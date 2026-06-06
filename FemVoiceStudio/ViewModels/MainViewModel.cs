@@ -338,7 +338,12 @@ namespace FemVoiceStudio.ViewModels
             {
                 // Reload debug settings before starting
                 DebugSettingsService.Instance.Reload();
-                
+
+                // Rydd gamle feilmeldinger — feilruta ble aldri tømt, så en
+                // transient feil fra forrige økt/oppstart ble stående synlig
+                // selv når den nye økten fungerte fint.
+                ErrorMessage = "";
+
                 _sessionStartTime = DateTime.Now;
                 PitchHistory.Clear();
                 RecentPitches.Clear();
@@ -360,8 +365,12 @@ namespace FemVoiceStudio.ViewModels
                 VoiceHealthScore = 0;
                 CoachExplanation = "";
                 
-                // Start event-driven audio engine for real-time pitch streaming
-                _audioEngine.Initialize();
+                // Start event-driven audio engine for real-time pitch streaming.
+                // IKKE kall Initialize() her — Start() initialiserer selv ved behov.
+                // Dobbeltkallet skapte en forlatt WasapiCapture-instans per øktstart
+                // (med event-handlere fortsatt påkoblet); når den forlatte instansen
+                // stoppet/finaliserte, fyrte OnRecordingStopped med exception →
+                // «audiofeil»-ruta vistes selv om den aktive capturen virket.
                 _audioEngine.Start();
                 
                 _audioAnalyzer.StartAnalysis();

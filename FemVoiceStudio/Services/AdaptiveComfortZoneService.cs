@@ -161,7 +161,12 @@ namespace FemVoiceStudio.Services
             // Check for recent health issues using weekly progress as a proxy
             // (SmartCoachEngine aggregates health monitoring; using weekly progress
             // allows us to infer significant strain without direct DB access).
-            var weekProgress = _smartCoach.CalculateWeeklyProgress(DateTime.Today.AddDays(-6), userId);
+            // KANONISK ukestart (søndag) — ikke rullerende vindu: Today.AddDays(-6)
+            // ga en NY WeekStart-verdi per dag, og siden CalculateWeeklyProgress
+            // persisterer raden (UPDATE-på-WeekStart matchet aldri) fikk SmartCoach-
+            // historikken én duplikatrad per treningsdag — «samme uke 4 ganger».
+            var weekStart = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
+            var weekProgress = _smartCoach.CalculateWeeklyProgress(weekStart, userId);
             if (weekProgress.HealthScore < 60)
                 return SessionType.Recovery;
             if (weekProgress.HealthScore < 80)

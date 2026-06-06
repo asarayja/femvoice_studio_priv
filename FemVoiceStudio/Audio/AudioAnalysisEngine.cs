@@ -369,6 +369,18 @@ namespace FemVoiceStudio.Audio
         /// </summary>
         private void InitializeAudioCapture()
         {
+            // Re-init-vern: rydd opp en eventuell eksisterende capture FØR ny
+            // opprettes. Tidligere ble forrige instans forlatt med event-handlere
+            // påkoblet og uten Dispose — orphan-instansens forsinkede
+            // RecordingStopped kunne fyre feilmeldinger inn i en fungerende økt.
+            if (_waveIn != null)
+            {
+                _waveIn.DataAvailable    -= OnWaveInDataAvailable;
+                _waveIn.RecordingStopped -= OnRecordingStopped;
+                try { _waveIn.Dispose(); } catch { /* allerede stoppet/disposed */ }
+                _waveIn = null;
+            }
+
             // Try WasapiCapture first for lower latency
             try
             {

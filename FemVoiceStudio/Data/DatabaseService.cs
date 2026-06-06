@@ -562,6 +562,27 @@ namespace FemVoiceStudio.Data
             // Migration 7: Recovery sessions count toward training frequency without affecting performance averages.
             AddColumnIfNotExists(connection, "TrainingSessions", "IsRecoveryPractice", "INTEGER DEFAULT 0");
 
+            // Migration 8 (heal): AdaptiveComfortZoneService brukte tidligere et
+            // RULLERENDE 7-dagers vindu (Today-6) som WeekStart — én ny duplikatrad
+            // per treningsdag i SmartCoachWeeklyProgress, og dashboardet viste samme
+            // uke flere ganger. Kanoniske rader har WeekStart på en søndag
+            // (strftime '%w' = '0'); rullerende rester slettes. Dataene er rene
+            // aggregater som regenereres av CalculateWeeklyProgress ved neste lasting.
+            try
+            {
+                if (TableExists(connection, "SmartCoachWeeklyProgress"))
+                {
+                    using var healCmd = connection.CreateCommand();
+                    healCmd.CommandText =
+                        "DELETE FROM SmartCoachWeeklyProgress WHERE strftime('%w', WeekStart) <> '0'";
+                    healCmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Migration 8] WeeklyProgress-heal feilet: {ex.Message}");
+            }
+
             ValidateCriticalSchema(connection);
         }
 
