@@ -1,0 +1,30 @@
+# Byggeartefakter (.NET)
+[Bb]in/
+[Oo]bj/
+publish/
+
+# Visual Studio / IDE
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider / VS Code
+.idea/
+.vscode/
+
+# Testresultater
+TestResults/
+*.trx
+
+# NuGet
+*.nupkg
+packages/
+
+# AI-verktøy-rester
+.blackboxcli/
+
+# OS
+Thumbs.db
+.DS_Store
