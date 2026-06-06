@@ -32,7 +32,7 @@ namespace FemVoiceStudio.Tests
         {
             // Arrange — CreateResonanceHumming: UsesResonance + UsesStability,
             // RequiredHoldSeconds = 3 > 0. UsesPitch = false.
-            // Active weights: resonance 0.45, stability 0.25, hold 0.10 → total 0.90.
+            // Active weights: resonance 0.45, stability 0.25, hold 0.10 → total 0.80.
             var profile = ExerciseTargetProfile.CreateResonanceHumming();
             var outcome = new ExerciseSessionOutcome
             {
@@ -47,8 +47,8 @@ namespace FemVoiceStudio.Tests
             var score = ClinicalSessionScore.Calculate(outcome, profile, FullElapsed, TargetSeconds);
 
             // Assert — weightedTotal = 0.80*0.45 + 0.60*0.25 + 0.90*0.10 = 0.60
-            // score = (0.60 / 0.90) * 100 = 66.666…
-            Assert.Equal(66.6667, score, 3);
+            // score = (0.60 / 0.80) * 100 = 75.0
+            Assert.Equal(75.0, score, 3);
         }
 
         [Fact]

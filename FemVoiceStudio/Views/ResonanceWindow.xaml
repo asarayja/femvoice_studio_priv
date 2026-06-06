@@ -108,28 +108,25 @@
             </Grid>
         </Border>
         
-        <!-- Controls -->
+        <!-- Controls — temastiler (PrimaryButtonStyle/DangerButtonStyle/SecondaryButtonStyle
+             finnes i både LightTheme og DarkTheme; DynamicResource så temabytte virker).
+             Tidligere: rå Background/Foreground-attributter uten stil (= umalte knapper),
+             og StopButton refererte DangerBrush som ikke finnes i temaene. -->
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center">
-            <Button x:Name="StartButton" Content="{loc:Loc ResonanceWindow_StartAnalysis}" 
+            <Button x:Name="StartButton" Content="{loc:Loc ResonanceWindow_StartAnalysis}"
                     Click="StartButton_Click"
-                    Background="{DynamicResource AccentPrimaryBrush}" 
-                    Foreground="{DynamicResource TextOnAccentBrush}"
-                    FontSize="14" FontWeight="SemiBold"
+                    Style="{DynamicResource PrimaryButtonStyle}"
                     Padding="24,12" Margin="0,0,16,0"/>
-            
-            <Button x:Name="StopButton" Content="{loc:Loc Exercise_Stop}" 
+
+            <Button x:Name="StopButton" Content="{loc:Loc Exercise_Stop}"
                     Click="StopButton_Click"
-                    Background="{DynamicResource DangerBrush}" 
-                    Foreground="{DynamicResource TextOnAccentBrush}"
-                    FontSize="14" FontWeight="SemiBold"
+                    Style="{DynamicResource DangerButtonStyle}"
                     Padding="24,12" Margin="0,0,16,0"
                     IsEnabled="False"/>
-            
-            <Button x:Name="ResetButton" Content="{loc:Loc UI_Reset}" 
+
+            <Button x:Name="ResetButton" Content="{loc:Loc UI_Reset}"
                     Click="ResetButton_Click"
-                    Background="{DynamicResource BackgroundTertiaryBrush}" 
-                    Foreground="{DynamicResource TextPrimaryBrush}"
-                    FontSize="14"
+                    Style="{DynamicResource SecondaryButtonStyle}"
                     Padding="24,12"/>
         </StackPanel>
     </Grid>

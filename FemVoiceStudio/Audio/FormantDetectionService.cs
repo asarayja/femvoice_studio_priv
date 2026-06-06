@@ -32,7 +32,7 @@ namespace FemVoiceStudio.Audio
         private int _historyIndex;
         
         // Støyrobustheit
-        private readonly double _rmsThreshold;
+        private double _rmsThreshold;
         private readonly double _confidenceThreshold;
         
         private double[] _lastLpcCoefficients = Array.Empty<double>();
@@ -83,6 +83,22 @@ namespace FemVoiceStudio.Audio
             
             _rmsThreshold = 0.01;
             _confidenceThreshold = 0.3;
+        }
+
+        #endregion
+
+        #region Public Properties - Tuning
+
+        /// <summary>
+        /// Minste frame-RMS for at formantanalyse regnes som gyldig.
+        /// Default 0.01 er konservativ — juster mot mikrofonkalibreringens
+        /// VoicedRmsThreshold for mikrofoner med lav inngangsforsterkning
+        /// (samme mønster som ResonanceProxyEngine.RmsThreshold).
+        /// </summary>
+        public double RmsThreshold
+        {
+            get => _rmsThreshold;
+            set => _rmsThreshold = Math.Clamp(value, 0.001, 0.05);
         }
 
         #endregion

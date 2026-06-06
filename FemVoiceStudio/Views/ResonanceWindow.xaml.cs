@@ -61,6 +61,7 @@ namespace FemVoiceStudio.Views
                 // Initialize audio capture
                 _audioCapture = new AudioCaptureService(44100, 1, 16);
                 _audioCapture.AudioDataAvailable += OnAudioDataAvailable;
+                _audioCapture.ErrorOccurred += OnAudioError;   // mikrofonfeil var tidligere helt stille her
                 
                 // Initialize formant detector
                 _formantDetector = new FormantDetectionService(44100, 25, 10, 12);
@@ -170,10 +171,15 @@ namespace FemVoiceStudio.Views
             };
             CategoryText.Text = categoryText;
             
-            // Update colors based on score with null-safe resource lookup
-            var successBrush = FindResource("SuccessBrush") as System.Windows.Media.Brush;
-            var warningBrush = FindResource("WarningBrush") as System.Windows.Media.Brush;
-            var dangerBrush = FindResource("DangerBrush") as System.Windows.Media.Brush;
+            // Update colors based on score with null-safe resource lookup.
+            // VIKTIG: TryFindResource, ikke FindResource — FindResource KASTER når
+            // nøkkelen mangler. Tidligere sto det FindResource("DangerBrush") her;
+            // DangerBrush finnes ikke i temaene (de heter ErrorBrush), så HVER gyldige
+            // lydframe kastet exception som ble svelget i OnAudioDataAvailable —
+            // dermed oppdaterte UI-et seg aldri («Start analyse gjør ingenting»).
+            var successBrush = TryFindResource("SuccessBrush") as System.Windows.Media.Brush;
+            var warningBrush = TryFindResource("WarningBrush") as System.Windows.Media.Brush;
+            var dangerBrush = TryFindResource("ErrorBrush") as System.Windows.Media.Brush;
             
             if (resonanceScore.TotalScore >= 70)
             {
@@ -201,6 +207,19 @@ namespace FemVoiceStudio.Views
                 _audioCapture?.Initialize();
                 if (_audioCapture != null)
                     _audioCapture.HearOwnVoice = GetHearOwnVoiceSetting();
+
+                // Juster formant-RMS-terskelen mot mikrofonkalibreringen (samme mønster
+                // som ExerciseWindow gjør for ResonanceProxyEngine) — default 0.01 er
+                // for strengt for mikrofoner med lav inngangsforsterkning, og ga
+                // «ingen data» selv ved normal tale.
+                if (_audioCapture?.CalibrationProfile != null && _formantDetector != null)
+                {
+                    _formantDetector.RmsThreshold = Math.Clamp(
+                        _audioCapture.CalibrationProfile.VoicedRmsThreshold * 0.75,
+                        0.002,
+                        0.01);
+                }
+
                 _audioCapture?.StartRecording();
                 
                 _isRecording = true;
@@ -248,6 +267,13 @@ namespace FemVoiceStudio.Views
             }
         }
         
+        private void OnAudioError(object? sender, string message)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+                MessageBox.Show(message, Loc.Get("UI_Error"),
+                    MessageBoxButton.OK, MessageBoxImage.Warning)));
+        }
+
         private void ResetButton_Click(object sender, RoutedEventArgs e)
         {
             // Clear history and charts
