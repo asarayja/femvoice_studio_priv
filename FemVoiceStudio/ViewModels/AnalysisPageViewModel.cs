@@ -109,7 +109,9 @@ namespace FemVoiceStudio.ViewModels
         
         public AnalysisPageViewModel()
         {
-            _database = new DatabaseService();
+            // DatabaseService er DI-singleton; manuelle new re-kjørte skjema-init (integrasjonsaudit-funn).
+            _database = App.Services?.GetService(typeof(DatabaseService)) as DatabaseService
+                        ?? new DatabaseService();
             _femVoiceScore = new FemVoiceScore();
         }
         

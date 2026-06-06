@@ -44,7 +44,9 @@ namespace FemVoiceStudio.ViewModels
         
         public CalendarViewModel()
         {
-            _database = new DatabaseService();
+            // DatabaseService er DI-singleton; manuelle new re-kjørte skjema-init (integrasjonsaudit-funn).
+            _database = App.Services?.GetService(typeof(DatabaseService)) as DatabaseService
+                        ?? new DatabaseService();
             _currentMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
             LoadCalendar();
         }

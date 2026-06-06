@@ -235,7 +235,10 @@ namespace FemVoiceStudio.Views
         {
             try
             {
-                return new DatabaseService().GetUserSettings().HearOwnVoice;
+                // DatabaseService er DI-singleton; manuelle new re-kjørte skjema-init (integrasjonsaudit-funn).
+                var db = App.Services?.GetService(typeof(DatabaseService)) as DatabaseService
+                         ?? new DatabaseService();
+                return db.GetUserSettings().HearOwnVoice;
             }
             catch
             {

@@ -152,8 +152,8 @@ namespace FemVoiceStudio.Views
         {
             try
             {
-                _database = new DatabaseService();
-                _engine = new SmartCoachEngine(_database as IDatabaseService);
+                _database = ResolveDatabase();
+                _engine = ResolveSmartCoach(_database);
                 _levelSystem = new LevelClassificationSystem();
                 _directionAnalyzer = new DirectionAnalyzer();
                 _scoreCalculator = new FemVoiceScore();
@@ -169,11 +169,11 @@ namespace FemVoiceStudio.Views
         public ProgressionDashboardViewModel(ProgressionDashboard dashboard)
         {
             _dashboard = dashboard;
-            
+
             try
             {
-                _database = new DatabaseService();
-                _engine = new SmartCoachEngine(_database as IDatabaseService);
+                _database = ResolveDatabase();
+                _engine = ResolveSmartCoach(_database);
                 _levelSystem = new LevelClassificationSystem();
                 _directionAnalyzer = new DirectionAnalyzer();
                 _scoreCalculator = new FemVoiceScore();
@@ -185,7 +185,17 @@ namespace FemVoiceStudio.Views
                 System.Diagnostics.Debug.WriteLine($"ProgressionDashboardViewModel Error: {ex.Message}");
             }
         }
-        
+
+        // DatabaseService er DI-singleton; manuelle new re-kjørte skjema-init (integrasjonsaudit-funn).
+        private static DatabaseService ResolveDatabase() =>
+            App.Services?.GetService(typeof(DatabaseService)) as DatabaseService
+            ?? new DatabaseService();
+
+        // DI-instansen har full feedback-graf (pipeline/mappere/goal-provider); den manuelle var degradert.
+        private static SmartCoachEngine ResolveSmartCoach(DatabaseService database) =>
+            App.Services?.GetService(typeof(SmartCoachEngine)) as SmartCoachEngine
+            ?? new SmartCoachEngine(database as IDatabaseService);
+
         /// <summary>
         /// Load all data for the dashboard
         /// </summary>

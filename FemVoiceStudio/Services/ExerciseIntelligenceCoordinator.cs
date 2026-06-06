@@ -18,12 +18,14 @@ namespace FemVoiceStudio.Services
     public class ExerciseIntelligenceCoordinator : IDisposable
     {
         // ── Engine dependencies (nullable — only set by the production constructor) ─
+        // VoiceHealthMonitor/VocalHealthLegacyBridge ble fjernet i integrasjons-
+        // oppryddingen: Analyze() ble aldri kalt i produksjon, så helse-eventene
+        // fyrte aldri. Helse kommer nå utelukkende via health-parameteren i
+        // UpdateMetrics (drevet av VocalHealthSupervisor gjennom ExerciseSessionRecorder).
         private readonly ResonanceProxyEngine? _resonanceEngine;
         private readonly FemVoiceScoreEngine? _scoreEngine;
         private readonly ComfortZoneController? _comfortZoneController;
-        private readonly VoiceHealthMonitor? _healthMonitor;
         private readonly SmartCoachEngine? _smartCoachEngine;
-        private readonly VocalHealthLegacyBridge _legacyHealthBridge;
         private readonly ILocalizationService _localization;
 
         // ── Cached engine values (guarded by _lock) ──────────────────────────────────
@@ -79,15 +81,12 @@ namespace FemVoiceStudio.Services
             ResonanceProxyEngine resonanceEngine,
             FemVoiceScoreEngine scoreEngine,
             ComfortZoneController comfortZoneController,
-            VoiceHealthMonitor healthMonitor,
             SmartCoachEngine smartCoachEngine)
         {
             _resonanceEngine      = resonanceEngine      ?? throw new ArgumentNullException(nameof(resonanceEngine));
             _scoreEngine          = scoreEngine          ?? throw new ArgumentNullException(nameof(scoreEngine));
             _comfortZoneController = comfortZoneController ?? throw new ArgumentNullException(nameof(comfortZoneController));
-            _healthMonitor        = healthMonitor        ?? throw new ArgumentNullException(nameof(healthMonitor));
             _smartCoachEngine     = smartCoachEngine     ?? throw new ArgumentNullException(nameof(smartCoachEngine));
-            _legacyHealthBridge   = new VocalHealthLegacyBridge();
             _localization         = LocalizationService.Instance;
 
             _currentProfile = ExerciseTargetProfile.ResonanceExercise();
@@ -97,9 +96,6 @@ namespace FemVoiceStudio.Services
             _resonanceEngine.FormantsUpdated       += OnFormantsUpdated;
             _scoreEngine.ScoreUpdated              += OnScoreUpdated;
             _comfortZoneController.ZoneUpdated     += OnComfortZoneUpdated;
-            _healthMonitor.HealthWarning            += OnHealthWarning;
-            _healthMonitor.HealthCritical           += OnHealthCritical;
-            _healthMonitor.LockoutTriggered         += OnLockoutTriggered;
         }
 
         /// <summary>
@@ -110,7 +106,6 @@ namespace FemVoiceStudio.Services
         public ExerciseIntelligenceCoordinator()
         {
             _currentProfile = ExerciseTargetProfile.ResonanceExercise();
-            _legacyHealthBridge = new VocalHealthLegacyBridge();
             _localization = LocalizationService.Instance;
         }
 
@@ -353,57 +348,6 @@ namespace FemVoiceStudio.Services
                     "COMFORT_ZONE_LOCK",
                     MessageSeverity.Warning,
                     15);
-            }
-        }
-
-        // sender is declared as object? to match EventHandler<T> delegate signature.
-        private void OnHealthWarning(object? sender, HealthAlertEventArgs e)
-        {
-            var decision = _legacyHealthBridge.FromWarning(e);
-            ApplyLegacyHealthDecision(decision);
-            EvaluateExerciseStateFromCache();
-
-            TryPublishCoachMessage(
-                _localization.GetString("ExerciseCoach_HealthWarning"),
-                "HEALTH_WARNING",
-                MessageSeverity.Warning,
-                10);
-        }
-
-        private void OnHealthCritical(object? sender, HealthAlertEventArgs e)
-        {
-            var decision = _legacyHealthBridge.FromCritical(e);
-            ApplyLegacyHealthDecision(decision);
-
-            EvaluateExerciseStateFromCache();
-
-            TryPublishCoachMessage(
-                _localization.GetString("ExerciseCoach_HealthCritical"),
-                "HEALTH_CRITICAL",
-                MessageSeverity.Warning,
-                20);
-        }
-
-        private void OnLockoutTriggered(object? sender, LockoutEventArgs e)
-        {
-            var decision = _legacyHealthBridge.FromLockout(e);
-            ApplyLegacyHealthDecision(decision);
-            EvaluateExerciseStateFromCache();
-
-            TryPublishCoachMessage(
-                _localization.GetString("ExerciseCoach_VoiceLockout"),
-                "VOICE_LOCKOUT",
-                MessageSeverity.Warning,
-                20);
-        }
-
-        private void ApplyLegacyHealthDecision(VocalHealthDecision decision)
-        {
-            lock (_lock)
-            {
-                _currentHealthScore = _legacyHealthBridge.ToHealthScore(decision);
-                if (decision.State is HealthSafetyState.Restrict or HealthSafetyState.Lock)
-                    _isSafetyLocked = true;
             }
         }
 
@@ -727,13 +671,6 @@ namespace FemVoiceStudio.Services
 
                 if (_comfortZoneController != null)
                     _comfortZoneController.ZoneUpdated -= OnComfortZoneUpdated;
-
-                if (_healthMonitor != null)
-                {
-                    _healthMonitor.HealthWarning    -= OnHealthWarning;
-                    _healthMonitor.HealthCritical   -= OnHealthCritical;
-                    _healthMonitor.LockoutTriggered -= OnLockoutTriggered;
-                }
 
                 lock (_lock)
                 {

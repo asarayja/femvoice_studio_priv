@@ -104,7 +104,8 @@ public partial class App : Application
         services.AddSingleton<ResonanceProxyEngine>();
         services.AddSingleton<FemVoiceScoreEngine>();
         services.AddSingleton<ComfortZoneController>();
-        services.AddSingleton<VoiceHealthMonitor>();
+        // VoiceHealthMonitor fjernet: Analyze() ble aldri kalt i produksjon
+        // (integrasjonsauditen) — helse drives av VocalHealthSupervisor-stien.
 
         // ── Coordinator ───────────────────────────────────────────────────────────
         // ExerciseIntelligenceCoordinator wires the five engines above; must be
@@ -167,7 +168,6 @@ public partial class App : Application
         services.AddSingleton(sp => sp.GetRequiredService<VocalHealthBaselineProvider>().CreateHydrationOptions());
         services.AddSingleton(sp => new VocalHealthSupervisor(sp.GetRequiredService<VocalHealthSupervisorOptions>()));
         services.AddSingleton<VocalHealthFeedbackMapper>();
-        services.AddSingleton<VocalHealthLegacyBridge>();
         services.AddSingleton(sp => new HydrationAdvisor(sp.GetRequiredService<HydrationAdvisorOptions>()));
         services.AddSingleton<HydrationFeedbackMapper>();
         services.AddSingleton<IVoiceGoalProfileProvider, LocalVoiceGoalProfileStore>();

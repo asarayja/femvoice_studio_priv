@@ -94,11 +94,16 @@ namespace FemVoiceStudio.Views
         
         #endregion
 
+        // DatabaseService er DI-singleton; manuelle new re-kjørte skjema-init (integrasjonsaudit-funn).
+        private static DatabaseService ResolveDatabase() =>
+            App.Services?.GetService(typeof(DatabaseService)) as DatabaseService
+            ?? new DatabaseService();
+
         private static bool GetHearOwnVoiceSetting()
         {
             try
             {
-                return new DatabaseService().GetUserSettings().HearOwnVoice;
+                return ResolveDatabase().GetUserSettings().HearOwnVoice;
             }
             catch
             {
@@ -320,7 +325,7 @@ namespace FemVoiceStudio.Views
                 };
                 
                 // Save to database
-                var db = new DatabaseService();
+                var db = ResolveDatabase();
                 db.SaveTrainingSession(session);
                 
                 MessageBox.Show(Loc.Get("ResonanceWindow_SessionSaved"), Loc.Get("UI_Success"), MessageBoxButton.OK, MessageBoxImage.Information);

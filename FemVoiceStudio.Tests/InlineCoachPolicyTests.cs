@@ -28,7 +28,6 @@ namespace FemVoiceStudio.Tests
         private const string ReasonStabilityLow      = "STABILITY_LOW";
         private const string ReasonHealthSafetyLock  = "HEALTH_SAFETY_LOCK";
         private const string ReasonComfortZoneLock   = "COMFORT_ZONE_LOCK";
-        private const string ReasonVoiceLockout      = "VOICE_LOCKOUT";
         private const string ReasonPitchOutOfZone    = "PITCH_OUT_OF_ZONE";
 
         // ── SUT ──────────────────────────────────────────────────────────────────────

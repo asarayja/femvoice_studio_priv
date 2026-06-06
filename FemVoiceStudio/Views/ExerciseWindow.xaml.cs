@@ -102,7 +102,9 @@ namespace FemVoiceStudio.Views
                     "FemVoiceStudio");
                 var connectionString = $"Data Source={System.IO.Path.Combine(appDataPath, "femvoice.db")}";
 
-                _exerciseService     = new ExerciseDataService(connectionString);
+                // ExerciseDataService er DI-singleton; fallback bruker samme connection string (integrasjonsaudit-funn).
+                _exerciseService     = App.Services?.GetService(typeof(ExerciseDataService)) as ExerciseDataService
+                                       ?? new ExerciseDataService(connectionString);
                 _exerciseTextService = new ExerciseTextService();
                 _trainingService     = new TrainingFrequencyService(_exerciseService);
 
@@ -924,7 +926,10 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
         {
             try
             {
-                return new DatabaseService().GetUserSettings().HearOwnVoice;
+                // DatabaseService er DI-singleton; manuelle new re-kjørte skjema-init (integrasjonsaudit-funn).
+                var db = App.Services?.GetService(typeof(DatabaseService)) as DatabaseService
+                         ?? new DatabaseService();
+                return db.GetUserSettings().HearOwnVoice;
             }
             catch
             {

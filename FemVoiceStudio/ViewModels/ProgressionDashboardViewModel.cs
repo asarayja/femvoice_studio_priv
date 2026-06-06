@@ -138,7 +138,9 @@ namespace FemVoiceStudio.ViewModels
         
         public ProgressionDashboardViewModel()
         {
-            _database = new DatabaseService();
+            // DatabaseService er DI-singleton; manuelle new re-kjørte skjema-init (integrasjonsaudit-funn).
+            _database = App.Services?.GetService(typeof(DatabaseService)) as DatabaseService
+                        ?? new DatabaseService();
             _scoreCalculator = new FemVoiceScore();
             _levelSystem = new LevelClassificationSystem();
         }
@@ -152,7 +154,9 @@ namespace FemVoiceStudio.ViewModels
 
         public ProgressionDashboardViewModel(LocalizationService localizationService)
         {
-            _database = new DatabaseService();
+            // DatabaseService er DI-singleton; manuelle new re-kjørte skjema-init (integrasjonsaudit-funn).
+            _database = App.Services?.GetService(typeof(DatabaseService)) as DatabaseService
+                        ?? new DatabaseService();
             _scoreCalculator = new FemVoiceScore();
             _levelSystem = new LevelClassificationSystem();
             _localizationService = localizationService;

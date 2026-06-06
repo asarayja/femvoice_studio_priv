@@ -171,7 +171,9 @@ namespace FemVoiceStudio.ViewModels
         public MainViewModel()
         {
             // Initialiser services
-            _database = new DatabaseService();
+            // DatabaseService er DI-singleton; manuelle new re-kjørte skjema-init (integrasjonsaudit-funn).
+            _database = App.Services?.GetService(typeof(DatabaseService)) as DatabaseService
+                        ?? new DatabaseService();
             _exerciseTextService = new ExerciseTextService();
             _feedbackService = new FeedbackService();
             _progressionService = new ProgressionService(_database as IDatabaseService);
@@ -188,7 +190,9 @@ namespace FemVoiceStudio.ViewModels
             
             // Initialize FemVoiceScore and related services
             _femVoiceScore = new FemVoiceScore();
-            _smartCoach = new SmartCoachEngine(_database as IDatabaseService);
+            // DI-instansen har full feedback-graf (pipeline/mappere/goal-provider); den manuelle var degradert.
+            _smartCoach = App.Services?.GetService(typeof(SmartCoachEngine)) as SmartCoachEngine
+                          ?? new SmartCoachEngine(_database as IDatabaseService);
             _liveMetrics = new LiveMetricsService();
             _comfortZoneService = new AdaptiveComfortZoneService(_smartCoach);
 
