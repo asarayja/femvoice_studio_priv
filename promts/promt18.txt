@@ -1,0 +1,168 @@
+You are a senior audio signal processing engineer and clinical voice-technology architect with deep expertise in formant analysis, FFT/LPC-based resonance extraction, and gender-affirming voice training systems.
+
+**Your task:** Design and implement a production-ready `ResonanceProxyEngine.cs` for FemVoice Studio—a real-time voice feminization biofeedback application built with **C# / .NET 10 / WPF** using **NAudio** for audio processing—that quantifies feminine vocal resonance independently of pitch.
+
+---
+
+## Clinical Foundation
+
+Resonance feminization depends on vocal tract shaping, not pitch. The system must:
+
+- Focus on formant frequency shifts (F1, F2, F3) that indicate forward tongue positioning and oral resonance
+- Detect spectral brightness patterns associated with feminine resonance
+- Score vocal tract configuration independently—even feminine pitch with masculine formant structures must score low
+- Correlate strongly with perceived vocal femininity in clinical voice training contexts
+
+---
+
+## Core Acoustic Features
+
+Implement real-time extraction of these features from NAudio audio buffers:
+
+**Formant Frequencies (F1, F2, F3)**
+- Use FFT + LPC or robust spectral peak tracking compatible with NAudio's processing pipeline
+- Track stable formant peaks across consecutive frames
+- Handle voice breaks and momentary instability gracefully
+
+**Formant Spacing Metrics**
+- F2 - F1 distance (indicates tongue advancement)
+- F3 - F2 distance (indicates oral cavity resonance)
+
+**Spectral Centroid**
+- Calculate within the vocal band (200-4000 Hz)
+- Measure perceived brightness of resonance
+
+**Temporal Stability**
+- Track formant consistency across frames
+- Penalize unstable resonance patterns that would cause noisy feedback
+
+---
+
+## ResonanceScore Algorithm
+
+Design a normalized 0.0–1.0 scoring system that combines weighted components:
+
+```
+ResonanceScore = 
+  0.40 * FormantShiftScore +
+  0.25 * SpacingScore +
+  0.25 * BrightnessScore +
+  0.10 * StabilityScore
+```
+
+**For each component:**
+
+1. Define clinically realistic bounds (e.g., F2 target zone: 2200-2800 Hz for feminine resonance)
+2. Normalize extracted values to 0.0–1.0 using those bounds
+3. Make weights configurable via constructor or properties
+
+**Scoring behavior requirements:**
+- Reward forward tongue positioning (higher F2)
+- Reward higher oral resonance (increased F3, wider F2-F1 spacing)
+- Penalize dark/throaty resonance (low centroid, narrow formant spacing)
+- Remain completely independent of pitch/F0
+
+---
+
+## Real-Time Output Interface
+
+Expose these public events for WPF data binding and integration:
+
+```csharp
+public event Action<double> ResonanceScoreUpdated;
+public event Action<FormantSnapshot> FormantsUpdated;
+```
+
+`FormantSnapshot` should include:
+- F1, F2, F3 frequencies (Hz)
+- Spectral centroid (Hz)
+- Stability metric (0.0-1.0)
+- Timestamp or frame index
+
+---
+
+## NAudio Integration Requirements
+
+**Audio Input:** Process `ISampleProvider` or `WaveInEvent` buffers from NAudio
+**Buffer Handling:** Work with NAudio's standard buffer sizes and sample rates (typically 44.1kHz or 48kHz)
+**Thread Safety:** Handle NAudio's callback thread appropriately for WPF UI updates
+**Latency:** Process audio buffers with <50ms latency for real-time biofeedback
+**Stability:** Apply temporal smoothing to prevent score jitter during visualization
+
+---
+
+## Production-Ready Requirements
+
+**Error Handling:**
+- Gracefully handle silence, clipping, and invalid audio input
+- Validate formant extraction results before scoring
+- Log meaningful diagnostics for debugging
+
+**Testing:**
+- Include unit tests for normalization functions
+- Provide test cases with known formant values
+- Document expected behavior with sample audio characteristics
+
+**Performance:**
+- Optimize for real-time processing on standard Windows desktop hardware
+- Minimize allocations in audio processing hot path
+- Profile and document CPU usage characteristics
+
+**Code Quality:**
+- Follow C# best practices and .NET 10 conventions
+- Include XML documentation comments for public API
+- Implement IDisposable if managing unmanaged resources
+- Separate concerns: DSP logic, scoring logic, event dispatch
+
+**Integration Point:** Must integrate seamlessly with existing `FemVoiceScoreEngine` via event subscription pattern
+
+---
+
+## Deliverables
+
+Provide:
+
+1. **Complete `ResonanceProxyEngine.cs` implementation** including:
+   - NAudio-compatible audio processing pipeline
+   - Formant extraction using FFT/LPC with NAudio
+   - Feature normalization with clinical ranges
+   - Weighted scoring calculation
+   - Temporal smoothing mechanism
+   - Thread-safe event-based output system
+   - Error handling and validation
+   - XML documentation comments
+
+2. **Unit tests** demonstrating:
+   - Normalization accuracy with edge cases
+   - Scoring behavior with known formant values
+   - Stability filtering effectiveness
+
+3. **Feature normalization strategy document** specifying:
+   - Clinical reference ranges for each acoustic feature
+   - Rationale for chosen bounds (cite voice feminization research if applicable)
+   - Mapping functions from raw feature values to 0.0–1.0 scores
+
+4. **Technical explanation** covering:
+   - Why each acoustic feature contributes to perceived femininity
+   - How stability filtering prevents false positives during exercises
+   - How this approach improves over pitch-only training systems
+   - Tradeoffs in your chosen formant extraction method
+   - NAudio-specific implementation considerations
+
+5. **Integration example** showing:
+   - How to instantiate `ResonanceProxyEngine` with NAudio input
+   - How `FemVoiceScoreEngine` subscribes to events
+   - Sample code for feeding NAudio buffers into the engine
+   - How resonance scores gate progression or trigger feedback in WPF UI
+
+---
+
+## Design Constraints
+
+- The engine should respond clearly to resonance exercises (sustaining /i/, /e/ vowels, forward placement techniques)
+- Score stability must support smooth visual feedback without lag or jumpiness
+- Architecture should allow future extension (adding formant bandwidths, harmonic richness, etc.)
+- No dependencies on WPF UI frameworks in the core engine—pure signal processing logic with events
+- Must work reliably with typical microphone input quality
+
+Provide working C# code compatible with .NET 10 and NAudio that can be immediately tested with audio input buffers, along with the supporting documentation and tests specified above.

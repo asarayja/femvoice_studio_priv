@@ -1,0 +1,91 @@
+using System;
+using System.Collections.Generic;
+using FemVoiceStudio.Models;
+using FemVoiceStudio.Services;
+
+namespace FemVoiceStudio.Data
+{
+    /// <summary>
+    /// Interface for database operations needed by services.
+    /// Allows for test implementations.
+    /// </summary>
+    public interface IDatabaseService
+    {
+        #region User Settings
+        UserSettings GetUserSettings();
+        void UpdateUserSettings(UserSettings settings);
+        #endregion
+
+        #region Training Sessions
+        List<TrainingSession> GetTrainingSessions(DateTime from, DateTime to);
+        List<TrainingSession> GetRecentSessions(int count = 10, int userId = 1);
+        int SaveTrainingSession(TrainingSession session);
+        void UpdateTrainingSession(TrainingSession session);
+        void DeleteTrainingSession(int sessionId);
+        #endregion
+
+        #region Progression Stats
+        (double AvgPitch, double Consistency, int Streak) GetProgressionStats();
+        int GetTrainingDaysCount(DateTime from, DateTime to, int userId = 1);
+        (int Sessions, int Minutes, double AvgScore, double AvgPitch, double AvgResonance, double AvgIntonation) GetTrainingStats(DateTime from, DateTime to, int userId = 1);
+        #endregion
+
+        #region Health Monitoring
+        List<SmartCoachHealthMonitoring> GetRecentHealthIssues(int userId = 1, int days = 7);
+        void SaveHealthMonitoring(SmartCoachHealthMonitoring health);
+        #endregion
+
+        #region SmartCoach - Baseline
+        void SaveSmartCoachBaseline(SmartCoachBaseline baseline);
+        SmartCoachBaseline? GetSmartCoachBaseline(int userId = 1);
+        #endregion
+
+        #region SmartCoach - Goals
+        void SaveSmartCoachGoal(SmartCoachGoal goal);
+        List<SmartCoachGoal> GetSmartCoachGoals(int userId = 1, bool activeOnly = true);
+        #endregion
+
+        #region SmartCoach - Daily Recommendations
+        void SaveDailyRecommendation(SmartCoachDailyRecommendation recommendation);
+        SmartCoachDailyRecommendation? GetDailyRecommendation(DateTime date, int userId = 1);
+        #endregion
+
+        #region SmartCoach - Weekly Progress
+        void SaveWeeklyProgress(SmartCoachWeeklyProgress progress);
+        SmartCoachWeeklyProgress? GetWeeklyProgress(DateTime weekStart, int userId = 1);
+        List<SmartCoachWeeklyProgress> GetRecentWeeklyProgress(int weeks = 4, int userId = 1);
+        #endregion
+
+        #region SmartCoach - Messages
+        void SaveCoachMessage(SmartCoachMessage message);
+        int GetUnreadMessageCount(int userId = 1);
+        void MarkMessageAsRead(int messageId);
+        #endregion
+
+        #region FemVoiceScore
+        void SaveFemVoiceScore(FemVoiceScoreResult score);
+        List<FemVoiceScoreResult> GetRecentFemVoiceScores(int count = 10, int userId = 1);
+        List<FemVoiceScoreResult> GetFemVoiceScores(DateTime from, DateTime to, int userId = 1);
+        #endregion
+
+        #region Complexity Progress
+        ComplexityProgress? GetComplexityProgress(int userId = 1);
+        void SaveComplexityProgress(ComplexityProgress progress);
+        #endregion
+
+        #region User Progress (Gamification)
+        UserProgressData GetUserProgress();
+        void UpdateUserProgress(UserProgressData progress);
+        void UnlockAchievement(string code);
+        #endregion
+
+        #region Milestones and Daily Progress
+        void SaveMilestone(Milestone milestone);
+        List<Milestone> GetMilestones(int userId = 1);
+        #endregion
+
+        #region Calendar
+        void SaveCalendarData(DateTime date, int sessionsCompleted, int totalMinutes, double averageScore);
+        #endregion
+    }
+}

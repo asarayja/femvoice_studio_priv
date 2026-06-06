@@ -1,0 +1,297 @@
+using System;
+using System.Linq;
+using FemVoiceStudio.Models;
+
+namespace FemVoiceStudio.Audio
+{
+    /// <summary>
+    /// Pitch detection service som implementerer YIN-algoritmen og autocorrelation.
+    /// YIN er valgt fordi den er mer robust mot støy og harmoniske.
+    /// </summary>
+    public class PitchDetectionService
+    {
+        private readonly int _sampleRate;
+        private readonly double _minFrequency;
+        private readonly double _maxFrequency;
+        
+        // YIN spesifikke parametere
+        private readonly double _threshold = 0.15;
+        public double VoicedRmsThreshold { get; set; } = 0.01;
+        
+        public PitchDetectionService(int sampleRate = 44100, double minFrequency = 80, double maxFrequency = 500, double voicedRmsThreshold = 0.01)
+        {
+            _sampleRate = sampleRate;
+            _minFrequency = minFrequency;
+            _maxFrequency = maxFrequency;
+            VoicedRmsThreshold = voicedRmsThreshold;
+        }
+        
+        /// <summary>
+        /// Detekterer pitch fra et array med audio samples ved hjelp av YIN-algoritmen.
+        /// </summary>
+        /// <param name="samples">Normaliserte audio samples (-1.0 til 1.0)</param>
+        /// <returns>PitchAnalysisResult med pitch-verdi og metadata</returns>
+        public PitchAnalysisResult DetectPitch(float[] samples)
+        {
+            double rms = CalculateRms(samples);
+            var result = new PitchAnalysisResult
+            {
+                Timestamp = DateTime.Now,
+                RmsValue = rms,
+                Intensity = rms
+            };
+            
+            // Sjekk om det er nok volum til å analysere
+            if (result.RmsValue < VoicedRmsThreshold) // Stille / below calibrated voiced threshold
+            {
+                result.IsVoiced = false;
+                result.Pitch = 0;
+                result.Confidence = 0;
+                return result;
+            }
+            
+            // Kjør YIN-algoritmen
+            var yinResult = YinPitchDetection(samples);
+            
+            if (yinResult.frequency > 0 && yinResult.probability > _threshold)
+            {
+                result.IsVoiced = true;
+                result.Pitch = yinResult.frequency;
+                result.Confidence = yinResult.probability;
+            }
+            else
+            {
+                // Prøv autocorrelation som backup
+                var autocorrResult = AutocorrelationPitchDetection(samples);
+                if (autocorrResult.frequency > 0)
+                {
+                    result.IsVoiced = true;
+                    result.Pitch = autocorrResult.frequency;
+                    result.Confidence = autocorrResult.probability;
+                }
+                else
+                {
+                    result.IsVoiced = false;
+                    result.Pitch = 0;
+                    result.Confidence = 0;
+                }
+            }
+            
+            return result;
+        }
+        
+        /// <summary>
+        /// YIN pitch detection algoritme - god for tale
+        /// </summary>
+        private (double frequency, double probability) YinPitchDetection(float[] samples)
+        {
+            int bufferSize = samples.Length;
+            double[] yinBuffer = new double[bufferSize / 2];
+            
+            // Step 1: Compute difference function
+            for (int tau = 0; tau < yinBuffer.Length; tau++)
+            {
+                yinBuffer[tau] = 0;
+                for (int i = 0; i < bufferSize / 2; i++)
+                {
+                    float delta = samples[i] - samples[i + tau];
+                    yinBuffer[tau] += delta * delta;
+                }
+            }
+            
+            // Step 2: Cumulative mean normalized difference
+            yinBuffer[0] = 1;
+            double runningSum = 0;
+            for (int tau = 1; tau < yinBuffer.Length; tau++)
+            {
+                runningSum += yinBuffer[tau];
+                yinBuffer[tau] *= tau / runningSum;
+            }
+            
+            // Step 3: Absolute threshold
+            int tauEstimate = -1;
+            for (int tau = 2; tau < yinBuffer.Length; tau++)
+            {
+                if (yinBuffer[tau] < _threshold)
+                {
+                    while (tau + 1 < yinBuffer.Length && yinBuffer[tau + 1] < yinBuffer[tau])
+                    {
+                        tau++;
+                    }
+                    tauEstimate = tau;
+                    break;
+                }
+            }
+            
+            if (tauEstimate == -1)
+            {
+                // No pitch found
+                return (0, 0);
+            }
+            
+            // Step 4: Parabolic interpolation for better precision
+            double betterTau;
+            if (tauEstimate < 1 || tauEstimate >= yinBuffer.Length - 1)
+            {
+                betterTau = tauEstimate;
+            }
+            else
+            {
+                double s0 = yinBuffer[tauEstimate - 1];
+                double s1 = yinBuffer[tauEstimate];
+                double s2 = yinBuffer[tauEstimate + 1];
+                betterTau = tauEstimate + (s2 - s0) / (2 * (2 * s1 - s2 - s0));
+            }
+            
+            double frequency = _sampleRate / betterTau;
+            double probability = 1 - yinBuffer[tauEstimate];
+            
+            // Begrens til gyldig frekvensområde
+            if (frequency < _minFrequency || frequency > _maxFrequency)
+            {
+                return (0, probability);
+            }
+            
+            return (frequency, probability);
+        }
+        
+        /// <summary>
+        /// Autocorrelation pitch detection - backup metode
+        /// </summary>
+        private (double frequency, double probability) AutocorrelationPitchDetection(float[] samples)
+        {
+            int minLag = _sampleRate / (int)_maxFrequency;
+            int maxLag = _sampleRate / (int)_minFrequency;
+            
+            double maxCorrelation = 0;
+            int bestLag = 0;
+            
+            // Beregn autocorrelation
+            for (int lag = minLag; lag < maxLag && lag < samples.Length / 2; lag++)
+            {
+                double correlation = 0;
+                double norm1 = 0;
+                double norm2 = 0;
+                
+                for (int i = 0; i < samples.Length - lag; i++)
+                {
+                    correlation += samples[i] * samples[i + lag];
+                    norm1 += samples[i] * samples[i];
+                    norm2 += samples[i + lag] * samples[i + lag];
+                }
+                
+                if (norm1 > 0 && norm2 > 0)
+                {
+                    correlation /= Math.Sqrt(norm1 * norm2);
+                }
+                
+                if (correlation > maxCorrelation)
+                {
+                    maxCorrelation = correlation;
+                    bestLag = lag;
+                }
+            }
+            
+            if (maxCorrelation > 0.5 && bestLag > 0)
+            {
+                double frequency = (double)_sampleRate / bestLag;
+                return (frequency, maxCorrelation);
+            }
+            
+            return (0, 0);
+        }
+        
+        /// <summary>
+        /// Beregner RMS-verdi (Root Mean Square) for volum-måling
+        /// </summary>
+        private double CalculateRms(float[] samples)
+        {
+            if (samples.Length == 0)
+                return 0;
+                
+            double sum = 0;
+            foreach (var sample in samples)
+            {
+                sum += sample * sample;
+            }
+            return Math.Sqrt(sum / samples.Length);
+        }
+        
+        /// <summary>
+        /// Beregner pitch-variasjon (standard avvik) fra en liste med pitch-verdier
+        /// </summary>
+        public static double CalculatePitchVariation(double[] pitches)
+        {
+            if (pitches.Length < 2)
+                return 0;
+                
+            var validPitches = pitches.Where(p => p > 0).ToArray();
+            if (validPitches.Length < 2)
+                return 0;
+                
+            double avg = validPitches.Average();
+            double sumSquares = validPitches.Sum(p => (p - avg) * (p - avg));
+            return Math.Sqrt(sumSquares / validPitches.Length);
+        }
+        
+        /// <summary>
+        /// Beregner gjennomsnittlig pitch fra en liste
+        /// </summary>
+        public static double CalculateAveragePitch(double[] pitches)
+        {
+            var validPitches = pitches.Where(p => p > 0).ToArray();
+            if (validPitches.Length == 0)
+                return 0;
+            return validPitches.Average();
+        }
+        
+        /// <summary>
+        /// Analyserer intonasjonsmønster - sjekker for stigende/fallende intonasjon
+        /// </summary>
+        public static IntonationAnalysis AnalyzeIntonation(double[] pitches, double[] intensities)
+        {
+            var analysis = new IntonationAnalysis();
+            
+            if (pitches.Length < 10)
+                return analysis;
+                
+            var validPitches = pitches.Where(p => p > 0).ToArray();
+            if (validPitches.Length < 10)
+                return analysis;
+                
+            // Sjekk for stigende intonasjon (spørsmål)
+            int risingCount = 0;
+            int windowSize = validPitches.Length / 4;
+            
+            for (int i = 0; i < validPitches.Length - windowSize; i++)
+            {
+                double startAvg = 0, endAvg = 0;
+                for (int j = 0; j < windowSize; j++)
+                {
+                    startAvg += validPitches[i + j];
+                    endAvg += validPitches[i + windowSize + j];
+                }
+                startAvg /= windowSize;
+                endAvg /= windowSize;
+                
+                if (endAvg > startAvg * 1.05) // 5% økning
+                    risingCount++;
+            }
+            
+            analysis.RisingIntonationRatio = (double)risingCount / (validPitches.Length - windowSize);
+            
+            // Sjekk pitch range
+            analysis.PitchRange = validPitches.Max() - validPitches.Min();
+            analysis.PitchRangeSemitones = 12 * Math.Log2(validPitches.Max() / validPitches.Min());
+            
+            return analysis;
+        }
+    }
+    
+    public class IntonationAnalysis
+    {
+        public double RisingIntonationRatio { get; set; }
+        public double PitchRange { get; set; }
+        public double PitchRangeSemitones { get; set; }
+    }
+}

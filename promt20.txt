@@ -1,0 +1,240 @@
+You are a senior clinical voice-technology architect specializing in adaptive biofeedback systems, motor learning frameworks, and WPF MVVM architecture in .NET 10. Your task is to design and implement a complete intelligent exercise system with real-time biofeedback integration and inline SmartCoach overlay for FemVoice Studio.
+
+**Existing Architecture Context**
+
+The codebase already implements:
+- ResonanceProxyEngine (real-time formant scoring)
+- FemVoiceScoreEngine (adaptive composite scoring with user-specific adaptation)
+- ComfortZoneController (dynamic pitch safety)
+- SmartCoachEngine (context-aware coaching system)
+- Event-driven architecture using direct C# events (no mediators, no polling)
+- Clean Architecture with DI and repository interfaces
+- 174 passing unit tests
+
+Current exercise system limitations: static pitch ranges, step-by-step instructions only, minimal live performance feedback, no microphone integration during exercises.
+
+**Clinical Framework**
+
+This system follows a research-based aggregate approach to voice feminization, integrating principles from multiple clinical frameworks rather than a single methodology. The system uses dynamically adapted metrics based on individual vocal characteristics rather than fixed universal targets.
+
+**Primary Objective**
+
+Transform the exercise system into clinically intelligent, real-time adaptive biofeedback modules that dynamically respond to microphone input and integrate SmartCoach inline within exercise UI (no separate SmartCoach window).
+
+**Core Architecture Requirements**
+
+Create `ExerciseIntelligenceCoordinator` service that:
+
+Subscribes to these existing engines:
+- ResonanceProxyEngine
+- FemVoiceScoreEngine
+- ComfortZoneController
+- HealthMonitoring
+- PitchAnalysisEngine
+
+Evaluates in real-time:
+- Current exercise goals against performance
+- Safety conditions from ComfortZoneController
+- Stability metrics and adaptive trends
+- User-specific thresholds (not fixed Hz limits)
+
+Publishes events:
+```csharp
+public event Action<ExerciseLiveState> ExerciseUpdated;
+public event Action<InlineCoachMessage> InlineCoachUpdated;
+```
+
+**Required Data Models**
+
+`ExerciseLiveState` must contain:
+```csharp
+public class ExerciseLiveState
+{
+    public double PrimaryMetricScore { get; init; } // 0–1
+    public double SecondaryMetricScore { get; init; } // 0–1
+    public double StabilityScore { get; init; } // 0–1
+    public bool IsInComfortZone { get; init; }
+    public bool IsHoldingCorrectly { get; init; }
+    public double HoldProgress { get; init; } // 0–1
+    public bool IsSafetyLocked { get; init; }
+    public PerformanceQuality Quality { get; init; } // enum: Poor, Improving, Good, Excellent
+    public DateTime Timestamp { get; init; }
+}
+```
+
+`InlineCoachMessage` must contain:
+```csharp
+public class InlineCoachMessage
+{
+    public string ShortMessage { get; init; } // 1 sentence, non-numeric
+    public string CoachingReason { get; init; } // internal reason code
+    public MessageSeverity Severity { get; init; } // enum: Info, Suggestion, Warning
+    public int AutoDismissSeconds { get; init; }
+}
+```
+
+`ExerciseTargetProfile` must define per-exercise configuration:
+```csharp
+public class ExerciseTargetProfile
+{
+    public bool UsesResonance { get; init; }
+    public bool UsesPitch { get; init; }
+    public bool UsesStability { get; init; }
+    public bool UsesIntensity { get; init; }
+    
+    public double? MinPitch { get; init; }
+    public double? MaxPitch { get; init; }
+    
+    public double TargetResonanceMin { get; init; }
+    public double TargetResonanceMax { get; init; }
+    
+    public double RequiredHoldSeconds { get; init; }
+    public double StabilityThreshold { get; init; } // User-adapted, not fixed Hz
+}
+```
+
+**Clinical Logic Rules with Adaptive Thresholds**
+
+Implement exercise-specific evaluation logic using dynamically adapted thresholds:
+
+**Resonance Exercises:**
+- Primary metric = ResonanceScore (evaluated against user-specific formant targets based on individual vocal tract characteristics and spectral brightness)
+- Secondary = Stability (threshold adapted per user based on control level and resonance consistency)
+- Pitch validated only if outside ComfortZone
+
+**Pitch Exercises:**
+- Primary metric = PitchScore (validated against user-adapted comfort ranges, not fixed Hz)
+- Secondary = Stability
+- Resonance monitored but not blocking
+
+**Intonation Exercises:**
+- Primary = PitchSlope tracking
+- Secondary = Range variability (adapted to user's natural vocal range)
+
+**Straw Phonation:**
+- Primary = Intensity + Stability
+- Resonance lightly weighted
+
+**Adaptive Threshold System:**
+The coordinator must integrate with FemVoiceScoreEngine's user-specific adaptation logic:
+- Resonance ranges dynamically adapted based on formant structure and spectral brightness
+- Stability thresholds adjusted based on user's demonstrated control level and vocal health metrics
+- All thresholds evolve with user progress rather than using fixed clinical targets
+
+**Safety Integration Rules**
+
+When `HealthScore < 70` OR `ComfortZoneController.IsSafetyLocked == true`:
+- Disable score accumulation
+- Display soft warning via InlineCoachMessage (Severity: Warning)
+- Freeze hold timer (HoldProgress stops incrementing)
+- Continue displaying real-time feedback but prevent progression
+
+**WPF MVVM Integration**
+
+Modify `ExerciseDetailViewModel` to:
+- Subscribe to `ExerciseIntelligenceCoordinator.ExerciseUpdated` and `InlineCoachUpdated` events
+- Bind `ExerciseLiveState` properties to UI elements using ObservableProperties
+- Display dynamic indicators:
+  - **Resonance bar** (green when within user-adapted target range, color-coded for distance from target)
+  - **Stability meter** (visual representation of consistency)
+  - **ComfortZone shield icon** (visual safety status indicator)
+  - **Hold-progress radial indicator** (0-100% completion circle)
+  - **Inline SmartCoach hint** (positioned within exercise UI, auto-dismissing based on severity)
+
+Remove static pitch-only displays where inappropriate. Pitch becomes secondary except for pitch-focused exercises. Exercise UI must dynamically show only relevant metrics per ExerciseTargetProfile.
+
+**Event Flow Architecture**
+
+Maintain strict event-driven flow:
+```
+Audio Engines
+   ↓
+ResonanceProxyEngine
+   ↓
+FemVoiceScoreEngine
+   ↓
+ComfortZoneController
+   ↓
+ExerciseIntelligenceCoordinator
+   ↓
+ExerciseDetailViewModel
+   ↓
+WPF UI
+```
+
+Requirements:
+- Direct C# events only (no polling, no DispatcherTimers, no mediator pattern)
+- Thread-safe event invocation using proper synchronization contexts
+- All engine logic remains UI-agnostic
+- Event handlers must marshal to UI thread when updating observable properties
+
+**Unit Test Requirements**
+
+Create `ExerciseIntelligenceCoordinatorTests.cs` covering:
+- Correct hold detection (HoldProgress increments when criteria met)
+- Safety lock freeze (HoldProgress pauses during safety violations, resumes when cleared)
+- Wrong resonance detection (triggers appropriate InlineCoachMessage with correct severity)
+- ComfortZone violation handling (sets IsSafetyLocked appropriately)
+- InlineCoach trigger conditions (message content and timing)
+- Plateau adaptation reflected in scoring (integrates with FemVoiceScoreEngine's adaptive logic)
+- Stability threshold validation (uses user-adapted thresholds, not fixed values)
+- Exercise-specific metric priority (correct primary/secondary assignment per profile)
+- All tests must avoid UI references and mock engine dependencies properly
+
+**Required Deliverables**
+
+1. **ExerciseIntelligenceCoordinator.cs** - Full implementation with:
+   - Constructor accepting all required engine dependencies via DI
+   - Event subscription logic to all source engines
+   - Real-time evaluation logic per exercise type
+   - Thread-safe event publishing
+   - Proper disposal pattern
+
+2. **ExerciseLiveState.cs** - Complete immutable record with all required properties
+
+3. **InlineCoachMessage.cs** - Complete immutable record with MessageSeverity enum definition
+
+4. **ExerciseTargetProfile.cs** - Complete immutable record with validation logic
+
+5. **Updated ExerciseDetailViewModel.cs** - Example showing:
+   - Event subscription in constructor/initialization
+   - ObservableProperty bindings for LiveState
+   - UI thread marshaling for event handlers
+   - Dynamic indicator visibility based on ExerciseTargetProfile
+
+6. **ExerciseIntelligenceCoordinatorTests.cs** - Complete unit test suite with:
+   - Mock setup for all engine dependencies
+   - Test fixtures for each scenario listed above
+   - AAA (Arrange-Act-Assert) pattern
+   - Proper async handling where needed
+
+7. **Clinical Reasoning Document** (200 words) explaining:
+   - How the system evaluates exercise correctness using adaptive thresholds
+   - Why different exercises prioritize different metrics
+   - How safety integration prevents vocal strain
+   - How the system adapts to individual user characteristics
+
+8. **DI Setup Integration Example** showing:
+   - Service registration in Program.cs or Startup.cs
+   - Dependency injection configuration for ExerciseIntelligenceCoordinator
+   - Singleton vs Transient vs Scoped lifetime considerations
+
+**Technical Constraints**
+
+- .NET 10 compatible
+- MVVM compliant (strict separation of concerns - no UI logic in coordinator)
+- Thread-safe (all cross-thread event invocations handled via SynchronizationContext or Dispatcher)
+- Production-ready code quality (comprehensive error handling, null checks, disposal patterns, logging integration points)
+- Consistent with existing codebase patterns (Clean Architecture, repository interfaces, direct event pattern)
+- Follow existing naming conventions and code style visible in mentioned engines
+- All public APIs must include XML documentation comments
+
+**Integration Notes**
+
+The coordinator must integrate seamlessly with existing adaptive systems:
+- Respect FemVoiceScoreEngine's user-specific scoring adaptations
+- Use ComfortZoneController's dynamic safety boundaries (not hardcoded ranges)
+- Leverage SmartCoachEngine's context-aware messaging logic
+- Coordinate with HealthMonitoring's vocal strain detection
+
+Focus on creating a system where exercises become intelligent biofeedback modules that guide users through clinically correct voice feminization practice with real-time adaptive feedback tailored to individual vocal characteristics and progress levels.

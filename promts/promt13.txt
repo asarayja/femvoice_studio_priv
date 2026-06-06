@@ -1,0 +1,281 @@
+Du er en senior C#/WPF-arkitekt med dyp ekspertise i adaptiv biofeedback-systemer, periodisert treningsplanlegging og klinisk voice feminization training. Du har omfattende erfaring med å bygge produksjonsklare helseapplikasjoner som balanserer automatisk progresjon med brukerens sikkerhet.
+
+# Teknisk kontekst
+
+Du arbeider i **.NET 10** med **MVVM-arkitektur**. Følgende komponenter er allerede implementert og tilgjengelige:
+
+- `FemVoiceScoreEngine` – scoring av stemmeparametere
+- `SmartCoachEngine` – målsetting og helsetilstandsvurdering  
+- `AudioAnalysisEngine` – sanntidsanalyse av stemme
+- `CalendarModule` – planlegging og visning
+- `BaseViewModel` – MVVM-basis
+
+Du har også tilgang til et eksisterende øvelsesbibliotek som kan refereres for øktinnhold.
+
+# Din oppgave
+
+Implementer et komplett, produksjonsklart **progresjons- og ukeplanleggingssystem** for FemVoice Studio. Systemet skal utvikle brukerens stemme trygt, stabilt og bærekraftig over 6–12+ uker, med automatisk tilpasning basert på målinger og subjektiv tilbakemelding.
+
+# Klinisk modell (ikke-forhandlingsbar progresjon)
+
+All utvikling følger denne sekvensen:
+
+1. **Resonansstabilisering** (fundament)
+2. **Pitch-utvikling** (når resonans er trygg)
+3. **Prosodi-raffinering** (naturlighet)
+4. **Utholdenhet** (konsistens over tid)
+5. **Langsiktig vedlikehold**
+
+Systemet må **eksplisitt forhindre**:
+
+- Pitch-økning uten resonansstøtte
+- Progresjon under strain eller fatigue
+- Høyintensitetsøkter flere dager på rad
+- Ukentlig belastningshopp >5% (svært konservativ tilnærming)
+- Hz-fiksering (fokus på tall fremfor teknikk)
+
+# Arkitektur og dataflyt
+
+```
+AudioAnalysisEngine → LiveMetrics
+FemVoiceScoreEngine → ScoreResult  
+SmartCoachEngine → Targets & HealthState
+ProgressionEngine → ProgressionDecision (ny)
+WeeklyPlannerEngine → CalendarSchedule (ny)
+```
+
+Alle motorer skal være:
+- Fullstendig UI-uavhengige
+- Unit-testbare med dependency injection
+- Konfigurerbare via settings
+
+# 1. ProgressionEngine (kjernelogikk)
+
+## Baseline-etablering
+
+De første **3–5 øktene** etablerer brukerens `UserProgressionProfile`:
+
+```csharp
+class UserProgressionProfile {
+    PitchRange ComfortablePitchRange;
+    double StableResonanceMedian;
+    ProsodyRange NaturalProsodyRange;
+    int HealthCapacity;
+    double FatigueTolerance;
+}
+```
+
+Dette er grunnlaget for alle fremtidige beslutninger.
+
+## Hard gates for pitch-progresjon
+
+Pitch-målsoner kan **kun** økes når **alle** følgende er oppfylt:
+
+- `ResonanceScore > 60`
+- `VoiceHealthScore > 70`  
+- `PitchStability == Stable`
+- Kriteriene er møtt i **≥3 sammenhengende økter**
+- **Ingen** strain-hendelser siste 7 dager
+
+**Brudd på ett kriterium → progresjon stoppes umiddelbart.**
+
+## ProgressionMode enum
+
+```csharp
+enum ProgressionMode {
+    PitchProgression,
+    ResonanceRefinement,
+    ProsodyExpansion,
+    Maintenance,
+    HealthRecovery
+}
+```
+
+**Kun én modus per økt.** Systemet velger automatisk basert på helsetilstand og måloppnåelse.
+
+## ProgressionDecision-struktur
+
+Output fra hver vurdering:
+
+```csharp
+class ProgressionDecision {
+    ProgressionMode Mode;
+    string Reasoning; // forklaring til brukeren
+    TargetAdjustment NextTargets;
+    bool AllowProgression;
+}
+```
+
+# 2. WeeklyPlannerEngine (periodisert ukeplan)
+
+Systemet genererer automatisk ukeplan som vises i `CalendarModule`.
+
+## Standard progresjonsuke
+
+- **3 progresjonsøkter** (høy intensitet, fokusert utvikling)
+- **1 konsolideringsøkt** (middels intensitet, befesting)
+- **1–2 lette økter** (lav intensitet, teknikk)
+- **1–2 hviledager** (ingen trening)
+
+## Recovery-uke
+
+Aktiveres automatisk ved helsefall eller strain:
+
+- **2 lette økter**
+- **2 recovery-økter** (kun resonans/avspenning)
+- **Resten hvile**
+
+## Automatisk justering midt i uke
+
+- Hvis **strain oppstår** → resten av uken skifter til recovery-modus
+- Hvis **helse forbedres stabilt** → forsiktig reaktivering av progresjon neste uke
+
+## Belastningsmodell
+
+```csharp
+WeeklyLoad = Σ(Intensity × Duration)
+```
+
+**Regler:**
+- Ukentlig belastning kan ikke øke mer enn **5% per uke** (svært konservativ tilnærming)
+- Ved `VoiceHealthScore`-fall >15% → automatisk reduksjon
+- **Aldri** høyintensitetsøkter to dager på rad
+
+# 3. TrainingLoad-struktur
+
+Hver økt må defineres med:
+
+```csharp
+class TrainingLoad {
+    TimeSpan WarmUpDuration;
+    TimeSpan MainTrainingDuration;
+    TimeSpan CoolDownDuration;
+    IntensityLevel Intensity;
+    TrainingFocus Focus; // Pitch/Resonance/Prosody/Recovery/MicroPractice
+}
+```
+
+## Obligatorisk warm-up og cool-down
+
+**Alle** økter skal:
+- **Starte** med lavintensiv resonans/humming (minimum 2–3 minutter)
+- **Avslutte** med avspenning og myk fonasjon (minimum 2 minutter)
+
+Øvelser fra det eksisterende øvelsesbiblioteket skal brukes for disse fasene.
+
+Dette er **påkrevd** for stemmehelse og skal aldri hoppes over.
+
+# 4. Mikrotrening (daglig integrasjon)
+
+Systemet støtter **mikro-økter** (1–5 minutter) som brukeren kan gjøre i dagliglivet:
+
+- Resonans-fokusert tale under korte samtaler
+- Myk prosodi under uformell kommunikasjon
+- Bevisst pustekontroll
+
+**Egenskaper:**
+- Teller **ikke** som høy belastning i `WeeklyLoad`
+- Øker teknikk-integrasjon
+- Forbedrer langtidskonsistens
+
+Brukeren logger disse frivillig. Systemet registrerer dem som bonus uten å kreve dem.
+
+# 5. Subjektiv komfort-rapportering
+
+Etter **hver** økt skal brukeren registrere:
+
+```csharp
+class SubjectiveReport {
+    int ComfortLevel; // 1–5
+    int FatigueFeeling; // 1–5
+    string OptionalNotes;
+}
+```
+
+Disse dataene **prioriteres høyere enn automatiske målinger** og inngår i:
+- `ProgressionEngine`-beslutninger
+- `WeeklyPlannerEngine`-justering  
+- Recovery-aktivering
+
+**Subjektiv helse overstyrer alltid automatisk progresjon.**
+
+# 6. Langtidshorisont
+
+`ProgressionEngine` skal modellere utvikling over **6–12+ uker** med:
+
+- **Begrensning av tempo** til realistisk terapeutisk progresjon
+- **Plateau-perioder** (3–4 uker uten pitch-økning er normalt)
+- **Vedlikeholdsperioder** (fokus på stabilitet fremfor utvikling)
+- **Midlertidig regresjon** (akseptert ved sykdom/stress)
+
+Systemet skal **aldri presse brukeren** til lineær progresjon hver uke.
+
+# 7. Milepæler og events
+
+Systemet registrerer automatisk disse prestasjoner:
+
+- ✔ Stabil resonans i 14 sammenhengende dager
+- ✔ Pitch-komfortsone utvidet med +20Hz
+- ✔ 10 økter uten strain-hendelser
+- ✔ Prosodi-range utvidet med +30%
+- ✔ 7 dager med `VoiceHealthScore > 85`
+- ✔ Første gang **alle** scores > 70 samtidig
+
+**Implementasjon:**
+- `ProgressionEngine` fyrer events når milepæler oppnås
+- UI binder til en observable collection av milepæler
+- Vis disse med positiv tilbakemelding og feiringsmoment
+
+# 8. SmartCoach ukeforklaringer
+
+For **hver** generert ukeplan må systemet kunne forklare:
+
+**"Hvorfor ser denne uken slik ut?"**
+
+Eksempler på gode forklaringer:
+
+- _"Resonansen din er stabil – vi utvider komfortsonen forsiktig med én ekstra pitch-økt."_
+- _"Belastningen reduseres for å beskytte stemmehelsen etter gårsdagens fatigue."_
+- _"Denne uken konsoliderer vi fremgangen før neste progresjonsfase."_
+
+Forklaringer skal alltid være:
+- **Støttende** (ikke kritiserende)
+- **Årsaksforklarende** (ikke bare konkluderende)
+- **Helsefokuserte** (bærekraft fremfor hastighet)
+
+# 9. Absolutte systemrestriksjoner
+
+Systemet skal **aldri**:
+
+- ❌ Øke pitch uten dokumentert resonansstøtte
+- ❌ Ignorere subjektiv fatigue-rapportering
+- ❌ Tillate lineær pitch-eskalering uke etter uke
+- ❌ Fjerne hviledager for å "holde tempo"
+- ❌ Prioritere tall (Hz) fremfor teknikk og helse
+
+**Brukerens langsiktige stemmehelse er viktigere enn rask progresjon.**
+
+# Implementeringskrav
+
+1. **Opprett alle klasser, enums og interfaces** som trengs
+2. **Implementer `ProgressionEngine`** med baseline-etablering og hard gates
+3. **Implementer `WeeklyPlannerEngine`** med periodisering og automatisk justering
+4. **Implementer event-basert milepælsystem** som UI kan binde til
+5. **Integrer** med eksisterende `FemVoiceScoreEngine`, `SmartCoachEngine`, `AudioAnalysisEngine`, `CalendarModule`
+6. **Lag unit-testbare metoder** med dependency injection
+7. **Inkluder XML-dokumentasjon** på alle offentlige metoder
+8. **Bruk MVVM-pattern** konsekvent med `BaseViewModel`
+9. **Sørg for at alt er konfigurerbart** via settings (5% belastningsøkning, gate-thresholds, etc.)
+
+# Leveranse
+
+Produser komplett, produksjonsklar C#-kode for hele systemet som kan integreres direkte i FemVoice Studio. Inkluder:
+
+- Alle engine-klasser
+- Datastrukturer og enums
+- Event-system for milepæler
+- Integrasjonspunkter med eksisterende komponenter
+- Kommentarer som forklarer kritiske beslutningspunkter
+- Eksempelbruk av systemet
+
+Koden skal være klar til å kompilere i .NET 10 med moderne C#-syntax.

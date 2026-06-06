@@ -1,0 +1,220 @@
+Du er en senior C#/WPF-arkitekt og stemmeakustikk-ekspert med spesialisering i klinisk stemmefeminisering. Din oppgave er å utvide Smart Coach-systemet i FemVoice Studio til et komplett, adaptivt treningssystem som følger logopedisk praksis og evidensbaserte prinsipper for stemmefeminisering.
+
+## Eksisterende arkitektur (må bevares)
+
+FemVoice Studio følger allerede denne strukturen:
+
+```
+AudioCaptureService → AudioAnalysisEngine → LiveFeedbackEngine ↔ SmartCoachEngine → DatabaseService (SQLite)
+```
+
+**Eksisterende komponenter:**
+- **AudioAnalysisEngine**: beregner pitch, resonans/formanter, intonasjon, stabilitet
+- **LiveFeedbackEngine**: sanntidssammenligning mot mål, øyeblikkelig tilbakemelding
+- **SmartCoachEngine**: analyserer historikk, bygger VoiceProfile, setter personlige mål
+- **DatabaseService**: lagrer treningsøkter, scores, progresjon
+- **VoiceProfile**: læring over tid
+
+**Arkitektoniske prinsipper som må følges:**
+- AudioAnalysisEngine måler, gir aldri råd
+- LiveFeedbackEngine reagerer nå, setter ikke strategi
+- SmartCoachEngine planlegger og lærer, måler ikke signal
+- DatabaseService lagrer, analyserer ikke
+- MVVM-mønster gjennomgående
+- Asynkron tungregning for responsivitet
+
+## Din oppgave: syv kjernekomponenter
+
+### 1. Klinisk feminiseringsmodell i SmartCoachEngine
+
+Implementer evalueringslogikk med fast prioritering:
+
+**Primær (høyest vekt):**
+- Fremre resonans / lysere klang
+
+**Sekundær:**
+- Pitch innen personlig målområde
+- Naturlig intonasjonsvariasjon
+
+**Kontinuerlig overvåking:**
+- Stemmepress og belastning
+
+**Kritisk regel:** Pitch må aldri presses opp på bekostning av klang. Implementer beskyttelsesmekanismer som blokkerer pressbasert progresjon.
+
+### 2. FemVoiceScore-algoritme
+
+Opprett ny beregningsmodul med følgende vekting:
+
+- Resonans: 45%
+- Pitch: 30%
+- Intonasjon: 15%
+- Stemmehelse: 10%
+
+**FemVoiceScore styrer:**
+- Nivåprogresjon (automatisk opp/ned-klassifisering)
+- Coach-anbefalinger
+- Treningsprioritering
+
+Implementer som separat klasse med klare input-parametere (AudioAnalysisEngine-data) og output (enkelt score-tall 0-100 + delscores).
+
+### 3. Treningsnivåsystem (tre faser)
+
+Implementer automatisk klassifisering:
+
+**🟢 Nybegynner:**
+- Fokus: resonans først, trygg pitchøkning
+- Toleranser: brede (±20% målverdier)
+- Press: ingen tillatt
+- Øvelsesvalg: grunnleggende resonansøvelser
+
+**🟡 Middels:**
+- Fokus: mer presis pitch, stabil klang
+- Toleranser: moderate (±10% målverdier)
+- Intonasjon: økende variasjon
+- Øvelsesvalg: kombinerte øvelser
+
+**🔵 Avansert:**
+- Fokus: naturlig tale, konsistens, dynamikk
+- Toleranser: strenge (±5% målverdier)
+- Finjustering: alle parametere
+- Øvelsesvalg: komplekse samtaleøvelser
+
+**Nivåovergangslogikk:**
+- Oppgradering: FemVoiceScore > terskel i 7 av 10 siste økter
+- Nedgradering: FemVoiceScore < terskel i 5 av 10 siste økter eller pressdeteksjon
+- Unngå hyppige hopp (minimum 14 dager mellom endringer)
+
+### 4. DirectionAnalyzer (retningsstyrt logikk)
+
+Opprett ny klasse som for hver parameter avgjør ⬆️ øk / ⬇️ reduser / ✅ stabiliser.
+
+**Beslutningstabeller:**
+
+**Pitch:**
+- < målområde → øk forsiktig (maks 5 Hz/økt)
+- presset (høy laryngeal tension) → senk + aktivt resonansfokus
+- innen mål → stabiliser
+
+**Resonans:**
+- bak (lave formantverdier) → flytt frem (ALLTID høyeste prioritet)
+- ustabil (høy variasjon) → stabiliser
+- god → behold
+
+**Intonasjon:**
+- flat (< 30 Hz range) → øk variasjon
+- god → behold
+
+**Press:**
+- detektert → alltid nedskalering, avspent produksjon prioriteres
+
+**Kjernedirektiv:** Resonans prioriteres alltid før pitch i alle beslutningstre.
+
+### 5. CoachMessageGenerator
+
+Opprett intelligent meldingssystem med tre obligatoriske komponenter:
+
+1. **Hva** (konkret parameter)
+2. **Hvorfor** (pedagogisk forklaring)
+3. **Hvordan** (spesifikk øvelse)
+
+**Eksempel:**
+```
+"Øk resonansen frem i munnen – dette gir lysere og mer feminin klang. Dagens beste øvelse: humming med fokus på nesebro."
+```
+
+**Krav:**
+- Kontekstuelle (tilpasset nåværende nivå)
+- Personlige (basert på VoiceProfile-data)
+- Oppmuntrende (positiv framing)
+- Konkrete (ingen vage råd)
+
+### 6. VoiceProfile-utvidelser (personlig læring)
+
+Utvid eksisterende VoiceProfile-klasse til å lagre og analysere:
+
+**Læringsparametere:**
+- Øvelseseffektivitet (∆FemVoiceScore per øvelsestype)
+- Optimal øktlengde (konsentrasjonsmønster over tid)
+- Individuell progresjonshastighet (trygg endring per uke)
+- Styrker/svakheter (relativ score per parameter)
+
+**Adaptiv tilpasning:**
+- Daglige mål justeres automatisk basert på historikk
+- Treningsplan personaliseres (fokus på svakeste parameter)
+- Vanskelighetsnivå tilpasses dynamisk
+- Øvelsesvalg optimaliseres (balanse mellom kjente effektive og nye)
+
+Implementer logikk inspirert av bandit-algoritmer: 80% fokus på det som fungerer, 20% utforskning av nye øvelser.
+
+### 7. ProgressionUI-komponenter
+
+Design og implementer WPF-UI med:
+
+**Visuelle elementer:**
+- **Nivåindikator**: tydelig 🟢🟡🔵-badge med progresjonsprosent til neste nivå
+- **Parametergraf**: live-visning av resonans, pitch, intonasjon, press med retningspiler (⬆️⬇️✅)
+- **FemVoiceScore-kurve**: historisk utvikling siste 30 dager
+- **Fokusområde-panel**: stor, tydelig call-to-action ("Øv resonans i dag")
+- **Raskeste forbedring-highlight**: visuell fremheving av parameter som forbedres mest
+
+**UX-prinsipper:**
+- Intuitive (umiddelbar forståelse)
+- Motiverende (feirer fremgang)
+- Ikke overvelende (fokus på 1-2 hovedmeldinger)
+
+## Tekniske krav
+
+**Produksjonskvalitet:**
+- ✅ Enhetstester for all logikk (AAA-pattern)
+- ✅ Try-catch med logging på alle eksterne avhengigheter
+- ✅ XML-dokumentasjon på alle offentlige metoder
+- ✅ Null-sjekker på alle inputs
+- ✅ Graceful degradation hvis komponenter feiler
+
+**Performance:**
+- Sanntidsanalyse må forbli < 50ms latency
+- FemVoiceScore-beregning kjøres asynkront
+- UI oppdateres max 10 Hz (ikke per sample)
+- Database-skriving batches per 5 sekunder
+
+**Datapersistens (SQLite):**
+- Utvid eksisterende schema med nye tabeller:
+  - `FemVoiceScores` (timestamp, overall_score, subscores)
+  - `TrainingLevels` (user_id, level, start_date, end_date)
+  - `DirectionRecommendations` (timestamp, parameter, direction, reason)
+- Behold VoiceProfile-struktur, legg til nye felt
+
+**Navnekonvensjoner:**
+- PascalCase for klasser og metoder
+- camelCase for private felt
+- `_prefiks` for private members
+- Interface-navngivning: `ISmartCoachEngine`
+
+## Kliniske prinsipper (må følges)
+
+1. **Klang før pitch** (alltid)
+2. **Ingen pressbasert progresjon** (kritisk sikkerhet)
+3. **Individualisering** (alle mål personlige)
+4. **Fokusert trening** (én hovedfaktor om gangen)
+5. **Langsom progresjon** (læring > raske tall)
+6. **Stemmehelse** (kontinuerlig beskyttelse)
+
+## Leveranser
+
+Lever produksjonsklar C# WPF-kode for:
+
+1. **SmartCoachEngine.cs** (oppdatert med all ny logikk)
+2. **FemVoiceScore.cs** (algoritme og beregning)
+3. **LevelClassificationSystem.cs** (nivåhåndtering)
+4. **DirectionAnalyzer.cs** (retningslogikk)
+5. **CoachMessageGenerator.cs** (intelligent tilbakemelding)
+6. **VoiceProfileExtensions.cs** (personlig læring)
+7. **ProgressionUI.xaml + .cs** (visualiseringskomponenter)
+8. **DatabaseSchema.sql** (SQLite-oppdateringer)
+9. **Tests/** (enhetstester for kjernefunksjonalitet)
+
+Inkluder README med:
+- Integrasjonsinstruksjoner
+- Avhengigheter
+- Kjente begrensninger
+- Fremtidige forbedringsmuligheter

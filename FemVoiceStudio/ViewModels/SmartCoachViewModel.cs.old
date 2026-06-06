@@ -1,0 +1,358 @@
+using System;
+using System.Collections.ObjectModel;
+using System.Linq;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using FemVoiceStudio.Data;
+using FemVoiceStudio.Models;
+using FemVoiceStudio.Services;
+using FemVoiceStudio.Services.Progression;
+
+namespace FemVoiceStudio.ViewModels
+{
+    /// <summary>
+    /// ViewModel for Smart Coach-dashboardsider
+    /// Håndterer daglig melding, økt-planer og brukerinteraksjon
+    /// </summary>
+    public partial class SmartCoachViewModel : ObservableObject
+    {
+        private readonly DatabaseService _database;
+        private readonly SmartCoachEngine _engine;
+        
+        [ObservableProperty]
+        private string _todayFocus = "";
+        
+        [ObservableProperty]
+        private string _todayRecommendation = "";
+        
+        [ObservableProperty]
+        private string _focusArea = "";
+        
+        [ObservableProperty]
+        private int _recommendedDuration = 5;
+        
+        [ObservableProperty]
+        private bool _hasHealthWarning;
+        
+        [ObservableProperty]
+        private string _healthWarningText = "";
+        
+        [ObservableProperty]
+        private bool _isRecommendationCompleted;
+        
+        [ObservableProperty]
+        private int _currentStreak;
+        
+        [ObservableProperty]
+        private int _sessionsThisWeek;
+        
+        [ObservableProperty]
+        private int _minutesThisWeek;
+        
+        [ObservableProperty]
+        private double _healthScore = 100;
+        
+        [ObservableProperty]
+        private string _statusSummary = "";
+        
+        [ObservableProperty]
+        private double _pitchProgress;
+        
+        [ObservableProperty]
+        private double _resonanceProgress;
+        
+        [ObservableProperty]
+        private double _intonationProgress;
+        
+        // ============================
+        // Complexity Properties
+        // ============================
+        
+        [ObservableProperty]
+        private SpeechComplexityLevel _currentComplexityLevel;
+        
+        [ObservableProperty]
+        private string _currentComplexityLevelDisplay = "";
+        
+        [ObservableProperty]
+        private int _sessionsAtCurrentComplexity;
+        
+        [ObservableProperty]
+        private bool _isComplexityReadyForNext;
+        
+        [ObservableProperty]
+        private string _complexityFeedback = "";
+        
+        [ObservableProperty]
+        private List<ComplexityLevelStep> _complexityProgressionSteps = new();
+        
+        [ObservableProperty]
+        private string _baselineConfidence = "";
+        
+        [ObservableProperty]
+        private bool _isLoading = true;
+        
+        [ObservableProperty]
+        private bool _hasData;
+        
+        [ObservableProperty]
+        private int _unreadMessageCount;
+        
+        public ObservableCollection<SmartCoachGoal> ActiveGoals { get; } = new();
+        public ObservableCollection<SmartCoachMessage> RecentMessages { get; } = new();
+        public ObservableCollection<WeeklyProgressItem> WeeklyProgressList { get; } = new();
+        
+        public SmartCoachViewModel()
+        {
+            try
+            {
+                _database = new DatabaseService();
+                _engine = new SmartCoachEngine(_database as IDatabaseService);
+                
+                LoadData();
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't crash
+                System.Diagnostics.Debug.WriteLine($"SmartCoachViewModel Error: {ex.Message}");
+                _database = null!;
+                _engine = null!;
+                IsLoading = false;
+                HasData = false;
+            }
+        }
+        
+        /// <summary>
+        /// Laster alle nødvendige data
+        /// </summary>
+        public void LoadData()
+        {
+            try
+            {
+                IsLoading = true;
+                
+                // Generer/få daglig anbefaling
+                var recommendation = _engine.GenerateDailyRecommendation(1);
+                TodayFocus = GetFocusAreaDisplay(recommendation.FocusArea);
+                TodayRecommendation = recommendation.RecommendationText;
+                FocusArea = recommendation.FocusArea;
+                RecommendedDuration = recommendation.RecommendedDurationMinutes;
+                HasHealthWarning = recommendation.HealthWarning;
+                HealthWarningText = recommendation.HealthWarningText ?? "";
+                IsRecommendationCompleted = recommendation.IsCompleted;
+                
+                // Hent baseline og mål
+                var baseline = _engine.GetOrCalculateBaseline(1);
+                if (baseline != null)
+                {
+                    HasData = baseline.ConfidenceLevel != "low";
+                    BaselineConfidence = baseline.ConfidenceLevel switch
+                    {
+                        "high" => "Høy",
+                        "medium" => "Medium",
+                        _ => "Lav"
+                    };
+                    
+                    // Beregn progresjon (mot mål)
+                    var goals = _database.GetSmartCoachGoals(1, true);
+                    ActiveGoals.Clear();
+                    foreach (var goal in goals.Take(3))
+                    {
+                        ActiveGoals.Add(goal);
+                        
+                        // Oppdater progresjon
+                        var progress = (goal.CurrentValue / goal.TargetValue) * 100;
+                        switch (goal.GoalType)
+                        {
+                            case "pitch":
+                                PitchProgress = Math.Min(100, progress);
+                                break;
+                            case "resonance":
+                                ResonanceProgress = Math.Min(100, progress);
+                                break;
+                            case "intonation":
+                                IntonationProgress = Math.Min(100, progress);
+                                break;
+                        }
+                    }
+                }
+                
+                // Hent ukentlig progresjon
+                var thisWeekStart = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
+                var weeklyProgress = _engine.CalculateWeeklyProgress(thisWeekStart, 1);
+                SessionsThisWeek = weeklyProgress.SessionsCount;
+                MinutesThisWeek = weeklyProgress.TotalMinutes;
+                HealthScore = weeklyProgress.HealthScore;
+                
+                // Hent historisk ukesprogresjon
+                WeeklyProgressList.Clear();
+                var recentWeeks = _database.GetRecentWeeklyProgress(4, 1);
+                foreach (var week in recentWeeks.OrderBy(w => w.WeekStart))
+                {
+                    WeeklyProgressList.Add(new WeeklyProgressItem
+                    {
+                        WeekLabel = GetWeekLabel(week.WeekStart),
+                        Sessions = week.SessionsCount,
+                        Minutes = week.TotalMinutes,
+                        AverageScore = week.AverageScore,
+                        PitchChange = week.PitchChange,
+                        ResonanceChange = week.ResonanceChange
+                    });
+                }
+                
+                // Hent brukerstatistikk
+                var userProgress = _database.GetUserProgress();
+                CurrentStreak = userProgress.CurrentStreak;
+                
+                // ============================
+                // Complexity Data
+                // ============================
+                LoadComplexityData();
+                
+                // Hent uleste meldinger
+                var messages = _database.GetUnreadMessages(1);
+                RecentMessages.Clear();
+                foreach (var msg in messages.Take(5))
+                {
+                    RecentMessages.Add(msg);
+                }
+                UnreadMessageCount = messages.Count;
+                
+                // Status summary
+                StatusSummary = _engine.GetStatusSummary(1);
+                
+            }
+            catch (Exception ex)
+            {
+                StatusSummary = $"Feil ved lasting: {ex.Message}";
+                HasData = false;
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+        
+        /// <summary>
+        /// Fullfører dagens anbefaling
+        /// </summary>
+        [RelayCommand]
+        private void CompleteRecommendation()
+        {
+            try
+            {
+                var recommendation = _database.GetDailyRecommendation(DateTime.Today, 1);
+                if (recommendation != null)
+                {
+                    recommendation.IsCompleted = true;
+                    recommendation.CompletedAt = DateTime.Now;
+                    _database.SaveDailyRecommendation(recommendation);
+                    IsRecommendationCompleted = true;
+                }
+            }
+            catch
+            {
+                // Ignorer feil
+            }
+        }
+        
+        /// <summary>
+        /// Markerer en melding som lest
+        /// </summary>
+        [RelayCommand]
+        private void MarkMessageAsRead(int messageId)
+        {
+            try
+            {
+                _database.MarkMessageAsRead(messageId);
+                UnreadMessageCount = _database.GetUnreadMessageCount(1);
+                
+                // Fjern fra listen
+                var message = RecentMessages.FirstOrDefault(m => m.Id == messageId);
+                if (message != null)
+                {
+                    RecentMessages.Remove(message);
+                }
+            }
+            catch
+            {
+                // Ignorer feil
+            }
+        }
+        
+        /// <summary>
+        /// Refresher alle data
+        /// </summary>
+        [RelayCommand]
+        private void Refresh()
+        {
+            LoadData();
+        }
+        
+        private static string GetFocusAreaDisplay(string focusArea)
+        {
+            return focusArea switch
+            {
+                "resonance" => "Resonans",
+                "pitch" => "Pitch",
+                "intonation" => "Intonasjon",
+                "breathing" => "Pust",
+                "recovery" => "Restitusjon",
+                "balanced" => "Balansert",
+                _ => "Generell trening"
+            };
+        }
+        
+        private static string GetWeekLabel(DateTime weekStart)
+        {
+            var weekNum = GetWeekNumber(weekStart);
+            return $"Uke {weekNum}";
+        }
+        
+        private static int GetWeekNumber(DateTime date)
+        {
+            var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+            return cal.GetWeekOfYear(date, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday);
+        }
+        
+        /// <summary>
+        /// Loads complexity progression data.
+        /// </summary>
+        private void LoadComplexityData()
+        {
+            try
+            {
+                var complexityEngine = new ComplexityEngine(_database);
+                var evaluation = complexityEngine.EvaluateCurrentLevel(1);
+                
+                CurrentComplexityLevel = evaluation.CurrentLevel;
+                CurrentComplexityLevelDisplay = ComplexityLevelStep.GetDisplayName(evaluation.CurrentLevel);
+                SessionsAtCurrentComplexity = evaluation.SessionsAtCurrentLevel;
+                IsComplexityReadyForNext = evaluation.IsReadyForNext;
+                ComplexityFeedback = complexityEngine.GenerateComplexityFeedback(evaluation);
+                ComplexityProgressionSteps = complexityEngine.GetProgressionSteps(1);
+            }
+            catch
+            {
+                // Fallback values
+                CurrentComplexityLevel = SpeechComplexityLevel.IsolatedSounds;
+                CurrentComplexityLevelDisplay = "Isolerte lyder";
+                SessionsAtCurrentComplexity = 0;
+                IsComplexityReadyForNext = false;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Helper class for weekly progress display
+    /// </summary>
+    public class WeeklyProgressItem
+    {
+        public string WeekLabel { get; set; } = "";
+        public int Sessions { get; set; }
+        public int Minutes { get; set; }
+        public double AverageScore { get; set; }
+        public double PitchChange { get; set; }
+        public double ResonanceChange { get; set; }
+    }
+}

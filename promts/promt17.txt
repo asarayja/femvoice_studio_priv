@@ -1,0 +1,151 @@
+You are a senior C# engineer with deep expertise in real-time audio signal processing in .NET, NAudio 2.x, FFT-based pitch detection optimized for vocal analysis, and production audio application development. Your task is to generate a complete, production-ready AudioAnalysisEngine class with two switchable pitch detection implementations for a WPF + MVVM realtime biofeedback system targeting female vocal pitch (150-500 Hz fundamental).
+
+**Technical Context:**
+This engine streams detected pitch continuously via events to a MainViewModel with thread-safe UI dispatch. The system processes live vocal input with low latency (<50ms target). Audio capture uses WasapiCapture with WaveInEvent fallback. All processing must run on background threads with proper synchronization. Default sample rate is 48,000 Hz (configurable). Training range is 80-400 Hz with optional extension to 1000 Hz.
+
+**Core Architecture Requirements:**
+
+Thread Model:
+- Audio capture and FFT processing on background threads
+- Event handlers marshal to UI thread safely using dispatcher pattern
+- No blocking calls to UI thread from audio processing
+
+Event Interface:
+```csharp
+public event Action<double> PitchUpdated;
+public event Action<double> ConfidenceUpdated;
+public event Action<double> RawPitchUpdated; // HighPrecision only
+```
+
+Configuration Parameters (constructor or properties):
+- Sample rate (default: 48000 Hz, configurable to 16000 Hz for voice-optimized)
+- Buffer size / FFT window size (default: 2048 samples)
+- Window overlap percentage
+- Smoothing factor for jitter reduction
+- Confidence threshold for rejecting low-quality frames
+- Vocal frequency range bounds (default: 80-400 Hz, extendable to 80-1000 Hz)
+
+**Implementation A: SimpleFirst Mode**
+
+FFT Pipeline optimized for 150-500 Hz female vocal fundamental:
+1. Apply Hann or Hamming window function to each audio frame before FFT to reduce spectral leakage
+2. Perform FFT on overlapped real input frames using NAudio's FFT implementation
+3. Find the largest magnitude bin in the configurable vocal frequency range (default: 80-400 Hz)
+4. Convert FFT bin index to frequency: `frequency = (binIndex * sampleRate) / fftSize`
+
+Confidence Scoring:
+- Calculate ratio of peak magnitude to total spectral energy in the vocal frequency band
+- Emit pitch only when both peak amplitude and confidence exceed configurable thresholds
+- Include inline comments explaining why this ratio effectively distinguishes voiced vs noisy frames
+
+Smoothing:
+- Implement exponential moving average or 3-point median filter to reduce frame-to-frame jitter
+- Apply smoothing before raising PitchUpdated event
+- Comment on parameter tuning recommendations (e.g., smoothing factor 0.3-0.5 for responsiveness vs stability)
+
+**Implementation B: HighPrecision Mode**
+
+Enhanced FFT Pipeline for sub-bin frequency resolution:
+1. Same windowing and FFT as SimpleFirst
+2. Locate the highest magnitude peak in configurable vocal frequency range
+3. Perform parabolic interpolation using the peak and its two nearest neighbors:
+   - Use formula: `refinedBin = peakBin + 0.5 * (left - right) / (2*peak - left - right)`
+   - Convert refined bin to frequency for sub-bin accuracy
+   - Include inline comment explaining how parabolic interpolation achieves finer frequency resolution than FFT bin spacing alone
+
+Advanced Confidence Scoring:
+- Signal-to-Noise Ratio: Compare peak magnitude to median magnitude of surrounding bins
+- Harmonic Content Evaluation: Calculate ratio of fundamental frequency energy to total spectral energy
+- Combine multiple confidence metrics into single score (0.0 to 1.0)
+- Include comments on threshold recommendations based on vocal analysis testing
+
+Adaptive Processing:
+- Use 75% buffer overlap for reduced latency while maintaining frequency resolution
+- Emit both raw detected pitch and smoothed pitch values
+- Include comment explaining overlap-latency tradeoff
+
+Dual Smoothing Filters:
+- Short-term exponential smoothing (alpha ~0.4) for display responsiveness
+- Optional longer-term median filter (window size 5-7 frames) for stable pitch tracking
+- Comment on when to use each filter type
+
+**Class Structure:**
+
+```csharp
+public class AudioAnalysisEngine : IDisposable
+{
+    public enum DetectionMode { SimpleFirst, HighPrecision }
+    
+    // Configuration
+    public DetectionMode Mode { get; set; }
+    public int SampleRate { get; set; } // Default: 48000 Hz
+    public int FftSize { get; set; } // Default: 2048
+    public double ConfidenceThreshold { get; set; }
+    public int MinFrequencyHz { get; set; } // Default: 80 Hz
+    public int MaxFrequencyHz { get; set; } // Default: 400 Hz
+    
+    // Events
+    public event Action<double> PitchUpdated;
+    public event Action<double> ConfidenceUpdated;
+    public event Action<double> RawPitchUpdated; // HighPrecision only
+    
+    // Methods
+    public void StartCapture();
+    public void StopCapture();
+    public void Dispose();
+}
+```
+
+**Required Deliverables:**
+
+1. **AudioAnalysisEngine.cs** - Complete implementation with:
+   - Both SimpleFirst and HighPrecision modes in a single class with mode selection
+   - NAudio 2.x integration (WasapiCapture with WaveInEvent fallback)
+   - Proper resource cleanup in Dispose()
+   - Clear method and variable naming
+   - Named constants instead of magic numbers
+
+2. **MainViewModel Usage Example** - Demonstrate:
+   ```csharp
+   // Constructor setup with female vocal optimization
+   _audioEngine = new AudioAnalysisEngine(DetectionMode.HighPrecision)
+   {
+       SampleRate = 48000,
+       MinFrequencyHz = 150,
+       MaxFrequencyHz = 500
+   };
+   _audioEngine.PitchUpdated += OnPitchUpdated;
+   _audioEngine.ConfidenceUpdated += OnConfidenceUpdated;
+   
+   // Event handler with dispatcher marshalling
+   private void OnPitchUpdated(double pitch)
+   {
+       Application.Current.Dispatcher.Invoke(() => 
+       {
+           CurrentPitch = pitch;
+       });
+   }
+   ```
+
+3. **Inline Code Comments** explaining:
+   - Why Hann/Hamming windowing reduces spectral leakage and improves frequency accuracy
+   - How parabolic interpolation achieves sub-bin frequency resolution and why this matters for vocal pitch detection
+   - Smoothing algorithm choice and parameter tuning (specific alpha values, window sizes)
+   - Confidence scoring rationale and recommended threshold values for different use cases
+   - Female vocal frequency optimization considerations
+
+4. **Summary Document** (as code comments at top of class or separate markdown):
+   - Why HighPrecision improves accuracy (sub-bin resolution via parabolic interpolation, better noise rejection via SNR and harmonic analysis)
+   - Performance tradeoffs: SimpleFirst = lower CPU (single-pass peak detection), HighPrecision = better accuracy (interpolation + dual filtering) but ~20-30% higher CPU
+   - When to use each mode: SimpleFirst for prototyping/testing/low-end hardware, HighPrecision for production vocal analysis and biofeedback applications
+   - Expected latency ranges for each mode with 48kHz/2048-sample configuration
+   - Female vocal range optimization benefits (150-500 Hz focus reduces false positives from environmental noise)
+
+**Code Quality Expectations:**
+- Production-ready error handling (device initialization failures, buffer underruns, audio device disconnection)
+- Proper thread synchronization (lock statements protecting shared state)
+- Memory-efficient buffer management (reuse FFT arrays, avoid per-frame allocations)
+- Clear separation of concerns (audio capture layer, FFT processing layer, smoothing layer, event dispatch layer)
+- No hardcoded magic numbers - use named constants with explanatory names
+
+Produce the complete implementation with all files, ensuring the code is copy-paste ready for immediate integration into a WPF project targeting NAudio 2.x and .NET 6+.

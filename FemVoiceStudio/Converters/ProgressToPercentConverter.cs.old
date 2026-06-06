@@ -1,0 +1,27 @@
+using System;
+using System.Globalization;
+using System.Windows.Data;
+
+namespace FemVoiceStudio.Converters
+{
+    /// <summary>
+    /// Konverterer en double-verdi (0–1) til en prosentstreng, f.eks. "42%".
+    /// Verdier utenfor 0–1 klippes til det nærmeste gyldige intervallet.
+    /// Brukes av Hold Progress-indikatoren i Live Feedback-panelet.
+    /// </summary>
+    [ValueConversion(typeof(double), typeof(string))]
+    public class ProgressToPercentConverter : IValueConverter
+    {
+        /// <inheritdoc/>
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is not double d) return "0%";
+            var clamped = Math.Clamp(d, 0.0, 1.0);
+            return $"{(int)Math.Round(clamped * 100)}%";
+        }
+
+        /// <inheritdoc/>
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotSupportedException("ProgressToPercentConverter støtter ikke ConvertBack.");
+    }
+}

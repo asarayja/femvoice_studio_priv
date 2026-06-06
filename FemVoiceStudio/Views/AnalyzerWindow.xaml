@@ -1,0 +1,262 @@
+<Window x:Class="FemVoiceStudio.Views.AnalyzerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:FemVoiceStudio.Converters"
+        Title="{loc:Loc Analyzer_Title}"
+        Height="700" Width="1000"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BackgroundSecondaryBrush}">
+    
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="{loc:Loc Analyzer_Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+            <TextBlock Text="{loc:Loc Analyzer_Subtitle}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
+        </StackPanel>
+        
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="300"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- Spectrogram -->
+            <Border Grid.Column="0" Background="Black" CornerRadius="8" Margin="0,0,16,0">
+                <Canvas x:Name="SpectrogramCanvas" Width="800" Height="400"/>
+            </Border>
+            
+            <!-- Controls Panel -->
+            <StackPanel Grid.Column="1">
+                <!-- Main Frequency Display -->
+                <Border Background="{DynamicResource BackgroundCardBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Analyzer_MainFrequency}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock x:Name="MainFrequencyText" Text="-- Hz" FontSize="32" FontWeight="Bold" Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Target Frequency -->
+                <Border Background="{DynamicResource BackgroundCardBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Analyzer_TargetFrequency}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock x:Name="TargetFrequencyText" Text="180 Hz" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource WarningBrush}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Resonance focus: formant-based, not a pitch target -->
+                <Border Background="{DynamicResource BackgroundCardBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Analyzer_ResonanceFocus}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock x:Name="ResonanceScoreText" Text="--" FontSize="28" FontWeight="Bold"
+                                   Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                        <TextBlock x:Name="ResonanceFocusText" Text="--" FontSize="13"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Clinical loop score: combines live pitch trace with resonance/spectrogram state -->
+                <Border Background="{DynamicResource BackgroundCardBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Dashboard_Score}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock x:Name="ClinicalScoreText" Text="--" FontSize="28" FontWeight="Bold"
+                                   Foreground="{DynamicResource SuccessBrush}"/>
+                        <TextBlock x:Name="ClinicalScoreStatusText" Text="{loc:Loc LiveFeedback_Listening}" FontSize="13"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+                 
+                <!-- Record Button -->
+                <Button x:Name="RecordButton" Content="{loc:Loc UI_StartRecording}" 
+                        Click="RecordButton_Click"
+                        Background="{DynamicResource AccentPrimaryBrush}" Foreground="{DynamicResource TextOnAccentBrush}"
+                        FontSize="14" FontWeight="SemiBold"
+                        Padding="20,12" Margin="0,0,0,16"
+                        HorizontalAlignment="Stretch"/>
+                
+                <!-- Debug Info -->
+                <Border x:Name="AnalyzerDebugPanel" Background="#333333" CornerRadius="4" Padding="8,4" Margin="0,0,0,16"
+                        Visibility="Collapsed">
+                    <TextBlock x:Name="AnalyzerDebugText" FontSize="11" FontFamily="Consolas" Foreground="#00FF00" TextWrapping="Wrap"/>
+                </Border>
+            </StackPanel>
+        </Grid>
+        
+        <!-- Note Selector -->
+        <Border Grid.Row="2" Background="{DynamicResource BackgroundCardBrush}" CornerRadius="8" Padding="16" Margin="0,16,0,16">
+            <StackPanel>
+                <TextBlock Text="{loc:Loc Analyzer_SelectTargetFrequency}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <StackPanel x:Name="NotesPanel"/>
+                </ScrollViewer>
+            </StackPanel>
+        </Border>
+        
+        <!-- Statistics Panel -->
+        <Border Grid.Row="3" x:Name="StatsPanel" Background="{DynamicResource BackgroundCardBrush}" CornerRadius="8" Padding="16" 
+                Visibility="Collapsed">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Basic Stats -->
+                <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                    <TextBlock Text="{loc:Loc Analyzer_BasicStats}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    
+                    <Grid Margin="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{loc:Loc Analyzer_Average}" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock x:Name="AveragePitchText" Grid.Column="1" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    </Grid>
+                    
+                    <Grid Margin="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{loc:Loc Analyzer_Minimum}" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock x:Name="MinPitchText" Grid.Column="1" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    </Grid>
+                    
+                    <Grid Margin="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{loc:Loc Analyzer_Maximum}" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock x:Name="MaxPitchText" Grid.Column="1" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    </Grid>
+                    
+                    <Grid Margin="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{loc:Loc Analyzer_Duration}" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock x:Name="DurationText" Grid.Column="1" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    </Grid>
+                </StackPanel>
+                
+                <!-- Quantiles -->
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="{loc:Loc Analyzer_Quantiles}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="50"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <TextBlock Grid.Column="0" Text="5%" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock Grid.Column="1" Text="10%" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock Grid.Column="2" Text="20%" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock Grid.Column="3" Text="50%" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock Grid.Column="4" Text="80%" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock Grid.Column="5" Text="90%" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock Grid.Column="6" Text="95%" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    </Grid>
+                    
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="50"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <TextBlock x:Name="Quantile5Text" Grid.Column="0" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock x:Name="Quantile10Text" Grid.Column="1" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock x:Name="Quantile20Text" Grid.Column="2" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock x:Name="Quantile50Text" Grid.Column="3" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock x:Name="Quantile80Text" Grid.Column="4" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock x:Name="Quantile90Text" Grid.Column="5" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock x:Name="Quantile95Text" Grid.Column="6" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    </Grid>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- Gender Distribution Panel -->
+        <Border Grid.Row="3" Background="{DynamicResource BackgroundCardBrush}" CornerRadius="8" Padding="16" Margin="0,200,0,0"
+                Visibility="Collapsed" x:Name="GenderPanel">
+            <StackPanel>
+                <TextBlock Text="{loc:Loc Analyzer_RangeDistribution}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                
+                <Grid Margin="0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="60"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{loc:Loc Analyzer_RangeVeryLow}" Foreground="#802020"/>
+                    <Border x:Name="InfraMascBar" Grid.Column="1" Height="16" Background="#802020" HorizontalAlignment="Left" Width="0"/>
+                    <TextBlock x:Name="InfraMascText" Grid.Column="2" HorizontalAlignment="Right" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                </Grid>
+                
+                <Grid Margin="0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="60"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{loc:Loc Analyzer_RangeLow}" Foreground="#4040FF"/>
+                    <Border x:Name="MascBar" Grid.Column="1" Height="16" Background="#4040FF" HorizontalAlignment="Left" Width="0"/>
+                    <TextBlock x:Name="MascText" Grid.Column="2" HorizontalAlignment="Right" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                </Grid>
+                
+                <Grid Margin="0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="60"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{loc:Loc Analyzer_RangeMiddle}" Foreground="#408040"/>
+                    <Border x:Name="EnbyBar" Grid.Column="1" Height="16" Background="#408040" HorizontalAlignment="Left" Width="0"/>
+                    <TextBlock x:Name="EnbyText" Grid.Column="2" HorizontalAlignment="Right" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                </Grid>
+                
+                <Grid Margin="0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="60"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{loc:Loc Analyzer_RangeUpper}" Foreground="#FF4040"/>
+                    <Border x:Name="FemBar" Grid.Column="1" Height="16" Background="#FF4040" HorizontalAlignment="Left" Width="0"/>
+                    <TextBlock x:Name="FemText" Grid.Column="2" HorizontalAlignment="Right" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                </Grid>
+                
+                <Grid Margin="0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="60"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{loc:Loc Analyzer_RangeVeryHigh}" Foreground="#FF8080"/>
+                    <Border x:Name="UltraFemBar" Grid.Column="1" Height="16" Background="#FF8080" HorizontalAlignment="Left" Width="0"/>
+                    <TextBlock x:Name="UltraFemText" Grid.Column="2" HorizontalAlignment="Right" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

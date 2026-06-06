@@ -1,0 +1,36 @@
+using System;
+using System.Globalization;
+using System.Windows.Data;
+using System.Windows.Media;
+using FemVoiceStudio.Models;
+
+namespace FemVoiceStudio.Converters
+{
+    /// <summary>
+    /// Konverterer <see cref="MessageSeverity"/> til en bakgrunnspensel
+    /// for Inline Coach Hint-panelet.
+    ///   Info       → subtil blå  (rgba 100,149,237, a=40)
+    ///   Suggestion → varm oransje (rgba 255,165,0,  a=40)
+    ///   Warning    → tydelig rød  (rgba 255,68,68,  a=40)
+    /// </summary>
+    [ValueConversion(typeof(MessageSeverity), typeof(Brush))]
+    public class SeverityToBrushConverter : IValueConverter
+    {
+        /// <inheritdoc/>
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is not MessageSeverity severity) return Brushes.Transparent;
+
+            return severity switch
+            {
+                MessageSeverity.Warning    => new SolidColorBrush(Color.FromArgb(40, 255, 68, 68)),
+                MessageSeverity.Suggestion => new SolidColorBrush(Color.FromArgb(40, 255, 165, 0)),
+                _                          => new SolidColorBrush(Color.FromArgb(40, 100, 149, 237))
+            };
+        }
+
+        /// <inheritdoc/>
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotSupportedException("SeverityToBrushConverter støtter ikke ConvertBack.");
+    }
+}

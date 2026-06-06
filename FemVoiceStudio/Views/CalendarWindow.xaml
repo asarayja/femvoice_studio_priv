@@ -1,0 +1,121 @@
+<Window x:Class="FemVoiceStudio.Views.CalendarWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:converters="clr-namespace:FemVoiceStudio.Converters"
+        xmlns:loc="clr-namespace:FemVoiceStudio.Converters"
+        mc:Ignorable="d"
+        Title="{loc:Loc Calendar_Title}"
+        Height="600" Width="800"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BackgroundSecondaryBrush}">
+    
+    <Window.Resources>
+        <converters:SimpleIntensityToColorConverter x:Key="SimpleIntensityToColor"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+        
+        <Style x:Key="NavButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="20">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource BackgroundHoverBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header -->
+        <TextBlock Grid.Row="0" Text="{loc:Loc Calendar_Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,20"/>
+        
+        <!-- Month Navigation -->
+        <Grid Grid.Row="1" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <Button Grid.Column="0" Content="&#xE76B;" FontFamily="Segoe MDL2 Assets" Style="{StaticResource NavButton}" Click="OnPreviousMonth" Foreground="{DynamicResource TextPrimaryBrush}"/>
+            
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                <TextBlock x:Name="MonthYearText" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <Button Content="{loc:Loc Calendar_Today}" Margin="20,0,0,0" Padding="12,6" 
+                        Background="{DynamicResource AccentPrimaryBrush}" Foreground="{DynamicResource TextOnAccentBrush}" BorderThickness="0" Cursor="Hand" Click="OnGoToToday"/>
+            </StackPanel>
+            
+            <Button Grid.Column="2" Content="&#xE76C;" FontFamily="Segoe MDL2 Assets" Style="{StaticResource NavButton}" Click="OnNextMonth" Foreground="{DynamicResource TextPrimaryBrush}"/>
+        </Grid>
+        
+        <!-- Weekday Headers -->
+        <UniformGrid Grid.Row="2" Columns="7" Margin="0,0,0,8" VerticalAlignment="Top">
+            <TextBlock Text="{loc:Loc Calendar_Sun}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+            <TextBlock Text="{loc:Loc Calendar_Mon}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+            <TextBlock Text="{loc:Loc Calendar_Tue}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+            <TextBlock Text="{loc:Loc Calendar_Wed}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+            <TextBlock Text="{loc:Loc Calendar_Thu}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+            <TextBlock Text="{loc:Loc Calendar_Fri}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+            <TextBlock Text="{loc:Loc Calendar_Sat}" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+        </UniformGrid>
+        
+        <!-- Calendar Grid -->
+        <ItemsControl Grid.Row="2" x:Name="CalendarGrid" Margin="0,35,0,0">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="7"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="2" CornerRadius="4" MinHeight="60" 
+                            Background="{Binding Converter={StaticResource SimpleIntensityToColor}}"
+                            BorderBrush="{DynamicResource BorderPrimaryBrush}" BorderThickness="1"
+                            ToolTip="{Binding ToolTip}"
+                            MouseLeftButtonUp="OnDayClicked"
+                            Cursor="Hand">
+                        <Grid Margin="8">
+                            <TextBlock Text="{Binding DayText}" 
+                                       FontSize="14" 
+                                       HorizontalAlignment="Left" VerticalAlignment="Top"
+                                       Foreground="{DynamicResource TextOnAccentBrush}"/>
+                            <Ellipse Width="8" Height="8" Fill="{DynamicResource SuccessBrush}" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                     Visibility="{Binding HasSessions, Converter={StaticResource BoolToVisibility}}"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        
+        <!-- Legend -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,16,0,0">
+            <TextBlock Text="{loc:Loc Calendar_NoSessions}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center"/>
+            <Rectangle Width="20" Height="12" Fill="{DynamicResource BackgroundTertiaryBrush}" Margin="8,0,20,0" RadiusX="2" RadiusY="2"/>
+            <TextBlock Text="{loc:Loc Calendar_1Session}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center"/>
+            <Rectangle Width="20" Height="12" Fill="#A5D6A7" Margin="8,0,20,0" RadiusX="2" RadiusY="2"/>
+            <TextBlock Text="{loc:Loc Calendar_2PlusSessions}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center"/>
+            <Rectangle Width="20" Height="12" Fill="{DynamicResource SuccessBrush}" Margin="8,0,0,0" RadiusX="2" RadiusY="2"/>
+        </StackPanel>
+    </Grid>
+</Window>

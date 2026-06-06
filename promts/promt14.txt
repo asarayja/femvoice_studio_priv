@@ -1,0 +1,349 @@
+# Utvid FemVoice Studio med klinisk basert kompleksitetsnivå-system
+
+Du er en senior C#/WPF-arkitekt med ekspertise innen sanntids lydanalyse, klinisk voice feminization therapy, adaptiv progresjonslogikk og MVVM-arkitektur. Du kjenner etablerte FemVoice Studio-mønstre fra eksisterende kode.
+
+## Klinisk grunnlag
+
+Voice feminization-trening krever integrert progresjon fra isolerte tekniske øvelser til naturlig, funksjonell tale. Pitch (F0), resonans, intonasjon, artikulasjon og spontan kommunikasjonsbruk må trenes sammen. Dette systemet skal modellere denne progresjonen klinisk korrekt.
+
+## Din oppgave
+
+Implementer et komplett `ComplexityEngine`-system som utvider eksisterende `ProgressionEngine` og `WeeklyPlannerEngine` med talebrukskompleksitet. Dette skal gi produksjonsklar C#-kode som følger FemVoice Studios etablerte mønstre.
+
+---
+
+## 1. ComplexityEngine-komponenten
+
+### Enums og datastrukturer
+
+```csharp
+public enum SpeechComplexityLevel
+{
+    IsolatedSounds,      // Isolerte lyder (humming, "aaaa")
+    Syllables,           // Stavelser ("la-la-la")
+    Words,               // Enkeltord ("hei", "takk")
+    Phrases,             // Korte fraser ("god morgen")
+    StructuredSentences, // Fullendte setninger
+    SpontaneousSpeech,   // Spontan tale med pauser
+    Conversational       // Naturlig dialog
+}
+
+public class ComplexityEvaluation
+{
+    public SpeechComplexityLevel CurrentLevel { get; set; }
+    public double SuccessRate { get; set; }        // 0-100, siste 5 økter på dette nivået
+    public bool IsReadyForNext { get; set; }       // Oppfyller alle kriterier
+    public string Feedback { get; set; }           // Pedagogisk forklaring
+    public int SessionsAtCurrentLevel { get; set; }
+    public DateTime LastLevelChange { get; set; }
+}
+```
+
+### Progresjonslogikk (klinisk informert)
+
+`ComplexityEngine` skal kun tillate nivåopprykk når **ALLE** disse kriteriene er oppfylt:
+
+**Teknisk stabilitet:**
+- Resonans score ≥60 (gjennomsnitt siste 3 økter)
+- Pitch stability ≥60 (fra `LiveMetricsService.StabilityState`)
+- Intonasjon score ≥50 (ikke flat tale)
+
+**Helse og sikkerhet:**
+- `VoiceHealthScore` ≥70
+- Ingen `HealthStatus.Warning` eller `Critical` i siste 3 økter
+- `StrainLevel` <50 (gjennomsnitt)
+
+**Repeterbar suksess:**
+- Minimum 5 økter fullført på nåværende nivå
+- `SuccessRate` ≥70% (beregnet fra `SessionEvaluationSummary.OverallScore`)
+- Minimum 2 økter per uke siste 2 uker (konsistens)
+
+**Eksempel på metoder:**
+```csharp
+public ComplexityEvaluation EvaluateCurrentLevel(int userId)
+public bool CanAdvanceToNextLevel(ComplexityEvaluation evaluation)
+public SpeechComplexityLevel DetermineNextLevel(SpeechComplexityLevel current)
+```
+
+### Integrasjon med eksisterende systemer
+
+**ProgressionEngine-integrasjon:**
+
+`ProgressionEngine` kommuniserer via `ProgressionDecision`-strukturen. Utvid denne med:
+
+```csharp
+public class ProgressionDecision
+{
+    // Eksisterende felter...
+    public SpeechComplexityLevel RecommendedComplexityLevel { get; set; }
+    public bool ComplexityCanAdvance { get; set; }
+    public string ComplexityReason { get; set; }
+}
+```
+
+`ComplexityEngine` skal være et dependency til `ProgressionEngine`, kalt under `EvaluateProgressionWithSafety()`.
+
+**Datapersistering:**
+
+Bruk `DatabaseService`-mønstre (parameteriserte queries, INSERT/UPDATE-logikk). Legg til ny tabell:
+
+```sql
+CREATE TABLE IF NOT EXISTS ComplexityProgress (
+    UserId INTEGER,
+    CurrentLevel INTEGER,
+    SessionsAtLevel INTEGER,
+    SuccessRate REAL,
+    LastEvaluationDate TEXT,
+    IsReadyForNext INTEGER
+)
+```
+
+---
+
+## 2. WeeklyPlannerEngine-utvidelse
+
+`WeeklyPlannerEngine` skal ta `SpeechComplexityLevel` som input og:
+
+### Øktfordeling basert på kompleksitet
+
+**Eksempel på ukeplan:**
+
+Hvis `CurrentLevel = SpeechComplexityLevel.Words`:
+
+- **Mandag**: Words-øvelse (funksjonell tale, enkeltord-repetisjoner)
+- **Tirsdag**: IsolatedSounds + Syllables (teknisk pitch/resonans-trening)
+- **Onsdag**: Words → Phrases (progresjon mot neste nivå)
+- **Fredag**: Words (konsolidering)
+
+### Filtering og readiness-sjekk
+
+Før ukeplanen genereres:
+- Sjekk `ComplexityEvaluation.IsReadyForNext`
+- Hvis `false`: planlegg kun økter på `CurrentLevel` eller lavere
+- Hvis `true`: inkluder 1-2 økter på `NextLevel` som "preview"
+
+### Øvelseskategorisering
+
+Bruk `ExerciseTextService` og kategoriser øvelser per kompleksitetsnivå basert på `ExerciseText.Content`:
+
+- **IsolatedSounds/Syllables**: Øvelser med ID 1-15 (Grunnleggende humming, Pitch exploration)
+- **Words/Phrases**: Øvelser med ID 16-35 (enkle setninger, daglige fraser)
+- **StructuredSentences+**: Øvelser med ID 36-50 (narrativ, emosjonell prosodi)
+
+---
+
+## 3. SmartCoach-integrasjon for kompleksitet
+
+### Pedagogiske meldinger
+
+`CoachMessageFormatter` og `CoachMessageGenerator` skal utvides med kompleksitetsbaserte meldinger:
+
+**Eksempel på meldinger:**
+
+```csharp
+public string GenerateComplexityFeedback(ComplexityEvaluation eval, VoiceMetrics metrics)
+{
+    // "Dagens økt fokuserer på korte fraser fordi din resonans (score: 72) og intonasjon (score: 68) er stabile."
+    // "Vi holder oss på setningsnivå til spontan tale blir mer konsistent. 3 av 5 siste økter hadde score >70."
+    // "Klar for neste nivå! Din pitch stabilitet (78%) og helse (82) tillater progresjon til naturlig dialog."
+}
+```
+
+Bruk `LocalizationService`-mønster for alle brukervendte strenger.
+
+### Visualisering i SmartCoachViewModel
+
+`SmartCoachViewModel` skal eksponere:
+
+```csharp
+[ObservableProperty]
+private string currentComplexityLevelText; // "Enkeltord og korte fraser"
+
+[ObservableProperty]
+private string nextComplexityGoal; // "Fullendte setninger"
+
+[ObservableProperty]
+private int progressToNextComplexity; // 0-100%
+
+[ObservableProperty]
+private string complexityFeedback; // Pedagogisk forklaring
+```
+
+---
+
+## 4. UI-integrasjon (MVVM-pattern)
+
+### AnalysisPageViewModel-utvidelse
+
+Legg til følgende observable properties:
+
+```csharp
+[ObservableProperty]
+private SpeechComplexityLevel currentComplexityLevel;
+
+[ObservableProperty]
+private List<ComplexityLevelStep> complexityProgressionSteps; // Visuell stegindikator
+
+[ObservableProperty]
+private string nextComplexityTarget;
+
+[ObservableProperty]
+private bool isReadyForComplexityAdvancement;
+```
+
+### ProgressionDashboard-visualisering
+
+I `ProgressionDashboard.xaml.cs` og `ProgressionDashboardViewModel`:
+
+**Vis trappediagram med 7 trinn** (IsolatedSounds → Conversational):
+
+```csharp
+public class ComplexityLevelStep
+{
+    public SpeechComplexityLevel Level { get; set; }
+    public bool IsCompleted { get; set; }
+    public bool IsCurrent { get; set; }
+    public string DisplayName { get; set; } // Norsk: "Stavelser", "Enkeltord"
+    public string Icon { get; set; }         // Emoji: 🔤, 💬, 🗣️
+}
+```
+
+**UI-layout:**
+
+```
+[✅ Isolerte lyder] → [✅ Stavelser] → [🔵 Enkeltord] → [⚪ Korte fraser] → ...
+```
+
+Bruk eksisterende mønster fra `LoadLevelInfo()` (progress bars, emoji-mapping).
+
+---
+
+## 5. Testing og validering
+
+Lag enhetstester i `FemVoice.Tests`-prosjektet:
+
+### Test-scenarios
+
+```csharp
+[Test]
+public void ComplexityEngine_AdvancesLevel_WhenAllCriteriaAreMet()
+{
+    // Arrange: 5 økter med score >70, resonans >60, helse >70
+    // Act: EvaluateCurrentLevel()
+    // Assert: IsReadyForNext == true
+}
+
+[Test]
+public void ComplexityEngine_BlocksAdvancement_WhenHealthIsWarning()
+{
+    // Arrange: 5 økter med gode scorer, men HealthStatus.Warning i siste økt
+    // Act: CanAdvanceToNextLevel()
+    // Assert: false, Feedback inneholder "helsesikkerhet"
+}
+
+[Test]
+public void ComplexityEngine_RemainsAtLevel_WhenSuccessRateIsLow()
+{
+    // Arrange: 5 økter, bare 2 med score >70 (40% success rate)
+    // Act: EvaluateCurrentLevel()
+    // Assert: IsReadyForNext == false
+}
+
+[Test]
+public void WeeklyPlannerEngine_FiltersExercises_ByComplexityLevel()
+{
+    // Arrange: CurrentLevel = Words
+    // Act: GenerateWeeklyPlan()
+    // Assert: Ingen øvelser fra StructuredSentences+ nivå inkludert
+}
+```
+
+### Simuleringstester
+
+```csharp
+[Test]
+public void ComplexityProgression_SimulatesFullCycle()
+{
+    // Simuler 50 økter fra IsolatedSounds til Conversational
+    // Valider at progresjon tar realistisk tid (minimum 5 økter per nivå)
+    // Sjekk at regresjon ved fatigue fungerer
+}
+```
+
+---
+
+## 6. Arkitektur- og implementasjonskrav
+
+### Følg etablerte mønstre
+
+**Dependency Injection:**
+- Constructor injection av `DatabaseService`, `LiveMetricsService`, `SmartCoachEngine`
+- Null-sjekk med `?? throw new ArgumentNullException()`
+
+**MVVM:**
+- `[ObservableProperty]` attributes (MVVM Community Toolkit)
+- `RelayCommand` for UI-actions
+- ViewModels arver fra `ViewModelBase` eller `ObservableObject`
+
+**Service-patterns:**
+- Singleton pattern for `ComplexityEngine` (hvis stateless), alternativt dependency injection
+- Event-driven: `ComplexityLevelChanged` event når nivå endres
+
+**Feilhåndtering:**
+- Try-catch med `Debug.WriteLine()` for logging
+- Graceful fallback (returnér `CurrentLevel` hvis evaluering feiler)
+
+### Dataintegritet
+
+- All kompleksitetsdata persisteres via `DatabaseService`
+- Transaksjonssikkerhet ved nivåendringer (UPDATE både ComplexityProgress og UserProgress)
+- Migrasjonssikker skjemadesign (`AddColumnIfNotExists`-mønster)
+
+### Ytelse
+
+- Kompleksitetsevaluering skal kjøre asynkront (`async/await` pattern)
+- Caching av siste evaluering i-memory (oppdateres etter hver økt)
+- Unngå heavy queries i real-time feedback loops
+
+---
+
+## 7. Leveranse
+
+Produsér komplett, kompilerbar C#-kode for:
+
+1. **ComplexityEngine.cs** (core evaluation logic)
+2. **DatabaseService-utvidelser** (tabell-setup, queries)
+3. **ProgressionEngine-integrasjon** (ProgressionDecision-utvidelser)
+4. **WeeklyPlannerEngine-utvidelser** (øktfiltrering)
+5. **SmartCoach-utvidelser** (meldingsgenerering)
+6. **ViewModel-utvidelser** (AnalysisPageViewModel, SmartCoachViewModel, ProgressionDashboardViewModel)
+7. **Enhetstester** (minimum 5 tests dekker kjernescenarier)
+
+### Kodekommentarer
+
+- XML-dokumentasjon på alle public methods
+- Inline-kommentarer for klinisk rasjonale (f.eks. "Resonance must be stable before advancing complexity per clinical guidelines")
+- Norske kommentarer for brukervendte meldinger
+
+### Dokumentasjon
+
+Inkluder kort README.md med:
+- Oversikt over kompleksitetsnivåer og kriterier
+- Eksempel på hvordan `ComplexityEngine` kalles fra eksisterende kode
+- Migrasjonsguide for eksisterende brukere (hvordan sette initialt nivå)
+
+---
+
+## Viktige referanser fra eksisterende kode
+
+**AdaptiveComfortZoneService.cs**: Følg progresjonsmønster (minimum 3 stabile økter før advancement), resonans-prioritering (≥60 threshold).
+
+**DirectionAnalyzer.cs**: Bruk `DirectionAnalysisResult`-struktur for å gi parameter-spesifikk feedback (Resonance, Pitch, Intonation, VoiceHealth).
+
+**ExerciseTextService.cs**: Kompleksitetsnivåer mapper til `Difficulty` + `TargetPitchVariation` + `TargetIntonationRise`. IsolatedSounds = lav variation (14-20), Conversational = høy (30-50).
+
+**FemVoiceScore.cs**: Bruk samme scoring weights (Resonance 45%, Pitch 30%, Intonation 15%, Health 10%) i kompleksitetsevaluering.
+
+**ProgressionService.cs**: Repliker safety lock pattern—blokkér kompleksitetsopprykk hvis `StrainLevel` ≥70 eller 2+ moderate strains (≥40%).
+
+**SmartCoachSubsystem.cs**: Følg clinical priority hierarchy (Resonance > Health > Pitch > Intonation), generer `CoachMessage` med What/Why/How-struktur.

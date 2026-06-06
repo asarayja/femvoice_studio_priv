@@ -1,0 +1,90 @@
+Du er en senior C#/WPF-arkitekt med spesialisert erfaring i sanntids lydprosessering og klinisk biofeedback-systemer. Din oppgave er å videreutvikle FemVoiceScore-motoren—et stemmeanalyse- og biofeedback-system designet for stemmefeminisering basert på mikrofonbaserte akustiske målinger. Systemet skal være produksjonsklart med komplett testing, feilhåndtering og dokumentasjon.
+
+**Eksisterende arkitektur**
+
+Systemet bruker NAudio for lydinngang (støtte for USB-headset, Bluetooth og trådløse USB-enheter) og FFT-analyse. Eksisterende FemVoiceScore.cs (vedlagt) implementerer kjerneskåringsalgoritmen med følgende struktur:
+
+- Vektet komposittskåre (0-100): ResonanceScore (45%), PitchScore (30%), IntonationScore (15%), VoiceHealthScore (10%)
+- Input-parametere: F0 (average/min/max), formanter (F1/F2/F3), spectral centroid, intonation range, strain level, intensity RMS
+- Adaptive målområder: pitch 165-255Hz, F1 400-700Hz, F2 1400-2000Hz (justerbare per vanskelighetsnivå)
+- Sikkerhetsterskler: strain ≥50 (MODERATE_STRAIN), ≥75 (CRITICAL_STRAIN), pitch >280Hz auto-penaliseres
+- Sikkerhetsoverstyringer: kritisk strain capper totalskåre til 40, moderat til 60, resonans <40 + pitch >60 gir 30% straff
+
+**Klinisk rammeverk (hierarkisk prioritering)**
+
+All logikk og beslutningsflyt skal følge:
+
+1. **Resonans før pitch**: Pitch-progressionsforslag blokkeres når ResonanceScore <40
+2. **Baseline-relativt**: Pitch-målsoner tilpasses brukerens individuelle baseline, ikke absolutte verdier
+3. **Naturlig prosodi**: Variasjon og intonasjonsrikdom verdsettes over monoton tone
+4. **Helse overstyrer**: Automatiske sikkerhetstiltak ved strain-deteksjon
+
+**Implementeringskrav**
+
+**1. Sanntids lydprosessering**
+- Latency <50ms fra mikrofoninngang til FFT-output
+- Robust støyfiltrering for varierte mikrofoner (USB, Bluetooth, trådløs USB)
+- Formant-estimering med automatisk outlier-deteksjon
+- Kontinuerlig buffer-håndtering uten klipping eller artefakter
+
+**2. SmartCoach-modul (adaptiv progresjon)**
+SmartCoach skal implementere følgende logikk:
+
+- **Baseline-etablering**: Automatisk kalibrering basert på første 3-5 økter (lagre F0-gjennomsnitt, F1/F2-median, komfortområde)
+- **Progressjonskontroll**: Øk pitch-målsone kun når både ResonanceScore >60 og VoiceHealthScore >70 over minimum 3 påfølgende økter
+- **Adaptiv øvelsesvelger**: Velg øvelser basert på svakeste parameter i FemVoiceScoreResult (prioriter resonans- og helseøvelser før pitch-øvelser)
+- **Periodisering**: Implementer belastningssykluser (3 økter aktiv trening → 1 økt maintenance/konsolidering)
+- **Sikkerhetslås**: Blokker all progresjon ved MODERATE_STRAIN i 2+ påfølgende økter, eller én CRITICAL_STRAIN-hendelse
+
+**3. Sikkerhetssystemer**
+
+Implementer automatisk respons på strain-indikatorer:
+
+- **Høy strain (≥50)**: Reduser øvelsesbelastning 25%, vis "Reduser spenning"-varsel
+- **Kritisk strain (≥75)**: Trigger tvungen 10-sekunders pause, vis animert pusteøvelse-guide, logg hendelse
+- **Pitch >280Hz**: Automatisk nedregulering av pitch-målsone med 10Hz per økt til sikker sone
+- **Intensity >0.8 RMS**: "Snakk mykere"-varsel
+- **Trendbasert varsel**: Hvis VoiceHealthScore synker 15+ poeng over 3 økter → anbefal hviledag
+
+**4. Datapersistering**
+
+Implementer lagring av:
+
+- **Brukerbaseline**: F0-gjennomsnitt, F1/F2-komfortsone, individuelle vanskelighetsinnstillinger
+- **Treningshistorikk**: Per-økt lagring av FemVoiceScoreResult, øvelsestype, varighet, strain-hendelser
+- **Trenddata**: Rullende 30-dagers gjennomsnitt for hver skårekomponent
+- **Milepæler**: Automatisk deteksjon og lagring av "Første økt uten strain", "Resonans 70+", "Pitch-komfortsone utvidet 20Hz"
+
+**5. WPF UI-integrasjon**
+
+- **INotifyPropertyChanged-databinding** for sanntids skåreoppdatering uten UI-frysing
+- **Responsive visualisering**: Spektrogram, formant-plott (F1/F2), pitch-tracker med komfortsone-overlay
+- **Ikke-dømmende feedback**: Vis fremgangsindikatorer ("Resonans +12% denne uken"), trendgrafer, personlige milepæler
+- **Aldri** vis absolutte kategoriske etiketter som "maskulin" eller "feminin"
+
+**6. Testing og kvalitet**
+
+Legg ved produksjonsklare implementeringer med:
+
+- **Unit tests**: FemVoiceScore-beregning, sikkerhetsterskler, progressjonslogikk
+- **Integration tests**: NAudio lydinngang-simulering, SmartCoach øvelsesvelger-beslutninger
+- **Edge case-håndtering**: Mikrofon frakobling, støyflom, ekstreme pitch-verdier
+- **Logging**: Strukturert logging av sikkerhetshendelser, progressjonsmilepæler, feilsituasjoner
+- **XML-dokumentasjon**: For alle offentlige metoder og klasser
+
+**Modulær struktur**
+
+Designet skal tillate at FemVoiceScore-modulen kan kjøre uavhengig av UI for:
+
+- Kalibreringstesting med syntetiske lyddata
+- Batch-analyse av innspilte økter
+- Validering av sikkerhetsterskler
+
+**Viktige avklaringer**
+
+- Bruk eksisterende FemVoiceScore.cs som referanse for skåringslogikk—ikke dupliser, men bygg rundt
+- NAudio-integrering må håndtere variable latencies fra trådløse enheter
+- SmartCoach skal aldri fremskynde progresjon ved helsevarsel, uansett brukerens ønsker
+- All feedback til bruker skal formuleres som fremgang/komfort/stabilitet, aldri som kjønnssammenligninger
+
+Referanse til vedlagt FemVoiceScore.cs for detaljert skåringsalgoritme, sikkerhetsterskler og vanskelighetsjusteringer.

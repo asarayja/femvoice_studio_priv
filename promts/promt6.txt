@@ -1,0 +1,274 @@
+Du er en senior C#/.NET 10 WPF-arkitekt med spesialisering i sanntids audioanalyse, klinisk stemmeakustikk, og biofeedback-systemdesign for medisinsk treningsteknologi.
+
+**Kontekst**
+
+FemVoice Studio er en eksisterende .NET 10 WPF-applikasjon for stemmetreningsfeminisering. Applikasjonen følger etablerte arkitekturmønstre:
+
+- **MVVM-struktur**: ViewModels arver `ObservableObject`, bruker `RelayCommand`, `ObservableCollection`, og property change notification
+- **Tynn code-behind**: Views (Window/UserControl) inneholder kun `InitializeComponent()` i konstruktør
+- **Namespace-konvensjon**: `FemVoiceStudio.Views` for UI, tjenester via dependency injection
+- **Sanntids visualisering**: OxyPlot med 300-punkt rolling buffer, DispatcherTimer (33-50ms intervaller), `InvalidatePlot(false)` for inkrementelle oppdateringer
+- **Lokalisering**: `LocalizationService` singleton med fallback, norske kategorinavn bevares
+- **Feilhåndtering**: Try-catch med lokaliserte feilmeldinger, null-safe resource lookups
+
+Eksisterende subsystemer:
+
+- **AudioSubsystem**: `AudioCaptureService` (44.1kHz, mono, 16-bit)
+- **AnalysisSubsystem**: Produserer `VoiceMetrics` (pitch, formanter F1/F2/F3, jitter, shimmer, stabilitet, amplitude)
+- **ProgressionSubsystem**: `DatabaseService` mot SQLite (femvoice.db i MyDocuments), `TrainingSession`-objekter, `ExerciseDataService`
+- **SmartCoachSubsystem**: Adaptiv læring, eksisterende tilbakemeldingslogikk
+- **Øvelsessystem**: 15 øvelser (SortOrder 1-15 → localization keys 101-115), kategorier (0=All, 1=Pitch, 2=Resonance, 3=Intonation, 4=Breathing, 5=Practice), SQLite-basert med `ExerciseDataService`/`ExerciseTextService`/`TrainingFrequencyService`
+
+**Din oppgave**
+
+Implementer et produksjonsklart Exercise Feedback & Smart Coaching System som transformerer eksisterende øvelser til intelligente, sanntids treningsøkter med umiddelbar evaluering, adaptiv vanskelighetsgradjustering, og klinisk helseovervåkning.
+
+**Kliniske prioriteringer**
+
+- Resonansutvikling (formanter F1/F2/F3) prioriteres over pitch
+- Alle vurderinger skal være klinisk korekte for stemmetreningsfeminisering (feminine voice baseline: 165-255 Hz pitch, forward resonance F2 >2100 Hz)
+- Helsebeskyttelse er kritisk: overvåk jitter, shimmer, amplitude spikes, pitch press
+- Ved overskridelse av helsegrenser: stopp øvelse umiddelbart, gi forklaring, foreslå pusteøvelse eller resonansøvelse, senk pitchmål midlertidig
+
+**Komponenter å implementere**
+
+**1. ExerciseFeedbackEngine.cs**
+
+Kjernesystemet som evaluerer øvelsesutførelse i sanntid.
+
+Ansvar:
+- Motta `VoiceMetrics` fra `AnalysisSubsystem` (pitch, F1/F2/F3, jitter, shimmer, stabilitet, amplitude)
+- Sammenligne sanntidsdata mot øvelsens adaptive målparametere (justert per brukernivå)
+- Evaluere: resonans (formanter F1/F2 ratio, F3 plassering), pitch (innenfor målsone), stabilitet (jitter threshold), intonasjon (pitch variasjon for relevante øvelser), belastning (shimmer, amplitude spikes, pitch press indicators)
+- Returnere `ExerciseEvaluationResult` med sanntidsstatus per parameter (korrekt/juster/stopp)
+
+Teknisk:
+- Kjør evaluering på dedikert bakgrunnstråd (ikke UI-tråd)
+- Thread-safe kommunikasjon med AnalysisSubsystem
+- Latens <100ms fra VoiceMetrics mottak til evaluering klar
+- Ingen WPF-avhengigheter i denne klassen
+- Konfiguerbar evalueringsfrekvens (standard: hver 50ms)
+
+**2. ExerciseDefinition.cs**
+
+Datastruktur som beskriver hver øvelse med målparametere og toleranser.
+
+Felt:
+- `TargetPitchRange` (min/max Hz)
+- `TargetResonanceRange` (F1/F2 targets, F3 threshold)
+- `StabilityThreshold` (akseptabel jitter%)
+- `StrainLimit` (shimmer threshold, amplitude spike limit)
+- `LevelScalingFactors` (nybegynner/middels/avansert toleranse-multiplikatorer)
+- `FeedbackRules` (parameter-spesifikke meldingsnøkler for LocalizationService)
+- `HealthProtectionThresholds` (kritiske grenser for stopp)
+- `RequiresIntonation` (bool, for øvelser med pitch-variasjon)
+
+Integrasjon:
+- Utvid eksisterende `Exercise`-klasse eller lag parallel definisjon
+- Lagres i SQLite (nye kolonner i exercises-tabellen) eller egen tabell
+- Laster via `ExerciseDataService`
+
+**3. ExerciseEvaluationResult.cs**
+
+Resultatomslag returnert fra `ExerciseFeedbackEngine` per evaluering.
+
+Felt:
+- `Status` (enum: Correct, Adjust, Stop)
+- `ResonanceStatus` (enum: Correct, Adjust, Stop)
+- `PitchStatus` (enum: Correct, Adjust, Stop)
+- `StabilityStatus` (enum: Correct, Adjust, Stop)
+- `IntonationStatus` (enum: Correct, Adjust, Stop, NotApplicable)
+- `HealthIndicator` (enum: Safe, Warning, Critical)
+- `CoachHintKey` (localization key for hint message)
+- `Timestamp` (DateTime)
+- `Details` (Dictionary<string, object> med raw metrics for logging)
+
+**4. SmartCoachExerciseAdapter.cs**
+
+Bindeledd mellom `ExerciseFeedbackEngine` og eksisterende `SmartCoachSubsystem`.
+
+Ansvar:
+- Motta brukerens historiske prestasjon fra `ProgressionSubsystem`
+- Beregne brukerens nåværende nivå per øvelse (nybegynner/middels/avansert basert på completion rate, score trends, session count)
+- Justere `ExerciseDefinition` målsoner i sanntid: utvide toleranser for nybegynner, stramme for avansert
+- Midlertidig senke pitchmål ved detektert strain i forrige økt
+- Prioritere øvelser for neste økt basert på svakeste parametere (eks. hvis resonans konsekvent lav → prioriter resonansøvelser)
+- Generere lokaliserte forklaringer på korreksjoner ("Senker pitch-mål midlertidig for å beskytte stemmen din")
+
+Teknisk:
+- Integrer med eksisterende SmartCoach-logikk (ikke dupliser kode)
+- Bruk `DatabaseService` for historiske data
+- Oppdater målparametere før øvelsesstart og mellom økter
+- Logg tilpasninger til database for progresjonssporing
+
+**5. LiveFeedbackView.xaml + LiveFeedbackViewModel.cs**
+
+Sanntids UI-komponent som vises under øvelsesutførelse.
+
+UI-elementer:
+- **Resonans-indikator**: Sirkel/ikon med status 🟢 korrekt, 🟡 juster teknikk, 🔴 stopp og korriger (bind til `ResonanceStatus`)
+- **Pitch-indikator**: Tilsvarende status-ikon (bind til `PitchStatus`)
+- **Stabilitet-indikator**: Tilsvarende status-ikon (bind til `StabilityStatus`)
+- **Intonasjon-indikator** (vises kun hvis øvelsen krever det): Tilsvarende status-ikon
+- **Helseindikator**: Overordnet status (🟢 trygt, 🟡 advarsel, 🔴 kritisk - stopp øvelse)
+- **Coach-hint**: TextBlock med kort, lokalisert veiledningstekst (1-2 setninger, oppdateres basert på `CoachHintKey`)
+- **Live pitch/resonans-graf** (valgfritt): Miniversjon av eksisterende OxyPlot-visualisering (300-punkt buffer, som i `PitchChartViewModel`)
+
+ViewModel:
+- Abonner på `ExerciseEvaluationResult` fra `ExerciseFeedbackEngine` (via event eller callback)
+- Oppdater status-properties med `OnPropertyChanged`
+- Dispatcher-basert UI-oppdatering (marshal fra bakgrunnstråd til UI-tråd)
+- Latens <100ms fra evaluering til visuell oppdatering
+- Trottling: unngå UI-flooding ved rask evaluering (max 20 oppdateringer per sekund)
+
+Pattern:
+- Arv `ObservableObject`
+- `RelayCommand` for mulige brukerinteraksjoner (pause/resume)
+- Code-behind kun `InitializeComponent()` (følg eksisterende konvensjon)
+- Namespace: `FemVoiceStudio.Views`
+
+**6. ExerciseSummaryView.xaml + ExerciseSummaryViewModel.cs**
+
+Øktoppsummering som vises etter hver fullførte øvelse.
+
+UI-elementer:
+- **Prosent korrekt utførelse**: Store tal (eks. "87%") beregnet fra andel Correct-status over øktens varighet
+- **Forbedring vs forrige økt**: "+5%" eller "-3%" med grønn/rød farge, hentes fra `ProgressionSubsystem`
+- **Strain-nivå**: Visuell indikator (low/moderate/high) basert på gjennomsnittlig shimmer og amplitude spikes
+- **Parameter-breakdown**: Liste med resonans, pitch, stabilitet scores (% tid korrekt)
+- **Coach-anbefaling**: Flerlinjes tekst (3-5 setninger) med konkret råd for videre trening, lokalisert
+- **Progresjonsgraf** (valgfritt): Trendlinje for siste 5 økter med samme øvelse
+
+Data:
+- Beregn metrics fra loggede `ExerciseEvaluationResult` under økten
+- Lag `TrainingSession`-objekt (som i `ResonanceWindow.SaveSession()`)
+- Lagre til database via `DatabaseService`
+- Inkluder: `AverageF1/F2/F3`, `AveragePitch`, `StabilityScore`, `OverallScore`, `StrainLevel`, `SessionDuration`, `ExerciseId`, `Timestamp`
+
+ViewModel:
+- Constructor injiserer `ExerciseDataService`, `DatabaseService`
+- `LoadSessionSummary(sessionId)` metode
+- Beregn forbedring ved å sammenligne med forrige økt (hent via SQL-query på timestamp)
+- Generer coach-tekst via `SmartCoachExerciseAdapter` (contextual feedback basert på resultat og brukernivå)
+
+Pattern:
+- Arv `ObservableObject`
+- `RelayCommand` for "Fortsett" / "Avslutt"-knapper
+- Følg eksisterende ViewModel-struktur (som `ExerciseDetailViewModel`)
+
+**Nivåbasert intelligens**
+
+Implementer adaptiv målsonetilpasning i `SmartCoachExerciseAdapter`:
+
+**Nybegynner** (0-10 økter fullført, eller gjennomsnittlig score <60):
+- Pitch: ±15 Hz toleranse rundt målsone
+- Resonans: F2 ±200 Hz toleranse
+- Stabilitet: jitter <3% akseptabelt
+- Feedback-frekvens: hver 5. sekund
+- Mer veiledning: detaljerte coach-hints
+
+**Middels** (11-30 økter fullført, score 60-80):
+- Pitch: ±8 Hz toleranse
+- Resonans: F2 ±100 Hz toleranse
+- Stabilitet: jitter <2%
+- Feedback-frekvens: hver 10. sekund
+- Balansert veiledning
+
+**Avansert** (>30 økter, score >80):
+- Pitch: ±4 Hz toleranse
+- Resonans: F2 ±50 Hz toleranse, krav til F3-kontroll (>2700 Hz for forward resonance)
+- Stabilitet: jitter <1.5%
+- Feedback-frekvens: kun ved feil
+- Minimal veiledning, fokus på naturlig flyt og subtilitet
+
+Automatisk justering:
+- Kjør nivå-vurdering ved start av hver øvelse
+- Hent siste 10 økter for samme øvelse fra database
+- Beregn gjennomsnittlig score og completion rate
+- Juster `LevelScalingFactors` i `ExerciseDefinition` før `ExerciseFeedbackEngine` starter
+
+**Stemmehelse-beskyttelseslogikk**
+
+Implementer sanntids overvåkning i `ExerciseFeedbackEngine` med automatiske tiltak:
+
+**Jitter >2.5%** (instabil stemme):
+- Sett `HealthIndicator` til Critical
+- Returner `Status.Stop`
+- `CoachHintKey`: "HealthWarning_Jitter" → "Din stemme er ustabil. Ta en pause, drikk vann, og prøv en pusteøvelse."
+
+**Shimmer >4%** (overbelastning):
+- Sett `HealthIndicator` til Critical
+- Returner `Status.Stop`
+- `CoachHintKey`: "HealthWarning_Shimmer" → "Din stemme er overbelastet. Stopp øvelsen og gjør 2 minutter dyp pusting før du fortsetter."
+
+**Amplitude spikes** (>20% variasjon innen 500ms):
+- Sett `HealthIndicator` til Warning (Critical hvis gjentatt)
+- Returner `Status.Stop`
+- `CoachHintKey`: "HealthWarning_Amplitude" → "Du presser for hardt. Senk volumet og fokuser på avslappet resonans."
+
+**Pitch press** (pitch >målsone + strain indicators samtidig):
+- Sett `HealthIndicator` til Warning
+- `SmartCoachExerciseAdapter` senker pitchmål med 10-15 Hz for neste evaluering
+- `CoachHintKey`: "HealthWarning_PitchPress" → "Du strekker stemmen for høyt. Midlertidig senking av pitch-mål til [ny verdi] Hz. Fokuser på avslappet teknikk."
+
+**Anbefalt øvelse ved stopp**:
+- Hvis jitter/shimmer: foreslå "Dyp pusting" eller "Sirkulær pust" (kategori 4)
+- Hvis pitch press: foreslå "Resonans uten pitch" (kategori 2)
+
+**Integrasjon med eksisterende system**
+
+**ExerciseWindow.xaml.cs**:
+- Erstatt `StartSession()` med oppstart av `ExerciseFeedbackEngine`
+- Vis `LiveFeedbackView` i ny ContentControl eller overlay under øvelse
+- Ved `CompleteSession()`: vis `ExerciseSummaryView`, lagre data
+- Behold eksisterende timer (MM:SS display), men legg til feedback-basert scoring
+
+**ExerciseDetailViewModel.cs**:
+- Utvid `StartExercise()` til å initialisere `ExerciseFeedbackEngine` med gjeldende `ExerciseDefinition`
+- Abonner på evaluering events
+- Oppdater `FeedbackMessage` med coach-hints fra `ExerciseEvaluationResult`
+- Erstatt tid-basert score i `CalculateScore()` med acoustic-parameter-basert score (% tid Correct status)
+- Behold experience bonus (2 poeng per tidligere økt, max 20)
+
+**MainWindow/AnalysisSubsystem**:
+- Sørg for at `VoiceMetrics` publiseres til `ExerciseFeedbackEngine` når øvelse er aktiv
+- Bruk eksisterende event/callback-mekanisme
+- Ingen endringer i `PitchChartViewModel` nødvendig (parallell visualisering)
+
+**Tekniske krav**
+
+- **Threading**: `ExerciseFeedbackEngine` kjører evaluering på `Task.Run()` eller dedikert `Thread`, oppdater UI via `Application.Current.Dispatcher.Invoke()`
+- **Thread-safe kommunikasjon**: Bruk `ConcurrentQueue<VoiceMetrics>` eller `lock` statements
+- **WPF MVVM-mønster**: Konsistent med eksisterende kode (arv `ObservableObject`, `RelayCommand`, property change notification)
+- **OxyPlot integrasjon**: Hvis live graf i `LiveFeedbackView`, bruk samme pattern som `PitchChartViewModel` (300-punkt buffer, `InvalidatePlot(false)`)
+- **Lokalisering**: Alle brukersynlige tekster via `LocalizationService.Instance.GetString(key)`, fallback til engelsk hvis nøkkel mangler
+- **Feilhåndtering**: Try-catch rundt audio-prosessering, evaluering, og database-operasjoner; vis lokaliserte feilmeldinger ved kritisk feil
+- **Null-safety**: Sjekk `VoiceMetrics != null`, `ExerciseDefinition != null` før evaluering
+- **Database-skjema**: Utvid SQLite-skjema hvis nødvendig (nye kolonner i `exercises` eller ny `exercise_definitions` tabell); inkluder migreringsskript
+- **Performance**: Evalueringslatens <100ms, UI-oppdatering <100ms, ingen UI-freezing
+
+**Leveranser**
+
+Generer komplett, produksjonsklar kode for alle 6 komponenter:
+
+1. **ExerciseFeedbackEngine.cs**: Full klasse med threading, evaluering, health checks
+2. **ExerciseDefinition.cs**: Datamodell med alle felt
+3. **ExerciseEvaluationResult.cs**: Resultatmodell
+4. **SmartCoachExerciseAdapter.cs**: Adaptiv logikk med database-integrasjon
+5. **LiveFeedbackView.xaml + LiveFeedbackViewModel.cs**: Sanntids UI med MVVM-binding
+6. **ExerciseSummaryView.xaml + ExerciseSummaryViewModel.cs**: Øktoppsummering med database-lagring
+
+**For hver komponent**:
+- Tydelige XML-kommentarer på norsk for klasser og public metoder
+- Try-catch med spesifikke exceptions
+- Null-validering
+- Thread-safety der relevant
+- Lokalisering av alle brukersynlige tekster (bruk placeholder localization keys som `Loc.ExerciseFeedback_*`)
+
+**Ekstra leveranser**:
+- **Unit test-eksempler**: xUnit-tester for `ExerciseFeedbackEngine.EvaluateMetrics()` (3-5 test cases: korrekt utførelse, pitch ut av sone, kritisk jitter)
+- **Integrasjonsinstruksjoner**: README.md med steg-for-steg for å koble komponentene til eksisterende `ExerciseWindow`, `AnalysisSubsystem`, `SmartCoachSubsystem`
+- **Database-migreringsskript**: SQL for å legge til nødvendige kolonner/tabeller i femvoice.db
+- **Lokaliserings-nøkkelliste**: Tabell med alle nye localization keys og foreslåtte norske/engelske tekster
+
+Koden skal være klar til å copy-paste inn i FemVoice Studio-prosjektet og kompilere uten endringer.

@@ -1,0 +1,108 @@
+You are a senior C# and WPF architect specializing in real-time audio signal processing, MVVM architecture, and OxyPlot visualization. You have deep expertise in event-driven systems and thread-safe UI updates in WPF applications.
+
+## Context
+
+I'm working on FemVoice Studio, a voice training application. The pitch visualization chart is already correctly implemented in the UI using OxyPlot, but it's not receiving real-time data. When users click "Start økt" (Start session), the pitch graph remains static with no movement.
+
+**Root cause:** AudioAnalysisEngine is not continuously pushing pitch updates to MainViewModel, so the OxyPlot graph never receives real-time values.
+
+The UI and chart components are working correctly and should not be modified. Only the data flow pipeline needs to be fixed.
+
+**Current technical stack:**
+- NAudio.Dsp.FastFourierTransform for FFT-based pitch detection
+- WasapiCapture as default audio capture (with WaveInEvent fallback)
+- Existing AudioAnalysisEngine.cs class that needs events added
+
+## Your Task
+
+Implement a clean, event-driven real-time pipeline that streams pitch data from AudioAnalysisEngine through MainViewModel to the existing OxyPlot chart. The architecture must follow strict MVVM principles with no polling, no code-behind logic, and proper thread safety.
+
+## Implementation Requirements
+
+**AudioAnalysisEngine modifications:**
+
+Add real-time events to the existing AudioAnalysisEngine class:
+
+```csharp
+public event Action<double> PitchUpdated;
+public event Action<double> SmoothedPitchUpdated; // optional
+```
+
+When pitch is calculated in the NAudio FFT processing loop, immediately invoke:
+
+```csharp
+PitchUpdated?.Invoke(detectedPitch);
+```
+
+The engine must run continuously while recording is active, emitting pitch values as they are detected. Use WasapiCapture as the primary audio capture method with WaveInEvent as fallback.
+
+**MainViewModel modifications:**
+
+Subscribe to audio events when recording starts:
+
+```csharp
+_audioEngine.PitchUpdated += OnPitchUpdated;
+```
+
+Handle pitch updates with proper dispatcher marshalling:
+
+```csharp
+private void OnPitchUpdated(double pitch)
+{
+    Application.Current.Dispatcher.Invoke(() =>
+    {
+        CurrentPitch = pitch;
+        SmoothedPitch = _pitchSmoother.Apply(pitch);
+        
+        OnPropertyChanged(nameof(CurrentPitch));
+        OnPropertyChanged(nameof(SmoothedPitch));
+    });
+}
+```
+
+Unsubscribe when recording stops to prevent memory leaks.
+
+**Recording lifecycle:**
+
+When `IsRecording = true`: Start the audio engine with `_audioEngine.Start();`
+
+When recording stops: Call `_audioEngine.Stop();` and properly dispose of all event subscriptions.
+
+The chart will automatically respond to PropertyChanged notifications—no additional chart-specific code is needed.
+
+## Critical Constraints
+
+Your implementation must NOT:
+- Use DispatcherTimer or any polling mechanism for audio data
+- Retrieve pitch values directly from UI components
+- Mix audio processing logic into views or code-behind
+- Create workarounds in the graph rendering code
+
+The solution must be purely event-driven following MVVM architecture.
+
+## Expected Outcome
+
+When recording starts, the system should exhibit:
+- Continuous pitch values streaming from the engine
+- SmoothedPitch updating in real-time
+- OxyPlot graph showing live movement
+- ComfortZone and color indicators responding correctly
+- SmartCoach and FemVoiceScore receiving live data
+
+## Testing Requirements
+
+Provide a mock AudioAnalysisEngine implementation that emits test pitch values to verify:
+- MainViewModel updates continuously without blocking
+- The graph receives data points without UI freezing
+- Event subscription and disposal work correctly
+
+## Deliverables
+
+Provide production-ready code for:
+
+1. **AudioAnalysisEngine.cs** - Event-based real-time output implementation using NAudio.Dsp.FastFourierTransform
+2. **MainViewModel.cs** - Event subscription, dispatcher handling, and lifecycle management  
+3. **Recording lifecycle management** - Start/stop logic with proper cleanup
+4. **Brief architectural explanation** - Why this event-driven approach ensures thread-safe, responsive real-time updates
+
+Ensure all code follows C# best practices with proper null checking, disposal patterns, and clear separation of concerns.

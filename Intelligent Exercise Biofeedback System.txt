@@ -1,0 +1,275 @@
+You are a senior clinical voice-technology architect with expertise in real-time biofeedback systems, adaptive motor learning, Clean Architecture in .NET 10, WPF MVVM patterns, and acoustic signal processing for voice training applications.
+
+**Context**
+
+You're implementing an intelligent exercise biofeedback system for FemVoice Studio, a voice feminization training platform serving mixed-experience users (beginners through advanced). The platform uses a research-based clinical framework that prioritizes resonance over pitch, employs adaptive thresholds personalized per user (no fixed Hz targets), and enforces automatic vocal health protection.
+
+**Existing Production Infrastructure**
+
+The codebase follows Clean Architecture with strict layer separation (domain/services/UI), uses MVVM in WPF, constructor dependency injection, repository interfaces per entity, and direct C# event-driven communication between engines (no polling, no mediator pattern). Current test coverage: 174 passing unit tests.
+
+Production-ready engines already implemented:
+- AudioAnalysisEngine: FFT pitch detection, smoothing, confidence scoring
+- ResonanceProxyEngine: formant-based feminine resonance scoring
+- FemVoiceScoreEngine: adaptive composite scoring with personal baseline tracking
+- ComfortZoneController: dynamic pitch safety with strain detection and safety locks
+- SmartCoachEngine: context-aware coaching message generation
+- HealthMonitoring: vocal health scoring system
+- Real-time pitch graph visualization
+- Real-time spectrogram visualization
+
+Configuration uses hybrid pattern: defaults in code with override support.
+
+**Your Task**
+
+Implement a complete intelligent exercise biofeedback system that transforms static exercise flows into adaptive real-time training modules. The system must continuously react to live microphone input, adapt to individual user physiology, integrate inline coaching feedback, visualize resonance intelligence through the spectrogram, and automatically protect vocal health during all exercises.
+
+**Component 1: ExerciseIntelligenceCoordinator Service**
+
+Create the central coordination service that orchestrates real-time exercise intelligence.
+
+Subscriptions (listen to these existing engines):
+- ResonanceProxyEngine (formant analysis results)
+- FemVoiceScoreEngine (composite scoring events)
+- ComfortZoneController (safety lock events)
+- PitchAnalysisEngine (pitch detection events)
+- HealthMonitoring (health score updates)
+
+Publications (emit these events):
+- `ExerciseUpdated` event with `ExerciseLiveState` payload
+- `InlineCoachUpdated` event with `InlineCoachMessage` payload
+
+Core responsibilities:
+- Evaluate exercise performance against adaptive thresholds (not fixed targets)
+- Calculate stability scores based on user-adapted thresholds
+- Detect and validate hold correctness during sustained exercises
+- Prioritize metrics per exercise type (resonance-primary vs pitch-primary)
+- Enforce safety locks from ComfortZoneController and HealthMonitoring
+- Generate real-time performance quality assessments
+- Coordinate inline coaching triggers
+- Support progressive difficulty adaptation based on user improvement
+
+Implementation requirements:
+- Thread-safe for real-time audio thread interactions
+- Event-driven only (absolutely no polling loops or DispatcherTimers)
+- Follow existing repository pattern if state persistence needed
+- Use constructor dependency injection for all dependencies
+- Include XML documentation for public APIs
+
+**Component 2: Data Models**
+
+**ExerciseTargetProfile**
+Define per-exercise training goals with these properties:
+- PrimaryMetric (enum: Resonance/Pitch/Stability/Intensity)
+- SecondaryMetric (enum: same options)
+- AdaptiveRangeMinimum (0-1 normalized scale)
+- AdaptiveRangeMaximum (0-1 normalized scale)
+- RequiredHoldDurationSeconds (double)
+- UserAdaptedStabilityThreshold (calculated per user, not fixed)
+- ExerciseType (enum or string identifier)
+- DifficultyLevel (for progression tracking)
+
+**ExerciseLiveState**
+Real-time exercise state containing:
+- PrimaryMetricScore (double, 0-1 normalized)
+- SecondaryMetricScore (double, 0-1 normalized)
+- StabilityScore (double, 0-1 normalized, computed from variance)
+- IsInComfortZone (bool, from ComfortZoneController)
+- IsHoldingCorrectly (bool, meets target and stability criteria)
+- HoldProgress (double, 0-1, time-based progress toward hold duration)
+- IsSafetyLocked (bool, true when safety freeze active)
+- PerformanceQuality (enum: Excellent/Good/Fair/NeedsWork/Unsafe)
+- Timestamp (DateTimeOffset for event sequencing)
+
+**InlineCoachMessage**
+Coaching hint for real-time display:
+- MessageText (string, short human-friendly hint without numbers, max ~60 characters)
+- ReasonCode (enum for internal tracking: BrightenResonance/StabilizePitch/ReduceStrain/Hydrate/etc)
+- SeverityLevel (enum: Info/Suggestion/Warning)
+- AutoDismissAfterSeconds (double?, null for manual dismiss)
+- Timestamp (DateTimeOffset)
+
+Include XML documentation and validation logic where appropriate.
+
+**Component 3: Spectrogram Intelligence Layer**
+
+Enhance the existing spectrogram visualization with resonance-focused intelligence features:
+
+Visual enhancements:
+- Overlay formant peak markers for F1, F2, F3 (first three formants)
+- Highlight feminine resonance zones with color-coding based on brightness/darkness criteria
+- Use smooth interpolation for pedagogical clarity (avoid raw spectral noise)
+- Map real-time resonance score from ResonanceProxyEngine to visual indicators
+- Differentiate between target zones and current performance visually
+
+Clinical integration:
+- Bind resonance score directly to spectral display (show correlation)
+- Make spectrogram the primary feedback mechanism for resonance-focused exercises
+- Design for immediate learner comprehension (form follows teaching function)
+- Support both real-time feedback and post-exercise review modes
+
+Implementation:
+- Extend existing spectrogram rendering without breaking current functionality
+- Use WPF best practices for high-frequency visual updates
+- Keep visualization logic separated from analysis logic (follow Clean Architecture)
+- No UI logic in domain/service layers
+
+**Component 4: HydrationAdvisor**
+
+Implement physiology-driven hydration and fatigue detection (no arbitrary timers).
+
+Trigger inline coaching hints when detecting:
+- Resonance brightness drop (formant energy reduction over sliding window)
+- Jitter increase (pitch stability degradation)
+- Stability score decline (increased variance in target metrics)
+- Accumulated session vocal load (integrated strain over time)
+
+Detection criteria:
+- Use statistical thresholds based on user's baseline performance
+- Calculate rolling averages to avoid false positives from momentary fluctuations
+- Weight recent samples more heavily (exponential moving average or similar)
+- Coordinate with HealthMonitoring for comprehensive fatigue assessment
+
+Messaging:
+- Trigger SmartCoachEngine with appropriate reason codes
+- Suggest breaks, hydration, or technique adjustments based on specific indicators
+- Escalate severity if physiological indicators worsen
+- Never use fixed time intervals (e.g., "every 15 minutes")
+
+**Component 5: Safety Rules Integration**
+
+Implement automatic safety freeze behavior when vocal health is at risk.
+
+Freeze conditions (if ANY of these are true):
+- HealthScore < 70 (from HealthMonitoring system)
+- ComfortZoneController has active safety lock
+- Sustained strain detected across multiple metrics
+
+Freeze behavior:
+- Immediately freeze progression tracking
+- Pause hold timer (don't penalize hold progress during safety events)
+- Emit InlineCoachMessage with Warning severity explaining the freeze
+- Continue visual feedback (pitch graph, spectrogram) so user understands current state
+- Disable scoring until safety conditions clear
+
+Recovery:
+- Automatically resume when safety conditions clear
+- Resume hold timer from paused state (don't reset)
+- Log safety freeze events for clinical review
+
+**Component 6: Unit Tests**
+
+Provide comprehensive unit test coverage using existing test framework patterns (NUnit, xUnit, or MSTest based on codebase).
+
+Required test scenarios:
+
+Adaptive Threshold Tests:
+- Verify threshold calculation adjusts to user baseline
+- Test threshold updates when user improves over time
+- Confirm no hardcoded Hz values in threshold logic
+
+Hold Detection Tests:
+- Test hold timer starts only when criteria met
+- Verify hold timer pauses during safety freezes
+- Confirm hold completes when duration reached
+- Test hold resets when user leaves target zone
+
+Safety Freeze Tests:
+- Test freeze activates when HealthScore < 70
+- Verify freeze activates on ComfortZoneController lock
+- Confirm hold timer pauses during freeze
+- Test scoring stops during freeze
+- Verify visual feedback continues during freeze
+
+Resonance Feedback Tests:
+- Test resonance-primary exercises prioritize resonance metric
+- Verify inline coaching triggers for brightness issues
+- Test spectrogram intelligence mappings
+
+Hydration Trigger Tests:
+- Test brightness drop detection over time windows
+- Verify jitter increase detection
+- Confirm accumulated load calculation
+- Test hydration hint generation without timers
+
+SmartCoach Integration Tests:
+- Verify reason codes map to appropriate messages
+- Test severity level assignments
+- Confirm auto-dismiss timing logic
+
+Test constraints:
+- No UI dependencies (use ViewModels or service layer only)
+- Mock external dependencies (audio input, file I/O)
+- Test thread safety where applicable
+- Follow AAA pattern (Arrange/Act/Assert)
+- Include both positive and negative test cases
+
+**Integration and Wiring**
+
+Show how components integrate through dependency injection:
+
+```csharp
+// Example DI registration pattern (adapt to your container)
+services.AddSingleton<IExerciseIntelligenceCoordinator, ExerciseIntelligenceCoordinator>();
+services.AddTransient<IHydrationAdvisor, HydrationAdvisor>();
+// ... additional registrations
+```
+
+Demonstrate event subscription patterns following existing codebase conventions:
+
+```csharp
+// Example subscription pattern
+_resonanceEngine.ResonanceUpdated += OnResonanceUpdated;
+_comfortZoneController.SafetyLockChanged += OnSafetyLockChanged;
+```
+
+Show how ViewModels consume the new services without violating layer boundaries.
+
+**Implementation Guidelines**
+
+Clinical logic comments:
+- Explain WHY certain thresholds or algorithms were chosen (cite clinical reasoning)
+- Document adaptive algorithm behavior with inline comments
+- Clarify formant analysis interpretations in spectrogram layer
+- Note physiology-based trigger rationale in HydrationAdvisor
+
+Code quality:
+- Production-ready: handle edge cases, null checks, thread safety
+- Error handling: graceful degradation if engines unavailable
+- Logging: appropriate log levels for clinical debugging
+- Performance: optimize for real-time constraints (audio thread timing)
+
+Architecture adherence:
+- Respect Clean Architecture layer boundaries
+- No domain logic in ViewModels
+- No UI dependencies in services
+- Use repository interfaces for any persistence
+- Follow existing naming conventions and file structure
+
+**Expected Deliverables**
+
+Provide complete, ready-to-integrate C# code including:
+
+1. ExerciseIntelligenceCoordinator.cs (full implementation)
+2. ExerciseTargetProfile.cs, ExerciseLiveState.cs, InlineCoachMessage.cs (models with XML docs)
+3. SpectrogramIntelligenceLayer.cs (or extension to existing spectrogram class)
+4. HydrationAdvisor.cs (full implementation)
+5. SafetyRulesIntegration.cs (or integration within Coordinator)
+6. IExerciseIntelligenceRepository.cs (if state persistence needed)
+7. ExerciseIntelligenceCoordinatorTests.cs (comprehensive test suite)
+8. Integration examples showing DI wiring and event subscriptions
+9. Configuration defaults in code (hybrid config pattern)
+
+**Success Criteria**
+
+The implementation should enable FemVoice Studio to function as a clinically intelligent, adaptive real-time biofeedback training system where:
+
+- Exercises continuously respond to live vocal input rather than following static scripts
+- Resonance training receives primary pedagogical focus with sophisticated spectral visualization
+- Each user receives personalized adaptive thresholds based on their vocal baseline
+- Vocal health protection is automatic and non-intrusive
+- Coaching feedback is contextual, physiology-driven, and actionable
+- Users of all experience levels receive appropriate difficulty calibration
+- The system supports long-term progression tracking and adaptation
+
+Deliver production-quality code that integrates seamlessly with the existing 174-test codebase while following all established architectural patterns and clinical principles.

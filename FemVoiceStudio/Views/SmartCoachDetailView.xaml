@@ -1,0 +1,378 @@
+<Window x:Class="FemVoiceStudio.Views.SmartCoachDetailWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:FemVoiceStudio.ViewModels"
+        xmlns:converters="clr-namespace:FemVoiceStudio.Converters"
+        xmlns:loc="clr-namespace:FemVoiceStudio.Converters"
+        mc:Ignorable="d"
+        Title="{loc:Loc SmartCoach_Title}"
+        Height="700" Width="900"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BackgroundSecondaryBrush}">
+    
+    <Window.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+        <converters:InverseBoolConverter x:Key="InverseBool"/>
+        <converters:BoolToButtonTextConverter x:Key="BoolToButtonText"/>
+        <converters:ZeroToVisibilityConverter x:Key="ZeroToVisibility"/>
+        
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource BackgroundCardBrush}"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1" Direction="270"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+        
+        <Style x:Key="StatLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+        </Style>
+        
+        <Style x:Key="StatValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        </Style>
+        
+        <!-- Primary Button Style -->
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource AccentPrimaryBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccentSecondaryBrush}"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccentTertiaryBrush}"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="{DynamicResource BackgroundTertiaryBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,24">
+                <StackPanel Orientation="Horizontal">
+                    <Border Background="{DynamicResource AccentPrimaryBrush}" CornerRadius="8" Padding="10,6" Margin="0,0,12,0">
+                        <TextBlock Text="&#xE7BC;" FontFamily="Segoe MDL2 Assets" FontSize="24" Foreground="{DynamicResource TextOnAccentBrush}"/>
+                    </Border>
+                    <TextBlock Text="{loc:Loc SmartCoach_Title}" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                </StackPanel>
+                <TextBlock Text="{Binding StatusSummary}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,8,0,0"/>
+            </StackPanel>
+            
+            <!-- Today's Focus Card -->
+            <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,0,0,20">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{loc:Loc SmartCoach_TodaysFocus}" Style="{StaticResource SectionTitle}"/>
+                        
+                        <!-- Focus Badge -->
+                        <Border Background="{DynamicResource AccentLightBrush}" 
+                                CornerRadius="4" 
+                                Padding="10,5" 
+                                HorizontalAlignment="Left"
+                                Margin="0,0,0,12">
+                            <TextBlock Text="{Binding TodayFocus}" 
+                                       FontSize="13" 
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource AccentSecondaryBrush}"/>
+                        </Border>
+                        
+                        <!-- Recommendation -->
+                        <TextBlock Text="{Binding TodayRecommendation}" 
+                                   FontSize="14" 
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   TextWrapping="Wrap"
+                                   LineHeight="22"/>
+                        
+                        <!-- Health Warning -->
+                        <Border Background="#33FF5555" 
+                                CornerRadius="6" 
+                                Padding="12,10" 
+                                Margin="0,12,0,0"
+                                Visibility="{Binding HasHealthWarning, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="⚠️" FontSize="16" Margin="0,0,10,0"/>
+                                <TextBlock Text="{Binding HealthWarningText}" 
+                                           FontSize="13" 
+                                           Foreground="#FFFF8888"
+                                           TextWrapping="Wrap"
+                                           MaxWidth="500"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                    
+                    <!-- Duration & Action -->
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="30,0,0,0">
+                        <TextBlock Text="{Binding RecommendedDuration, StringFormat={}{0} min}" 
+                                   FontSize="32" 
+                                   FontWeight="Bold" 
+                                   Foreground="{DynamicResource AccentPrimaryBrush}"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="{loc:Loc SmartCoach_Recommended}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,4,0,12"/>
+                        
+                        <Button Content="{Binding IsRecommendationCompleted, Converter={StaticResource BoolToButtonText}}"
+                                Command="{Binding CompleteRecommendationCommand}"
+                                Style="{StaticResource PrimaryButton}"
+                                IsEnabled="{Binding IsRecommendationCompleted, Converter={StaticResource InverseBool}}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            
+            <!-- Quick Stats Row -->
+            <Grid Grid.Row="2" Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Streak -->
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="&#xE945;" FontFamily="Segoe MDL2 Assets" FontSize="28" Foreground="{DynamicResource AccentPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                        <TextBlock Text="{Binding CurrentStreak}" Style="{StaticResource StatValue}" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{loc:Loc SmartCoach_DayStreak}" Style="{StaticResource StatLabel}"/>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Sessions This Week -->
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="10,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="28" Foreground="{DynamicResource AccentSecondaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                        <TextBlock Text="{Binding SessionsThisWeek}" Style="{StaticResource StatValue}" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{loc:Loc SmartCoach_SessionsThisWeek}" Style="{StaticResource StatLabel}"/>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Minutes This Week -->
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}" Margin="10,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="&#xE916;" FontFamily="Segoe MDL2 Assets" FontSize="28" Foreground="{DynamicResource InfoBrush}" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                        <TextBlock Text="{Binding MinutesThisWeek, StringFormat={}{0} min}" Style="{StaticResource StatValue}" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{loc:Loc SmartCoach_TotalTimeThisWeek}" Style="{StaticResource StatLabel}"/>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Health Score -->
+                <Border Grid.Column="3" Style="{StaticResource CardStyle}" Margin="10,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="&#xE8E1;" FontFamily="Segoe MDL2 Assets" FontSize="28" Foreground="{DynamicResource SuccessBrush}" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                        <TextBlock Text="{Binding HealthScore, StringFormat={}{0:F0}%}" Style="{StaticResource StatValue}" Foreground="{DynamicResource SuccessBrush}" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{loc:Loc SmartCoach_VoiceHealth}" Style="{StaticResource StatLabel}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+            
+            <!-- Progress Section -->
+            <Border Grid.Row="3" Style="{StaticResource CardStyle}" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc SmartCoach_ProgressToGoal}" Style="{StaticResource SectionTitle}"/>
+                    
+                    <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <!-- Pitch Progress -->
+                        <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                            <TextBlock Text="{loc:Loc Dashboard_Pitch}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+                            <Grid>
+                                <ProgressBar Value="{Binding PitchProgress}" Maximum="100" Height="8" 
+                                             Background="{DynamicResource BackgroundTertiaryBrush}" 
+                                             Foreground="{DynamicResource AccentPrimaryBrush}">
+                                    <ProgressBar.Template>
+                                        <ControlTemplate TargetType="ProgressBar">
+                                            <Grid>
+                                                <Border x:Name="PART_Track" 
+                                                        Background="{TemplateBinding Background}" 
+                                                        CornerRadius="4"/>
+                                                <Border x:Name="PART_Indicator" 
+                                                        Background="{TemplateBinding Foreground}" 
+                                                        CornerRadius="4" 
+                                                        HorizontalAlignment="Left"/>
+                                            </Grid>
+                                        </ControlTemplate>
+                                    </ProgressBar.Template>
+                                </ProgressBar>
+                            </Grid>
+                            <TextBlock Text="{Binding PitchProgress, StringFormat={}{0:F0}%}" 
+                                       FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,4,0,0"/>
+                        </StackPanel>
+                        
+                        <!-- Resonance Progress -->
+                        <StackPanel Grid.Column="1" Margin="15,0,15,0">
+                            <TextBlock Text="{loc:Loc Dashboard_Resonance}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+                            <Grid>
+                                <ProgressBar Value="{Binding ResonanceProgress}" Maximum="100" Height="8" 
+                                             Background="{DynamicResource BackgroundTertiaryBrush}" 
+                                             Foreground="{DynamicResource AccentMutedBrush}">
+                                    <ProgressBar.Template>
+                                        <ControlTemplate TargetType="ProgressBar">
+                                            <Grid>
+                                                <Border x:Name="PART_Track" 
+                                                        Background="{TemplateBinding Background}" 
+                                                        CornerRadius="4"/>
+                                                <Border x:Name="PART_Indicator" 
+                                                        Background="{TemplateBinding Foreground}" 
+                                                        CornerRadius="4" 
+                                                        HorizontalAlignment="Left"/>
+                                            </Grid>
+                                        </ControlTemplate>
+                                    </ProgressBar.Template>
+                                </ProgressBar>
+                            </Grid>
+                            <TextBlock Text="{Binding ResonanceProgress, StringFormat={}{0:F0}%}" 
+                                       FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,4,0,0"/>
+                        </StackPanel>
+                        
+                        <!-- Intonation Progress -->
+                        <StackPanel Grid.Column="2" Margin="15,0,0,0">
+                            <TextBlock Text="{loc:Loc Dashboard_Intonation}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+                            <Grid>
+                                <ProgressBar Value="{Binding IntonationProgress}" Maximum="100" Height="8" 
+                                             Background="{DynamicResource BackgroundTertiaryBrush}" 
+                                             Foreground="{DynamicResource InfoBrush}">
+                                    <ProgressBar.Template>
+                                        <ControlTemplate TargetType="ProgressBar">
+                                            <Grid>
+                                                <Border x:Name="PART_Track" 
+                                                        Background="{TemplateBinding Background}" 
+                                                        CornerRadius="4"/>
+                                                <Border x:Name="PART_Indicator" 
+                                                        Background="{TemplateBinding Foreground}" 
+                                                        CornerRadius="4" 
+                                                        HorizontalAlignment="Left"/>
+                                            </Grid>
+                                        </ControlTemplate>
+                                    </ProgressBar.Template>
+                                </ProgressBar>
+                            </Grid>
+                            <TextBlock Text="{Binding IntonationProgress, StringFormat={}{0:F0}%}" 
+                                       FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                    
+                    <!-- Baseline Confidence -->
+                    <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                        <TextBlock Text="{loc:Loc SmartCoach_BaselineConfidence}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}"/>
+                        <TextBlock Text=": " FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}"/>
+                        <TextBlock Text="{Binding BaselineConfidence}" FontSize="12" Foreground="{DynamicResource AccentSecondaryBrush}" FontWeight="Medium"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            
+            <!-- Weekly Progress & Messages -->
+            <Grid Grid.Row="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Weekly History -->
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc SmartCoach_WeeklyHistory}" Style="{StaticResource SectionTitle}"/>
+                        
+                        <ItemsControl ItemsSource="{Binding WeeklyProgressList}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{DynamicResource BackgroundTertiaryBrush}" CornerRadius="6" Padding="12,10" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <TextBlock Grid.Column="0" Text="{Binding WeekLabel}" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Sessions, StringFormat={}{0} økter}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,15,0" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding AverageScore, StringFormat={}{0:F0}%}" FontSize="12" Foreground="{DynamicResource SuccessBrush}" FontWeight="Medium" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Messages -->
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="10,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc SmartCoach_Messages}" Style="{StaticResource SectionTitle}"/>
+                        
+                        <ItemsControl ItemsSource="{Binding RecentMessages}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{DynamicResource BackgroundTertiaryBrush}" CornerRadius="6" Padding="12,10" Margin="0,0,0,8">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                            <TextBlock Text="{Binding Message}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        
+                        <TextBlock Text="{loc:Loc SmartCoach_NoNewMessages}" 
+                                   Foreground="{DynamicResource TextTertiaryBrush}" 
+                                   FontSize="13"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,20,0,0"
+                                   Visibility="{Binding RecentMessages.Count, Converter={StaticResource ZeroToVisibility}}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</Window>

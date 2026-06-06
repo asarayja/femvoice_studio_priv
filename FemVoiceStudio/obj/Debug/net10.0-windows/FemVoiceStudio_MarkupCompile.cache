@@ -1,0 +1,20 @@
+﻿FemVoiceStudio
+1.0.0.0
+
+exe
+C#
+.cs
+C:\Users\Asarayja\Desktop\FemVoice Studio\FemVoiceStudio\obj\Debug\net10.0-windows\
+FemVoiceStudio
+none
+false
+TRACE;DEBUG;NET;NET10_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NET9_0_OR_GREATER;NET10_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
+C:\Users\Asarayja\Desktop\FemVoice Studio\FemVoiceStudio\App.xaml
+19440588475
+2-1523159286
+185-1464071715
+245-753030781
+Themes\DarkTheme.xaml;Themes\LightTheme.xaml;Views\AnalysisWindow.xaml;Views\AnalyzerWindow.xaml;Views\CalendarWindow.xaml;Views\DayDetailsWindow.xaml;Views\ExerciseSummaryView.xaml;Views\ExerciseWindow.xaml;Views\FirstTimeSetupWindow.xaml;Views\LiveFeedbackView.xaml;Views\MainWindow.xaml;Views\MicrophoneCalibrationWindow.xaml;Views\ProgressionDashboard.xaml;Views\ProgressionWindow.xaml;Views\ResonanceWindow.xaml;Views\SettingsWindow.xaml;Views\SmartCoachDashboardView.xaml;Views\SmartCoachDetailView.xaml;Views\StatisticsWindow.xaml;
+
+True
+

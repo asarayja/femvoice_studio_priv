@@ -1,0 +1,432 @@
+# FemVoice Studio – Arkitekturrefaktorering til Testbar MVVM
+
+Du er en senior C#/WPF-arkitekt med erfaring fra kliniske helseapplikasjoner og testbar MVVM-arkitektur. Din oppgave er å refaktorere FemVoice Studio fra teknisk gjeld til profesjonell, testbar arkitektur uten å endre eksisterende funksjonalitet.
+
+## Kontekst
+
+FemVoice Studio er en klinisk helseapplikasjon for voice feminization training med moduler for progresjon, helse, SmartCoach, og ComplexityEngine. Applikasjonen bruker .NET 10, WPF, xUnit for testing, og Moq/in-memory patterns for mocking.
+
+**Nåværende arkitekturproblemer:**
+
+- Domene-modeller ligger feilplassert inne i DatabaseService.cs og andre servicefiler
+- Services avhenger av konkret `DatabaseService` class istedenfor interface
+- Static singletons (LocalizationService.Instance, DebugSettingsService.Instance, ThemeManager.Instance, FirstTimeSetupService.Instance) blokkerer dependency injection
+- ViewModels bruker allerede constructor injection—dette mønsteret skal utvides til services
+- Unit tests kan ikke kjøre uten ekte database eller filsystem
+- Modeller spredt over Services-namespace istedenfor dedikert Models-namespace
+
+**Referansefilene** (alle vedlagt) dokumenterer eksisterende arkitektur med konkrete eksempler på problemene som skal fikses. Les disse for å forstå dagens struktur før refaktoreringen.
+
+## Suksesskriterier
+
+✅ Alle unit tests kjører med in-memory test-implementasjoner (ingen ekte database/filsystem)
+✅ Domene-modeller er UI- og database-uavhengige, samlet i Models-namespace
+✅ Services bruker constructor injection av interfaces
+✅ Ingen static singletons for data eller tjenester
+✅ Ingen adapter-hack eller workarounds
+✅ All eksisterende funksjonalitet fungerer uendret
+✅ Koden kompilerer i .NET 10
+
+---
+
+## Del 1: Domene-Modeller til Models-Namespace
+
+**Flytt alle domene-modeller ut av servicefiler til dedikert Models-mappe.**
+
+**Modeller identifisert i vedlagte filer for migrering:**
+
+**Fra DatabaseService.cs:**
+- VoiceMetrics
+- FemVoiceScoreResult
+- ProgressionDecision
+- ComplexityEvaluation
+- SubjectiveReport
+- HealthState (enum)
+- StabilityState (enum)
+- TrainingLoad
+- WeeklySchedule
+
+**Fra FemVoiceScore.cs:**
+- FemVoiceScoreInput
+- FemVoiceScoreResult (hvis duplikat, konsolider)
+
+**Fra AdaptiveDifficultyService.cs:**
+- SessionPerformance
+- DifficultyRecommendation
+- ExerciseRecommendation
+
+**Fra DirectionAnalyzer.cs:**
+- DirectionRecommendation
+- DirectionAnalysisResult
+- Direction (enum)
+
+**Fra CoachMessageGenerator.cs:**
+- CoachMessage
+
+**Fra ExerciseTextService.cs:**
+- ExerciseText
+
+**Fra ExerciseFeedbackEngine.cs:**
+- ExerciseEvaluationResult
+- SessionEvaluationSummary
+- ExerciseDefinition
+
+**Fra GamificationService.cs:**
+- UserProgressData
+- AchievementData
+- SessionReward
+
+**Fra HealthStatus.cs:**
+- HealthStatus (enum)
+
+**Fra LevelClassificationSystem.cs:**
+- LevelClassificationResult
+- TrainingLevel (enum)
+
+**Fra LiveMetricsService.cs:**
+- HealthSnapshot
+
+**Fra PeriodizationService.cs:**
+- PeriodizationState
+- PeriodizationConfig
+- PeriodizationResult
+- WeeklyTrainingStats
+- TrainingPhase (enum)
+
+**Fra ProgressionConfig.cs:**
+- ProgressionEvaluationResult (hvis ikke allerede i Models)
+
+**Fra ProgressionService.cs:**
+- ProgressionResult
+- ProgressionStatus
+- MilestoneFeedback
+- SafetyLockStatus
+- SafetyLockEventArgs
+
+**Fra SmartCoachEngine.cs:**
+- SmartCoachBaseline
+- SmartCoachWeeklyProgress
+- SmartCoachGoal
+- SmartCoachDailyRecommendation
+- SmartCoachHealthMonitoring
+
+**Fra TrainingFrequencyService.cs:**
+- TrainingStatus
+
+**Fra TrendAlertService.cs:**
+- BaseAlert
+- HealthTrendRecommendation
+- PitchAlert
+- IntensityAlert
+- SafetyCheckResult
+
+**Fra TrendAnalysisService.cs:**
+- TrendResult
+- TrendDirection (enum)
+- PitchPatternResult
+- PitchPattern (enum)
+- CalendarDay
+
+**Fra VoiceFeminizationExerciseService.cs:**
+- EnhancedExercise
+
+**Fra VoiceHealthMonitor.cs:**
+- VoiceHealthConfig
+- HealthAnalysisResult
+- HealthReport
+- HealthIncident
+- StrainIncidentSummary
+
+**Fra FirstTimeSetupService.cs:**
+- AppSettings
+
+**Fra AdaptiveComfortZoneService.cs:**
+- Range
+- HealthSnapshot (hvis duplikat, konsolider)
+- CoachExplanationContext
+- SessionType (enum)
+
+**Fra CoachMessageFormatter.cs:**
+- SessionEvaluationSummary (hvis duplikat, konsolider)
+- HealthIndicator (enum)
+
+**Fra FeedbackService.cs:**
+- FeedbackCollection
+- Feedback
+
+**Regler:**
+- Ingen database- eller UI-avhengigheter i modeller
+- Kun properties med enkel validering (DataAnnotations hvis nødvendig)
+- Alle referanser til disse modellene skal oppdateres til `using FemVoiceStudio.Models;`
+- Konsolider duplikater (f.eks. HealthSnapshot, SessionEvaluationSummary)
+
+---
+
+## Del 2: Interface-Basert Dependency Injection
+
+**Opprett `IDatabaseService` interface** med minimum disse operasjonene (utvid basert på metodekall i vedlagte filer):
+
+```csharp
+public interface IDatabaseService
+{
+    // Session management
+    Task SaveSessionAsync(SessionData data);
+    Task<List<SessionData>> LoadSessionsAsync(int userId);
+    Task<List<TrainingSession>> GetTrainingSessions(int userId, DateTime? startDate = null);
+    Task<TrainingSession?> GetSessionById(int sessionId);
+    
+    // Complexity progression
+    Task SaveComplexityProgressAsync(ComplexityProgress progress);
+    Task<ComplexityProgress> LoadComplexityProgressAsync(int userId);
+    
+    // SmartCoach baseline & goals
+    Task SaveBaselineAsync(SmartCoachBaseline baseline);
+    Task<SmartCoachBaseline?> GetBaselineAsync(int userId);
+    Task SaveGoalsAsync(List<SmartCoachGoal> goals);
+    Task<List<SmartCoachGoal>> GetActiveGoalsAsync(int userId);
+    
+    // Health monitoring
+    Task<List<HealthIssue>> GetRecentHealthIssuesAsync(int userId, int days);
+    Task SaveHealthIncidentAsync(HealthIncident incident);
+    
+    // Gamification
+    Task SaveUserProgressAsync(UserProgressData progress);
+    Task<UserProgressData> GetUserProgressAsync(int userId);
+    Task<List<AchievementData>> GetAllAchievementsAsync(int userId);
+    
+    // User settings
+    Task<UserSettings> GetUserSettingsAsync(int userId);
+    Task SaveUserSettingsAsync(UserSettings settings);
+    
+    // FemVoiceScore results
+    Task SaveFemVoiceScoreResultAsync(FemVoiceScoreResult result);
+    Task<List<FemVoiceScoreResult>> GetRecentScoresAsync(int userId, int count);
+}
+```
+
+**Implementer `DatabaseService : IDatabaseService`** med eksisterende SQLite-logikk.
+
+**Implementer `TestDatabaseService : IDatabaseService`** med:
+- In-memory collections (`Dictionary<int, List<T>>` for user-scoped data)
+- Thread-safe operasjoner (bruk `ConcurrentDictionary` hvis nødvendig)
+- Ingen file I/O eller database-kall
+- Synkron returnering av Task-wrappede resultater for unit tests
+
+---
+
+**Opprett `ILocalizationService` interface:**
+
+```csharp
+public interface ILocalizationService
+{
+    string CurrentLanguage { get; }
+    string GetString(string key);
+    string GetFormattedString(string key, params object[] args);
+    void SetLanguage(string languageCode);
+    event PropertyChangedEventHandler PropertyChanged;
+}
+```
+
+**Refaktorer `LocalizationService`** til:
+- Implementer `ILocalizationService`
+- Fjern static singleton pattern
+- Accept `ISettingsRepository` i constructor for persistence
+- Behold ResourceManager-logikk og WPF binding support
+
+**Implementer `TestLocalizationService : ILocalizationService`** med:
+- In-memory key-value dictionary
+- Ingen filsystem-operasjoner
+- Returner mock-strings (`$"[{key}]"` format) for test-kontekst
+
+---
+
+**Opprett `ISettingsService` interface:**
+
+```csharp
+public interface ISettingsService
+{
+    bool IsFirstTime { get; }
+    void MarkSetupCompleted();
+    void ResetFirstTimeStatus();
+    
+    AppSettings LoadSettings();
+    void SaveSettings(AppSettings settings);
+}
+```
+
+**Refaktorer `FirstTimeSetupService` og `ThemeManager`** til å bruke `ISettingsService` via constructor injection.
+
+**Implementer `TestSettingsService : ISettingsService`** med in-memory state.
+
+---
+
+**Opprett `IDebugSettingsRepository` og `IDebugLogger` interfaces:**
+
+```csharp
+public interface IDebugSettingsRepository
+{
+    bool EnablePitchDebug { get; set; }
+    bool EnableAnalyzerDebug { get; set; }
+    void LoadSettings();
+    void SaveSettings();
+}
+
+public interface IDebugLogger
+{
+    void LogPitchData(/* parameters */);
+    void LogAnalyzerData(/* parameters */);
+    void CloseLogs();
+}
+```
+
+**Refaktorer `DebugSettingsService`** til å bruke begge interfaces via constructor injection, fjern singleton pattern.
+
+**Implementer test-versjoner** med in-memory state og no-op logging.
+
+---
+
+## Del 3: Refaktorer Services til Constructor Injection
+
+**Services å refaktorere** (identifisert i vedlagte filer):
+
+1. **ProgressionEngine** → inject `IDatabaseService`
+2. **WeeklyPlannerEngine** → inject `IDatabaseService`
+3. **ComplexityEngine** → inject `IDatabaseService`
+4. **SmartCoachEngine** → inject `IDatabaseService`, `ILocalizationService`
+5. **AdaptiveComfortZoneService** → inject `IDatabaseService` (erstatt placeholder-metoder)
+6. **AdaptiveDifficultyService** → ingen DB-avhengighet, behold ren calculation
+7. **CoachMessageFormatter** → inject `ILocalizationService`
+8. **CoachMessageGenerator** → inject `ILocalizationService`
+9. **DebugSettingsService** → inject `IDebugSettingsRepository`, `IDebugLogger`
+10. **DirectionAnalyzer** → ingen DB-avhengighet, behold ren calculation
+11. **ExerciseFeedbackEngine** → ingen DB-avhengighet (in-memory state OK)
+12. **ExerciseTextService** → inject `ILocalizationService`
+13. **FeedbackService** → inject `ILocalizationService`
+14. **FemVoiceScore** → ingen DB-avhengighet, behold ren calculation
+15. **FirstTimeSetupService** → inject `ISettingsService`
+16. **GamificationService** → inject `IDatabaseService`
+17. **LevelClassificationSystem** → inject `IDatabaseService`, `ILocalizationService`
+18. **LiveMetricsService** → ingen DB-avhengighet (real-time state OK)
+19. **PeriodizationService** → inject `IDatabaseService`, `ILocalizationService`
+20. **ProgressionService** → inject `IDatabaseService`, `ILocalizationService`
+21. **SmartCoachExerciseAdapter** → inject `IDatabaseService`, `ILocalizationService` (fjern nullable constructor)
+22. **ThemeManager** → inject `ISettingsService`
+23. **TrainingFrequencyService** → inject `IDatabaseService` (erstatning for ExerciseDataService)
+24. **TrendAlertService** → inject `IDatabaseService`
+25. **TrendAnalysisService** → ingen DB-avhengighet, behold static utility methods
+26. **VoiceFeminizationExerciseService** → inject `ILocalizationService`
+27. **VoiceHealthMonitor** → ingen DB-avhengighet (real-time monitoring OK)
+
+**Mønster:**
+
+```csharp
+public class ProgressionEngine
+{
+    private readonly IDatabaseService _database;
+
+    public ProgressionEngine(IDatabaseService database)
+    {
+        _database = database ?? throw new ArgumentNullException(nameof(database));
+    }
+    
+    // Eksisterende metoder...
+}
+```
+
+**Spesifikke refaktoreringsnotater:**
+
+- **AdaptiveComfortZoneService**: Erstatt `GetRecentSessionScores()` og `GetRecentHealthIssues()` placeholder-metoder med faktiske `_database`-kall
+- **SmartCoachExerciseAdapter**: Fjern parameterless constructor og nullable dependencies—krev eksplisitt injection
+- **PeriodizationService**: Sørg for safety lock state (strain incidents) persisteres via `IDatabaseService` istedenfor in-memory
+- **ProgressionService**: Safety lock state skal også persisteres til database
+
+---
+
+## Del 4: Oppdater Unit Tests
+
+**Refaktorer alle eksisterende xUnit-tester** (FemVoiceScoreTests.cs, LevelClassificationSystemTests.cs, VoiceProfileExtensionsTests.cs, CoachMessageGeneratorTests.cs, DirectionAnalyzerTests.cs):
+
+**Standardmønster for tester:**
+
+```csharp
+[Fact]
+public void TestName()
+{
+    // Arrange
+    var testDb = new TestDatabaseService();
+    var testLocalization = new TestLocalizationService();
+    var engine = new ProgressionEngine(testDb);
+    
+    // Act
+    var result = engine.EvaluateProgression(userId: 1);
+    
+    // Assert
+    Assert.NotNull(result);
+    // Flere assertions...
+}
+```
+
+**Oppdater testdata-setup:**
+- Seed TestDatabaseService med nødvendig testdata (sessions, scores, health issues)
+- Bruk Moq for å mocke interfaces kun når kompleks oppførsel er nødvendig
+- Foretrekk in-memory TestDatabaseService over Moq når mulig for enklere tests
+
+**Test-coverage prioritering:**
+- Services med complex business logic: ProgressionEngine, SmartCoachEngine, ComplexityEngine
+- Scoring-algoritmer: FemVoiceScore, LevelClassificationSystem
+- Safety-mekanismer: VoiceHealthMonitor, PeriodizationService safety locks
+- Feedback-generering: CoachMessageGenerator, DirectionAnalyzer
+
+---
+
+## Del 5: Absolutte Arkitekturregler
+
+**Systemet skal IKKE:**
+
+❌ Ha domene-modeller inne i servicefiler eller DatabaseService
+❌ Bruke static singletons for data eller tjenester (Instance-properties)
+❌ Bruke adapter/wrapper-hacks for å omgå dependency injection
+❌ Koble services direkte til konkrete DatabaseService, LocalizationService, eller andre service-klasser
+❌ Ha unit tests som krever ekte database, filsystem, eller nettverkstilgang
+
+**Systemet skal:**
+
+✅ Bruke constructor injection konsekvent
+✅ Ha klare interface-boundaries mellom lag
+✅ Følge SOLID-prinsipper (spesielt Dependency Inversion)
+✅ Tillate full testbarhet med in-memory implementasjoner
+✅ Separere domene-logikk fra infrastruktur (persistence, UI, I/O)
+
+---
+
+## Del 6: Leveranse
+
+**Levert kodebase skal inneholde:**
+
+1. **Models-namespace** med alle migrerte domene-modeller (50+ filer)
+2. **Interfaces-mappe** med `IDatabaseService`, `ILocalizationService`, `ISettingsService`, `IDebugSettingsRepository`, `IDebugLogger`
+3. **DatabaseService** og **TestDatabaseService** implementasjoner
+4. **LocalizationService** og **TestLocalizationService** implementasjoner
+5. **Alle 27+ refaktorerte services** med constructor injection
+6. **Oppdaterte unit tests** som bruker test-implementasjoner (ingen ekte DB/filsystem)
+7. **Kompilerbar .NET 10-kode** uten warnings relatert til arkitekturbrudd
+
+**Funksjonalitet uendret:**
+- Alle kliniske algoritmer (FemVoiceScore, ProgressionEngine, ComplexityEngine) fungerer identisk
+- UI-oppførsel uendret (ViewModels mottar services via injection som før)
+- Databaseskjema og persistence-logikk uendret (kun abstrahert bak interface)
+- Brukerdataintegritet bevart
+
+---
+
+## Overordnet Mål
+
+FemVoice Studio skal etter refaktoreringen ha profesjonell arkitektur klar for langsiktig vedlikehold og utvidelse:
+
+- **Ren domene-logikk** isolert i Models-namespace
+- **Full testbarhet** uten eksterne avhengigheter
+- **Fleksibel persistence** (kan bytte fra SQLite til annen database ved å implementere IDatabaseService)
+- **Vedlikeholdbar kodebase** uten teknisk gjeld fra tight coupling
+- **Stabil plattform** for videre kliniske features
+
+Dette er fundamentet for videre utvikling av adaptive training algorithms, machine learning integration, og cloud-syncing capabilities.

@@ -1,0 +1,1360 @@
+FEMVOICE - Technical Truth Audit
+Main Dashboard & Pitch System
+
+Status: 2026-06-06
+Scope: Main dashboard, pitch graph, dashboard metrics, start/stop recording flow, dashboard localization, and related audio/analysis sources.
+
+Rule followed: no code changes, no UI redesign, no clinical recommendations. This document establishes technical truth only.
+
+Authoritative statement:
+The main dashboard does not use ExerciseIntelligenceCoordinator -> ExerciseLiveState -> ExerciseDetailViewModel for its primary displayed values. That architecture exists for the Exercise Guide / exercise detail flow. The main dashboard uses MainWindow + MainViewModel with its own audio, scoring, chart, and display path.
+
+============================================================
+SECTION 1 - MAIN DASHBOARD INVENTORY
+============================================================
+
+Files inspected:
+
+- FemVoiceStudio/Views/MainWindow.xaml
+- FemVoiceStudio/Views/MainWindow.xaml.cs
+- FemVoiceStudio/ViewModels/MainViewModel.cs
+- FemVoiceStudio/Audio/AudioAnalysisEngine.cs
+- FemVoiceStudio/Audio/AudioAnalyzerService.cs
+- FemVoiceStudio/Audio/PitchDetectionService.cs
+- FemVoiceStudio/Audio/ResonanceProxyEngine.cs
+- FemVoiceStudio/Services/PitchTargetZonePolicy.cs
+- FemVoiceStudio/Services/PitchTraceStabilizer.cs
+- FemVoiceStudio/Services/PitchChartAxisRangeCalculator.cs
+- FemVoiceStudio/Services/LiveMetricsService.cs
+- FemVoiceStudio/Services/FemVoiceScore.cs
+- FemVoiceStudio/Services/FemVoiceScoreEngine.cs
+- FemVoiceStudio/Services/ComfortZoneController.cs
+- FemVoiceStudio/Services/ExerciseIntelligenceCoordinator.cs
+- FemVoiceStudio/Models/ExerciseLiveState.cs
+- FemVoiceStudio/Views/PitchChartViewModel.cs
+- FemVoiceStudio/Views/ResonanceChartViewModel.cs
+- FemVoiceStudio/Resources/Strings.resx
+
+DashboardViewModel:
+
+- No file/class named DashboardViewModel was found for the main dashboard.
+- Main dashboard DataContext is MainViewModel, created directly in MainWindow.xaml.cs constructor.
+
+Visible component inventory:
+
+1. Window title
+   Control: Window Title
+   XAML location: MainWindow.xaml root Window
+   Value: "FemVoice Studio"
+   Bound property: none
+   ViewModel source: none
+   Live/static: static
+   Localization: hardcoded
+
+2. Header brand
+   Control: TextBlock
+   XAML text: "FemVoice Studio"
+   Bound property: none
+   ViewModel source: none
+   Live/static: static
+   Localization: hardcoded
+
+3. Header subtitle
+   Control: TextBlock
+   XAML: Text="{loc:Loc Main_TrainingForFeminineVoice}"
+   Bound property: localization extension
+   ViewModel source: none
+   Live/static: static text, refreshed by localization mechanism/window refresh
+   Localization: RESX backed
+
+4. Pitch graph panel title
+   Control: TextBlock
+   XAML: Text="{loc:Loc Main_PitchGraph}"
+   Bound property: localization extension
+   ViewModel source: none
+   Live/static: static text
+   Localization: RESX backed
+
+5. Target badge
+   Control: TextBlock with Runs
+   XAML: Main_Target + TargetMinPitch + TargetMaxPitch + hardcoded Hz
+   Bound property: TargetMinPitch, TargetMaxPitch
+   ViewModel source: MainViewModel.TargetMinPitch / TargetMaxPitch
+   Source assignment:
+     - initial property defaults: 165 / 255
+     - LoadUserSettings(): settings.PreferredMinPitch / PreferredMaxPitch
+     - LoadNextExercise(): ApplyPitchTargetZone(PitchTargetZonePolicy.ClampForDifficulty(...))
+     - SetDifficulty(): ApplyPitchTargetZone(PitchTargetZonePolicy.ForDifficulty(level)), then LoadNextExercise()
+   Live/static: live when target zone changes
+   Localization: label is RESX, separators and "Hz" are hardcoded
+   Data type: raw Hz numbers
+
+6. Stability badge
+   Control: named Border StabilityBorder and TextBlock StabilityText
+   XAML initial text: {loc:Loc Stability_Stable}
+   Bound property: none after initialization
+   Update path:
+     - MainViewModel.PitchStability property changes
+     - MainWindow.OnViewModelPropertyChanged()
+     - MainWindow.UpdateStabilityIndicator()
+     - StabilityText.Text = Loc.Get("Stability_*")
+   ViewModel source: MainViewModel.PitchStability
+   Engine/source: LiveMetricsService.CalculateStability()
+   Live/static: live
+   Localization: code-behind Loc.Get for runtime text
+
+7. Health badge
+   Control: named Border HealthBorder and TextBlock HealthText
+   XAML initial text: {loc:Loc Health_Safe}
+   Bound property: none after initialization
+   Update path:
+     - MainViewModel.HealthIndicator property changes
+     - MainWindow.OnViewModelPropertyChanged()
+     - MainWindow.UpdateHealthIndicator()
+     - HealthText.Text = Loc.Get("Health_*")
+   ViewModel source: MainViewModel.HealthIndicator
+   Engine/source: LiveMetricsService.CalculateHealth()
+   Live/static: live
+   Localization: code-behind Loc.Get for runtime text
+
+8. Pitch plot
+   Control: OxyPlot PlotView named PitchPlotView
+   XAML: <oxy:PlotView x:Name="PitchPlotView">
+   Bound property: none
+   ViewModel source: MainViewModel.CurrentPitch / SmoothedPitch / LivePitchUpdateSequence / ActivePitchTargetZone / TargetMinPitch / TargetMaxPitch / PitchStability / HealthIndicator
+   Rendering source: MainWindow.xaml.cs owns PlotModel, LineSeries, RectangleAnnotation, and _pitchDataPoints list
+   Live/static: live while IsRecording is true
+   Localization: plot title/axis/series labels use Loc in code-behind
+   Data type: raw Hz after display filtering
+
+9. Mini FemVoiceScore panel
+   Control: Border
+   Visibility: Binding IsRecording through BoolToVisibilityConverter
+   Live/static: visible only while recording
+   Localization: label "FemVoiceScore" is hardcoded
+
+10. Overall score in mini panel
+    Control: TextBlock
+    Binding: OverallScore, StringFormat "{0:F0}%"
+    ViewModel source: MainViewModel.OverallScore
+    Source method while recording: MainViewModel.CalculateLiveScore()
+    Source method after stop: FeedbackService.GenerateFeedback(...).OverallScore
+    Live/static: live while recording, post-session after stop
+    Localization: numeric format hardcoded
+    Data type: derived 0-100 score
+
+11. Coach explanation
+    Control: TextBlock named CoachExplanationText
+    Binding: CoachExplanation
+    ViewModel source: MainViewModel.CoachExplanation
+    Source method: UpdateCoachExplanation()
+    Source service: AdaptiveComfortZoneService.GenerateExplanation(context)
+    Live/static: live, throttled to at most once per second
+    Localization: depends on service output
+
+12. Resonance score bar
+    Control: Border width via ScoreToWidthConverter + TextBlock
+    Binding: ResonanceScore
+    ViewModel source: MainViewModel.ResonanceScore
+    Source method: CalculateLiveScore()
+    Calculation source: FemVoiceScore.Calculate(input).ResonanceScore
+    Input source: fixed AverageF1=500, AverageF3=2500, AverageF2=LiveMetricsService.EstimateF2(result.RmsValue * 5000), SpectralCentroid=result.RmsValue * 5000
+    Live/static: live while recording
+    Localization: label Dashboard_Resonance is RESX
+    Data type: derived 0-100 score, not raw resonance
+
+13. Pitch score bar
+    Control: Border width via ScoreToWidthConverter + TextBlock
+    Binding: PitchScore
+    ViewModel source: MainViewModel.PitchScore
+    Source: FemVoiceScore.Calculate(input).PitchScore
+    Inputs: SmoothedPitch, pitch variance, ActivePitchTargetZone, difficulty
+    Live/static: live while recording
+    Localization: label Dashboard_Pitch is RESX
+    Data type: derived 0-100 score
+
+14. Intonation score bar
+    Control: Border width via ScoreToWidthConverter + TextBlock
+    Binding: IntonationScore
+    ViewModel source: MainViewModel.IntonationScore
+    Source: FemVoiceScore.Calculate(input).IntonationScore
+    Inputs: IntonationRange = clamp(sqrt(pitchVariance) * 4, 0, 120), IntonationRiseScore = clamp(sqrt(pitchVariance), 0, 60)
+    Live/static: live while recording
+    Localization: label Dashboard_Intonation is RESX
+    Data type: derived 0-100 score
+
+15. Voice health score bar
+    Control: Border width via ScoreToWidthConverter + TextBlock
+    Binding: VoiceHealthScore
+    ViewModel source: MainViewModel.VoiceHealthScore
+    Source: FemVoiceScore.Calculate(input).VoiceHealthScore
+    Inputs: HealthIndicator mapped to StrainLevel 0/50/80, IntensityRms, pitch thresholds in FemVoiceScore
+    Live/static: live while recording
+    Localization: label Dashboard_VoiceHealth is RESX
+    Data type: derived 0-100 score
+
+16. Difficulty buttons
+    Controls: three Buttons
+    Commands: SetDifficultyCommand
+    Parameters: Nybegynner / Middels / Avansert
+    ViewModel method: MainViewModel.SetDifficulty(string difficulty)
+    Live/static: user action
+    Localization: Difficulty_Beginner / Difficulty_Intermediate / Difficulty_Advanced
+
+17. Navigation buttons
+    Controls: Buttons for Calendar, Statistics, Exercise Guide, Analyzer, SmartCoach, Resonance, Progression, Analysis, Settings
+    Handlers: OnOpenCalendar, OnOpenStatistics, OnOpenExerciseGuide, OnOpenAnalyzer, OnOpenSmartCoach, OnOpenResonance, OnOpenProgression, OnOpenAnalysis, OnOpenSettings
+    ViewModel source: none
+    Live/static: user action
+    Localization: Main_* keys
+
+18. Mic/status badge
+    Control: TextBlock with mic emoji and StatusText
+    Binding: StatusText
+    ViewModel source: MainViewModel.StatusText
+    Source updates: LoadUserSettings/InitializeAudio/StartRecording/StopRecording/error handlers
+    Live/static: live
+    Localization: status values use Loc keys; mic emoji hardcoded
+
+19. Start session button
+    Control: Button
+    Command: StartRecordingCommand
+    Visibility: hidden when IsRecording true
+    Text: UI_StartSession
+    ViewModel method: MainViewModel.StartRecording()
+    Live/static: user action
+    Localization: RESX backed
+
+20. Stop session button
+    Control: Button
+    Command: StopRecordingCommand
+    Visibility: visible when IsRecording true
+    Text: UI_StopSession
+    ViewModel method: MainViewModel.StopRecording()
+    Live/static: user action
+    Localization: RESX backed
+
+21. Current level panel
+    Controls: TextBlocks and ProgressBar
+    Bindings: DifficultyText, CurrentDifficulty, ProgressionStatus.ProgressPercentage, ProgressionStatus.SessionsAtCurrentLevel, ProgressionStatus.SessionsRequiredForPromotion
+    ViewModel source: MainViewModel.LoadUserSettings(), StopRecording()
+    Live/static: updates after settings/session changes
+    Localization: labels RESX backed
+
+22. Streak and total sessions
+    Controls: TextBlocks
+    Bindings: CurrentStreak, TotalSessions
+    ViewModel source: ProgressionStatus from ProgressionService
+    Live/static: updates after settings/session changes
+    Localization: labels RESX backed, icon glyphs hardcoded
+
+23. Realtime feedback panel
+    Control: TextBlock
+    Binding: RealtimeFeedback
+    ViewModel source: MainViewModel.RealtimeFeedback
+    Source methods: OnPitchUpdated(), OnPitchAnalyzed(), default initializer
+    Live/static: live while recording
+    Localization: content comes from FeedbackService/Loc keys
+
+24. Debug info panel
+    Control: TextBlock
+    Binding: DebugInfo
+    ViewModel source: MainViewModel.DebugInfo
+    Source: debug-only formatted strings in OnPitchUpdated/OnPitchAnalyzed
+    Live/static: live only when DebugSettingsService.EnablePitchDebug
+    Localization: hardcoded English/technical labels in interpolated strings
+
+25. Post-session feedback panel
+    Control: TextBlock
+    Binding: Feedback
+    ViewModel source: FeedbackService.GenerateFeedback(...).GetFormattedFeedback()
+    Live/static: after stop, hidden while recording
+    Localization: feedback service uses localization
+
+26. Exercise text panel
+    Control: TextBox
+    Binding: CurrentExerciseText
+    ViewModel source: ExerciseTextService.GetLocalizedContent(CurrentExercise.Id)
+    Live/static: changes on LoadNextExercise, NextExercise, SetDifficulty, language change
+    Localization: exercise text service/localized content
+
+27. Error message panel
+    Control: TextBlock
+    Binding: ErrorMessage
+    ViewModel source: exception/error handlers
+    Visibility binding: ErrorMessage through BoolToVisibilityConverter
+    Live/static: error-only
+    Localization: message format uses localization in most paths, exception text is raw
+
+============================================================
+SECTION 2 - START SESSION FLOW
+============================================================
+
+Main dashboard Start Session:
+
+1. User clicks Start Session button in MainWindow.xaml.
+2. Button Command is StartRecordingCommand.
+3. CommunityToolkit.Mvvm RelayCommand maps StartRecordingCommand to MainViewModel.StartRecording().
+4. StartRecording() guard:
+   - if !IsMicrophoneReady or IsRecording, return.
+5. StartRecording() operations:
+   - DebugSettingsService.Instance.Reload()
+   - _sessionStartTime = DateTime.Now
+   - PitchHistory.Clear()
+   - RecentPitches.Clear()
+   - ScoreHistory.Clear()
+   - Feedback = ""
+   - OverallScore = 0
+   - _liveMetrics.Reset()
+   - _pitchSmoother.Reset()
+   - CurrentScore = null
+   - ResonanceScore = 0
+   - PitchScore = 0
+   - IntonationScore = 0
+   - VoiceHealthScore = 0
+   - CoachExplanation = ""
+   - _audioEngine.Initialize()
+   - _audioEngine.Start()
+   - _audioAnalyzer.StartAnalysis()
+   - IsRecording = true
+   - _uiUpdateTimer.Start()
+   - StatusText = Loc.UI_Recording
+6. IsRecording property changed.
+7. MainWindow.OnViewModelPropertyChanged(nameof(IsRecording)) runs.
+8. If IsRecording true:
+   - ClearChart()
+   - _chartSessionStartTime = DateTime.Now
+   - _lastChartRenderAt = DateTime.MinValue
+   - _lastRenderedPitchSequence = 0
+   - _lastRenderedPitch = 0
+   - _chartVoiceSeconds = 0
+   - _pitchTraceStabilizer.Reset()
+   - SetTimelineInteraction(false)
+   - _chartUpdateTimer.Start()
+
+AudioAnalysisEngine start path:
+
+1. MainViewModel.StartRecording() calls _audioEngine.Initialize().
+2. AudioAnalysisEngine.Initialize() creates WASAPI capture if possible, else WaveInEvent fallback.
+3. Initialize() resolves default capture device name.
+4. Initialize() calls ApplyStoredCalibration(deviceName).
+5. ApplyStoredCalibration() loads MicrophoneCalibrationProfile through MicrophoneCalibrationService.
+6. If profile exists:
+   - _minimumFrameRms = clamp(profile.VoicedRmsThreshold * 0.8, 0.0008, 0.05)
+   - _minimumPeakMagnitude = 0.0035 for LowOutput, otherwise default 0.01
+   - if HighNoiseFloor, confidence threshold is raised by at least +0.05 over mode default
+7. _audioEngine.Start() calls Initialize() again if not recording, then StartCapture().
+8. StartCapture() calls wasapi.StartRecording() or _waveIn.StartRecording().
+9. OnWaveInDataAvailable() receives bytes.
+10. ConvertToFloatSamples().
+11. ProcessAudioSamples(samples).
+12. Per full FFT frame:
+    - CalculateRms(_inputBuffer)
+    - if frameRms < _minimumFrameRms, skip frame and emit no pitch
+    - ProcessFrame()
+    - ApplySmoothing(pitch)
+    - CalculateConfidence(_fftBuffer)
+    - if confidence >= _confidenceThreshold and pitch > 0:
+      - _lastAcceptedPitch = pitch
+      - RaisePitchUpdated(pitch)
+      - RaiseConfidenceUpdated(confidence)
+      - if HighPrecision: RaiseRawPitchUpdated(pitch)
+      - if smoothedPitch > 0: RaiseSmoothedPitchUpdated(smoothedPitch)
+
+AudioAnalyzerService start path:
+
+1. MainViewModel.StartRecording() calls _audioAnalyzer.StartAnalysis().
+2. AudioAnalyzerService.StartAnalysis():
+   - _analysisHistory.Clear()
+   - _audioCapture.StartRecording()
+3. AudioCaptureService raises AudioDataAvailable.
+4. AudioAnalyzerService.OnAudioDataAvailable() starts Task.Run.
+5. PitchDetectionService.DetectPitch(samples).
+6. Result appended to _analysisHistory.
+7. PitchAnalyzed event invokes MainViewModel.OnPitchAnalyzed(result).
+
+Live state:
+
+- Main dashboard has no ExerciseLiveState in its Start Session flow.
+- ExerciseLiveState is not created by MainViewModel.StartRecording().
+- ExerciseIntelligenceCoordinator is not invoked by MainWindow Start Session.
+
+Stop Session:
+
+1. User clicks Stop Session.
+2. Button Command is StopRecordingCommand.
+3. RelayCommand maps StopRecordingCommand to MainViewModel.StopRecording().
+4. StopRecording() guard:
+   - if !IsRecording, return.
+5. StopRecording() operations:
+   - _uiUpdateTimer.Stop()
+   - IsRecording = false
+   - DebugInfo = ""
+   - _audioEngine.Stop()
+   - DebugSettingsService.Instance.CloseLogs()
+   - analysis = _audioAnalyzer.StopAnalysis()
+   - AveragePitch = analysis.AveragePitch
+   - PitchVariation = analysis.PitchStandardDeviation
+   - feedbackCollection = _feedbackService.GenerateFeedback(analysis, CurrentExercise)
+   - Feedback = feedbackCollection.GetFormattedFeedback()
+   - OverallScore = feedbackCollection.OverallScore
+   - TrainingSession object created from session start/end, current exercise, analysis values, feedback, difficulty
+   - _database.SaveTrainingSession(session)
+   - progressionResult = _progressionService.EvaluateProgression(session)
+   - StatusText set to promotion text or session complete text
+   - ProgressionStatus reloaded
+   - CurrentStreak / TotalSessions updated
+   - LoadNextExercise()
+6. IsRecording property changed.
+7. MainWindow.OnViewModelPropertyChanged(nameof(IsRecording)) runs.
+8. If IsRecording false:
+   - _chartUpdateTimer.Stop()
+   - SetTimelineInteraction(true)
+
+Pause Session:
+
+- Main dashboard has no Pause Session command.
+- Pause behavior exists in ExerciseDetailViewModel for exercise flow, not in MainWindow/MainViewModel dashboard flow.
+
+Exercise flow for comparison only:
+
+- ExerciseDetailViewModel pause toggles by calling _coordinator.StopExercise() and later _coordinator.StartExercise(_activeProfile, userId: 1).
+- This is not the main dashboard Start Session button.
+
+============================================================
+SECTION 3 - PITCH GRAPH TRUTH
+============================================================
+
+What the graph actually displays:
+
+- The graph displays detected pitch/fundamental frequency over elapsed session time.
+- Unit is Hz.
+- The plotted value is not normalized.
+- The plotted value is filtered for visual stability by PitchTraceStabilizer before entering the OxyPlot series.
+- The plotted value is not comfort-zone adjusted. It is compared against the target zone to decide color/status, but the y-value remains Hz.
+
+Graph control:
+
+- MainWindow.xaml contains OxyPlot PlotView named PitchPlotView.
+- PlotModel is created in MainWindow.xaml.cs CreatePitchPlotModel().
+- MainWindow.xaml.cs assigns PitchPlotView.Model = _pitchPlotModel.
+- No XAML binding to a chart ViewModel is used for this graph.
+- PitchChartViewModel.cs exists, but MainWindow does not use it.
+
+Plotted value pipeline:
+
+1. AudioAnalysisEngine emits PitchUpdated(pitch) and SmoothedPitchUpdated(smoothedPitch).
+2. MainViewModel.OnPitchUpdated(double pitch):
+   - CurrentPitch = pitch
+   - LivePitchUpdateSequence++
+   - SmoothedPitch = _liveMetrics.CalculateSmoothedPitch(pitch, true)
+   - if SmoothedPitch <= 0: SmoothedPitch = _pitchSmoother.Apply(pitch)
+   - PitchStability = _liveMetrics.CalculateStability()
+   - CurrentIntensity = CurrentIntensity > 0 ? CurrentIntensity : 0.02
+   - HealthIndicator = _liveMetrics.CalculateHealth(...)
+   - RealtimeFeedback updated from FeedbackService using ActivePitchTargetZone
+   - CalculateLiveScore(...)
+3. MainViewModel.OnSmoothedPitchUpdated(double smoothedPitch):
+   - SmoothedPitch = smoothedPitch
+   - LivePitchUpdateSequence++
+   - AddPitchDataPoint(smoothedPitch)
+4. MainWindow listens to property changes:
+   - CurrentPitch
+   - SmoothedPitch
+   - LivePitchUpdateSequence
+5. MainWindow.RenderLatestPitchPoint():
+   - rawPitch = CurrentPitch > 0 ? CurrentPitch : SmoothedPitch
+   - if rawPitch <= 0: return
+   - pitch = _pitchTraceStabilizer.Filter(rawPitch, now)
+   - if pitch <= 0: return
+   - xPos = seconds since _chartSessionStartTime
+   - isInRange = pitch >= ActivePitchTargetZone.Min && pitch <= ActivePitchTargetZone.Max
+   - append (xPos, pitch, isInRange, PitchStability, HealthIndicator) to _pitchDataPoints
+   - clear and rebuild _pitchSeries.Points from _pitchDataPoints
+   - line color chosen from latest point:
+     - gray if Y <= 0
+     - red if Health Warning or Danger
+     - green if InRange
+     - yellow otherwise
+   - UpdateLiveXAxis(xPos)
+   - UpdateLiveYAxis(xPos)
+   - InvalidatePlot(false)
+
+Sampling/update frequency:
+
+- AudioAnalysisEngine default sample rate: 48000 Hz.
+- AudioAnalysisEngine default FFT size: 2048.
+- SimpleFirst effective latency: about 43 ms per comments.
+- HighPrecision uses 75% overlap, effective about 21 ms per comments.
+- MainWindow chart timer interval: 33 ms.
+- Property-change rendering also calls RenderLatestPitchPoint().
+- Duplicate rendering is throttled by LivePitchUpdateSequence, last rendered pitch, and a 100 ms timing guard.
+- Max plotted data points: 18000.
+- Default visible x-axis window: 30 seconds.
+- Maximum review x-axis range: 600 seconds.
+
+Pitch source algorithms:
+
+AudioAnalysisEngine:
+
+- Uses FFT.
+- Detection modes:
+  - SimpleFirst: peak finding in vocal range, magnitude ratio confidence, EMA smoothing.
+  - HighPrecision: parabolic interpolation, SNR + harmonic confidence, EMA + median smoothing.
+- Default frequency search range: 80-400 Hz.
+- Frame below _minimumFrameRms is skipped.
+- Pitch event emitted only if confidence >= _confidenceThreshold and pitch > 0.
+
+AudioAnalyzerService / PitchDetectionService:
+
+- Uses AudioCaptureService samples.
+- PitchDetectionService.DetectPitch(samples):
+  - calculates RMS
+  - if RMS < VoicedRmsThreshold: IsVoiced=false, Pitch=0, Confidence=0
+  - tries YIN detection
+  - if YIN fails, tries autocorrelation fallback
+  - frequency limited to min/max, default 80-500 Hz
+- AudioAnalyzerService stores results in _analysisHistory for StopAnalysis().
+- AudioAnalyzerService also updates MainViewModel.CurrentPitch through OnPitchAnalyzed().
+
+Smoothing/filtering layers:
+
+1. AudioAnalysisEngine ApplySmoothing:
+   - SimpleFirst: EMA with _smoothingFactor default 0.3
+   - HighPrecision: EMA default 0.4 then median window size 5
+2. LiveMetricsService.CalculateSmoothedPitch:
+   - EMA smoothing factor 0.3
+   - stores recent smoothed pitches in a 15-item queue
+3. MainViewModel.PitchSmoother:
+   - fallback EMA alpha 0.3 only if LiveMetricsService returns <= 0
+4. PitchTraceStabilizer:
+   - rejects rawPitch < 60
+   - rejects NaN/infinity
+   - if no last accepted pitch, rejects rawPitch > 340
+   - if last accepted pitch exists, tries rawPitch / 2, /3, /4 as harmonic corrections
+   - accepts divisor candidate if relative distance to last accepted pitch <= 0.35 and better than raw
+   - blocks fast jumps > 90 Hz within 0.25 seconds
+
+Graph ranges:
+
+- X-axis:
+  - initial min 0
+  - initial max 30
+  - visible window default 30 seconds
+  - absolute min 0
+  - absolute max max(30, elapsedSeconds + 1)
+  - pan/zoom disabled while recording, enabled after stop
+- Y-axis:
+  - initial min 100
+  - initial max 350
+  - absolute min 60
+  - absolute max 500
+  - minimum range 50
+  - maximum range 440
+  - live range calculated by PitchChartAxisRangeCalculator from visible pitches + target min/max + 25 Hz padding
+
+Target zones:
+
+- Target zone displayed as green RectangleAnnotation.
+- Annotation MinimumY/MaximumY set from ActivePitchTargetZone, fallback TargetMinPitch/TargetMaxPitch.
+- Default annotation in CreatePitchPlotModel starts as 165-255.
+- UpdatePitchTargetZone() updates annotation to ActivePitchTargetZone.
+- ActivePitchTargetZone source:
+  - property default: 165-255
+  - LoadNextExercise(): PitchTargetZonePolicy.ClampForDifficulty(CurrentDifficulty, CurrentExercise.TargetMinPitch, CurrentExercise.TargetMaxPitch)
+  - SetDifficulty(): PitchTargetZonePolicy.ForDifficulty(level), then LoadNextExercise()
+
+PitchTargetZonePolicy:
+
+- AbsoluteMinimum = 150
+- AbsoluteMaximum = 240
+- ForDifficulty:
+  - Nybegynner: 160-230, center 195
+  - Middels: 165-230, center 197.5
+  - Avansert: 175-240, center 207.5
+- ClampForDifficulty:
+  - min = clamp(requestedMin, 150, levelZone.Max)
+  - max = clamp(requestedMax, min + 20, levelZone.Max)
+  - if min < levelZone.Min - 10: min = levelZone.Min - 10
+  - max = min(max, 240)
+  - if max - min > 70: min = max - 70
+  - returns Range(min, max, midpoint)
+
+Raw vs transformed for graph:
+
+- Raw microphone samples are not plotted.
+- Raw FFT/YIN pitch is not always directly plotted.
+- Plotted y-value is a detected Hz value after upstream confidence/RMS gating and downstream PitchTraceStabilizer filtering.
+- The graph y-value remains Hz; it is not normalized to 0-1 or 0-100.
+
+============================================================
+SECTION 4 - RESONANCE TRUTH
+============================================================
+
+Main dashboard resonance:
+
+- Main dashboard does not use ResonanceProxyEngine directly.
+- MainViewModel.CurrentResonance is calculated in OnPitchAnalyzed():
+  - estimatedF2 = _liveMetrics.EstimateF2(result.RmsValue * 5000)
+  - CurrentResonance = _liveMetrics.EstimateResonance(result.RmsValue * 5000, result.Pitch, result.RmsValue)
+- CurrentResonance is used in ScoreSnapshot and CoachExplanationContext.
+- Displayed ResonanceScore is not CurrentResonance directly.
+- Displayed ResonanceScore is FemVoiceScore.Calculate(input).ResonanceScore from CalculateLiveScore().
+
+Main dashboard resonance score calculation path:
+
+1. MainViewModel.CalculateLiveScore(result) creates FemVoiceScoreInput:
+   - AverageF1 = 500
+   - AverageF2 = _liveMetrics.EstimateF2(result.RmsValue * 5000)
+   - AverageF3 = 2500
+   - SpectralCentroid = result.RmsValue * 5000
+   - ResonanceScore is not supplied in input, so FemVoiceScore.CalculateResonanceScore calculates from F1/F2/brightness.
+2. LiveMetricsService.EstimateF2(spectralCentroid):
+   - if spectralCentroid <= 0: returns 1500
+   - f2 = 1200 + (spectralCentroid / 30.0) * 600
+   - clamp 1000-2500
+3. FemVoiceScore.CalculateResonanceScore(input):
+   - if input.ResonanceScore > 0, use it; main dashboard does not set it
+   - f1Score from AverageF1 relative to 400-700
+   - f2Score from AverageF2 relative to 1400-2200
+   - brightnessScore = min(100, SpectralCentroid / 2000 * 100)
+   - resonanceScore = f1Score * 0.30 + f2Score * 0.40 + brightnessScore * 0.30
+   - ApplyDifficultyTolerance()
+
+Main dashboard resonance truth:
+
+- It is derived.
+- It is proxy-based.
+- It is normalized to a 0-100 score by FemVoiceScore.
+- It is not raw formant resonance.
+- It is not the same as ResonanceProxyEngine output.
+- It is not the same as ExerciseLiveState.PrimaryMetricScore for resonance exercises.
+
+ResonanceProxyEngine truth:
+
+- Used by exercise/analyzer/resonance systems, not directly by MainWindow dashboard.
+- Input: float samples or byte buffer.
+- Processing:
+  - pre-emphasis: emphasized = sample - 0.97 * lastSample
+  - FFT size default 2048
+  - sample rate default 48000
+  - hop size depends on ResonanceMode
+  - RMS threshold default 0.01
+  - ExtractFormants finds peaks in 200-4000 Hz
+  - if F1 or F2 missing, defaults F1=350, F2=2000, F3=2800
+  - FormantSnapshot.IsValid requires F1/F2/F3 > 0 and Confidence > 0.1
+  - Stability = 1 - min(1, average relative F1/F2 change * 10)
+  - ResonanceScore = weighted normalized formant/spacing/brightness/stability
+- Output:
+  - ResonanceScoreUpdated(double score), scale 0-1
+  - FormantsUpdated(FormantSnapshot), raw F1/F2/F3/centroid/confidence
+- Weights:
+  - formant shift 0.40
+  - spacing 0.25
+  - brightness 0.25
+  - stability 0.10
+
+ResonanceChartViewModel truth:
+
+- Exists for resonance visualizations.
+- Uses F1/F2 scatter and formant timeline.
+- CurrentResonanceScore comment says 0-100.
+- AddFormantPoint(f1, f2, f3, resonanceScore) stores whatever resonanceScore caller passes.
+- Not used by MainWindow dashboard pitch graph.
+
+============================================================
+SECTION 5 - STABILITY TRUTH
+============================================================
+
+Main dashboard stability:
+
+- Displayed as:
+  - Stability badge text/color
+  - ScoreSnapshot.CurrentStability
+  - indirect input to CoachExplanation
+- No numeric StabilityScore bar exists on main dashboard. The mini panel has IntonationScore, not StabilityScore.
+
+Main dashboard stability generation:
+
+1. MainViewModel.OnPitchUpdated():
+   - SmoothedPitch = LiveMetricsService.CalculateSmoothedPitch(pitch, true)
+   - PitchStability = LiveMetricsService.CalculateStability()
+2. MainViewModel.OnPitchAnalyzed():
+   - SmoothedPitch = LiveMetricsService.CalculateSmoothedPitch(result.Pitch, result.IsVoiced)
+   - PitchStability = LiveMetricsService.CalculateStability()
+3. LiveMetricsService.CalculateSmoothedPitch():
+   - if !isVoiced or rawPitch <= 0: _lastPitch = 0, return 0
+   - if _lastPitch <= 0: _lastPitch = rawPitch
+   - else: _lastPitch = 0.3 * rawPitch + 0.7 * _lastPitch
+   - enqueue _lastPitch into _recentPitches
+   - keep max 15 recent pitches
+4. LiveMetricsService.CalculateStability():
+   - if _recentPitches.Count < 5: NoVoice
+   - recentList = last 10 pitches
+   - if recentList.Count < 5: NoVoice
+   - mean = average
+   - variance = sum((p - mean)^2) / count
+   - stdDev = sqrt(variance)
+   - stdDev < 5: VeryStable
+   - stdDev < 15: Stable
+   - stdDev < 30: Developing
+   - otherwise: Unstable
+
+Main dashboard stability scale:
+
+- Enum: NoVoice, VeryStable, Stable, Developing, Unstable.
+- Text comes from Stability_* RESX keys.
+- Color is assigned in MainWindow.xaml.cs.
+
+ExerciseLiveState stability:
+
+- ExerciseLiveState.StabilityScore is a double 0-1.
+- It is not the main dashboard PitchStability enum.
+- ExerciseIntelligenceCoordinator obtains _cachedStabilityScore from FemVoiceScoreEngine.ScoreUpdated snapshot.StabilityScore or manual UpdateMetrics().
+- ExerciseDetailViewModel applies state.StabilityScore directly to StabilityScore.
+
+ExerciseDetailViewModel display quality uses stability:
+
+- DisplayQuality composite = clamp(0.65 * PrimaryMetricScore + 0.35 * StabilityScore, 0, 1)
+- Excellent >= 0.9
+- VeryGood >= 0.75
+- Good >= 0.55
+- Fair >= 0.35
+- else Poor
+- If safety locked: Poor
+
+============================================================
+SECTION 6 - QUALITY TRUTH
+============================================================
+
+Main dashboard quality:
+
+- There is no property named Quality displayed on MainWindow main dashboard.
+- Main dashboard displays OverallScore, ResonanceScore, PitchScore, IntonationScore, VoiceHealthScore.
+- These come from FemVoiceScore, not ExerciseLiveState.Quality.
+
+Main dashboard score formula:
+
+Class: FemVoiceStudio.Services.FemVoiceScore
+
+Weights:
+
+- ResonanceWeight = 0.45
+- PitchWeight = 0.30
+- IntonationWeight = 0.15
+- VoiceHealthWeight = 0.10
+
+Main live score input:
+
+- AveragePitch = SmoothedPitch
+- MinPitch = SmoothedPitch
+- MaxPitch = SmoothedPitch
+- PitchVariation = LiveMetricsService.GetPitchVariance()
+- AverageF1 = 500
+- AverageF2 = LiveMetricsService.EstimateF2(result.RmsValue * 5000)
+- AverageF3 = 2500
+- SpectralCentroid = result.RmsValue * 5000
+- IntonationRange = clamp(sqrt(pitchVariance) * 4, 0, 120)
+- IntonationRiseScore = clamp(sqrt(pitchVariance), 0, 60)
+- StrainLevel = 50 if HealthIndicator Warning, 80 if Danger, else 0
+- IntensityRms = result.RmsValue
+- TargetMinPitch = ActivePitchTargetZone.Min
+- TargetMaxPitch = ActivePitchTargetZone.Max
+- DifficultyLevel = CurrentDifficulty
+
+FemVoiceScore.Calculate:
+
+- CheckStrainSafety:
+  - Critical strain if StrainLevel >= 75
+  - High pitch strain if AveragePitch > 280
+  - Moderate strain if StrainLevel >= 50
+- ResonanceScore:
+  - calculated from F1/F2/brightness unless input.ResonanceScore > 0
+- PitchScore:
+  - based on AveragePitch inside/outside target range
+  - effective max pitch is TargetMaxPitch unless maintenance cap applies
+  - canIncreasePitch requires input.ResonanceScore > 60 and input.VoiceHealthScore > 70
+  - main dashboard does not supply input.ResonanceScore or VoiceHealthScore, so canIncreasePitch is false
+  - high pitch above effective max penalized
+  - AveragePitch > 280 adds additional penalty
+  - PitchVariation > 25 adds penalty
+- IntonationScore:
+  - based on IntonationRange 30-120 ideal
+  - IntonationRiseScore > 30 adds bonus
+- VoiceHealthScore:
+  - starts at input.VoiceHealthScore if > 0, otherwise 100
+  - subtracts for strain, high IntensityRms, low IntensityRms, AveragePitch > 260/280
+- OverallScore:
+  - 0.45 resonance + 0.30 pitch + 0.15 intonation + 0.10 health
+  - if strain >= 50, overall capped at 60
+  - if strain >= 75, overall capped at 40
+  - if pitch score > 60 and resonance score < 40, overall *= 0.7
+  - if voice health < 60 and pitch > 220, overall *= 0.8
+  - clamp 0-100
+
+Exercise Quality truth:
+
+- ExerciseIntelligenceCoordinator creates ExerciseLiveState.Quality.
+- Quality formula in DeterminePerformanceQuality():
+  - score starts 0
+  - if UsesResonance:
+    - +0.5 if primary metric within target resonance min/max
+    - +0.3 if within 80%-120% looser range
+  - if UsesStability:
+    - +0.3 if secondaryMetric >= StabilityThreshold
+    - +0.2 if >= StabilityThreshold * 0.8
+  - if UsesPitch and IsInComfortZone:
+    - +0.2
+  - score >= 0.8 => Excellent
+  - score >= 0.6 => Good
+  - score >= 0.4 => Improving
+  - else Poor
+  - if effectively safety locked: Quality = Poor
+- ExerciseDetailViewModel then maps PrimaryMetricScore/StabilityScore to DisplayQuality with a different five-step display mapping:
+  - composite = 0.65 * primary + 0.35 * stability
+  - >= 0.9 Excellent
+  - >= 0.75 VeryGood
+  - >= 0.55 Good
+  - >= 0.35 Fair
+  - else Poor
+- This exercise quality path is not used by MainWindow dashboard.
+
+============================================================
+SECTION 7 - EVERY USER VISIBLE NUMBER
+============================================================
+
+1. Target Min Pitch
+   Name: target lower bound
+   Source: MainViewModel.TargetMinPitch
+   Unit: Hz
+   Range: from PitchTargetZonePolicy / user settings / exercise target; current policy clamped around 150-240, visible ranges by difficulty 160-230, 165-230, 175-240
+   Meaning: lower edge of active dashboard target zone
+   Display format: F0 + "Hz"
+   Clinical interpretation: technical pitch boundary, raw number
+   Raw/normalized/derived: raw Hz policy value, derived from settings/exercise/difficulty
+
+2. Target Max Pitch
+   Name: target upper bound
+   Source: MainViewModel.TargetMaxPitch
+   Unit: Hz
+   Range: policy max 240 for active target zones
+   Meaning: upper edge of active dashboard target zone
+   Display format: F0 + "Hz"
+   Clinical interpretation: technical pitch boundary, raw number
+   Raw/normalized/derived: raw Hz policy value, derived from settings/exercise/difficulty
+
+3. Pitch graph y-value
+   Name: pitch line
+   Source: MainWindow.RenderLatestPitchPoint rawPitch from CurrentPitch or SmoothedPitch
+   Unit: Hz
+   Range: visible y-axis dynamic, absolute 60-500; PitchTraceStabilizer display max 340 for accepted first/high values
+   Meaning: detected fundamental frequency over time
+   Display format: plotted line, y-axis Frequency (Hz)
+   Clinical interpretation: technical acoustic pitch display
+   Raw/normalized/derived: detected Hz after RMS/confidence gating, smoothing upstream, and graph-level harmonic/spike filtering
+
+4. Time axis
+   Name: graph time
+   Source: DateTime.Now - _chartSessionStartTime
+   Unit: seconds
+   Range: visible 30 seconds, absolute review up to 600 seconds
+   Meaning: elapsed dashboard recording time since chart reset
+   Display format: axis seconds
+   Raw/normalized/derived: derived from system clock
+
+5. OverallScore during recording
+   Source: MainViewModel.OverallScore from FemVoiceScore.Calculate(input)
+   Unit: percent-like score
+   Range: 0-100
+   Meaning: weighted composite of dashboard live proxy inputs
+   Display format: F0%
+   Raw/normalized/derived: derived score
+
+6. OverallScore after stop
+   Source: FeedbackService.GenerateFeedback(SessionAnalysis, CurrentExercise).OverallScore
+   Unit: percent-like score
+   Range: 0-100
+   Meaning: session feedback score from aggregated AudioAnalyzerService analysis
+   Display format: F0%
+   Raw/normalized/derived: derived score
+
+7. ResonanceScore
+   Source: FemVoiceScore.Calculate(input).ResonanceScore
+   Unit: score
+   Range: 0-100
+   Meaning: dashboard proxy resonance/brightness/formant estimate score
+   Display format: F0 and bar width
+   Raw/normalized/derived: derived, normalized score; not raw resonance
+
+8. PitchScore
+   Source: FemVoiceScore.Calculate(input).PitchScore
+   Unit: score
+   Range: 0-100
+   Meaning: score based on SmoothedPitch vs ActivePitchTargetZone, variation, safety penalties
+   Display format: F0 and bar width
+   Raw/normalized/derived: derived, normalized score
+
+9. IntonationScore
+   Source: FemVoiceScore.Calculate(input).IntonationScore
+   Unit: score
+   Range: 0-100
+   Meaning: live proxy based on pitch variance-derived range/rise score
+   Display format: F0 and bar width
+   Raw/normalized/derived: derived, normalized score
+
+10. VoiceHealthScore
+    Source: FemVoiceScore.Calculate(input).VoiceHealthScore
+    Unit: score
+    Range: 0-100
+    Meaning: score derived from strain, intensity, high/low pitch thresholds
+    Display format: F0 and bar width
+    Raw/normalized/derived: derived, normalized score
+
+11. Stability badge
+    Source: MainViewModel.PitchStability
+    Unit: enum label
+    Range: NoVoice, VeryStable, Stable, Developing, Unstable
+    Meaning: recent pitch standard deviation category
+    Display format: localized text and color
+    Raw/normalized/derived: derived enum
+
+12. Health badge
+    Source: MainViewModel.HealthIndicator
+    Unit: enum label
+    Range: NoVoice, Safe, Monitor, Warning, Danger
+    Meaning: simplified pitch/intensity strain monitor category
+    Display format: localized text and color
+    Raw/normalized/derived: derived enum
+
+13. CoachExplanation
+    Source: AdaptiveComfortZoneService.GenerateExplanation(CoachExplanationContext)
+    Unit: text
+    Range: service-generated text
+    Meaning: explanation based on current score/resonance/stability/health context
+    Display format: text
+    Raw/normalized/derived: derived text
+
+14. ProgressionStatus.ProgressPercentage
+    Source: ProgressionService.GetProgressionStatus()
+    Unit: percent
+    Range: 0-100 expected
+    Meaning: progress toward next level
+    Display format: ProgressBar value
+    Raw/normalized/derived: derived from progression/session history
+
+15. SessionsAtCurrentLevel / SessionsRequiredForPromotion
+    Source: ProgressionStatus
+    Unit: count
+    Range: nonnegative integer
+    Meaning: progression count
+    Display format: X/Y
+    Raw/normalized/derived: persisted/derived count
+
+16. CurrentStreak
+    Source: ProgressionStatus.CurrentStreak
+    Unit: days/count
+    Range: nonnegative integer
+    Meaning: training streak
+    Display format: integer
+    Raw/normalized/derived: derived from session history
+
+17. TotalSessions
+    Source: ProgressionStatus.TotalSessions
+    Unit: count
+    Range: nonnegative integer
+    Meaning: saved sessions total
+    Display format: integer
+    Raw/normalized/derived: persisted/derived count
+
+18. CurrentExerciseText
+    Source: ExerciseTextService.GetLocalizedContent(CurrentExercise.Id)
+    Unit: text
+    Meaning: current prompt text
+    Display format: read-only TextBox
+    Raw/normalized/derived: localized content
+
+19. RealtimeFeedback
+    Source: FeedbackService.GetRealtimeFeedback or Loc.Get("LiveFeedback_SpeakLouder")
+    Unit: text
+    Meaning: signal/target-zone feedback
+    Display format: text
+    Raw/normalized/derived: derived text from pitch/voicing/target zone
+
+20. DebugInfo
+    Source: MainViewModel formatted debug strings
+    Unit: text with Hz/RMS/confidence/stability
+    Meaning: technical debug metrics
+    Display format: text
+    Raw/normalized/derived: direct technical formatting, debug-only
+
+Exercise-only visible values not on Main Dashboard:
+
+- SessionElapsedSeconds, HoldProgress, Quality, PrimaryMetricScore, StabilityScore, Mastery and HoldProgressPercent exist in ExerciseDetailViewModel/ExerciseWindow, not MainWindow dashboard.
+- ExerciseSessionTimerState provides local fallback seconds for ExerciseWindow, not MainWindow.
+
+============================================================
+SECTION 8 - LOCALIZATION AUDIT
+============================================================
+
+Dashboard visible RESX-backed keys:
+
+- Main_TrainingForFeminineVoice
+- Main_PitchGraph
+- Main_Target
+- Main_TimeSec
+- Main_FrequencyHz
+- Main_YourPitch
+- Stability_VeryStable
+- Stability_Stable
+- Stability_Developing
+- Stability_Unstable
+- Stability_NoVoice
+- Health_Safe
+- Health_Monitor
+- Health_Warning
+- Health_Danger
+- Dashboard_Resonance
+- Dashboard_Pitch
+- Dashboard_Intonation
+- Dashboard_VoiceHealth
+- Difficulty_Beginner
+- Difficulty_Intermediate
+- Difficulty_Advanced
+- Main_Calendar
+- Main_Statistics
+- Main_ExerciseGuide
+- Main_Analyzer
+- Main_SmartCoach
+- Main_Resonance
+- Main_Progression
+- Main_Analysis
+- Main_Settings
+- UI_StartSession
+- UI_StopSession
+- Main_YourProgress
+- Main_CurrentLevel
+- Main_SessionsToNextLevel
+- Main_Streak
+- Main_TotalSessions
+- Main_RealTimeFeedback
+- Main_Feedback
+- Main_ExerciseText
+- Main_ReadyToStart
+- Difficulty_PromotedFormat
+- Difficulty_SessionCompleteFormat
+- Realtime_PitchBelowZoneFormat
+- Realtime_PitchInZoneFormat
+- Realtime_PitchAboveZoneFormat
+- Feedback_Realtime_NoVoice
+- LiveFeedback_SpeakLouder
+- Audio_MicrophoneStartFailedFormat
+- Recording_StartFailedFormat
+- Recording_StopFailedFormat
+- Audio_Error
+- Error_OpenWindowFormat
+
+Hardcoded visible or semi-visible dashboard text:
+
+- "FemVoice Studio" window title
+- "FemVoice Studio" header
+- "FemVoiceScore"
+- target separators ": " and " - "
+- unit "Hz" in target badge
+- mic emoji
+- icon glyphs for streak and total sessions
+- debug labels: Pitch, Smoothed, RMS, Voiced, Stability, Hz
+
+Missing translation status:
+
+- This audit verified key presence in Strings.resx for the main dashboard keys listed above.
+- This audit did not exhaustively compare every culture-specific RESX file value.
+- The target unit "Hz" is hardcoded, not a missing RESX key.
+- Brand text appears intentionally hardcoded, not a missing key.
+
+============================================================
+SECTION 9 - HIDDEN TRANSFORMATIONS
+============================================================
+
+1. Audio samples -> FFT pitch
+   Location: AudioAnalysisEngine.ProcessAudioSamples()
+   Transformation:
+   - byte buffer -> float samples
+   - frame buffer
+   - RMS threshold gating
+   - window function
+   - FFT
+   - peak/parabolic pitch detection
+   - confidence threshold
+   - smoothing
+   - event dispatch to UI synchronization context
+
+2. Audio samples -> YIN/autocorrelation pitch
+   Location: PitchDetectionService.DetectPitch()
+   Transformation:
+   - RMS threshold gating
+   - YIN difference function
+   - cumulative mean normalized difference
+   - threshold search
+   - parabolic interpolation
+   - frequency range clamp
+   - autocorrelation fallback
+   - PitchAnalysisResult with IsVoiced/Pitch/Confidence
+
+3. Calibration profile -> pitch detection thresholds
+   Location: AudioAnalysisEngine.ApplyStoredCalibration()
+   Transformation:
+   - VoicedRmsThreshold * 0.8 -> _minimumFrameRms
+   - clamp 0.0008-0.05
+   - LowOutput -> lower _minimumPeakMagnitude
+   - HighNoiseFloor -> higher confidence threshold
+
+4. Raw pitch -> smoothed pitch
+   Location: LiveMetricsService.CalculateSmoothedPitch()
+   Transformation:
+   - EMA alpha 0.3
+   - recent pitch queue max 15
+   - unvoiced resets _lastPitch to 0
+
+5. Raw/display pitch -> stabilized chart pitch
+   Location: PitchTraceStabilizer.Filter()
+   Transformation:
+   - reject invalid/low values
+   - harmonic correction by divisors 2, 3, 4
+   - reject/cap extreme display values
+   - block fast jumps
+
+6. Visible chart range -> auto y-axis
+   Location: PitchChartAxisRangeCalculator.Calculate()
+   Transformation:
+   - visible positive pitches + targetMin + targetMax
+   - min/max + padding 25
+   - enforce minimum range 50
+   - clamp absolute 60-500
+
+7. Exercise/current difficulty -> active target zone
+   Location: PitchTargetZonePolicy
+   Transformation:
+   - difficulty selects default range
+   - exercise requested pitch targets clamped
+   - upper active target never above 240 in this policy
+
+8. Pitch history -> stability enum
+   Location: LiveMetricsService.CalculateStability()
+   Transformation:
+   - last 10 smoothed pitches
+   - standard deviation
+   - thresholds 5/15/30 Hz -> VeryStable/Stable/Developing/Unstable
+
+9. Pitch/intensity -> health enum
+   Location: LiveMetricsService.CalculateHealth()
+   Transformation:
+   - strainLevel input from intensity logic in MainViewModel
+   - pitch > 280 => Danger
+   - pitch > 260 => Warning
+   - strainLevel > 30 => Monitor
+   - else Safe
+   - records health snapshots for fatigue calculation
+
+10. RMS -> dashboard resonance proxy
+    Location: MainViewModel.CalculateLiveScore(), LiveMetricsService.EstimateF2()
+    Transformation:
+    - spectral proxy = RMS * 5000
+    - F2 estimate = clamp(1200 + spectralProxy / 30 * 600, 1000, 2500)
+    - fixed F1/F3 placeholders
+    - FemVoiceScore resonance formula
+
+11. Pitch variance -> dashboard intonation proxy
+    Location: MainViewModel.CalculateLiveScore()
+    Transformation:
+    - variance from LiveMetricsService.GetPitchVariance()
+    - IntonationRange = clamp(sqrt(variance) * 4, 0, 120)
+    - IntonationRiseScore = clamp(sqrt(variance), 0, 60)
+
+12. Score inputs -> 0-100 dashboard scores
+    Location: FemVoiceScore.Calculate()
+    Transformation:
+    - resonance, pitch, intonation, health component formulas
+    - difficulty tolerance
+    - safety penalties
+    - weighted composite 45/30/15/10
+
+13. Score values -> bar widths
+    Location: MainWindow.xaml ScoreToWidthConverter MultiBinding
+    Transformation:
+    - score + actual grid width -> displayed bar width
+    - exact converter implementation not inspected in this audit
+
+14. Coordinator raw/cache values -> ExerciseLiveState
+    Location: ExerciseIntelligenceCoordinator
+    Transformation:
+    - cached resonance score 0-1
+    - cached pitch Hz normalized to 0-1 only when pitch is primary and no resonance primary
+    - cached stability 0-1
+    - health score < 70 creates safety lock
+    - hold progress 0-1
+    - quality enum
+    - session elapsed seconds from StartExercise timestamp
+    - rate-limited to 100 ms
+    - not used by main dashboard
+
+15. ExerciseLiveState -> ExerciseDetailViewModel display
+    Location: ExerciseDetailViewModel.ApplyLiveState()
+    Transformation:
+    - copies state PrimaryMetricScore, StabilityScore, HoldProgress, booleans, Quality, SessionElapsedSeconds
+    - maps to indicators
+    - DisplayQuality = 0.65 * primary + 0.35 * stability, with thresholds 0.35/0.55/0.75/0.9
+    - not used by main dashboard
+
+============================================================
+SECTION 10 - TECHNICAL RISK REPORT
+============================================================
+
+Technical risks and multiple sources of truth:
+
+1. Main dashboard has two live audio pipelines writing overlapping UI values.
+   Files:
+   - MainViewModel.cs
+   - AudioAnalysisEngine.cs
+   - AudioAnalyzerService.cs
+   Details:
+   - OnPitchUpdated() and OnPitchAnalyzed() both set CurrentPitch, SmoothedPitch, PitchStability, HealthIndicator, RealtimeFeedback, and score-related values.
+   - AudioAnalysisEngine uses FFT/event streaming.
+   - AudioAnalyzerService uses YIN/autocorrelation and history.
+   Technical consequence:
+   - UI values can depend on which event arrived most recently.
+
+2. Main dashboard does not use ExerciseLiveState.
+   Files:
+   - MainViewModel.cs
+   - ExerciseIntelligenceCoordinator.cs
+   - ExerciseLiveState.cs
+   Details:
+   - ExerciseLiveState is authoritative for Exercise Guide live biofeedback, not for MainWindow.
+   - MainWindow dashboard computes and displays its own values.
+   Technical consequence:
+   - Dashboard values and Exercise Guide values may differ even for similar voice input.
+
+3. Realtime feedback can use different ranges depending on source event.
+   File:
+   - MainViewModel.cs
+   Details:
+   - OnPitchUpdated() uses ActivePitchTargetZone.Min/Max.
+   - OnPitchAnalyzed() uses ComfortZone.Min/Max.
+   - Visible target badge and chart annotation use ActivePitchTargetZone.
+   Technical consequence:
+   - Text feedback can disagree with visible graph zone.
+
+4. Main dashboard graph state is code-behind-owned.
+   File:
+   - MainWindow.xaml.cs
+   Details:
+   - _pitchDataPoints, PlotModel, LineSeries, chart timer, line color, axis updates live in code-behind.
+   - MainViewModel.PitchHistory is maintained but not used by the main PlotView.
+   Technical consequence:
+   - There are duplicate pitch histories and graph behavior is harder to unit test.
+
+5. PitchHistory and _pitchDataPoints are separate stores.
+   Files:
+   - MainViewModel.cs
+   - MainWindow.xaml.cs
+   Details:
+   - MainViewModel.AddPitchDataPoint() fills PitchHistory.
+   - MainWindow.RenderLatestPitchPoint() fills _pitchDataPoints and renders from that.
+   Technical consequence:
+   - A future developer may assume PitchHistory drives the main graph, but it does not.
+
+6. Main dashboard resonance is proxy-based.
+   File:
+   - MainViewModel.cs
+   Details:
+   - ResonanceScore is based on fixed formant placeholders and RMS-derived F2/spectral proxy.
+   - ResonanceProxyEngine is not used by MainWindow.
+   Technical consequence:
+   - Displayed ResonanceScore is not equivalent to formant-based resonance engine output.
+
+7. Main dashboard health is simplified.
+   Files:
+   - MainViewModel.cs
+   - LiveMetricsService.cs
+   Details:
+   - HealthIndicator is based on pitch and intensity-derived strain.
+   - VocalHealthSupervisor is not in the main dashboard path.
+   Technical consequence:
+   - Displayed health values are not the full health intelligence layer.
+
+8. Main dashboard quality is score-based, not ExerciseLiveState quality.
+   Files:
+   - MainViewModel.cs
+   - FemVoiceScore.cs
+   Details:
+   - Main dashboard shows OverallScore and component scores.
+   - Exercise Quality exists as PerformanceQuality in ExerciseLiveState and DisplayQuality in ExerciseDetailViewModel, but not on main dashboard.
+   Technical consequence:
+   - "Quality" must not be assumed to mean the same thing across dashboard and Exercise Guide.
+
+9. _uiUpdateTimer currently has no active dashboard work.
+   File:
+   - MainViewModel.cs
+   Details:
+   - Timer starts and stops with recording.
+   - OnUiTimerTick() contains comments only.
+   Technical consequence:
+   - Timer exists as lifecycle complexity without visible function.
+
+10. ErrorMessage visibility binding may be type-mismatched.
+    File:
+    - MainWindow.xaml
+    Details:
+    - ErrorMessage string is bound through BoolToVisibilityConverter.
+    - StringToVisibilityConverter exists and is used elsewhere.
+    Technical consequence:
+    - Depending on converter implementation, errors may not become visible.
+
+11. Raw Hz is visible in several places.
+    Files:
+    - MainWindow.xaml
+    - MainWindow.xaml.cs
+    - Strings.resx
+    Details:
+    - target badge shows exact Hz
+    - y-axis says Frequency (Hz)
+    - realtime feedback includes current Hz and target Hz range
+    - debug info includes Hz
+    Technical consequence:
+    - Future clinical validation must explicitly evaluate raw-number exposure.
+
+12. PitchChartViewModel exists but is not used by MainWindow.
+    File:
+    - Views/PitchChartViewModel.cs
+    Details:
+    - It defines its own PlotModel and target area logic.
+    - MainWindow creates chart directly in code-behind.
+    Technical consequence:
+    - There are two pitch chart implementations/approaches in the codebase.
+
+13. ComfortZoneController default max is 255 and max limit 350, but MainWindow active target policy caps at 240.
+    Files:
+    - ComfortZoneController.cs
+    - PitchTargetZonePolicy.cs
+    Details:
+    - These are different systems.
+    - Main dashboard visible target zone uses PitchTargetZonePolicy/ActivePitchTargetZone.
+    - ComfortZoneController belongs to exercise/adaptive comfort-zone path.
+    Technical consequence:
+    - "comfort zone" and "active target zone" are not one single source of truth.
+
+14. Main dashboard Stop Session saves TrainingSession from AudioAnalyzerService history only.
+    Files:
+    - MainViewModel.cs
+    - AudioAnalyzerService.cs
+    Details:
+    - StopAnalysis() calculates AveragePitch, MinPitch, MaxPitch, PitchStandardDeviation, etc. from PitchDetectionService/PitchAnalyzed history.
+    - The plotted graph may include values from AudioAnalysisEngine.
+    Technical consequence:
+    - Saved session analysis may not exactly match the plotted pitch trace.
+
+============================================================
+END OF TECHNICAL TRUTH AUDIT
+============================================================
+
+This document intentionally does not prescribe fixes or clinical changes. It establishes what data is shown, where it comes from, how it is transformed, and where multiple sources of truth exist.

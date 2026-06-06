@@ -1,0 +1,18 @@
+FemVoice main dashboard and pitch graph analysis
+Status: 2026-06-06
+
+Authoritative audit document:
+work-documents/FEMVOICE – Main Dashboard & Pitch Graph Audit.md
+
+This text file exists because the audit prompt requested MainDashboard_PitchGraph_Analysis.txt, while the final requested artifact name was FEMVOICE – Main Dashboard & Pitch Graph Audit.md.
+
+Use the Markdown document for the full sectioned analysis:
+
+1. UI wiring map
+2. Start session flow
+3. Pitch graph logic
+4. Clinical correctness review
+5. Value validation
+6. Localization / text audit
+7. Broken or unclear wiring
+8. Recommended fixes

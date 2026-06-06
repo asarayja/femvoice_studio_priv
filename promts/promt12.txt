@@ -1,0 +1,206 @@
+Du er en senior C#/WPF-arkitekt med dyp ekspertise innen sanntids signalprosessering, MVVM-arkitektur og klinisk biofeedback-systemer for gender-affirming voice training. Du har eksisterende BaseViewModel-infrastruktur, en grunnleggende NAudio-basert AudioAnalysisEngine, en implementert FemVoiceScore-motor, og delvis ferdig SmartCoach-logikk.
+
+Din oppgave er å levere produksjonsklare, kompilerbare klasser for et helhetlig sanntids biofeedback-dashboard i FemVoice Studio. Koden skal være klar for testing og deploy, med full feilhåndtering, unit tests og dokumentasjon.
+
+# Klinisk pedagogisk fundament
+
+Systemets UI og logikk må gjenspeile følgende pedagogisk korrekte årsak-virkning-kjede:
+
+**Riktig progresjonsvei:**
+Resonansforbedring → Pitch blir lettere og mer stabil → FemVoiceScore øker balansert → VoiceHealth forblir stabil
+
+**Skadelig anti-mønster som må forhindres:**
+Pressing av høyere pitch → Midlertidig scoreøkning → Strain/fatigue → Progresjonsstopp
+
+Hver implementeringsbeslutning skal aktivt motvirke "Hz-jakt" og fremme helhetlig, bærekraftig stemmeutvikling.
+
+# Teknisk stack og eksisterende kodebase
+
+- .NET 10 / C# / WPF
+- Strikt MVVM (bruk eksisterende BaseViewModel med INotifyPropertyChanged)
+- Eksisterende NAudio-basert AudioAnalysisEngine (bygg videre på denne)
+- Eksisterende FemVoiceScore-motor (integrer med UI)
+- Delvis ferdig SmartCoach-logikk (fullfør og integrer)
+- OxyPlot for sanntids- og trendvisualisering
+
+# Arkitektur og datastrøm
+
+Følg denne datastrømmen konsekvent:
+
+```
+AudioAnalysisEngine → LiveMetrics
+FemVoiceScore → ScoreResult
+SmartCoach → Adaptive Targets & ComfortZones
+```
+
+**MainPageViewModel** skal eksponere:
+- `double CurrentPitch`
+- `Range ComfortZone`
+- `FemVoiceScoreResult CurrentScore`
+- `StabilityState PitchStability`
+- `HealthState HealthIndicator`
+
+**AnalysisPageViewModel** skal eksponere:
+- `ObservableCollection<PitchSample> PitchHistory`
+- `ObservableCollection<FormantSample> ResonanceTrend`
+- `ObservableCollection<ScoreSnapshot> ScoreHistory`
+- `ObservableCollection<HealthSnapshot> HealthTrend`
+
+# 1. Main Page – Sanntids biofeedback
+
+## Pitch-graf (OxyPlot)
+
+Implementer live pitch-visualisering med:
+
+- Glattet pitch-kurve (async oppdatering, unngå UI-frys)
+- Komfortsone-overlay (adaptive målsoner fra SmartCoach)
+- Stabilitetsindikator
+- Strain-indikator
+
+**Fargelogikk:**
+- 🟢 Grønn: stabil + innenfor komfortsone
+- 🟡 Gul: utenfor komfortsone
+- 🔴 Rød: helsevarsel aktiv
+
+**Komfortsonen skal:**
+- Være baseline-relativ (ikke absolutte Hz-verdier)
+- Justeres dynamisk av SmartCoach basert på faktisk progresjon
+- Aldri presenteres som "kjønnsmåltall"
+
+Pitch-grafen skal aldri være forståelig isolert – den må alltid sees i sammenheng med score-kontekst.
+
+## FemVoiceScore mini-dashboard
+
+Vis komposittscore med:
+
+- **TotalScore** (fremtredende, men ikke dominerende)
+- Fire likeverdige komponentbarer med identisk visuell prioritet:
+  - ResonanceScore
+  - PitchScore
+  - IntonationScore
+  - VoiceHealthScore
+
+Ingen komponent får være visuelt større eller mer prominent enn andre. Dette forhindrer fiksering på enkeltparametere.
+
+# 2. Analysis Page – Forståelse av progresjon
+
+Implementer fire like viktige analyseseksjoner med OxyPlot:
+
+## Resonans
+- F2-trend over tid
+- Spectral brightness proxy
+- Resonansstabilitet
+- Fremover-indikator (akustisk basert, ikke perceptuell)
+
+## Pitch
+- Stabilitetsutvikling over økt
+- Range per frase
+- Komfortsoneutvikling (hvordan sonen endres)
+- Langtidstrend (ukentlig/månedlig)
+
+## Prosodi
+- Intonasjonsrange
+- Monotoni-indikator (variasjon i pitch over tid)
+
+## Helse
+- Strain-trend
+- Fatigue-trend
+
+Hver seksjon skal ha både sanntidsdata og trendvisualisering. Bruk OxyPlot effektivt med partielle oppdateringer (`InvalidatePlot(false)`).
+
+# 3. FemVoiceScore-samspill og progresjonslogikk
+
+Fullfør og integrer eksisterende FemVoiceScore-motor med følgende logikk:
+
+**Pitch får kun øke når:**
+- `ResonanceScore > 60`
+- `VoiceHealthScore > 70`
+- Stabilitet vedvart over minst 3 økter
+
+**Scoring-prinsipper:**
+- Belønne pitch **kun** når resonans og helse støtter det
+- Straffe ekstrem pitch uten resonansstøtte (negativ feedback)
+- Umiddelbart reflektere helsefall i totalscore
+
+**Maintenance-økter:**
+- Reduserte pitchkrav
+- Fokus på resonans og stabilitet
+- Vedlikeholde oppnådde nivåer uten pushing
+
+# 4. SmartCoach forklaringsmotor
+
+Fullfør og integrer delvis ferdig SmartCoach-logikk med et system som kontinuerlig genererer kontekstsensitive forklaringer på hva som påvirker scoren akkurat nå.
+
+**Eksempler på forklaringer:**
+- "Resonans er lavere enn pitch – fokusér på fremre klang"
+- "Pitch stabil, men intonasjon kan få mer variasjon"
+- "Helseindikator viser belastning – reduser intensitet"
+
+**Forklaringene skal:**
+- Være støttende og ikke-dømmende i tone
+- Alltid forklare årsak-virkning
+- Aldri bruke kjønnskategorier ("maskulin", "feminin")
+- Aldri referere til Hz-tall uten samtidig å gi komfort/stabilitet/helse-kontekst
+
+Implementer logikk som identifiserer den mest begrensende faktoren for progresjon akkurat nå og kommuniserer dette tydelig.
+
+# Absolutte UI-restriksjoner
+
+Systemet skal **aldri**:
+
+❌ Vise etiketter som "maskulin" eller "feminin"
+❌ Vise Hz-tall isolert uten komfort/stabilitet/helse-kontekst
+❌ Belønne ekstrem pitch i scoreberegning
+❌ Gi pitch visuell prioritet over resonans i layout/størrelse/fargebruk
+
+# Tekniske kvalitetskrav (produksjonsnivå)
+
+- Sanntidsvisualisering må kjøre uten UI-frysing (async/await, dispatcher-bruk)
+- Signal må være glattet før plotting (implementer passende filter)
+- OxyPlot-oppdateringer må være effektive (bruk `InvalidatePlot(false)` for partielle oppdateringer)
+- Full MVVM-separasjon (ingen forretningslogikk i views eller code-behind)
+- FemVoiceScore-motoren og SmartCoach må være unit-testbare (dependency injection)
+- Håndter edge cases: ingen lyd, ekstreme verdier, plutselige helsefall
+- Inkluder komplett feilhåndtering med logging
+- Implementer dispose-patterns for audio resources
+- Skriv unit tests for kritisk scorelogikk og progresjonskontroll
+- Dokumenter kliniske begrunnelser for ikke-opplagte designvalg
+
+# Leveranse
+
+Implementer fullstendige, produksjonsklare, kompilerbare klasser for:
+
+1. **MainPage.xaml** og **MainPageViewModel.cs** (sanntids biofeedback)
+   - XAML med komplett databinding
+   - ViewModel som arver fra eksisterende BaseViewModel
+   - Integrasjon med eksisterende AudioAnalysisEngine
+
+2. **AnalysisPage.xaml** og **AnalysisPageViewModel.cs** (trendanalyse)
+   - XAML med OxyPlot-implementasjon
+   - ViewModel med effektiv collection-håndtering
+
+3. **FemVoiceScoreEngine.cs** (utvidelse av eksisterende motor)
+   - Pedagogisk korrekt scoreberegning
+   - Progresjonskontroll-logikk
+   - Unit tests for kritiske scoring-scenarier
+
+4. **SmartCoachEngine.cs** (fullføring av delvis ferdig logikk)
+   - Adaptive målsoner
+   - Forklaringsgenerering
+   - Progresjonsdeteksjon
+
+5. **AudioAnalysisEngine.cs** (utvidelser til eksisterende NAudio-implementasjon)
+   - Signal smoothing
+   - FFT-optimalisering
+   - Resource disposal
+
+Inkluder:
+- Komplett XAML med riktig databinding
+- ViewModels som arver fra eksisterende BaseViewModel
+- Score-logikk som implementerer alle pedagogiske restriksjoner
+- Kommentarer som forklarer kliniske begrunnelser
+- Unit tests for kritisk logikk
+- Try-catch med logging for produksjonssikkerhet
+- XML-dokumentasjon for public APIs
+
+Koden skal være klar til kompilering, testing og deploy.

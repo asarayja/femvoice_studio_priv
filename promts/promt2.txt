@@ -1,0 +1,137 @@
+Du er en erfaren C#/WPF-arkitekt med dyp forståelse for MVVM-arkitektur, treningsprogresjonsapper, og datadrevet UI-design.
+
+## Kontekst
+
+FemVoice Studio har en eksisterende kalender implementert i WPF med MVVM-arkitektur. `CalendarViewModel.cs` (vedlagt) bruker CommunityToolkit.Mvvm, ObservableCollection<CalendarDay>, og DatabaseService for å hente treningsdata via `GetCalendarData(year, month)`.
+
+**Nåværende tilstand:**
+- CalendarDay-modellen har Date, DayNumber, IsCurrentMonth, IsToday, HasSessions, SessionCount, TotalMinutes, AverageScore, Intensity
+- Intensity beregnes kun basert på SessionCount: `Math.Min(1.0, SessionCount/3.0)` — AverageScore ignoreres fullstendig
+- DatabaseService returnerer dictionary med Sessions, Minutes, Score per dato
+- Ingen command bindings for dag-klikk
+- Ingen detaljert økt-data (pitch-score, resonans-score, feedback) hentes eller vises
+- Ingen uke/måned-sammendrag, ingen treningsanbefalinger, ingen animasjoner
+
+**Ønsket tilstand:**
+Kalender transformert til aktivt treningsdashboard med kvalitetsbasert heatmap, interaktiv dagvisning, og intelligent progresjonsveiledning.
+
+## Din oppgave
+
+Lever komplett, produksjonsklar implementeringsplan med konkret C#-kode, XAML-oppdateringer, og integrasjonsveiledning som kan kopieres direkte inn i eksisterende kodebase.
+
+## Krav
+
+**1. Kvalitetsbasert heatmap**
+
+Implementer ny intensitetsalgoritme i CalendarDay som kombinerer kvalitet og aktivitet:
+
+```
+Intensity = (AverageScore / 100) × min(1, SessionCount / 2)
+```
+
+Opprett eller oppdater `IntensityToColorConverter` hvor:
+- Lav score (0-50) → svak intensitet i rødspektrum
+- Middels score (50-75) → moderat intensitet i gulspektrum  
+- Høy score (75-100) → sterk intensitet i grønnspektrum
+
+Intensiteten skal reflektere treningskvalitet, ikke bare antall økter.
+
+**2. Modal vindu for dagdetaljer**
+
+Brukeren ønsker modal window-løsning (egen Window-klasse). Implementer:
+
+- `DayDetailsWindow.xaml` og `DayDetailsViewModel.cs`
+- ICommand i CalendarViewModel som åpner vinduet når dag klikkes
+- Vinduet skal vise:
+  - Dato
+  - Liste over alle økter for dagen
+  - Pitch-score per økt
+  - Resonans-score per økt
+  - Total progresjon for dagen
+  - Feedback-oppsummering
+
+Krev detaljerte økt-data fra database. Utvid DatabaseService hvis nødvendig.
+
+**3. Dynamiske sammendrag**
+
+Legg til properties i CalendarViewModel for månedsstatistikk:
+- TotalSessions (int)
+- AverageScore (double)
+- MostImprovedParameter (string: "Pitch", "Resonance", eller "Consistency")
+- TotalTrainingMinutes (int)
+
+Disse skal beregnes automatisk når LoadCalendar() kjøres. Vis i XAML nederst i kalenderen.
+
+**4. Treningsanbefalinger**
+
+Legg til i CalendarDay-modellen:
+- IsRecommendedTrainingDay (bool)
+- IsRestDay (bool)
+
+Marker visuelt i kalender-UI med ikoner eller border-styling. Hvis progresjonsmotoren ikke er tilgjengelig ennå, implementer enkel logikk:
+- Anbefalt treningsdag: når forrige økt er 1-2 dager siden
+- Hviledag: når forrige økt er samme dag eller dagen før
+
+**5. UX-forbedringer**
+
+Implementer:
+- Tydelig IsToday-markering (bruker eksisterende property, men styrk visningen)
+- Hover-effekt på CalendarDay med PointerOver VisualState
+- Fade-animasjon ved månedsskifte (bruk Storyboard på Days collection change)
+- Utvidet tooltip med SessionCount, TotalMinutes, AverageScore formatert lesbart
+
+Alt styling må følge eksisterende ResourceDictionary-struktur.
+
+## Tekniske leveranser
+
+For hver komponent, lever:
+
+**1. Oppdatert CalendarViewModel.cs**
+- Nye properties for sammendrag
+- ICommand for dag-klikk (ShowDayDetailsCommand)
+- Oppdatert LoadCalendar() med summering
+- Kalkulasjonslogikk for MostImprovedParameter
+
+**2. Ny CalendarDay.cs-utvidelse**
+- Oppdatert Intensity-beregning
+- IsRecommendedTrainingDay, IsRestDay properties
+- Dokumentasjon av hver property
+
+**3. IntensityToColorConverter.cs**
+- Komplett IValueConverter-implementasjon
+- Color-mapping basert på ny formel
+- Null-håndtering og edge cases
+
+**4. DayDetailsWindow.xaml + DayDetailsViewModel.cs**
+- Komplett Window-layout
+- ViewModel med ObservableCollection<TrainingSession>
+- Command for lukking
+- Data binding til alle felter
+
+**5. Oppdatert Calendar.xaml**
+- DataTemplate for CalendarDay med hover-effekt, recommended/rest-indikatorer
+- Binding til ShowDayDetailsCommand
+- Sammendrag-seksjon nederst med statistikk
+- Animasjon-trigger for månedsskifte
+
+**6. DatabaseService-utvidelser**
+- Ny metode `GetDetailedSessionsForDay(DateTime date)` som returnerer liste med pitch-score, resonance-score, feedback per økt
+- Oppdater `GetCalendarData()` hvis nødvendig for summary-kalkulasjoner
+
+**7. Integrasjonsveiledning**
+- Hvor nye filer plasseres i prosjektstruktur
+- Hvordan koble commands i XAML
+- Testing-anbefalinger per funksjon
+- Potensielle breaking changes (skal være ingen)
+
+## Kritiske constraints
+
+Din implementering MÅ:
+- Bevare all eksisterende funksjonalitet i CalendarViewModel
+- Følge MVVM strengt (null code-behind logic utenom boilerplate)
+- Bruke nåværende DatabaseService-pattern
+- Være modulær – hver feature testbar isolert
+- Inkludere null-sjekker, error handling, og XML-dokumentasjonskommentarer
+- Følge norske månedsnavn og eksisterende naming conventions fra CalendarViewModel.cs
+
+Lever produksjonsferdig kode som kan integreres direkte uten refaktorering.

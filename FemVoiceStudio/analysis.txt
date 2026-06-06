@@ -1,0 +1,175 @@
+UI Wiring Map
+--------------
+
+Files examined:
+- Views/ExerciseWindow.xaml
+- Views/ExerciseWindow.xaml.cs
+- ViewModels/ExerciseDetailViewModel.cs
+- Services/ExerciseIntelligenceCoordinator.cs
+- Models/ExerciseLiveState.cs
+
+1) Button → Command wiring
+- `StartButton` (ExerciseWindow.xaml) -> Click -> `OnStartClick` (ExerciseWindow.xaml.cs)
+  - `OnStartClick` calls `StartExerciseCommand.Execute(null)` on `_viewModel` (if non-null)
+  - `StartExerciseCommand` in `ExerciseDetailViewModel` maps to `ExecuteStart()` → calls `_coordinator.StartExercise(_activeProfile, userId:1)`
+
+- `StopButton` (ExerciseWindow.xaml) -> Click -> `OnStopClick` (ExerciseWindow.xaml.cs)
+  - `OnStopClick` calls `_viewModel.StopExerciseCommand.Execute(null)` (if `_viewModel` present)
+  - `StopExerciseCommand` in VM maps to `ExecuteStop()` → calls `_coordinator.StopExercise()`
+
+2) Timer text properties
+- `TimerDisplay.Text` is updated in two places:
+  - `ExerciseWindow.OnViewModelPropertyChanged` handles `SessionElapsedSeconds` property and sets `TimerDisplay.Text = "{secs/60:00}:{secs%60:00}"` using `_viewModel.SessionElapsedSeconds`.
+    - (See `ExerciseWindow.xaml.cs` switch case for `SessionElapsedSeconds`.)
+  - `ExerciseWindow.OnTimerTick` (DispatcherTimer tick) sets `TimerDisplay.Text` using `_viewModel?.SessionElapsedSeconds ?? _elapsedSeconds`.
+
+3) Guidance content drive
+- `GuidanceItemsList` (ItemsControl in ExerciseWindow.xaml) binds `ItemsSource="{Binding GuidanceItems}"` expecting its DataContext to expose `GuidanceItems` (an ObservableCollection<GuidanceItem>) provided by `ExerciseDetailViewModel`.
+- The guidance panel header also binds `Text="{Binding FeedbackModeKey, Converter={loc:LocConverter}}"` which also expects the VM as DataContext.
+- The VM method `RebuildGuidanceItems(profile)` populates `GuidanceItems` and is invoked by `ExerciseDetailViewModel.ApplyProfile(profile, exerciseId)` which is called from `ExerciseWindow.ShowExerciseDetail()`.
+
+4) Live UI subscriptions
+- `ExerciseDetailViewModel` subscribes directly to `ExerciseIntelligenceCoordinator` events:
+  - In `ExerciseDetailViewModel` ctor: `_coordinator.ExerciseUpdated += OnExerciseUpdated;` and `_coordinator.InlineCoachUpdated += OnInlineCoachUpdated;`
+- `ExerciseWindow.InitializeLiveFeedback()` resolves an instance of `ExerciseDetailViewModel` from DI and does:
+  - `_viewModel.PropertyChanged += OnViewModelPropertyChanged;`
+  - `LiveFeedbackPanel.DataContext = _viewModel;` (only the LiveFeedback panel is assigned DataContext)
+
+
+Timer Flow (trace)
+------------------
+
+Where Start triggers timer:
+- `ExerciseWindow.OnStartClick` (Views/ExerciseWindow.xaml.cs)
+  - creates a DB session via `_exerciseService.StartSession(...)`
+  - sets `_elapsedSeconds = 0; _isRunning = true; _timer?.Start();`
+  - then if `_viewModel != null`: `_viewModel.StartExerciseCommand.Execute(null);` and `LiveFeedbackPanel.Visibility = Visible`.
+
+Where time increments:
+- `DispatcherTimer _timer` created in `InitializeServices()` with `Interval = TimeSpan.FromSeconds(1)` and `Tick += OnTimerTick`.
+- `OnTimerTick` (ExerciseWindow.xaml.cs) currently does NOT increment `_elapsedSeconds`. It reads the authoritative time source as `_viewModel?.SessionElapsedSeconds ?? _elapsedSeconds` and writes formatted text to `TimerDisplay.Text` but never increments `_elapsedSeconds` itself.
+
+Where Stop resets/pauses:
+- `ExerciseWindow.OnStopClick` stops the `_timer` (`_timer?.Stop()`), sets `_isRunning = false`, completes DB session, and if `_viewModel != null` invokes `_viewModel.StopExerciseCommand.Execute(null)` and hides `LiveFeedbackPanel`.
+
+Whether event-driven or dispatcher-based:
+- Timer display is a hybrid:
+  - UI expects the authoritative `SessionElapsedSeconds` to come inside `ExerciseLiveState` published by `ExerciseIntelligenceCoordinator` (event-driven).
+  - Fallback `_elapsedSeconds` exists for when VM is unavailable, but the fallback is never incremented in `OnTimerTick` (missing incrementation).
+
+
+Guidance Flow (trace)
+---------------------
+
+When GuidanceItems are populated:
+- `ExerciseDetailViewModel.ApplyProfile(profile, exerciseId)` sets visibility flags (ShowResonanceBar etc.) and calls `RebuildGuidanceItems(profile)` which creates a new `ObservableCollection<GuidanceItem>` and assigns it to the `GuidanceItems` property (raises PropertyChanged).
+
+What triggers refresh:
+- `ShowExerciseDetail(Exercise exercise)` in `ExerciseWindow` calls:
+  - `var profile = _profileFactory?.CreateProfile(exercise.ProfileType) ...` then `_viewModel.ApplyProfile(profile, exercise.ExerciseId);` so guidance population happens when the detail view is shown and the VM is present.
+
+Whether they depend on exercise start:
+- No. `RebuildGuidanceItems` is run during `ApplyProfile` when the exercise detail is shown (not on Start/Stop). Guidance is derived from static profile keys and should appear as soon as the detail is shown.
+
+Whether they update from ExerciseLiveState:
+- No. GuidanceItems are constructed from `ExerciseTargetProfile` keys (ClinicalPurposeKey, PhysicalFocusKey, CommonMistakesKey, SafetyInfoKey). They do not listen to `ExerciseLiveState` metric updates. Inline coach messages are separate (`InlineCoachUpdated`).
+
+
+State Update Chain (Start → coordinator → UI)
+---------------------------------------------
+
+1) UI Start action:
+- User clicks `StartButton` → `ExerciseWindow.OnStartClick` → DB session start + `_timer.Start()` → `_viewModel?.StartExerciseCommand.Execute(null)`.
+
+2) VM Start handling:
+- `ExerciseDetailViewModel.ExecuteStart` calls `_coordinator.StartExercise(_activeProfile, userId:1)` and sets `IsExerciseActive = true`.
+
+3) Coordinator:
+- `ExerciseIntelligenceCoordinator.StartExercise` calls `StopExercise()` (no-op if inactive), `SetExerciseContext(profile, userId)` which invokes `_exerciseUpdated?.Invoke(BuildDefaultState())` (this publishes a default zeroed state at context switch), and sets `_isActive = true` and `_sessionStartTimestamp = DateTime.Now`.
+
+4) Engines & evaluation loop:
+- Engines (ResonanceProxyEngine, ScoreEngine, ComfortZoneController, HealthMonitor) raise events which Coordinator handles (OnResonanceScoreUpdated, OnScoreUpdated, OnComfortZoneUpdated, OnHealthWarning, etc.). Each cached update calls `EvaluateExerciseStateFromCache()` which calls `EvaluateExerciseStateCore(...)`.
+- `EvaluateExerciseStateCore` computes metrics and builds an `ExerciseLiveState` snapshot (PrimaryMetricScore, SecondaryMetricScore, StabilityScore, IsInComfortZone, IsHoldingCorrectly, HoldProgress, IsSafetyLocked, Quality, Timestamp) and then `_exerciseUpdated?.Invoke(liveState);` (publishes state to subscribers).
+
+5) VM subscription and UI mirror:
+- `ExerciseDetailViewModel` subscribes to `_coordinator.ExerciseUpdated` and marshals to UI thread in `OnExerciseUpdated`, then `ApplyLiveState(state)` which copies values into VM properties and raises PropertyChanged for each binding.
+- `ExerciseWindow` has subscribed to `_viewModel.PropertyChanged` (via `InitializeLiveFeedback`) and mirrors select properties (HoldProgress via MirrorHoldArc, CoachMessage via MirrorCoachHint, SessionElapsedSeconds mapped to TimerDisplay in OnViewModelPropertyChanged).
+
+
+Broken / Missing Links (explicit)
+--------------------------------
+
+1) Guidance Items are not visible / not updating in UI
+- Symptom: `GuidanceItemsList` ItemsControl remains empty despite `ExerciseDetailViewModel.ApplyProfile()` populating `GuidanceItems`.
+- Root cause: `GuidanceItemsList` uses XAML binding `ItemsSource="{Binding GuidanceItems}"` but no DataContext is set for the guidance panel or the detail content.
+  - `InitializeLiveFeedback()` sets `LiveFeedbackPanel.DataContext = _viewModel;` but the Guidance panel (`ExerciseGuidancePanel` / `GuidanceItemsList`) is outside `LiveFeedbackPanel` and thus has no DataContext pointing to the VM.
+  - The rest of the detail UI is updated imperatively (named TextBlocks like `DetailName`, `DetailDescription`, etc.), but the guidance panel erroneously relies on a DataContext binding while none is set.
+
+2) Session elapsed timer never advances (no visible ticking)
+- Symptom: `TimerDisplay` remains static (00:00 or 00:00 fallback) even after Start pressed.
+- Root causes (two independent problems):
+  a) `ExerciseIntelligenceCoordinator` does NOT populate `SessionElapsedSeconds` in `ExerciseLiveState` published from `EvaluateExerciseStateCore`. The coordinator sets `Timestamp` but never computes `SessionElapsedSeconds = (int)(DateTime.Now - _sessionStartTimestamp).TotalSeconds` before invoking `_exerciseUpdated?.Invoke(liveState);`.
+  b) Local fallback `_elapsedSeconds` in `ExerciseWindow` is never incremented. `OnTimerTick` reads `_viewModel?.SessionElapsedSeconds ?? _elapsedSeconds` but does not increment `_elapsedSeconds` each tick.
+  Therefore, neither the event-driven path (coordinator → VM → UI) nor the fallback dispatcher path produces advancing seconds.
+
+3) Potential DI resolution gaps (runtime null VM)
+- Observation: `App.ConfigureServices` registers `ExerciseDetailViewModel` via `services.AddTransient(detailVmType)` only if the type exists. Many services (LocalizationService, ExerciseIntelligenceCoordinator, etc.) are configured in `Infra/DependencyInjection.cs` via `AddFemVoiceStudio` extension, but this extension is not invoked in `App.ConfigureServices`.
+- Practical effect: If the DI container does not include `ExerciseIntelligenceCoordinator` or `LocalizationService` registrations at runtime, resolving `ExerciseDetailViewModel` may fail (caught in InitializeLiveFeedback) and `_viewModel` could be null, causing Start/Stop delegation to the VM to be skipped.
+- In the observed code paths, `InitializeLiveFeedback` swallows exceptions and silently returns when `_viewModel` is null — making the problem quiet.
+
+
+Recommended Fixes (per broken flow)
+-----------------------------------
+
+Fix 1 — Guidance DataContext wiring (high priority)
+- Symptom: Guidance panel empty when detail shown.
+- What to change: Set the DataContext of the guidance panel (or the entire DetailView) to the resolved `ExerciseDetailViewModel` instance.
+- Where to change: `ExerciseWindow.InitializeLiveFeedback()` or `ShowExerciseDetail()`:
+  - Option A (recommended): in `InitializeLiveFeedback()` after resolving `_viewModel`, add:
+    - `ExerciseGuidancePanel.DataContext = _viewModel;` (or `DetailView.DataContext = _viewModel;` if safe)
+  - Option B: in `ShowExerciseDetail()` after `_viewModel.ApplyProfile(...)`, set `GuidanceItemsList.ItemsSource = _viewModel.GuidanceItems;` (imperative binding minimal change)
+- Why it fixes: `GuidanceItemsList` will have its binding context and will reflect `GuidanceItems` updates.
+
+Fix 2 — SessionElapsedSeconds publication (high priority)
+- Symptom: Timer not driven by coordinator.
+- What to change: `ExerciseIntelligenceCoordinator.EvaluateExerciseStateCore(...)` must compute `SessionElapsedSeconds` based on `_sessionStartTimestamp` and include it in the `ExerciseLiveState` snapshot it publishes.
+- Where to change: inside `EvaluateExerciseStateCore`, before building `liveState`, compute:
+  - `int elapsed = 0; lock(_lock) { if (_sessionStartTimestamp.HasValue) elapsed = (int)(DateTime.Now - _sessionStartTimestamp.Value).TotalSeconds; }` then set `SessionElapsedSeconds = elapsed;` on the created `ExerciseLiveState` instance.
+- Why it fixes: `ExerciseDetailViewModel.ApplyLiveState(state)` will receive updated `SessionElapsedSeconds` and `PropertyChanged` will fire, causing `ExerciseWindow` to mirror the VM value to `TimerDisplay`.
+
+Fix 3 — Fallback local timer increment (medium priority / defensive)
+- Symptom: If VM absent, local timer never increments.
+- What to change: increment `_elapsedSeconds` in `OnTimerTick` when the VM is unavailable.
+- Where to change: at start of `OnTimerTick`, add `if (_viewModel == null) _elapsedSeconds++;` (or always increment when `_isRunning` true, but ensure VM remains authoritative).
+- Why it fixes: If VM cannot be resolved, the UI still shows progressing time using the local DispatcherTimer fallback.
+
+Fix 4 — DI registration clarity (medium priority)
+- Symptom: Could fail to resolve VM or coordinator silently.
+- What to change: Ensure `App.ConfigureServices` invokes the central `AddFemVoiceStudio()` extension (or explicitly registers `LocalizationService`, `ExerciseIntelligenceCoordinator`, etc.) so that `ExerciseDetailViewModel` constructor dependencies are resolvable.
+- Where to change: `App.xaml.cs` in `ConfigureServices()` add `services.AddFemVoiceStudio();` or inline the needed registrations.
+- Why it fixes: Guarantees `_viewModel` and the coordinator are successfully constructed by DI, avoiding null VM and quiet failures.
+
+Fix 5 — Consider binding consistency (design hygiene)
+- Symptom: Mixed imperative updates (named TextBlocks) and data binding (GuidanceItemsList) cause confusion.
+- Recommendation: Choose a consistent approach for the detail view — either set `DetailView.DataContext = _viewModel;` and migrate imperative updates to bindings, or keep all updates imperative (set ItemsSource explicitly). The minimal fix is to set the DataContext for the guidance panel only.
+
+
+Files to edit to implement fixes (developer minimal touch list)
+- `Views/ExerciseWindow.xaml.cs`:
+  - Add `ExerciseGuidancePanel.DataContext = _viewModel;` inside `InitializeLiveFeedback()` after `LiveFeedbackPanel.DataContext = _viewModel;` (or set `DetailView.DataContext`).
+  - Add `_elapsedSeconds++;` in `OnTimerTick` when `_viewModel == null` (defensive fallback) or when `_isRunning` true.
+
+- `Services/ExerciseIntelligenceCoordinator.cs`:
+  - In `EvaluateExerciseStateCore(...)` compute elapsed seconds from `_sessionStartTimestamp` and set `liveState.SessionElapsedSeconds = elapsed;` before invoking `_exerciseUpdated`.
+
+- `App.xaml.cs` (optional):
+  - Call `services.AddFemVoiceStudio();` in `ConfigureServices()` (or register required services explicitly) to ensure DI can resolve the VM and coordinator.
+
+
+Appendix — Quick pointers to exact lines I inspected
+- `Views/ExerciseWindow.xaml` — GuidanceItemsList binding at ~line 513, LiveFeedbackPanel block starts at ~line 640
+- `Views/ExerciseWindow.xaml.cs` — `InitializeLiveFeedback()` around line 96; `OnStartClick()`, `OnStopClick()` and `OnTimerTick()` around lines 330–420
+- `ViewModels/ExerciseDetailViewModel.cs` — `ApplyProfile()` (guidance builder) and `RebuildGuidanceItems()` around lines 210–320; `ApplyLiveState(ExerciseLiveState state)` around line 620
+- `Services/ExerciseIntelligenceCoordinator.cs` — `StartExercise()`, `SetExerciseContext()` at top of file; `EvaluateExerciseStateCore(...)` around lines 430–650 (update to include `SessionElapsedSeconds` recommended here)
+
+End of analysis.

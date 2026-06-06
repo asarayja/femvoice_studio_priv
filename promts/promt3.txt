@@ -1,0 +1,69 @@
+Du er en senior C#/WPF-arkitekt med dyp ekspertise i stemmeakustikk, pedagogisk progresjon og adaptiv feedbackdesign. Din spesialisering inkluderer klinisk stemmetrening, særlig stemmefeminisering basert på logopedisk praksis.
+
+**Kontekst:**
+FemVoice Studio er en WPF-applikasjon med eksisterende funksjonalitet for sanntids akustisk analyse (pitch, resonans/formanter), treningskalender med progresjon, feedback-motor og treningsøvelser. Applikasjonen bruker SQLite som database og har etablerte ViewModels og UI-komponenter. All treningsdata lagres allerede i databasen.
+
+**Din oppgave:**
+Implementer en komplett Smart Coach-funksjon som gir individualisert, evidensbasert veiledning til brukere av stemmefeminiseringstrening. Coach-meldingen skal vises både på dashboard og ha en dedikert side.
+
+**Kjernekomponenter å implementere:**
+
+**1. Baseline og progresjonssystem**
+- Beregn brukerens baseline i de første ukene basert på: gjennomsnittlig pitch (F0), resonansprofil (F1/F2), intonasjonsvarians
+- Definer realistiske individuelle mål for pitchøkning, resonansfremføring og intonasjonendring
+- Implementer ukentlig revurdering av progresjon basert på treningshistorikk og analyse-resultater fra eksisterende SQLite-database
+- Lag datamodeller for å lagre baseline-verdier, mål og progresjonsmålinger i SQLite
+
+**2. Daglig anbefalingsmotor**
+- Generer korte, konkrete daglige anbefalinger (f.eks. "Fokus i dag: resonans-øvelser 8 min for lysere klang")
+- Basér anbefalinger på: treningsfrekvens per øvelsestype, områder med manglende framgang, klinisk relevans (resonans prioriteres over isolert pitch-trening)
+- Implementer logikk som balanserer treningsvariant og fokusområder
+- Hent treningsdata fra eksisterende SQLite-database
+
+**3. Kvalitativ rådgivningsmotor**
+- Generer kontekstualiserte råd som kombinerer objektive målinger og subjektive veiledning
+- Inkluder råd om forward resonance, pitch-variasjon, pust-teknikk (diafragmatisk pust)
+- Tilpass råd til brukerens nåværende nivå og progresjon
+
+**4. Daglig melding og økt-planlegging**
+- Design dashboard-komponent som viser dagens fokus (kompakt visning)
+- Design dedikert Smart Coach-side med utvidet informasjon og progresjonsoversikt
+- Generer anbefalt økt-plan for dagen med estimert varighet
+- Beregn og vis estimert total treningsmengde for uken
+- Presenter kort analyse av brukerens status (f.eks. "Høy resonans-score, men lav pitch-kontroll")
+
+**5. Stemmehelse-overvåkning**
+- Implementer deteksjon av tegn på anstrengelse: kraftig pitch-press, støy i signalet, plutselige score-endringer
+- Generer forebyggende anbefalinger når anstrengelse oppdages: pustøvelser, kortere økter, resonans-fokus fremfor pitch-press
+- Integrer varsler for stemmehelse i daglig melding
+
+**Tekniske leveranser:**
+
+- **SmartCoachEngine.cs**: Kjernelogikk for baseline-beregning, progresjonsvurdering, anbefalingsgenerering og helseovervåkning. Må integrere med eksisterende SQLite-database.
+- **SmartCoachViewModel.cs**: ViewModel for daglig melding, økt-planer og brukerinteraksjon. Følg eksisterende MVVM-patterns i FemVoice Studio.
+- **SmartCoachDashboardView.xaml**: Kompakt UI-komponent for dashboard med dagens fokus og nøkkelinformasjon
+- **SmartCoachDetailView.xaml**: Dedikert side med utvidet informasjon, progresjonsgraf, økt-plan og progresjonsstatus
+- **Database-migrering**: SQL-script for nye tabeller/kolonner i SQLite som lagrer baseline, mål, daglige anbefalinger og helsedata
+- **Integrasjonsguide.md**: Dokumentasjon for hvordan Smart Coach integreres med eksisterende treningskalender, analyse-motor og feedback-system
+
+**Bonusfunksjoner (hvis tid tillater):**
+- Ukesoppsummeringer med visualisering av framgang
+- Månedlige mål med milepæler
+- Kontekstualiserte motivasjonsmeldinger basert på prestasjoner
+
+**Viktige designprinsipper:**
+- Følg klinisk praksis fra logopedi og stemmeterapi
+- Prioriter resonans-arbeid over isolert pitch-trening (evidensbasert tilnærming)
+- Individualiser all veiledning basert på faktisk data fra SQLite-database
+- Gi konkrete, handlingsrettede råd fremfor generiske beskjeder
+- Balansér ambisiøse mål med stemmehelse og bærekraftig trening
+- Dashboard-visning skal være kompakt og informativ; dedikert side skal gi dybdeinformasjon
+
+**Kodekvalitet:**
+- Bruk etablerte WPF-patterns (MVVM) som allerede finnes i FemVoice Studio
+- Implementer Unit tests for Smart Coach-logikk
+- Følg C# best practices og eksisterende kodestil i FemVoice Studio
+- Dokumenter alle algoritmer og terskelverdier med kommentarer
+- Sørg for effektiv SQLite-integrasjon med eksisterende databasestruktur
+
+Levér produktionsklar kode som gir brukeren opplevelsen av personlig veiledning, ikke bare datavisualisering.

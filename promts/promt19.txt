@@ -1,0 +1,207 @@
+You are a senior C# clinical software architect with deep expertise in adaptive scoring systems, motor learning feedback models, and real-time biofeedback applications. You specialize in .NET 10, Clean Architecture, MVVM patterns, and building thread-safe, event-driven service layers for voice training applications.
+
+**Context**
+
+I'm building FemVoice Studio, a voice training application that uses real-time acoustic analysis to provide adaptive feedback. The system currently includes:
+
+- **ResonanceProxyEngine**: Provides real-time formant-based resonance scoring
+- **PitchAnalysisEngine**: Already implemented, tracks pitch metrics
+- **HealthMonitoring**: Tracks vocal health indicators
+- **SmartCoachEngine**: Generates coaching recommendations
+- **ProgressionEngine**: Manages user progression paths
+
+The architecture is Clean Architecture with MVVM. All service communication happens through **direct C# events** (Action/EventHandler pattern)—no mediator or event bus. Services use specific repository interfaces per entity (IScoreRepository, IUserRepository). Configuration uses a **hybrid approach**: defaults defined as code constants, with optional overrides loaded from configuration files.
+
+**Your Task**
+
+Implement two production-ready services that integrate into this ecosystem:
+
+1. **FemVoiceScoreEngine.cs** — Adaptive composite scoring engine
+2. **ComfortZoneController.cs** — Dynamic pitch training zone manager
+
+Both must be fully event-driven, thread-safe, UI-independent, unit-testable, and .NET 10 compatible.
+
+---
+
+## Service 1: FemVoiceScoreEngine.cs
+
+**Purpose**: Calculate a dynamic FemVoiceScore that combines multiple metrics with adaptive normalization based on individual user progress patterns.
+
+**Score Composition**
+
+Base formula with configurable weights (define as constants with default values, allow config override):
+
+```
+FemVoiceScore = 
+  0.45 × ResonanceScore +
+  0.30 × PitchScore +
+  0.15 × StabilityScore +
+  0.10 × HealthModifier
+```
+
+**Adaptive Intelligence Requirements**
+
+The engine must adapt scoring to individual user baselines:
+
+- Track a 30-day rolling baseline per user
+- Apply exponential smoothing for long-term trend calculation
+- Normalize current performance against personal trend (not absolute scale)
+- Detect stagnation: plateau lasting >14 days
+- Detect regression: sustained >10% drop from baseline
+- Prevent score inflation during unstable sessions
+
+**Event Interface**
+
+Expose:
+```csharp
+public event Action<FemVoiceScoreSnapshot> ScoreUpdated;
+```
+
+**FemVoiceScoreSnapshot Model** must include:
+- `RawScore` (weighted composite)
+- `AdaptiveScore` (normalized against baseline)
+- `TrendSlope` (direction and rate of change)
+- `PlateauDetected` (bool)
+- `RegressionDetected` (bool)
+- `Timestamp`
+
+**Dependency Injection**
+
+Constructor must accept:
+- `IScoreRepository` for persisting baseline data
+- `IUserRepository` for user-specific settings
+- Any configuration object for weight overrides
+
+**Technical Constraints**
+
+- No static state
+- No direct database access (use injected repository interfaces)
+- No UI references
+- All magic numbers replaced with named constants
+- Full XML documentation
+- Thread-safe event raising
+
+---
+
+## Service 2: ComfortZoneController.cs
+
+**Purpose**: Dynamically manage safe pitch training boundaries that adapt to user performance and health status.
+
+**Zone Management Rules**
+
+The controller determines safe pitch ranges based on:
+- ResonanceScore stability
+- AdaptiveFemVoiceScore trends
+- HealthScore thresholds
+- PitchStability metrics
+
+**Expansion Logic**
+
+- Expand zone gradually when resonance stable ≥7 consecutive days
+- Maximum expansion rate: 5% per week
+- Expansion only allowed when all safety conditions met
+
+**Contraction/Lock Logic**
+
+- Immediate contraction on vocal strain detection or instability
+- Freeze all progression if HealthScore <70
+- Safety lock for 3 days after strain incident
+- Maintain individualized zone width based on user tolerance data
+
+**Event Interface**
+
+Expose:
+```csharp
+public event Action<ComfortZoneState> ZoneUpdated;
+```
+
+**ComfortZoneState Model** must include:
+- `MinPitch` (Hz)
+- `MaxPitch` (Hz)
+- `ZoneWidth` (Hz)
+- `IsExpansionAllowed` (bool)
+- `IsSafetyLocked` (bool)
+- `Reason` (string explaining current state)
+
+**Safety Decision Matrix**
+
+| Condition | Action |
+|-----------|--------|
+| HealthScore <70 | Contract zone |
+| Stability below threshold | Freeze expansion |
+| Rapid score increase | Limited expansion only |
+| Strain incident detected | 3-day safety lock |
+
+**Dependency Injection**
+
+Constructor must accept specific repository interfaces for zone persistence and user settings retrieval.
+
+---
+
+## Integration Architecture
+
+Expected event flow:
+```
+ResonanceProxyEngine 
+  → FemVoiceScoreEngine 
+  → ComfortZoneController 
+  → SmartCoachEngine 
+  → ViewModel
+```
+
+**Critical Requirements**:
+- No component may directly call UI methods
+- All communication via direct C# events (Action<T>)
+- Services must be independently testable
+- Thread-safe event raising using proper locking or immutable snapshots
+
+---
+
+## Unit Testing Requirements
+
+Provide xUnit test suites covering:
+
+**FemVoiceScoreEngine Tests**:
+- Baseline calculation accuracy
+- Trend detection (upward/downward/plateau)
+- Plateau detection triggering at 14-day threshold
+- Adaptive normalization math
+- Weighting formula accuracy with default constants
+- Edge cases: missing data, first-time users, config override scenarios
+
+**ComfortZoneController Tests**:
+- Zone expansion calculation correctness
+- Zone contraction on health score drop
+- Safety lock triggering and 3-day duration enforcement
+- Weekly 5% expansion cap enforcement
+- Multi-condition safety matrix scenarios
+- Individual user tolerance variations
+
+All tests must use **in-memory mock implementations** of IScoreRepository and IUserRepository (no database dependencies).
+
+---
+
+## Deliverables
+
+Provide complete, production-ready code for:
+
+1. **FemVoiceScoreEngine.cs** (service implementation)
+2. **ComfortZoneController.cs** (service implementation)
+3. **FemVoiceScoreSnapshot.cs** (model)
+4. **ComfortZoneState.cs** (model)
+5. **Unit test files** (FemVoiceScoreEngineTests.cs, ComfortZoneControllerTests.cs) with in-memory mock repositories
+6. **Technical explanation** (150-250 words) describing the adaptive scoring logic and zone management algorithm
+7. **Integration example** showing how to wire these services in a MainViewModel constructor with proper event subscriptions using direct C# events
+
+**Code Quality Standards**
+
+- Clean Architecture compliance
+- All magic numbers replaced with named constants (use hybrid approach: defaults in code, config override support)
+- XML documentation on all public members
+- Production-grade error handling (no swallowed exceptions)
+- Async patterns where appropriate
+- .NET 10 compatibility verified
+- Constructor dependency injection for repository interfaces
+- Thread-safe event raising patterns
+
+Ensure the code is copy-paste ready for immediate integration into the existing FemVoice Studio codebase.

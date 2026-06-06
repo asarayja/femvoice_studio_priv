@@ -1,0 +1,180 @@
+Du er en senior .NET 10 / WPF MVVM-arkitekt som arbeider på FemVoice Studio. Din oppgave er å implementere Start/Stop exercise lifecycle ved å legge til kode i tre eksisterende filer. Ingen breaking changes. Ingen endringer i eksisterende metoder, properties eller events.
+
+De eksisterende filene er vedlagt. Les dem nøye og følg etablerte navnekonvensjoner, innrykk og kodestil eksakt.
+
+
+
+Arkitekturregler som ikke kan brytes:
+
+
+
+
+
+Direkte C# events kun — ingen polling, ingen DispatcherTimer, ingen mediator
+
+
+
+All engine-logikk er UI-uavhengig
+
+
+
+Dispatcher marshalling KUN i ViewModel-laget via eksisterende RunOnUiThread()-mønster
+
+
+
+Koordinator støtter parameterless constructor — ingen mock-framework i tester
+
+
+
+Trådsikkerhet via lock(_lock) i koordinator — _isActive leses og skrives utelukkende under _lock
+
+
+
+Leveranse 1 — ExerciseIntelligenceCoordinator.cs
+
+Legg til disse tre members uten å røre eksisterende kode:
+
+public void StartExercise(ExerciseTargetProfile profile, int userId)
+public void StopExercise()
+public bool IsExerciseActive { get; }
+
+Implementasjonskrav:
+
+
+
+
+
+StartExercise kaller SetExerciseContext internt og setter _isActive = true under _lock. Kalles koordinatoren mens en øvelse allerede er aktiv, stopp den gamle og start ny — ingen lekkasje av hold-state mellom øvelser
+
+
+
+StopExercise setter _isActive = false, nullstiller all hold-state (hold progress, hold start time), og publiserer en final ExerciseLiveState med alle verdier nullet/default (samme mønster som når SetExerciseContext nullstiller state)
+
+
+
+Legg til guard øverst i EvaluateExerciseStateCore: returner tidlig hvis _isActive == false. Guarden skal forhindre evalueringslogikk, men ikke supprimere event-infrastrukturen
+
+
+
+Rate-limiting (100 ms evalueringsvindu) og coach message rate-limiting (5 s per reason) skal bevares uendret
+
+
+
+IsExerciseActive eksponeres som public bool property backed av _isActive
+
+
+
+Leveranse 2 — ExerciseDetailViewModel.cs
+
+Legg til følgende uten å røre eksisterende properties, commands eller event-subscriptions:
+
+[RelayCommand]
+public void StartExercise()
+
+[RelayCommand]
+public void StopExercise()
+
+[ObservableProperty]
+private bool _isExerciseActive;
+
+Implementasjonskrav:
+
+
+
+
+
+StartExerciseCommand henter aktiv ExerciseTargetProfile fra ViewModel (fra eksisterende profile-state) og kaller _coordinator.StartExercise(profile, userId)
+
+
+
+StopExerciseCommand kaller _coordinator.StopExercise()
+
+
+
+IsExerciseActive holdes synkronisert med _coordinator.IsExerciseActive — oppdater den ved state-endring i koordinatoren (via eksisterende ExerciseUpdated-event eller dedikert event fra koordinatoren)
+
+
+
+Alle oppdateringer av IsExerciseActive som ankommer fra en annen tråd marshaller via eksisterende RunOnUiThread()
+
+
+
+XAML-knapper bindes til StartExerciseCommand og StopExerciseCommand — ingen code-behind
+
+
+
+Dispose()-metoden må avmelde eventuelle nye subscriptions hvis du legger til noen
+
+
+
+Leveranse 3 — ExerciseIntelligenceCoordinatorTests.cs
+
+Legg til disse fem testene i den eksisterende testklassen. Bruk eksisterende BuildSut()-helper og etablerte testmønstre:
+
+
+
+
+
+StartExercise_SetsIsActiveTrue
+
+
+
+StopExercise_SetsIsActiveFalse_AndResetsHoldProgress — verifiser at HoldProgress == 0 i publisert final state
+
+
+
+EvaluateState_DoesNotFire_WhenNotActive — kall UpdateMetrics uten å kalle StartExercise først, verifiser at ingen ExerciseLiveState med non-default verdier publiseres
+
+
+
+StartExercise_WhileAlreadyActive_RestartsCleanly — verifiser at hold-state fra første øvelse ikke lekker inn i andre
+
+
+
+StopExercise_PublishesFinalZeroedState — verifiser at siste publiserte ExerciseLiveState har HoldProgress == 0, PrimaryMetricScore == 0, IsSafetyLocked == false
+
+Testregler:
+
+
+
+
+
+Parameterless constructor — ingen mock-framework
+
+
+
+UpdateMetrics(resonanceScore, pitch, stability, health) som eneste test-seam for å trigge evalueringslogikk
+
+
+
+Bypass rate-limiting med Thread.Sleep(150) mellom kall (eksisterende mønster)
+
+
+
+AAA-pattern med // Arrange, // Act, // Assert-kommentarblokker
+
+
+
+Ingen referanser til WPF, Application.Current eller UI-lag
+
+
+
+Globale krav for alle tre filer:
+
+
+
+
+
+.NET 10 kompatibelt — ingen nye NuGet-avhengigheter
+
+
+
+XML-dokumentasjonskommentarer (/// <summary>) på alle nye public members
+
+
+
+Lever alle tre filer i sin helhet med de nye tilleggene integrert i riktig kontekst
+
+
+
+Produksjonsklar kode: feilhåndtering for null-argumenter (ArgumentNullException), edge cases (f.eks. StopExercise kalt når ingen øvelse er aktiv skal være trygg no-op), og tydelig kode uten TODO-kommentarer

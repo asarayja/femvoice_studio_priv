@@ -1,0 +1,117 @@
+Du er en senior C#/WPF-arkitekt med spesialisering i sanntids lydanalyse, biofeedback-systemer og voice therapy-applikasjoner. Du har dyp kunnskap om voice feminization training-prinsipper fra moderne logopedi og kjønnsaffirmativ stemmeterapi.
+
+**Din oppgave:** Implementer et komplett Smart Coach- og sanntids feedback-system for FemVoice Studio som følger evidensbaserte stemmetreningsprinsipper.
+
+## Plattformkontekst
+
+FemVoice Studio er en adaptiv stemmetreningsplattform i C#/WPF som støtter pitch, resonans, intonasjon og progresjon. Målet er å hjelpe brukere utvikle en stemme som oppleves som mer feminin på en trygg, effektiv og klinisk informert måte.
+
+## Implementasjonskrav
+
+### 1. Sanntids analysemotor
+
+Opprett et lydsignal-analyselag som kontinuerlig evaluerer:
+- **Fundamental frekvens (F0/pitch)** – typisk målområde 160-260 Hz for feminisert stemme
+- **Resonanskarakteristikk** – oral vs. faryngal resonans, formantplassering (F1/F2/F3)
+- **Intonasjonsmønstre** – prosodi, tonefall, variasjonsbredde
+- **Stemmestatistikk** – jitter, shimmer, HNR (harmonics-to-noise ratio)
+- **Pustparametere** – luftflow-indikatorer, frasehåndtering
+
+Evalueringslatens må være <100 ms for effektiv biofeedback.
+
+### 2. Kliniske feedbackregler
+
+Implementer regelbasert feedback-system som for hver øvelsestype evaluerer:
+
+**Pitch-øvelser:**
+- Om F0 er innenfor målområde (med toleranse)
+- Om brukeren "overstrekker" (strain-indikatorer)
+- Om pitch er stabil eller fluktuerer utenfor akseptable terskler
+
+**Resonansøvelser:**
+- Fremadrettet vs. tilbaketrukket resonans (formant-analyse)
+- Om stemmen høres lys/mørk ut basert på F2/F3-forhold
+
+**Intonasjonsøvelser:**
+- Om tonefall har naturlig variasjon
+- Om prosodisk mønster matcher målprofil (f.eks. rising intonation ved spørsmål)
+
+**Output:** Gi sanntids kategorisk feedback: `Korrekt` / `Juster litt høyere/mer fremover/mer variasjon` / `Stopp – hvil deg`.
+
+### 3. Smart Coach-system
+
+Bygg et adaptivt coach-system som:
+
+**Evaluerer brukerens progresjon:**
+- Hent historiske data fra ProgressionSubsystem
+- Beregn trender i pitch-stabilitet, resonansutvikling, intonasjonsbredde
+- Identifiser områder med forbedring vs. plateauer
+
+**Setter adaptive målsoner:**
+- Start konservativt basert på baseline
+- Øk krav gradvis når brukeren oppnår konsistent suksess (>80% av målene i 3 økter)
+- Vektlegg resonans og naturlighet fremfor kun pitch
+
+**Genererer kontekstuell coaching:**
+- Person-tilpassede meldinger basert på brukerens språk og prestasjoner
+- Eksempler: "Du holder pitch godt – nå fokuser på å bevege resonansen fremover mot tennene" / "Du presser litt – ta en dyp pust og slapp av i halsen"
+- Bruk motiverende språk som balanserer utfordring med støtte
+
+**Progresjonslogikk:**
+- Følg prinsippene fra voice therapy: gradvis økning, periodisering, konsolidering
+- Tilpass ikke bare vanskelighetsgrad, men også øvelsesvarighet og hvileperioder
+
+### 4. Stemmehelse-overvåkning
+
+Implementer et beskyttelsesystem som:
+
+**Overvåker strain-indikatorer:**
+- Uvanlig høyt shimmer/jitter
+- Kompresjon i høyere harmoniske (tegn på pressed fonasjon)
+- Brå pitch-instabilitet
+- Brukerrapporterte ubehag (integrer optional self-report)
+
+**Reagerer proaktivt:**
+- Utløs hvile-forslag når 2+ strain-indikatorer detekteres
+- Midlertidig senk målsoner med 5-10% ved gjentatt strain
+- Vis veiledning om respirasjon og spenningsreduksjon
+- Forhindre videre treningsøkter ved kritisk nivå (lock-out med 15 min minimum pause)
+
+### 5. Progressiv feedbackrapportering
+
+**Sanntids feedback:**
+- Visuell indikator (fargekode: grønn/gul/rød) for hver parameter
+- Tekstlig veiledning basert på avvik: "Pitch: 145 Hz – prøv litt høyere mot 165 Hz"
+
+**Øktsoppsummering:**
+- Sammenlign med brukerens egen baseline (ikke absolutte normer)
+- Vis forbedring i %: "Pitch-stabilitet: +12% vs. forrige uke"
+- Fremhev hvilke områder som har utviklet seg mest (resonans, intonasjon, etc.)
+- Gi konkrete forslag til neste økts fokus
+
+**Lokalisering:**
+- Alle coach-meldinger må hentes fra ressursfiler (.resx) for flerspråklig støtte
+- Bruk brukerens valgte språk fra programinnstillinger
+
+## Teknisk arkitektur
+
+Organiser løsningen i følgende moduler:
+
+- `AudioAnalysisEngine` – lydopptak, FFT, formant-ekstraksjon, feature-beregning
+- `FeedbackRuleEngine` – regelbasert evaluering per øvelsestype
+- `SmartCoachModule` – adaptiv logikk, progresjonsevaluering, målsone-justering
+- `VoiceHealthMonitor` – strain-deteksjon, hvile-logikk
+- `FeedbackPresenter` – UI-komponenter for sanntids og post-økt feedback
+
+Integrer med eksisterende `ProgressionSubsystem` for historisk datahenting.
+
+## Kliniske retningslinjer å følge
+
+Bas implementasjonen på disse prinsipper fra voice feminization therapy:
+
+- **Resonans før pitch:** Mange brukere oppnår bedre resultater ved å prioritere forward resonance før å heve pitch aggressivt
+- **Naturlighet og utholdenhet:** Verdsett stemmebruk som kan opprettholdes uten strain fremfor ekstreme målverdier
+- **Individuell variasjon:** Det finnes ikke én "feminisert stemme" – tilpass feedback til brukerens egne målsettinger
+- **Stemmehygiene:** Hvile, hydrering og spenningshåndtering er kritiske for progresjon
+
+Implementer kode som er modulær, testbar og godt dokumentert. Inkluder XML-kommentarer som forklarer klinisk rasjonale der det er relevant.

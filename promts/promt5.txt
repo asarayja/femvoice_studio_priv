@@ -1,0 +1,300 @@
+# FemVoice Studio: Modulær Arkitektur for Adaptiv Stemmefeminisering
+
+Du er en senior C#-arkitekt med ekspertise i moderne WPF (.NET 10), sanntids lydbehandling og klinisk stemmefeminisering. Din oppgave er å designe en fullstendig teknisk arkitektur for refaktorering og utvidelse av den eksisterende FemVoice Studio-applikasjonen.
+
+## Arkitekturmål
+
+Design et modulært system der hver komponent er:
+- Løst koblet via dependency injection
+- Uavhengig testbar
+- Skalerbar uten kjerneendringer
+- Bygg på eksisterende kodebase der det gir mening; refaktorer der nødvendig
+
+## Kritiske Designprinsipper
+
+**Klinisk fundament:** Resonans (formantfrekvenser) er primær feminiseringsmekanisme. Pitch-trening skal kun intensiveres etter etablert resonansstabilitet.
+
+**Adaptiv læring:** Systemet lærer hver bruker individuelt og justerer progresjon basert på hva som faktisk gir forbedring for denne personen.
+
+**Stemmehelse først:** Alle anbefalinger må overvåkes mot belastningsindikatorer. Estetiske mål skal aldri kompromittere trygg stemmeutvikling.
+
+## Modularkitektur
+
+### 1. ProgressionSubsystem (Sannhetskilde)
+
+Dette er den sentrale sannhetskilden for all coaching-logikk.
+
+**Ansvar:**
+- Persistent historikk av alle treningsøkter med tidsstempler
+- Beregning av **FemVoiceScore** som vektet kompositt:
+  - Resonans: 50%
+  - Pitch: 30%
+  - Intonasjon: 15%
+  - Konsistens: 5%
+  - Stemmehelse: override-mekanisme
+- Trendanalyse (ukentlig, månedlig, totalt)
+- Automatisk måljustering basert på individuelle mønstre
+- Identifisering av hvilke øvelser som gir best fremgang per bruker
+- Plateådeteksjon og forslag til intervensjon
+
+**Output:** Progresjonsdata, beredskapsnivåer, anbefalte justeringer, helseadvarsler
+
+**WPF-integrasjon:** Eksponér ObservableCollection<TrainingSession> for databinding. Implementer INotifyPropertyChanged for sanntidsoppdateringer av FemVoiceScore i UI.
+
+### 2. AudioSubsystem
+
+**Ansvar:**
+- Automatisk mikrofondeteksjon og konfigurasjon (NAudio eller Windows.Media.Capture)
+- Lavlatens lydprosesseringspipeline (<50ms)
+- Støyfiltrering og signalrensing
+- Øktbasert opptaksorganisering
+- Avspilling av brukeropptak for selvvurdering
+- Referanseopptakslagring for fremdriftssammenligning
+- Eksport av rene VoiceMetrics til andre systemer
+
+**Teknisk spesifikasjon:**
+- Bruk NAudio for lydcapture og analyse
+- Implementer WASAPI-eksklusive modus for minimal latens
+- Async/await-pattern for ikke-blokkerende opptakshåndtering
+- Background worker for sanntidsanalyse uten UI-frysing
+
+**Integrasjon:** Må levere sanntids-metrics til SmartCoachSubsystem og arkivere data til ProgressionSubsystem
+
+### 3. AnalysisSubsystem
+
+**Ansvar:**
+- Sanntidsberegning av:
+  - Fundamental frekvens (F0/pitch) via autokorrelasjon
+  - Formantfrekvenser (F1, F2, F3) for resonansindikatorer via LPC-analyse
+  - Pitch-variabilitet (intonasjonsmønstre)
+  - Belastningsindikatorer (jitter, shimmer)
+- Historisk sammenligning mot brukerens baseline
+- Målsone-evaluering (innenfor/utenfor akseptabelt område)
+- Trenddeteksjon (forbedring/nedgang/stabil)
+
+**Output:** Strukturert VoiceMetrics-objekt med kliniske tolkningsflagg
+
+**Teknisk spesifikasjon:**
+- Implementer FFT-analyse for formantberegning
+- Adaptive målsoner basert på brukerens utgangspunkt
+- Real-time processing på separat tråd med CancellationToken-støtte
+
+### 4. LanguageSubsystem
+
+**Ansvar:**
+- Støtte for ubegrenset antall språk uten hardkodede strenger
+- Dynamisk mapping av:
+  - UI-tekst
+  - Tilbakemeldingsmeldinger
+  - Øvelsesbeskrivelser
+  - SmartCoach-forklaringer
+- Eksport/import av oversettelser som JSON-filer for samfunnsbidrag
+- Fallback-språkmekanisme (standard til engelsk hvis oversettelse mangler)
+- Kulturbevisst formatering (tall, datoer)
+
+**WPF-integrasjon:** Implementer som StaticResource med DynamicResource-binding for språkbytte uten omstart. Bruk IValueConverter for runtime-oversettelser.
+
+**Integrasjon:** All brukervennlig tekst må gå gjennom dette systemet
+
+### 5. SmartCoachSubsystem (Orkestrator)
+
+**Denne modulen utfører IKKE analyse eller lagring.** Den koordinerer andre systemer for å ta intelligente beslutninger.
+
+**Ansvar:**
+- Sett daglige treningsmål ved å spørre ProgressionSubsystem
+- Velg øvelser passende til gjeldende brukernivå
+- Bestem retningsstyring for hver parameter:
+  - ⬆️ Øk (f.eks. hev resonansfrekvens)
+  - ⬇️ Senk (f.eks. senk pitch ved belastning)
+  - ✅ Hold stabilitet
+- Juster vanskelighetsnivå basert på progresjonsdata
+- Overvåk stemmehelsindikatorer og override trening ved detektert belastning
+- Generer forklaringer for anbefalinger ved hjelp av LanguageSubsystem
+- Gi kontekst: "Hvorfor gjør jeg denne øvelsen?"
+
+**Nøkkeladferd:** Forklar alltid anbefalinger basert på feminiseringsprinsipper (f.eks. "Vi fokuserer på resonans fordi det skaper mer bærekraftig feminisering enn pitch alene")
+
+**Teknisk spesifikasjon:**
+- Implementer Strategy-pattern for øvelsesvalg
+- Observer-pattern for sanntids metric-oppdateringer
+- Command-pattern for treningsmålsetting
+
+### 6. DataSubsystem
+
+**Ansvar:**
+- Persistent lagring av alle treningsøkter (SQLite eller LiteDB for lokal lagring)
+- Brukerprofilhåndtering
+- Sikker datahåndtering
+- Eksportfunksjonalitet for brukerdata-portabilitet (JSON/CSV)
+- Backup- og gjenopprettingsmekanismer
+
+**Teknisk spesifikasjon:**
+- Repository-pattern for dataaksess
+- Entity Framework Core eller Dapper for ORM
+- Async I/O for ikke-blokkerende databaseoperasjoner
+
+## Treningsnivåmodell
+
+Implementer tre evidensbaserte progresjonsfaser:
+
+### 🟢 Nybegynner
+**Fokus:** Resonansetablering først
+**Pitch:** Konservative mål, brede akseptable områder
+**Øvelser:** Grunnleggende resonansbevissthet, trygg pitch-utforskning
+**Helse:** Maksimal forsiktighet, hyppige hvilepåminnelser
+
+### 🟡 Middels
+**Fokus:** Presisjon og stabilitet
+**Pitch:** Mer spesifikke mål ettersom resonans stabiliseres
+**Øvelser:** Konsistensøvelser, vedvarende vokaler, pitch-glides
+**Helse:** Overvåk for overbruksmønstre
+
+### 🔵 Avansert
+**Fokus:** Naturlig integrasjon og intonasjon
+**Pitch:** Dynamisk område og ekspressivitet
+**Øvelser:** Samtalefraser, emosjonell prosodi, utholdenhet
+**Helse:** Vedlikehold og finpussing
+
+**Nivåoverganger** må være automatiske basert på ProgressionSubsystem-data. Kriterier inkluderer:
+- Vedvarende prestasjon i gjeldende nivå (ikke bare toppytelse)
+- Stemmehelsestabilitet over tid
+- Konsistens på tvers av flere økter
+
+## Retningsstyrt Veiledningssystem
+
+For hver målbar parameter (pitch, resonansformanter, intonasjonsområde) må systemet bestemme:
+
+- ⬆️ **Øk:** Når gjeldende verdi er under mål og brukeren viser kontroll
+- ⬇️ **Senk:** Når gjeldende verdi overskrider trygt område eller viser belastning
+- ✅ **Vedlikehold:** Når verdi er i optimal sone; fokus på konsistens
+
+Hver anbefaling må inkludere:
+- Gjeldende verdi vs. mål
+- Grunn basert på feminiseringsvitenskap
+- Spesifikk handling (f.eks. "Prøv å snakke fra en høyere plassering i munnen")
+
+**Teknisk spesifikasjon:**
+- Implementer RecommendationEngine med konfigurerte terskelverdier
+- Bruk Factory-pattern for å generere kontekstspesifikke forklaringer
+
+## FemVoiceScore Algoritme
+
+```csharp
+FemVoiceScore = (Resonans × 0.50) + (Pitch × 0.30) + (Intonasjon × 0.15) + (Konsistens × 0.05)
+
+// Helseoverride
+if (VocalStrainIndicators > Threshold)
+{
+    FemVoiceScore = Math.Min(FemVoiceScore, SafeCapValue);
+    IssueHealthWarning();
+}
+```
+
+Score skal:
+- Oppdateres i sanntid under øvelser
+- Spore historiske trender (daglig gjennomsnitt, ukentlig topp, månedlig fremgang)
+- Gi persentil-rangering innenfor brukerens egen historikk (ikke sammenlignet med andre)
+- Fremhev hvilken komponent som trenger mest oppmerksomhet
+
+## Dataflyt og Arkitekturmønstre
+
+**Dataflyt:**
+```
+Mikrofon → AudioSubsystem → AnalysisSubsystem → SmartCoachSubsystem
+                                     ↓
+                          ProgressionSubsystem ← DataSubsystem
+                                     ↓
+                            LanguageSubsystem → WPF UI
+```
+
+**Arkitekturmønstre:**
+- **Dependency Injection:** Alle subsystem-interaksjoner (bruk Microsoft.Extensions.DependencyInjection)
+- **MVVM:** WPF UI-lag med ViewModels som orkestrerer subsystemer
+- **Repository Pattern:** Dataaksess via DataSubsystem
+- **Strategy Pattern:** Øvelsesvalg og progresjonsalgoritmer
+- **Observer Pattern:** Sanntids metric-oppdateringer til UI
+
+**WPF-spesifikke anbefalinger:**
+- Bruk Prism eller MVVM Light for struktur
+- Implementer RelayCommand for knapp-handlinger
+- Messenger-pattern for løst koblet kommunikasjon mellom ViewModels
+- DataBinding til ObservableCollections for dynamiske lister
+- INotifyPropertyChanged for alle ViewModel-properties
+
+## Ytelseskrav
+
+- Lydlatens < 50ms
+- UI-responsivitet opprettholdt under lydbehandling
+- Progresjonsberegninger fullført innen 200ms
+- Støtte 10 000+ treningsøkter uten ytelseforringelse
+- Smooth animasjoner i WPF (60 FPS) selv under aktiv analyse
+
+## Utvidbarhet
+
+- Nye øvelsestyper via plugin-grensesnitt
+- Tilpassede progresjonsalgoritmer via strategy injection
+- Tillegsspråk via enkle JSON-filer
+- Tredjepartslydfunksjon via adapter-pattern
+
+## Leveranser
+
+Lever følgende:
+
+### 1. Systemarkitekturdokument
+- Modulinteraksjonsdiagrammer
+- Dataflytspesifikasjoner
+- Teknologistabel-anbefalinger (.NET 10, WPF, NAudio, etc.)
+- Migrasjonsstrategi fra eksisterende kodebase
+
+### 2. API-spesifikasjoner for hvert subsystem
+- Offentlige grensesnitt (C# interfaces)
+- Datakontrakter (modellklasser)
+- Integrasjonspunkter
+
+### 3. Implementeringsveiledning
+- Kritisk vei for utvikling (hva bygges først)
+- Testestrategi for hver modul (unit tests, integration tests)
+- Ytelseoptimaliseringskontrollpunkter
+
+### 4. Progresjonsalgoritmeutforming
+- FemVoiceScore-beregning med vekter
+- Nivåavansementskriterier
+- Adaptiv vanskelighetsjusteringslogikk
+
+### 5. SmartCoach Beslutningslogikk
+- Øvelsesvalgsalgoritme
+- Retningsstyringsregler
+- Helseovervåkningsterskler
+
+### 6. Eksempelkodestrukturer (C#/WPF)
+- Nøkkelklassedefinisjoner med XML-dokumentasjon
+- Interface-kontrakter
+- Kritiske implementeringsmønstre
+- Eksempel på ViewModel-implementasjon med DataBinding
+- Eksempel på DependencyInjection-oppsett
+
+## Valideringskriterier
+
+Din design må sikre:
+
+✅ En bruker kan trene konsekvent i måneder uten plateauing på grunn av rigid programmering
+✅ Systemet tilpasser seg individuelle stemmekarakteristikker (utgangspitch, naturlig område, belastningsmønstre)
+✅ Stemmehelse aldri kompromitteres for scoreoptimalisering
+✅ Resonanstrening går foran aggressiv pitch-trening
+✅ Hver anbefaling inkluderer klar, vitenskapelig begrunnet forklaring
+✅ Systemet kan støtte 50+ språk uten kodeendringer
+✅ Nye funksjoner kan legges til uten omskriving av kjernesystemer
+✅ Refaktorering fra eksisterende kodebase er gjennomførbar med inkrementell migrasjon
+
+## Klinisk Grunnlag
+
+Baser all treningslogikk på disse evidensbaserte prinsippene:
+
+- Resonans (formantfrekvensmodifikasjon) er den primære feminiseringsmekanismen
+- Pitch-heving uten resonanstrening høres unaturlig ut og risikerer belastning
+- Intonasjonsmønstre (prosodi) påvirker oppfattet femininitet betydelig
+- Stemmehelsindikatorer (belastning, tretthet) må overstyre estetiske mål
+- Individuell variasjon er høy; rigide mål feiler for de fleste brukere
+- Konsistens over tid slår sporadisk toppytelse
+
+Design et system som legemliggjør disse prinsippene i hver beslutning det tar.

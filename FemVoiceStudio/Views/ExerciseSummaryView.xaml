@@ -1,0 +1,207 @@
+<UserControl x:Class="FemVoiceStudio.Views.ExerciseSummaryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:loc="clr-namespace:FemVoiceStudio.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="500" d:DesignWidth="450">
+    
+    <UserControl.Resources>
+        <!-- Score Display Style -->
+        <Style x:Key="ScoreText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="48"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentPrimaryBrush}"/>
+        </Style>
+        
+        <!-- Label Style -->
+        <Style x:Key="LabelText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+        </Style>
+        
+        <!-- Value Style -->
+        <Style x:Key="ValueText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        </Style>
+    </UserControl.Resources>
+    
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20">
+            <!-- Header: Score -->
+            <Border Background="{DynamicResource BackgroundCardBrush}" 
+                    CornerRadius="12" Padding="24" Margin="0,0,0,16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{loc:Loc ExerciseSummary_Completed}" FontSize="24" FontWeight="Bold" 
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock x:Name="ExerciseNameText" Text="{loc:Loc ExerciseSummary_ExerciseFallback}" FontSize="14" 
+                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                        <TextBlock x:Name="ScoreText" Text="87%" Style="{StaticResource ScoreText}" 
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="ImprovementText" Text="+5%" FontSize="14" 
+                                   Foreground="{DynamicResource SuccessBrush}" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            
+            <!-- Parameter Breakdown -->
+            <Border Background="{DynamicResource BackgroundCardBrush}" 
+                    CornerRadius="12" Padding="20" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc ExerciseSummary_Parameters}" FontSize="18" FontWeight="SemiBold" 
+                               Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,16"/>
+                    
+                    <!-- Resonance -->
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="50"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Indicator_Resonance}" Style="{StaticResource LabelText}"/>
+                        <ProgressBar Grid.Column="1" x:Name="ResonanceProgress" Height="8" 
+                                    Background="{DynamicResource BackgroundTertiaryBrush}"
+                                    Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                        <TextBlock Grid.Column="2" x:Name="ResonancePercent" Text="85%" 
+                                   Style="{StaticResource ValueText}" HorizontalAlignment="Right"/>
+                    </Grid>
+                    
+                    <!-- Pitch -->
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="50"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc ExerciseSummary_Pitch}" Style="{StaticResource LabelText}"/>
+                        <ProgressBar Grid.Column="1" x:Name="PitchProgress" Height="8" 
+                                    Background="{DynamicResource BackgroundTertiaryBrush}"
+                                    Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                        <TextBlock Grid.Column="2" x:Name="PitchPercent" Text="78%" 
+                                   Style="{StaticResource ValueText}" HorizontalAlignment="Right"/>
+                    </Grid>
+                    
+                    <!-- Stability -->
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="50"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc Indicator_Stability}" Style="{StaticResource LabelText}"/>
+                        <ProgressBar Grid.Column="1" x:Name="StabilityProgress" Height="8" 
+                                    Background="{DynamicResource BackgroundTertiaryBrush}"
+                                    Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                        <TextBlock Grid.Column="2" x:Name="StabilityPercent" Text="92%" 
+                                   Style="{StaticResource ValueText}" HorizontalAlignment="Right"/>
+                    </Grid>
+                    
+                    <!-- Intonation (optional) -->
+                    <Grid x:Name="IntonationRow" Visibility="Collapsed" Margin="0,0,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="50"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{loc:Loc ExerciseSummary_Intonation}" Style="{StaticResource LabelText}"/>
+                        <ProgressBar Grid.Column="1" x:Name="IntonationProgress" Height="8" 
+                                    Background="{DynamicResource BackgroundTertiaryBrush}"
+                                    Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                        <TextBlock Grid.Column="2" x:Name="IntonationPercent" Text="--%" 
+                                   Style="{StaticResource ValueText}" HorizontalAlignment="Right"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+            
+            <!-- Strain Level -->
+            <Border Background="{DynamicResource BackgroundCardBrush}" 
+                    CornerRadius="12" Padding="20" Margin="0,0,0,16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{loc:Loc ExerciseSummary_VoiceLoad}" FontSize="16" FontWeight="SemiBold" 
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock x:Name="StrainDescriptionText" Text="{loc:Loc ExerciseSummary_StrainLowDescription}" 
+                                   FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                    </StackPanel>
+                    
+                    <Border Grid.Column="1" x:Name="StrainBadge" 
+                            Background="{DynamicResource SuccessBrush}" 
+                            CornerRadius="12" Padding="16,8" VerticalAlignment="Center">
+                        <TextBlock x:Name="StrainLevelText" Text="{loc:Loc ExerciseSummary_StrainLow}" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="White"/>
+                    </Border>
+                </Grid>
+            </Border>
+            
+            <!-- Coach Recommendation -->
+            <Border Background="{DynamicResource BackgroundCardBrush}" 
+                    CornerRadius="12" Padding="20" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc ExerciseSummary_CoachRecommendation}" FontSize="18" FontWeight="SemiBold" 
+                               Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                    <TextBlock x:Name="CoachRecommendationText" 
+                               Text="{loc:Loc ExerciseSummary_CoachRecommendationDefault}"
+                               FontSize="14" TextWrapping="Wrap" LineHeight="22"
+                               Foreground="{DynamicResource TextSecondaryBrush}"/>
+                </StackPanel>
+            </Border>
+            
+            <!-- Action Buttons -->
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <Button Grid.Column="0" x:Name="ContinueButton" Content="{loc:Loc ExerciseSummary_Continue}" 
+                        Padding="20,14" Margin="0,0,8,0"
+                        Background="{DynamicResource BackgroundTertiaryBrush}"
+                        Foreground="{DynamicResource TextPrimaryBrush}"
+                        BorderThickness="0" FontSize="14" FontWeight="SemiBold"
+                        Click="OnContinueClick">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="8" 
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+                
+                <Button Grid.Column="1" x:Name="FinishButton" Content="{loc:Loc ExerciseSummary_Finish}" 
+                        Padding="20,14" Margin="8,0,0,0"
+                        Background="{DynamicResource AccentPrimaryBrush}"
+                        Foreground="{DynamicResource TextOnAccentBrush}"
+                        BorderThickness="0" FontSize="14" FontWeight="SemiBold"
+                        Click="OnFinishClick">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="8" 
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
