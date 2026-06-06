@@ -83,8 +83,12 @@ namespace FemVoiceStudio.Services.Progression
                 CurrentLevel = currentLevel,
                 SessionsAtCurrentLevel = Math.Max(sessionsAtCurrentLevel.Count,
                     Math.Min(persistedSessionsAtLevel, MinSessionsAtLevel)),
-                LastLevelChange = progress?.LastEvaluationDate != null 
-                    ? DateTime.Parse(progress.LastEvaluationDate) 
+                // Robust parsing (runtime-feil): legacy-databaser kan ha 0/'' i
+                // LastEvaluationDate-kolonnen — naken DateTime.Parse kastet
+                // "String '0' was not recognized as a valid DateTime" og veltet
+                // hele SmartCoach-dashboardlasten.
+                LastLevelChange = DateTime.TryParse(progress?.LastEvaluationDate, out var lastEval)
+                    ? lastEval
                     : DateTime.Now
             };
             
@@ -185,7 +189,16 @@ namespace FemVoiceStudio.Services.Progression
             // Telleren nullstilles ved nivåheving lenger ned, og er det som gjør
             // avansement mulig på nivåer øvelses-id-bucketingen ikke kjenner.
             var countProgress = _database.GetComplexityProgress(userId)
-                ?? new ComplexityProgress { UserId = userId };
+                ?? new ComplexityProgress
+                {
+                    UserId = userId,
+                    LastEvaluationDate = DateTime.Now.ToString("yyyy-MM-dd")   // aldri tom/0 i kolonnen
+                };
+            if (string.IsNullOrWhiteSpace(countProgress.LastEvaluationDate)
+                || !DateTime.TryParse(countProgress.LastEvaluationDate, out _))
+            {
+                countProgress.LastEvaluationDate = DateTime.Now.ToString("yyyy-MM-dd");   // heal legacy 0/''
+            }
             countProgress.SessionsAtLevel++;
             _database.SaveComplexityProgress(countProgress);
             _cachedEvaluation = null;   // evalueringen under skal se den nye telleren

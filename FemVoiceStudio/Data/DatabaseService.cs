@@ -929,7 +929,25 @@ namespace FemVoiceStudio.Data
                 // Best-effort; if enabling fails continue without throwing to avoid startup hard-fail.
             }
         }
-        
+
+        /// <summary>Robust dato-lesing: legacy-databaser kan ha 0/''/ugyldig i datokolonner.</summary>
+        private static DateTime ReadDate(SqliteDataReader reader, int ordinal, DateTime fallback = default)
+            => !reader.IsDBNull(ordinal) && DateTime.TryParse(reader.GetString(ordinal), out var dt)
+                ? dt : fallback;
+
+        private static DateTime? ReadDateOrNull(SqliteDataReader reader, int ordinal)
+            => !reader.IsDBNull(ordinal) && DateTime.TryParse(reader.GetString(ordinal), out var dt)
+                ? dt : (DateTime?)null;
+
+        /// <summary>Som ReadDate, men returnerer false ved manglende/ugyldig dato slik at kalleren kan skippe raden.</summary>
+        private static bool TryReadDate(SqliteDataReader reader, int ordinal, out DateTime value)
+        {
+            if (!reader.IsDBNull(ordinal) && DateTime.TryParse(reader.GetString(ordinal), out value))
+                return true;
+            value = default;
+            return false;
+        }
+
         /// <summary>
         /// Åpner databaseforbindelsen
         /// </summary>
@@ -1087,7 +1105,7 @@ namespace FemVoiceStudio.Data
                     ConsistencyScore = reader.GetDouble(5),
                     TotalSessionsCompleted = reader.GetInt32(6),
                     CurrentStreak = reader.GetInt32(7),
-                    LastSessionDate = reader.IsDBNull(8) ? null : DateTime.Parse(reader.GetString(8)),
+                    LastSessionDate = ReadDateOrNull(reader, 8),
                     SessionsAtCurrentLevel = reader.GetInt32(9),
                     VolumeThreshold = reader.GetDouble(10),
                     AutoAdvanceLevel = reader.GetInt32(11) == 1,
@@ -1168,8 +1186,8 @@ namespace FemVoiceStudio.Data
                 sessions.Add(new Models.TrainingSession
                 {
                     Id = reader.GetInt32(0),
-                    StartTime = DateTime.Parse(reader.GetString(1)),
-                    EndTime = reader.IsDBNull(2) ? null : DateTime.Parse(reader.GetString(2)),
+                    StartTime = ReadDate(reader, 1),
+                    EndTime = ReadDateOrNull(reader, 2),
                     ExerciseTextId = reader.GetInt32(3),
                     AveragePitch = reader.GetDouble(4),
                     MinPitch = reader.GetDouble(5),
@@ -1249,7 +1267,10 @@ namespace FemVoiceStudio.Data
             using var reader = command.ExecuteReader();
             while (reader.Read())
             {
-                var date = DateTime.Parse(reader.GetString(0)).Date;
+                // Skip rader med ugyldig dato: verdien blir dictionary-nøkkel, og en
+                // default(DateTime) ville opprettet en falsk kalendercelle (0001-01-01).
+                if (!TryReadDate(reader, 0, out var date)) continue;
+                date = date.Date;
                 result[date] = new CalendarDayData
                 {
                     Sessions = reader.GetInt32(1),
@@ -1276,8 +1297,10 @@ namespace FemVoiceStudio.Data
             using var sessionsReader = sessionsCommand.ExecuteReader();
             while (sessionsReader.Read())
             {
-                var sessionDate = DateTime.Parse(sessionsReader.GetString(0)).Date;
-                
+                // Skip rader med ugyldig dato: brukes som dictionary-nøkkel for kalenderen.
+                if (!TryReadDate(sessionsReader, 0, out var sessionDate)) continue;
+                sessionDate = sessionDate.Date;
+
                 if (result.TryGetValue(sessionDate, out var data))
                 {
                     data.PitchScore = sessionsReader.IsDBNull(3) ? 0 : sessionsReader.GetDouble(3);
@@ -1333,8 +1356,8 @@ namespace FemVoiceStudio.Data
                 sessions.Add(new Models.TrainingSession
                 {
                     Id = reader.GetInt32(0),
-                    StartTime = DateTime.Parse(reader.GetString(1)),
-                    EndTime = reader.IsDBNull(2) ? null : DateTime.Parse(reader.GetString(2)),
+                    StartTime = ReadDate(reader, 1),
+                    EndTime = ReadDateOrNull(reader, 2),
                     ExerciseTextId = reader.GetInt32(3),
                     AveragePitch = reader.GetDouble(4),
                     MinPitch = reader.GetDouble(5),
@@ -1389,8 +1412,8 @@ namespace FemVoiceStudio.Data
                 sessions.Add(new Models.TrainingSession
                 {
                     Id = reader.GetInt32(0),
-                    StartTime = DateTime.Parse(reader.GetString(1)),
-                    EndTime = reader.IsDBNull(2) ? null : DateTime.Parse(reader.GetString(2)),
+                    StartTime = ReadDate(reader, 1),
+                    EndTime = ReadDateOrNull(reader, 2),
                     ExerciseTextId = reader.GetInt32(3),
                     AveragePitch = reader.GetDouble(4),
                     MinPitch = reader.GetDouble(5),
@@ -1557,7 +1580,7 @@ namespace FemVoiceStudio.Data
                     Category = reader.GetString(5),
                     XPReward = reader.GetInt32(6),
                     IsUnlocked = reader.GetInt32(7) == 1,
-                    UnlockedAt = reader.IsDBNull(8) ? null : DateTime.Parse(reader.GetString(8))
+                    UnlockedAt = ReadDateOrNull(reader, 8)
                 });
             }
             
@@ -1719,7 +1742,7 @@ namespace FemVoiceStudio.Data
                     BaselineF2 = reader.GetDouble(4),
                     BaselineIntonation = reader.GetDouble(5),
                     BaselineResonanceScore = reader.GetDouble(6),
-                    CalculatedAt = reader.IsDBNull(7) ? null : DateTime.Parse(reader.GetString(7)),
+                    CalculatedAt = ReadDateOrNull(reader, 7),
                     TrainingDaysCount = reader.GetInt32(8),
                     ConfidenceLevel = reader.GetString(9)
                 };
@@ -1797,10 +1820,10 @@ namespace FemVoiceStudio.Data
                     GoalType = reader.GetString(2),
                     TargetValue = reader.GetDouble(3),
                     CurrentValue = reader.GetDouble(4),
-                    StartDate = reader.IsDBNull(5) ? null : DateTime.Parse(reader.GetString(5)),
-                    TargetDate = reader.IsDBNull(6) ? null : DateTime.Parse(reader.GetString(6)),
+                    StartDate = ReadDateOrNull(reader, 5),
+                    TargetDate = ReadDateOrNull(reader, 6),
                     IsAchieved = reader.GetInt32(7) == 1,
-                    AchievedAt = reader.IsDBNull(8) ? null : DateTime.Parse(reader.GetString(8)),
+                    AchievedAt = ReadDateOrNull(reader, 8),
                     Priority = reader.GetInt32(9)
                 });
             }
@@ -1889,13 +1912,13 @@ namespace FemVoiceStudio.Data
                 {
                     Id = reader.GetInt32(0),
                     UserId = reader.GetInt32(1),
-                    Date = DateTime.Parse(reader.GetString(2)),
+                    Date = ReadDate(reader, 2),
                     FocusArea = reader.GetString(3),
                     RecommendationText = reader.GetString(4),
                     RecommendedExerciseId = reader.IsDBNull(5) ? null : reader.GetInt32(5),
                     RecommendedDurationMinutes = reader.GetInt32(6),
                     IsCompleted = reader.GetInt32(7) == 1,
-                    CompletedAt = reader.IsDBNull(8) ? null : DateTime.Parse(reader.GetString(8)),
+                    CompletedAt = ReadDateOrNull(reader, 8),
                     HealthWarning = reader.GetInt32(9) == 1,
                     HealthWarningText = reader.IsDBNull(10) ? null : reader.GetString(10)
                 };
@@ -1985,8 +2008,8 @@ namespace FemVoiceStudio.Data
                 {
                     Id = reader.GetInt32(0),
                     UserId = reader.GetInt32(1),
-                    WeekStart = DateTime.Parse(reader.GetString(2)),
-                    WeekEnd = reader.IsDBNull(3) ? null : DateTime.Parse(reader.GetString(3)),
+                    WeekStart = ReadDate(reader, 2),
+                    WeekEnd = ReadDateOrNull(reader, 3),
                     SessionsCount = reader.GetInt32(4),
                     TotalMinutes = reader.GetInt32(5),
                     AverageScore = reader.GetDouble(6),
@@ -2040,8 +2063,8 @@ namespace FemVoiceStudio.Data
                 {
                     Id = reader.GetInt32(0),
                     UserId = reader.GetInt32(1),
-                    WeekStart = DateTime.Parse(reader.GetString(2)),
-                    WeekEnd = reader.IsDBNull(3) ? null : DateTime.Parse(reader.GetString(3)),
+                    WeekStart = ReadDate(reader, 2),
+                    WeekEnd = ReadDateOrNull(reader, 3),
                     SessionsCount = reader.GetInt32(4),
                     TotalMinutes = reader.GetInt32(5),
                     AverageScore = reader.GetDouble(6),
@@ -2123,14 +2146,14 @@ namespace FemVoiceStudio.Data
                 {
                     Id = reader.GetInt32(0),
                     UserId = reader.GetInt32(1),
-                    Date = DateTime.Parse(reader.GetString(2)),
+                    Date = ReadDate(reader, 2),
                     SessionId = reader.IsDBNull(3) ? null : reader.GetInt32(3),
                     StrainDetected = reader.GetInt32(4) == 1,
                     StrainType = reader.IsDBNull(5) ? null : reader.GetString(5),
                     StrainLevel = reader.GetDouble(6),
                     Recommendation = reader.IsDBNull(7) ? null : reader.GetString(7),
                     IsRead = reader.GetInt32(8) == 1,
-                    CreatedAt = reader.IsDBNull(9) ? null : DateTime.Parse(reader.GetString(9))
+                    CreatedAt = ReadDateOrNull(reader, 9)
                 });
             }
             
@@ -2187,12 +2210,12 @@ namespace FemVoiceStudio.Data
                 {
                     Id = reader.GetInt32(0),
                     UserId = reader.GetInt32(1),
-                    Date = DateTime.Parse(reader.GetString(2)),
+                    Date = ReadDate(reader, 2),
                     MessageType = reader.GetString(3),
                     Title = reader.GetString(4),
                     Message = reader.GetString(5),
                     IsRead = reader.GetInt32(6) == 1,
-                    CreatedAt = reader.IsDBNull(7) ? null : DateTime.Parse(reader.GetString(7))
+                    CreatedAt = ReadDateOrNull(reader, 7)
                 });
             }
             
@@ -2312,8 +2335,8 @@ namespace FemVoiceStudio.Data
                 sessions.Add(new Models.TrainingSession
                 {
                     Id = reader.GetInt32(0),
-                    StartTime = DateTime.Parse(reader.GetString(1)),
-                    EndTime = reader.IsDBNull(2) ? null : DateTime.Parse(reader.GetString(2)),
+                    StartTime = ReadDate(reader, 1),
+                    EndTime = ReadDateOrNull(reader, 2),
                     ExerciseTextId = reader.GetInt32(3),
                     AveragePitch = reader.GetDouble(4),
                     MinPitch = reader.GetDouble(5),
@@ -2368,7 +2391,7 @@ namespace FemVoiceStudio.Data
                     PitchScore = reader.IsDBNull(5) ? 50 : reader.GetDouble(5),
                     IntonationScore = reader.IsDBNull(6) ? 50 : reader.GetDouble(6),
                     VoiceHealthScore = reader.IsDBNull(7) ? 100 : reader.GetDouble(7),
-                    CalculatedAt = DateTime.Parse(reader.GetString(8)),
+                    CalculatedAt = ReadDate(reader, 8),
                     WarningFlags = reader.IsDBNull(9) ? null : reader.GetString(9)
                 });
             }
@@ -2410,7 +2433,7 @@ namespace FemVoiceStudio.Data
                     PitchScore = reader.IsDBNull(5) ? 50 : reader.GetDouble(5),
                     IntonationScore = reader.IsDBNull(6) ? 50 : reader.GetDouble(6),
                     VoiceHealthScore = reader.IsDBNull(7) ? 100 : reader.GetDouble(7),
-                    CalculatedAt = DateTime.Parse(reader.GetString(8)),
+                    CalculatedAt = ReadDate(reader, 8),
                     WarningFlags = reader.IsDBNull(9) ? null : reader.GetString(9)
                 });
             }
@@ -2499,7 +2522,7 @@ namespace FemVoiceStudio.Data
                     UserId = reader.GetInt32(1),
                     MilestoneType = reader.GetString(2),
                     Description = reader.GetString(3),
-                    AchievedAt = reader.IsDBNull(4) ? null : DateTime.Parse(reader.GetString(4))
+                    AchievedAt = ReadDateOrNull(reader, 4)
                 });
             }
             
@@ -2577,7 +2600,7 @@ namespace FemVoiceStudio.Data
                 {
                     Id = reader.GetInt32(0),
                     UserId = reader.GetInt32(1),
-                    Date = DateTime.Parse(reader.GetString(2)),
+                    Date = ReadDate(reader, 2),
                     FemVoiceScore = reader.IsDBNull(3) ? 0 : reader.GetDouble(3),
                     ResonanceScore = reader.IsDBNull(4) ? 0 : reader.GetDouble(4),
                     PitchScore = reader.IsDBNull(5) ? 0 : reader.GetDouble(5),
@@ -2619,7 +2642,7 @@ namespace FemVoiceStudio.Data
                 {
                     Id = reader.GetInt32(0),
                     UserId = reader.GetInt32(1),
-                    Date = DateTime.Parse(reader.GetString(2)),
+                    Date = ReadDate(reader, 2),
                     FemVoiceScore = reader.IsDBNull(3) ? 0 : reader.GetDouble(3),
                     ResonanceScore = reader.IsDBNull(4) ? 0 : reader.GetDouble(4),
                     PitchScore = reader.IsDBNull(5) ? 0 : reader.GetDouble(5),

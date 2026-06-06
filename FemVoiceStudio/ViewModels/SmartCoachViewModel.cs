@@ -204,13 +204,17 @@ namespace FemVoiceStudio.ViewModels
                     });
 
                 // Batch 2: user stats, messages, status summary
-                var (userProgress, messages, statusSummary) =
+                // Streak leses fra UserSettings (vedlikeholdt av ProgressionService.
+                // UpdateStreak ved hver øktslutt) — IKKE fra UserProgress-tabellen,
+                // som ingen aktiv kode oppdaterer (kun den døde GamificationService
+                // skrev til den), slik at dashboardet alltid viste 0 i streak.
+                var (userSettings, messages, statusSummary) =
                     await Task.Run(() =>
                     {
-                        var up      = _database.GetUserProgress();
+                        var settings = _database.GetUserSettings();
                         var msgs    = _database.GetUnreadMessages(1);
                         var summary = _engine.GetStatusSummary(1);
-                        return (up, msgs, summary);
+                        return (settings, msgs, summary);
                     });
 
                 // ── Marshal all results to the UI thread for property writes ─────────
@@ -277,8 +281,8 @@ namespace FemVoiceStudio.ViewModels
                         });
                     }
 
-                    // User stats
-                    CurrentStreak = userProgress.CurrentStreak;
+                    // User stats — fra UserSettings (den reelt vedlikeholdte streaken)
+                    CurrentStreak = userSettings.CurrentStreak;
 
                     // Messages
                     RecentMessages.Clear();

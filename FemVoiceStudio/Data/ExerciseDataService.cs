@@ -31,6 +31,11 @@ namespace FemVoiceStudio.Data
         {
             _connectionString = connectionString;
         }
+
+        /// <summary>Robust dato-lesing: legacy-databaser kan ha 0/''/ugyldig i datokolonner.</summary>
+        private static DateTime? ReadDateOrNull(SqliteDataReader reader, int ordinal)
+            => !reader.IsDBNull(ordinal) && DateTime.TryParse(reader.GetString(ordinal), out var dt)
+                ? dt : (DateTime?)null;
         
         /// <summary>
         /// Hent alle tilgjengelige Ã¸velser
@@ -227,7 +232,7 @@ namespace FemVoiceStudio.Data
                     ExerciseId = reader.GetInt32(1),
                     UserId = reader.GetInt32(2),
                     TotalSessions = reader.GetInt32(3),
-                    LastSessionDate = reader.IsDBNull(4) ? null : DateTime.Parse(reader.GetString(4)),
+                    LastSessionDate = ReadDateOrNull(reader, 4),
                     TotalMinutes = reader.GetInt32(5),
                     BestScore = reader.GetDouble(6),
                     AverageScore = reader.GetDouble(7),
@@ -260,7 +265,7 @@ namespace FemVoiceStudio.Data
                     ExerciseId = reader.GetInt32(1),
                     UserId = reader.GetInt32(2),
                     TotalSessions = reader.GetInt32(3),
-                    LastSessionDate = reader.IsDBNull(4) ? null : DateTime.Parse(reader.GetString(4)),
+                    LastSessionDate = ReadDateOrNull(reader, 4),
                     TotalMinutes = reader.GetInt32(5),
                     BestScore = reader.GetDouble(6),
                     AverageScore = reader.GetDouble(7),
@@ -717,7 +722,7 @@ namespace FemVoiceStudio.Data
                 Category = reader.GetString(reader.GetOrdinal("Category")),
                 Icon = reader.IsDBNull(reader.GetOrdinal("Icon")) ? "ðŸŽ¤" : reader.GetString(reader.GetOrdinal("Icon")),
                 TotalSessions = reader.GetInt32(reader.GetOrdinal("TotalSessions")),
-                LastSessionDate = reader.IsDBNull(reader.GetOrdinal("LastSessionDate")) ? null : DateTime.Parse(reader.GetString(reader.GetOrdinal("LastSessionDate"))),
+                LastSessionDate = ReadDateOrNull(reader, reader.GetOrdinal("LastSessionDate")),
                 AverageScore = reader.GetDouble(reader.GetOrdinal("AverageScore")),
                 SortOrder = reader.GetInt32(reader.GetOrdinal("SortOrder"))
             };
