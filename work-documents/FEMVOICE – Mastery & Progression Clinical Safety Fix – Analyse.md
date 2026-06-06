@@ -1,6 +1,9 @@
 # FEMVOICE – Mastery & Progression Clinical Safety Fix – Analyse
 
-**Status:** Analysefase — ingen kode endret ennå.
+**Status:** ✅ IMPLEMENTERT 2026-06-06 (se addendum nederst). Avklarte beslutninger: kun
+Mastery/Progression-fiksen i denne runden; engangs-nullstilling av AverageScore/BestScore;
+lås-regler som foreslått (kun Lock < 70, klebrig ut økten); ProgressionOrchestrator-aktivering
+utsatt til egen runde (kun datagrunnlag + gren-bugfix nå).
 **Dato:** 2026-06-06
 **Metode:** Full kodelesing av de 6 utpekte filene + ExerciseDataService/ProgressionService/ExerciseWindow, deretter parallell sweep av samtlige 18 nivå-/mastery-/progresjonsbeslutningspunkter i kodebasen, og adversarial verifisering av 8 nøkkelpåstander (hver påstand forsøkt motbevist av uavhengig agent med fil:linje-bevis). 7 av 8 bekreftet, 1 presisert.
 
@@ -610,3 +613,40 @@ services.AddSingleton<ProgressionSafetyGate>();
 6. **Subjektiv rapport** (C7) forblir ulest i denne fasen; fase 2 (aktivering av `ProgressionOrchestrator`, som allerede støtter `SubjectiveReport.IndicatesHealthConcern` → pause) er den naturlige mottakeren.
 
 **Anbefalt fase 2 (utenfor denne fiksen):** Aktiver `ProgressionOrchestrator` (datakilden er nå fylt av Patch 1) ved å kalle `OnSessionCompletedAsync` fra øvelses-stopp og la `SuggestedProfile` persisteres via eksisterende `ExerciseProfileStore` — da blir også per-øvelse vanskelighetsskalering helse-gatet. Krever Patch 7 (`&&`-fiksen) først.
+
+---
+
+## Addendum: Implementeringsstatus (2026-06-06)
+
+**Implementert som planlagt**, med disse avvikene/presiseringene fra patch-forslagene:
+
+1. **Orchestrator-fiksen ble raffinert** (ikke ren `||`→`&&`): testene avslørte at venstresiden
+   (`avgResonance < min`) skal gjelde *alle* profiler (resonans-før-pitch-doktrinen), mens
+   høyresiden var feilen. Ny finale: pitch → resonans (`RESONANCE_PROGRESSION`, ny kode) →
+   stabilitet. Begge eksisterende orchestrator-tester forblir grønne (gjennomregnet).
+2. **Nytt funn under implementering:** `ExerciseDataService` var aldri DI-registrert —
+   mastery-badgen viste i praksis alltid «Beginner» i prod. Nå registrert i App.xaml.cs.
+3. **`HealthAnalyticsEventType.ComfortZoneBreach`** lagt til (additivt) + offentlig
+   `SessionAnalyticsStore.GetHealthEventsAsync` — komfortbrudd-økter journalføres som én
+   hendelse per økt (≥ 3 brudd-episoder).
+4. **Migrering:** `EnsureClinicalScoreMigration` i ExerciseDataService (markørrad i ny
+   SchemaMeta-tabell; nullstiller AverageScore/BestScore én gang; TotalSessions/streaks beholdes).
+5. **Tidsscore-metoden** erstattet av `CompleteSessionAndCalculateScore` (navnet reflekterer at
+   den også avslutter aggregeringen).
+
+**Adversarial review (18 agenter, 3 linser, funn verifisert enkeltvis):** 15 funn → 13 motbevist,
+2 bekreftet og FIKSET:
+- *Kritisk:* Safety-låsens tidlige return i `EvaluateProgression` hoppet over
+  `UpdateStreak`/`UpdateUserSettings` → streak/statistikk ville frosset når låsen engasjeres.
+  Fikset: statistikk oppdateres alltid; låsen blokkerer kun promotering/degradering.
+- *Major:* Mastered-antallsgaten talte legacy `TotalSessions` (oppmøte) — 5 verifiserte økter
+  kunne gi Mastered for returnerende brukere. Fikset: krever i tillegg ≥ 20/8 klinisk
+  verifiserte analytics-rader (lookback utvidet 28 → 90 dager for antallsgatene).
+
+Verifikatorene bekreftet eksplisitt: pitch-høyde kan ikke påvirke øktscore/mastery/progresjon
+ad noen vei, og ingen profil når Mastered på antall alene (stabilitetsgaten gjelder alltid).
+
+**Tester:** 52 nye (ClinicalSessionScoreTests 15, MasteryEvaluatorTests 10,
+ProgressionSafetyGateTests 11, ExerciseSessionRecorderTests 11, ExternalSafetyBlockTests 5).
+Begge prosjekter kompilerer rent på Linux med `-p:EnableWindowsTargeting=true` (0/0).
+**Testkjøring og manuell QA gjenstår på Windows** — se regresjonssjekklisten i §6.

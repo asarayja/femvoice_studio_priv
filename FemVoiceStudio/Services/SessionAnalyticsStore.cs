@@ -13,7 +13,10 @@ namespace FemVoiceStudio.Services
         StrainPeriod,
         PauseRecommended,
         HydrationSuggested,
-        HealthTrendUpdated
+        HealthTrendUpdated,
+
+        /// <summary>A session with repeated comfort-zone breaches (journaled once per session).</summary>
+        ComfortZoneBreach
     }
 
     public sealed record SessionAnalyticsRecord
@@ -684,6 +687,18 @@ namespace FemVoiceStudio.Services
             return summaries
                 .OrderBy(s => s.StartedAt)
                 .ThenBy(s => s.ExerciseId)
+                .ToList();
+        }
+
+        public async Task<IReadOnlyList<HealthAnalyticsEvent>> GetHealthEventsAsync(
+            DateTime from,
+            DateTime to,
+            int userId = 1,
+            CancellationToken cancellationToken = default)
+        {
+            var events = await _repository.GetHealthEventsAsync(userId, from, to, cancellationToken);
+            return events
+                .OrderBy(e => e.OccurredAt)
                 .ToList();
         }
 

@@ -206,6 +206,128 @@ namespace FemVoiceStudio.Tests
     }
     
     /// <summary>
+    /// Tests for the external safety block entry point
+    /// (ProgressionService.ApplyExternalSafetyBlock), which lets a stateless
+    /// clinical gate engage the in-memory progression lock.
+    /// </summary>
+    public class ExternalSafetyBlockTests
+    {
+        private readonly TestDatabaseService _testDatabase;
+        private readonly ProgressionService _progressionService;
+
+        public ExternalSafetyBlockTests()
+        {
+            _testDatabase = new TestDatabaseService();
+            _progressionService = new ProgressionService(_testDatabase);
+        }
+
+        [Fact]
+        public void ApplyExternalSafetyBlock_EngagesLockWithReasonAndExpiry()
+        {
+            // Arrange
+            const string reason = "CLINICAL_GATE_VOCAL_REST";
+            const int restDays = 3;
+            var before = DateTime.Now;
+
+            // Act
+            _progressionService.ApplyExternalSafetyBlock(reason, restDays);
+
+            // Assert - progression is now blocked and the status reflects the gate
+            Assert.True(_progressionService.IsProgressionBlocked());
+
+            var status = _progressionService.GetSafetyLockStatus();
+            Assert.True(status.IsBlocked);
+            Assert.NotNull(status.Reason);
+            Assert.Contains(reason, status.Reason!);
+
+            // ExpiresAt should be ~restDays into the future
+            Assert.NotNull(status.ExpiresAt);
+            Assert.True(status.ExpiresAt >= before.AddDays(restDays));
+            Assert.True(status.ExpiresAt <= DateTime.Now.AddDays(restDays).AddMinutes(1));
+        }
+
+        [Fact]
+        public void ApplyExternalSafetyBlock_DefaultRestDays_UsesTwoDayWindow()
+        {
+            // Arrange
+            var before = DateTime.Now;
+
+            // Act - default restDays is 2 (SafetyLockDurationDays)
+            _progressionService.ApplyExternalSafetyBlock("CLINICAL_GATE_DEFAULT");
+
+            // Assert
+            var status = _progressionService.GetSafetyLockStatus();
+            Assert.NotNull(status.ExpiresAt);
+            Assert.True(status.ExpiresAt >= before.AddDays(2));
+            Assert.True(status.ExpiresAt <= DateTime.Now.AddDays(2).AddMinutes(1));
+        }
+
+        [Fact]
+        public void ApplyExternalSafetyBlock_SuppressesPromotionWithQualifyingScore()
+        {
+            // Arrange - engage the external block first
+            _progressionService.ApplyExternalSafetyBlock("CLINICAL_GATE_STRAIN_HISTORY");
+
+            var session = new TrainingSession
+            {
+                StartTime = DateTime.Now,
+                EndTime = DateTime.Now.AddMinutes(10),
+                OverallScore = 95, // Would normally count toward promotion
+                AveragePitch = 200
+            };
+
+            // Act
+            var result = _progressionService.EvaluateProgressionWithSafety(session);
+
+            // Assert - no promotion, blocked by safety, difficulty unchanged
+            Assert.True(result.IsBlockedBySafety);
+            Assert.Equal(DifficultyLevel.Nybegynner, result.NewDifficulty);
+            Assert.Equal(result.CurrentDifficulty, result.NewDifficulty);
+            Assert.False(result.ShouldShowCelebration);
+        }
+
+        [Fact]
+        public void ApplyExternalSafetyBlock_IsIdempotentWhileLocked()
+        {
+            // Arrange - first call establishes the lock and its reason
+            const string firstReason = "CLINICAL_GATE_FIRST";
+            _progressionService.ApplyExternalSafetyBlock(firstReason, restDays: 4);
+            var firstExpiry = _progressionService.GetSafetyLockStatus().ExpiresAt;
+
+            // Act - a second call while already locked must not overwrite the lock
+            _progressionService.ApplyExternalSafetyBlock("CLINICAL_GATE_SECOND", restDays: 7);
+
+            // Assert - the original reason and expiry are preserved
+            var status = _progressionService.GetSafetyLockStatus();
+            Assert.True(status.IsBlocked);
+            Assert.NotNull(status.Reason);
+            Assert.Contains(firstReason, status.Reason!);
+            Assert.DoesNotContain("CLINICAL_GATE_SECOND", status.Reason!);
+            Assert.Equal(firstExpiry, status.ExpiresAt);
+        }
+
+        [Fact]
+        public void ApplyExternalSafetyBlock_ThenRelease_NoLongerBlocked()
+        {
+            // Arrange
+            _progressionService.ApplyExternalSafetyBlock("CLINICAL_GATE_TEMPORARY");
+            Assert.True(_progressionService.IsProgressionBlocked());
+
+            // Act
+            var released = _progressionService.ReleaseSafetyLock();
+
+            // Assert
+            Assert.True(released);
+            Assert.False(_progressionService.IsProgressionBlocked());
+
+            var status = _progressionService.GetSafetyLockStatus();
+            Assert.False(status.IsBlocked);
+            Assert.Null(status.Reason);
+            Assert.Null(status.ExpiresAt);
+        }
+    }
+
+    /// <summary>
     /// Tests for PeriodizationService
     /// </summary>
     public class PeriodizationServiceTests

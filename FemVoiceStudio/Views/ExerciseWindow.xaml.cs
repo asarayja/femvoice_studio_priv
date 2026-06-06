@@ -59,6 +59,10 @@ namespace FemVoiceStudio.Views
         private ExerciseDetailViewModel? _viewModel;
         private IExerciseProfileFactory? _profileFactory;
 
+        // ── Klinisk øktscoring (resolved via DI) ─────────────────────────────────
+        private ExerciseSessionRecorder? _sessionRecorder;
+        private ExerciseTargetProfile?   _activeProfile;
+
         // ── REMOVED: _coordinator field — coordinator access now belongs entirely
         //    to ExerciseDetailViewModel. Code-behind no longer subscribes directly.
 
@@ -111,8 +115,10 @@ namespace FemVoiceStudio.Views
         _viewModel      = App.Services.GetService(typeof(ExerciseDetailViewModel))
                           as ExerciseDetailViewModel;
         _profileFactory = App.Services.GetService(typeof(IExerciseProfileFactory))
-                          as IExerciseProfileFactory 
+                          as IExerciseProfileFactory
                           ?? new ExerciseProfileFactory(); // <-- ADD THIS FALLBACK
+        _sessionRecorder = App.Services.GetService(typeof(ExerciseSessionRecorder))
+                          as ExerciseSessionRecorder;
 
         if (_viewModel == null) return;
 
@@ -339,6 +345,11 @@ namespace FemVoiceStudio.Views
                 LiveFeedbackPanel.Visibility = Visibility.Visible;
             }
 
+            // Start aggregering ETTER StartExerciseCommand (koordinatorens synthetiske
+            // default-state ved SetExerciseContext skal ikke inn i øktsnittet) og FØR
+            // lydstart, slik at alle reelle evalueringsticks fanges.
+            _sessionRecorder?.BeginSession(_currentExercise.ExerciseId, _currentSessionId);
+
             StartExerciseAudio();
         }
 
@@ -351,7 +362,7 @@ namespace FemVoiceStudio.Views
 
             if (_currentSessionId > 0 && _currentExercise != null)
             {
-                var score = CalculateScore();
+                var score = CompleteSessionAndCalculateScore();
                 _exerciseService.CompleteSession(_currentSessionId, _elapsedSeconds, score, "");
                 FeedbackText.Text   = GetCompletionFeedback(score);
                 DetailProgress.Text = string.Format(Loc.Exercise_StepsProgress,
@@ -377,6 +388,7 @@ namespace FemVoiceStudio.Views
             _timer?.Stop();
             _isRunning = false;
             StopExerciseAudio();
+            _sessionRecorder?.AbortSession();   // avbrutt økt journalføres ikke
             if (_currentSessionId > 0)
             {
                 _exerciseService?.CancelSession(_currentSessionId);
@@ -479,6 +491,7 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
 
     // Apply profile to ViewModel — drives indicators + Guidance
     var profile = (_profileFactory ?? new ExerciseProfileFactory()).CreateProfile(exercise.ProfileType);
+    _activeProfile = profile;   // brukes av ClinicalSessionScore ved øktslutt
 
     _viewModel?.ApplyProfile(profile, exercise.ExerciseId);
 
@@ -605,13 +618,28 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
         // Helpers (uendret)
         // ────────────────────────────────────────────────────────────────────────
 
-        private double CalculateScore()
+        /// <summary>
+        /// Fullfører øktaggregeringen og beregner klinisk øktscore (0–100).
+        ///
+        /// Erstatter den gamle tidsbaserte CalculateScore (tid + oppmøtebonus) som
+        /// gjorde at høy score — og dermed Mastery — kunne oppnås uten stemmedata.
+        /// Nå scorer ClinicalSessionScore på resonans/stabilitet/komfort/hold med
+        /// harde sikkerhetscaps; tid er kun et gulvkrav. Pitch teller bare som
+        /// sone-compliance, aldri som høyde.
+        /// </summary>
+        private double CompleteSessionAndCalculateScore()
         {
             if (_currentExercise == null) return 0;
-            var targetSeconds  = _currentExercise.DurationMinutes * 60;
-            var timeScore      = Math.Min(100, _elapsedSeconds * 100.0 / targetSeconds);
-            var experienceBonus= Math.Min(20, _currentExercise.TotalSessions * 2);
-            return Math.Min(100, timeScore + experienceBonus);
+
+            var outcome = _sessionRecorder?.CompleteSession();
+            if (outcome == null || _activeProfile == null)
+                return 0;   // ingen verifiserte stemmedata → ingen score
+
+            return ClinicalSessionScore.Calculate(
+                outcome,
+                _activeProfile,
+                _elapsedSeconds,
+                _currentExercise.DurationMinutes * 60);
         }
 
         private string GetCompletionFeedback(double score)
@@ -733,11 +761,14 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
             var stability = pitch.IsVoiced
                 ? Math.Clamp(pitch.Confidence, 0, 1)
                 : Math.Clamp(resonance, 0, 1);
+            // Health hentes fra VocalHealthSupervisor-tilstanden via recorderen
+            // (tidligere hardkodet 100, som gjorde at <70-sikkerhetslåsen i
+            // koordinatoren aldri kunne utløses fra øvelsesløkka).
             _viewModel.UpdateLiveMetrics(
                 resonance,
                 pitch.IsVoiced ? pitch.Pitch : 0,
                 stability,
-                100);
+                _sessionRecorder?.CurrentHealthScore ?? 100);
         }
 
         private void OnExerciseAudioError(object? sender, string message)
@@ -773,6 +804,7 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
         {
             _timer?.Stop();
             StopExerciseAudio();
+            _sessionRecorder?.AbortSession();   // vindu lukket midt i økt → ikke journalfør
             _viewModel?.Dispose();   // Unsubscribes from coordinator events.
             // REMOVED: _coordinator.ExerciseUpdated -= ... (no direct coordinator ref)
             base.OnClosed(e);

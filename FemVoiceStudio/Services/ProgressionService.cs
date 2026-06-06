@@ -83,16 +83,20 @@ namespace FemVoiceStudio.Services
                 return result;
             }
             
-            // SAFETY CHECK: Block promotion if safety lock is active
-            if (_safetyLockActive)
+            // SAFETY CHECK: Blokker promotering/degradering ved aktiv sikkerhetslås —
+            // men ALDRI aktivitetsstatistikken (streak/totaler/7-dagers-snitt), som må
+            // oppdateres for hver fullført økt. (Tidligere returnerte denne grenen før
+            // UpdateStreak/UpdateUserSettings; det var harmløst så lenge låsen aldri
+            // ble engasjert fra opptaksflyten, men ville nå frosset streaken.)
+            bool blockedBySafety = _safetyLockActive;
+            if (blockedBySafety)
             {
                 result.Reason = $"Progression blocked: {_safetyLockReason ?? "Safety concern"}";
                 result.IsBlockedBySafety = true;
-                return result;
             }
-            
+
             // Sjekk om brukeren kvalifiserer for promotering
-            if (settings.CurrentDifficulty < DifficultyLevel.Avansert)
+            if (!blockedBySafety && settings.CurrentDifficulty < DifficultyLevel.Avansert)
             {
                 if (lastSession.OverallScore >= MinScoreForPromotion)
                 {
@@ -123,7 +127,7 @@ namespace FemVoiceStudio.Services
             }
             
             // Sjekk om brukeren skal degraderes (for lavt over tid)
-            if (settings.CurrentDifficulty > DifficultyLevel.Nybegynner)
+            if (!blockedBySafety && settings.CurrentDifficulty > DifficultyLevel.Nybegynner)
             {
                 var recentSessions = _database.GetTrainingSessions(
                     DateTime.Now.AddDays(-7), 
@@ -415,6 +419,30 @@ namespace FemVoiceStudio.Services
             }
         }
         
+        /// <summary>
+        /// Engages the safety lock from an external clinical gate (e.g.
+        /// ProgressionSafetyGate, which evaluates persisted health-event history).
+        /// The gate itself is stateless — re-evaluated from history on every session —
+        /// so this in-memory lock only needs to hold within the current app run.
+        /// </summary>
+        /// <param name="reason">Reason code from the external gate (logged, not shown raw in UI).</param>
+        /// <param name="restDays">Recommended rest period before re-evaluation.</param>
+        public void ApplyExternalSafetyBlock(string reason, int restDays = SafetyLockDurationDays)
+        {
+            if (_safetyLockActive)
+                return;
+
+            _safetyLockExpires = DateTime.Now.AddDays(Math.Max(1, restDays));
+            _safetyLockActive = true;
+            _safetyLockReason = reason;
+
+            SafetyLockEngaged?.Invoke(this, new SafetyLockEventArgs
+            {
+                Reason = reason,
+                ExpiresAt = _safetyLockExpires.Value
+            });
+        }
+
         /// <summary>
         /// Resets strain counters (call at start of new week).
         /// </summary>

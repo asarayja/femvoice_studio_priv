@@ -303,6 +303,9 @@ namespace FemVoiceStudio.Data
             // Migrer nye kolonner hvis de ikke eksisterer
             MigrateExerciseColumns(connection);
 
+            // Engangs-nullstilling av tidsbaserte scores (klinisk score-migrering)
+            EnsureClinicalScoreMigration(connection);
+
             // Slett eksisterende Ã¸velser og legg til alle pÃ¥ nytt inside a transaction
             using var tran = connection.BeginTransaction();
             try
@@ -741,6 +744,53 @@ namespace FemVoiceStudio.Data
             return exercise;
         }
         
+        /// <summary>
+        /// Engangs-migrering: nullstiller AverageScore/BestScore i ExerciseProgress.
+        ///
+        /// Bakgrunn: Frem til den kliniske score-fiksen var øktscore ren tid +
+        /// oppmøtebonus — verdiene var systematisk inflaterte og uten stemmedata.
+        /// Etter avklaring med bruker nullstilles de én gang slik at mastery bygges
+        /// på reelle kliniske data. TotalSessions/streaks beholdes. Idempotent via
+        /// markørrad i SchemaMeta.
+        /// </summary>
+        private void EnsureClinicalScoreMigration(SqliteConnection connection)
+        {
+            try
+            {
+                using var transaction = connection.BeginTransaction();
+
+                var createCmd = connection.CreateCommand();
+                createCmd.Transaction = transaction;
+                createCmd.CommandText = "CREATE TABLE IF NOT EXISTS SchemaMeta (Key TEXT PRIMARY KEY, Value TEXT)";
+                createCmd.ExecuteNonQuery();
+
+                var checkCmd = connection.CreateCommand();
+                checkCmd.Transaction = transaction;
+                checkCmd.CommandText = "SELECT Value FROM SchemaMeta WHERE Key = 'ClinicalScoreReset_v1'";
+                if (checkCmd.ExecuteScalar() == null)
+                {
+                    var resetCmd = connection.CreateCommand();
+                    resetCmd.Transaction = transaction;
+                    resetCmd.CommandText = "UPDATE ExerciseProgress SET AverageScore = 0, BestScore = 0";
+                    resetCmd.ExecuteNonQuery();
+
+                    var markCmd = connection.CreateCommand();
+                    markCmd.Transaction = transaction;
+                    markCmd.CommandText = @"
+                        INSERT INTO SchemaMeta (Key, Value)
+                        VALUES ('ClinicalScoreReset_v1', @Now)";
+                    markCmd.Parameters.AddWithValue("@Now", DateTime.Now.ToString("o"));
+                    markCmd.ExecuteNonQuery();
+                }
+
+                transaction.Commit();
+            }
+            catch
+            {
+                // Migreringsfeil skal aldri blokkere oppstart — neste kjøring prøver igjen.
+            }
+        }
+
         private void UpdateExerciseProgress(SqliteConnection connection, int sessionId, int durationSeconds, double score)
         {
             // Hent ExerciseId fra session

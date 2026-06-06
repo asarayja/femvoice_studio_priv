@@ -135,6 +135,28 @@ public partial class App : Application
         });
         services.AddSingleton<SessionAnalyticsStore>();
         services.AddSingleton<ProgressionOrchestrator>();
+
+        // ── Klinisk øktscoring og gating ──────────────────────────────────────────
+        // ExerciseSessionRecorder abonnerer på koordinatorens live-state-strøm,
+        // vekker VocalHealthSupervisor (strain/fatigue) og persisterer øktresultater
+        // til SessionAnalyticsStore. MasteryEvaluator og ProgressionSafetyGate leser
+        // den persisterte historikken for å gate mastery og vanskelighetspromotering.
+        services.AddSingleton<ExerciseSessionRecorder>();
+        services.AddSingleton<MasteryEvaluator>();
+        services.AddSingleton<ProgressionSafetyGate>();
+
+        // ExerciseDataService brukes av ExerciseDetailViewModel for å lese øvelses-
+        // progresjon (mastery). Var tidligere aldri registrert — GetService returnerte
+        // null og mastery-badgen viste alltid «Beginner».
+        services.AddSingleton(_ =>
+        {
+            var appDataPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "FemVoiceStudio");
+            Directory.CreateDirectory(appDataPath);
+            var databasePath = Path.Combine(appDataPath, "femvoice.db");
+            return new Data.ExerciseDataService($"Data Source={databasePath}");
+        });
         services.AddSingleton<FeedbackConsistencyGuard>();
         services.AddSingleton<FeedbackPipeline>();
         services.AddSingleton<ProgressionFeedbackMapper>();

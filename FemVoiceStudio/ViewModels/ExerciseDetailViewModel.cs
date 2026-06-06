@@ -93,7 +93,8 @@ namespace FemVoiceStudio.ViewModels
     /// </summary>
     public enum PerformanceQualityExtended { Poor, Fair, Good, VeryGood, Excellent }
 
-    public enum MasteryLevel { Beginner, Developing, Stable, Mastered }
+    // MasteryLevel flyttet til Models/MasteryLevel.cs — beregnes nå av MasteryEvaluator
+    // med kliniske gater (komfort/safety/fatigue), ikke av score-snitt alene.
 
     public sealed class ExerciseDetailViewModel : INotifyPropertyChanged, IDisposable
     {
@@ -103,6 +104,7 @@ namespace FemVoiceStudio.ViewModels
         private readonly IExerciseProfileFactory?        _profileFactory;
         private readonly FeedbackPipeline?               _feedbackPipeline;
         private readonly InlineCoachFeedbackMapper?      _inlineCoachFeedbackMapper;
+        private readonly MasteryEvaluator?               _masteryEvaluator;
 
         // ── State ────────────────────────────────────────────────────────────────
         private ExerciseTargetProfile _activeProfile = ExerciseTargetProfile.CreateResonanceHumming();
@@ -146,13 +148,15 @@ namespace FemVoiceStudio.ViewModels
             ILocalizationService            localization,
             IExerciseProfileFactory?        profileFactory = null,
             FeedbackPipeline?               feedbackPipeline = null,
-            InlineCoachFeedbackMapper?      inlineCoachFeedbackMapper = null)
+            InlineCoachFeedbackMapper?      inlineCoachFeedbackMapper = null,
+            MasteryEvaluator?               masteryEvaluator = null)
         {
             _coordinator    = coordinator  ?? throw new ArgumentNullException(nameof(coordinator));
             _localization   = localization ?? throw new ArgumentNullException(nameof(localization));
             _profileFactory = profileFactory;
             _feedbackPipeline = feedbackPipeline;
             _inlineCoachFeedbackMapper = inlineCoachFeedbackMapper;
+            _masteryEvaluator = masteryEvaluator;
 
             _coordinator.ExerciseUpdated    += OnExerciseUpdated;
             _coordinator.InlineCoachUpdated += OnInlineCoachUpdated;
@@ -212,18 +216,12 @@ namespace FemVoiceStudio.ViewModels
             RebuildGuidanceItems(profile);
             RaiseClinicalLoopPropertiesChanged();
 
-            // Load persisted progress for mastery visualization when exerciseId provided
+            // Load persisted progress + clinically gated mastery asynchronously —
+            // never blocks the UI thread on DB access (the old code did).
             if (exerciseId.HasValue)
             {
                 EnsureProgressService();
-                try
-                {
-                    var prog = _progressService?.GetExerciseProgress(exerciseId.Value);
-                    _completedSessions = prog?.TotalSessions ?? 0;
-                    _averageSessionScore = prog?.AverageScore ?? 0;
-                    ComputeMasteryFromProgress();
-                }
-                catch { _completedSessions = 0; _averageSessionScore = 0; ComputeMasteryFromProgress(); }
+                _ = LoadMasteryAsync(exerciseId.Value, profile);
             }
 
             OnPropertyChanged(nameof(ActiveIndicatorPackage));
@@ -559,13 +557,56 @@ namespace FemVoiceStudio.ViewModels
             }
         }
 
-        private void ComputeMasteryFromProgress()
+        /// <summary>
+        /// Loads persisted progress and evaluates mastery through MasteryEvaluator's
+        /// clinical gates. Runs off the UI thread; property updates are marshalled back.
+        /// On any failure the previous mastery is kept — never upgrade on error.
+        /// </summary>
+        private async System.Threading.Tasks.Task LoadMasteryAsync(int exerciseId, ExerciseTargetProfile profile)
         {
-            // Mastery rules derived from session count & average score — all numeric and within VM
-            if (_completedSessions < 3) _mastery = MasteryLevel.Beginner;
-            else if (_averageSessionScore < 60) _mastery = MasteryLevel.Developing;
-            else if (_averageSessionScore < 80) _mastery = MasteryLevel.Stable;
-            else _mastery = MasteryLevel.Mastered;
+            try
+            {
+                var prog = await System.Threading.Tasks.Task.Run(
+                    () => _progressService?.GetExerciseProgress(exerciseId)).ConfigureAwait(false);
+                var completedSessions   = prog?.TotalSessions ?? 0;
+                var averageSessionScore = prog?.AverageScore ?? 0;
+
+                var mastery = MasteryLevel.Beginner;
+                if (_masteryEvaluator != null)
+                {
+                    var evaluation = await _masteryEvaluator.EvaluateAsync(
+                        exerciseId, completedSessions, profile, DateTime.Now).ConfigureAwait(false);
+                    mastery = evaluation.Level;
+                }
+                else if (completedSessions >= 3)
+                {
+                    // Uten evaluator (f.eks. eldre tester): konservativ default —
+                    // aldri over Developing uten verifiserte kliniske gater.
+                    mastery = MasteryLevel.Developing;
+                }
+
+                void Apply()
+                {
+                    _completedSessions   = completedSessions;
+                    _averageSessionScore = averageSessionScore;
+                    _mastery             = mastery;
+                    OnPropertyChanged(nameof(Mastery));
+                    OnPropertyChanged(nameof(MasteryLabelKey));
+                    OnPropertyChanged(nameof(MasteryProgressPercent));
+                    OnPropertyChanged(nameof(CompletedSessionCount));
+                    OnPropertyChanged(nameof(AverageQualityLabelKey));
+                }
+
+                var dispatcher = Application.Current?.Dispatcher;
+                if (dispatcher != null && !dispatcher.CheckAccess())
+                    await dispatcher.InvokeAsync(Apply);
+                else
+                    Apply();
+            }
+            catch
+            {
+                // Behold forrige mastery-nivå ved feil — aldri oppgrader på feil.
+            }
         }
 
         // ─────────────────────────────────────────────────────────────────────────

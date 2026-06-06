@@ -30,6 +30,7 @@ namespace FemVoiceStudio.ViewModels
         private readonly ExerciseTextService _exerciseTextService;
         private readonly FeedbackService _feedbackService;
         private readonly ProgressionService _progressionService;
+        private readonly ProgressionSafetyGate? _progressionSafetyGate;
         private readonly LiveMetricsService _liveMetrics;
         private readonly AdaptiveComfortZoneService _comfortZoneService;
         private readonly FemVoiceScore _femVoiceScore;
@@ -189,6 +190,18 @@ namespace FemVoiceStudio.ViewModels
             _smartCoach = new SmartCoachEngine(_database as IDatabaseService);
             _liveMetrics = new LiveMetricsService();
             _comfortZoneService = new AdaptiveComfortZoneService(_smartCoach);
+
+            // Klinisk progresjonsgate — leser persistert helsehistorikk fra DI-containeren.
+            // Null-safe: uten DI (f.eks. i tester) er gaten av, og kun in-memory-låsen gjelder.
+            try
+            {
+                _progressionSafetyGate = App.Services?.GetService(typeof(ProgressionSafetyGate))
+                    as ProgressionSafetyGate;
+            }
+            catch
+            {
+                _progressionSafetyGate = null;
+            }
             
             // Sett opp event handlers
             _audioAnalyzer.PitchAnalyzed += OnPitchAnalyzed;
@@ -342,11 +355,11 @@ namespace FemVoiceStudio.ViewModels
         }
         
         [RelayCommand]
-        private void StopRecording()
+        private async Task StopRecording()
         {
             if (!IsRecording)
                 return;
-                
+
             try
             {
                 _uiUpdateTimer.Stop();
@@ -371,6 +384,10 @@ namespace FemVoiceStudio.ViewModels
                 OverallScore = feedbackCollection.OverallScore;
                 
                 // Lagre økt
+                // OverallScore: feedbackCollection.OverallScore er den reelle
+                // FemVoiceScore-baserte verdien (samme som vises i UI). Tidligere ble
+                // analysis.OverallScore brukt — den settes aldri og var alltid 0, så
+                // promotering var umulig og degradering feilutløstes.
                 var session = new TrainingSession
                 {
                     StartTime = _sessionStartTime,
@@ -381,15 +398,40 @@ namespace FemVoiceStudio.ViewModels
                     MaxPitch = analysis.MaxPitch,
                     PitchVariation = analysis.PitchStandardDeviation,
                     IntonationScore = analysis.IntonationRiseScore,
-                    OverallScore = analysis.OverallScore,
+                    OverallScore = feedbackCollection.OverallScore,
+                    VoiceHealthScore = CurrentScore?.VoiceHealthScore ?? 100,
+                    StrainLevel = HealthIndicator == HealthState.Warning ? 50
+                                : HealthIndicator == HealthState.Danger ? 80 : 0,
                     Feedback = Feedback,
                     DifficultyLevel = CurrentDifficulty
                 };
-                
+
                 _database.SaveTrainingSession(session);
-                
-                // Evaluer progresjon
-                var progressionResult = _progressionService.EvaluateProgression(session);
+
+                // Klinisk gate FØR progresjonsevaluering:
+                // 1) Strain-flagg fra siste FemVoiceScore → registrer hendelse (engasjerer
+                //    in-memory-låsen i ProgressionService).
+                var warningFlags = CurrentScore?.WarningFlags;
+                if (!string.IsNullOrEmpty(warningFlags))
+                {
+                    if (warningFlags.Contains("CRITICAL_STRAIN"))
+                        _progressionService.RecordStrainIncident(80, "CRITICAL_STRAIN");
+                    else if (warningFlags.Contains("STRAIN"))
+                        _progressionService.RecordStrainIncident(50, "MODERATE_STRAIN");
+                }
+
+                // 2) Persistert helsehistorikk (safety-locks/strain/fatigue/komfortbrudd
+                //    siste 7-14 dager) — overlever restart, i motsetning til in-memory-låsen.
+                if (_progressionSafetyGate != null)
+                {
+                    var gate = await _progressionSafetyGate.EvaluateAsync(DateTime.Now);
+                    if (gate.IsBlocked)
+                        _progressionService.ApplyExternalSafetyBlock(gate.ReasonCode, gate.RecommendedRestDays);
+                }
+
+                // Evaluer progresjon — WithSafety-varianten undertrykker promotering
+                // (og feiring) når sikkerhetslåsen er aktiv, uansett score.
+                var progressionResult = _progressionService.EvaluateProgressionWithSafety(session);
                 
                 if (progressionResult.ShouldShowCelebration)
                 {

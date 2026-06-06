@@ -337,7 +337,11 @@ namespace FemVoiceStudio.Services
             var avgStability = recent.Average(s => s.StabilityConsistency);
             var avgHold = recent.Average(s => s.HoldCompletionRate);
 
-            if (avgResonance < _options.MinimumStableResonance || profile.UsesResonance)
+            // Resonans-først gjelder ALLE profiler: er resonansen ennå ikke stabil,
+            // konsolideres den før noen annen dimensjon skaleres. (Tidligere sto det
+            // «|| profile.UsesResonance» her — da tok enhver resonansprofil alltid
+            // denne grenen, og stabilitets-/hold-gatene under ble aldri nådd.)
+            if (avgResonance < _options.MinimumStableResonance)
             {
                 return ProfileUpdate(
                     ProgressionAdjustmentDimension.Resonance,
@@ -373,11 +377,37 @@ namespace FemVoiceStudio.Services
                     baselineComposite);
             }
 
+            // Alle gater bestått → øk vanskelighet langs profilens primærdimensjon.
+            // Pitch alltid sist; resonansprofiler progredierer på resonans.
+            if (profile.UsesPitch)
+            {
+                return ProfileUpdate(
+                    ProgressionAdjustmentDimension.PitchComfort,
+                    "PITCH_AFTER_RESONANCE_STABILITY",
+                    "Difficulty can increase after stable resonance and stability history.",
+                    ScalePitchComfort(profile),
+                    sessionsAnalyzed,
+                    recentComposite,
+                    baselineComposite);
+            }
+
+            if (profile.UsesResonance)
+            {
+                return ProfileUpdate(
+                    ProgressionAdjustmentDimension.Resonance,
+                    "RESONANCE_PROGRESSION",
+                    "Resonance targets can advance after a stable, safe history.",
+                    ScaleResonance(profile),
+                    sessionsAnalyzed,
+                    recentComposite,
+                    baselineComposite);
+            }
+
             return ProfileUpdate(
-                profile.UsesPitch ? ProgressionAdjustmentDimension.PitchComfort : ProgressionAdjustmentDimension.Stability,
-                profile.UsesPitch ? "PITCH_AFTER_RESONANCE_STABILITY" : "STABILITY_ENDURANCE",
+                ProgressionAdjustmentDimension.Stability,
+                "STABILITY_ENDURANCE",
                 "Difficulty can increase after stable resonance and stability history.",
-                profile.UsesPitch ? ScalePitchComfort(profile) : ScaleStability(profile),
+                ScaleStability(profile),
                 sessionsAnalyzed,
                 recentComposite,
                 baselineComposite);
