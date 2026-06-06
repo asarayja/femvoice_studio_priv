@@ -89,6 +89,14 @@ namespace FemVoiceStudio.Tests
             => _store.GetHealthEventsAsync(WindowFrom, WindowTo)
                 .ContinueWith(t => (List<HealthAnalyticsEvent>?)t.Result.ToList());
 
+        // The SessionAnalyticsStore exposes session rows only via aggregates, so the raw
+        // SessionAnalyticsSessions row (EndedAt, ExerciseCount, …) is read straight from the
+        // in-memory repository. The recorder stamps StartedAt/EndedAt with DateTime.Now, so
+        // the wide window is guaranteed to contain it.
+        private Task<SessionAnalyticsRecord?> FetchSessionAsync(int sessionId, int userId = 1)
+            => _repository.GetSessionsAsync(userId, WindowFrom, WindowTo)
+                .ContinueWith(t => t.Result.FirstOrDefault(s => s.SessionId == sessionId));
+
         // ────────────────────────────────────────────────────────────────────────────
         // 1. Aggregation — averages and EvaluatedTicks
         // ────────────────────────────────────────────────────────────────────────────
@@ -397,6 +405,157 @@ namespace FemVoiceStudio.Tests
             // Assert
             Assert.Equal(100, _recorder.CurrentHealthScore);
             Assert.True(_recorder.IsRecording);
+        }
+
+        // ────────────────────────────────────────────────────────────────────────────
+        // 9. BeginSession — persists a session-start row (RecordSessionStartedAsync)
+        // ────────────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task BeginSession_PersistsSessionStartRow_WithSessionIdAndUserId()
+        {
+            // Arrange
+            var profile = ExerciseTargetProfile.ResonanceExercise();
+
+            // Act — BeginSession fires RecordSessionStartedAsync fire-and-forget.
+            Begin(profile, exerciseId: 21, sessionId: 1000, userId: 7);
+
+            // Assert — the session-start row is visible once the async write lands.
+            var session = await PollAsync(
+                () => FetchSessionAsync(1000, userId: 7),
+                s => s != null);
+
+            Assert.Equal(1000, session.SessionId);
+            Assert.Equal(7, session.UserId);
+            // A start row has no end and no aggregates yet (RecordSessionStartedAsync clears them).
+            Assert.Null(session.EndedAt);
+            Assert.Equal(0, session.ExerciseCount);
+        }
+
+        // ────────────────────────────────────────────────────────────────────────────
+        // 10. CompleteSession — persists the session row with EndedAt + aggregates
+        // ────────────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task CompleteSession_PersistsSessionRow_WithEndedAtAndAggregates()
+        {
+            // Arrange
+            var profile = ExerciseTargetProfile.ResonanceExercise();
+            Begin(profile, exerciseId: 22, sessionId: 1100, userId: 1);
+
+            _coordinator.UpdateMetrics(0.6, 200, 0.4, 100);
+            WaitForRateLimit();
+            _coordinator.UpdateMetrics(0.8, 200, 0.6, 100);
+
+            // Act
+            var outcome = _recorder.CompleteSession();
+
+            // Assert — poll until the completed row (EndedAt set) is visible. BeginSession
+            // wrote a start row first, so we wait specifically for the completion update.
+            var session = await PollAsync(
+                () => FetchSessionAsync(1100),
+                s => s != null && s.EndedAt != null);
+
+            Assert.Equal(1100, session.SessionId);
+            Assert.NotNull(session.EndedAt);
+            Assert.Equal(1, session.ExerciseCount);
+            Assert.Equal(outcome.AverageResonance, session.AverageResonance, 3);
+            // AveragePitchComfort is sourced from the outcome's ComfortCompliance.
+            Assert.Equal(outcome.ComfortCompliance, session.AveragePitchComfort, 3);
+            Assert.Equal(outcome.FatigueIndicators, session.FatigueIndicatorCount);
+        }
+
+        // ────────────────────────────────────────────────────────────────────────────
+        // 11. SubmitSubjectiveReport — health concern → PauseRecommended event
+        // ────────────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task SubmitSubjectiveReport_WithHealthConcern_PersistsPauseRecommendedEvent()
+        {
+            // Arrange
+            var profile = ExerciseTargetProfile.ResonanceExercise();
+            Begin(profile, exerciseId: 23, sessionId: 1200, userId: 1);
+
+            // ExperiencedStrain=true makes IndicatesHealthConcern true.
+            var report = new SubjectiveReport
+            {
+                SessionId = 1200,
+                UserId = 1,
+                ComfortLevel = 4,
+                FatigueFeeling = 2,
+                ExperiencedStrain = true,
+                WantsToContinue = false
+            };
+
+            // Act
+            _recorder.SubmitSubjectiveReport(report);
+
+            // Assert — exactly one PauseRecommended event with the subjective reason code.
+            var events = await PollAsync(
+                FetchEventsAsync,
+                e => e != null && e.Any(x => x.EventType == HealthAnalyticsEventType.PauseRecommended));
+
+            var pause = events.Single(e => e.EventType == HealthAnalyticsEventType.PauseRecommended);
+            Assert.Equal(1200, pause.SessionId);
+            Assert.Equal(1, pause.UserId);
+            Assert.Equal("SUBJECTIVE_HEALTH_CONCERN", pause.ReasonCode);
+        }
+
+        // ────────────────────────────────────────────────────────────────────────────
+        // 12. SubmitSubjectiveReport — no concern → nothing persisted
+        // ────────────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task SubmitSubjectiveReport_WithoutHealthConcern_PersistsNothing()
+        {
+            // Arrange
+            var profile = ExerciseTargetProfile.ResonanceExercise();
+            Begin(profile, exerciseId: 24, sessionId: 1300, userId: 1);
+
+            // Good comfort (>2), low fatigue (<4), no strain, wants to continue →
+            // IndicatesHealthConcern is false.
+            var report = new SubjectiveReport
+            {
+                SessionId = 1300,
+                UserId = 1,
+                ComfortLevel = 5,
+                FatigueFeeling = 1,
+                ExperiencedStrain = false,
+                WantsToContinue = true
+            };
+
+            // Act
+            _recorder.SubmitSubjectiveReport(report);
+
+            // Give any (incorrect) async persistence a chance to land before asserting.
+            await Task.Delay(80);
+
+            // Assert — no health events were written.
+            var events = await _store.GetHealthEventsAsync(WindowFrom, WindowTo);
+            Assert.Empty(events);
+        }
+
+        // ────────────────────────────────────────────────────────────────────────────
+        // 13. SubmitSubjectiveReport(null) — no-op, no exception
+        // ────────────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task SubmitSubjectiveReport_WithNull_IsNoOp()
+        {
+            // Arrange
+            var profile = ExerciseTargetProfile.ResonanceExercise();
+            Begin(profile, exerciseId: 25, sessionId: 1400, userId: 1);
+
+            // Act + Assert — null report must not throw.
+            var exception = Record.Exception(() => _recorder.SubmitSubjectiveReport(null!));
+            Assert.Null(exception);
+
+            // Give any (incorrect) async persistence a chance to land before asserting.
+            await Task.Delay(80);
+
+            // Assert — nothing was persisted as a health event.
+            var events = await _store.GetHealthEventsAsync(WindowFrom, WindowTo);
+            Assert.Empty(events);
         }
 
         // ────────────────────────────────────────────────────────────────────────────

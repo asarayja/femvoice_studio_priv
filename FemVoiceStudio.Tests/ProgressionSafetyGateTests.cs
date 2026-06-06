@@ -198,6 +198,75 @@ namespace FemVoiceStudio.Tests
             Assert.Equal("REPEATED_SAFETY_LOCKS", result.ReasonCode);
         }
 
+        [Fact]
+        public async Task Evaluate_WithTwoPauseRecommendationsInLastWeek_BlocksWithRepeatedPauseRecommendations()
+        {
+            var store = CreateStore();
+            var gate = new ProgressionSafetyGate(store);
+
+            // 2 PauseRecommended events in the recent week reach the block threshold.
+            await AddEvent(store, HealthAnalyticsEventType.PauseRecommended, Now.AddDays(-1), sessionId: 21);
+            await AddEvent(store, HealthAnalyticsEventType.PauseRecommended, Now.AddDays(-4), sessionId: 22);
+
+            var result = await gate.EvaluateAsync(Now);
+
+            Assert.True(result.IsBlocked);
+            Assert.Equal("REPEATED_PAUSE_RECOMMENDATIONS", result.ReasonCode);
+        }
+
+        [Fact]
+        public async Task Evaluate_WithSinglePauseRecommendation_DoesNotBlock()
+        {
+            var store = CreateStore();
+            var gate = new ProgressionSafetyGate(store);
+
+            await AddEvent(store, HealthAnalyticsEventType.PauseRecommended, Now.AddDays(-1), sessionId: 21);
+
+            var result = await gate.EvaluateAsync(Now);
+
+            Assert.False(result.IsBlocked);
+            Assert.Equal("CLEAR", result.ReasonCode);
+        }
+
+        [Fact]
+        public async Task Evaluate_WithPauseRecommendationsOlderThanSevenDays_DoesNotBlock()
+        {
+            var store = CreateStore();
+            var gate = new ProgressionSafetyGate(store);
+
+            // Two PauseRecommended events inside the 14-day fetch window but older than the
+            // 7-day recent window -> not counted, so no block.
+            await AddEvent(store, HealthAnalyticsEventType.PauseRecommended, Now.AddDays(-8), sessionId: 21);
+            await AddEvent(store, HealthAnalyticsEventType.PauseRecommended, Now.AddDays(-10), sessionId: 22);
+
+            var result = await gate.EvaluateAsync(Now);
+
+            Assert.False(result.IsBlocked);
+            Assert.Equal("CLEAR", result.ReasonCode);
+        }
+
+        [Fact]
+        public async Task Evaluate_WhenComfortBreachesAndPausesBothTrigger_PrioritizesRepeatedComfortBreaches()
+        {
+            var store = CreateStore();
+            var gate = new ProgressionSafetyGate(store);
+
+            // Comfort-breach rule satisfied: 3 breach events on distinct sessions this week.
+            await AddEvent(store, HealthAnalyticsEventType.ComfortZoneBreach, Now.AddDays(-1), sessionId: 11);
+            await AddEvent(store, HealthAnalyticsEventType.ComfortZoneBreach, Now.AddDays(-2), sessionId: 12);
+            await AddEvent(store, HealthAnalyticsEventType.ComfortZoneBreach, Now.AddDays(-3), sessionId: 13);
+
+            // Pause-recommendation rule also satisfied (2 recent), but it is evaluated AFTER
+            // the comfort-breach rule, so the comfort-breach reason wins.
+            await AddEvent(store, HealthAnalyticsEventType.PauseRecommended, Now.AddDays(-1), sessionId: 21);
+            await AddEvent(store, HealthAnalyticsEventType.PauseRecommended, Now.AddDays(-4), sessionId: 22);
+
+            var result = await gate.EvaluateAsync(Now);
+
+            Assert.True(result.IsBlocked);
+            Assert.Equal("REPEATED_COMFORT_BREACHES", result.ReasonCode);
+        }
+
         private static SessionAnalyticsStore CreateStore()
             => new(new InMemorySessionAnalyticsRepository());
 

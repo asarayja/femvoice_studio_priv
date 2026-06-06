@@ -80,6 +80,8 @@ namespace FemVoiceStudio.Services
         private int _comfortBreachEpisodes;
         private int _fatigueIndicators;
         private int _strainDetections;
+        private int _pauseRecommendations;
+        private int _hydrationSuggestions;
         private int _coachHints;
         private bool _wasSafetyLocked;
         private bool _wasInComfortZone = true;
@@ -131,6 +133,7 @@ namespace FemVoiceStudio.Services
                 _ticks = _ticksInComfortZone = 0;
                 _safetyLockEpisodes = _comfortBreachEpisodes = 0;
                 _fatigueIndicators = _strainDetections = _coachHints = 0;
+                _pauseRecommendations = _hydrationSuggestions = 0;
                 _wasSafetyLocked = false;
                 _wasInComfortZone = true;
                 _currentHealthScore = 100;
@@ -138,6 +141,10 @@ namespace FemVoiceStudio.Services
                 _healthSupervisor.Reset();
                 _recording = true;
             }
+
+            // Sesjonsnivå-journalføring: SessionAnalyticsSessions-tabellen ble aldri
+            // skrevet før (integrasjonsauditen) — daglig/ukentlig trend var alltid tom.
+            _ = PersistSessionStartedAsync(sessionId, userId, DateTime.Now);
         }
 
         /// <summary>
@@ -147,7 +154,8 @@ namespace FemVoiceStudio.Services
         public ExerciseSessionOutcome CompleteSession()
         {
             ExerciseSessionOutcome outcome;
-            int sessionId, exerciseId, userId, strain, locks, breaches;
+            int sessionId, exerciseId, userId, strain, locks, breaches, pauses, hydration;
+            double healthScore;
             DateTime startedAt;
 
             lock (_lock)
@@ -173,11 +181,38 @@ namespace FemVoiceStudio.Services
                 strain     = _strainDetections;
                 locks      = _safetyLockEpisodes;
                 breaches   = _comfortBreachEpisodes;
+                pauses     = _pauseRecommendations;
+                hydration  = _hydrationSuggestions;
+                healthScore = _currentHealthScore;
                 startedAt  = _startedAt;
             }
 
-            _ = PersistAsync(outcome, sessionId, exerciseId, userId, strain, locks, breaches, startedAt);
+            _ = PersistAsync(outcome, sessionId, exerciseId, userId, strain, locks, breaches,
+                pauses, hydration, healthScore, startedAt);
             return outcome;
+        }
+
+        /// <summary>
+        /// Persists the user's subjective self-report. Reports indicating a health
+        /// concern are journaled as PauseRecommended events so MasteryEvaluator and
+        /// ProgressionSafetyGate can gate on them. Previously the report was
+        /// write-only (collected in ExerciseWindow, never read — integration audit).
+        /// </summary>
+        public void SubmitSubjectiveReport(SubjectiveReport report)
+        {
+            if (report == null) return;
+
+            int sessionId, userId;
+            lock (_lock)
+            {
+                sessionId = report.SessionId ?? _sessionId;
+                userId    = report.UserId > 0 ? report.UserId : _userId;
+            }
+
+            if (!report.IndicatesHealthConcern)
+                return;
+
+            _ = PersistSubjectiveConcernAsync(report, sessionId, userId);
         }
 
         /// <summary>Discards the current session without persisting anything.</summary>
@@ -221,6 +256,8 @@ namespace FemVoiceStudio.Services
                 if (!_recording) return;
                 if (decision.FatigueDetected) _fatigueIndicators++;
                 if (decision.StrainDetected)  _strainDetections++;
+                if (decision.PauseRecommended) _pauseRecommendations++;
+                if (decision.HydrationSuggested) _hydrationSuggestions++;
                 _currentHealthScore = decision.State switch
                 {
                     HealthSafetyState.Lock     => 40,   // under 70 → koordinatoren låser
@@ -254,6 +291,48 @@ namespace FemVoiceStudio.Services
         // Persistence
         // ────────────────────────────────────────────────────────────────────────
 
+        private async Task PersistSessionStartedAsync(int sessionId, int userId, DateTime startedAt)
+        {
+            try
+            {
+                await _analyticsStore.RecordSessionStartedAsync(new SessionAnalyticsRecord
+                {
+                    SessionId = sessionId,
+                    UserId    = userId,
+                    StartedAt = startedAt
+                }).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ExerciseSessionRecorder] Session-start persist failed: {ex.Message}");
+            }
+        }
+
+        private async Task PersistSubjectiveConcernAsync(SubjectiveReport report, int sessionId, int userId)
+        {
+            try
+            {
+                // Severitet avledes av brukerens egen gradering: opplevd strain veier
+                // tyngst, deretter fatigue (1-5) og lav komfort (1-5, invertert).
+                var severity = report.ExperiencedStrain ? 1.0
+                    : Math.Clamp(Math.Max(report.FatigueFeeling, 6 - report.ComfortLevel) / 5.0, 0.2, 1.0);
+
+                await _analyticsStore.RecordHealthEventAsync(new HealthAnalyticsEvent
+                {
+                    SessionId  = sessionId,
+                    UserId     = userId,
+                    EventType  = HealthAnalyticsEventType.PauseRecommended,
+                    OccurredAt = DateTime.Now,
+                    Severity   = severity,
+                    ReasonCode = "SUBJECTIVE_HEALTH_CONCERN"
+                }).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ExerciseSessionRecorder] Subjective persist failed: {ex.Message}");
+            }
+        }
+
         private async Task PersistAsync(
             ExerciseSessionOutcome outcome,
             int sessionId,
@@ -262,10 +341,32 @@ namespace FemVoiceStudio.Services
             int strainDetections,
             int lockEpisodes,
             int breachEpisodes,
+            int pauseRecommendations,
+            int hydrationSuggestions,
+            double healthScore,
             DateTime startedAt)
         {
             try
             {
+                // Sesjonsnivå-raden (driver GetDailySummaryAsync/GetWeeklyTrendAsync —
+                // aggregatene var tomme før fordi denne aldri ble skrevet).
+                await _analyticsStore.RecordSessionCompletedAsync(new SessionAnalyticsRecord
+                {
+                    SessionId                 = sessionId,
+                    UserId                    = userId,
+                    StartedAt                 = startedAt,
+                    EndedAt                   = DateTime.Now,
+                    ExerciseCount             = 1,
+                    AverageResonance          = outcome.AverageResonance,
+                    AverageStability          = outcome.AverageStability,
+                    AveragePitchComfort       = outcome.ComfortCompliance,
+                    AverageHealthScore        = Math.Clamp(healthScore / 100.0, 0, 1),
+                    SafetyEventsCount         = lockEpisodes,
+                    PauseRecommendationsCount = pauseRecommendations,
+                    HydrationSuggestionsCount = hydrationSuggestions,
+                    FatigueIndicatorCount     = outcome.FatigueIndicators
+                }).ConfigureAwait(false);
+
                 await _analyticsStore.RecordExercisePerformanceAsync(new ExercisePerformanceSummary
                 {
                     SessionId             = sessionId,

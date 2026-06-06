@@ -62,6 +62,13 @@ namespace FemVoiceStudio.Views
         // ── Klinisk øktscoring (resolved via DI) ─────────────────────────────────
         private ExerciseSessionRecorder? _sessionRecorder;
         private ExerciseTargetProfile?   _activeProfile;
+        private ExerciseSessionOutcome?  _lastSessionOutcome;
+
+        // ── Adaptiv komfortsone (resolved via DI) ────────────────────────────────
+        // Var dormant: InitializeAsync/UpdateZoneAsync ble aldri kalt, så ZoneUpdated
+        // fyrte aldri og koordinatoren fikk kun statiske profilgrenser (audit-funn).
+        private ComfortZoneController? _comfortZoneController;
+        private bool _comfortZoneReady;
 
         // ── REMOVED: _coordinator field — coordinator access now belongs entirely
         //    to ExerciseDetailViewModel. Code-behind no longer subscribes directly.
@@ -119,6 +126,8 @@ namespace FemVoiceStudio.Views
                           ?? new ExerciseProfileFactory(); // <-- ADD THIS FALLBACK
         _sessionRecorder = App.Services.GetService(typeof(ExerciseSessionRecorder))
                           as ExerciseSessionRecorder;
+        _comfortZoneController = App.Services.GetService(typeof(ComfortZoneController))
+                          as ComfortZoneController;
 
         if (_viewModel == null) return;
 
@@ -324,7 +333,7 @@ namespace FemVoiceStudio.Views
         // Exercise Start / Stop
         // ────────────────────────────────────────────────────────────────────────
 
-        private void OnStartClick(object sender, RoutedEventArgs e)
+        private async void OnStartClick(object sender, RoutedEventArgs e)
         {
             if (_currentExercise == null || _exerciseService == null) return;
 
@@ -351,9 +360,25 @@ namespace FemVoiceStudio.Views
             _sessionRecorder?.BeginSession(_currentExercise.ExerciseId, _currentSessionId);
 
             StartExerciseAudio();
+
+            // Adaptiv komfortsone: last brukerens sonetilstand. Soneoppdateringen
+            // (UpdateZoneAsync) skjer ved øktslutt med øktsnittene; ZoneUpdated-eventet
+            // seeder da koordinatorens pitch-grenser/sonelås for kommende økter.
+            if (_comfortZoneController != null && !_comfortZoneReady)
+            {
+                try
+                {
+                    await _comfortZoneController.InitializeAsync(userId: 1);
+                    _comfortZoneReady = true;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ComfortZone] Init failed: {ex.Message}");
+                }
+            }
         }
 
-        private void OnStopClick(object sender, RoutedEventArgs e)
+        private async void OnStopClick(object sender, RoutedEventArgs e)
         {
             if (_exerciseService == null) return;
 
@@ -368,6 +393,26 @@ namespace FemVoiceStudio.Views
                 DetailProgress.Text = string.Format(Loc.Exercise_StepsProgress,
                                           _currentExercise.TotalSessions + 1, score.ToString("F0"));
                 UpdateTodaysStatus();
+
+                // Adaptiv komfortsone: oppdater sonen med øktsnittene (0-100-skala).
+                // RaiseZoneUpdatedEvent → koordinatoren cacher nye pitch-grenser/sonelås.
+                if (_comfortZoneController != null && _comfortZoneReady && _lastSessionOutcome != null
+                    && _lastSessionOutcome.EvaluatedTicks > 0)
+                {
+                    try
+                    {
+                        await _comfortZoneController.UpdateZoneAsync(
+                            _lastSessionOutcome.AverageResonance * 100,
+                            _lastSessionOutcome.ComfortCompliance * 100,
+                            _lastSessionOutcome.AverageStability * 100,
+                            score,
+                            _sessionRecorder?.CurrentHealthScore ?? 100);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ComfortZone] Update failed: {ex.Message}");
+                    }
+                }
             }
 
             StartButton.IsEnabled = true;
@@ -632,6 +677,7 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
             if (_currentExercise == null) return 0;
 
             var outcome = _sessionRecorder?.CompleteSession();
+            _lastSessionOutcome = outcome;   // brukes av komfortsone-oppdateringen ved øktslutt
             if (outcome == null || _activeProfile == null)
                 return 0;   // ingen verifiserte stemmedata → ingen score
 
@@ -667,6 +713,11 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
                         : SubjectiveNotesTextBox.Text.Trim(),
                     SubmittedAt = DateTime.Now
                 };
+
+                // Rapporten var tidligere write-only (audit-funn) — nå journalføres
+                // helsebekymringer som PauseRecommended-events i analytics, slik at
+                // MasteryEvaluator og ProgressionSafetyGate kan gate på dem.
+                _sessionRecorder?.SubmitSubjectiveReport(_lastSubjectiveReport);
 
                 SubjectiveReportStatusText.Text = Loc.Get("SubjectiveReport_Saved");
             }

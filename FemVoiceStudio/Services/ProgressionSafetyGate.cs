@@ -29,6 +29,9 @@ namespace FemVoiceStudio.Services
     ///                                week-over-week with ≥ 3 in the recent week.
     ///   • REPEATED_COMFORT_BREACHES — ≥ 3 sessions journaled with repeated
     ///                                comfort-zone breaches in the last 7 days.
+    ///   • REPEATED_PAUSE_RECOMMENDATIONS — ≥ 2 PauseRecommended events in the
+    ///                                last 7 days (supervisor-anbefalt pause eller
+    ///                                brukerens egen subjektive helsebekymring).
     /// </summary>
     public sealed class ProgressionSafetyGate
     {
@@ -36,6 +39,7 @@ namespace FemVoiceStudio.Services
         private const int StrainRecentMinimum = 2;
         private const int FatigueRecentMinimum = 3;
         private const int BreachSessionBlockThreshold = 3;
+        private const int PauseRecommendationBlockThreshold = 2;
 
         private readonly SessionAnalyticsStore _analyticsStore;
 
@@ -72,6 +76,13 @@ namespace FemVoiceStudio.Services
                 .Count();
             if (recentBreachSessions >= BreachSessionBlockThreshold)
                 return new ProgressionGateResult { IsBlocked = true, ReasonCode = "REPEATED_COMFORT_BREACHES" };
+
+            // Subjektive helsebekymringer + supervisor-anbefalte pauser teller likt —
+            // brukerens egen rapport skal kunne stoppe progresjon (var write-only før).
+            var recentPauseRecommendations = events.Count(e =>
+                e.EventType == HealthAnalyticsEventType.PauseRecommended && e.OccurredAt >= recentWeekStart);
+            if (recentPauseRecommendations >= PauseRecommendationBlockThreshold)
+                return new ProgressionGateResult { IsBlocked = true, ReasonCode = "REPEATED_PAUSE_RECOMMENDATIONS" };
 
             var summaries = await _analyticsStore.GetExerciseSummariesAsync(
                 now.AddDays(-14), now.AddTicks(1), userId, cancellationToken).ConfigureAwait(false);
