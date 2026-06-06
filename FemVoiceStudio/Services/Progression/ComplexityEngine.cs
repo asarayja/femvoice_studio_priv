@@ -65,11 +65,24 @@ namespace FemVoiceStudio.Services.Progression
                 .Where(s => GetComplexityForSession(s) == currentLevel)
                 .Take(MinSessionsAtLevel)
                 .ToList();
-            
+
+            // Øvelses-id-bucketingen (GetComplexityForSession) kjenner bare 3 av 7
+            // nivåer — på mellomnivåene (Syllables/Phrases/SpontaneousSpeech/
+            // Conversational) ga den alltid 0 treff, så brukeren satt permanent fast
+            // (review-funn). Den persisterte SessionsAtLevel-telleren (inkrementert
+            // per øktslutt i TryAdvanceLevelAsync, nullstilt ved nivåheving) er
+            // autoritativ; id-bucketingen beholdes som sekundær kilde der den finnes.
+            if (sessionsAtCurrentLevel.Count == 0 && recentSessions.Any())
+            {
+                sessionsAtCurrentLevel = recentSessions.Take(MinSessionsAtLevel).ToList();
+            }
+            var persistedSessionsAtLevel = progress?.SessionsAtLevel ?? 0;
+
             var evaluation = new ComplexityEvaluation
             {
                 CurrentLevel = currentLevel,
-                SessionsAtCurrentLevel = sessionsAtCurrentLevel.Count,
+                SessionsAtCurrentLevel = Math.Max(sessionsAtCurrentLevel.Count,
+                    Math.Min(persistedSessionsAtLevel, MinSessionsAtLevel)),
                 LastLevelChange = progress?.LastEvaluationDate != null 
                     ? DateTime.Parse(progress.LastEvaluationDate) 
                     : DateTime.Now
@@ -168,8 +181,17 @@ namespace FemVoiceStudio.Services.Progression
         /// </summary>
         public async Task<bool> TryAdvanceLevelAsync(int userId = 1)
         {
+            // Tell den nettopp fullførte økten på gjeldende nivå (persistert teller).
+            // Telleren nullstilles ved nivåheving lenger ned, og er det som gjør
+            // avansement mulig på nivåer øvelses-id-bucketingen ikke kjenner.
+            var countProgress = _database.GetComplexityProgress(userId)
+                ?? new ComplexityProgress { UserId = userId };
+            countProgress.SessionsAtLevel++;
+            _database.SaveComplexityProgress(countProgress);
+            _cachedEvaluation = null;   // evalueringen under skal se den nye telleren
+
             var evaluation = await EvaluateCurrentLevelAsync(userId);
-            
+
             if (!CanAdvanceToNextLevel(evaluation))
                 return false;
             

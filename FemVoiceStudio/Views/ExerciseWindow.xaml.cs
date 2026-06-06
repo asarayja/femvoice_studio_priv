@@ -77,6 +77,12 @@ namespace FemVoiceStudio.Views
         private IExerciseProfileStore?     _profileStore;
         private ProgressionFeedbackMapper? _progressionFeedbackMapper;
         private FeedbackPipeline?          _feedbackPipeline;
+        private FemVoiceScoreEngine?       _scoreEngine;
+
+        /// <summary>Overrides eldre enn dette ignoreres — øvelsen returnerer naturlig
+        /// til baseline etter en strain-fri periode (review-funn: ingen utløp gjorde
+        /// nedjustering permanent).</summary>
+        private static readonly TimeSpan ProfileOverrideMaxAge = TimeSpan.FromDays(28);
 
         // ── REMOVED: _coordinator field — coordinator access now belongs entirely
         //    to ExerciseDetailViewModel. Code-behind no longer subscribes directly.
@@ -146,6 +152,8 @@ namespace FemVoiceStudio.Views
                           as ProgressionFeedbackMapper;
         _feedbackPipeline = App.Services.GetService(typeof(FeedbackPipeline))
                           as FeedbackPipeline;
+        _scoreEngine = App.Services.GetService(typeof(FemVoiceScoreEngine))
+                          as FemVoiceScoreEngine;
 
         if (_viewModel == null) return;
 
@@ -365,6 +373,10 @@ namespace FemVoiceStudio.Views
             StopButton.IsEnabled  = true;
             FeedbackText.Text     = Loc.Feedback_ExerciseStarted;
 
+            // Ny økt = ny selvrapport. Panelet vises igjen ved øktslutt.
+            _lastSubjectiveReport = null;
+            SubjectiveReportPanel.Visibility = Visibility.Collapsed;
+
             // Delegate exercise start to ViewModel command.
             if (_viewModel != null)
             {
@@ -387,6 +399,8 @@ namespace FemVoiceStudio.Views
                 try
                 {
                     await _comfortZoneController.InitializeAsync(userId: 1);
+                    if (_scoreEngine != null)
+                        await _scoreEngine.SetUserAsync(1);   // kreves før CalculateScoreAsync ved øktslutt
                     _comfortZoneReady = true;
                 }
                 catch (Exception ex)
@@ -403,17 +417,56 @@ namespace FemVoiceStudio.Views
             _timer?.Stop();
             _isRunning = false;
 
-            if (_currentSessionId > 0 && _currentExercise != null)
+            // REENTRANS-GUARD (review-funn): metoden er async void og yielder til
+            // dispatcheren under await — uten guard kunne dobbeltklikk på Stopp
+            // dobbel-fullføre økten (TotalSessions+2, dobbel orchestrator-kjøring).
+            // Snapshot av øktidentiteten tas FØR awaits slik at navigasjon under
+            // ventetiden ikke kan flytte override-lagringen til feil øvelse.
+            var sessionId = _currentSessionId;
+            var exercise  = _currentExercise;
+            var profile   = _activeProfile;
+            _currentSessionId = 0;
+            StopButton.IsEnabled  = false;
+            StartButton.IsEnabled = true;
+
+            if (sessionId > 0 && exercise != null)
             {
                 var score = CompleteSessionAndCalculateScore();
-                _exerciseService.CompleteSession(_currentSessionId, _elapsedSeconds, score, "");
+                _exerciseService.CompleteSession(sessionId, _elapsedSeconds, score, "");
                 FeedbackText.Text   = GetCompletionFeedback(score);
                 DetailProgress.Text = string.Format(Loc.Exercise_StepsProgress,
-                                          _currentExercise.TotalSessions + 1, score.ToString("F0"));
+                                          exercise.TotalSessions + 1, score.ToString("F0"));
                 UpdateTodaysStatus();
 
+                // Vis selvrapport-panelet — klinisk riktig tidspunkt («hvordan
+                // føltes økten?»). Panelet var hardkodet Collapsed og hele
+                // selvrapport-kjeden var dermed død (review-funn).
+                SubjectiveReportPanel.Visibility = Visibility.Visible;
+
+                // Driv FemVoiceScoreEngine med øktsnittene (0-100): uten persisterte
+                // score-snapshots var consecutiveStableDays alltid 0 og komfortsonen
+                // kunne aldri UTVIDES (review-funn).
+                if (_scoreEngine != null && _lastSessionOutcome != null
+                    && _lastSessionOutcome.EvaluatedTicks > 0)
+                {
+                    try
+                    {
+                        await _scoreEngine.CalculateScoreAsync(
+                            _lastSessionOutcome.AverageResonance * 100,
+                            _lastSessionOutcome.ComfortCompliance * 100,
+                            _lastSessionOutcome.AverageStability * 100,
+                            _lastSessionOutcome.SessionHealthScore);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ScoreEngine] Calculate failed: {ex.Message}");
+                    }
+                }
+
                 // Adaptiv komfortsone: oppdater sonen med øktsnittene (0-100-skala).
-                // RaiseZoneUpdatedEvent → koordinatoren cacher nye pitch-grenser/sonelås.
+                // SessionHealthScore er øktrepresentativ (per-tick-snitt, cappet ved
+                // lås-episode) — siste-tick-verdien lot transient strain på slutten
+                // kontrahere sonen urettmessig (review-funn).
                 if (_comfortZoneController != null && _comfortZoneReady && _lastSessionOutcome != null
                     && _lastSessionOutcome.EvaluatedTicks > 0)
                 {
@@ -424,7 +477,7 @@ namespace FemVoiceStudio.Views
                             _lastSessionOutcome.ComfortCompliance * 100,
                             _lastSessionOutcome.AverageStability * 100,
                             score,
-                            _sessionRecorder?.CurrentHealthScore ?? 100);
+                            _lastSessionOutcome.SessionHealthScore);
                     }
                     catch (Exception ex)
                     {
@@ -432,15 +485,19 @@ namespace FemVoiceStudio.Views
                     }
                 }
 
+                // Vent på at øktjournalføringen er committet før orchestratoren leser
+                // historikken (review-funn: lese-etter-skriv-race mot fire-and-forget).
+                if (_sessionRecorder?.LastPersistTask is { } persistTask)
+                {
+                    try { await persistTask; } catch { /* persist-feil svelges i recorderen */ }
+                }
+
                 // Adaptiv progresjon (fase 2): orchestratoren leser den persisterte
                 // analytics-historikken (inkl. økten som nettopp ble journalført) og
                 // foreslår profil-justering eller pause/regresjon. Forslaget
                 // persisteres som override og lastes ved neste åpning av øvelsen.
-                await EvaluateAdaptiveProgressionAsync();
+                await EvaluateAdaptiveProgressionAsync(exercise, profile);
             }
-
-            StartButton.IsEnabled = true;
-            StopButton.IsEnabled  = false;
 
             // Delegate stop to ViewModel command.
             if (_viewModel != null)
@@ -553,6 +610,8 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
 
     FeedbackText.Text = "";
     LiveFeedbackPanel.Visibility = Visibility.Collapsed;
+    SubjectiveReportPanel.Visibility = Visibility.Collapsed;   // ny øvelse = nytt skjema
+    _lastSubjectiveReport = null;
 
     // 🔧 ENSURE VIEWMODEL EXISTS BEFORE APPLYING PROFILE
     if (_viewModel == null)
@@ -563,13 +622,19 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
 
     // Fase 2: bruk persistert profil-override fra ProgressionOrchestrator hvis den
     // finnes — dette er leddet som gjør adaptiv per-øvelse-vanskelighet reell.
+    // Overrides eldre enn ProfileOverrideMaxAge ignoreres: profilen returnerer
+    // naturlig til fabrikk-baseline etter en strain-fri periode (review-funn:
+    // uten utløp kunne en regresjons-nedjustering bli permanent).
     if (_profileStore != null)
     {
         try
         {
             var profileOverride = await _profileStore.GetAsync(userId: 1, exerciseId: exercise.ExerciseId);
-            if (profileOverride?.Profile != null)
+            if (profileOverride?.Profile != null
+                && DateTime.UtcNow - profileOverride.UpdatedAt <= ProfileOverrideMaxAge)
+            {
                 profile = profileOverride.Profile;
+            }
         }
         catch (Exception ex)
         {
@@ -869,9 +934,13 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
         /// override via IExerciseProfileStore, og ruter beslutningen gjennom
         /// ProgressionFeedbackMapper → FeedbackPipeline → coach-panelet.
         /// </summary>
-        private async Task EvaluateAdaptiveProgressionAsync()
+        private async Task EvaluateAdaptiveProgressionAsync(Exercise exercise, ExerciseTargetProfile? profile)
         {
-            if (_progressionOrchestrator == null || _currentExercise == null || _activeProfile == null)
+            // Øktidentiteten kommer som SNAPSHOT-parametre tatt før awaits i OnStopClick —
+            // _currentExercise/_activeProfile kan endres av navigasjon (Tilbake → annen
+            // øvelse) mens orchestratorens SQLite-await pågår (review-funn: override
+            // kunne persisteres mot feil øvelse).
+            if (_progressionOrchestrator == null || profile == null)
                 return;
 
             try
@@ -880,8 +949,8 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
                     new ProgressionOrchestratorContext
                     {
                         UserId = 1,
-                        ExerciseId = _currentExercise.ExerciseId,
-                        CurrentProfile = _activeProfile,
+                        ExerciseId = exercise.ExerciseId,
+                        CurrentProfile = profile,
                         EvaluationTime = DateTime.Now,
                         SubjectiveReport = _lastSubjectiveReport
                     });
@@ -892,11 +961,23 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
                         or ProgressionOrchestratorDecisionKind.RegressionTriggered
                     && _profileStore != null)
                 {
+                    // Recovery-gulv: RegressionTriggered skalerer fra GJELDENDE profil
+                    // (som kan være en allerede nedjustert override) — uten gulv ville
+                    // gjentatte regresjoner senke profilen kumulativt uten grense
+                    // (review-funn). Gulvet er fabrikk-baseline minus to recovery-steg.
+                    var profileToSave = decision.SuggestedProfile;
+                    if (decision.Kind == ProgressionOrchestratorDecisionKind.RegressionTriggered)
+                    {
+                        var baseline = (_profileFactory ?? new ExerciseProfileFactory())
+                            .CreateProfile(exercise.ProfileType);
+                        profileToSave = ClampToRecoveryFloor(profileToSave, baseline);
+                    }
+
                     await _profileStore.SaveAsync(new ExerciseProfileOverride
                     {
                         UserId = 1,
-                        ExerciseId = _currentExercise.ExerciseId,
-                        Profile = decision.SuggestedProfile,
+                        ExerciseId = exercise.ExerciseId,
+                        Profile = profileToSave,
                         UpdatedAt = DateTime.UtcNow,
                         ReasonCode = decision.ReasonCode,
                         Source = "ProgressionOrchestrator"
@@ -915,6 +996,44 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
             {
                 System.Diagnostics.Debug.WriteLine($"[AdaptiveProgression] Evaluate failed: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Begrenser en recovery-nedjustering til et klinisk gulv relativt til
+        /// fabrikk-baselinen (maks to recovery-steg under: resonans/stabilitet -0.08,
+        /// hold -2s) slik at gjentatte regresjoner konvergerer i stedet for å
+        /// senke profilen ubegrenset.
+        /// </summary>
+        private static ExerciseTargetProfile ClampToRecoveryFloor(
+            ExerciseTargetProfile suggested,
+            ExerciseTargetProfile baseline)
+        {
+            var clamped = new ExerciseTargetProfile
+            {
+                UsesResonance = suggested.UsesResonance,
+                UsesPitch = suggested.UsesPitch,
+                UsesStability = suggested.UsesStability,
+                UsesIntensity = suggested.UsesIntensity,
+                ClinicalPurposeKey = suggested.ClinicalPurposeKey,
+                PhysicalFocusKey = suggested.PhysicalFocusKey,
+                CommonMistakesKey = suggested.CommonMistakesKey,
+                SafetyInfoKey = suggested.SafetyInfoKey,
+                FeedbackModeKey = suggested.FeedbackModeKey,
+                ThresholdStrategyKey = suggested.ThresholdStrategyKey,
+                IndicatorPackageSummaryKey = suggested.IndicatorPackageSummaryKey,
+                MinPitch = suggested.MinPitch,
+                MaxPitch = suggested.MaxPitch,
+                TargetResonanceMin = Math.Max(suggested.TargetResonanceMin,
+                    Math.Max(0, baseline.TargetResonanceMin - 0.08)),
+                TargetResonanceMax = suggested.TargetResonanceMax,
+                StabilityThreshold = Math.Max(suggested.StabilityThreshold,
+                    Math.Max(0, baseline.StabilityThreshold - 0.08)),
+                RequiredHoldSeconds = Math.Max(suggested.RequiredHoldSeconds,
+                    Math.Max(0, baseline.RequiredHoldSeconds - 2))
+            };
+
+            clamped.Validate();
+            return clamped;
         }
 
         private void OnExerciseAudioError(object? sender, string message)

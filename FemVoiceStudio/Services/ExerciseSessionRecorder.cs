@@ -36,6 +36,14 @@ namespace FemVoiceStudio.Services
 
         /// <summary>Number of live-state snapshots that entered the aggregate.</summary>
         public int EvaluatedTicks { get; init; }
+
+        /// <summary>
+        /// Session-representative health score (0–100): the per-tick average,
+        /// capped at 40 when a safety lock occurred. Used instead of the last-tick
+        /// snapshot, which let a transient end-of-session strain misrepresent an
+        /// otherwise healthy session (review finding).
+        /// </summary>
+        public double SessionHealthScore { get; init; } = 100;
     }
 
     /// <summary>
@@ -90,6 +98,7 @@ namespace FemVoiceStudio.Services
         private bool _wasSafetyLocked;
         private bool _wasInComfortZone = true;
         private double _currentHealthScore = 100;
+        private double _healthScoreSum;
 
         public ExerciseSessionRecorder(
             ExerciseIntelligenceCoordinator coordinator,
@@ -128,6 +137,14 @@ namespace FemVoiceStudio.Services
         }
 
         /// <summary>
+        /// The persistence task from the most recent CompleteSession. Await this
+        /// before reading analytics (f.eks. ProgressionOrchestrator) for å garantere
+        /// at den nettopp fullførte økten er journalført (review-funn: lese-etter-
+        /// skriv-race mot fire-and-forget-persisteringen). Feil svelges internt.
+        /// </summary>
+        public Task? LastPersistTask { get; private set; }
+
+        /// <summary>
         /// Starts aggregation for a new session. Resets the health supervisor so each
         /// session evaluates against a fresh trend window (locks do not carry over
         /// in-memory — they persist as analytics events instead).
@@ -149,6 +166,7 @@ namespace FemVoiceStudio.Services
                 _wasSafetyLocked = false;
                 _wasInComfortZone = true;
                 _currentHealthScore = 100;
+                _healthScoreSum = 0;
 
                 _healthSupervisor.Reset();
                 _recording = true;
@@ -167,12 +185,20 @@ namespace FemVoiceStudio.Services
         {
             ExerciseSessionOutcome outcome;
             int sessionId, exerciseId, userId, strain, locks, breaches, pauses, hydration;
-            double healthScore;
             DateTime startedAt;
 
             lock (_lock)
             {
                 _recording = false;
+
+                // Øktrepresentativ helse: per-tick-snitt, hardt cappet til 40 ved
+                // safety-lock-episode. Siste-tick-verdien alene lot en transient
+                // strain på slutten feilrepresentere en ellers frisk økt.
+                var averageHealth = _ticks > 0 ? _healthScoreSum / _ticks : 100;
+                var sessionHealth = _safetyLockEpisodes > 0
+                    ? Math.Min(averageHealth, 40)
+                    : averageHealth;
+
                 outcome = new ExerciseSessionOutcome
                 {
                     AverageResonance       = _ticks > 0 ? _resonanceSum / _ticks : 0,
@@ -184,7 +210,8 @@ namespace FemVoiceStudio.Services
                     FatigueIndicators      = _fatigueIndicators,
                     StrainDetections       = _strainDetections,
                     CoachingHintsTriggered = _coachHints,
-                    EvaluatedTicks         = _ticks
+                    EvaluatedTicks         = _ticks,
+                    SessionHealthScore     = sessionHealth
                 };
 
                 sessionId  = _sessionId;
@@ -195,12 +222,11 @@ namespace FemVoiceStudio.Services
                 breaches   = _comfortBreachEpisodes;
                 pauses     = _pauseRecommendations;
                 hydration  = _hydrationSuggestions;
-                healthScore = _currentHealthScore;
                 startedAt  = _startedAt;
             }
 
-            _ = PersistAsync(outcome, sessionId, exerciseId, userId, strain, locks, breaches,
-                pauses, hydration, healthScore, startedAt);
+            LastPersistTask = PersistAsync(outcome, sessionId, exerciseId, userId, strain, locks, breaches,
+                pauses, hydration, outcome.SessionHealthScore, startedAt);
             return outcome;
         }
 
@@ -278,6 +304,7 @@ namespace FemVoiceStudio.Services
                     HealthSafetyState.Caution  => 85,
                     _                          => 100
                 };
+                _healthScoreSum += _currentHealthScore;
             }
 
             // Brukerrettet helse-/hydrerings-coaching: rut beslutningene gjennom
