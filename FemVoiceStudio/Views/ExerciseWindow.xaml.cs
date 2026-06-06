@@ -132,41 +132,65 @@ namespace FemVoiceStudio.Views
         /// UI elements (preserves existing pattern; avoids DataContext conflict).
         /// </summary>
         private void InitializeLiveFeedback()
-{
-    try
-    {
-        _viewModel      = App.Services.GetService(typeof(ExerciseDetailViewModel))
-                          as ExerciseDetailViewModel;
-        _profileFactory = App.Services.GetService(typeof(IExerciseProfileFactory))
-                          as IExerciseProfileFactory
-                          ?? new ExerciseProfileFactory(); // <-- ADD THIS FALLBACK
-        _sessionRecorder = App.Services.GetService(typeof(ExerciseSessionRecorder))
-                          as ExerciseSessionRecorder;
-        _comfortZoneController = App.Services.GetService(typeof(ComfortZoneController))
-                          as ComfortZoneController;
-        _progressionOrchestrator = App.Services.GetService(typeof(ProgressionOrchestrator))
-                          as ProgressionOrchestrator;
-        _profileStore = App.Services.GetService(typeof(IExerciseProfileStore))
-                          as IExerciseProfileStore;
-        _progressionFeedbackMapper = App.Services.GetService(typeof(ProgressionFeedbackMapper))
-                          as ProgressionFeedbackMapper;
-        _feedbackPipeline = App.Services.GetService(typeof(FeedbackPipeline))
-                          as FeedbackPipeline;
-        _scoreEngine = App.Services.GetService(typeof(FemVoiceScoreEngine))
-                          as FemVoiceScoreEngine;
+        {
+            // KRITISK REKKEFØLGE (runtime-feil funnet her): panel-DataContext MÅ
+            // settes umiddelbart etter at ViewModel er resolvet — FØR de øvrige
+            // tjeneste-resolvene. Flere av dem kjører SQLite-skjema/DB-lesing ved
+            // FØRSTE resolve (SqliteExerciseProfileStore.EnsureSchema, analytics-
+            // repoet via recorder-kjeden, VocalHealthBaselineProvider i options-
+            // fabrikken). Tidligere lå alt i samme try/catch med DataContext-
+            // koblingen NEDERST: én exception → catch svelget den → Guidance-/
+            // LiveFeedback-panelene mistet bindingen → GuidanceItemsList rendret
+            // 0 items selv om ViewModel-en bygde dem korrekt.
+            try
+            {
+                _viewModel = App.Services.GetService(typeof(ExerciseDetailViewModel))
+                    as ExerciseDetailViewModel;
 
-        if (_viewModel == null) return;
+                if (_viewModel != null)
+                {
+                    _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+                    LiveFeedbackPanel.DataContext     = _viewModel;
+                    ExerciseGuidancePanel.DataContext = _viewModel;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"[LiveFeedback] Kunne ikke initialisere ViewModel: {ex.Message}");
+            }
 
-        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
-        LiveFeedbackPanel.DataContext    = _viewModel;
-        ExerciseGuidancePanel.DataContext = _viewModel;
-    }
-    catch (Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine(
-            $"[LiveFeedback] Kunne ikke initialisere ViewModel: {ex.Message}");
-    }
-}
+            // Valgfrie tjenester — isolert per resolve slik at én feil aldri
+            // stopper de andre (og aldri river ned panel-koblingen over).
+            _profileFactory            = SafeResolve<IExerciseProfileFactory>() ?? new ExerciseProfileFactory();
+            _sessionRecorder           = SafeResolve<ExerciseSessionRecorder>();
+            _comfortZoneController     = SafeResolve<ComfortZoneController>();
+            _progressionOrchestrator   = SafeResolve<ProgressionOrchestrator>();
+            _profileStore              = SafeResolve<IExerciseProfileStore>();
+            _progressionFeedbackMapper = SafeResolve<ProgressionFeedbackMapper>();
+            _feedbackPipeline          = SafeResolve<FeedbackPipeline>();
+            _scoreEngine               = SafeResolve<FemVoiceScoreEngine>();
+        }
+
+        /// <summary>
+        /// Resolver en valgfri tjeneste fra DI uten at en konstruksjonsfeil
+        /// (f.eks. SQLite-feil ved første skjema-init) river ned resten av
+        /// initialiseringen. Feilen logges med typenavn slik at den faktiske
+        /// synderen er synlig i Debug-output i stedet for å forsvinne stille.
+        /// </summary>
+        private static T? SafeResolve<T>() where T : class
+        {
+            try
+            {
+                return App.Services?.GetService(typeof(T)) as T;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"[DI] Resolve av {typeof(T).Name} feilet: {ex.Message}");
+                return null;
+            }
+        }
 
         // ────────────────────────────────────────────────────────────────────────
         // ViewModel PropertyChanged → named UI element mirror
