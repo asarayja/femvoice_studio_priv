@@ -62,6 +62,10 @@ namespace FemVoiceStudio.Services
         private readonly ExerciseIntelligenceCoordinator _coordinator;
         private readonly VocalHealthSupervisor _healthSupervisor;
         private readonly SessionAnalyticsStore _analyticsStore;
+        private readonly HydrationAdvisor? _hydrationAdvisor;
+        private readonly FeedbackPipeline? _feedbackPipeline;
+        private readonly VocalHealthFeedbackMapper? _vocalHealthMapper;
+        private readonly HydrationFeedbackMapper? _hydrationMapper;
         private readonly object _lock = new();
 
         private bool _recording;
@@ -90,11 +94,19 @@ namespace FemVoiceStudio.Services
         public ExerciseSessionRecorder(
             ExerciseIntelligenceCoordinator coordinator,
             VocalHealthSupervisor healthSupervisor,
-            SessionAnalyticsStore analyticsStore)
+            SessionAnalyticsStore analyticsStore,
+            HydrationAdvisor? hydrationAdvisor = null,
+            FeedbackPipeline? feedbackPipeline = null,
+            VocalHealthFeedbackMapper? vocalHealthMapper = null,
+            HydrationFeedbackMapper? hydrationMapper = null)
         {
             _coordinator      = coordinator      ?? throw new ArgumentNullException(nameof(coordinator));
             _healthSupervisor = healthSupervisor ?? throw new ArgumentNullException(nameof(healthSupervisor));
             _analyticsStore   = analyticsStore   ?? throw new ArgumentNullException(nameof(analyticsStore));
+            _hydrationAdvisor = hydrationAdvisor;
+            _feedbackPipeline = feedbackPipeline;
+            _vocalHealthMapper = vocalHealthMapper;
+            _hydrationMapper  = hydrationMapper;
 
             _coordinator.ExerciseUpdated    += OnExerciseUpdated;
             _coordinator.InlineCoachUpdated += OnInlineCoachUpdated;
@@ -250,6 +262,7 @@ namespace FemVoiceStudio.Services
 
             // Supervisor has its own internal lock; never call it while holding ours.
             var decision = _healthSupervisor.Evaluate(state);
+            var hydrationAdvice = _hydrationAdvisor?.Evaluate(state);
 
             lock (_lock)
             {
@@ -257,7 +270,7 @@ namespace FemVoiceStudio.Services
                 if (decision.FatigueDetected) _fatigueIndicators++;
                 if (decision.StrainDetected)  _strainDetections++;
                 if (decision.PauseRecommended) _pauseRecommendations++;
-                if (decision.HydrationSuggested) _hydrationSuggestions++;
+                if (decision.HydrationSuggested || hydrationAdvice?.Suggested == true) _hydrationSuggestions++;
                 _currentHealthScore = decision.State switch
                 {
                     HealthSafetyState.Lock     => 40,   // under 70 → koordinatoren låser
@@ -265,6 +278,45 @@ namespace FemVoiceStudio.Services
                     HealthSafetyState.Caution  => 85,
                     _                          => 100
                 };
+            }
+
+            // Brukerrettet helse-/hydrerings-coaching: rut beslutningene gjennom
+            // mapperne og FeedbackPipeline (guarden rate-limiter/prioriterer).
+            // Var dormant før — helse påvirket kun lås/score i det stille (audit-funn).
+            SubmitHealthFeedback(decision, hydrationAdvice, state);
+        }
+
+        private void SubmitHealthFeedback(
+            VocalHealthDecision decision,
+            HydrationAdvice? hydrationAdvice,
+            ExerciseLiveState state)
+        {
+            if (_feedbackPipeline == null) return;
+
+            try
+            {
+                var healthCandidate = _vocalHealthMapper?.Map(decision);
+                if (healthCandidate != null)
+                {
+                    _feedbackPipeline.Submit(
+                        healthCandidate,
+                        _vocalHealthMapper!.BuildContext(decision));
+                }
+
+                if (hydrationAdvice != null)
+                {
+                    var hydrationCandidate = _hydrationMapper?.Map(hydrationAdvice);
+                    if (hydrationCandidate != null)
+                    {
+                        _feedbackPipeline.Submit(
+                            hydrationCandidate,
+                            _hydrationMapper!.BuildContext(hydrationAdvice, state));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ExerciseSessionRecorder] Feedback submit failed: {ex.Message}");
             }
         }
 

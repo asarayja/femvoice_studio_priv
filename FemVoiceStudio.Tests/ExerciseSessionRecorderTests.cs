@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FemVoiceStudio.Models;
 using FemVoiceStudio.Services;
+using FemVoiceStudio.ViewModels;
 using Xunit;
 using Assert = Xunit.Assert;
 
@@ -556,6 +557,183 @@ namespace FemVoiceStudio.Tests
             // Assert — nothing was persisted as a health event.
             var events = await _store.GetHealthEventsAsync(WindowFrom, WindowTo);
             Assert.Empty(events);
+        }
+
+        // ────────────────────────────────────────────────────────────────────────────
+        // 14. Feedback graph — strain routed through mappers → pipeline approval
+        // ────────────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public void OnExerciseUpdated_WithFullFeedbackGraph_RoutesVocalHealthDecisionToPipeline()
+        {
+            // Arrange — a recorder wired with the complete (real) feedback graph:
+            // VocalHealthSupervisor + HydrationAdvisor + both mappers behind a
+            // FeedbackPipeline guarded by a real FeedbackConsistencyGuard.
+            using var coordinator = new ExerciseIntelligenceCoordinator();
+            var supervisor = new VocalHealthSupervisor();
+            var hydration  = new HydrationAdvisor();
+            var store      = new SessionAnalyticsStore(new InMemorySessionAnalyticsRepository());
+            var guard      = new FeedbackConsistencyGuard();
+            var pipeline   = new FeedbackPipeline(guard);
+
+            using var recorder = new ExerciseSessionRecorder(
+                coordinator,
+                supervisor,
+                store,
+                hydration,
+                pipeline,
+                new VocalHealthFeedbackMapper(),
+                new HydrationFeedbackMapper());
+
+            FeedbackCandidate? approved = null;
+            pipeline.FeedbackApproved += (_, decision) => approved = decision.Candidate;
+
+            coordinator.StartExercise(ExerciseTargetProfile.ResonanceExercise(), userId: 1);
+            recorder.BeginSession(exerciseId: 30, sessionId: 1500, userId: 1);
+
+            // Act — a tick with health < 70 locks the coordinator. The supervisor's
+            // EvaluateStrain adds +0.80 (IsSafetyLocked) → StrainDetected on the first
+            // locked tick → the VocalHealthFeedbackMapper produces a candidate.
+            coordinator.UpdateMetrics(0.6, 200, 0.5, health: 60);
+
+            // Assert — a candidate sourced from the supervisor was approved by the guard.
+            Assert.NotNull(approved);
+            Assert.Equal("VocalHealthSupervisor", approved!.Source);
+        }
+
+        // ────────────────────────────────────────────────────────────────────────────
+        // 15. Null-safe — same run without a feedback graph does not throw
+        // ────────────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public void OnExerciseUpdated_WithoutFeedbackGraph_IsNullSafe()
+        {
+            // Arrange — the legacy 3-arg recorder (no advisor / pipeline / mappers).
+            using var coordinator = new ExerciseIntelligenceCoordinator();
+            var supervisor = new VocalHealthSupervisor();
+            var store      = new SessionAnalyticsStore(new InMemorySessionAnalyticsRepository());
+            using var recorder = new ExerciseSessionRecorder(coordinator, supervisor, store);
+
+            coordinator.StartExercise(ExerciseTargetProfile.ResonanceExercise(), userId: 1);
+            recorder.BeginSession(exerciseId: 31, sessionId: 1600, userId: 1);
+
+            // Act + Assert — the same lock-inducing tick must not throw when the
+            // optional feedback dependencies are null.
+            var exception = Record.Exception(() =>
+                coordinator.UpdateMetrics(0.6, 200, 0.5, health: 60));
+            Assert.Null(exception);
+        }
+
+        // ────────────────────────────────────────────────────────────────────────────
+        // 16. Guard rate-limiting — two rapid strain ticks → one approved health candidate
+        // ────────────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public void OnExerciseUpdated_TwoRapidStrainTicks_GuardRateLimitsSameConflictKey()
+        {
+            // Arrange — a frozen clock so the guard's minimum-interval rate-limit is
+            // deterministic: both ticks evaluate at the same instant, well within the
+            // guard's default 2-second minimum interval for a repeated reason.
+            var frozen = new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+            using var coordinator = new ExerciseIntelligenceCoordinator();
+            var supervisor = new VocalHealthSupervisor();
+            var store      = new SessionAnalyticsStore(new InMemorySessionAnalyticsRepository());
+            var guard      = new FeedbackConsistencyGuard(clock: () => frozen);
+            var pipeline   = new FeedbackPipeline(guard);
+
+            using var recorder = new ExerciseSessionRecorder(
+                coordinator,
+                supervisor,
+                store,
+                hydrationAdvisor: null,
+                feedbackPipeline: pipeline,
+                vocalHealthMapper: new VocalHealthFeedbackMapper(),
+                hydrationMapper: new HydrationFeedbackMapper());
+
+            var approvedHealthCandidates = new List<FeedbackCandidate>();
+            pipeline.FeedbackApproved += (_, decision) =>
+            {
+                if (decision.Candidate.Source == "VocalHealthSupervisor")
+                    approvedHealthCandidates.Add(decision.Candidate);
+            };
+
+            coordinator.StartExercise(ExerciseTargetProfile.ResonanceExercise(), userId: 1);
+            recorder.BeginSession(exerciseId: 32, sessionId: 1700, userId: 1);
+
+            // Act — two locked ticks in quick succession (frozen clock). Both produce a
+            // supervisor candidate with the same conflict key, but the guard suppresses
+            // the second because the same reason was approved within the min interval.
+            coordinator.UpdateMetrics(0.6, 200, 0.5, health: 60);
+            WaitForRateLimit(); // only advances the coordinator's 100 ms gate, not the guard clock
+            coordinator.UpdateMetrics(0.6, 200, 0.5, health: 60);
+
+            // Assert — exactly one approved health candidate; the rapid duplicate (same
+            // conflict key, same frozen instant) was rate-limited away.
+            Assert.Single(approvedHealthCandidates);
+            var distinctConflictKeys = approvedHealthCandidates
+                .Select(c => c.ConflictKey)
+                .Distinct()
+                .Count();
+            Assert.Equal(1, distinctConflictKeys);
+        }
+
+        // ────────────────────────────────────────────────────────────────────────────
+        // 17. ExerciseDetailViewModel — pipeline approval surfaces as coach message,
+        //     filtered by source.
+        // ────────────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public void ExerciseDetailViewModel_ShowsApprovedFeedback_FromNonCoordinatorSourceOnly()
+        {
+            // Arrange — the VM subscribes to the pipeline's FeedbackApproved event.
+            // Application.Current is null in the test host, so the handler runs
+            // synchronously (no dispatcher marshalling).
+            using var coordinator = new ExerciseIntelligenceCoordinator();
+            var localization = new TestLocalizationService();
+            localization.AddString("VoiceHealthFeedback_Restrict", "Skjerm stemmen — ta det med ro.");
+            var guard    = new FeedbackPipeline(new FeedbackConsistencyGuard());
+
+            using var vm = new ExerciseDetailViewModel(
+                coordinator,
+                localization,
+                profileFactory: null,
+                feedbackPipeline: guard,
+                inlineCoachFeedbackMapper: new InlineCoachFeedbackMapper());
+
+            Assert.False(vm.IsCoachMessageVisible);
+
+            // Act — submit a candidate sourced from the supervisor (NOT the coordinator).
+            var healthCandidate = new FeedbackCandidate(
+                "VoiceHealthFeedback_Restrict",
+                "HEALTH_RESTRICT",
+                FeedbackPriority.HealthWarning,
+                MessageSeverity.Warning,
+                Source: "VocalHealthSupervisor",
+                ConflictKey: "HEALTH_RESTRICT");
+            var healthDecision = guard.Submit(healthCandidate);
+            Assert.Equal(FeedbackDecisionKind.Approved, healthDecision.Kind);
+
+            // Assert — the VM resolves the localization key and shows it as the coach msg.
+            Assert.True(vm.IsCoachMessageVisible);
+            Assert.Equal("Skjerm stemmen — ta det med ro.", vm.CoachMessage);
+
+            var healthMessage = vm.CoachMessage;
+
+            // Act — a later candidate sourced from the coordinator must be filtered out
+            // (it is surfaced via the inline-coach path, not this pipeline handler).
+            var coordinatorCandidate = new FeedbackCandidate(
+                "InlineCoachFeedback_ResonanceTooLow",
+                "RESONANCE_TOO_LOW",
+                FeedbackPriority.SafetyFreeze, // high priority → guard would otherwise approve
+                MessageSeverity.Warning,
+                Source: "ExerciseIntelligenceCoordinator",
+                ConflictKey: "INLINE_RESONANCE_TOO_LOW");
+            var coordinatorDecision = guard.Submit(coordinatorCandidate);
+            Assert.Equal(FeedbackDecisionKind.Approved, coordinatorDecision.Kind);
+
+            // Assert — the coach message is unchanged: the coordinator-sourced candidate
+            // was filtered by OnPipelineFeedbackApproved.
+            Assert.Equal(healthMessage, vm.CoachMessage);
         }
 
         // ────────────────────────────────────────────────────────────────────────────

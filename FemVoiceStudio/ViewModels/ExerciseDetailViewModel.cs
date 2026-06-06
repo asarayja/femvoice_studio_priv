@@ -161,6 +161,13 @@ namespace FemVoiceStudio.ViewModels
             _coordinator.ExerciseUpdated    += OnExerciseUpdated;
             _coordinator.InlineCoachUpdated += OnInlineCoachUpdated;
 
+            // Godkjente feedback-kandidater fra ANDRE kilder enn inline-coachen
+            // (helse/hydrering/progresjon via ExerciseSessionRecorder m.fl.) vises i
+            // samme coach-panel. Inline-coachens egne kandidater håndteres via
+            // Submit-returverdien i SubmitInlineCoachMessage og filtreres bort her.
+            if (_feedbackPipeline != null)
+                _feedbackPipeline.FeedbackApproved += OnPipelineFeedbackApproved;
+
             // Commands — use the existing RelayCommand from ExerciseListViewModel.cs
             StartExerciseCommand       = new RelayCommand(_ => ExecuteStart(null),   _ => CanStart(null));
             StopExerciseCommand        = new RelayCommand(_ => ExecuteStop(null),    _ => CanStop(null));
@@ -841,6 +848,31 @@ namespace FemVoiceStudio.ViewModels
             SubmitInlineCoachMessage(message);
         }
 
+        private void OnPipelineFeedbackApproved(object? sender, FeedbackDecision decision)
+        {
+            // Inline-coach-kandidater vises allerede via Submit-returverdien —
+            // her håndteres kun de øvrige kildene (VocalHealthSupervisor,
+            // HydrationAdvisor, ProgressionOrchestrator, SmartCoachEngine).
+            if (decision.Candidate.Source == "ExerciseIntelligenceCoordinator")
+                return;
+
+            void Apply()
+            {
+                ApplyCoachMessage(new InlineCoachMessage
+                {
+                    ShortMessage       = _localization.GetString(decision.Candidate.Message),
+                    CoachingReason     = decision.Candidate.ReasonCode,
+                    Severity           = decision.Candidate.Severity,
+                    AutoDismissSeconds = decision.Candidate.Severity == MessageSeverity.Warning ? 10 : 6
+                });
+            }
+
+            if (Application.Current?.Dispatcher.CheckAccess() == false)
+                Application.Current.Dispatcher.BeginInvoke((Action)Apply);
+            else
+                Apply();
+        }
+
         // ─────────────────────────────────────────────────────────────────────────
         // State application — must run on UI thread
         // ─────────────────────────────────────────────────────────────────────────
@@ -984,6 +1016,8 @@ namespace FemVoiceStudio.ViewModels
             _isDisposed = true;
             _coordinator.ExerciseUpdated    -= OnExerciseUpdated;
             _coordinator.InlineCoachUpdated -= OnInlineCoachUpdated;
+            if (_feedbackPipeline != null)
+                _feedbackPipeline.FeedbackApproved -= OnPipelineFeedbackApproved;
             if (IsExerciseActive) _coordinator.StopExercise();
         }
     }

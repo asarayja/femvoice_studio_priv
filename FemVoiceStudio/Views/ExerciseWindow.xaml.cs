@@ -70,6 +70,14 @@ namespace FemVoiceStudio.Views
         private ComfortZoneController? _comfortZoneController;
         private bool _comfortZoneReady;
 
+        // ── Adaptiv progresjon (fase 2 — resolved via DI) ────────────────────────
+        // ProgressionOrchestrator var DI-registrert uten konsument, og
+        // IExerciseProfileStore hadde aldri en skrive- eller lesesti (audit-funn).
+        private ProgressionOrchestrator?   _progressionOrchestrator;
+        private IExerciseProfileStore?     _profileStore;
+        private ProgressionFeedbackMapper? _progressionFeedbackMapper;
+        private FeedbackPipeline?          _feedbackPipeline;
+
         // ── REMOVED: _coordinator field — coordinator access now belongs entirely
         //    to ExerciseDetailViewModel. Code-behind no longer subscribes directly.
 
@@ -128,6 +136,14 @@ namespace FemVoiceStudio.Views
                           as ExerciseSessionRecorder;
         _comfortZoneController = App.Services.GetService(typeof(ComfortZoneController))
                           as ComfortZoneController;
+        _progressionOrchestrator = App.Services.GetService(typeof(ProgressionOrchestrator))
+                          as ProgressionOrchestrator;
+        _profileStore = App.Services.GetService(typeof(IExerciseProfileStore))
+                          as IExerciseProfileStore;
+        _progressionFeedbackMapper = App.Services.GetService(typeof(ProgressionFeedbackMapper))
+                          as ProgressionFeedbackMapper;
+        _feedbackPipeline = App.Services.GetService(typeof(FeedbackPipeline))
+                          as FeedbackPipeline;
 
         if (_viewModel == null) return;
 
@@ -413,6 +429,12 @@ namespace FemVoiceStudio.Views
                         System.Diagnostics.Debug.WriteLine($"[ComfortZone] Update failed: {ex.Message}");
                     }
                 }
+
+                // Adaptiv progresjon (fase 2): orchestratoren leser den persisterte
+                // analytics-historikken (inkl. økten som nettopp ble journalført) og
+                // foreslår profil-justering eller pause/regresjon. Forslaget
+                // persisteres som override og lastes ved neste åpning av øvelsen.
+                await EvaluateAdaptiveProgressionAsync();
             }
 
             StartButton.IsEnabled = true;
@@ -468,7 +490,7 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
         // Detail view / navigation (uendret fra original)
         // ────────────────────────────────────────────────────────────────────────
 
-        private void ShowExerciseDetail(Exercise exercise)
+        private async void ShowExerciseDetail(Exercise exercise)
 {
     _currentExercise = exercise;
     var locKey = exercise.SortOrder + 100;
@@ -536,6 +558,23 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
 
     // Apply profile to ViewModel — drives indicators + Guidance
     var profile = (_profileFactory ?? new ExerciseProfileFactory()).CreateProfile(exercise.ProfileType);
+
+    // Fase 2: bruk persistert profil-override fra ProgressionOrchestrator hvis den
+    // finnes — dette er leddet som gjør adaptiv per-øvelse-vanskelighet reell.
+    if (_profileStore != null)
+    {
+        try
+        {
+            var profileOverride = await _profileStore.GetAsync(userId: 1, exerciseId: exercise.ExerciseId);
+            if (profileOverride?.Profile != null)
+                profile = profileOverride.Profile;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[AdaptiveProgression] Override load failed: {ex.Message}");
+        }
+    }
+
     _activeProfile = profile;   // brukes av ClinicalSessionScore ved øktslutt
 
     _viewModel?.ApplyProfile(profile, exercise.ExerciseId);
@@ -820,6 +859,60 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
                 pitch.IsVoiced ? pitch.Pitch : 0,
                 stability,
                 _sessionRecorder?.CurrentHealthScore ?? 100);
+        }
+
+        /// <summary>
+        /// Fase 2-aktivering: kjører ProgressionOrchestrator på øktens persisterte
+        /// historikk (inkl. subjektiv rapport), persisterer foreslått profil som
+        /// override via IExerciseProfileStore, og ruter beslutningen gjennom
+        /// ProgressionFeedbackMapper → FeedbackPipeline → coach-panelet.
+        /// </summary>
+        private async Task EvaluateAdaptiveProgressionAsync()
+        {
+            if (_progressionOrchestrator == null || _currentExercise == null || _activeProfile == null)
+                return;
+
+            try
+            {
+                var decision = await _progressionOrchestrator.OnSessionCompletedAsync(
+                    new ProgressionOrchestratorContext
+                    {
+                        UserId = 1,
+                        ExerciseId = _currentExercise.ExerciseId,
+                        CurrentProfile = _activeProfile,
+                        EvaluationTime = DateTime.Now,
+                        SubjectiveReport = _lastSubjectiveReport
+                    });
+
+                // Persister foreslått profil — lastes igjen i ShowExerciseDetail.
+                if (decision.SuggestedProfile != null
+                    && decision.Kind is ProgressionOrchestratorDecisionKind.ExerciseProfileUpdated
+                        or ProgressionOrchestratorDecisionKind.RegressionTriggered
+                    && _profileStore != null)
+                {
+                    await _profileStore.SaveAsync(new ExerciseProfileOverride
+                    {
+                        UserId = 1,
+                        ExerciseId = _currentExercise.ExerciseId,
+                        Profile = decision.SuggestedProfile,
+                        UpdatedAt = DateTime.UtcNow,
+                        ReasonCode = decision.ReasonCode,
+                        Source = "ProgressionOrchestrator"
+                    });
+                }
+
+                // Brukerrettet progresjonsmelding (plateau/pause/regresjon/justering).
+                if (_progressionFeedbackMapper != null && _feedbackPipeline != null)
+                {
+                    var candidate = _progressionFeedbackMapper.Map(decision);
+                    if (candidate != null)
+                        _feedbackPipeline.Submit(candidate, _progressionFeedbackMapper.BuildContext(decision));
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AdaptiveProgression] Evaluate failed: {ex.Message}");
+            }
         }
 
         private void OnExerciseAudioError(object? sender, string message)

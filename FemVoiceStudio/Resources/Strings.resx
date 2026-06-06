@@ -3379,6 +3379,15 @@
   <data name="Progression_NoChange" xml:space="preserve">
     <value>Ingen endring</value>
   </data>
+  <data name="Progression_SafetyLockEngagedStatus" xml:space="preserve">
+    <value>Progresjon satt på pause av sikkerhetshensyn — stemmen din trenger hvile</value>
+  </data>
+  <data name="Progression_SafetyLockReleasedStatus" xml:space="preserve">
+    <value>Sikkerhetspausen er over — progresjonen er aktiv igjen</value>
+  </data>
+  <data name="Progression_ComplexityAdvanced" xml:space="preserve">
+    <value>Talekompleksiteten din har nådd et nytt nivå — se Smart Coach for detaljer</value>
+  </data>
   <data name="Progression_DemotedLowScore" xml:space="preserve">
     <value>Vanskelighetsgraden er justert ned på grunn av lav score.</value>
   </data>

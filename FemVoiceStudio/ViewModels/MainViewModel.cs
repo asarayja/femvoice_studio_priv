@@ -12,6 +12,7 @@ using FemVoiceStudio.Audio;
 using FemVoiceStudio.Data;
 using FemVoiceStudio.Models;
 using FemVoiceStudio.Services;
+using FemVoiceStudio.Services.Progression;
 using FemVoiceStudio.Converters;
 using Range = FemVoiceStudio.Models.Range;
 
@@ -202,6 +203,11 @@ namespace FemVoiceStudio.ViewModels
             {
                 _progressionSafetyGate = null;
             }
+
+            // Sikkerhetslås-varsling: eventene fyrte reelt men hadde ingen abonnenter
+            // (audit-funn) — progresjonsblokkering var usynlig for brukeren.
+            _progressionService.SafetyLockEngaged += OnSafetyLockEngaged;
+            _progressionService.SafetyLockReleased += OnSafetyLockReleased;
             
             // Sett opp event handlers
             _audioAnalyzer.PitchAnalyzed += OnPitchAnalyzed;
@@ -244,6 +250,17 @@ namespace FemVoiceStudio.ViewModels
             }
         }
         
+        /// <summary>Sikkerhetslås engasjert → synlig statusmelding (var stille før).</summary>
+        private void OnSafetyLockEngaged(object? sender, SafetyLockEventArgs e)
+        {
+            StatusText = Loc.Get("Progression_SafetyLockEngagedStatus");
+        }
+
+        private void OnSafetyLockReleased(object? sender, EventArgs e)
+        {
+            StatusText = Loc.Get("Progression_SafetyLockReleasedStatus");
+        }
+
         public void LoadUserSettings()
         {
             var settings = _database.GetUserSettings();
@@ -432,7 +449,7 @@ namespace FemVoiceStudio.ViewModels
                 // Evaluer progresjon — WithSafety-varianten undertrykker promotering
                 // (og feiring) når sikkerhetslåsen er aktiv, uansett score.
                 var progressionResult = _progressionService.EvaluateProgressionWithSafety(session);
-                
+
                 if (progressionResult.ShouldShowCelebration)
                 {
                     CurrentDifficulty = progressionResult.NewDifficulty;
@@ -442,6 +459,23 @@ namespace FemVoiceStudio.ViewModels
                 else
                 {
                     StatusText = string.Format(Loc.Get("Difficulty_SessionCompleteFormat"), OverallScore);
+                }
+
+                // Talekompleksitet: TryAdvanceLevelAsync ble aldri kalt (audit-funn) —
+                // nivået kunne bare leses, aldri heves. Motoren har egne kliniske
+                // gater (helse/strain/suksessrate/øktfrekvens), så hevingen er gatet.
+                try
+                {
+                    var complexityEngine = new ComplexityEngine(_database);
+                    if (await complexityEngine.TryAdvanceLevelAsync(userId: 1)
+                        && !progressionResult.ShouldShowCelebration)
+                    {
+                        StatusText = Loc.Get("Progression_ComplexityAdvanced");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Complexity] Advance failed: {ex.Message}");
                 }
                 
                 // Last progresjonsstatus
