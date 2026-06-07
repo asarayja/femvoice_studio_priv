@@ -2647,6 +2647,18 @@
   <data name="FirstSetup_Continue" xml:space="preserve">
     <value>Fortsett →</value>
   </data>
+  <data name="FirstSetup_StyleGoalLabel" xml:space="preserve">
+    <value>Velg målstil</value>
+  </data>
+  <data name="FirstSetup_StyleGoalDesc" xml:space="preserve">
+    <value>Hvilken klang ønsker du å utforske? Du kan endre dette når som helst senere.</value>
+  </data>
+  <data name="FirstSetup_FrequencyLabel" xml:space="preserve">
+    <value>Treningsdager per uke</value>
+  </data>
+  <data name="FirstSetup_FrequencyDesc" xml:space="preserve">
+    <value>Hvor ofte ønsker du å trene? Velg et tempo som kjennes overkommelig for deg.</value>
+  </data>
   <data name="Exercise_NameFallback" xml:space="preserve">
     <value>Øvelsesnavn</value>
   </data>

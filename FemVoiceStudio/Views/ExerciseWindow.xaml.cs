@@ -86,6 +86,18 @@ namespace FemVoiceStudio.Views
         private TargetProfileAdapter? _targetProfileAdapter;
         private DatabaseService?      _database;
 
+        // Persistert klinisk gate (samme DI-singleton som MainViewModel). Leverer
+        // recovery-statusen som styrer om FERSKE (ikke-overstyrte) profiler skal krympes
+        // i detalj-visningen. Null-safe: utilgjengelig ⇒ recovery av (dagens oppførsel).
+        private ProgressionSafetyGate? _progressionSafetyGate;
+
+        // Snapshot av brukerens stemmeprofil, lest i ShowExerciseDetail (samme
+        // GetUserVoiceProfile-kall som personaliseringen bruker). Gjenbrukes av
+        // EvaluateAdaptiveProgressionAsync slik at stilmålet (PreferredVoiceStyle)
+        // når ProgressionOrchestrator UTEN en ny DB-lesning per kontekst. null =
+        // ingen profil ⇒ stil-nøytral (dagens) progresjon.
+        private UserVoiceProfile? _userVoiceProfile;
+
         /// <summary>Overrides eldre enn dette ignoreres — øvelsen returnerer naturlig
         /// til baseline etter en strain-fri periode (review-funn: ingen utløp gjorde
         /// nedjustering permanent).</summary>
@@ -179,6 +191,7 @@ namespace FemVoiceStudio.Views
             _scoreEngine               = SafeResolve<FemVoiceScoreEngine>();
             _targetProfileAdapter      = SafeResolve<TargetProfileAdapter>();
             _database                  = SafeResolve<DatabaseService>();
+            _progressionSafetyGate     = SafeResolve<ProgressionSafetyGate>();
         }
 
         /// <summary>
@@ -658,6 +671,11 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
     // Overrides eldre enn ProfileOverrideMaxAge ignoreres: profilen returnerer
     // naturlig til fabrikk-baseline etter en strain-fri periode (review-funn:
     // uten utløp kunne en regresjons-nedjustering bli permanent).
+    //
+    // overrideApplied: en anvendt override er ALLEREDE recovery-skalert av
+    // ProgressionOrchestrator (ClampToRecoveryFloor før persist) — den styrer
+    // recovery-grenen under (se Personalize-kallet) for å unngå dobbel-krymping.
+    bool overrideApplied = false;
     if (_profileStore != null)
     {
         try
@@ -667,6 +685,7 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
                 && DateTime.UtcNow - profileOverride.UpdatedAt <= ProfileOverrideMaxAge)
             {
                 profile = profileOverride.Profile;
+                overrideApplied = true;
             }
         }
         catch (Exception ex)
@@ -675,17 +694,40 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
         }
     }
 
+    // Recovery-status fra den persisterte kliniske gaten (samme kilde som forsiden).
+    // DOBBEL-SKALERINGS-NYANSE: recoveryActive til Personalize = (gaten er blokkert)
+    // && (INGEN override ble anvendt).
+    //   • Override anvendt  ⇒ profilen er ALLEREDE recovery-skalert av
+    //     ProgressionOrchestrator (ClampToRecoveryFloor før persist). En ny recovery-
+    //     krymping her ville dobbelt-skalere kravene ⇒ recoveryActive = false.
+    //   • Ingen override (fersk øvelse) ⇒ vi bruker den USKALERTE fabrikkprofilen, så
+    //     recovery-krympingen MÅ skje her når brukeren er i recovery ⇒ recoveryActive = true.
+    // Null-safe: gate utilgjengelig ⇒ false (dagens oppførsel). Safety/Health > Progression:
+    // recovery kan kun krympe krav, aldri utvide.
+    bool gateBlocked = false;
+    if (_progressionSafetyGate != null)
+    {
+        try
+        {
+            var gate = await _progressionSafetyGate.EvaluateAsync(DateTime.Now, userId: 1);
+            gateBlocked = gate.IsBlocked;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TargetProfile] Recovery-gate feilet: {ex.Message}");
+        }
+    }
+    bool recoveryActive = RecoveryActivationPolicy.ForExerciseProfile(gateBlocked, overrideApplied);
+
     // Personlig måltilpasning: juster profilen mot brukerens stilmål (resonansmål,
-    // ikke pitch-jag) og kalibrerte komfortsone. recoveryActive = false her: profilen
-    // fra IExerciseProfileStore er allerede recovery-skalert av ProgressionOrchestrator
-    // (ClampToRecoveryFloor), så en ny recovery-krymping i detalj-visningen ville
-    // dobbelt-skalere kravene. Null-safe: uten adapter/DB faller vi tilbake til profilen.
+    // ikke pitch-jag) og kalibrerte komfortsone, og krymp ferske (ikke-overstyrte)
+    // profiler under recovery. Null-safe: uten adapter/DB faller vi tilbake til profilen.
     if (_targetProfileAdapter != null)
     {
         try
         {
-            var userProfile = _database?.GetUserVoiceProfile(1);
-            profile = _targetProfileAdapter.Personalize(profile, userProfile, recoveryActive: false);
+            _userVoiceProfile = _database?.GetUserVoiceProfile(1);
+            profile = _targetProfileAdapter.Personalize(profile, _userVoiceProfile, recoveryActive: recoveryActive);
         }
         catch (Exception ex)
         {
@@ -1005,7 +1047,10 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
                         ExerciseId = exercise.ExerciseId,
                         CurrentProfile = profile,
                         EvaluationTime = DateTime.Now,
-                        SubjectiveReport = _lastSubjectiveReport
+                        SubjectiveReport = _lastSubjectiveReport,
+                        // Stilbevisst progresjon: gjenbruker profilen lest i
+                        // ShowExerciseDetail (ingen ny DB-lesning). null ⇒ stil-nøytral.
+                        PreferredVoiceStyle = _userVoiceProfile?.PreferredVoiceStyle
                     });
 
                 // Persister foreslått profil — lastes igjen i ShowExerciseDetail.

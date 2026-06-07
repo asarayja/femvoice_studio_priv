@@ -52,6 +52,15 @@ namespace FemVoiceStudio.Services
         public ExerciseTargetProfile CurrentProfile { get; init; } = ExerciseTargetProfile.CreateResonanceHumming();
         public DateTime EvaluationTime { get; init; } = DateTime.Now;
         public SubjectiveReport? SubjectiveReport { get; init; }
+
+        /// <summary>
+        /// Brukerens stilmål. null = ukjent ⇒ dagens (stil-nøytrale) oppførsel.
+        /// Brukes KUN til å dempe HVOR aggressivt resonansmål skaleres oppover for
+        /// stiler der et lyst/fremre resonansmål ikke er ønsket (DarkFeminine, og
+        /// mildt for Androgynous). Påvirker ALDRI recovery-/sikkerhetsgrenene —
+        /// safety trumfer stil i sikkerhetshierarkiet.
+        /// </summary>
+        public VoiceStyleGoal? PreferredVoiceStyle { get; init; }
     }
 
     public sealed record ProgressionOrchestratorDecision
@@ -220,7 +229,9 @@ namespace FemVoiceStudio.Services
                     SessionsAnalyzed = sessions.Count,
                     RecentCompositeScore = recentComposite,
                     BaselineCompositeScore = baselineComposite,
-                    SuggestedProfile = ScaleResonance(context.CurrentProfile)
+                    // Platået bryts ved å heve resonansmålet — en oppskalering, derfor
+                    // stilbevisst (dempes for DarkFeminine/Androgynous).
+                    SuggestedProfile = ScaleResonance(context.CurrentProfile, context.PreferredVoiceStyle)
                 });
             }
 
@@ -237,7 +248,7 @@ namespace FemVoiceStudio.Services
                     };
             }
 
-            var decision = BuildProgressionDecision(context.CurrentProfile, recent, sessions.Count, recentComposite, baselineComposite);
+            var decision = BuildProgressionDecision(context.CurrentProfile, recent, sessions.Count, recentComposite, baselineComposite, context.PreferredVoiceStyle);
             return Publish(DifficultyAdjustmentSuggested, decision);
         }
 
@@ -331,7 +342,8 @@ namespace FemVoiceStudio.Services
             IReadOnlyList<ExercisePerformanceSummary> recent,
             int sessionsAnalyzed,
             double recentComposite,
-            double baselineComposite)
+            double baselineComposite,
+            VoiceStyleGoal? preferredVoiceStyle = null)
         {
             var avgResonance = recent.Average(s => s.ResonanceQualityIndex);
             var avgStability = recent.Average(s => s.StabilityConsistency);
@@ -347,7 +359,7 @@ namespace FemVoiceStudio.Services
                     ProgressionAdjustmentDimension.Resonance,
                     "RESONANCE_FIRST",
                     "Resonance is prioritized before pitch progression.",
-                    ScaleResonance(profile),
+                    ScaleResonance(profile, preferredVoiceStyle),
                     sessionsAnalyzed,
                     recentComposite,
                     baselineComposite);
@@ -397,7 +409,7 @@ namespace FemVoiceStudio.Services
                     ProgressionAdjustmentDimension.Resonance,
                     "RESONANCE_PROGRESSION",
                     "Resonance targets can advance after a stable, safe history.",
-                    ScaleResonance(profile),
+                    ScaleResonance(profile, preferredVoiceStyle),
                     sessionsAnalyzed,
                     recentComposite,
                     baselineComposite);
@@ -520,12 +532,35 @@ namespace FemVoiceStudio.Services
             return decision;
         }
 
-        private static ExerciseTargetProfile ScaleResonance(ExerciseTargetProfile profile)
+        // Stilbevisst resonans-oppskalering. KLINISK BEGRUNNELSE: et lyst/fremre
+        // resonansmål er målet for en typisk feminin stemme, men ikke for alle
+        // stilmål. En DarkFeminine-bruker sikter mot en mørkere, varmere klang —
+        // å presse resonansmålet like aggressivt oppover ville drive treningen bort
+        // fra brukerens eget mål. Vi DEMPER derfor oppskaleringen (minst invasivt:
+        // halverer delta i stedet for å hoppe over elevasjonen helt, så resonans
+        // fortsatt konsolideres trygt) for DarkFeminine, og demper mildt for
+        // Androgynous. Feminine/Situational/Custom/ukjent = uendret (full delta).
+        // Nedre resonansmål senkes ALDRI her — dette er kun en demping av økningen,
+        // aldri en reduksjon (det ville vært en recovery-handling, som eies av
+        // ScaleForRecovery og safety-grenene).
+        private static ExerciseTargetProfile ScaleResonance(ExerciseTargetProfile profile, VoiceStyleGoal? preferredVoiceStyle)
         {
-            var min = Math.Clamp(profile.TargetResonanceMin + 0.02, 0, 0.90);
+            const double baseDelta = 0.02;
+            var delta = baseDelta * ResonanceUpscaleFactor(preferredVoiceStyle);
+            var min = Math.Clamp(profile.TargetResonanceMin + delta, 0, 0.90);
             var max = Math.Clamp(Math.Max(profile.TargetResonanceMax, min + 0.10), min, 1.0);
             return CloneProfile(profile, targetResonanceMin: min, targetResonanceMax: max);
         }
+
+        // Multiplikator for resonans-oppskaleringens delta, styrt av stilmål.
+        // 1.0 = full oppskalering (stil-nøytral standard). Lavere = dempet.
+        private static double ResonanceUpscaleFactor(VoiceStyleGoal? preferredVoiceStyle)
+            => preferredVoiceStyle switch
+            {
+                VoiceStyleGoal.DarkFeminine => 0.5,  // halver delta — mørkere klangmål
+                VoiceStyleGoal.Androgynous  => 0.75, // mild demping
+                _                           => 1.0   // Feminine/Situational/Custom/null uendret
+            };
 
         private static ExerciseTargetProfile ScaleStability(ExerciseTargetProfile profile)
         {

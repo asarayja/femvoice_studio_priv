@@ -25,6 +25,12 @@ namespace FemVoiceStudio.Services
         private const double FatigueScoreDrop = 20.0; // Prosent
         private const int BaselineMinDays = 7; // Minimum dager for baseline
         private const int BaselineIdealDays = 14; // Ideelle dager for baseline
+
+        // Fallback for ukentlig økt-mål når brukeren ikke har en kalibrert
+        // UserVoiceProfile ennå. Speiler standardverdien i UserVoiceProfile
+        // (TrainingFrequencyPerWeek = 3) og WeeklyGoals-tabellen (TargetSessions
+        // DEFAULT 3), så ingen ny parallell konstant innføres.
+        private const int DefaultWeeklySessionTarget = 3;
         
         /// <summary>
         /// Constructor with dependency injection (recommended)
@@ -193,10 +199,38 @@ namespace FemVoiceStudio.Services
             
             // Lagre til database
             _database.SaveWeeklyProgress(progress);
-            
+
             return progress;
         }
-        
+
+        /// <summary>
+        /// Brukerens eget ukentlige økt-mål. Kilden er UserVoiceProfile.TrainingFrequencyPerWeek
+        /// (brukeren setter dette selv) — IKKE en hardkodet konstant. Mangler profil, eller er
+        /// verdien ikke-positiv, faller vi tilbake til <see cref="DefaultWeeklySessionTarget"/>.
+        ///
+        /// KLINISK: Dette er brukerens EGET mål. Det skal aldri brukes til å skamme eller
+        /// presse («du ligger bak») — kun til å feire når brukeren når sin egen kadens og
+        /// til å gi støttende, lavterskel-formuleringer ellers.
+        /// </summary>
+        public int GetWeeklySessionTarget(int userId = 1)
+        {
+            try
+            {
+                var profile = _database.GetUserVoiceProfile(userId);
+                if (profile != null && profile.TrainingFrequencyPerWeek > 0)
+                {
+                    return profile.TrainingFrequencyPerWeek;
+                }
+            }
+            catch
+            {
+                // Null-safe degradering: ved enhver lesefeil bruker vi fallback-målet
+                // i stedet for å la coachingen kollapse.
+            }
+
+            return DefaultWeeklySessionTarget;
+        }
+
         /// <summary>
         /// Genererer individuelle mål basert på baseline og progresjon
         /// </summary>
@@ -608,8 +642,12 @@ namespace FemVoiceStudio.Services
                 title = _localization.GetString("SmartCoach_Message_PitchTitle");
                 message = _localization.GetString("SmartCoach_Message_PitchProgress");
             }
-            else if (progress.SessionsCount >= 5)
+            else if (progress.SessionsCount >= GetWeeklySessionTarget(userId))
             {
+                // Brukeren har nådd sitt EGET ukentlige økt-mål (UserVoiceProfile
+                // .TrainingFrequencyPerWeek). Tidligere lå terskelen hardkodet på 5;
+                // nå feirer vi brukerens egen valgte kadens. Støttende ramme — aldri
+                // «du ligger bak».
                 messageType = "motivation";
                 title = _localization.GetString("SmartCoach_Message_ConsistentTitle");
                 message = _localization.GetFormattedString("Coach_SessionsThisWeek", progress.SessionsCount);

@@ -572,9 +572,14 @@ namespace FemVoiceStudio.Views
             var settingsWindow = new SettingsWindow();
             settingsWindow.Owner = this;
             settingsWindow.ShowDialog();
-            
+
             // Last inn progresjon på nytt etter reset
             _viewModel.LoadUserSettings();
+
+            // Re-les brukerprofilen (stilmål + komfortsone) og re-applier forsidens
+            // pitch-målsone. Settings kan ha endret PreferredVoiceStyle/komfortsone —
+            // uten denne så MainViewModel aldri endringene før restart.
+            _viewModel.ReloadUserVoiceProfile();
         }
         
         public void RefreshUI()

@@ -34,10 +34,31 @@ namespace FemVoiceStudio.ViewModels
         private readonly ProgressionSafetyGate? _progressionSafetyGate;
         private readonly LiveMetricsService _liveMetrics;
         private readonly AdaptiveComfortZoneService _comfortZoneService;
-        // Brukerens personlige profil (stilmål + kalibrert komfortsone). Hentes én gang
-        // i ctor og brukes til å personliggjøre forsidens pitch-målsone. null = ingen
-        // profil/DB ⇒ PersonalizePitchZone faller tilbake til den statiske policy-sonen.
-        private readonly UserVoiceProfile? _userVoiceProfile;
+        // Brukerens personlige profil (stilmål + kalibrert komfortsone). Hentes i ctor
+        // og brukes til å personliggjøre forsidens pitch-målsone. null = ingen profil/DB
+        // ⇒ PersonalizePitchZone faller tilbake til den statiske policy-sonen.
+        // IKKE readonly: ReloadUserVoiceProfile() re-leser den etter Settings-lagring og
+        // øktslutt-kalibrering, slik at forsidens sone reflekterer ny kalibrering uten
+        // restart (ingen parallell state — dette ER den ene cachen).
+        private UserVoiceProfile? _userVoiceProfile;
+
+        // Cachet recovery-flagg: true når den persisterte kliniske gaten
+        // (ProgressionSafetyGate) er blokkert (gjentatte safety-locks, stigende
+        // strain/fatigue, gjentatte komfortbrudd/pause-anbefalinger). Driver
+        // recovery-grenen i TargetProfileAdapter.PersonalizePitchZone på forsiden slik
+        // at målsonen KRYMPER mens brukeren restituerer. Settes (1) én gang asynkront
+        // ved oppstart og (2) ved hver øktslutt fra det gate-resultatet som alt hentes
+        // for ApplyExternalSafetyBlock — ingen ny gate-evaluering, ingen parallell state.
+        // Klinisk invariant: kan kun KRYMPE sonen, aldri utvide krav.
+        private bool _recoveryActive;
+
+        // Den siste BASE-pitch-målsonen (per-difficulty policy-sone, FØR personalisering).
+        // Lagres slik at en recovery-/profil-endring kan re-personalisere fra et rent
+        // utgangspunkt i stedet for å re-krympe en allerede personalisert sone (som ville
+        // dobbelt-krympe når recovery er aktiv). ActivePitchTargetZone er resultatet;
+        // dette er inndataen.
+        private Range _basePitchTargetZone = new(165, 255, 210);
+
         private readonly FemVoiceScore _femVoiceScore;
         private readonly SmartCoachEngine _smartCoach;
         private readonly PitchSmoother _pitchSmoother;
@@ -199,7 +220,9 @@ namespace FemVoiceStudio.ViewModels
             _smartCoach = App.Services?.GetService(typeof(SmartCoachEngine)) as SmartCoachEngine
                           ?? new SmartCoachEngine(_database as IDatabaseService);
             _liveMetrics = new LiveMetricsService();
-            _comfortZoneService = new AdaptiveComfortZoneService(_smartCoach);
+            // Gi tjenesten DB-tilgang slik at den kan persistere en kalibrert komfortsone
+            // til UserVoiceProfile ved øktslutt og lese baseline-snapshot ved kaldstart.
+            _comfortZoneService = new AdaptiveComfortZoneService(_smartCoach, _database as IDatabaseService);
 
             // Hent brukerprofilen én gang (null-safe) for personlig pitch-målsone.
             // GetUserVoiceProfile er en synkron, indeksert enkeltlesning på samme
@@ -254,6 +277,10 @@ namespace FemVoiceStudio.ViewModels
             // which may trigger database reads (GetOrCalculateBaseline, GetTrainingStats etc.).
             // We schedule it on the thread pool so the constructor returns immediately.
             _ = Task.Run(UpdateComfortZoneAsync);
+
+            // Hent persistert recovery-status én gang (DB-tung gate-evaluering) uten å
+            // blokkere ctor — krymper forsidens målsone hvis brukeren alt er i recovery.
+            _ = InitializeRecoveryStateAsync();
         }
         
         /// <summary>
@@ -474,6 +501,12 @@ namespace FemVoiceStudio.ViewModels
                     var gate = await _progressionSafetyGate.EvaluateAsync(DateTime.Now);
                     if (gate.IsBlocked)
                         _progressionService.ApplyExternalSafetyBlock(gate.ReasonCode, gate.RecommendedRestDays);
+
+                    // Recovery-aware målsoner: cache gate-blokkeringen og krymp forsidens
+                    // pitch-målsone uten restart hvis flagget skiftet (samme gate-resultat,
+                    // ingen ny evaluering). Vi er på UI-tråden her (StopRecording-RelayCommand),
+                    // så SetRecoveryActive kan trygt skrive de UI-bundne sone-egenskapene.
+                    SetRecoveryActive(RecoveryActivationPolicy.ForHomeZone(gate.IsBlocked));
                 }
 
                 // Evaluer progresjon — WithSafety-varianten undertrykker promotering
@@ -512,10 +545,19 @@ namespace FemVoiceStudio.ViewModels
                 ProgressionStatus = _progressionService.GetProgressionStatus();
                 CurrentStreak = ProgressionStatus?.CurrentStreak ?? 0;
                 TotalSessions = ProgressionStatus?.TotalSessions ?? 0;
-                
+
                 // Last neste øvelse
                 LoadNextExercise();
-                
+
+                // Persister kalibrert komfortsone + baseline-snapshot til UserVoiceProfile
+                // ÉN gang per økt (ikke per tick). Øktens komfort-ratio (hvor godt snitt-
+                // pitchen lå i komfortsonen) og helsescore snapshotes som BaselineComfort/
+                // BaselineHealth. Kjøres off UI-tråden (DB-skriving) og re-applier sonen
+                // på forsiden når kalibreringen faktisk endret seg.
+                var sessionComfortRatio = CalculateSessionComfortRatio(
+                    analysis.AveragePitch, ComfortZone);
+                var sessionHealthScore = session.VoiceHealthScore;
+                _ = PersistComfortZoneCalibrationAsync(sessionComfortRatio, sessionHealthScore);
             }
             catch (Exception ex)
             {
@@ -560,19 +602,49 @@ namespace FemVoiceStudio.ViewModels
 
         private void ApplyPitchTargetZone(Range zone)
         {
-            // Personliggjør den statiske policy-sonen mot brukerens kalibrerte komfortsone.
-            // recoveryActive = false: GetRecommendedSessionType leser DB og er ikke trygt
-            // å kalle synkront fra UI-event-handlerne / ctor-pathen som driver denne metoden
-            // (jf. UpdateComfortZone-merknaden). TODO: koble recovery inn via en cachet
-            // SessionType når øktstart-pathen oppdaterer den asynkront.
+            // Husk BASE-sonen slik at en senere recovery-/profil-endring kan re-
+            // personalisere fra et rent utgangspunkt (RepersonalizePitchTargetZone),
+            // ikke fra en allerede krympet sone.
+            _basePitchTargetZone = zone;
+
+            // Personliggjør den statiske policy-sonen mot brukerens kalibrerte komfortsone
+            // og recovery-status. recoveryActive er det cachede gate-flagget (oppdateres
+            // asynkront ved oppstart og ved øktslutt) — vi unngår en synkron DB-lesning fra
+            // UI-event-handlerne / ctor-pathen som driver denne metoden. Recovery KRYMPER
+            // kun sonen (klinisk invariant), aldri utvider.
             var (min, max) = TargetProfileAdapter.PersonalizePitchZone(
-                (zone.Min, zone.Max), _userVoiceProfile, recoveryActive: false);
+                (zone.Min, zone.Max), _userVoiceProfile, recoveryActive: _recoveryActive);
 
             var personalized = new Range(min, max);
 
             TargetMinPitch = personalized.Min;
             TargetMaxPitch = personalized.Max;
             ActivePitchTargetZone = personalized;
+        }
+
+        /// <summary>
+        /// Re-personaliserer forsidens pitch-målsone fra den siste BASE-sonen. Brukes når
+        /// en inndata til personaliseringen endrer seg uten at base-sonen gjør det — dvs.
+        /// når recovery-flagget skifter eller den cachede profilen re-leses. Re-bruker
+        /// _basePitchTargetZone slik at recovery-krympingen aldri stables (dobbelt-krymper).
+        /// </summary>
+        private void RepersonalizePitchTargetZone()
+        {
+            ApplyPitchTargetZone(_basePitchTargetZone);
+        }
+
+        /// <summary>
+        /// Oppdaterer det cachede recovery-flagget fra et ferdig gate-resultat. Re-applier
+        /// forsidens pitch-målsone KUN når flagget faktisk skifter, slik at sonen krymper/
+        /// utvides uten restart. Idempotent: samme verdi ⇒ ingen re-apply.
+        /// </summary>
+        private void SetRecoveryActive(bool recoveryActive)
+        {
+            if (_recoveryActive == recoveryActive)
+                return;
+
+            _recoveryActive = recoveryActive;
+            RepersonalizePitchTargetZone();
         }
         
         private void OnPitchAnalyzed(object? sender, PitchAnalysisResult result)
@@ -894,6 +966,34 @@ namespace FemVoiceStudio.ViewModels
         }
 
         /// <summary>
+        /// Henter den persisterte recovery-statusen ÉN gang ved oppstart (fire-and-forget
+        /// fra ctor; blokkerer aldri konstruksjonen) og krymper forsidens pitch-målsone hvis
+        /// brukeren allerede er i recovery fra forrige økt. Gate-evalueringen er DB-tung og
+        /// kjøres på trådpuljen; flagg-skrivingen + re-personaliseringen marshales tilbake
+        /// til UI-tråden via SetRecoveryActive (skriver UI-bundne sone-egenskaper).
+        /// Null-safe: uten gate (f.eks. tester/ingen DI) er recovery av (dagens oppførsel).
+        /// </summary>
+        private async Task InitializeRecoveryStateAsync()
+        {
+            if (_progressionSafetyGate == null)
+                return;
+
+            try
+            {
+                var gate = await Task.Run(() => _progressionSafetyGate.EvaluateAsync(DateTime.Now))
+                    .ConfigureAwait(false);
+
+                Application.Current?.Dispatcher.Invoke(
+                    () => SetRecoveryActive(RecoveryActivationPolicy.ForHomeZone(gate.IsBlocked)));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"[FemVoice][MainViewModel] InitializeRecoveryStateAsync failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Async wrapper: runs the blocking SmartCoach/DB work on the thread pool,
         /// then updates UI-bound properties on the UI thread. Called from the constructor
         /// via Task.Run() so startup is non-blocking.
@@ -913,7 +1013,91 @@ namespace FemVoiceStudio.ViewModels
                 });
             }
         }
-        
+
+        /// <summary>
+        /// Øktens komfort-ratio (0-1): hvor godt øktens snitt-pitch lå innenfor den
+        /// aktive komfortsonen. 1.0 = midt i sonen / godt innenfor; faller lineært mot 0
+        /// jo lenger utenfor sonen snittet lå (én sonebredde utenfor ⇒ 0). Ren, sideeffekt-
+        /// fri beregning fra verdier som alt finnes i øktslutt-stien (ingen ny state).
+        /// </summary>
+        private static double CalculateSessionComfortRatio(double averagePitch, Range comfortZone)
+        {
+            var width = comfortZone.Max - comfortZone.Min;
+            if (width <= 0 || averagePitch <= 0)
+                return 0.0;
+
+            if (averagePitch >= comfortZone.Min && averagePitch <= comfortZone.Max)
+                return 1.0;
+
+            var distanceOutside = averagePitch < comfortZone.Min
+                ? comfortZone.Min - averagePitch
+                : averagePitch - comfortZone.Max;
+
+            // Lineær avtrapping: én full sonebredde utenfor ⇒ 0.
+            var ratio = 1.0 - distanceOutside / width;
+            return Math.Clamp(ratio, 0.0, 1.0);
+        }
+
+        /// <summary>
+        /// Persisterer en kalibrert komfortsone + baseline-snapshot til UserVoiceProfile
+        /// off UI-tråden (DB-skriving), og re-applier forsidens pitch-målsone hvis
+        /// kalibreringen faktisk endret seg. Kalt ÉN gang per økt fra øktslutt-stien.
+        /// </summary>
+        private async Task PersistComfortZoneCalibrationAsync(double sessionComfortRatio, double sessionHealthScore)
+        {
+            try
+            {
+                var updated = await Task.Run(() =>
+                {
+                    var sessionType = _comfortZoneService.GetRecommendedSessionType(1);
+                    return _comfortZoneService.PersistCalibratedProfile(
+                        userId: 1,
+                        sessionType: sessionType,
+                        sessionComfortRatio: sessionComfortRatio,
+                        sessionHealthScore: sessionHealthScore);
+                });
+
+                if (updated != null)
+                {
+                    Application.Current?.Dispatcher.Invoke(() =>
+                    {
+                        // Oppdater den cachede profilen og re-applier sonen uten restart.
+                        // Re-personaliser fra BASE-sonen (ikke den allerede personaliserte
+                        // ActivePitchTargetZone) — ellers ville recovery-krympingen stables.
+                        _userVoiceProfile = updated;
+                        RepersonalizePitchTargetZone();
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"[FemVoice][MainViewModel] PersistComfortZoneCalibrationAsync failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Re-leser brukerprofilen (stilmål + kalibrert komfortsone) og re-applier
+        /// forsidens pitch-målsone. Lett reload-mekanisme kalt etter at Settings lukkes
+        /// med lagring — uten den så MainViewModel aldri Settings-endringer før restart.
+        /// Ingen event-buss: én eksplisitt re-lesning av den ene cachede profilen.
+        /// </summary>
+        public void ReloadUserVoiceProfile()
+        {
+            try
+            {
+                _userVoiceProfile = _database.GetUserVoiceProfile(1);
+            }
+            catch
+            {
+                // DB utilgjengelig ⇒ behold eksisterende cache.
+                return;
+            }
+
+            // Re-personaliser fra BASE-sonen (ikke den allerede krympede ActivePitchTargetZone).
+            RepersonalizePitchTargetZone();
+        }
+
         private void OnUiTimerTick(object? sender, EventArgs e)
         {
             // UI update timer is kept for non-pitch related updates

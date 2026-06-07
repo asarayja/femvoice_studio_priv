@@ -96,6 +96,42 @@
                         </StackPanel>
                     </Border>
                     
+                    <!-- Voice Goal Style Section -->
+                    <Border Background="{DynamicResource BackgroundCardBrush}" CornerRadius="10" Padding="20" Margin="0,0,0,20">
+                        <StackPanel>
+                            <TextBlock x:Name="StyleGoalLabel" Text="{loc:Loc FirstSetup_StyleGoalLabel}" FontSize="18" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                            <TextBlock x:Name="StyleGoalDesc" Text="{loc:Loc FirstSetup_StyleGoalDesc}"
+                                       FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}"
+                                       TextWrapping="Wrap" Margin="0,0,0,15"/>
+
+                            <ComboBox x:Name="StyleGoalComboBox" FontSize="14" Padding="10,8">
+                                <ComboBoxItem Content="{loc:Loc VoiceGoalStyle_SoftFeminine}" Tag="soft_feminine"/>
+                                <ComboBoxItem Content="{loc:Loc VoiceGoalStyle_BrightNeutral}" Tag="bright_neutral"/>
+                                <ComboBoxItem Content="{loc:Loc VoiceGoalStyle_Androgynous}" Tag="androgynous"/>
+                                <ComboBoxItem Content="{loc:Loc VoiceGoalStyle_Custom}" Tag="custom"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Training Frequency Section -->
+                    <Border Background="{DynamicResource BackgroundCardBrush}" CornerRadius="10" Padding="20" Margin="0,0,0,20">
+                        <StackPanel>
+                            <TextBlock x:Name="FrequencyLabel" Text="{loc:Loc FirstSetup_FrequencyLabel}" FontSize="18" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                            <TextBlock x:Name="FrequencyDesc" Text="{loc:Loc FirstSetup_FrequencyDesc}"
+                                       FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}"
+                                       TextWrapping="Wrap" Margin="0,0,0,15"/>
+
+                            <ComboBox x:Name="FrequencyComboBox" FontSize="14" Padding="10,8">
+                                <ComboBoxItem Content="{loc:Loc Settings_Accessibility_Frequency2}" Tag="2"/>
+                                <ComboBoxItem Content="{loc:Loc Settings_Accessibility_Frequency3}" Tag="3"/>
+                                <ComboBoxItem Content="{loc:Loc Settings_Accessibility_Frequency4}" Tag="4"/>
+                                <ComboBoxItem Content="{loc:Loc Settings_Accessibility_Frequency5}" Tag="5"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Theme Section -->
                     <Border Background="{DynamicResource BackgroundCardBrush}" CornerRadius="10" Padding="20">
                         <StackPanel>
