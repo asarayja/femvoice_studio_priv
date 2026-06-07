@@ -30,7 +30,12 @@ namespace FemVoiceStudio.Services
         FeedbackPriority Priority,
         MessageSeverity Severity,
         string Source = "",
-        string ConflictKey = "");
+        string ConflictKey = "",
+        // Logisk UI-overflate kandidaten lander på. Den tidsbaserte «multiple
+        // simultaneous hints»-anti-flommen scopes per kanal, slik at distinkte
+        // paneler ikke sulter hverandre ut. Tom kanal ("") = den delte coach-
+        // panel-overflaten (EDVM/SmartCoach/Progresjon/Helse) — uendret oppførsel.
+        string Channel = "");
 
     public sealed record FeedbackGuardContext(
         bool IsSafetyFreezeActive = false,
@@ -52,6 +57,7 @@ namespace FemVoiceStudio.Services
         private readonly TimeSpan _minimumInterval;
         private readonly int _escalationThreshold;
         private readonly Dictionary<string, DateTime> _lastApprovedByReason = new();
+        private readonly Dictionary<string, DateTime> _lastApprovedAtByChannel = new();
         private readonly Dictionary<string, int> _suppressionCounts = new();
         private DateTime _lastApprovedAt = DateTime.MinValue;
         private FeedbackCandidate? _activeWarning;
@@ -131,14 +137,19 @@ namespace FemVoiceStudio.Services
                     return SuppressLocked(candidate, "Active warning has priority over lower-priority feedback.");
                 }
 
-                if (_lastApprovedAt != DateTime.MinValue
-                    && now - _lastApprovedAt < _minimumInterval
+                // Anti-flom per UI-overflate: distinkte paneler (f.eks. forsidens fire
+                // MainScreen-bindinger) skal ikke sulte hverandre ut. Den delte coach-
+                // panel-overflaten (Channel == "") beholder nøyaktig dagens oppførsel.
+                var channel = candidate.Channel ?? string.Empty;
+                if (_lastApprovedAtByChannel.TryGetValue(channel, out var lastForChannel)
+                    && now - lastForChannel < _minimumInterval
                     && candidate.Priority < FeedbackPriority.HealthWarning)
                 {
                     return SuppressLocked(candidate, "Rate limit prevents multiple simultaneous hints.");
                 }
 
                 _lastApprovedAt = now;
+                _lastApprovedAtByChannel[channel] = now;
                 _lastApprovedByReason[candidate.ReasonCode] = now;
                 _suppressionCounts.Remove(GetSuppressionKey(candidate));
 

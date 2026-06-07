@@ -480,13 +480,22 @@ namespace FemVoiceStudio.Services
                 conflictKey = $"{conflictKey}_{intent.ReasonDiscriminator}";
             }
 
+            // Distinkt kanal per binding: forsidens fire paneler (RealtimeFeedback,
+            // CoachExplanation, SessionFeedback, StatusText) deler IKKE den globale
+            // anti-flom-vinduet, slik at f.eks. pitch-sone-coaching ikke sulter ut
+            // coach-forklaringen i samme tick (runtime-validation-funn). Bindinger
+            // som deler ett panel (ProgressionCelebration + SafetyLockNotice → StatusText)
+            // får med vilje samme kanal og anti-flommer hverandre der.
+            var channel = $"{SourceName}:{BindingFor(intent.Kind)}";
+
             return new FeedbackCandidate(
                 intent.ResolvedText,
                 reasonCode,
                 priority,
                 severity,
                 SourceName,
-                conflictKey);
+                conflictKey,
+                channel);
         }
 
         /// <summary>
@@ -601,6 +610,7 @@ namespace FemVoiceStudio.Services
     {
         private readonly Func<DateTime> _clock;
         private readonly TimeSpan _minimumInterval;
+        private readonly object _gate = new();
         private readonly System.Collections.Generic.Dictionary<MainScreenFeedbackBinding, (string Key, DateTime At)> _last = new();
 
         public MainScreenFeedbackDebouncer(Func<DateTime>? clock = null, TimeSpan? minimumInterval = null)
@@ -614,24 +624,37 @@ namespace FemVoiceStudio.Services
         /// <paramref name="binding"/> should be submitted to the pipeline now. A repeated
         /// identical key inside the window is swallowed (false); a changed key passes
         /// immediately; an unchanged key passes again only after the window elapses.
+        /// Thread-safe: the home screen's two live pitch sources fire on different threads
+        /// (AudioAnalysisEngine marshals to the UI thread; AudioAnalyzerService raises on a
+        /// thread-pool thread), so the backing dictionary is guarded by a lock to avoid a
+        /// data race (A.1/A.2 runtime-validation finding).
         /// </summary>
         public bool ShouldSubmit(MainScreenFeedbackBinding binding, string messageKey)
         {
             if (string.IsNullOrEmpty(messageKey))
                 return false;
 
-            var now = _clock();
-            if (_last.TryGetValue(binding, out var prev))
+            lock (_gate)
             {
-                if (prev.Key == messageKey && now - prev.At < _minimumInterval)
-                    return false;
-            }
+                var now = _clock();
+                if (_last.TryGetValue(binding, out var prev))
+                {
+                    if (prev.Key == messageKey && now - prev.At < _minimumInterval)
+                        return false;
+                }
 
-            _last[binding] = (messageKey, now);
-            return true;
+                _last[binding] = (messageKey, now);
+                return true;
+            }
         }
 
         /// <summary>Clears debounce memory — call on session start/stop so a new session re-emits.</summary>
-        public void Reset() => _last.Clear();
+        public void Reset()
+        {
+            lock (_gate)
+            {
+                _last.Clear();
+            }
+        }
     }
 }

@@ -62,6 +62,12 @@ namespace FemVoiceStudio.Views
         // ── Klinisk øktscoring (resolved via DI) ─────────────────────────────────
         private ExerciseSessionRecorder? _sessionRecorder;
         private ExerciseTargetProfile?   _activeProfile;
+        // Den USTIL-PERSONALISERTE profilen (rå override/fabrikk, før stil-/komfortsone-/
+        // recovery-justering). Progresjons-autoriteten evaluerer og PERSISTERER mot denne,
+        // aldri mot den stil-justerte _activeProfile — ellers ville den relative stil-
+        // resonansdeltaen bli bakt inn i override-en og trukket fra på nytt ved hver
+        // lasting ⇒ kumulativ drift mot gulvet (runtime-validation-funn).
+        private ExerciseTargetProfile?   _activeBaseProfile;
         private ExerciseSessionOutcome?  _lastSessionOutcome;
 
         // ── Adaptiv komfortsone (resolved via DI) ────────────────────────────────
@@ -471,6 +477,10 @@ namespace FemVoiceStudio.Views
             var sessionId = _currentSessionId;
             var exercise  = _currentExercise;
             var profile   = _activeProfile;
+            // Progresjon evalueres mot den stil-nøytrale base-profilen (ikke den
+            // personaliserte) — se _activeBaseProfile. Fallback til _activeProfile om
+            // base ikke ble satt (defensivt; bevarer dagens oppførsel).
+            var baseProfile = _activeBaseProfile ?? _activeProfile;
             _currentSessionId = 0;
             StopButton.IsEnabled  = false;
             StartButton.IsEnabled = true;
@@ -542,7 +552,9 @@ namespace FemVoiceStudio.Views
                 // analytics-historikken (inkl. økten som nettopp ble journalført) og
                 // foreslår profil-justering eller pause/regresjon. Forslaget
                 // persisteres som override og lastes ved neste åpning av øvelsen.
-                await EvaluateAdaptiveProgressionAsync(exercise, profile);
+                // Evalueres mot den stil-NØYTRALE base-profilen så stil-resonansdeltaen
+                // ikke kompounderer gjennom override-rundturen (runtime-validation-funn).
+                await EvaluateAdaptiveProgressionAsync(exercise, baseProfile);
             }
 
             // Delegate stop to ViewModel command.
@@ -718,6 +730,12 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
         }
     }
     bool recoveryActive = RecoveryActivationPolicy.ForExerciseProfile(gateBlocked, overrideApplied);
+
+    // Den rå, stil-nøytrale profilen (override eller fabrikk) er progresjons-
+    // autoritetens referanse — fanges FØR personalisering slik at orchestratoren
+    // kan evaluere/persistere mot den uten å bake inn den relative stil-resonans-
+    // deltaen (som ellers ville kompoundert per økt).
+    _activeBaseProfile = profile;
 
     // Personlig måltilpasning: juster profilen mot brukerens stilmål (resonansmål,
     // ikke pitch-jag) og kalibrerte komfortsone, og krymp ferske (ikke-overstyrte)
