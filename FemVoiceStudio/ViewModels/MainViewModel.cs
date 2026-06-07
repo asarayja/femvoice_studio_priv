@@ -62,6 +62,20 @@ namespace FemVoiceStudio.ViewModels
         private readonly FemVoiceScore _femVoiceScore;
         private readonly SmartCoachEngine _smartCoach;
         private readonly PitchSmoother _pitchSmoother;
+
+        // ── Feedback-pipeline (Agent 6: forsidens kliniske feedback-autoritet) ──────
+        // Forsiden hadde en komplett, aktiv klinisk feedback-vei (RealtimeFeedback /
+        // CoachExplanation / Feedback / status-promotering/safety-lås) som omgikk
+        // FeedbackPipeline → FeedbackConsistencyGuard fullstendig. Suppresjonsmatrisen
+        // (helse/strain/pause/fatigue undertrykker ros & teknikk-prat) gjaldt derfor
+        // ALDRI forsiden. Disse rutes nå gjennom pipelinen.
+        //
+        // Null-safe: uten DI (tester / oppstart uten container) er pipelinen null og
+        // forsiden faller tilbake til den DIREKTE, dokumenterte dagens-oppførselen
+        // (skriver de bundne egenskapene rett) — eksisterende tester knekker ikke.
+        private readonly FeedbackPipeline? _feedbackPipeline;
+        private readonly MainScreenFeedbackMapper _mainScreenFeedbackMapper = new();
+        private readonly MainScreenFeedbackDebouncer _mainScreenDebouncer = new();
         
         private readonly DispatcherTimer _uiUpdateTimer;
         private DateTime _sessionStartTime;
@@ -248,6 +262,24 @@ namespace FemVoiceStudio.ViewModels
                 _progressionSafetyGate = null;
             }
 
+            // Klinisk feedback-pipeline — samme DI-singleton som øvelsesvinduet og
+            // SmartCoach bruker. Mapperen (MainScreenFeedbackMapper) er ren/tilstandsløs
+            // og konstrueres direkte (ingen DI-avhengighet, samme mønster som
+            // ExerciseProfileFactory-fallbacken). Vi abonnerer på godkjente meldinger og
+            // demukser dem til riktig bundet egenskap. Null-safe: ingen pipeline ⇒
+            // direkte fallback overalt.
+            try
+            {
+                _feedbackPipeline = App.Services?.GetService(typeof(FeedbackPipeline)) as FeedbackPipeline;
+            }
+            catch
+            {
+                _feedbackPipeline = null;
+            }
+
+            if (_feedbackPipeline != null)
+                _feedbackPipeline.FeedbackApproved += OnPipelineFeedbackApproved;
+
             // Sikkerhetslås-varsling: eventene fyrte reelt men hadde ingen abonnenter
             // (audit-funn) — progresjonsblokkering var usynlig for brukeren.
             _progressionService.SafetyLockEngaged += OnSafetyLockEngaged;
@@ -298,15 +330,26 @@ namespace FemVoiceStudio.ViewModels
             }
         }
         
-        /// <summary>Sikkerhetslås engasjert → synlig statusmelding (var stille før).</summary>
+        /// <summary>Sikkerhetslås engasjert → synlig statusmelding (var stille før).
+        /// Rutes som SafetyFreeze-kandidat (prioritet 80) — passerer ALLTID guarden;
+        /// safety-informasjon skal aldri forsvinne.</summary>
         private void OnSafetyLockEngaged(object? sender, SafetyLockEventArgs e)
         {
-            StatusText = Loc.Get("Progression_SafetyLockEngagedStatus");
+            // Diskriminator ENGAGED/RELEASED ⇒ distinkte ReasonCodes slik at en frigjøring
+            // tett etter en engasjering ikke rate-limiteres bort (begge er SafetyFreeze,
+            // begge MÅ vises).
+            RouteMainScreenFeedback(new MainScreenFeedbackIntent(
+                MainScreenFeedbackKind.SafetyLockNotice,
+                Loc.Get("Progression_SafetyLockEngagedStatus"),
+                ReasonDiscriminator: "ENGAGED"));
         }
 
         private void OnSafetyLockReleased(object? sender, EventArgs e)
         {
-            StatusText = Loc.Get("Progression_SafetyLockReleasedStatus");
+            RouteMainScreenFeedback(new MainScreenFeedbackIntent(
+                MainScreenFeedbackKind.SafetyLockNotice,
+                Loc.Get("Progression_SafetyLockReleasedStatus"),
+                ReasonDiscriminator: "RELEASED"));
         }
 
         public void LoadUserSettings()
@@ -397,9 +440,13 @@ namespace FemVoiceStudio.ViewModels
                 
                 // Reset live metrics for new session
                 _liveMetrics.Reset();
-                
+
                 // Reset pitch smoother for new session
                 _pitchSmoother.Reset();
+
+                // Nullstill forsidens feedback-debounce slik at ny økt re-emitter live-
+                // feedback selv om teksten tilfeldigvis er identisk med forrige økts siste.
+                _mainScreenDebouncer.Reset();
                 
                 // Reset score values
                 CurrentScore = null;
@@ -452,10 +499,23 @@ namespace FemVoiceStudio.ViewModels
                 AveragePitch = analysis.AveragePitch;
                 PitchVariation = analysis.PitchStandardDeviation;
                 
-                // Generer tilbakemelding
+                // Generer tilbakemelding — øktslutt-oppsummeringen rutes gjennom
+                // FeedbackPipeline (kandidat: PerformancePraise når økten kvalifiserer for
+                // avansement, ellers ProgressionUpdate). Begge undertrykkes klinisk korrekt
+                // når helse-/strain-/recovery-konteksten er aktiv ved øktslutt.
+                // OverallScore er ren visningsverdi (ikke feedback) og settes direkte.
                 var feedbackCollection = _feedbackService.GenerateFeedback(analysis, CurrentExercise);
-                Feedback = feedbackCollection.GetFormattedFeedback();
                 OverallScore = feedbackCollection.OverallScore;
+                // Den genererte oppsummeringen persisteres i øktraden uavhengig av om
+                // pipelinen viser den (en suppresjon skal ikke gi en tom øktjournal).
+                // Selve PIPELINE-rutingen av oppsummeringen utsettes til ETTER en
+                // eventuell promoterings-feiring: ved en sterk økt (promotering) er
+                // feiringen overskriften brukeren vil se, og guardens rate-limiter
+                // («multiple simultaneous hints» for prioritet < HealthWarning) slipper
+                // bare den FØRSTE godkjente lav-prioritets-meldingen i vinduet gjennom.
+                // Feiringen rutes derfor først (under), oppsummeringen etterpå.
+                var sessionSummaryText = feedbackCollection.GetFormattedFeedback();
+                var sessionSummaryIsPraise = feedbackCollection.ShouldAdvanceLevel;
                 
                 // Lagre økt
                 // OverallScore: feedbackCollection.OverallScore er den reelle
@@ -476,7 +536,7 @@ namespace FemVoiceStudio.ViewModels
                     VoiceHealthScore = CurrentScore?.VoiceHealthScore ?? 100,
                     StrainLevel = HealthIndicator == HealthState.Warning ? 50
                                 : HealthIndicator == HealthState.Danger ? 80 : 0,
-                    Feedback = Feedback,
+                    Feedback = sessionSummaryText,
                     DifficultyLevel = CurrentDifficulty
                 };
 
@@ -513,15 +573,21 @@ namespace FemVoiceStudio.ViewModels
                 // (og feiring) når sikkerhetslåsen er aktiv, uansett score.
                 var progressionResult = _progressionService.EvaluateProgressionWithSafety(session);
 
+                // Nøytral øktslutt-status settes FØRST som baseline (ikke-klinisk —
+                // direkte). Promoterings-/kompleksitets-feiringen rutes deretter gjennom
+                // FeedbackPipeline som ProgressionCelebration-kandidat (ProgressionUpdate);
+                // den overstyrer kun StatusText hvis den GODKJENNES. Undertrykkes den av
+                // helse-/recovery-konteksten, beholder vi den nøytrale baselinen i stedet
+                // for å vise jubel mens helse-gaten er aktiv.
+                StatusText = string.Format(Loc.Get("Difficulty_SessionCompleteFormat"), OverallScore);
+
                 if (progressionResult.ShouldShowCelebration)
                 {
                     CurrentDifficulty = progressionResult.NewDifficulty;
                     DifficultyText = GetDifficultyText(CurrentDifficulty);
-                    StatusText = string.Format(Loc.Get("Difficulty_PromotedFormat"), DifficultyText);
-                }
-                else
-                {
-                    StatusText = string.Format(Loc.Get("Difficulty_SessionCompleteFormat"), OverallScore);
+                    RouteMainScreenFeedback(new MainScreenFeedbackIntent(
+                        MainScreenFeedbackKind.ProgressionCelebration,
+                        string.Format(Loc.Get("Difficulty_PromotedFormat"), DifficultyText)));
                 }
 
                 // Talekompleksitet: TryAdvanceLevelAsync ble aldri kalt (audit-funn) —
@@ -533,14 +599,26 @@ namespace FemVoiceStudio.ViewModels
                     if (await complexityEngine.TryAdvanceLevelAsync(userId: 1)
                         && !progressionResult.ShouldShowCelebration)
                     {
-                        StatusText = Loc.Get("Progression_ComplexityAdvanced");
+                        RouteMainScreenFeedback(new MainScreenFeedbackIntent(
+                            MainScreenFeedbackKind.ProgressionCelebration,
+                            Loc.Get("Progression_ComplexityAdvanced")));
                     }
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"[Complexity] Advance failed: {ex.Message}");
                 }
-                
+
+                // Øktslutt-oppsummeringen rutes NÅ (etter feiringen) gjennom pipelinen:
+                // PerformancePraise når økten kvalifiserer for avansement, ellers en
+                // nøytral ProgressionUpdate. Klinisk kontekst (helse/strain/recovery)
+                // undertrykker begge korrekt; ved suppresjon beholder Feedback-panelet
+                // forrige verdi (tømt ved øktstart) — ingen ros mens helse-gaten er aktiv.
+                RouteMainScreenFeedback(new MainScreenFeedbackIntent(
+                    MainScreenFeedbackKind.SessionSummary,
+                    sessionSummaryText,
+                    IsPraise: sessionSummaryIsPraise));
+
                 // Last progresjonsstatus
                 ProgressionStatus = _progressionService.GetProgressionStatus();
                 CurrentStreak = ProgressionStatus?.CurrentStreak ?? 0;
@@ -646,7 +724,115 @@ namespace FemVoiceStudio.ViewModels
             _recoveryActive = recoveryActive;
             RepersonalizePitchTargetZone();
         }
-        
+
+        // ─────────────────────────────────────────────────────────────────────────
+        // Klinisk feedback-pipeline — forsidens autoritet (Agent 6)
+        // ─────────────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Bygger guard-konteksten fra forsidens EKSISTERENDE runtime-tilstand slik at
+        /// suppresjonsmatrisen virker på forsiden. Kilder (kun LESING — ingen ny state):
+        ///   • HealthIndicator == Danger        ⇒ IsHealthRiskActive (helse-risiko)
+        ///   • HealthIndicator == Warning        ⇒ IsActiveStrainAlert (aktiv belastning)
+        ///   • siste FemVoiceScore.WarningFlags  ⇒ CRITICAL_STRAIN ⇒ helse-risiko;
+        ///                                          (HIGH_)?STRAIN ⇒ strain-varsel
+        ///   • _recoveryActive (cachet gate)     ⇒ IsPauseRecommended (pause anbefalt)
+        /// Resultat: promoteringsjubel og teknikk-prat undertrykkes når helse-gaten slo
+        /// til — det som var umulig før på forsiden.
+        /// </summary>
+        private MainScreenClinicalState BuildMainScreenClinicalState()
+        {
+            var warningFlags = CurrentScore?.WarningFlags ?? string.Empty;
+            var criticalStrain = warningFlags.Contains("CRITICAL_STRAIN");
+            var strain = warningFlags.Contains("STRAIN"); // dekker CRITICAL_/MODERATE_/HIGH_PITCH_STRAIN
+
+            var healthRisk = HealthIndicator == HealthState.Danger || criticalStrain;
+            var strainAlert = HealthIndicator == HealthState.Warning || strain;
+
+            return new MainScreenClinicalState(
+                IsHealthRiskActive: healthRisk,
+                IsActiveStrainAlert: strainAlert,
+                IsPauseRecommended: _recoveryActive,
+                IsFatigueActive: false);
+        }
+
+        /// <summary>
+        /// Ruter en forside-feedback-intensjon gjennom FeedbackPipeline. Live-kilder
+        /// (pitch-sone-coaching ~30 Hz, coach-forklaring ~1 Hz) debounces FØR Submit på
+        /// meldings-tekst (kun ved endret tekst, maks ~1/sek) slik at guardens
+        /// per-ReasonCode rate-limiter ikke spammes. Fallback: uten pipeline skrives den
+        /// bundne egenskapen direkte (dagens oppførsel, dokumentert).
+        /// </summary>
+        private void RouteMainScreenFeedback(MainScreenFeedbackIntent intent)
+        {
+            var binding = MainScreenFeedbackMapper.BindingFor(intent.Kind);
+
+            // Pipeline utilgjengelig ⇒ behold dagens direkte oppførsel.
+            if (_feedbackPipeline == null)
+            {
+                ApplyMainScreenFeedback(binding, intent.ResolvedText);
+                return;
+            }
+
+            // Debounce KUN de høyfrekvente live-kildene. Øktslutt/promotering/safety-lås
+            // er sjeldne enkelthendelser og skal aldri svelges av debounceren.
+            var isLiveSource = intent.Kind is MainScreenFeedbackKind.PitchZoneCoaching
+                or MainScreenFeedbackKind.CoachExplanation;
+            if (isLiveSource && !_mainScreenDebouncer.ShouldSubmit(binding, intent.ResolvedText))
+                return;
+
+            var candidate = _mainScreenFeedbackMapper.Map(intent);
+            if (candidate == null)
+                return;
+
+            _feedbackPipeline.Submit(candidate, _mainScreenFeedbackMapper.BuildContext(BuildMainScreenClinicalState()));
+        }
+
+        /// <summary>
+        /// MOTTAK: godkjente meldinger fra pipelinen rutes til riktig bundet egenskap.
+        /// Kun forsidens egne meldinger (Source == MainScreen) håndteres her — andre
+        /// kilder (SmartCoach/Helse/Hydrering/Progresjon) eies av sine respektive
+        /// vinduer. For forsidens kilder ER candidate.Message allerede ferdig oppløst
+        /// tekst (ikke en lokaliseringsnøkkel) — samme konvensjon som SmartCoach-mapperen.
+        /// FeedbackSuppressed abonneres bevisst IKKE: ved suppresjon BEHOLDES forrige
+        /// melding i den bundne egenskapen (klinisk roligst — ingen blafring der et
+        /// teknikk-/ros-hint undertrykkes av helse-gaten).
+        /// </summary>
+        private void OnPipelineFeedbackApproved(object? sender, FeedbackDecision decision)
+        {
+            if (decision.Candidate.Source != MainScreenFeedbackMapper.SourceName)
+                return;
+
+            var binding = MainScreenFeedbackMapper.BindingForReasonCode(decision.Candidate.ReasonCode);
+
+            void Apply() => ApplyMainScreenFeedback(binding, decision.Candidate.Message);
+
+            if (Application.Current?.Dispatcher.CheckAccess() == false)
+                Application.Current.Dispatcher.BeginInvoke((Action)Apply);
+            else
+                Apply();
+        }
+
+        /// <summary>Skriver en godkjent (eller fallback-) melding til den bundne egenskapen.</summary>
+        private void ApplyMainScreenFeedback(MainScreenFeedbackBinding binding, string text)
+        {
+            switch (binding)
+            {
+                case MainScreenFeedbackBinding.RealtimeFeedback:
+                    RealtimeFeedback = text;
+                    break;
+                case MainScreenFeedbackBinding.CoachExplanation:
+                    CoachExplanation = text;
+                    break;
+                case MainScreenFeedbackBinding.SessionFeedback:
+                    Feedback = text;
+                    break;
+                case MainScreenFeedbackBinding.StatusText:
+                    StatusText = text;
+                    break;
+            }
+        }
+
         private void OnPitchAnalyzed(object? sender, PitchAnalysisResult result)
         {
             CurrentPitch = result.Pitch;
@@ -684,17 +870,22 @@ namespace FemVoiceStudio.ViewModels
                 DebugInfo = "";
             }
             
-            // Realtime feedback
+            // Realtime feedback — rutes gjennom FeedbackPipeline (pitch-sone-coaching er
+            // klinisk teknikk-feedback; undertrykkes når helse-gaten slo til).
             if (result.IsVoiced)
             {
-                RealtimeFeedback = _feedbackService.GetRealtimeFeedback(result, ComfortZone.Min, ComfortZone.Max);
-                
+                RouteMainScreenFeedback(new MainScreenFeedbackIntent(
+                    MainScreenFeedbackKind.PitchZoneCoaching,
+                    _feedbackService.GetRealtimeFeedback(result, ComfortZone.Min, ComfortZone.Max)));
+
                 // Update coach explanation
                 UpdateCoachExplanation();
             }
             else if (result.RmsValue < WeakSignalFeedbackRmsThreshold)
             {
-                RealtimeFeedback = Loc.Get("LiveFeedback_SpeakLouder");
+                RouteMainScreenFeedback(new MainScreenFeedbackIntent(
+                    MainScreenFeedbackKind.PitchZoneCoaching,
+                    Loc.Get("LiveFeedback_SpeakLouder")));
             }
         }
         
@@ -726,18 +917,21 @@ namespace FemVoiceStudio.ViewModels
                 DebugInfo = $"Pitch: {pitch:F1} Hz | Smoothed: {SmoothedPitch:F1} Hz | Stability: {PitchStability}";
             }
             
-            // Provide realtime feedback
+            // Provide realtime feedback — gjennom FeedbackPipeline (klinisk pitch-sone-
+            // coaching; debounced + undertrykt av helse-gaten der den slo til).
             if (pitch > 0)
             {
-                RealtimeFeedback = _feedbackService.GetRealtimeFeedback(new PitchAnalysisResult
-                {
-                    Pitch = pitch,
-                    RmsValue = CurrentIntensity,
-                    Intensity = CurrentIntensity,
-                    IsVoiced = true,
-                    Confidence = 1,
-                    Timestamp = DateTime.Now
-                }, ActivePitchTargetZone.Min, ActivePitchTargetZone.Max);
+                RouteMainScreenFeedback(new MainScreenFeedbackIntent(
+                    MainScreenFeedbackKind.PitchZoneCoaching,
+                    _feedbackService.GetRealtimeFeedback(new PitchAnalysisResult
+                    {
+                        Pitch = pitch,
+                        RmsValue = CurrentIntensity,
+                        Intensity = CurrentIntensity,
+                        IsVoiced = true,
+                        Confidence = 1,
+                        Timestamp = DateTime.Now
+                    }, ActivePitchTargetZone.Min, ActivePitchTargetZone.Max)));
 
                 CalculateLiveScore(new PitchAnalysisResult
                 {
@@ -942,7 +1136,15 @@ namespace FemVoiceStudio.ViewModels
                 CurrentSessionType = SessionType.Progressive
             };
 
-            CoachExplanation = _comfortZoneService.GenerateExplanation(context);
+            // Rutes gjennom FeedbackPipeline. Coach-forklaringen kan være en HealthWarning
+            // når konteksten beskriver en helse-/belastningstilstand (samme signal som
+            // GenerateExplanation selv key-er på via context.Health) — da får den
+            // HealthWarning-prioritet og overlever der teknikk-prat undertrykkes.
+            var isHealthContext = HealthIndicator is HealthState.Warning or HealthState.Danger;
+            RouteMainScreenFeedback(new MainScreenFeedbackIntent(
+                MainScreenFeedbackKind.CoachExplanation,
+                _comfortZoneService.GenerateExplanation(context),
+                IsHealthContext: isHealthContext));
         }
         
         /// <summary>
@@ -1115,6 +1317,9 @@ namespace FemVoiceStudio.ViewModels
         {
             _uiUpdateTimer.Stop();
             LocalizationService.Instance.PropertyChanged -= OnLanguageChanged;
+
+            if (_feedbackPipeline != null)
+                _feedbackPipeline.FeedbackApproved -= OnPipelineFeedbackApproved;
             
             // Unsubscribe from AudioAnalysisEngine events to prevent memory leaks
             _audioEngine.PitchUpdated -= OnPitchUpdated;

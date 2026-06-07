@@ -159,6 +159,7 @@ namespace FemVoiceStudio.Tests
             Assert.Equal("SMARTCOACH_HEALTH_WARNING", candidate.ReasonCode);
             Assert.Equal(FeedbackPriority.HealthWarning, candidate.Priority);
             Assert.True(context.IsHealthRiskActive);
+            Assert.True(context.IsActiveStrainAlert);
             Assert.True(context.IsPauseRecommended);
         }
 

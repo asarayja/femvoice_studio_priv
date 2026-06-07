@@ -867,6 +867,12 @@ namespace FemVoiceStudio.ViewModels
             if (decision.Candidate.Source == "ExerciseIntelligenceCoordinator")
                 return;
 
+            // Forside-meldinger (MainScreen) hører til MainViewModel-mottakeren —
+            // de bærer ferdig-oppløst tekst (ikke RESX-nøkler) og ville ellers
+            // rendres i feil vindu når begge er åpne samtidig.
+            if (decision.Candidate.Source == "MainScreen")
+                return;
+
             void Apply()
             {
                 ApplyCoachMessage(new InlineCoachMessage

@@ -70,8 +70,15 @@ namespace FemVoiceStudio.Services
                 "health_warning",
                 StringComparison.OrdinalIgnoreCase);
 
+            // SmartCoach health_warning-meldinger oppstår KUN fra
+            // SmartCoachEngine.AnalyzeSessionForStrain når strainDetected == true
+            // (pitch_press eller fatigue). Strain-deteksjonen selv er derfor en aktiv
+            // strain-tilstand: vi flagger IsActiveStrainAlert slik at guardens
+            // suppresjonsmatrise undertrykker samtidig ros/progresjon (≤ PerformancePraise)
+            // mens selve helse-advarselen (HealthWarning 70) slipper gjennom.
             return new FeedbackGuardContext(
                 IsHealthRiskActive: isHealthWarning,
+                IsActiveStrainAlert: isHealthWarning,
                 IsPauseRecommended: isHealthWarning,
                 IsHoldStable: !isHealthWarning);
         }
@@ -371,5 +378,260 @@ namespace FemVoiceStudio.Services
                 severity,
                 "VocalHealthSupervisor",
                 conflictKey);
+    }
+
+    /// <summary>
+    /// The clinical intent behind a feedback message originating on the home screen
+    /// (MainViewModel). Drives priority/severity/conflict-key selection in
+    /// <see cref="MainScreenFeedbackMapper"/>. The home screen carries already-resolved
+    /// display text (not localization keys), so candidates produced from these intents
+    /// hold the final text directly and MainViewModel routes them back to the bound
+    /// property by <see cref="MainScreenFeedbackBinding"/> — mirroring how
+    /// <see cref="SmartCoachFeedbackMapper"/> emits raw text candidates.
+    /// </summary>
+    public enum MainScreenFeedbackKind
+    {
+        /// <summary>Live pitch-zone coaching ("under/in/above zone"). TechniqueCorrection.</summary>
+        PitchZoneCoaching,
+
+        /// <summary>SmartCoach explanation; HealthWarning when the context names a health issue, else technique.</summary>
+        CoachExplanation,
+
+        /// <summary>End-of-session summary. Praise vs. progression update by content.</summary>
+        SessionSummary,
+
+        /// <summary>Difficulty promotion / complexity advance celebration. ProgressionUpdate.</summary>
+        ProgressionCelebration,
+
+        /// <summary>Safety-lock engaged/released notice. SafetyFreeze (always survives the guard).</summary>
+        SafetyLockNotice
+    }
+
+    /// <summary>
+    /// Which bound MainViewModel property the approved home-screen message should be
+    /// routed to. Lets MainViewModel demux <see cref="FeedbackPipeline.FeedbackApproved"/>
+    /// without re-parsing the reason code.
+    /// </summary>
+    public enum MainScreenFeedbackBinding
+    {
+        RealtimeFeedback,
+        CoachExplanation,
+        SessionFeedback,
+        StatusText
+    }
+
+    /// <summary>
+    /// A home-screen feedback message ready to be routed through the pipeline.
+    /// <paramref name="ResolvedText"/> is already localized/formatted (the home screen
+    /// never deals in localization keys here). <paramref name="IsHealthContext"/> lets the
+    /// coach-explanation source escalate to <see cref="FeedbackPriority.HealthWarning"/>
+    /// when the explanation describes a strain/health issue. <paramref name="IsPraise"/>
+    /// distinguishes a session-summary praise from a neutral progression update.
+    /// Pure value type — testable without WPF.
+    /// </summary>
+    public sealed record MainScreenFeedbackIntent(
+        MainScreenFeedbackKind Kind,
+        string ResolvedText,
+        bool IsHealthContext = false,
+        bool IsPraise = false,
+        string? ReasonDiscriminator = null);
+
+    /// <summary>
+    /// Snapshot of the home screen's clinical runtime state, used to build the
+    /// <see cref="FeedbackGuardContext"/> so the suppression matrix applies to the
+    /// front page exactly as it does to the exercise screen. All flags are READ from
+    /// existing MainViewModel state (HealthIndicator, FemVoiceScore WarningFlags,
+    /// the cached ProgressionSafetyGate recovery flag). Pure value type.
+    /// </summary>
+    public sealed record MainScreenClinicalState(
+        bool IsHealthRiskActive = false,
+        bool IsActiveStrainAlert = false,
+        bool IsPauseRecommended = false,
+        bool IsFatigueActive = false);
+
+    /// <summary>
+    /// Maps home-screen feedback intents to pipeline candidates and builds the guard
+    /// context from the home screen's clinical runtime state. Lives next to the other
+    /// mappers (no new silo). All candidates use Source "MainScreen" so MainViewModel
+    /// can recognise its own approved messages and treat the candidate text as already
+    /// resolved (rather than a localization key).
+    /// </summary>
+    public sealed class MainScreenFeedbackMapper
+    {
+        public const string SourceName = "MainScreen";
+
+        public FeedbackCandidate? Map(MainScreenFeedbackIntent intent)
+        {
+            if (intent == null) throw new ArgumentNullException(nameof(intent));
+            if (string.IsNullOrWhiteSpace(intent.ResolvedText))
+                return null;
+
+            var (priority, severity, reasonCode, conflictKey) = Classify(intent);
+
+            // En valgfri diskriminator gir to logisk distinkte hendelser samme
+            // klassifisering, men ULIKE ReasonCode/ConflictKey, slik at de ikke
+            // rate-limiter eller konflikt-undertrykker hverandre i guarden (f.eks.
+            // safety-lås ENGASJERT vs. FRIGJORT — begge må gjennom selv om de fyrer
+            // tett). ReasonCode-PREFIKSET bevares slik at ruteren (BindingFor/receiveren)
+            // fortsatt kjenner igjen kategorien.
+            if (!string.IsNullOrEmpty(intent.ReasonDiscriminator))
+            {
+                reasonCode = $"{reasonCode}_{intent.ReasonDiscriminator}";
+                conflictKey = $"{conflictKey}_{intent.ReasonDiscriminator}";
+            }
+
+            return new FeedbackCandidate(
+                intent.ResolvedText,
+                reasonCode,
+                priority,
+                severity,
+                SourceName,
+                conflictKey);
+        }
+
+        /// <summary>
+        /// Where the approved message should be shown. Independent of the guard so it
+        /// can be read on the approval event without re-deriving the intent.
+        /// </summary>
+        public static MainScreenFeedbackBinding BindingFor(MainScreenFeedbackKind kind)
+            => kind switch
+            {
+                MainScreenFeedbackKind.PitchZoneCoaching => MainScreenFeedbackBinding.RealtimeFeedback,
+                MainScreenFeedbackKind.CoachExplanation => MainScreenFeedbackBinding.CoachExplanation,
+                MainScreenFeedbackKind.SessionSummary => MainScreenFeedbackBinding.SessionFeedback,
+                MainScreenFeedbackKind.ProgressionCelebration => MainScreenFeedbackBinding.StatusText,
+                MainScreenFeedbackKind.SafetyLockNotice => MainScreenFeedbackBinding.StatusText,
+                _ => MainScreenFeedbackBinding.StatusText
+            };
+
+        /// <summary>
+        /// Routes an approved candidate's ReasonCode back to its bound property. Uses
+        /// prefix matching so an optional discriminator suffix (e.g. safety ENGAGED vs
+        /// RELEASED) still routes correctly. Used by MainViewModel's approval receiver;
+        /// exposed (and pure) so it is unit-testable without WPF.
+        /// </summary>
+        public static MainScreenFeedbackBinding BindingForReasonCode(string reasonCode)
+        {
+            if (string.IsNullOrEmpty(reasonCode))
+                return MainScreenFeedbackBinding.StatusText;
+
+            if (reasonCode.StartsWith("MAINSCREEN_PITCH_ZONE", StringComparison.Ordinal))
+                return MainScreenFeedbackBinding.RealtimeFeedback;
+            if (reasonCode.StartsWith("MAINSCREEN_COACH", StringComparison.Ordinal))
+                return MainScreenFeedbackBinding.CoachExplanation;
+            if (reasonCode.StartsWith("MAINSCREEN_SESSION", StringComparison.Ordinal))
+                return MainScreenFeedbackBinding.SessionFeedback;
+
+            // MAINSCREEN_PROGRESSION / MAINSCREEN_SAFETY_LOCK → status line.
+            return MainScreenFeedbackBinding.StatusText;
+        }
+
+        public FeedbackGuardContext BuildContext(MainScreenClinicalState state)
+        {
+            if (state == null) throw new ArgumentNullException(nameof(state));
+
+            return new FeedbackGuardContext(
+                IsHealthRiskActive: state.IsHealthRiskActive,
+                IsActiveStrainAlert: state.IsActiveStrainAlert,
+                IsPauseRecommended: state.IsPauseRecommended,
+                IsFatigueActive: state.IsFatigueActive,
+                // Home screen has no "hold" concept; keep it stable so the unstable-hold
+                // praise suppression never fires spuriously here.
+                IsHoldStable: true);
+        }
+
+        private static (FeedbackPriority Priority, Models.MessageSeverity Severity, string ReasonCode, string ConflictKey)
+            Classify(MainScreenFeedbackIntent intent)
+            => intent.Kind switch
+            {
+                MainScreenFeedbackKind.SafetyLockNotice => (
+                    FeedbackPriority.SafetyFreeze,
+                    Models.MessageSeverity.Warning,
+                    "MAINSCREEN_SAFETY_LOCK",
+                    "MAINSCREEN_SAFETY"),
+
+                MainScreenFeedbackKind.CoachExplanation when intent.IsHealthContext => (
+                    FeedbackPriority.HealthWarning,
+                    Models.MessageSeverity.Warning,
+                    "MAINSCREEN_COACH_HEALTH",
+                    "MAINSCREEN_COACH"),
+
+                MainScreenFeedbackKind.CoachExplanation => (
+                    FeedbackPriority.TechniqueCorrection,
+                    Models.MessageSeverity.Suggestion,
+                    "MAINSCREEN_COACH_TECHNIQUE",
+                    "MAINSCREEN_COACH"),
+
+                MainScreenFeedbackKind.PitchZoneCoaching => (
+                    FeedbackPriority.TechniqueCorrection,
+                    Models.MessageSeverity.Suggestion,
+                    "MAINSCREEN_PITCH_ZONE",
+                    "MAINSCREEN_PITCH_ZONE"),
+
+                MainScreenFeedbackKind.ProgressionCelebration => (
+                    FeedbackPriority.ProgressionUpdate,
+                    Models.MessageSeverity.Info,
+                    "MAINSCREEN_PROGRESSION",
+                    "MAINSCREEN_PROGRESSION"),
+
+                // SessionSummary: praise vs. neutral progression update by content.
+                _ when intent.IsPraise => (
+                    FeedbackPriority.PerformancePraise,
+                    Models.MessageSeverity.Info,
+                    "MAINSCREEN_SESSION_PRAISE",
+                    "MAINSCREEN_SESSION"),
+
+                _ => (
+                    FeedbackPriority.ProgressionUpdate,
+                    Models.MessageSeverity.Info,
+                    "MAINSCREEN_SESSION_SUMMARY",
+                    "MAINSCREEN_SESSION")
+            };
+    }
+
+    /// <summary>
+    /// Debounce helper for the home screen's high-frequency live feedback sources
+    /// (pitch-zone coaching ~30 Hz, coach explanation ~1 Hz). Submits to the pipeline
+    /// only when the message KEY changes, or when a minimum interval has elapsed since
+    /// the last submit for that binding — so the guard's per-reason rate-limiter is
+    /// never spammed at 30 Hz. Pure, deterministic (injectable clock), no WPF — fully
+    /// unit-testable. Not thread-safe; the home screen calls it from the UI thread only.
+    /// </summary>
+    public sealed class MainScreenFeedbackDebouncer
+    {
+        private readonly Func<DateTime> _clock;
+        private readonly TimeSpan _minimumInterval;
+        private readonly System.Collections.Generic.Dictionary<MainScreenFeedbackBinding, (string Key, DateTime At)> _last = new();
+
+        public MainScreenFeedbackDebouncer(Func<DateTime>? clock = null, TimeSpan? minimumInterval = null)
+        {
+            _clock = clock ?? (() => DateTime.UtcNow);
+            _minimumInterval = minimumInterval ?? TimeSpan.FromSeconds(1);
+        }
+
+        /// <summary>
+        /// Returns true when a message with <paramref name="messageKey"/> for
+        /// <paramref name="binding"/> should be submitted to the pipeline now. A repeated
+        /// identical key inside the window is swallowed (false); a changed key passes
+        /// immediately; an unchanged key passes again only after the window elapses.
+        /// </summary>
+        public bool ShouldSubmit(MainScreenFeedbackBinding binding, string messageKey)
+        {
+            if (string.IsNullOrEmpty(messageKey))
+                return false;
+
+            var now = _clock();
+            if (_last.TryGetValue(binding, out var prev))
+            {
+                if (prev.Key == messageKey && now - prev.At < _minimumInterval)
+                    return false;
+            }
+
+            _last[binding] = (messageKey, now);
+            return true;
+        }
+
+        /// <summary>Clears debounce memory — call on session start/stop so a new session re-emits.</summary>
+        public void Reset() => _last.Clear();
     }
 }

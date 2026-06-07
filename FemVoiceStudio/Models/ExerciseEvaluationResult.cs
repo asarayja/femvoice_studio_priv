@@ -25,7 +25,7 @@ namespace FemVoiceStudio.Models
     }
     
     /// <summary>
-    /// Resultatomslag returnert fra ExerciseFeedbackEngine per evaluering
+    /// Resultatomslag returnert fra CompositeEvaluator per evaluering
     /// </summary>
     public class ExerciseEvaluationResult
     {
