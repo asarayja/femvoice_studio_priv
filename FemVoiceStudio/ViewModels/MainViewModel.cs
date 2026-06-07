@@ -223,7 +223,6 @@ namespace FemVoiceStudio.ViewModels
             _audioEngine.PitchUpdated += OnPitchUpdated;
             _audioEngine.SmoothedPitchUpdated += OnSmoothedPitchUpdated;
             _audioEngine.ErrorOccurred += OnAudioEngineError;
-            _audioEngine.DeviceLost += OnAudioEngineDeviceLost;
             
             // Initialize pitch smoother for visualization
             _pitchSmoother = new PitchSmoother();
@@ -835,8 +834,15 @@ namespace FemVoiceStudio.ViewModels
 
         private void OnPitchAnalyzed(object? sender, PitchAnalysisResult result)
         {
+            if (Application.Current?.Dispatcher.CheckAccess() == false)
+            {
+                Application.Current.Dispatcher.BeginInvoke((Action)(() => OnPitchAnalyzed(sender, result)));
+                return;
+            }
+
             CurrentPitch = result.Pitch;
             CurrentIntensity = result.RmsValue;
+            LivePitchUpdateSequence++;
             
             // Calculate smoothed pitch
             SmoothedPitch = _liveMetrics.CalculateSmoothedPitch(result.Pitch, result.IsVoiced);
@@ -1017,8 +1023,8 @@ namespace FemVoiceStudio.ViewModels
             // virker — det var årsaken til den PERMANENTE FALSKE «Audiofeil» (engine-feilen
             // ankom asynkront via RaiseError→Post og overskrev «Recording...», og ble
             // aldri tømt). Reelle feil på den load-bearing pipelinen varsles via
-            // _audioAnalyzer.ErrorOccurred → OnError («Feil oppstått»); ekte enhetstap
-            // under opptak håndteres med safety-stopp av OnAudioEngineDeviceLost.
+            // _audioAnalyzer.ErrorOccurred → OnError («Feil oppstått»). DeviceLost fra
+            // denne redundante engine-en er ikke lenger en autoritet for øktstopp.
             Application.Current?.Dispatcher.Invoke(() =>
             {
                 ErrorMessage = error;
@@ -1034,24 +1040,11 @@ namespace FemVoiceStudio.ViewModels
         {
             Application.Current?.Dispatcher.Invoke(() =>
             {
-                if (!IsRecording)
-                    return;
-
-                _uiUpdateTimer.Stop();
-                IsRecording = false;
-
-                // Stopp analysen trygt og forkast resultatet — ingen lagring/progresjon.
-                try
-                {
-                    _audioAnalyzer.StopAnalysis();
-                }
-                catch
-                {
-                    // Enhet allerede borte; en feil her skal ikke maskere safety-stoppen.
-                }
-
-                ErrorMessage = Loc.Get("UI_MicNotReady");
-                StatusText = Loc.Get("Audio_Error");
+                // AudioAnalysisEngine er en ekstra pitch-stream for forsidens graf.
+                // Den vanlige øktanalysen drives av AudioAnalyzerService. En transient
+                // WASAPI/device-feil her skal derfor ikke stoppe en ellers fungerende økt
+                // eller sette forsiden i Audio_Error.
+                ErrorMessage = reason;
             });
         }
         
@@ -1334,7 +1327,6 @@ namespace FemVoiceStudio.ViewModels
             _audioEngine.PitchUpdated -= OnPitchUpdated;
             _audioEngine.SmoothedPitchUpdated -= OnSmoothedPitchUpdated;
             _audioEngine.ErrorOccurred -= OnAudioEngineError;
-            _audioEngine.DeviceLost -= OnAudioEngineDeviceLost;
             _audioEngine.Dispose();
             
             _audioAnalyzer.Dispose();
