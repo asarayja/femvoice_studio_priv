@@ -145,6 +145,15 @@ public partial class App : Application
         services.AddSingleton<ExerciseSessionRecorder>();
         services.AddSingleton<MasteryEvaluator>();
         services.AddSingleton<ProgressionSafetyGate>();
+        services.AddSingleton<TargetProfileAdapter>();
+
+        // ── Tilgjengelighet (StressSensitiveMode / ReducedVisualFeedback) ──────────
+        // Singleton: laster UserVoiceProfile lazy og caches. SettingsWindow trenger
+        // ikke endres — Refresh() kalles lazy (profilen re-leses ved neste
+        // vindusåpning/refresh-trigger). Dempingen endrer KUN presentasjon, aldri om
+        // safety/helse-informasjon vises (Safety > Health > ... > UI).
+        services.AddSingleton(sp => new StressSensitiveExperience(
+            sp.GetRequiredService<IDatabaseService>()));
 
         // ExerciseDataService brukes av ExerciseDetailViewModel for å lese øvelses-
         // progresjon (mastery). Var tidligere aldri registrert — GetService returnerte

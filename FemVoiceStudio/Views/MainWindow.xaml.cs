@@ -287,7 +287,16 @@ namespace FemVoiceStudio.Views
         private void UpdateHealthIndicator()
         {
             var health = _viewModel.HealthIndicator;
-            
+
+            // Tilgjengelighet: ved StressSensitiveMode skal Danger ikke vises i rødt —
+            // selve helse-INFORMASJONEN består (teksten Health_Danger er uendret), men
+            // fargen dempes til varm advarsel (gul/oransje) i stedet for rødt. Resolves
+            // null-safe via App.Services (kan mangle i design/test-kontekst).
+            StressSensitiveExperience? stressSensitive = null;
+            try { stressSensitive = App.Services?.GetService(typeof(StressSensitiveExperience)) as StressSensitiveExperience; }
+            catch { stressSensitive = null; }
+            var softenDanger = stressSensitive?.IsStressSensitive ?? false;
+
             Dispatcher.Invoke(() =>
             {
                 switch (health)
@@ -305,7 +314,11 @@ namespace FemVoiceStudio.Views
                         HealthText.Text = Loc.Get("Health_Warning");
                         break;
                     case HealthState.Danger:
-                        HealthBorder.Background = new SolidColorBrush(Color.FromRgb(244, 67, 54));
+                        // Rød (244,67,54) erstattes av varm advarselsfarge (255,152,0)
+                        // når StressSensitiveMode er på. Teksten er identisk uansett.
+                        HealthBorder.Background = softenDanger
+                            ? new SolidColorBrush(Color.FromRgb(255, 152, 0))
+                            : new SolidColorBrush(Color.FromRgb(244, 67, 54));
                         HealthText.Text = Loc.Get("Health_Danger");
                         break;
                     default:

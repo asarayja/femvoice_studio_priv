@@ -79,6 +79,13 @@ namespace FemVoiceStudio.Views
         private FeedbackPipeline?          _feedbackPipeline;
         private FemVoiceScoreEngine?       _scoreEngine;
 
+        // ── Personlig måltilpasning (resolved via DI) ────────────────────────────
+        // Personliggjør den (allerede recovery-skalerte) profilen mot brukerens
+        // stilmål og kalibrerte komfortsone. DatabaseService er DI-singleton — samme
+        // mønster som GetHearOwnVoiceSetting.
+        private TargetProfileAdapter? _targetProfileAdapter;
+        private DatabaseService?      _database;
+
         /// <summary>Overrides eldre enn dette ignoreres — øvelsen returnerer naturlig
         /// til baseline etter en strain-fri periode (review-funn: ingen utløp gjorde
         /// nedjustering permanent).</summary>
@@ -170,6 +177,8 @@ namespace FemVoiceStudio.Views
             _progressionFeedbackMapper = SafeResolve<ProgressionFeedbackMapper>();
             _feedbackPipeline          = SafeResolve<FeedbackPipeline>();
             _scoreEngine               = SafeResolve<FemVoiceScoreEngine>();
+            _targetProfileAdapter      = SafeResolve<TargetProfileAdapter>();
+            _database                  = SafeResolve<DatabaseService>();
         }
 
         /// <summary>
@@ -663,6 +672,24 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[AdaptiveProgression] Override load failed: {ex.Message}");
+        }
+    }
+
+    // Personlig måltilpasning: juster profilen mot brukerens stilmål (resonansmål,
+    // ikke pitch-jag) og kalibrerte komfortsone. recoveryActive = false her: profilen
+    // fra IExerciseProfileStore er allerede recovery-skalert av ProgressionOrchestrator
+    // (ClampToRecoveryFloor), så en ny recovery-krymping i detalj-visningen ville
+    // dobbelt-skalere kravene. Null-safe: uten adapter/DB faller vi tilbake til profilen.
+    if (_targetProfileAdapter != null)
+    {
+        try
+        {
+            var userProfile = _database?.GetUserVoiceProfile(1);
+            profile = _targetProfileAdapter.Personalize(profile, userProfile, recoveryActive: false);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TargetProfile] Personalisering feilet: {ex.Message}");
         }
     }
 

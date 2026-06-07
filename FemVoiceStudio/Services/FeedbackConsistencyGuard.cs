@@ -167,8 +167,11 @@ namespace FemVoiceStudio.Services
             if (context.IsPauseRecommended && candidate.Priority == FeedbackPriority.TechniqueCorrection)
                 return "Pause recommendation suppresses technique correction.";
 
-            if (context.IsFatigueActive && candidate.Priority == FeedbackPriority.ProgressionUpdate)
-                return "Fatigue suppresses progression updates.";
+            if (context.IsPauseRecommended && candidate.Priority <= FeedbackPriority.PerformancePraise)
+                return "Pause recommendation suppresses praise and progression.";
+
+            if (context.IsFatigueActive && candidate.Priority <= FeedbackPriority.PerformancePraise)
+                return "Fatigue suppresses praise and progression.";
 
             if (!context.IsHoldStable && candidate.Priority == FeedbackPriority.PerformancePraise)
                 return "Unstable hold suppresses praise.";

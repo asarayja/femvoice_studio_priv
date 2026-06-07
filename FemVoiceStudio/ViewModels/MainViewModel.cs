@@ -34,6 +34,10 @@ namespace FemVoiceStudio.ViewModels
         private readonly ProgressionSafetyGate? _progressionSafetyGate;
         private readonly LiveMetricsService _liveMetrics;
         private readonly AdaptiveComfortZoneService _comfortZoneService;
+        // Brukerens personlige profil (stilmål + kalibrert komfortsone). Hentes én gang
+        // i ctor og brukes til å personliggjøre forsidens pitch-målsone. null = ingen
+        // profil/DB ⇒ PersonalizePitchZone faller tilbake til den statiske policy-sonen.
+        private readonly UserVoiceProfile? _userVoiceProfile;
         private readonly FemVoiceScore _femVoiceScore;
         private readonly SmartCoachEngine _smartCoach;
         private readonly PitchSmoother _pitchSmoother;
@@ -196,6 +200,18 @@ namespace FemVoiceStudio.ViewModels
                           ?? new SmartCoachEngine(_database as IDatabaseService);
             _liveMetrics = new LiveMetricsService();
             _comfortZoneService = new AdaptiveComfortZoneService(_smartCoach);
+
+            // Hent brukerprofilen én gang (null-safe) for personlig pitch-målsone.
+            // GetUserVoiceProfile er en synkron, indeksert enkeltlesning på samme
+            // DI-singleton som allerede er åpnet — trygt i ctor.
+            try
+            {
+                _userVoiceProfile = _database.GetUserVoiceProfile(1);
+            }
+            catch
+            {
+                _userVoiceProfile = null;
+            }
 
             // Klinisk progresjonsgate — leser persistert helsehistorikk fra DI-containeren.
             // Null-safe: uten DI (f.eks. i tester) er gaten av, og kun in-memory-låsen gjelder.
@@ -544,9 +560,19 @@ namespace FemVoiceStudio.ViewModels
 
         private void ApplyPitchTargetZone(Range zone)
         {
-            TargetMinPitch = zone.Min;
-            TargetMaxPitch = zone.Max;
-            ActivePitchTargetZone = zone;
+            // Personliggjør den statiske policy-sonen mot brukerens kalibrerte komfortsone.
+            // recoveryActive = false: GetRecommendedSessionType leser DB og er ikke trygt
+            // å kalle synkront fra UI-event-handlerne / ctor-pathen som driver denne metoden
+            // (jf. UpdateComfortZone-merknaden). TODO: koble recovery inn via en cachet
+            // SessionType når øktstart-pathen oppdaterer den asynkront.
+            var (min, max) = TargetProfileAdapter.PersonalizePitchZone(
+                (zone.Min, zone.Max), _userVoiceProfile, recoveryActive: false);
+
+            var personalized = new Range(min, max);
+
+            TargetMinPitch = personalized.Min;
+            TargetMaxPitch = personalized.Max;
+            ActivePitchTargetZone = personalized;
         }
         
         private void OnPitchAnalyzed(object? sender, PitchAnalysisResult result)

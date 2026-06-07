@@ -239,7 +239,7 @@
   </data>
   <!-- New Quality labels -->
   <data name="Quality_Poor" xml:space="preserve">
-    <value>Dårlig</value>
+    <value>Tidlig fase</value>
   </data>
   <data name="Quality_Fair" xml:space="preserve">
     <value>Under forventning</value>

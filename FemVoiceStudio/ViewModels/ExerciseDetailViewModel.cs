@@ -105,6 +105,7 @@ namespace FemVoiceStudio.ViewModels
         private readonly FeedbackPipeline?               _feedbackPipeline;
         private readonly InlineCoachFeedbackMapper?      _inlineCoachFeedbackMapper;
         private readonly MasteryEvaluator?               _masteryEvaluator;
+        private readonly StressSensitiveExperience?      _stressSensitive;
 
         // ── State ────────────────────────────────────────────────────────────────
         private ExerciseTargetProfile _activeProfile = ExerciseTargetProfile.CreateResonanceHumming();
@@ -149,7 +150,8 @@ namespace FemVoiceStudio.ViewModels
             IExerciseProfileFactory?        profileFactory = null,
             FeedbackPipeline?               feedbackPipeline = null,
             InlineCoachFeedbackMapper?      inlineCoachFeedbackMapper = null,
-            MasteryEvaluator?               masteryEvaluator = null)
+            MasteryEvaluator?               masteryEvaluator = null,
+            StressSensitiveExperience?      stressSensitive = null)
         {
             _coordinator    = coordinator  ?? throw new ArgumentNullException(nameof(coordinator));
             _localization   = localization ?? throw new ArgumentNullException(nameof(localization));
@@ -157,6 +159,7 @@ namespace FemVoiceStudio.ViewModels
             _feedbackPipeline = feedbackPipeline;
             _inlineCoachFeedbackMapper = inlineCoachFeedbackMapper;
             _masteryEvaluator = masteryEvaluator;
+            _stressSensitive = stressSensitive;
 
             _coordinator.ExerciseUpdated    += OnExerciseUpdated;
             _coordinator.InlineCoachUpdated += OnInlineCoachUpdated;
@@ -392,7 +395,7 @@ namespace FemVoiceStudio.ViewModels
 
         public string StabilityBrushKey => IsHoldingCorrectly ? "SuccessBrush" : "WarningBrush";
         public Brush? StabilityBrush => Application.Current?.TryFindResource(StabilityBrushKey) as Brush;
-        public string QualityBrushKey  => Quality switch
+        public string QualityBrushKey  => Soften(Quality switch
         {
             _ => DisplayQuality switch
             {
@@ -402,7 +405,7 @@ namespace FemVoiceStudio.ViewModels
                 PerformanceQualityExtended.Fair     => "QualityBrush_Fair",
                 _                                    => "QualityBrush_Poor"
             }
-        };
+        });
 
         public string QualityLabelKey => DisplayQuality switch
         {
@@ -425,12 +428,12 @@ namespace FemVoiceStudio.ViewModels
             _                          => "Shield_OutsideComfortZone"
         };
 
-        public string ShieldBrushKey   => ShieldState switch
+        public string ShieldBrushKey   => Soften(ShieldState switch
         {
             ShieldDisplayState.Locked  => "ErrorBrush",
             ShieldDisplayState.Safe    => "SuccessBrush",
             _                          => "WarningBrush"
-        };
+        });
 
         public Brush? ShieldBrush => Application.Current?.TryFindResource(ShieldBrushKey) as Brush;
 
@@ -484,7 +487,7 @@ namespace FemVoiceStudio.ViewModels
             get
             {
                 if (IsSafetyLocked)
-                    return "ErrorBrush";
+                    return Soften("ErrorBrush");
                 if (LiveCompositeScorePercent >= 80)
                     return "SuccessBrush";
                 if (LiveCompositeScorePercent >= 55)
@@ -804,6 +807,14 @@ namespace FemVoiceStudio.ViewModels
             return weight <= 0 ? 0 : Math.Clamp(weightedTotal / weight, 0, 1);
         }
 
+        /// <summary>
+        /// Ruter en brush-nøkkel gjennom StressSensitiveExperience når tjenesten finnes.
+        /// Null-safe: uten tjenesten (eldre tester / ingen DI) returneres nøkkelen
+        /// uendret — full bakoverkompatibilitet (ErrorBrush ved lås, osv.).
+        /// </summary>
+        private string Soften(string brushKey)
+            => _stressSensitive?.SoftenBrushKey(brushKey) ?? brushKey;
+
         private void RaiseClinicalLoopPropertiesChanged()
         {
             OnPropertyChanged(nameof(LiveCompositeScorePercent));
@@ -897,12 +908,30 @@ namespace FemVoiceStudio.ViewModels
 
             if (Indicators.Count >= 6)
             {
+                // Ved ReducedVisualFeedback: bevisst redusert visuell last. Vi oppdaterer
+                // KUN primærindikatoren (0) og helse-shielden (4) — sistnevnte fordi
+                // safety-signalet aldri skal forsvinne (Safety > UI). De øvrige
+                // sekundære indikatorene (stabilitet/pitch/hold/airflow) nulles og
+                // settes inaktive slik at brukeren ikke overstimuleres.
+                var reduced = _stressSensitive?.IsReducedVisual ?? false;
+
                 Indicators[0].Value = state.PrimaryMetricScore;
-                Indicators[1].Value = state.StabilityScore;
-                Indicators[2].Value = state.IsInComfortZone ? 1.0 : 0.0;
-                Indicators[3].Value = state.HoldProgress;
                 Indicators[4].Value = state.IsSafetyLocked  ? 0.0 : 1.0;
-                Indicators[5].Value = state.PrimaryMetricScore; // intensity proxy
+
+                if (reduced)
+                {
+                    Indicators[1].Value = 0; Indicators[1].IsActive = false;
+                    Indicators[2].Value = 0; Indicators[2].IsActive = false;
+                    Indicators[3].Value = 0; Indicators[3].IsActive = false;
+                    Indicators[5].Value = 0; Indicators[5].IsActive = false;
+                }
+                else
+                {
+                    Indicators[1].Value = state.StabilityScore;
+                    Indicators[2].Value = state.IsInComfortZone ? 1.0 : 0.0;
+                    Indicators[3].Value = state.HoldProgress;
+                    Indicators[5].Value = state.PrimaryMetricScore; // intensity proxy
+                }
             }
 
             // Derive a 5-step quality label from numeric scores — all presentation mapping lives here
@@ -925,8 +954,10 @@ namespace FemVoiceStudio.ViewModels
 
         private void ApplyCoachMessage(InlineCoachMessage message)
         {
+            // Innholdet beholdes alltid; ved StressSensitiveMode dempes kun severity
+            // (Warning -> Suggestion) slik at panelet ikke roper. Null-safe uten tjenesten.
             CoachMessage          = message.ShortMessage ?? "";
-            CoachSeverity         = message.Severity;
+            CoachSeverity         = _stressSensitive?.SoftenSeverity(message.Severity) ?? message.Severity;
             IsCoachMessageVisible = !string.IsNullOrWhiteSpace(CoachMessage);
         }
 
