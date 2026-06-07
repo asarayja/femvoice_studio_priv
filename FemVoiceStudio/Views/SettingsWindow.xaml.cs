@@ -51,6 +51,7 @@ public partial class SettingsWindow : Window
         ThemeDarkRadio.IsChecked = currentTheme == AppTheme.Dark;
 
         LoadVoiceGoalProfile();
+        LoadUserVoiceProfile();
     }
     
     private void OnLanguageSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -86,6 +87,7 @@ public partial class SettingsWindow : Window
         settings.Theme = ThemeManager.Instance.CurrentThemeMode.ToString();
         _database.UpdateUserSettings(settings);
         SaveVoiceGoalProfile();
+        SaveUserVoiceProfile();
     }
     
     private void OnResetDatabase(object sender, RoutedEventArgs e)
@@ -157,6 +159,33 @@ public partial class SettingsWindow : Window
         profile.PrimaryFocus = selectedFocus == "balanced" ? string.Empty : selectedFocus;
         profile.GoalStyleKey = GetSelectedTag(VoiceGoalStyleComboBox);
         _voiceGoalProfiles.SaveProfile(profile);
+    }
+
+    private void LoadUserVoiceProfile()
+    {
+        var profile = _database.GetUserVoiceProfile(1);
+
+        StressSensitiveModeCheckBox.IsChecked = profile?.StressSensitiveMode ?? false;
+        ReducedVisualFeedbackCheckBox.IsChecked = profile?.ReducedVisualFeedback ?? false;
+
+        var frequency = profile?.TrainingFrequencyPerWeek ?? 3;
+        SelectComboBoxByTag(TrainingFrequencyComboBox, frequency.ToString());
+    }
+
+    private void SaveUserVoiceProfile()
+    {
+        // Hent-eller-opprett: bevarer baselines/komfortsone som andre systemer kan ha kalibrert.
+        var profile = _database.GetUserVoiceProfile(1) ?? new UserVoiceProfile { UserId = 1 };
+
+        profile.StressSensitiveMode = StressSensitiveModeCheckBox.IsChecked ?? false;
+        profile.ReducedVisualFeedback = ReducedVisualFeedbackCheckBox.IsChecked ?? false;
+
+        if (int.TryParse(GetSelectedTag(TrainingFrequencyComboBox), out var frequency))
+        {
+            profile.TrainingFrequencyPerWeek = frequency;
+        }
+
+        _database.SaveUserVoiceProfile(profile);
     }
 
     private static IVoiceGoalProfileProvider ResolveVoiceGoalProfileProvider()

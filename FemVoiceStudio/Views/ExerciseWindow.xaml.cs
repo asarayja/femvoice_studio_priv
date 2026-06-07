@@ -888,6 +888,7 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
 
                 _exerciseAudioCapture.AudioDataAvailable += OnExerciseAudioDataAvailable;
                 _exerciseAudioCapture.ErrorOccurred += OnExerciseAudioError;
+                _exerciseAudioCapture.DeviceLost += OnExerciseAudioDeviceLost;
                 _exerciseAudioCapture.StartRecording();
             }
             catch (Exception ex)
@@ -903,6 +904,7 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
             {
                 _exerciseAudioCapture.AudioDataAvailable -= OnExerciseAudioDataAvailable;
                 _exerciseAudioCapture.ErrorOccurred -= OnExerciseAudioError;
+                _exerciseAudioCapture.DeviceLost -= OnExerciseAudioDeviceLost;
                 _exerciseAudioCapture.Dispose();
                 _exerciseAudioCapture = null;
             }
@@ -1063,6 +1065,22 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
         private void OnExerciseAudioError(object? sender, string message)
         {
             Dispatcher.BeginInvoke(new Action(() => FeedbackText.Text = message));
+        }
+
+        /// <summary>
+        /// Safety-first: ved tap av lydkilde under øvelsen stoppes analysen og økten
+        /// pauses trygt via StopInternalExercise (timer stopp, AbortSession på recorder,
+        /// CancelSession i DB) — en avbrutt økt journalføres IKKE som fullført. Når
+        /// tick-strømmen opphører genereres heller ingen falske helsedata, så
+        /// helsekjeden varsles implisitt korrekt.
+        /// </summary>
+        private void OnExerciseAudioDeviceLost(object? sender, string reason)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                StopInternalExercise();
+                FeedbackText.Text = Loc.Get("UI_MicNotReady");
+            }));
         }
 
         private static bool GetHearOwnVoiceSetting()

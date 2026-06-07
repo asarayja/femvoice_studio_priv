@@ -170,8 +170,16 @@ namespace FemVoiceStudio.Audio
         public event Action<double>? RawPitchUpdated;  // HighPrecision only
         public event Action<string>? ErrorOccurred;
         public event Action<double>? SmoothedPitchUpdated;
-        
-        
+
+        /// <summary>
+        /// Fyres når lydkilden går tapt under opptak (enhetstap/driverfeil manifesterer
+        /// i OnRecordingStopped med exception). Safety-first: abonnenter skal stenge ned
+        /// trygt — stoppe analysen og ikke lagre en korrupt økt. Strengen er en kort årsak.
+        /// Marshalles til UI-tråden på samme måte som ErrorOccurred (RaiseError-mønsteret).
+        /// </summary>
+        public event Action<string>? DeviceLost;
+
+
 
         /// <summary>
         /// Detection mode: SimpleFirst (fast) or HighPrecision (accurate).
@@ -1239,6 +1247,21 @@ namespace FemVoiceStudio.Audio
             }
         }
 
+        /// <summary>
+        /// Raise DeviceLost event in a thread-safe manner (same marshalling as RaiseError).
+        /// </summary>
+        private void RaiseDeviceLost(string reason)
+        {
+            if (_syncContext != null)
+            {
+                _syncContext.Post(_ => DeviceLost?.Invoke(reason), null);
+            }
+            else
+            {
+                DeviceLost?.Invoke(reason);
+            }
+        }
+
         private void OnRecordingStopped(object? sender, StoppedEventArgs e)
         {
             _isRecording = false;
@@ -1246,6 +1269,9 @@ namespace FemVoiceStudio.Audio
             if (e.Exception != null)
             {
                 RaiseError($"Recording stopped: {e.Exception.Message}");
+                // Safety: signaler tapt lydkilde slik at opptaket kan stenges ned trygt
+                // og en korrupt økt ikke lagres.
+                RaiseDeviceLost(e.Exception.Message);
             }
         }
 

@@ -184,6 +184,7 @@ namespace FemVoiceStudio.ViewModels
             _audioEngine.PitchUpdated += OnPitchUpdated;
             _audioEngine.SmoothedPitchUpdated += OnSmoothedPitchUpdated;
             _audioEngine.ErrorOccurred += OnAudioEngineError;
+            _audioEngine.DeviceLost += OnAudioEngineDeviceLost;
             
             // Initialize pitch smoother for visualization
             _pitchSmoother = new PitchSmoother();
@@ -722,6 +723,36 @@ namespace FemVoiceStudio.ViewModels
                 StatusText = Loc.Get("Audio_Error");
             });
         }
+
+        /// <summary>
+        /// Safety-first nedstenging ved tap av lydkilde under opptak. Stopper UI-timer
+        /// og analyse, og forkaster resultatet — en enhet-tapt økt skal IKKE føre til
+        /// progresjon eller lagring av en korrupt økt (safety over progression).
+        /// </summary>
+        private void OnAudioEngineDeviceLost(string reason)
+        {
+            Application.Current?.Dispatcher.Invoke(() =>
+            {
+                if (!IsRecording)
+                    return;
+
+                _uiUpdateTimer.Stop();
+                IsRecording = false;
+
+                // Stopp analysen trygt og forkast resultatet — ingen lagring/progresjon.
+                try
+                {
+                    _audioAnalyzer.StopAnalysis();
+                }
+                catch
+                {
+                    // Enhet allerede borte; en feil her skal ikke maskere safety-stoppen.
+                }
+
+                ErrorMessage = Loc.Get("UI_MicNotReady");
+                StatusText = Loc.Get("Audio_Error");
+            });
+        }
         
         /// <summary>
         /// Calculate live FemVoiceScore based on current metrics
@@ -879,6 +910,7 @@ namespace FemVoiceStudio.ViewModels
             _audioEngine.PitchUpdated -= OnPitchUpdated;
             _audioEngine.SmoothedPitchUpdated -= OnSmoothedPitchUpdated;
             _audioEngine.ErrorOccurred -= OnAudioEngineError;
+            _audioEngine.DeviceLost -= OnAudioEngineDeviceLost;
             _audioEngine.Dispose();
             
             _audioAnalyzer.Dispose();

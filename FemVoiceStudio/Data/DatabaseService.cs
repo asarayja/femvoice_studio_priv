@@ -422,6 +422,23 @@ namespace FemVoiceStudio.Data
                     LastEvaluationDate TEXT,
                     IsReadyForNext INTEGER DEFAULT 0
                 );
+
+                CREATE TABLE IF NOT EXISTS UserVoiceProfiles (
+                    UserId INTEGER PRIMARY KEY DEFAULT 1,
+                    CreatedAt TEXT NOT NULL,
+                    LastUpdated TEXT NOT NULL,
+                    BaselinePitch REAL DEFAULT 0,
+                    BaselineResonance REAL DEFAULT 0,
+                    BaselineComfort REAL DEFAULT 0,
+                    BaselineHealth REAL DEFAULT 0,
+                    PreferredVoiceStyle INTEGER DEFAULT 0,
+                    TrainingFrequencyPerWeek INTEGER DEFAULT 3,
+                    ComfortZoneMinPitch REAL,
+                    ComfortZoneMaxPitch REAL,
+                    ComfortZoneOptimalPitch REAL,
+                    StressSensitiveMode INTEGER DEFAULT 0,
+                    ReducedVisualFeedback INTEGER DEFAULT 0
+                );
             ";
 
             var statements = schemaBatch
@@ -561,6 +578,21 @@ namespace FemVoiceStudio.Data
 
             // Migration 7: Recovery sessions count toward training frequency without affecting performance averages.
             AddColumnIfNotExists(connection, "TrainingSessions", "IsRecoveryPractice", "INTEGER DEFAULT 0");
+
+            // Migration 9: UserVoiceProfiles – baselines, preferanser og tilgjengelighetsvalg.
+            // Idempotent heal: legacy-databaser som fikk tabellen før en kolonne ble lagt til
+            // får kolonnene ALTER-et inn her uten datatap (samme mønster som migrasjonene over).
+            AddColumnIfNotExists(connection, "UserVoiceProfiles", "BaselinePitch", "REAL DEFAULT 0");
+            AddColumnIfNotExists(connection, "UserVoiceProfiles", "BaselineResonance", "REAL DEFAULT 0");
+            AddColumnIfNotExists(connection, "UserVoiceProfiles", "BaselineComfort", "REAL DEFAULT 0");
+            AddColumnIfNotExists(connection, "UserVoiceProfiles", "BaselineHealth", "REAL DEFAULT 0");
+            AddColumnIfNotExists(connection, "UserVoiceProfiles", "PreferredVoiceStyle", "INTEGER DEFAULT 0");
+            AddColumnIfNotExists(connection, "UserVoiceProfiles", "TrainingFrequencyPerWeek", "INTEGER DEFAULT 3");
+            AddColumnIfNotExists(connection, "UserVoiceProfiles", "ComfortZoneMinPitch", "REAL");
+            AddColumnIfNotExists(connection, "UserVoiceProfiles", "ComfortZoneMaxPitch", "REAL");
+            AddColumnIfNotExists(connection, "UserVoiceProfiles", "ComfortZoneOptimalPitch", "REAL");
+            AddColumnIfNotExists(connection, "UserVoiceProfiles", "StressSensitiveMode", "INTEGER DEFAULT 0");
+            AddColumnIfNotExists(connection, "UserVoiceProfiles", "ReducedVisualFeedback", "INTEGER DEFAULT 0");
 
             // Migration 8 (heal): AdaptiveComfortZoneService brukte tidligere et
             // RULLERENDE 7-dagers vindu (Today-6) som WeekStart — én ny duplikatrad
@@ -866,6 +898,7 @@ namespace FemVoiceStudio.Data
             // Training & general
             TryExec("TrainingLevels", "CREATE INDEX IF NOT EXISTS idx_traininglevels_user ON TrainingLevels(UserId)");
             TryExec("VoiceProfiles", "CREATE INDEX IF NOT EXISTS idx_voiceprofiles_user ON VoiceProfiles(UserId)");
+            TryExec("UserVoiceProfiles", "CREATE INDEX IF NOT EXISTS idx_uservoiceprofiles_user ON UserVoiceProfiles(UserId)");
             TryExec("DailyProgress", "CREATE INDEX IF NOT EXISTS idx_dailyprogress_user ON DailyProgress(UserId, Date)");
             TryExec("ExerciseEffectiveness", "CREATE INDEX IF NOT EXISTS idx_exerciseeffectiveness_user ON ExerciseEffectiveness(UserId)");
             TryExec("TrainingSessions", "CREATE INDEX IF NOT EXISTS idx_sessions_date ON TrainingSessions(StartTime)");
@@ -2761,9 +2794,114 @@ namespace FemVoiceStudio.Data
         }
         
         #endregion
-        
+
         #endregion
-        
+
+        #region User Voice Profile
+
+        /// <summary>
+        /// Henter brukerens stemmeprofil (baselines, preferanser, tilgjengelighet).
+        /// Returnerer null hvis ingen profil er lagret ennå.
+        /// </summary>
+        public virtual UserVoiceProfile? GetUserVoiceProfile(int userId = 1)
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+                SELECT UserId, CreatedAt, LastUpdated, BaselinePitch, BaselineResonance,
+                       BaselineComfort, BaselineHealth, PreferredVoiceStyle, TrainingFrequencyPerWeek,
+                       ComfortZoneMinPitch, ComfortZoneMaxPitch, ComfortZoneOptimalPitch,
+                       StressSensitiveMode, ReducedVisualFeedback
+                FROM UserVoiceProfiles
+                WHERE UserId = @UserId";
+            command.Parameters.AddWithValue("@UserId", userId);
+
+            using var reader = command.ExecuteReader();
+            if (reader.Read())
+            {
+                return new UserVoiceProfile
+                {
+                    UserId = reader.GetInt32(0),
+                    CreatedAt = ReadDate(reader, 1, DateTime.UtcNow),
+                    LastUpdated = ReadDate(reader, 2, DateTime.UtcNow),
+                    BaselinePitch = reader.IsDBNull(3) ? 0 : reader.GetDouble(3),
+                    BaselineResonance = reader.IsDBNull(4) ? 0 : reader.GetDouble(4),
+                    BaselineComfort = reader.IsDBNull(5) ? 0 : reader.GetDouble(5),
+                    BaselineHealth = reader.IsDBNull(6) ? 0 : reader.GetDouble(6),
+                    PreferredVoiceStyle = reader.IsDBNull(7)
+                        ? VoiceStyleGoal.Feminine
+                        : (VoiceStyleGoal)reader.GetInt32(7),
+                    TrainingFrequencyPerWeek = reader.IsDBNull(8) ? 3 : reader.GetInt32(8),
+                    ComfortZoneMinPitch = reader.IsDBNull(9) ? (double?)null : reader.GetDouble(9),
+                    ComfortZoneMaxPitch = reader.IsDBNull(10) ? (double?)null : reader.GetDouble(10),
+                    ComfortZoneOptimalPitch = reader.IsDBNull(11) ? (double?)null : reader.GetDouble(11),
+                    StressSensitiveMode = !reader.IsDBNull(12) && reader.GetInt32(12) == 1,
+                    ReducedVisualFeedback = !reader.IsDBNull(13) && reader.GetInt32(13) == 1
+                };
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Lagrer eller oppdaterer brukerens stemmeprofil (UPSERT på UserId).
+        /// LastUpdated settes alltid til nå ved lagring.
+        /// </summary>
+        public virtual void SaveUserVoiceProfile(UserVoiceProfile profile)
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            profile.LastUpdated = DateTime.UtcNow;
+
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+                INSERT INTO UserVoiceProfiles
+                    (UserId, CreatedAt, LastUpdated, BaselinePitch, BaselineResonance,
+                     BaselineComfort, BaselineHealth, PreferredVoiceStyle, TrainingFrequencyPerWeek,
+                     ComfortZoneMinPitch, ComfortZoneMaxPitch, ComfortZoneOptimalPitch,
+                     StressSensitiveMode, ReducedVisualFeedback)
+                VALUES
+                    (@UserId, @CreatedAt, @LastUpdated, @BaselinePitch, @BaselineResonance,
+                     @BaselineComfort, @BaselineHealth, @PreferredVoiceStyle, @TrainingFrequencyPerWeek,
+                     @ComfortZoneMinPitch, @ComfortZoneMaxPitch, @ComfortZoneOptimalPitch,
+                     @StressSensitiveMode, @ReducedVisualFeedback)
+                ON CONFLICT(UserId) DO UPDATE SET
+                    LastUpdated = @LastUpdated,
+                    BaselinePitch = @BaselinePitch,
+                    BaselineResonance = @BaselineResonance,
+                    BaselineComfort = @BaselineComfort,
+                    BaselineHealth = @BaselineHealth,
+                    PreferredVoiceStyle = @PreferredVoiceStyle,
+                    TrainingFrequencyPerWeek = @TrainingFrequencyPerWeek,
+                    ComfortZoneMinPitch = @ComfortZoneMinPitch,
+                    ComfortZoneMaxPitch = @ComfortZoneMaxPitch,
+                    ComfortZoneOptimalPitch = @ComfortZoneOptimalPitch,
+                    StressSensitiveMode = @StressSensitiveMode,
+                    ReducedVisualFeedback = @ReducedVisualFeedback";
+
+            command.Parameters.AddWithValue("@UserId", profile.UserId);
+            command.Parameters.AddWithValue("@CreatedAt", profile.CreatedAt.ToString("o"));
+            command.Parameters.AddWithValue("@LastUpdated", profile.LastUpdated.ToString("o"));
+            command.Parameters.AddWithValue("@BaselinePitch", profile.BaselinePitch);
+            command.Parameters.AddWithValue("@BaselineResonance", profile.BaselineResonance);
+            command.Parameters.AddWithValue("@BaselineComfort", profile.BaselineComfort);
+            command.Parameters.AddWithValue("@BaselineHealth", profile.BaselineHealth);
+            command.Parameters.AddWithValue("@PreferredVoiceStyle", (int)profile.PreferredVoiceStyle);
+            command.Parameters.AddWithValue("@TrainingFrequencyPerWeek", profile.TrainingFrequencyPerWeek);
+            command.Parameters.AddWithValue("@ComfortZoneMinPitch", profile.ComfortZoneMinPitch ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue("@ComfortZoneMaxPitch", profile.ComfortZoneMaxPitch ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue("@ComfortZoneOptimalPitch", profile.ComfortZoneOptimalPitch ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue("@StressSensitiveMode", profile.StressSensitiveMode ? 1 : 0);
+            command.Parameters.AddWithValue("@ReducedVisualFeedback", profile.ReducedVisualFeedback ? 1 : 0);
+
+            command.ExecuteNonQuery();
+        }
+
+        #endregion
+
         public void Dispose()
         {
             _connection?.Dispose();

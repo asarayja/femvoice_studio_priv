@@ -28,6 +28,7 @@ namespace FemVoiceStudio.Tests
         private UserSettings _userSettings = new();
         private UserProgressData _userProgress = new();
         private ComplexityProgress? _complexityProgress;
+        private readonly Dictionary<int, UserVoiceProfile> _voiceProfiles = new();
         
         private int _sessionIdCounter = 1;
         
@@ -151,7 +152,23 @@ namespace FemVoiceStudio.Tests
         {
             _userSettings = settings;
         }
-        
+
+        #endregion
+
+        #region User Voice Profile
+
+        public UserVoiceProfile? GetUserVoiceProfile(int userId = 1)
+        {
+            return _voiceProfiles.TryGetValue(userId, out var profile) ? profile : null;
+        }
+
+        public void SaveUserVoiceProfile(UserVoiceProfile profile)
+        {
+            // Speil produksjonsoppførselen: LastUpdated settes ved hver lagring.
+            profile.LastUpdated = DateTime.UtcNow;
+            _voiceProfiles[profile.UserId] = profile;
+        }
+
         #endregion
         
         #region Progression Stats
@@ -508,6 +525,7 @@ namespace FemVoiceStudio.Tests
             _milestones.Clear();
             _dailyProgress.Clear();
             _complexityProgress = null;
+            _voiceProfiles.Clear();
             _userSettings = new UserSettings();
             _userProgress = new UserProgressData();
             _sessionIdCounter = 1;

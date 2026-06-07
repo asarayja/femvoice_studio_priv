@@ -16,6 +16,11 @@ namespace FemVoiceStudio.Data
         void UpdateUserSettings(UserSettings settings);
         #endregion
 
+        #region User Voice Profile
+        UserVoiceProfile? GetUserVoiceProfile(int userId = 1);
+        void SaveUserVoiceProfile(UserVoiceProfile profile);
+        #endregion
+
         #region Training Sessions
         List<TrainingSession> GetTrainingSessions(DateTime from, DateTime to);
         List<TrainingSession> GetRecentSessions(int count = 10, int userId = 1);

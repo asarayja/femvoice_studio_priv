@@ -5,7 +5,12 @@ using NAudio.CoreAudioApi;
 using NAudio.Wave;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 using FemVoiceStudio.Models;
+
+// Eksponerer internal medlemmer (f.eks. HandleRecordingStopped) for enhetstesting
+// av safety-stien uten en fysisk lydenhet.
+[assembly: InternalsVisibleTo("FemVoiceStudio.Tests")]
 
 namespace FemVoiceStudio.Audio
 {
@@ -30,6 +35,19 @@ namespace FemVoiceStudio.Audio
         // Events for data og feilhåndtering
         public event EventHandler<float[]>? AudioDataAvailable;
         public event EventHandler<string>? ErrorOccurred;
+
+        /// <summary>
+        /// Fyres når lydkilden går tapt under opptak (enhetstap/driverfeil).
+        /// Safety-first: abonnenter skal STOPPE analysen og PAUSE økten — aldri
+        /// fortsette stille på en ukjent kilde. Strengen er en kort årsaksbeskrivelse.
+        /// </summary>
+        public event EventHandler<string>? DeviceLost;
+
+        /// <summary>
+        /// Navnet på enheten som var aktiv ved siste StartRecording.
+        /// Null inntil opptak er startet. Brukes for diagnostikk ved enhetstap.
+        /// </summary>
+        public string? ActiveDeviceName { get; private set; }
         
         // Konfigurasjon - lav latens
         private int _bufferSize = 1024; // Redusert for lav latens (~23ms ved 44100Hz)
@@ -252,6 +270,8 @@ namespace FemVoiceStudio.Audio
                     _playbackBuffer?.ClearBuffer();
                 }
                 _waveIn.BufferMilliseconds = (_bufferSize * 1000) / _sampleRate;
+                // Lagre aktiv enhet slik at vi kan rapportere hvilken kilde som gikk tapt.
+                ActiveDeviceName = InputDeviceName;
                 _waveIn.StartRecording();
                 _isRecording = true;
             }
@@ -405,11 +425,25 @@ namespace FemVoiceStudio.Audio
         
         private void OnRecordingStopped(object? sender, StoppedEventArgs e)
         {
+            HandleRecordingStopped(e.Exception);
+        }
+
+        /// <summary>
+        /// Felles håndtering av at opptaket stoppet. Skilt ut fra NAudio-eventet slik at
+        /// enhetstap-logikken kan verifiseres i test uten en fysisk lydenhet.
+        /// Ved exception (enhetstap/driverfeil manifesterer her i NAudio) fyres BÅDE
+        /// ErrorOccurred (eksisterende oppførsel) OG DeviceLost (safety-stopp).
+        /// </summary>
+        internal void HandleRecordingStopped(Exception? exception)
+        {
             _isRecording = false;
-            
-            if (e.Exception != null)
+
+            if (exception != null)
             {
-                ErrorOccurred?.Invoke(this, $"Opptak stoppet på grunn av feil: {e.Exception.Message}");
+                var reason = exception.Message;
+                ErrorOccurred?.Invoke(this, $"Opptak stoppet på grunn av feil: {reason}");
+                // Safety: signaler tapt lydkilde slik at økten kan pauses trygt.
+                DeviceLost?.Invoke(this, reason);
             }
         }
         

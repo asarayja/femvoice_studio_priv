@@ -3939,6 +3939,39 @@ Dette kan ikke angres!</value>
   <data name="VoiceGoalStyle_Custom" xml:space="preserve">
     <value>Egendefinert</value>
   </data>
+  <data name="Settings_Accessibility_Title" xml:space="preserve">
+    <value>Tilgjengelighet</value>
+  </data>
+  <data name="Settings_Accessibility_Desc" xml:space="preserve">
+    <value>Tilpass tempo og synsinntrykk slik at trening kjennes trygt og overkommelig.</value>
+  </data>
+  <data name="Settings_Accessibility_StressSensitive" xml:space="preserve">
+    <value>Rolig modus</value>
+  </data>
+  <data name="Settings_Accessibility_StressSensitiveDesc" xml:space="preserve">
+    <value>Dempet, mindre pågående coaching med mer pauser. Fint hvis det fort blir overveldende.</value>
+  </data>
+  <data name="Settings_Accessibility_ReducedVisual" xml:space="preserve">
+    <value>Redusert visuell tilbakemelding</value>
+  </data>
+  <data name="Settings_Accessibility_ReducedVisualDesc" xml:space="preserve">
+    <value>Roligere skjermbilde med færre animasjoner og mindre bevegelse.</value>
+  </data>
+  <data name="Settings_Accessibility_TrainingFrequency" xml:space="preserve">
+    <value>Treningsdager per uke</value>
+  </data>
+  <data name="Settings_Accessibility_Frequency2" xml:space="preserve">
+    <value>2 dager</value>
+  </data>
+  <data name="Settings_Accessibility_Frequency3" xml:space="preserve">
+    <value>3 dager (anbefalt)</value>
+  </data>
+  <data name="Settings_Accessibility_Frequency4" xml:space="preserve">
+    <value>4 dager</value>
+  </data>
+  <data name="Settings_Accessibility_Frequency5" xml:space="preserve">
+    <value>5 eller flere dager</value>
+  </data>
   <data name="Chart_TimeAxis" xml:space="preserve">
     <value>Tid</value>
   </data>
