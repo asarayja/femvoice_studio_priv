@@ -1009,10 +1009,19 @@ namespace FemVoiceStudio.ViewModels
         /// </summary>
         private void OnAudioEngineError(string error)
         {
+            // _audioEngine er en REDUNDANT pitch-streaming-kilde; analyse, score og den
+            // lagrede økten drives av _audioAnalyzer. En feil i denne redundante engine-en
+            // (typisk WASAPI-hikke / enhetskontensjon når begge pipelines åpner samme
+            // mikrofon i StartRecording) skal logges i ErrorMessage for diagnostikk, men
+            // IKKE overstyre forsidens StatusText til «Audiofeil» mens analysen faktisk
+            // virker — det var årsaken til den PERMANENTE FALSKE «Audiofeil» (engine-feilen
+            // ankom asynkront via RaiseError→Post og overskrev «Recording...», og ble
+            // aldri tømt). Reelle feil på den load-bearing pipelinen varsles via
+            // _audioAnalyzer.ErrorOccurred → OnError («Feil oppstått»); ekte enhetstap
+            // under opptak håndteres med safety-stopp av OnAudioEngineDeviceLost.
             Application.Current?.Dispatcher.Invoke(() =>
             {
                 ErrorMessage = error;
-                StatusText = Loc.Get("Audio_Error");
             });
         }
 
