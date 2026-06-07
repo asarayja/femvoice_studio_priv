@@ -148,9 +148,9 @@ public partial class App : Application
         services.AddSingleton<TargetProfileAdapter>();
 
         // ── Tilgjengelighet (StressSensitiveMode / ReducedVisualFeedback) ──────────
-        // Singleton: laster UserVoiceProfile lazy og caches. SettingsWindow trenger
-        // ikke endres — Refresh() kalles lazy (profilen re-leses ved neste
-        // vindusåpning/refresh-trigger). Dempingen endrer KUN presentasjon, aldri om
+        // Singleton: laster UserVoiceProfile lazy og caches. SettingsWindow kaller
+        // Refresh() etter lagring (SaveUserVoiceProfile) slik at endrede flagg slår
+        // igjennom uten omstart. Dempingen endrer KUN presentasjon, aldri om
         // safety/helse-informasjon vises (Safety > Health > ... > UI).
         services.AddSingleton(sp => new StressSensitiveExperience(
             sp.GetRequiredService<IDatabaseService>()));

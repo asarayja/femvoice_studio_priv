@@ -199,6 +199,40 @@ namespace FemVoiceStudio.Tests
         }
 
         [Fact]
+        public void Personalize_Recovery_FloorNeverRaisesSubFloorBase()
+        {
+            var adapter = CreateAdapter();
+            // A7-regresjon: base UNDER recovery-gulvene (resonansMin 0.10 < 0.15,
+            // stability 0.15 < 0.20). Math.Max-gulvet alene ville LØFTET kravene til
+            // gulvverdien — i strid med invarianten «recovery kan aldri øke noe».
+            var baseProfile = ExerciseTargetProfile.CreateResonanceHumming(
+                targetResonanceMin: 0.10, stabilityThreshold: 0.15, requiredHoldSeconds: 1.0);
+
+            var result = adapter.Personalize(
+                baseProfile, ProfileWithStyle(VoiceStyleGoal.Custom), recoveryActive: true);
+
+            Assert.True(result.TargetResonanceMin <= baseProfile.TargetResonanceMin);
+            Assert.True(result.StabilityThreshold <= baseProfile.StabilityThreshold);
+            Assert.True(result.RequiredHoldSeconds <= baseProfile.RequiredHoldSeconds);
+        }
+
+        [Fact]
+        public void Personalize_Recovery_NeverRaisesAboveBase_EvenWithFeminineElevation()
+        {
+            var adapter = CreateAdapter();
+            // A7-regresjon: Feminine-stil eleverer min (+0.03) FØR recovery. Med base
+            // rett under gulvet (0.13) ville stil (0.16) + gulv (0.15) gitt et resultat
+            // OVER base. Recovery skal trumfe stil-elevasjonen: resultat ≤ base.
+            var baseProfile = ExerciseTargetProfile.CreateResonanceHumming(
+                targetResonanceMin: 0.13);
+
+            var result = adapter.Personalize(
+                baseProfile, ProfileWithStyle(VoiceStyleGoal.Feminine), recoveryActive: true);
+
+            Assert.True(result.TargetResonanceMin <= baseProfile.TargetResonanceMin);
+        }
+
+        [Fact]
         public void Personalize_Recovery_ShrinksPitchZoneTowardCenter()
         {
             var adapter = CreateAdapter();

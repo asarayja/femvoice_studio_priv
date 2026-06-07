@@ -106,9 +106,20 @@ namespace FemVoiceStudio.Services
             // ── 3) Recovery: krymp ALLE krav (etter stil; kan aldri øke noe) ────────
             if (recoveryActive)
             {
-                resonanceMin = Math.Max(ResonanceFloorRecovery, resonanceMin + RecoveryResonanceMinDelta);
-                stability    = Math.Max(RecoveryStabilityFloor, stability + RecoveryStabilityDelta);
-                holdSeconds  = Math.Max(0, holdSeconds + RecoveryHoldDelta);
+                // Gulvene beskytter mot å krympe FOR langt — men får aldri LØFTE et
+                // allerede-lavt krav (Math.Max alene kunne det når basen lå under
+                // gulvet). Recovery-resultatet cappes derfor både mot verdien etter
+                // stiljustering og mot base-profilens utgangspunkt, slik at recovery
+                // aldri ender høyere enn noen av dem (A7-funn).
+                resonanceMin = Math.Min(
+                    Math.Min(resonanceMin, baseProfile.TargetResonanceMin),
+                    Math.Max(ResonanceFloorRecovery, resonanceMin + RecoveryResonanceMinDelta));
+                stability = Math.Min(
+                    stability,
+                    Math.Max(RecoveryStabilityFloor, stability + RecoveryStabilityDelta));
+                holdSeconds = Math.Min(
+                    holdSeconds,
+                    Math.Max(0, holdSeconds + RecoveryHoldDelta));
 
                 // resonanceMax aldri øket; hold konsistens om min nå overstiger max.
                 if (resonanceMax < resonanceMin)

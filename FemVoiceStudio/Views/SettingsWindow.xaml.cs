@@ -185,7 +185,30 @@ public partial class SettingsWindow : Window
             profile.TrainingFrequencyPerWeek = frequency;
         }
 
+        // A7-funn (critical): stilvalget MÅ speiles inn i UserVoiceProfile —
+        // TargetProfileAdapter leser utelukkende PreferredVoiceStyle. Uten denne
+        // koblingen sto feltet på modelldefault (Feminine) for alle brukere uansett
+        // valg, og en DarkFeminine-/Androgynous-bruker fikk HEVET resonansmål.
+        var styleTag = GetSelectedTag(VoiceGoalStyleComboBox);
+        if (!string.IsNullOrEmpty(styleTag))
+        {
+            profile.PreferredVoiceStyle = UserVoiceProfile.FromGoalStyleKey(styleTag);
+        }
+
         _database.SaveUserVoiceProfile(profile);
+
+        // A7-funn: StressSensitiveExperience er en singleton som cacher profilen —
+        // uten Refresh() tok endrede tilgjengelighetsflagg først effekt ved neste
+        // app-start.
+        try
+        {
+            (App.Services?.GetService(typeof(StressSensitiveExperience))
+                as StressSensitiveExperience)?.Refresh();
+        }
+        catch
+        {
+            // Settings kan konstrueres i design-/testkontekst før App.Services finnes.
+        }
     }
 
     private static IVoiceGoalProfileProvider ResolveVoiceGoalProfileProvider()

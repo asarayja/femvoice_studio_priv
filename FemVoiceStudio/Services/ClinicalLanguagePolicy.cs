@@ -99,6 +99,15 @@ namespace FemVoiceStudio.Services
 
             // Direct shaming of the person.
             new(@"\bskam\w*\b", Options),
+
+            // Deficiency-/under-standard framing of the trainee's result: language that
+            // measures the voice against a norm/expectation and finds it lacking
+            // ("under forventning", "ikke god nok", "under det normale/normalen").
+            // Technical/diagnostic metric copy ("for lav suksessrate") is a different
+            // grammatical shape and is not touched by these rules.
+            new(@"\bunder\s+forventning\w*\b", Options),
+            new(@"\bikke\s+god\w*\s+nok\b", Options),
+            new(@"\bunder\s+(?:det\s+)?(?:normale\w*|normalen|forventede)\b", Options),
         };
 
         /// <summary>
@@ -132,6 +141,9 @@ namespace FemVoiceStudio.Services
                 ["svak"] = "lett",
                 ["mislykket"] = "ikke helt der ennå - prøv igjen",
                 ["skam"] = "",
+                ["under forventning"] = "i utvikling",
+                ["ikke god nok"] = "på vei",
+                ["under normalen"] = "i ditt eget tempo",
             };
 
         /// <summary>

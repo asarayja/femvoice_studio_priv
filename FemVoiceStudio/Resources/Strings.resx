@@ -242,7 +242,7 @@
     <value>Tidlig fase</value>
   </data>
   <data name="Quality_Fair" xml:space="preserve">
-    <value>Under forventning</value>
+    <value>I utvikling</value>
   </data>
   <data name="Quality_Good" xml:space="preserve">
     <value>God</value>
@@ -1563,6 +1563,9 @@
   </data>
   <data name="Main_Target" xml:space="preserve">
     <value>Mål</value>
+  </data>
+  <data name="Main_ComfortZone" xml:space="preserve">
+    <value>Komfortsone</value>
   </data>
   <data name="Main_Calendar" xml:space="preserve">
     <value>Kalender</value>

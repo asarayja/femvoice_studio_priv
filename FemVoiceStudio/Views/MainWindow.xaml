@@ -224,15 +224,11 @@
                     
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
                         <TextBlock Text="{loc:Loc Main_PitchGraph}" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <!-- A7: ingen rå Hz-verdier eksponeres i UI (samme prinsipp som
+                             ExerciseWindow). Sonen kommuniseres som komfortsone-etterlevelse
+                             via båndet i grafen — ikke som et tallmål å treffe. -->
                         <Border Background="{DynamicResource AccentLightBrush}" CornerRadius="4" Padding="8,4" Margin="16,0,0,0">
-                            <TextBlock FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}">
-                                <Run Text="{loc:Loc Main_Target}"/>
-                                <Run Text=": "/>
-                                <Run Text="{Binding TargetMinPitch, StringFormat={}{0:F0}}" FontWeight="SemiBold"/>
-                                <Run Text=" - "/>
-                                <Run Text="{Binding TargetMaxPitch, StringFormat={}{0:F0}}" FontWeight="SemiBold"/>
-                                <Run Text=" Hz"/>
-                            </TextBlock>
+                            <TextBlock Text="{loc:Loc Main_ComfortZone}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         </Border>
                         
                         <!-- Stability Indicator -->

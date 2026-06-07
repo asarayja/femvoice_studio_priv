@@ -32,6 +32,12 @@ namespace FemVoiceStudio.Tests
         [InlineData("shame_exclaim", "Feil! Prøv på nytt.")]
         [InlineData("mislykket", "Forsøket var mislykket.")]
         [InlineData("skam", "Det er ingenting å skamme seg over her.")]
+        // Deficiency-/under-standard framing (A7 false-negative round): the voice
+        // measured against a norm and found lacking.
+        [InlineData("under_forventning", "Under forventning")]
+        [InlineData("ikke_god_nok", "Resultatet er ikke godt nok ennå.")]
+        [InlineData("under_normalen", "Stemmen ligger under normalen.")]
+        [InlineData("under_det_normale", "Resonansen er under det normale.")]
         public void Scan_FlagsForbiddenCopy(string key, string value)
         {
             var violations = ClinicalLanguagePolicy.Scan(
@@ -71,6 +77,10 @@ namespace FemVoiceStudio.Tests
         [InlineData("error_format", "Feil ved lasting av øvelser: {0}")]
         // Mic-troubleshooting "dårlig signal" is a hardware note, not a voice judgement.
         [InlineData("daarlig_signal", "Dårlig signal - sjekk mikrofon")]
+        // "under" in temporal/positional senses is legitimate — only the
+        // norm-comparison shapes ("under forventning/normalen") are deficiency framing.
+        [InlineData("under_temporal", "Hold tonen jevn under øvelsen.")]
+        [InlineData("under_position", "Slipp skuldrene ned og pust rolig under hele økten.")]
         public void Scan_AllowsLegitimateCopy(string key, string value)
         {
             var violations = ClinicalLanguagePolicy.Scan(
