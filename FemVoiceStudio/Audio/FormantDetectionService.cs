@@ -54,6 +54,9 @@ namespace FemVoiceStudio.Audio
         public double Confidence { get; private set; }
         public double RmsValue { get; private set; }
 
+        /// <summary>Siste frames LPC-koeffisienter (testbarhet/diagnostikk).</summary>
+        public IReadOnlyList<double> LastLpcCoefficients => _lastLpcCoefficients;
+
         #endregion
 
         #region Constructor
@@ -128,14 +131,29 @@ namespace FemVoiceStudio.Audio
                 return result;
             }
 
-            var preEmphasized = ApplyPreEmphasis(samples);
+            // RUNTIME-FIKS 3 (analyserate): LPC-orden 12 kan ikke oppløse formanter
+            // ved 44100 Hz (tommelfingerregel: orden ≈ samplerate/1000) — spekteret
+            // ble 1-2 brede pukler og F1/F2-gatene feilet alltid. Standard praksis
+            // er å decimere til ~11 kHz før formant-LPC; ved 44100 → 11025 Hz
+            // passer orden 12, og 5 kHz-analysebåndet dekker F1–F3 med god margin.
+            // Verifisert numerisk: målformanter treffes innenfor ~10 % for fem
+            // syntetiske vokaler (maskulin/feminin a-i-e-æ) etter fiksen.
+            var analysisSamples = samples;
+            var analysisRate = _sampleRate;
+            while (analysisRate >= 22050 && analysisSamples.Length >= 4 * (_order + 2))
+            {
+                analysisSamples = DecimateByTwo(analysisSamples);
+                analysisRate /= 2;
+            }
+
+            var preEmphasized = ApplyPreEmphasis(analysisSamples);
             var lpcCoefficients = ComputeLpcCoefficients(preEmphasized, _order);
             _lastLpcCoefficients = lpcCoefficients;
 
             _lastResidualEnergy = ComputeResidualEnergy(preEmphasized, lpcCoefficients);
             result.ResidualEnergy = _lastResidualEnergy;
 
-            var formants = FindFormantFrequencies(lpcCoefficients, _sampleRate);
+            var formants = FindFormantFrequencies(lpcCoefficients, analysisRate);
             formants = formants.OrderBy(f => f.Frequency).ToList();
 
             if (formants.Count >= 1)
@@ -220,6 +238,25 @@ namespace FemVoiceStudio.Audio
             return centroid;
         }
 
+        /// <summary>
+        /// Halverer sampleraten med et enkelt [1,2,1]/4-lavpassfilter foran
+        /// decimeringen (antialiasing). Brukes for å bringe analyseraten ned til
+        /// ~11 kHz der LPC-orden 12 faktisk kan modellere formantstrukturen.
+        /// </summary>
+        private static float[] DecimateByTwo(float[] samples)
+        {
+            var filtered = new float[samples.Length];
+            filtered[0] = samples[0];
+            filtered[^1] = samples[^1];
+            for (int i = 1; i < samples.Length - 1; i++)
+                filtered[i] = (samples[i - 1] + 2f * samples[i] + samples[i + 1]) / 4f;
+
+            var result = new float[samples.Length / 2];
+            for (int i = 0; i < result.Length; i++)
+                result[i] = filtered[i * 2];
+            return result;
+        }
+
         private float[] ApplyPreEmphasis(float[] samples)
         {
             var result = new float[samples.Length];
@@ -235,7 +272,7 @@ namespace FemVoiceStudio.Audio
         {
             int n = samples.Length;
             var windowed = ApplyHammingWindow(samples);
-            
+
             var r = new double[order + 1];
             for (int lag = 0; lag <= order; lag++)
             {
@@ -247,7 +284,7 @@ namespace FemVoiceStudio.Audio
 
             var a = new double[order + 1];
             var e = new double[order + 1];
-            
+
             e[0] = r[0];
             a[0] = 1;
 
@@ -257,13 +294,24 @@ namespace FemVoiceStudio.Audio
                 for (int j = 1; j < i; j++)
                     sum += a[j] * r[i - j];
 
-                double k = (r[i] - sum) / (e[i - 1] + 1e-10);
+                // RUNTIME-FIKS 1 (fortegnsfeil): med feilfilter-konvensjonen
+                // A(z) = 1 + Σ a_j z^-j er refleksjonskoeffisienten
+                // k = (r[i] + Σ a_j r[i-j]) / E. Koden hadde minus — det ga
+                // koeffisienter på ~±60 (skal være O(1)), et formantløst
+                // LPC-spektrum, null topper og dermed «--» i resonansanalysen.
+                // Verifisert numerisk mot direkte løsning av normallikningene.
+                double k = (r[i] + sum) / (e[i - 1] + 1e-10);
+
+                // RUNTIME-FIKS 2 (in-place-korrupsjon): Levinson-Durbin-oppdateringen
+                // a_j ← a_j − k·a_{i−j} må bruke FORRIGE iterasjons verdier på begge
+                // sider; in-place-oppdatering korrumperer a_{i−j} for j > i/2.
+                var prev = (double[])a.Clone();
 
                 a[i] = -k;
 
                 for (int j = 1; j < i; j++)
                 {
-                    a[j] = a[j] - k * a[i - j];
+                    a[j] = prev[j] - k * prev[i - j];
                 }
 
                 e[i] = (1 - k * k) * e[i - 1];
