@@ -76,8 +76,9 @@ namespace FemVoiceStudio.Tests
             Assert.Equal(61, snapshot.ResonanceScore);
             Assert.Equal(38, snapshot.PitchScore);
             Assert.Equal(49, snapshot.IntonationScore);
-            // Voice-health proxy = mean of the Health pair (Comfort + Recovery).
-            Assert.Equal((72 + 81) / 2.0, snapshot.VoiceHealthScore);
+            // Voice-health proxy = worst-of (min) the Health pair (Comfort + Recovery),
+            // per Sprint D-A COMFORT-01: a rising comfort can never mask a falling recovery.
+            Assert.Equal(Math.Min(72, 81), snapshot.VoiceHealthScore);
             // OverallScore mirrors the composite measurement.
             Assert.Equal(59, snapshot.OverallScore);
         }
@@ -293,8 +294,9 @@ namespace FemVoiceStudio.Tests
             Assert.Equal(Math.Round((20 + 40 + 0) / 3.0), vm.PitchScore);
             Assert.Equal(Math.Round((50 + 70 + 30) / 3.0), vm.CompositeVoiceScore);
 
-            // Voice-health proxy = mean of the rounded Comfort + Recovery means.
-            Assert.Equal(Math.Round((vm.ComfortScore + vm.RecoveryScore) / 2.0), vm.VoiceHealthScore);
+            // Voice-health proxy = worst-of (min) the rounded Comfort + Recovery means,
+            // per Sprint D-A COMFORT-01 (a rising comfort can never mask a falling recovery).
+            Assert.Equal(Math.Round(Math.Min(vm.ComfortScore, vm.RecoveryScore)), vm.VoiceHealthScore);
 
             // Bar widths track scores (max 200px).
             Assert.Equal(Math.Min(200, vm.ComfortScore * 2), vm.ComfortBarWidth);
