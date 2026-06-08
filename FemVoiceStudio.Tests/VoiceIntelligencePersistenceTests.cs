@@ -255,8 +255,10 @@ namespace FemVoiceStudio.Tests
             Assert.Equal(3, trend.Count);
             Assert.Equal(new[] { 10, 20, 30 }, trend.Select(p => p.SessionId).ToArray());
             Assert.True(trend[0].StartedAt < trend[1].StartedAt && trend[1].StartedAt < trend[2].StartedAt);
+            // Kronologisk: session 10 @ 09:00 (composite 50), 20 @ 10:30 (70), 30 @ 12:00 (60).
+            // trend[2] er den siste i TID (session 30) = 60 — ikke den med høyest sessionId.
             Assert.Equal(50, trend[0].CompositeVoiceScore, 3);
-            Assert.Equal(70, trend[2].CompositeVoiceScore, 3);
+            Assert.Equal(60, trend[2].CompositeVoiceScore, 3);
         }
 
         // ── 9. Trend honours the user/time window filter ──────────────────────────

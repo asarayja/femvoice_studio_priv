@@ -250,7 +250,10 @@ namespace FemVoiceStudio.Tests
         public void ScoreSession_RobustToOutlierFrames()
         {
             var a = NewAnalyzer();
-            // Overveiende tung økt med to ekstreme lette utliggere; trimmet snitt skal holde Heavy.
+            // Overveiende tung økt (8 tunge frames) med to ekstreme lette utliggere.
+            // RobustMean trimmer 20 % i hver ende, dvs. (int)(10*0.20)=2 verdier — nok til
+            // å fjerne BEGGE utliggerne per akse, så det trimmede snittet holder Heavy.
+            // (Med kun 7 frames trimmet den bare 1 og én utligger overlevde.)
             var frames = new List<(double, double, double, double)>
             {
                 (380, 1100, 8, 0.70),
@@ -258,6 +261,9 @@ namespace FemVoiceStudio.Tests
                 (370, 1080, 7, 0.72),
                 (385, 1110, 8, 0.69),
                 (395, 1130, 9, 0.67),
+                (382, 1095, 8, 0.71),
+                (388, 1115, 9, 0.69),
+                (375, 1090, 7, 0.70),
                 (740, 5000, 40, 0.10), // utligger
                 (745, 5200, 42, 0.10), // utligger
             };

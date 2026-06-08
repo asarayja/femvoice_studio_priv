@@ -312,11 +312,17 @@ namespace FemVoiceStudio.Tests
             // found, so a valid FormantSnapshot — and thus FormantsUpdated — is guaranteed
             // once enough above-threshold frames are pumped.
             resonanceEngine.Start();
-            PumpSyntheticVoice(resonanceEngine);
 
-            // The formant cache is populated by every FormantsUpdated. Wait past the 100 ms
-            // evaluation rate-limit (the pump's own evaluation consumed the current window),
-            // then drive a non-idle UpdateMetrics evaluation that forwards the cached signal.
+            // Confirm the REAL engine actually emits a valid formant snapshot before we
+            // assert on the wiring — pump in a bounded loop until FormantsUpdated fires
+            // (robust to per-machine frame-count/timing variance), then drive a non-idle
+            // UpdateMetrics evaluation that forwards the cached signal.
+            var formantFired = false;
+            resonanceEngine.FormantsUpdated += f => { if (f.F1 > 0) formantFired = true; };
+            for (var attempt = 0; attempt < 20 && !formantFired; attempt++)
+                PumpSyntheticVoice(resonanceEngine);
+            Assert.True(formantFired, "Resonansmotoren skal emittere et gyldig formant-snapshot for det syntetiske signalet.");
+
             WaitForRateLimit();
             coordinator.UpdateMetrics(0.7, pitch: 200, stability: 0.6, health: 100);
 
@@ -524,10 +530,16 @@ namespace FemVoiceStudio.Tests
             for (var i = 0; i < count; i++)
             {
                 double t = (double)i / sampleRate;
+                // FormantSnapshot.IsValid krever F1>0 && F2>0 && F3>0 — så vi trenger TRE
+                // distinkte spektraltopper i 200–4000 Hz-søkeområdet, ellers blir F3=0,
+                // snapshot ugyldig og FormantsUpdated fyrer aldri (rotårsak til at
+                // VocalWeight-produksjonsstien testet falt tilbake til nøytral 50).
+                // Grunntonen legges under 200 Hz-søkegulvet så den ikke plukkes som formant.
                 double sample =
-                    0.45 * Math.Sin(2 * Math.PI * 200 * t) +   // fundamental
-                    0.30 * Math.Sin(2 * Math.PI * 700 * t) +   // ~F1 region
-                    0.25 * Math.Sin(2 * Math.PI * 2000 * t);   // ~F2 region (brightness)
+                    0.40 * Math.Sin(2 * Math.PI * 150 * t) +   // grunntone (under formant-søkegulvet)
+                    0.35 * Math.Sin(2 * Math.PI * 700 * t) +   // ~F1
+                    0.30 * Math.Sin(2 * Math.PI * 1800 * t) +  // ~F2
+                    0.25 * Math.Sin(2 * Math.PI * 2900 * t);   // ~F3 (sikrer gyldig snapshot)
                 buffer[i] = (float)sample;
             }
             engine.ProcessSamples(buffer);
