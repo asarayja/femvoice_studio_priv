@@ -9,8 +9,22 @@ namespace FemVoiceStudio.Tests
         private static readonly Regex ExplicitHzValue = new(@"\b\d+(?:[.,]\d+)?(?:\s*[-+]\s*\d+(?:[.,]\d+)?)?\s*Hz\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static readonly Regex LocalizationMethodKey = new(@"\bGet(?:Formatted)?String\(\s*""([^""]+)""", RegexOptions.Compiled);
         private static readonly Regex LocalizationIndexerKey = new(@"(?:LocalizationService\.Instance|loc|Service|locService)\s*\[\s*""([^""]+)""\s*\]", RegexOptions.Compiled);
+        // Language-agnostic critical shame/pressure copy that must never reach a user, in
+        // ANY *.resx (this regex runs over every resource file). Extends the original list
+        // with the remaining critical ClinicalLanguagePolicy shapes:
+        //   • voice value-judgements: wrong/masculine/male/bad voice (NO: feil/mannlig stemme),
+        //   • pressure imperatives: try/push harder, go/aim/push/press higher, must (go) higher,
+        //   • failure framing: "failure"/"failed" — EXCEPT the legitimate technical operation
+        //     errors "Loading failed:" / "Calibration failed:" (negative look-behind),
+        //   • deficiency/shame quality LABELS: "ikke god nok", and — anchored as a WHOLE value
+        //     to avoid false positives like "Dårlig signal" (mic note) or "under øvelsen"
+        //     (temporal) — a bare "Dårlig"/"daarlig" or "under forventning/normalen/det normale".
         private static readonly Regex UnsafeUserFacingVoiceCopy = new(
-            @"\b(mannlig stemme|male voice|ikke feminin nok|not feminine enough|passing|push harder|snakk høyere|speak louder|du må høyere|you must go higher|prosjekter stemmen|project your voice)\b",
+            @"\b(mannlig stemme|male voice|masculine voice|bad voice|wrong voice|feil stemme|ikke feminin nok|not feminine enough|passing|push harder|try harder|snakk høyere|speak louder|du må høyere|you must go higher|must go higher|must higher|prosjekter stemmen|project your voice|push higher|press higher|go higher|aim higher|ikke god nok)\b"
+            + @"|(?<!\b(?:loading|calibration)\s)\bfailure\b"
+            + @"|(?<!\b(?:loading|calibration)\s)\bfailed\b"
+            + @"|^\s*(?:dårlig|daarlig)\s*$"
+            + @"|^\s*under (?:forventning\w*|normalen|det normale)\s*$",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static readonly Regex SpeechInstructionCopy = new(@"\b(snakk|snakke|tale|speak|speech)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 

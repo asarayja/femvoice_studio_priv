@@ -192,7 +192,6 @@
                 </Grid>
                 
                 <!-- Row 3: Voice Intelligence — Comfort + Recovery (Health pair) -->
-                <!-- {loc}-TODO: section/chart titles are English literals; add Strings.resx keys. -->
                 <Grid Grid.Row="3" Margin="0,0,0,16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -206,7 +205,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="200"/>
                             </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Comfort" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="0" Text="{loc:Loc Dimension_Comfort}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
                             <oxy:PlotView Grid.Row="1" x:Name="ComfortPlotView" Background="White"/>
                         </Grid>
                     </Border>
@@ -218,7 +217,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="200"/>
                             </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Recovery" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="0" Text="{loc:Loc Dimension_Recovery}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
                             <oxy:PlotView Grid.Row="1" x:Name="RecoveryPlotView" Background="White"/>
                         </Grid>
                     </Border>
@@ -239,7 +238,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="200"/>
                             </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Consistency" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="0" Text="{loc:Loc Dimension_Consistency}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
                             <oxy:PlotView Grid.Row="1" x:Name="ConsistencyPlotView" Background="White"/>
                         </Grid>
                     </Border>
@@ -251,7 +250,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="200"/>
                             </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Vocal Weight" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="0" Text="{loc:Loc Dimension_VocalWeight}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
                             <oxy:PlotView Grid.Row="1" x:Name="VocalWeightPlotView" Background="White"/>
                         </Grid>
                     </Border>
@@ -263,7 +262,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="200"/>
                             </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Voice Development" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="0" Text="{loc:Loc Dashboard_VoiceDevelopment}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
                             <oxy:PlotView Grid.Row="1" x:Name="VoiceDevelopmentPlotView" Background="White"/>
                         </Grid>
                     </Border>

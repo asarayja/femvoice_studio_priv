@@ -938,6 +938,24 @@ namespace FemVoiceStudio.Services
         }
 
         /// <summary>
+        /// Persisted per-session analytics rows in the window, chronological. Exposes the
+        /// raw repository columns (incl. HydrationSuggestionsCount / PauseRecommendationsCount)
+        /// to callers that need the persisted counts rather than the trend projection — e.g.
+        /// the VH-03 hydration brake in <see cref="RecoveryIntelligenceService.BuildSnapshotAsync"/>.
+        /// </summary>
+        public async Task<IReadOnlyList<SessionAnalyticsRecord>> GetSessionsAsync(
+            DateTime from,
+            DateTime to,
+            int userId = 1,
+            CancellationToken cancellationToken = default)
+        {
+            var sessions = await _repository.GetSessionsAsync(userId, from, to, cancellationToken);
+            return sessions
+                .OrderBy(s => s.StartedAt)
+                .ToList();
+        }
+
+        /// <summary>
         /// Voice Intelligence trend (Sprint B): the eight 0–100 scores per completed
         /// session in the window, chronological. Read by Bølge 2 (analytics/viz/coaching).
         /// Returns an empty list if the backing repository does not expose the trend

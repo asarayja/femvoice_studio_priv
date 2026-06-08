@@ -33,6 +33,51 @@ namespace FemVoiceStudio.Services
         public const double ImprovementThreshold = 1.0;
 
         /// <summary>
+        /// Localization source for all user-facing copy. The calm, non-shaming clinical
+        /// framing is authored verbatim as the neutral-resource default; only the lookup
+        /// indirection is added here (same pattern as ExerciseCoach_*/AdaptiveComfort_*).
+        /// Defaults to the shared <see cref="LocalizationService.Instance"/> so existing
+        /// callers (<c>new SessionInsightBuilder()</c>) keep working unchanged.
+        /// </summary>
+        private readonly ILocalizationService _localization;
+
+        /// <summary>Production constructor — resolves copy via the shared localization service.</summary>
+        public SessionInsightBuilder() : this(LocalizationService.Instance)
+        {
+        }
+
+        /// <summary>Constructor with an injectable localization service (testability / DI).</summary>
+        public SessionInsightBuilder(ILocalizationService localization)
+        {
+            _localization = localization ?? LocalizationService.Instance;
+        }
+
+        /// <summary>
+        /// Resolves a localized string by key, falling back to the supplied verbatim English
+        /// default when the key is missing (the indexer returns the key itself on a miss).
+        /// The default preserves the exact clinical wording so behaviour is unchanged even
+        /// before a locale has been translated.
+        /// </summary>
+        private string L(string key, string fallback)
+        {
+            var value = _localization[key];
+            return string.IsNullOrEmpty(value) || value == key ? fallback : value;
+        }
+
+        /// <summary>
+        /// Resolves a localized format string by key (verbatim English fallback) and formats
+        /// it with the supplied arguments. Numeric arguments are pre-formatted with
+        /// <see cref="CultureInfo.InvariantCulture"/> by the callers, so the user-facing
+        /// number rendering is stable across locales (task mandate).
+        /// </summary>
+        private string LF(string key, string fallback, params object[] args)
+        {
+            var format = L(key, fallback);
+            try { return string.Format(CultureInfo.InvariantCulture, format, args); }
+            catch { return format; }
+        }
+
+        /// <summary>
         /// Light static focus→exercise mapping used until the Agent-2 recommender lands in
         /// Bølge 2. Each dimension maps to a small, fixed set of exercise ids whose primary
         /// training target is that dimension. Intentionally conservative and side-effect
@@ -107,7 +152,7 @@ namespace FemVoiceStudio.Services
         /// (delta ≥ <see cref="ImprovementThreshold"/>) are kept, strongest first, with a
         /// stable hierarchy tie-break for equal deltas.
         /// </summary>
-        private static IReadOnlyList<DimensionImprovement> BuildImprovements(
+        private IReadOnlyList<DimensionImprovement> BuildImprovements(
             VoiceIntelligenceScores current, VoiceIntelligenceTrendPoint reference)
         {
             var pairs = new (VoiceDimension Dim, double Current, double Previous)[]
@@ -130,8 +175,12 @@ namespace FemVoiceStudio.Services
                     Dimension = p.Dim,
                     CurrentScore = p.Current,
                     PreviousScore = p.Previous,
-                    Explanation = string.Create(CultureInfo.InvariantCulture,
-                        $"{DimensionLabel(p.Dim)} +{p.Current - p.Previous:0} since last session"),
+                    // "{label} +{delta} since last session" — number pre-formatted Invariant.
+                    Explanation = LF(
+                        "SessionInsight_Improvement",
+                        "{0} +{1} since last session",
+                        DimensionLabel(p.Dim),
+                        (p.Current - p.Previous).ToString("0", CultureInfo.InvariantCulture)),
                 })
                 .ToArray();
         }
@@ -144,7 +193,7 @@ namespace FemVoiceStudio.Services
         /// Comfort breaches only flag at the same ≥3 threshold the recorder uses to journal
         /// a ComfortZoneBreach health event, so the insight matches the durable history.
         /// </summary>
-        private static IReadOnlyList<SessionRisk> BuildRisks(ExerciseSessionOutcome outcome)
+        private IReadOnlyList<SessionRisk> BuildRisks(ExerciseSessionOutcome outcome)
         {
             var risks = new List<SessionRisk>();
 
@@ -155,7 +204,9 @@ namespace FemVoiceStudio.Services
                 {
                     ReasonCode = "SAFETY_LOCK",
                     Count = safetyLocks,
-                    Description = "Your voice took a protective pause this session — a good moment to rest.",
+                    Description = L(
+                        "SessionInsight_Risk_SafetyLock",
+                        "Your voice took a protective pause this session — a good moment to rest."),
                 });
             }
 
@@ -166,7 +217,9 @@ namespace FemVoiceStudio.Services
                 {
                     ReasonCode = "STRAIN_DETECTED",
                     Count = strain,
-                    Description = "Some effort showed up in your voice — easing off keeps it comfortable.",
+                    Description = L(
+                        "SessionInsight_Risk_Strain",
+                        "Some effort showed up in your voice — easing off keeps it comfortable."),
                 });
             }
 
@@ -177,7 +230,9 @@ namespace FemVoiceStudio.Services
                 {
                     ReasonCode = "COMFORT_BREACH",
                     Count = breaches,
-                    Description = "Your voice drifted outside its comfort zone a few times — staying within it feels easier.",
+                    Description = L(
+                        "SessionInsight_Risk_ComfortBreach",
+                        "Your voice drifted outside its comfort zone a few times — staying within it feels easier."),
                 });
             }
 
@@ -228,33 +283,44 @@ namespace FemVoiceStudio.Services
         /// gentle next focus, and surfaces recovery first when it needs attention (Health
         /// before Goals). Deterministic; safe for clinical surfaces.
         /// </summary>
-        private static string BuildSummary(SessionInsight insight)
+        private string BuildSummary(SessionInsight insight)
         {
             var parts = new List<string>();
 
             // Recovery takes the lead when it needs attention — Health before Goals.
             if (insight.RecoveryNeeds.NeedsAttention)
             {
-                parts.Add("Your voice could use some rest — let's keep things gentle.");
+                parts.Add(L(
+                    "SessionInsight_Summary_RecoveryLead",
+                    "Your voice could use some rest — let's keep things gentle."));
             }
 
             if (insight.Improvements.Count > 0)
             {
                 var top = insight.Improvements[0];
-                parts.Add(string.Create(CultureInfo.InvariantCulture,
-                    $"Nice work — {DimensionLabel(top.Dimension).ToLowerInvariant()} grew {top.Delta:0} since last time."));
+                parts.Add(LF(
+                    "SessionInsight_Summary_Improvement",
+                    "Nice work — {0} grew {1} since last time.",
+                    DimensionLabel(top.Dimension).ToLowerInvariant(),
+                    top.Delta.ToString("0", CultureInfo.InvariantCulture)));
             }
             else if (insight.IsFirstSession)
             {
-                parts.Add("Great first session — this is your starting point to explore from.");
+                parts.Add(L(
+                    "SessionInsight_Summary_FirstSession",
+                    "Great first session — this is your starting point to explore from."));
             }
             else
             {
-                parts.Add("Steady session — you're holding your ground.");
+                parts.Add(L(
+                    "SessionInsight_Summary_Steady",
+                    "Steady session — you're holding your ground."));
             }
 
-            parts.Add(string.Create(CultureInfo.InvariantCulture,
-                $"Next, you might gently explore {DimensionLabel(insight.SuggestedFocus).ToLowerInvariant()}."));
+            parts.Add(LF(
+                "SessionInsight_Summary_NextFocus",
+                "Next, you might gently explore {0}.",
+                DimensionLabel(insight.SuggestedFocus).ToLowerInvariant()));
 
             return string.Join(" ", parts);
         }
@@ -266,15 +332,15 @@ namespace FemVoiceStudio.Services
         /// summary. When this copy is promoted to RESX the keys map per-dimension and the
         /// result must pass <see cref="ClinicalLanguagePolicy"/>.
         /// </summary>
-        private static string DimensionLabel(VoiceDimension dimension) => dimension switch
+        private string DimensionLabel(VoiceDimension dimension) => dimension switch
         {
-            VoiceDimension.Comfort => "Comfort",
-            VoiceDimension.Recovery => "Recovery",
-            VoiceDimension.Resonance => "Resonance",
-            VoiceDimension.Consistency => "Consistency",
-            VoiceDimension.Intonation => "Intonation",
-            VoiceDimension.VocalWeight => "Vocal weight",
-            VoiceDimension.Pitch => "Pitch",
+            VoiceDimension.Comfort => L("DimensionLabel_Comfort", "Comfort"),
+            VoiceDimension.Recovery => L("DimensionLabel_Recovery", "Recovery"),
+            VoiceDimension.Resonance => L("DimensionLabel_Resonance", "Resonance"),
+            VoiceDimension.Consistency => L("DimensionLabel_Consistency", "Consistency"),
+            VoiceDimension.Intonation => L("DimensionLabel_Intonation", "Intonation"),
+            VoiceDimension.VocalWeight => L("DimensionLabel_VocalWeight", "Vocal weight"),
+            VoiceDimension.Pitch => L("DimensionLabel_Pitch", "Pitch"),
             _ => dimension.ToString()
         };
 

@@ -84,6 +84,43 @@ namespace FemVoiceStudio.Tests
             Assert.Equal(FeedbackDecisionKind.Suppressed, b.Kind);
         }
 
+        // ── F1 (safety): the health band must bypass the per-channel time gate ─────
+
+        [Fact]
+        public void Guard_HealthBand_SkipsPerChannelGate_AfterLowerCoachingMessage()
+        {
+            // F1-regresjon: en tidligere lavere-prioritert coaching-melding på den DELTE
+            // tomme kanalen ("") fikk før tidsundertrykke en påfølgende helse-melding via
+            // per-kanal-tidsgaten. Etter fiksen MÅ hele helse-båndet (>= HydrationSuggestion
+            // = 40) hoppe over den gaten. Distinkte reason codes brukes slik at den
+            // per-reason rate-limiten ikke maskerer testen.
+            var now = new DateTime(2026, 6, 1, 12, 0, 0, DateTimeKind.Utc);
+            var guard = GuardWithControllableClock(() => now);
+
+            // Lower-priority coaching first on the shared empty channel — warms the gate.
+            var technique = guard.Submit(new FeedbackCandidate(
+                "t", "F1_TECHNIQUE", FeedbackPriority.TechniqueCorrection,
+                MessageSeverity.Info, "MainScreen", "F1_TECHNIQUE", Channel: ""));
+            Assert.Equal(FeedbackDecisionKind.Approved, technique.Kind);
+
+            // All three health-band messages within the same tick (window) MUST pass —
+            // the gate must NOT time-suppress them behind the earlier coaching message.
+            var strain = guard.Submit(new FeedbackCandidate(
+                "t", "F1_STRAIN", FeedbackPriority.ActiveStrainAlert,
+                MessageSeverity.Warning, "MainScreen", "F1_STRAIN", Channel: ""));
+            Assert.Equal(FeedbackDecisionKind.Approved, strain.Kind);
+
+            var pause = guard.Submit(new FeedbackCandidate(
+                "t", "F1_PAUSE", FeedbackPriority.PauseRecommendation,
+                MessageSeverity.Warning, "MainScreen", "F1_PAUSE", Channel: ""));
+            Assert.Equal(FeedbackDecisionKind.Approved, pause.Kind);
+
+            var hydration = guard.Submit(new FeedbackCandidate(
+                "t", "F1_HYDRATION", FeedbackPriority.HydrationSuggestion,
+                MessageSeverity.Info, "MainScreen", "F1_HYDRATION", Channel: ""));
+            Assert.Equal(FeedbackDecisionKind.Approved, hydration.Kind);
+        }
+
         [Fact]
         public void Guard_PerChannel_DoesNotBypassClinicalMatrix()
         {

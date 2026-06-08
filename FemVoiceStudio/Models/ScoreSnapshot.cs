@@ -49,8 +49,10 @@ namespace FemVoiceStudio.Models
                 ResonanceScore = resonance,
                 PitchScore = pitch,
                 IntonationScore = intonation,
-                // Voice health proxy = the Health pair (Comfort + Recovery), mean.
-                VoiceHealthScore = Clamp0To100((comfort + recovery) / 2.0),
+                // Voice health proxy = the Health pair (Comfort + Recovery), WORST-OF.
+                // COMFORT-01 (safety): min, not mean — a rising comfort must never mask
+                // a falling recovery in the user-facing headline number.
+                VoiceHealthScore = Clamp0To100(Math.Min(comfort, recovery)),
 
                 // Voice Intelligence dimensions.
                 ResonanceDimension = resonance,

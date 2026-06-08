@@ -569,6 +569,12 @@ namespace FemVoiceStudio.Services
                     Timestamp             = now,
                     SessionElapsedSeconds = sessionElapsedSeconds,
 
+                    // Whether PrimaryMetricScore carries a REAL resonance value this tick.
+                    // For a pitch-only profile (UsesResonance=false, UsesPitch=true) the
+                    // primary metric is a normalised-pitch proxy, NOT resonance — flag it so
+                    // the recorder does not aggregate the proxy as resonance (RES-01).
+                    UsesResonanceSignal   = _currentProfile.UsesResonance,
+
                     // Raw acoustic signals for Voice Intelligence — forwarded ONLY when the
                     // source actually delivered a positive measurement; otherwise the field
                     // keeps its "missing" sentinel (0, or NaN for HNR which has no source on

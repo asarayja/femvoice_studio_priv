@@ -3666,4 +3666,139 @@ This cannot be undone!</value>
   <data name="Realtime_PitchAboveZoneFormat" xml:space="preserve">
     <value>Above target zone ({0:F0} Hz). The voice is higher/brighter than the green zone {1:F0}-{2:F0} Hz. Let it ease down and avoid pressure.</value>
   </data>
+  <data name="SessionInsight_Title" xml:space="preserve">
+    <value>Sitzungsreflexion</value>
+  </data>
+  <data name="DimensionLabel_Comfort" xml:space="preserve">
+    <value>Komfort</value>
+  </data>
+  <data name="DimensionLabel_Recovery" xml:space="preserve">
+    <value>Erholung</value>
+  </data>
+  <data name="DimensionLabel_Resonance" xml:space="preserve">
+    <value>Resonanz</value>
+  </data>
+  <data name="DimensionLabel_Consistency" xml:space="preserve">
+    <value>Konsistenz</value>
+  </data>
+  <data name="DimensionLabel_Intonation" xml:space="preserve">
+    <value>Intonation</value>
+  </data>
+  <data name="DimensionLabel_VocalWeight" xml:space="preserve">
+    <value>Stimmgewicht</value>
+  </data>
+  <data name="DimensionLabel_Pitch" xml:space="preserve">
+    <value>Tonhöhe</value>
+  </data>
+  <data name="SessionInsight_Improvement" xml:space="preserve">
+    <value>{0} +{1} seit der letzten Sitzung</value>
+  </data>
+  <data name="SessionInsight_Risk_SafetyLock" xml:space="preserve">
+    <value>Deine Stimme hat in dieser Sitzung eine schützende Pause eingelegt — ein guter Moment zum Ausruhen.</value>
+  </data>
+  <data name="SessionInsight_Risk_Strain" xml:space="preserve">
+    <value>Etwas Anstrengung zeigte sich in deiner Stimme — etwas lockerer zu lassen hält sie angenehm.</value>
+  </data>
+  <data name="SessionInsight_Risk_ComfortBreach" xml:space="preserve">
+    <value>Deine Stimme verließ ein paar Mal ihre Komfortzone — innerhalb zu bleiben fühlt sich leichter an.</value>
+  </data>
+  <data name="SessionInsight_Summary_RecoveryLead" xml:space="preserve">
+    <value>Deine Stimme könnte etwas Ruhe gebrauchen — lass es uns sanft angehen.</value>
+  </data>
+  <data name="SessionInsight_Summary_Improvement" xml:space="preserve">
+    <value>Gut gemacht — {0} ist seit dem letzten Mal um {1} gewachsen.</value>
+  </data>
+  <data name="SessionInsight_Summary_FirstSession" xml:space="preserve">
+    <value>Schöne erste Sitzung — das ist dein Ausgangspunkt zum Erkunden.</value>
+  </data>
+  <data name="SessionInsight_Summary_Steady" xml:space="preserve">
+    <value>Stabile Sitzung — du hältst dein Niveau.</value>
+  </data>
+  <data name="SessionInsight_Summary_NextFocus" xml:space="preserve">
+    <value>Als Nächstes kannst du sanft {0} erkunden.</value>
+  </data>
+  <data name="Recovery_Explanation_Prefix" xml:space="preserve">
+    <value>Erholung {0} ({1}). </value>
+  </data>
+  <data name="Recovery_Explanation_NoLoad" xml:space="preserve">
+    <value>Keine jüngste Ermüdung, Anstrengung oder Sicherheitsereignisse — die Stimme ist gut erholt.</value>
+  </data>
+  <data name="Recovery_Explanation_LoweredBy" xml:space="preserve">
+    <value>Gesenkt durch: {0}.</value>
+  </data>
+  <data name="Recovery_Explanation_DriverSeparator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="Recovery_Explanation_RestReward" xml:space="preserve">
+    <value> Ruhe seit der letzten Sitzung hat +{0} zurückgegeben.</value>
+  </data>
+  <data name="Recovery_Status_WellRecovered" xml:space="preserve">
+    <value>gut erholt</value>
+  </data>
+  <data name="Recovery_Status_Adequate" xml:space="preserve">
+    <value>ausreichend</value>
+  </data>
+  <data name="Recovery_Status_Strained" xml:space="preserve">
+    <value>beansprucht</value>
+  </data>
+  <data name="Recovery_Status_Overtrained" xml:space="preserve">
+    <value>übertrainiert</value>
+  </data>
+  <data name="Recovery_Status_Unknown" xml:space="preserve">
+    <value>unbekannt</value>
+  </data>
+  <data name="Recovery_Driver_SafetyLock_One" xml:space="preserve">
+    <value>{0} Schutzpause (dominant)</value>
+  </data>
+  <data name="Recovery_Driver_SafetyLock_Many" xml:space="preserve">
+    <value>{0} Schutzpausen (dominant)</value>
+  </data>
+  <data name="Recovery_Driver_Strain_One" xml:space="preserve">
+    <value>{0} Anstrengungsepisode</value>
+  </data>
+  <data name="Recovery_Driver_Strain_Many" xml:space="preserve">
+    <value>{0} Anstrengungsepisoden</value>
+  </data>
+  <data name="Recovery_Driver_Pause_One" xml:space="preserve">
+    <value>{0} Pausenempfehlung</value>
+  </data>
+  <data name="Recovery_Driver_Pause_Many" xml:space="preserve">
+    <value>{0} Pausenempfehlungen</value>
+  </data>
+  <data name="Recovery_Driver_Fatigue_One" xml:space="preserve">
+    <value>{0} Ermüdungsindikator</value>
+  </data>
+  <data name="Recovery_Driver_Fatigue_Many" xml:space="preserve">
+    <value>{0} Ermüdungsindikatoren</value>
+  </data>
+  <data name="Recovery_Driver_FatigueTrend" xml:space="preserve">
+    <value>steigender Ermüdungstrend (+{0})</value>
+  </data>
+  <data name="Recovery_Driver_TrainingDensity" xml:space="preserve">
+    <value>hohe Trainingsdichte mit wenig Ruhe</value>
+  </data>
+  <data name="Recovery_Driver_Hydration_One" xml:space="preserve">
+    <value>{0} Trinkerinnerung</value>
+  </data>
+  <data name="Recovery_Driver_Hydration_Many" xml:space="preserve">
+    <value>{0} Trinkerinnerungen</value>
+  </data>
+  <data name="FeedbackMode_Resonance" xml:space="preserve">
+    <value>Visuell: Resonanzanzeige (vordere Platzierung)</value>
+  </data>
+  <data name="IndicatorPackage_Resonance" xml:space="preserve">
+    <value>Resonanz • Stabilität</value>
+  </data>
+  <data name="ThresholdStrategy_ComfortZone" xml:space="preserve">
+    <value>Schwelle: hält die Tonhöhe in einer angenehmen Zone.</value>
+  </data>
+  <data name="ThresholdStrategy_Continuous" xml:space="preserve">
+    <value>Schwelle: kontinuierliches Feedback während der gesamten Übung.</value>
+  </data>
+  <data name="ThresholdStrategy_Endurance" xml:space="preserve">
+    <value>Schwelle: ruhige, anhaltende Anstrengung über die Zeit ohne zu drängen.</value>
+  </data>
+  <data name="ThresholdStrategy_Intensity" xml:space="preserve">
+    <value>Schwelle: kürzere, fokussiertere Intervalle mit Ruhe dazwischen.</value>
+  </data>
 </root>

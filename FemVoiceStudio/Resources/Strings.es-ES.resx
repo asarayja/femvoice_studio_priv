@@ -3645,4 +3645,139 @@ This cannot be undone!</value>
   <data name="Realtime_PitchAboveZoneFormat" xml:space="preserve">
     <value>Above target zone ({0:F0} Hz). The voice is higher/brighter than the green zone {1:F0}-{2:F0} Hz. Let it ease down and avoid pressure.</value>
   </data>
+  <data name="SessionInsight_Title" xml:space="preserve">
+    <value>Reflexión de la sesión</value>
+  </data>
+  <data name="DimensionLabel_Comfort" xml:space="preserve">
+    <value>Comodidad</value>
+  </data>
+  <data name="DimensionLabel_Recovery" xml:space="preserve">
+    <value>Recuperación</value>
+  </data>
+  <data name="DimensionLabel_Resonance" xml:space="preserve">
+    <value>Resonancia</value>
+  </data>
+  <data name="DimensionLabel_Consistency" xml:space="preserve">
+    <value>Constancia</value>
+  </data>
+  <data name="DimensionLabel_Intonation" xml:space="preserve">
+    <value>Entonación</value>
+  </data>
+  <data name="DimensionLabel_VocalWeight" xml:space="preserve">
+    <value>Peso vocal</value>
+  </data>
+  <data name="DimensionLabel_Pitch" xml:space="preserve">
+    <value>Tono</value>
+  </data>
+  <data name="SessionInsight_Improvement" xml:space="preserve">
+    <value>{0} +{1} desde la última sesión</value>
+  </data>
+  <data name="SessionInsight_Risk_SafetyLock" xml:space="preserve">
+    <value>Tu voz hizo una pausa protectora en esta sesión — un buen momento para descansar.</value>
+  </data>
+  <data name="SessionInsight_Risk_Strain" xml:space="preserve">
+    <value>Apareció algo de esfuerzo en tu voz — aflojar un poco la mantiene cómoda.</value>
+  </data>
+  <data name="SessionInsight_Risk_ComfortBreach" xml:space="preserve">
+    <value>Tu voz salió de su zona de comodidad algunas veces — mantenerse dentro se siente más fácil.</value>
+  </data>
+  <data name="SessionInsight_Summary_RecoveryLead" xml:space="preserve">
+    <value>A tu voz le vendría bien un poco de descanso — vamos con calma.</value>
+  </data>
+  <data name="SessionInsight_Summary_Improvement" xml:space="preserve">
+    <value>Buen trabajo — {0} creció {1} desde la última vez.</value>
+  </data>
+  <data name="SessionInsight_Summary_FirstSession" xml:space="preserve">
+    <value>Buena primera sesión — este es tu punto de partida para explorar.</value>
+  </data>
+  <data name="SessionInsight_Summary_Steady" xml:space="preserve">
+    <value>Sesión estable — mantienes tu posición.</value>
+  </data>
+  <data name="SessionInsight_Summary_NextFocus" xml:space="preserve">
+    <value>A continuación, podrías explorar con calma {0}.</value>
+  </data>
+  <data name="Recovery_Explanation_Prefix" xml:space="preserve">
+    <value>Recuperación {0} ({1}). </value>
+  </data>
+  <data name="Recovery_Explanation_NoLoad" xml:space="preserve">
+    <value>Sin fatiga, esfuerzo ni eventos de seguridad recientes — la voz está bien descansada.</value>
+  </data>
+  <data name="Recovery_Explanation_LoweredBy" xml:space="preserve">
+    <value>Reducida por: {0}.</value>
+  </data>
+  <data name="Recovery_Explanation_DriverSeparator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="Recovery_Explanation_RestReward" xml:space="preserve">
+    <value> El descanso desde la última sesión recuperó +{0}.</value>
+  </data>
+  <data name="Recovery_Status_WellRecovered" xml:space="preserve">
+    <value>bien descansada</value>
+  </data>
+  <data name="Recovery_Status_Adequate" xml:space="preserve">
+    <value>adecuada</value>
+  </data>
+  <data name="Recovery_Status_Strained" xml:space="preserve">
+    <value>exigida</value>
+  </data>
+  <data name="Recovery_Status_Overtrained" xml:space="preserve">
+    <value>sobreentrenada</value>
+  </data>
+  <data name="Recovery_Status_Unknown" xml:space="preserve">
+    <value>desconocida</value>
+  </data>
+  <data name="Recovery_Driver_SafetyLock_One" xml:space="preserve">
+    <value>{0} pausa de seguridad (dominante)</value>
+  </data>
+  <data name="Recovery_Driver_SafetyLock_Many" xml:space="preserve">
+    <value>{0} pausas de seguridad (dominantes)</value>
+  </data>
+  <data name="Recovery_Driver_Strain_One" xml:space="preserve">
+    <value>{0} episodio de esfuerzo</value>
+  </data>
+  <data name="Recovery_Driver_Strain_Many" xml:space="preserve">
+    <value>{0} episodios de esfuerzo</value>
+  </data>
+  <data name="Recovery_Driver_Pause_One" xml:space="preserve">
+    <value>{0} recomendación de pausa</value>
+  </data>
+  <data name="Recovery_Driver_Pause_Many" xml:space="preserve">
+    <value>{0} recomendaciones de pausa</value>
+  </data>
+  <data name="Recovery_Driver_Fatigue_One" xml:space="preserve">
+    <value>{0} indicador de fatiga</value>
+  </data>
+  <data name="Recovery_Driver_Fatigue_Many" xml:space="preserve">
+    <value>{0} indicadores de fatiga</value>
+  </data>
+  <data name="Recovery_Driver_FatigueTrend" xml:space="preserve">
+    <value>tendencia de fatiga en aumento (+{0})</value>
+  </data>
+  <data name="Recovery_Driver_TrainingDensity" xml:space="preserve">
+    <value>alta densidad de entrenamiento con poco descanso</value>
+  </data>
+  <data name="Recovery_Driver_Hydration_One" xml:space="preserve">
+    <value>{0} recordatorio de hidratación</value>
+  </data>
+  <data name="Recovery_Driver_Hydration_Many" xml:space="preserve">
+    <value>{0} recordatorios de hidratación</value>
+  </data>
+  <data name="FeedbackMode_Resonance" xml:space="preserve">
+    <value>Visual: indicador de resonancia (colocación frontal)</value>
+  </data>
+  <data name="IndicatorPackage_Resonance" xml:space="preserve">
+    <value>Resonancia • Estabilidad</value>
+  </data>
+  <data name="ThresholdStrategy_ComfortZone" xml:space="preserve">
+    <value>Umbral: mantiene el tono dentro de una zona cómoda.</value>
+  </data>
+  <data name="ThresholdStrategy_Continuous" xml:space="preserve">
+    <value>Umbral: retroalimentación continua durante todo el ejercicio.</value>
+  </data>
+  <data name="ThresholdStrategy_Endurance" xml:space="preserve">
+    <value>Umbral: esfuerzo tranquilo y sostenido en el tiempo, sin forzar.</value>
+  </data>
+  <data name="ThresholdStrategy_Intensity" xml:space="preserve">
+    <value>Umbral: intervalos más cortos y enfocados, con descanso entre ellos.</value>
+  </data>
 </root>

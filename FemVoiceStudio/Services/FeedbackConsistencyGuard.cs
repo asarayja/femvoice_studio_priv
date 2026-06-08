@@ -139,11 +139,19 @@ namespace FemVoiceStudio.Services
 
                 // Anti-flom per UI-overflate: distinkte paneler (f.eks. forsidens fire
                 // MainScreen-bindinger) skal ikke sulte hverandre ut. Den delte coach-
-                // panel-overflaten (Channel == "") beholder nøyaktig dagens oppførsel.
+                // panel-overflaten (Channel == "") beholder coaching-anti-flommen.
+                //
+                // F1 (safety): HELE helse-båndet (HydrationSuggestion=40 / Pause=50 /
+                // ActiveStrainAlert=60 og oppover) MÅ hoppe over den per-kanal tidsgaten.
+                // Før kunne en tidligere lavere-prioritert coaching-melding på den delte
+                // tomme kanalen tidsundertrykke en påfølgende helse-melding. Terskelen er
+                // derfor senket fra HealthWarning(70) til HydrationSuggestion(40): bare
+                // ren coaching (< 40: Progression/Praise/Technique) anti-flommes fortsatt
+                // — det bevarer to-sub-40-tilfellet uendret.
                 var channel = candidate.Channel ?? string.Empty;
                 if (_lastApprovedAtByChannel.TryGetValue(channel, out var lastForChannel)
                     && now - lastForChannel < _minimumInterval
-                    && candidate.Priority < FeedbackPriority.HealthWarning)
+                    && candidate.Priority < FeedbackPriority.HydrationSuggestion)
                 {
                     return SuppressLocked(candidate, "Rate limit prevents multiple simultaneous hints.");
                 }

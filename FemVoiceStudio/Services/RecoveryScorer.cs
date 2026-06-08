@@ -161,6 +161,49 @@ namespace FemVoiceStudio.Services
         private const double StrainedThreshold = 25.0;
 
         /// <summary>
+        /// Localization source for the explainable, user-facing <see cref="RecoveryResult.Explanation"/>.
+        /// The calm clinical wording is authored verbatim as the neutral-resource default; only the
+        /// lookup indirection is added (same pattern as ExerciseCoach_*/AdaptiveComfort_*). Defaults
+        /// to <see cref="LocalizationService.Instance"/> so existing <c>new RecoveryScorer()</c>
+        /// callers are unaffected. The numeric scoring itself is pure and culture-independent.
+        /// </summary>
+        private readonly ILocalizationService _localization;
+
+        /// <summary>Production constructor — resolves explanation copy via the shared localization service.</summary>
+        public RecoveryScorer() : this(LocalizationService.Instance)
+        {
+        }
+
+        /// <summary>Constructor with an injectable localization service (testability / DI).</summary>
+        public RecoveryScorer(ILocalizationService localization)
+        {
+            _localization = localization ?? LocalizationService.Instance;
+        }
+
+        /// <summary>
+        /// Resolves a localized string by key, falling back to the supplied verbatim English
+        /// default when the key is missing (the indexer returns the key on a miss). The default
+        /// preserves the exact clinical wording so behaviour is unchanged before translation.
+        /// </summary>
+        private string L(string key, string fallback)
+        {
+            var value = _localization[key];
+            return string.IsNullOrEmpty(value) || value == key ? fallback : value;
+        }
+
+        /// <summary>
+        /// Resolves a localized format string by key (verbatim English fallback) and formats it
+        /// with <see cref="CultureInfo.InvariantCulture"/>; callers pre-format any numbers Invariant
+        /// so user-facing number rendering is stable across locales (task mandate).
+        /// </summary>
+        private string LF(string key, string fallback, params object[] args)
+        {
+            var format = L(key, fallback);
+            try { return string.Format(CultureInfo.InvariantCulture, format, args); }
+            catch { return format; }
+        }
+
+        /// <summary>
         /// Computes the recovery score for the supplied snapshot. Pure and total:
         /// any input (including all-zero, negative, NaN, ±∞) yields a clamped 0–100
         /// result. Negative counts and non-finite hours are sanitised to 0.
@@ -245,7 +288,7 @@ namespace FemVoiceStudio.Services
             return RecoveryStatus.Overtrained;
         }
 
-        private static string BuildExplanation(
+        private string BuildExplanation(
             double score,
             RecoveryStatus status,
             int safetyLocks,
@@ -258,7 +301,12 @@ namespace FemVoiceStudio.Services
             double restReward)
         {
             var sb = new StringBuilder();
-            sb.Append(CultureInfo.InvariantCulture, $"Recovery {score:0} ({StatusLabel(status)}). ");
+            // "Recovery {score} ({status}). " — score pre-formatted Invariant.
+            sb.Append(LF(
+                "Recovery_Explanation_Prefix",
+                "Recovery {0} ({1}). ",
+                score.ToString("0", CultureInfo.InvariantCulture),
+                StatusLabel(status)));
 
             var noLoad =
                 safetyLocks == 0 && strain == 0 && pauses == 0 &&
@@ -266,46 +314,76 @@ namespace FemVoiceStudio.Services
 
             if (noLoad)
             {
-                sb.Append("No recent fatigue, strain or safety events — voice is well rested.");
+                sb.Append(L(
+                    "Recovery_Explanation_NoLoad",
+                    "No recent fatigue, strain or safety events — voice is well rested."));
                 return sb.ToString();
             }
 
             var drivers = new System.Collections.Generic.List<string>();
             if (safetyLocks > 0)
-                drivers.Add($"{safetyLocks} safety lock{Plural(safetyLocks)} (dominant)");
+                drivers.Add(Driver(safetyLocks,
+                    "Recovery_Driver_SafetyLock_One", "{0} safety lock (dominant)",
+                    "Recovery_Driver_SafetyLock_Many", "{0} safety locks (dominant)"));
             if (strain > 0)
-                drivers.Add($"{strain} strain episode{Plural(strain)}");
+                drivers.Add(Driver(strain,
+                    "Recovery_Driver_Strain_One", "{0} strain episode",
+                    "Recovery_Driver_Strain_Many", "{0} strain episodes"));
             if (pauses > 0)
-                drivers.Add($"{pauses} pause recommendation{Plural(pauses)}");
+                drivers.Add(Driver(pauses,
+                    "Recovery_Driver_Pause_One", "{0} pause recommendation",
+                    "Recovery_Driver_Pause_Many", "{0} pause recommendations"));
             if (fatigue > 0)
-                drivers.Add($"{fatigue} fatigue indicator{Plural(fatigue)}");
+                drivers.Add(Driver(fatigue,
+                    "Recovery_Driver_Fatigue_One", "{0} fatigue indicator",
+                    "Recovery_Driver_Fatigue_Many", "{0} fatigue indicators"));
             if (trendDelta > 0)
-                drivers.Add($"rising fatigue trend (+{trendDelta})");
+                drivers.Add(LF(
+                    "Recovery_Driver_FatigueTrend", "rising fatigue trend (+{0})",
+                    trendDelta.ToString(CultureInfo.InvariantCulture)));
             if (isOvertraining)
-                drivers.Add("high training density with little rest");
+                drivers.Add(L(
+                    "Recovery_Driver_TrainingDensity",
+                    "high training density with little rest"));
             if (hydration > 0)
-                drivers.Add($"{hydration} hydration nudge{Plural(hydration)}");
+                drivers.Add(Driver(hydration,
+                    "Recovery_Driver_Hydration_One", "{0} hydration nudge",
+                    "Recovery_Driver_Hydration_Many", "{0} hydration nudges"));
 
-            sb.Append("Lowered by: ");
-            sb.Append(string.Join(", ", drivers));
-            sb.Append('.');
+            // "Lowered by: {drivers}." — driver list joined with the localized separator.
+            sb.Append(LF(
+                "Recovery_Explanation_LoweredBy",
+                "Lowered by: {0}.",
+                string.Join(L("Recovery_Explanation_DriverSeparator", ", "), drivers)));
 
             if (restReward > 0)
-                sb.Append(CultureInfo.InvariantCulture, $" Rest since last session recovered +{restReward:0}.");
+                sb.Append(LF(
+                    "Recovery_Explanation_RestReward",
+                    " Rest since last session recovered +{0}.",
+                    restReward.ToString("0", CultureInfo.InvariantCulture)));
 
             return sb.ToString();
         }
 
-        private static string StatusLabel(RecoveryStatus status) => status switch
+        /// <summary>
+        /// Selects the singular/plural localized driver phrase for <paramref name="count"/> and
+        /// fills in the count (Invariant). English defaults preserve the original wording so the
+        /// neutral resource and the fallback agree verbatim.
+        /// </summary>
+        private string Driver(int count, string oneKey, string oneFallback, string manyKey, string manyFallback)
         {
-            RecoveryStatus.WellRecovered => "well recovered",
-            RecoveryStatus.Adequate => "adequate",
-            RecoveryStatus.Strained => "strained",
-            RecoveryStatus.Overtrained => "overtrained",
-            _ => "unknown"
-        };
+            var n = count.ToString(CultureInfo.InvariantCulture);
+            return count == 1 ? LF(oneKey, oneFallback, n) : LF(manyKey, manyFallback, n);
+        }
 
-        private static string Plural(int count) => count == 1 ? string.Empty : "s";
+        private string StatusLabel(RecoveryStatus status) => status switch
+        {
+            RecoveryStatus.WellRecovered => L("Recovery_Status_WellRecovered", "well recovered"),
+            RecoveryStatus.Adequate => L("Recovery_Status_Adequate", "adequate"),
+            RecoveryStatus.Strained => L("Recovery_Status_Strained", "strained"),
+            RecoveryStatus.Overtrained => L("Recovery_Status_Overtrained", "overtrained"),
+            _ => L("Recovery_Status_Unknown", "unknown")
+        };
 
         private static int NonNeg(int value) => value < 0 ? 0 : value;
 

@@ -737,6 +737,172 @@ namespace FemVoiceStudio.Tests
         }
 
         // ────────────────────────────────────────────────────────────────────────────
+        // 18. RES-01 — a pitch-only session must NOT report its normalised-pitch proxy as
+        //     resonance. The Resonance dimension stays neutral 50, not the pitch value.
+        // ────────────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task CompleteSession_PitchOnlyProfile_DoesNotEchoPitchProxyAsResonance()
+        {
+            // Arrange — a PITCH-ONLY profile (UsesResonance=false, UsesPitch=true). For this
+            // profile the coordinator sets PrimaryMetricScore = NormalizePitch(...), i.e. a
+            // pitch PROXY, never a resonance value. Comfort zone 160–220 Hz; pitch 200 Hz is
+            // in-zone and normalises to (200−160)/(220−160) ≈ 0.67 ⇒ a clearly non-50 proxy.
+            var profile = ExerciseTargetProfile.PitchExercise(minPitch: 160, maxPitch: 220);
+            Assert.False(profile.UsesResonance);
+            Assert.True(profile.UsesPitch);
+            Begin(profile, exerciseId: 40, sessionId: 1800, userId: 1);
+
+            // Act — several high in-zone pitch ticks, NO real resonance signal at all.
+            _coordinator.UpdateMetrics(0.0, pitch: 200, stability: 0.6, health: 100);
+            WaitForRateLimit();
+            _coordinator.UpdateMetrics(0.0, pitch: 205, stability: 0.6, health: 100);
+            WaitForRateLimit();
+            _coordinator.UpdateMetrics(0.0, pitch: 195, stability: 0.6, health: 100);
+
+            var outcome = _recorder.CompleteSession();
+            await (_recorder.LastPersistTask ?? Task.CompletedTask);
+
+            // The session never carried a real resonance signal, so the outcome reports it
+            // as such — AverageResonance stays 0 and UsedResonanceSignal is false. Crucially
+            // the pitch proxy (~0.67) was NOT folded into the resonance mean.
+            Assert.False(outcome.UsedResonanceSignal);
+            Assert.Equal(0.0, outcome.AverageResonance, 3);
+
+            // End-to-end: the persisted Resonance dimension is the neutral 50, NOT ~67 (the
+            // pitch proxy ×100). A regression that echoes the proxy would land ~67 here.
+            var session = await PollAsync(
+                () => FetchSessionAsync(1800, userId: 1),
+                s => s != null && s.EndedAt != null);
+            Assert.Equal(50.0, session.ResonanceScore100, 3);
+
+            // And the dimension's explanation says there was no resonance signal — proving
+            // ScoreResonance took the neutral branch, not the "from average resonance" branch.
+            var scores = new VoiceIntelligenceScorer().Compute(VoiceIntelligenceInput.Empty());
+            Assert.Equal(50.0, scores.Resonance.Score, 3);
+            Assert.Contains("no resonance signal", scores.Resonance.Explanation,
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+        // ────────────────────────────────────────────────────────────────────────────
+        // 19. CONS-1/2 — Consistency must measure REPRODUCIBILITY (in-session spread),
+        //     not voicing clarity. A steady 0.7 trace ≫ a 0.4/1.0-alternating mean-0.7 trace.
+        // ────────────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task CompleteSession_Consistency_RewardsSteadyTrace_OverOscillatingSameMean()
+        {
+            // Two sessions with the SAME mean stability (0.7) but very different SPREAD.
+            // Old behaviour (Consistency = average stability) would score them identically.
+            // The fix re-derives Consistency from the in-session std-dev, so the steady
+            // trace must score substantially higher than the oscillating one.
+            var profile = ExerciseTargetProfile.ResonanceExercise();
+
+            // ── Session A: perfectly steady stability 0.7 across four ticks ──────────
+            Begin(profile, exerciseId: 41, sessionId: 1900, userId: 1);
+            _coordinator.UpdateMetrics(0.6, 200, stability: 0.7, health: 100);
+            WaitForRateLimit();
+            _coordinator.UpdateMetrics(0.6, 200, stability: 0.7, health: 100);
+            WaitForRateLimit();
+            _coordinator.UpdateMetrics(0.6, 200, stability: 0.7, health: 100);
+            WaitForRateLimit();
+            _coordinator.UpdateMetrics(0.6, 200, stability: 0.7, health: 100);
+            var steady = _recorder.CompleteSession();
+            await (_recorder.LastPersistTask ?? Task.CompletedTask);
+
+            // ── Session B: 0.4 / 1.0 alternating — identical mean 0.7, large spread ──
+            Begin(profile, exerciseId: 41, sessionId: 1901, userId: 1);
+            _coordinator.UpdateMetrics(0.6, 200, stability: 0.4, health: 100);
+            WaitForRateLimit();
+            _coordinator.UpdateMetrics(0.6, 200, stability: 1.0, health: 100);
+            WaitForRateLimit();
+            _coordinator.UpdateMetrics(0.6, 200, stability: 0.4, health: 100);
+            WaitForRateLimit();
+            _coordinator.UpdateMetrics(0.6, 200, stability: 1.0, health: 100);
+            var oscillating = _recorder.CompleteSession();
+            await (_recorder.LastPersistTask ?? Task.CompletedTask);
+
+            // Same mean stability (the live-UI / MasteryEvaluator signal is unchanged) …
+            Assert.Equal(0.7, steady.AverageStability, 3);
+            Assert.Equal(0.7, oscillating.AverageStability, 3);
+
+            // … but very different STEADINESS — flat ⇒ ~1.0, oscillating ⇒ much lower.
+            Assert.True(steady.StabilitySteadiness01 > 0.95,
+                $"steady steadiness should be near 1.0 but was {steady.StabilitySteadiness01:0.000}");
+            Assert.True(oscillating.StabilitySteadiness01 < 0.25,
+                $"oscillating steadiness should be low but was {oscillating.StabilitySteadiness01:0.000}");
+
+            // The persisted ConsistencyScore100 (which the scorer derives from steadiness)
+            // must be substantially higher for the steady trace than the oscillating one.
+            var steadyRow = await PollAsync(
+                () => FetchSessionAsync(1900, userId: 1),
+                s => s != null && s.EndedAt != null);
+            var oscillatingRow = await PollAsync(
+                () => FetchSessionAsync(1901, userId: 1),
+                s => s != null && s.EndedAt != null);
+
+            Assert.True(steadyRow.ConsistencyScore100 - oscillatingRow.ConsistencyScore100 > 40,
+                $"steady Consistency ({steadyRow.ConsistencyScore100:0}) should far exceed " +
+                $"oscillating ({oscillatingRow.ConsistencyScore100:0}).");
+        }
+
+        // ────────────────────────────────────────────────────────────────────────────
+        // 20. VH-02 (safety) — repeated SUPERVISOR pause recommendations across sessions
+        //     feed the progression block via a distinct SUPERVISOR_PAUSE channel, WITHOUT
+        //     any subjective report. They must never collide with SUBJECTIVE_HEALTH_CONCERN.
+        // ────────────────────────────────────────────────────────────────────────────
+
+        [Fact]
+        public async Task RepeatedSupervisorPauses_AcrossSessions_BlockProgression_WithoutSubjectiveReport()
+        {
+            // Induce an OBJECTIVE supervisor pause via FATIGUE, not a safety lock, so the
+            // test isolates the SUPERVISOR_PAUSE channel: the first non-idle tick seeds the
+            // supervisor's meso EMA directly, so resonance/stability of 0.30 (well under the
+            // 0.70 baseline) drives both fatigue drifts past threshold ⇒ fatigueDetected ⇒
+            // pauseRecommended on that very tick — with health 100 (no lock) and in the
+            // comfort zone (no breach). This avoids the gate's earlier REPEATED_SAFETY_LOCKS
+            // rule firing first, proving the pause channel specifically reaches the gate.
+            var profile = ExerciseTargetProfile.ResonanceExercise();
+
+            async Task RunPauseInducingSessionAsync(int sessionId)
+            {
+                Begin(profile, exerciseId: 42, sessionId: sessionId, userId: 1);
+                // Two low-but-non-idle ticks (health 100 ⇒ no lock). Fatigue → pause fires.
+                _coordinator.UpdateMetrics(0.30, 200, stability: 0.30, health: 100);
+                WaitForRateLimit();
+                _coordinator.UpdateMetrics(0.30, 200, stability: 0.30, health: 100);
+                _recorder.CompleteSession();
+                await (_recorder.LastPersistTask ?? Task.CompletedTask);
+            }
+
+            // Act — two separate pause-inducing sessions; the supervisor resets per session.
+            await RunPauseInducingSessionAsync(2000);
+            await RunPauseInducingSessionAsync(2001);
+
+            // Assert — two PauseRecommended events exist, BOTH from the objective supervisor
+            // channel (SUPERVISOR_PAUSE), and NONE from the subjective channel.
+            var events = await PollAsync(
+                FetchEventsAsync,
+                e => e != null
+                     && e.Count(x => x.EventType == HealthAnalyticsEventType.PauseRecommended
+                                     && x.ReasonCode == "SUPERVISOR_PAUSE") >= 2);
+
+            var supervisorPauses = events
+                .Where(x => x.EventType == HealthAnalyticsEventType.PauseRecommended)
+                .ToList();
+            Assert.True(supervisorPauses.All(x => x.ReasonCode == "SUPERVISOR_PAUSE"),
+                "all pause events must carry the distinct SUPERVISOR_PAUSE reason code.");
+            Assert.DoesNotContain(supervisorPauses, x => x.ReasonCode == "SUBJECTIVE_HEALTH_CONCERN");
+
+            // And the gate blocks progression on REPEATED_PAUSE_RECOMMENDATIONS — proving the
+            // supervisor channel reaches the gate with no subjective report whatsoever.
+            var gate = new ProgressionSafetyGate(_store);
+            var result = await gate.EvaluateAsync(DateTime.Now, userId: 1);
+            Assert.True(result.IsBlocked);
+            Assert.Equal("REPEATED_PAUSE_RECOMMENDATIONS", result.ReasonCode);
+        }
+
+        // ────────────────────────────────────────────────────────────────────────────
         // Teardown
         // ────────────────────────────────────────────────────────────────────────────
 

@@ -167,16 +167,18 @@ namespace FemVoiceStudio.Services
                 : FeedbackPriority.TechniqueCorrection;
         }
 
+        // Uses the same ExerciseCoach_* keys as the coordinator so every trigger
+        // always resolves to identical wording regardless of which pipeline path fires.
         private static string GetLocalizationKey(string reasonCode)
             => reasonCode.ToUpperInvariant() switch
             {
-                "HEALTH_SAFETY_LOCK" => "InlineCoachFeedback_HealthSafetyLock",
-                "RESONANCE_TOO_LOW" => "InlineCoachFeedback_ResonanceTooLow",
-                "RESONANCE_TOO_HIGH" => "InlineCoachFeedback_ResonanceTooHigh",
-                "STABILITY_LOW" => "InlineCoachFeedback_StabilityLow",
-                "PITCH_OUT_OF_ZONE" => "InlineCoachFeedback_PitchOutOfZone",
-                "HOLD_COMPLETE" => "InlineCoachFeedback_HoldComplete",
-                _ => "InlineCoachFeedback_Generic"
+                "HEALTH_SAFETY_LOCK" => "ExerciseCoach_HealthSafetyLock",
+                "RESONANCE_TOO_LOW"  => "ExerciseCoach_ResonanceTooLow",
+                "RESONANCE_TOO_HIGH" => "ExerciseCoach_ResonanceTooHigh",
+                "STABILITY_LOW"      => "ExerciseCoach_StabilityLow",
+                "PITCH_OUT_OF_ZONE"  => "ExerciseCoach_PitchOutOfZone",
+                "HOLD_COMPLETE"      => "ExerciseCoach_HoldComplete",
+                _                    => "InlineCoachFeedback_Generic"
             };
 
         private static string GetConflictKey(string reasonCode, FeedbackPriority priority)

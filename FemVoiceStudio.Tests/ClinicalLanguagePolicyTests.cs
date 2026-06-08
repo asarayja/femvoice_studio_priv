@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
+using FemVoiceStudio.Models;
 using FemVoiceStudio.Services;
 using Xunit;
 
@@ -260,6 +262,181 @@ namespace FemVoiceStudio.Tests
                     Environment.NewLine +
                     string.Join(Environment.NewLine, failures));
             }
+        }
+
+        // -----------------------------------------------------------------------------
+        // A13-F3: motor-generated (NON-resx) runtime copy must also stay clinically clean.
+        // The resource guards above protect the static *.resx values, but the user also sees
+        // strings that the producers assemble at runtime from those keys plus live numbers:
+        // RecoveryScorer.Score(...).Explanation and the SessionInsightBuilder output (summary,
+        // improvement and risk descriptions). We drive both producers over a broad range of
+        // inputs — including the clinical extremes (every load signal maxed, deep overtraining,
+        // catastrophic recovery, big improvements, every risk firing) — and assert that NOT ONE
+        // of the assembled strings trips ClinicalLanguagePolicy.Scan. This catches a regression
+        // where a future key edit or a composed phrase (e.g. a pluralised "Lowered by: …" line)
+        // reintroduces shame/pressure copy that the per-key resx scan would not see in context.
+        // The producers use the default LocalizationService.Instance, so this exercises the real
+        // shipping copy (neutral resource, with the verbatim English fallback as a safety net).
+        // -----------------------------------------------------------------------------
+
+        [Fact]
+        public void MotorGeneratedRuntimeStrings_PassClinicalLanguagePolicy()
+        {
+            var recoveryScorer = new RecoveryScorer();
+            var insightBuilder = new SessionInsightBuilder();
+
+            var generated = new List<KeyValuePair<string, string>>();
+
+            // 1) RecoveryScorer explanations across the full input spectrum.
+            foreach (var input in RecoveryScoreInputs())
+            {
+                var result = recoveryScorer.Score(input);
+                generated.Add(new("RecoveryScorer.Explanation", result.Explanation));
+            }
+
+            // 2) SessionInsightBuilder output (summary + every improvement + every risk
+            //    description) across first-session, steady, improving and worst-case sessions.
+            foreach (var insight in SessionInsights(insightBuilder))
+            {
+                generated.Add(new("SessionInsight.Summary", insight.Summary));
+                foreach (var improvement in insight.Improvements)
+                    generated.Add(new("SessionInsight.Improvement", improvement.Explanation));
+                foreach (var risk in insight.Risks)
+                    generated.Add(new("SessionInsight.Risk", risk.Description));
+                generated.Add(new("SessionInsight.RecoveryNeeds", insight.RecoveryNeeds.Explanation));
+            }
+
+            // Sanity: we actually produced a meaningful body of copy to scan.
+            Assert.NotEmpty(generated);
+            Assert.All(generated, g => Assert.False(string.IsNullOrWhiteSpace(g.Value)));
+
+            var violations = ClinicalLanguagePolicy.Scan(generated);
+
+            Assert.True(
+                violations.Count == 0,
+                "Clinical-language policy violations in motor-generated runtime copy:" +
+                Environment.NewLine +
+                string.Join(Environment.NewLine,
+                    violations.Select(v => v.ToString())));
+        }
+
+        // Extreme + representative RecoveryScorer inputs (mirrors the boundary cases the
+        // RecoveryScorerTests cover, so every explanation branch is exercised).
+        private static IEnumerable<RecoveryScoreInput> RecoveryScoreInputs()
+        {
+            yield return new RecoveryScoreInput(); // new user — "well rested" no-load branch
+            yield return new RecoveryScoreInput { RecentSafetyLocks = 1 }; // single dominant lock
+            yield return new RecoveryScoreInput { RecentSafetyLocks = 10 }; // capped, overtrained
+            yield return new RecoveryScoreInput
+            {
+                RecentStrainEpisodes = 1,
+                RecentPauseRecommendations = 1,
+                RecentFatigueIndicators = 1,
+                HydrationSuggestionsRecent = 1,
+            }; // singular driver phrasing
+            yield return new RecoveryScoreInput
+            {
+                RecentStrainEpisodes = 3,
+                RecentPauseRecommendations = 2,
+                RecentFatigueIndicators = 6,
+                PriorFatigueIndicators = 1, // rising trend driver
+                HydrationSuggestionsRecent = 4,
+            }; // plural drivers + trend
+            yield return new RecoveryScoreInput
+            {
+                SessionsLast7Days = 8,
+                HoursSinceLastSession = 2.0, // overtraining "training density" driver
+            };
+            yield return new RecoveryScoreInput
+            {
+                HoursSinceLastSession = 48.0, // rest-reward tail with a small load
+                RecentFatigueIndicators = 2,
+                PriorFatigueIndicators = 2,
+            };
+            yield return new RecoveryScoreInput // catastrophic: every signal maxed
+            {
+                RecentSafetyLocks = 10,
+                RecentStrainEpisodes = 10,
+                RecentPauseRecommendations = 10,
+                RecentFatigueIndicators = 20,
+                PriorFatigueIndicators = 0,
+                HydrationSuggestionsRecent = 20,
+                SessionsLast7Days = 14,
+                HoursSinceLastSession = 0.0,
+            };
+        }
+
+        // First-session, steady, improving and worst-case insights — covers every summary
+        // branch and every risk description.
+        private static IEnumerable<SessionInsight> SessionInsights(SessionInsightBuilder builder)
+        {
+            DimensionScore D(double s) => new(s, $"score {s:0.0}");
+
+            VoiceIntelligenceScores Scores(
+                double resonance = 50, double comfort = 50, double consistency = 50,
+                double intonation = 50, double vocalWeight = 50, double recovery = 50,
+                double pitch = 50, double composite = 50) => new()
+                {
+                    Resonance = D(resonance), Comfort = D(comfort), Consistency = D(consistency),
+                    Intonation = D(intonation), VocalWeight = D(vocalWeight), Recovery = D(recovery),
+                    Pitch = D(pitch), CompositeVoiceScore = composite,
+                };
+
+            VoiceIntelligenceTrendPoint Prior(
+                double resonance = 50, double comfort = 50, double consistency = 50,
+                double intonation = 50, double vocalWeight = 50, double recovery = 50,
+                double pitch = 50) => new()
+                {
+                    SessionId = 1,
+                    StartedAt = DateTime.Now.AddDays(-1),
+                    EndedAt = DateTime.Now.AddDays(-1).AddMinutes(10),
+                    ResonanceScore100 = resonance, ComfortScore100 = comfort,
+                    ConsistencyScore100 = consistency, IntonationScore100 = intonation,
+                    VocalWeightScore100 = vocalWeight, RecoveryScore100 = recovery,
+                    PitchScore100 = pitch, CompositeVoiceScore = 50,
+                };
+
+            ExerciseSessionOutcome Outcome(
+                int safetyLocks = 0, int strain = 0, int comfortBreaches = 0) => new()
+                {
+                    SafetyLockEpisodes = safetyLocks,
+                    StrainDetections = strain,
+                    ComfortBreachEpisodes = comfortBreaches,
+                };
+
+            var rested = new RecoveryScorer().Score(new RecoveryScoreInput());
+            var strained = new RecoveryScorer().Score(new RecoveryScoreInput
+            {
+                RecentStrainEpisodes = 3,
+                RecentPauseRecommendations = 1,
+            });
+            var overtrained = new RecoveryScorer().Score(new RecoveryScoreInput
+            {
+                RecentSafetyLocks = 2,
+                RecentStrainEpisodes = 4,
+            });
+
+            // First session (no prior trend) — first-session summary branch.
+            yield return builder.Build(Scores(pitch: 30), null, Outcome(), rested);
+
+            // Steady session (prior present, nothing improved) — steady summary branch.
+            yield return builder.Build(Scores(), new[] { Prior() }, Outcome(), rested);
+
+            // Improving session — improvement summary + improvement explanations.
+            yield return builder.Build(
+                Scores(resonance: 70, pitch: 40, comfort: 62),
+                new[] { Prior(resonance: 50, pitch: 35, comfort: 55) },
+                Outcome(), rested);
+
+            // Recovery-needs lead branch with a strained recovery.
+            yield return builder.Build(Scores(recovery: 30), new[] { Prior() }, Outcome(), strained);
+
+            // Worst case: every risk fires and recovery is overtrained.
+            yield return builder.Build(
+                Scores(pitch: 15),
+                new[] { Prior() },
+                Outcome(safetyLocks: 2, strain: 3, comfortBreaches: 5),
+                overtrained);
         }
 
         private static string FindResourceDirectory()

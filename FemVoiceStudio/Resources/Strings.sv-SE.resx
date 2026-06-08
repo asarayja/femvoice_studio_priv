@@ -3645,4 +3645,139 @@ This cannot be undone!</value>
   <data name="Realtime_PitchAboveZoneFormat" xml:space="preserve">
     <value>Över målzonen ({0:F0} Hz). Rösten ligger högre/ljusare än den gröna zonen {1:F0}-{2:F0} Hz. Låt den sjunka lite och undvik press.</value>
   </data>
+  <data name="SessionInsight_Title" xml:space="preserve">
+    <value>Sessionsreflektion</value>
+  </data>
+  <data name="DimensionLabel_Comfort" xml:space="preserve">
+    <value>Komfort</value>
+  </data>
+  <data name="DimensionLabel_Recovery" xml:space="preserve">
+    <value>Återhämtning</value>
+  </data>
+  <data name="DimensionLabel_Resonance" xml:space="preserve">
+    <value>Resonans</value>
+  </data>
+  <data name="DimensionLabel_Consistency" xml:space="preserve">
+    <value>Konsistens</value>
+  </data>
+  <data name="DimensionLabel_Intonation" xml:space="preserve">
+    <value>Intonation</value>
+  </data>
+  <data name="DimensionLabel_VocalWeight" xml:space="preserve">
+    <value>Röstvikt</value>
+  </data>
+  <data name="DimensionLabel_Pitch" xml:space="preserve">
+    <value>Tonhöjd</value>
+  </data>
+  <data name="SessionInsight_Improvement" xml:space="preserve">
+    <value>{0} +{1} sedan förra sessionen</value>
+  </data>
+  <data name="SessionInsight_Risk_SafetyLock" xml:space="preserve">
+    <value>Din röst tog en skyddande paus den här sessionen — ett bra tillfälle att vila.</value>
+  </data>
+  <data name="SessionInsight_Risk_Strain" xml:space="preserve">
+    <value>Lite ansträngning syntes i din röst — att slappna av håller den bekväm.</value>
+  </data>
+  <data name="SessionInsight_Risk_ComfortBreach" xml:space="preserve">
+    <value>Din röst hamnade utanför sin komfortzon några gånger — att hålla sig inom den känns lättare.</value>
+  </data>
+  <data name="SessionInsight_Summary_RecoveryLead" xml:space="preserve">
+    <value>Din röst skulle må bra av lite vila — låt oss ta det lugnt.</value>
+  </data>
+  <data name="SessionInsight_Summary_Improvement" xml:space="preserve">
+    <value>Bra jobbat — {0} ökade {1} sedan sist.</value>
+  </data>
+  <data name="SessionInsight_Summary_FirstSession" xml:space="preserve">
+    <value>Bra första session — det här är din utgångspunkt att utforska från.</value>
+  </data>
+  <data name="SessionInsight_Summary_Steady" xml:space="preserve">
+    <value>Stabil session — du håller ställningarna.</value>
+  </data>
+  <data name="SessionInsight_Summary_NextFocus" xml:space="preserve">
+    <value>Nästa gång kan du lugnt utforska {0}.</value>
+  </data>
+  <data name="Recovery_Explanation_Prefix" xml:space="preserve">
+    <value>Återhämtning {0} ({1}). </value>
+  </data>
+  <data name="Recovery_Explanation_NoLoad" xml:space="preserve">
+    <value>Ingen nylig trötthet, ansträngning eller säkerhetshändelser — rösten är väl vilad.</value>
+  </data>
+  <data name="Recovery_Explanation_LoweredBy" xml:space="preserve">
+    <value>Sänkt av: {0}.</value>
+  </data>
+  <data name="Recovery_Explanation_DriverSeparator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="Recovery_Explanation_RestReward" xml:space="preserve">
+    <value> Vila sedan förra sessionen gav +{0} tillbaka.</value>
+  </data>
+  <data name="Recovery_Status_WellRecovered" xml:space="preserve">
+    <value>väl vilad</value>
+  </data>
+  <data name="Recovery_Status_Adequate" xml:space="preserve">
+    <value>tillräcklig</value>
+  </data>
+  <data name="Recovery_Status_Strained" xml:space="preserve">
+    <value>ansträngd</value>
+  </data>
+  <data name="Recovery_Status_Overtrained" xml:space="preserve">
+    <value>övertränad</value>
+  </data>
+  <data name="Recovery_Status_Unknown" xml:space="preserve">
+    <value>okänd</value>
+  </data>
+  <data name="Recovery_Driver_SafetyLock_One" xml:space="preserve">
+    <value>{0} säkerhetspaus (dominerande)</value>
+  </data>
+  <data name="Recovery_Driver_SafetyLock_Many" xml:space="preserve">
+    <value>{0} säkerhetspauser (dominerande)</value>
+  </data>
+  <data name="Recovery_Driver_Strain_One" xml:space="preserve">
+    <value>{0} ansträngningsepisod</value>
+  </data>
+  <data name="Recovery_Driver_Strain_Many" xml:space="preserve">
+    <value>{0} ansträngningsepisoder</value>
+  </data>
+  <data name="Recovery_Driver_Pause_One" xml:space="preserve">
+    <value>{0} pausrekommendation</value>
+  </data>
+  <data name="Recovery_Driver_Pause_Many" xml:space="preserve">
+    <value>{0} pausrekommendationer</value>
+  </data>
+  <data name="Recovery_Driver_Fatigue_One" xml:space="preserve">
+    <value>{0} trötthetsindikator</value>
+  </data>
+  <data name="Recovery_Driver_Fatigue_Many" xml:space="preserve">
+    <value>{0} trötthetsindikatorer</value>
+  </data>
+  <data name="Recovery_Driver_FatigueTrend" xml:space="preserve">
+    <value>stigande trötthetstrend (+{0})</value>
+  </data>
+  <data name="Recovery_Driver_TrainingDensity" xml:space="preserve">
+    <value>hög träningstäthet med lite vila</value>
+  </data>
+  <data name="Recovery_Driver_Hydration_One" xml:space="preserve">
+    <value>{0} vätskepåminnelse</value>
+  </data>
+  <data name="Recovery_Driver_Hydration_Many" xml:space="preserve">
+    <value>{0} vätskepåminnelser</value>
+  </data>
+  <data name="FeedbackMode_Resonance" xml:space="preserve">
+    <value>Visuell: resonansindikator (främre placering)</value>
+  </data>
+  <data name="IndicatorPackage_Resonance" xml:space="preserve">
+    <value>Resonans • Stabilitet</value>
+  </data>
+  <data name="ThresholdStrategy_ComfortZone" xml:space="preserve">
+    <value>Tröskel: håller tonhöjden inom en bekväm zon.</value>
+  </data>
+  <data name="ThresholdStrategy_Continuous" xml:space="preserve">
+    <value>Tröskel: kontinuerlig återkoppling genom hela övningen.</value>
+  </data>
+  <data name="ThresholdStrategy_Endurance" xml:space="preserve">
+    <value>Tröskel: lugn, ihållande insats över tid utan att pressa.</value>
+  </data>
+  <data name="ThresholdStrategy_Intensity" xml:space="preserve">
+    <value>Tröskel: kortare, mer fokuserade intervaller med vila emellan.</value>
+  </data>
 </root>

@@ -70,6 +70,16 @@ namespace FemVoiceStudio.Models
         /// </summary>
         public int SessionElapsedSeconds { get; init; }
 
+        /// <summary>
+        /// <c>true</c> when the active exercise profile actually measures resonance
+        /// (<c>UsesResonance</c>), so <see cref="PrimaryMetricScore"/> carries a REAL
+        /// resonance value this tick. <c>false</c> for pitch-only profiles, where
+        /// <see cref="PrimaryMetricScore"/> is a normalised-pitch proxy and must NOT be
+        /// aggregated as resonance — otherwise the Resonance dimension would echo the
+        /// pitch proxy instead of falling back to its neutral-50 sentinel (RES-01).
+        /// </summary>
+        public bool UsesResonanceSignal { get; init; }
+
         // ── Raw per-tick acoustic signals (Voice Intelligence, Bølge 2) ──────────────
         // Additive, init-only, default = "missing" sentinel (0 / NaN). These carry the
         // RAW per-tick aggregates the VoiceIntelligenceScorer needs for the Intonation,

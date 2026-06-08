@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using FemVoiceStudio.Audio;
 using FemVoiceStudio.Models;
+using FemVoiceStudio.Services;
 using Xunit;
 
 namespace FemVoiceStudio.Tests
@@ -274,6 +276,102 @@ namespace FemVoiceStudio.Tests
             double a = implicitDefault.EvaluateResonance(DarkTimbre()).TotalScore;
             double b = explicitFeminine.EvaluateResonance(DarkTimbre()).TotalScore;
             Assert.Equal(a, b, 6);
+        }
+
+        // ──────────────────────────────────────────────────────────────────────
+        // (A13-F4) Klinisk-språk-vakt på SELVE SCORE/FEEDBACK-OBJEKTET — ikke bare
+        // resx. ResonansScoringService.EvaluateResonance(...) + GetFeedback(...) er
+        // den brukervendte resonans-overflaten (kategori-label + Message/Hint). For en
+        // mørk/maskulint-klingende frame skal INGEN av disse feltene matche
+        // ClinicalLanguagePolicys maskulin/mannlig-stemme-mønstre (eller noen annen
+        // forbudt regel): appen skal aldri klassifisere brukerens klang som «maskulin/
+        // mannlig stemme». Vi kjører label + feedback-tekst gjennom den EKTE
+        // ClinicalLanguagePolicy.Scan — samme håndhevelse som resx-vakten, men nå på
+        // runtime-genererte objektfelt. Dekker både Feminine-default og alle mørkere
+        // stiler (det er nettopp under en mørk klang en naiv motor kunne fristes til en
+        // «maskulin»-merkelapp).
+        // ──────────────────────────────────────────────────────────────────────
+
+        // En tydelig mørk/tilbaketrukket, men gyldig stemt frame — lavere F2/F3 enn det
+        // lyse feminine idealet. Dette er det «verste tilfellet» for en maskulin-merkelapp.
+        private static FormantAnalysisResult VeryDarkTimbre() => new FormantAnalysisResult
+        {
+            Timestamp = DateTime.UtcNow,
+            F1 = 360, F2 = 1500, F3 = 2300,
+            SmoothedF1 = 360, SmoothedF2 = 1500, SmoothedF3 = 2300,
+            FrameRms = 0.12,
+            Confidence = 0.95,
+            IsValid = true
+        };
+
+        public static IEnumerable<object[]> AllStyles()
+        {
+            yield return new object[] { VoiceStyleGoal.Feminine };
+            yield return new object[] { VoiceStyleGoal.Androgynous };
+            yield return new object[] { VoiceStyleGoal.DarkFeminine };
+            yield return new object[] { VoiceStyleGoal.Situational };
+            yield return new object[] { VoiceStyleGoal.Custom };
+        }
+
+        [Theory]
+        [MemberData(nameof(AllStyles))]
+        public void Scoring_DarkFrame_LabelAndFeedback_NeverViolateClinicalLanguagePolicy(VoiceStyleGoal style)
+        {
+            var svc = new ResonansScoringService(enableSmoothing: false);
+            svc.SetVoiceStyle(style);
+
+            var score = svc.EvaluateResonance(VeryDarkTimbre());
+            var feedback = svc.GetFeedback(score);
+
+            // Den brukervendte resonans-overflaten: kategori-label (maskin-merkelappen som
+            // kunne bli «maskulin/mannlig») + den genererte norske tilbakemeldingen.
+            var surface = new[]
+            {
+                new KeyValuePair<string, string>("ResonansScore.Category", score.Category.ToString()),
+                new KeyValuePair<string, string>("ResonanceFeedback.Message", feedback.Message),
+                new KeyValuePair<string, string>("ResonanceFeedback.Hint", feedback.Hint),
+            };
+
+            var violations = ClinicalLanguagePolicy.Scan(surface);
+
+            // Ingen forbudt klinisk-språk-treff overhodet — og SPESIELT ingen maskulin/
+            // mannlig-stemme-merkelapp — på score/feedback-objektets felt for en mørk klang.
+            Assert.Empty(violations);
+        }
+
+        [Theory]
+        [MemberData(nameof(AllStyles))]
+        public void Scoring_DarkFrame_CategoryLabel_IsNeverMasculineOrMaleVoice(VoiceStyleGoal style)
+        {
+            // Smalere, eksplisitt assertion mot nettopp maskulin/mannlig-stemme-mønstrene:
+            // kategori-labelen kjøres med et «stemme»-suffiks så et hypotetisk
+            // «Masculine»/«Maskulin» ville bli fanget av maskulin/mannlig-stemme-regelen
+            // (som krever adjacency til voice/stemme). Beviser at klassifiseringen ALDRI
+            // merker en mørk klang som en mannlig/maskulin stemme.
+            var svc = new ResonansScoringService(enableSmoothing: false);
+            svc.SetVoiceStyle(style);
+
+            var category = svc.EvaluateResonance(VeryDarkTimbre()).Category.ToString();
+
+            var probes = new[]
+            {
+                new KeyValuePair<string, string>("category.en", $"{category} voice"),
+                new KeyValuePair<string, string>("category.no", $"{category} stemme"),
+            };
+
+            var violations = ClinicalLanguagePolicy.Scan(probes);
+
+            Assert.DoesNotContain(violations, v =>
+                v.MatchedText.IndexOf("voice", StringComparison.OrdinalIgnoreCase) >= 0
+                || v.MatchedText.IndexOf("stemme", StringComparison.OrdinalIgnoreCase) >= 0);
+            // Den faktiske kategori-enumen er en av de tre nøytrale klang-kategoriene —
+            // aldri en kjønns-merkelapp.
+            Assert.Contains(category, new[]
+            {
+                AudioResonanceCategory.ForwardResonant.ToString(),
+                AudioResonanceCategory.NeutralResonant.ToString(),
+                AudioResonanceCategory.BackResonant.ToString()
+            });
         }
     }
 }

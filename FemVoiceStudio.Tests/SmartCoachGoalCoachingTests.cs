@@ -13,6 +13,7 @@ namespace FemVoiceStudio.Tests
     using SmartCoachBaseline = FemVoiceStudio.Data.SmartCoachBaseline;
     using SmartCoachHealthMonitoring = FemVoiceStudio.Data.SmartCoachHealthMonitoring;
     using SmartCoachWeeklyProgress = FemVoiceStudio.Data.SmartCoachWeeklyProgress;
+    using SmartCoachGoal = FemVoiceStudio.Data.SmartCoachGoal;
 
     /// <summary>
     /// Sprint C, Bølge 2 — GOAL-/STIL-/CONFIDENCE-/VARIGHET-evolusjon i SmartCoach
@@ -554,6 +555,79 @@ namespace FemVoiceStudio.Tests
             var messages = _testDatabase.GetMessages(1, 10);
             var msg = Assert.Single(messages);
             Assert.NotEqual(LocalizationService.Instance.GetString("SmartCoach_Mastery_Title"), msg.Title);
+        }
+
+        // ══ 5b. STIL-BEVISST MÅL-GENERERING (GOAL-01) ═══════════════════════════════
+        // Det stil-blinde +20 Hz-pitchmålet (Mål 1, kappet ved 220) skyver mot LYSERE/
+        // HØYERE pitch. For DarkFeminine/Androgynous er målet en varmere/lavere stemme —
+        // ikke høyere pitch — så GenerateGoals skal HOPPE OVER pitch-økningsmålet for
+        // disse, mens Feminine fortsatt får det. Gate-rekkefølgen i daglig-anbefalingen
+        // er urørt; dette gjelder KUN mål-genereringen.
+
+        private static bool HasPitchIncreaseGoal(IEnumerable<SmartCoachGoal> goals)
+            => goals.Any(g => string.Equals(g.GoalType, "pitch", StringComparison.OrdinalIgnoreCase));
+
+        [Fact]
+        public void GenerateGoals_Feminine_EmitsPitchIncreaseGoal()
+        {
+            // Kontroll: Feminine beholder +20 Hz-pitchmålet (baseline 175 ⇒ mål 195,
+            // godt under 220-taket, så det er et reelt øknings-mål).
+            SeedHealthyBaseline();
+            SetStyle(VoiceStyleGoal.Feminine);
+            var engine = EngineWith(); // ingen ekstra tjenester nødvendig
+
+            var goals = engine.GenerateGoals(1);
+
+            Assert.True(HasPitchIncreaseGoal(goals),
+                "Feminine skal fortsatt få +20 Hz-pitchmålet.");
+            var pitch = goals.Single(g => g.GoalType == "pitch");
+            Assert.Equal(System.Math.Min(175.0 + 20.0, 220.0), pitch.TargetValue);
+        }
+
+        [Theory]
+        [InlineData(VoiceStyleGoal.DarkFeminine)]
+        [InlineData(VoiceStyleGoal.Androgynous)]
+        public void GenerateGoals_LowerPitchStyles_OmitPitchIncreaseGoal(VoiceStyleGoal style)
+        {
+            // DarkFeminine/Androgynous sikter mot en varmere/lavere stemme — det
+            // stil-blinde +20 Hz-mot-220-målet skal IKKE emitteres for disse.
+            SeedHealthyBaseline();
+            SetStyle(style);
+            var engine = EngineWith();
+
+            var goals = engine.GenerateGoals(1);
+
+            Assert.False(HasPitchIncreaseGoal(goals),
+                $"{style} skal IKKE få det pitch-økende +20 Hz-målet.");
+        }
+
+        [Fact]
+        public void GenerateGoals_LowerPitchStyles_StillEmitNonPitchGoals()
+        {
+            // Stil-dempingen rammer KUN pitch-økningsmålet — resonans/intonasjon
+            // (når baselinen tilsier dem) skal være urørt.
+            SeedLowResonanceBaseline(); // resonans 55 ⇒ resonans-mål; intonasjon 80 ⇒ ikke intonasjon
+            SetStyle(VoiceStyleGoal.DarkFeminine);
+            var engine = EngineWith();
+
+            var goals = engine.GenerateGoals(1);
+
+            Assert.False(HasPitchIncreaseGoal(goals));
+            Assert.Contains(goals, g => g.GoalType == "resonance");
+        }
+
+        [Fact]
+        public void GenerateGoals_NoStyle_KeepsPitchIncreaseGoal()
+        {
+            // Bakoverkompat: uten lagret stil (ingen UserVoiceProfile, ingen goal-profil)
+            // er ResolveVoiceStyle null ⇒ vi demper ikke, og pitch-målet beholdes.
+            SeedHealthyBaseline();
+            var engine = EngineWith(); // ingen SetStyle
+
+            var goals = engine.GenerateGoals(1);
+
+            Assert.True(HasPitchIncreaseGoal(goals),
+                "Uten stil-info skal +20 Hz-pitchmålet beholdes (dagens oppførsel).");
         }
 
         // ══ 6. NYE RESX-STRENGER FINNES + ER KLINISK TRYGGE ════════════════════════

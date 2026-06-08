@@ -236,12 +236,15 @@ namespace FemVoiceStudio.Services
             if (input.AverageStability01 < 0 || !IsUsable(input.AverageStability01))
             {
                 return DimensionScore.Neutral(
-                    "Consistency: no stability signal — neutral 50 assigned.");
+                    "Consistency: no stability-steadiness signal — neutral 50 assigned.");
             }
 
+            // AverageStability01 here is the in-session stability STEADINESS (reproducibility:
+            // 1 − stdDev/scale), NOT the raw voicing-clarity mean — so this dimension reflects
+            // how steady the voice was, not how voiced it was (CONS-1/2).
             double score = Math.Clamp(input.AverageStability01, 0, 1) * 100.0;
             return new DimensionScore(score, string.Create(CultureInfo.InvariantCulture,
-                $"Consistency {score:0}/100 from average stability {input.AverageStability01:0.00} (×100)."));
+                $"Consistency {score:0}/100 from in-session stability steadiness {input.AverageStability01:0.00} (×100; reproducibility, not voicing level)."));
         }
 
         private DimensionScore ScoreIntonation(VoiceIntelligenceInput input)

@@ -551,8 +551,10 @@ namespace FemVoiceStudio.Views
                 VocalWeightScore = Math.Round(snapshots.Average(s => s.VocalWeightDimension));
                 ComfortScore = Math.Round(snapshots.Average(s => s.ComfortDimension));
                 RecoveryScore = Math.Round(snapshots.Average(s => s.RecoveryDimension));
-                // Voice health proxy = the Health pair (Comfort + Recovery), mean.
-                VoiceHealthScore = Math.Round((ComfortScore + RecoveryScore) / 2.0);
+                // Voice health proxy = the Health pair (Comfort + Recovery), WORST-OF.
+                // COMFORT-01 (safety): min, not mean — a rising comfort must never mask
+                // a falling recovery in the user-facing headline number.
+                VoiceHealthScore = Math.Round(Math.Min(ComfortScore, RecoveryScore));
                 CompositeVoiceScore = Math.Round(snapshots.Average(s => s.CompositeVoiceScore));
             }
 

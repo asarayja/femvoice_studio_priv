@@ -368,6 +368,87 @@ namespace FemVoiceStudio.Tests
             Assert.Contains("comfort", result.Rationale);
         }
 
+        // ── A5-04. Flag penalty is PRIMARY; effectiveness is only a WITHIN-bucket tie-break;
+        //          HasEnoughData=false is NEUTRAL (neither lift nor penalty). ──────────────
+        [Fact]
+        public void RankCandidates_FlagPenaltyAndEffectivenessTieBreak()
+        {
+            // Weak resonance + WellRecovered ⇒ focus = resonance, pool = IsolatedSounds {1,2,3}.
+            // We craft the three ids so the ordering proves the two contractual properties:
+            //
+            //   • PENALTY-PRIMARY over effectiveness: id 2 is safety-FLAGGED (+FlagPenalty)
+            //     yet carries the HIGHEST CompositeEffectiveness (95). An otherwise-equal but
+            //     UNFLAGGED id 3 with a much LOWER effectiveness (10) must STILL outrank it —
+            //     a flag can never be out-weighed by a better effectiveness number, because
+            //     penalty is the primary sort key and effectiveness only breaks ties WITHIN a
+            //     penalty bucket.
+            //
+            //   • HasEnoughData=false is NEUTRAL: id 1 has a low-data profile. It must be
+            //     treated as the neutral midpoint (≈50) — neither lifted nor penalised. So it
+            //     sorts ABOVE the evidenced-but-low id 3 (10 < 50) and BELOW where a genuine
+            //     high score would put it — i.e. "insufficient evidence", never "ineffective".
+            //
+            // Expected final ranking (penalty asc, then effectiveness desc, then id):
+            //   id 1 (penalty 0, eff≈50 neutral) → id 3 (penalty 0, eff 10) → id 2 (penalty 1).
+            var effectiveness = new Dictionary<int, ExerciseEffectivenessProfile>
+            {
+                // Low-data ⇒ NEUTRAL. CompositeEffectiveness is deliberately set to an extreme
+                // value to PROVE it is ignored while HasEnoughData is false (no lift/penalty).
+                [1] = new ExerciseEffectivenessProfile
+                {
+                    ExerciseId = 1, HasEnoughData = false, CompositeEffectiveness = 99
+                },
+                // Flagged id carries the HIGHEST effectiveness — must still lose to the flag.
+                [2] = new ExerciseEffectivenessProfile
+                {
+                    ExerciseId = 2, HasEnoughData = true, CompositeEffectiveness = 95
+                },
+                // Unflagged, evidenced, but LOW effectiveness — still beats the flagged id 2.
+                [3] = new ExerciseEffectivenessProfile
+                {
+                    ExerciseId = 3, HasEnoughData = true, CompositeEffectiveness = 10
+                },
+            };
+
+            var input = new ExerciseRecommendationInput
+            {
+                Recovery = Recovery(90, RecoveryStatus.WellRecovered),
+                LatestVoiceScores = Scores(resonance: 25),
+                ComplexityLevel = SpeechComplexityLevel.IsolatedSounds,
+                EffectivenessByExercise = effectiveness,
+                FlaggedExerciseIds = new[] { 2 }
+            };
+
+            var result = Engine().RecommendNext(input);
+
+            var ranking = new List<int> { result.ExerciseId };
+            ranking.AddRange(result.AlternativeExerciseIds);
+
+            // Full, deterministic order.
+            Assert.Equal(new[] { 1, 3, 2 }, ranking);
+
+            var posFlagged = ranking.IndexOf(2);   // flagged, eff 95
+            var posUnflagged = ranking.IndexOf(3); // unflagged, eff 10
+            var posNeutral = ranking.IndexOf(1);   // low-data ⇒ neutral
+
+            // PENALTY PRIMARY: the flagged id sorts AFTER the otherwise-equal unflagged id
+            // despite a strictly HIGHER CompositeEffectiveness.
+            Assert.True(posUnflagged < posFlagged,
+                "Unflagged id 3 must outrank flagged id 2 even though id 2 has higher effectiveness.");
+
+            // HasEnoughData=false is NEUTRAL: the low-data id is NOT penalised to the bottom
+            // (it beats the evidenced-but-low id 3 at the neutral midpoint) and is NOT lifted
+            // by its inflated raw number (it does not jump the flagged id on effectiveness —
+            // it only ranks ahead because the flagged id carries a penalty).
+            Assert.True(posNeutral < posUnflagged,
+                "Low-data (neutral ≈50) id 1 must outrank evidenced-but-low id 3.");
+            Assert.True(posNeutral < posFlagged,
+                "Low-data id 1 outranks flagged id 2 — but via the flag penalty, not an effectiveness lift.");
+
+            // The flagged id is the single most de-prioritised candidate here.
+            Assert.Equal(2, ranking[^1]);
+        }
+
         // ── 18. Recovery pool never exceeds the lightest bucket, regardless of level ───
         [Fact]
         public void RecommendNext_RecoveryPool_NeverHarderThanLightBucket()

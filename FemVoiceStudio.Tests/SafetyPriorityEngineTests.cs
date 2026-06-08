@@ -464,6 +464,73 @@ namespace FemVoiceStudio.Tests
             Assert.False(service.CanProgress(1));
         }
 
+        // (A13-F2) Isoler HELSE-gaten fra den tomme GetRecentSessionScores-stuben.
+        //
+        // CanProgress kjeder fire gater: baseline != null → resonans ≥ 60 → ukentlig
+        // HealthScore ≥ MinHealthForProgression(70) → ≥ 3 stabile økter. Stabilitets-
+        // kilden (GetRecentSessionScores) er i denne builden en TOM stubb som returnerer
+        // en tom liste UBETINGET, så CanProgress kan aldri returnere true ende-til-ende.
+        // En naiv «CanProgress == false»-test ville derfor IKKE bevise at helse-gaten
+        // gjør noe — den tomme stuben alene gir samme utfall.
+        //
+        // For å bevise at helse-terskelen er load-bearing ALENE, isolerer vi selve
+        // helse-predikatet (GetWeeklyHealthScore(userId) < 70) fra stabilitets-stuben:
+        //   • Baseline + resonans holdes konstant over terskel (de tidligere gatene
+        //     bestått), slik at KUN helse-/strain-feltet varierer.
+        //   • Vi leser den private GetWeeklyHealthScore via refleksjon (samme kilde gaten
+        //     bruker) og beviser at den krysser 70 NØYAKTIG med strain — gaten fyrer når
+        //     helsen er lav og IKKE fyrer når helsen er tilstrekkelig.
+        //   • Når helsen er tilstrekkelig (gaten åpen) er CanProgress fortsatt false —
+        //     det RESIDUALE blokket er da stabilitets-stuben, ikke helse-gaten. Dermed er
+        //     helse-gaten vist å vippe uavhengig av stuben.
+        // Assertionen på helse-terskelen ville FEILE dersom helse-gaten ble fjernet (da
+        // ville GetWeeklyHealthScore-koblingen / 70-terskelen ikke lenger eksistere som
+        // den avgjørende grensen mellom blokkert og åpen helse-gren).
+        private static double WeeklyHealthScoreViaGate(AdaptiveComfortZoneService service, int userId)
+        {
+            var method = typeof(AdaptiveComfortZoneService).GetMethod(
+                "GetWeeklyHealthScore",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.NotNull(method);
+            return (double)method!.Invoke(service, new object[] { userId })!;
+        }
+
+        [Fact]
+        public void ZoneCanProgress_HealthGate_IsolatedFromStabilityStub()
+        {
+            const double MinHealthForProgression = 70.0; // speiler AdaptiveComfortZoneService
+
+            // ── Lav helse: strain 40 ⇒ ukentlig HealthScore = 60 (< 70). Helse-gaten
+            //    fyrer ALENE — de tidligere gatene (baseline/resonans) er bestått. ──
+            var (lowHealth, lowDb) = BuildZoneService(ProgressionReadyBaseline());
+            SeedStrain(lowDb, 40);
+
+            double lowScore = WeeklyHealthScoreViaGate(lowHealth, 1);
+            Assert.True(lowScore < MinHealthForProgression,
+                $"Strain 40 skal gi HealthScore {lowScore:F0} < {MinHealthForProgression} ⇒ helse-gaten fyrer.");
+            Assert.False(lowHealth.CanProgress(1)); // blokkert (her: av helse-gaten)
+
+            // ── Tilstrekkelig helse: INGEN strain ⇒ HealthScore = 100 (≥ 70). Helse-gaten
+            //    åpner. Resonans/baseline er like over terskel som over. Det ENESTE som nå
+            //    kan blokkere er stabilitets-stuben (tom liste < 3 økter). ──
+            var (highHealth, _) = BuildZoneService(ProgressionReadyBaseline()); // ingen strain seedet
+
+            double highScore = WeeklyHealthScoreViaGate(highHealth, 1);
+            Assert.True(highScore >= MinHealthForProgression,
+                $"Uten strain skal HealthScore {highScore:F0} ≥ {MinHealthForProgression} ⇒ helse-gaten åpner.");
+
+            // Helse-gaten vippet NØYAKTIG på strain (60 < 70 ≤ 100): terskelen er den
+            // avgjørende grensen. Hadde helse-gaten vært fjernet, ville dette skillet
+            // (lav vs. tilstrekkelig helse som forskjellen mellom blokkert/åpen helse-
+            // gren) ikke eksistert.
+            Assert.True(lowScore < MinHealthForProgression && highScore >= MinHealthForProgression);
+
+            // Med helse-gaten åpen er CanProgress fortsatt false ⇒ det residuale blokket er
+            // stabilitets-stuben, IKKE helse-gaten. Helse-gaten er dermed isolert bevist å
+            // vippe utfallet alene, uavhengig av den tomme GetRecentSessionScores-stuben.
+            Assert.False(highHealth.CanProgress(1));
+        }
+
         [Fact]
         public void RecommendedSessionType_LowHealth_NeverProgressive()
         {

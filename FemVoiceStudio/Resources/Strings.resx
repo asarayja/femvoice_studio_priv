@@ -4024,7 +4024,7 @@ Dette kan ikke angres!</value>
     <value>Rolig modus</value>
   </data>
   <data name="Settings_Accessibility_StressSensitiveDesc" xml:space="preserve">
-    <value>Dempet, mindre pågående coaching med mer pauser. Fint hvis det fort blir overveldende.</value>
+    <value>Roligere farger og dempede varsler i stedet for rød alarm. Fint hvis det fort blir overveldende.</value>
   </data>
   <data name="Settings_Accessibility_ReducedVisual" xml:space="preserve">
     <value>Redusert visuell tilbakemelding</value>
@@ -4191,5 +4191,150 @@ Dette kan ikke angres!</value>
   </data>
   <data name="Dashboard_Axis_Date" xml:space="preserve">
     <value>Dato</value>
+  </data>
+  <!-- Secondary exercise metadata (G9-03): descriptive Norwegian values for the
+       feedback-mode / indicator-package / threshold-strategy keys referenced from
+       ExerciseTargetProfile.cs that were previously missing from the resources. -->
+  <data name="FeedbackMode_Resonance" xml:space="preserve">
+    <value>Visuell: resonansindikator (fremre plassering)</value>
+  </data>
+  <data name="IndicatorPackage_Resonance" xml:space="preserve">
+    <value>Resonans • Stabilitet</value>
+  </data>
+  <data name="ThresholdStrategy_ComfortZone" xml:space="preserve">
+    <value>Terskel: holder pitch innenfor en komfortabel sone.</value>
+  </data>
+  <data name="ThresholdStrategy_Continuous" xml:space="preserve">
+    <value>Terskel: kontinuerlig tilbakemelding gjennom hele øvelsen.</value>
+  </data>
+  <data name="ThresholdStrategy_Endurance" xml:space="preserve">
+    <value>Terskel: rolig, vedvarende innsats over tid uten å presse.</value>
+  </data>
+  <data name="ThresholdStrategy_Intensity" xml:space="preserve">
+    <value>Terskel: kortere, mer fokuserte intervaller med hvile imellom.</value>
+  </data>
+  <!-- ───────────────────────────────────────────────────────────────────────
+       Session-end insight (SessionInsightBuilder) and Recovery explanation
+       (RecoveryScorer). The calm, non-shaming clinical framing is authored
+       verbatim here as the neutral baseline (ClinicalLanguagePolicy-validated);
+       per-locale translations live in the culture-specific resources. Numbers in
+       the format strings ({1} deltas/counts) are pre-formatted with the invariant
+       culture by the producers. -->
+  <data name="SessionInsight_Title" xml:space="preserve">
+    <value>Session reflection</value>
+  </data>
+  <data name="DimensionLabel_Comfort" xml:space="preserve">
+    <value>Comfort</value>
+  </data>
+  <data name="DimensionLabel_Recovery" xml:space="preserve">
+    <value>Recovery</value>
+  </data>
+  <data name="DimensionLabel_Resonance" xml:space="preserve">
+    <value>Resonance</value>
+  </data>
+  <data name="DimensionLabel_Consistency" xml:space="preserve">
+    <value>Consistency</value>
+  </data>
+  <data name="DimensionLabel_Intonation" xml:space="preserve">
+    <value>Intonation</value>
+  </data>
+  <data name="DimensionLabel_VocalWeight" xml:space="preserve">
+    <value>Vocal weight</value>
+  </data>
+  <data name="DimensionLabel_Pitch" xml:space="preserve">
+    <value>Pitch</value>
+  </data>
+  <data name="SessionInsight_Improvement" xml:space="preserve">
+    <value>{0} +{1} since last session</value>
+  </data>
+  <data name="SessionInsight_Risk_SafetyLock" xml:space="preserve">
+    <value>Your voice took a protective pause this session — a good moment to rest.</value>
+  </data>
+  <data name="SessionInsight_Risk_Strain" xml:space="preserve">
+    <value>Some effort showed up in your voice — easing off keeps it comfortable.</value>
+  </data>
+  <data name="SessionInsight_Risk_ComfortBreach" xml:space="preserve">
+    <value>Your voice drifted outside its comfort zone a few times — staying within it feels easier.</value>
+  </data>
+  <data name="SessionInsight_Summary_RecoveryLead" xml:space="preserve">
+    <value>Your voice could use some rest — let's keep things gentle.</value>
+  </data>
+  <data name="SessionInsight_Summary_Improvement" xml:space="preserve">
+    <value>Nice work — {0} grew {1} since last time.</value>
+  </data>
+  <data name="SessionInsight_Summary_FirstSession" xml:space="preserve">
+    <value>Great first session — this is your starting point to explore from.</value>
+  </data>
+  <data name="SessionInsight_Summary_Steady" xml:space="preserve">
+    <value>Steady session — you're holding your ground.</value>
+  </data>
+  <data name="SessionInsight_Summary_NextFocus" xml:space="preserve">
+    <value>Next, you might gently explore {0}.</value>
+  </data>
+  <data name="Recovery_Explanation_Prefix" xml:space="preserve">
+    <value>Recovery {0} ({1}). </value>
+  </data>
+  <data name="Recovery_Explanation_NoLoad" xml:space="preserve">
+    <value>No recent fatigue, strain or safety events — voice is well rested.</value>
+  </data>
+  <data name="Recovery_Explanation_LoweredBy" xml:space="preserve">
+    <value>Lowered by: {0}.</value>
+  </data>
+  <data name="Recovery_Explanation_DriverSeparator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="Recovery_Explanation_RestReward" xml:space="preserve">
+    <value> Rest since last session recovered +{0}.</value>
+  </data>
+  <data name="Recovery_Status_WellRecovered" xml:space="preserve">
+    <value>well recovered</value>
+  </data>
+  <data name="Recovery_Status_Adequate" xml:space="preserve">
+    <value>adequate</value>
+  </data>
+  <data name="Recovery_Status_Strained" xml:space="preserve">
+    <value>strained</value>
+  </data>
+  <data name="Recovery_Status_Overtrained" xml:space="preserve">
+    <value>overtrained</value>
+  </data>
+  <data name="Recovery_Status_Unknown" xml:space="preserve">
+    <value>unknown</value>
+  </data>
+  <data name="Recovery_Driver_SafetyLock_One" xml:space="preserve">
+    <value>{0} safety lock (dominant)</value>
+  </data>
+  <data name="Recovery_Driver_SafetyLock_Many" xml:space="preserve">
+    <value>{0} safety locks (dominant)</value>
+  </data>
+  <data name="Recovery_Driver_Strain_One" xml:space="preserve">
+    <value>{0} strain episode</value>
+  </data>
+  <data name="Recovery_Driver_Strain_Many" xml:space="preserve">
+    <value>{0} strain episodes</value>
+  </data>
+  <data name="Recovery_Driver_Pause_One" xml:space="preserve">
+    <value>{0} pause recommendation</value>
+  </data>
+  <data name="Recovery_Driver_Pause_Many" xml:space="preserve">
+    <value>{0} pause recommendations</value>
+  </data>
+  <data name="Recovery_Driver_Fatigue_One" xml:space="preserve">
+    <value>{0} fatigue indicator</value>
+  </data>
+  <data name="Recovery_Driver_Fatigue_Many" xml:space="preserve">
+    <value>{0} fatigue indicators</value>
+  </data>
+  <data name="Recovery_Driver_FatigueTrend" xml:space="preserve">
+    <value>rising fatigue trend (+{0})</value>
+  </data>
+  <data name="Recovery_Driver_TrainingDensity" xml:space="preserve">
+    <value>high training density with little rest</value>
+  </data>
+  <data name="Recovery_Driver_Hydration_One" xml:space="preserve">
+    <value>{0} hydration nudge</value>
+  </data>
+  <data name="Recovery_Driver_Hydration_Many" xml:space="preserve">
+    <value>{0} hydration nudges</value>
   </data>
 </root>

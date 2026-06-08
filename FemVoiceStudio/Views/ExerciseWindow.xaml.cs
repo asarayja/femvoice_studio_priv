@@ -560,7 +560,8 @@ namespace FemVoiceStudio.Views
                 // async-sti som persisteringen, så den er klar etter await-en over. Helt
                 // null-safe: ingen innsikt (tom/ugyldig økt eller byggefeil) ⇒ panelet
                 // forblir skjult. Bygges fra SessionInsight sine allerede klinisk-validerte
-                // tekstfelt; engelsk forklarings-tekst er {loc}-TODO inntil RESX-nøkler finnes.
+                // tekstfelt, som nå lokaliseres i SessionInsightBuilder/RecoveryScorer via
+                // RESX (ClinicalLanguagePolicy-validert).
                 RenderSessionInsight(_sessionRecorder?.LastSessionInsight);
 
                 // Adaptiv progresjon (fase 2): orchestratoren leser den persisterte
@@ -971,9 +972,9 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
         /// her. Helt null-safe: ingen insight ⇒ panelet skjules. Bygges/oppdateres
         /// programmatisk fordi denne agenten ikke eier ExerciseWindow.xaml.
         ///
-        /// {loc}-TODO: tekstfeltene er foreløpig engelske (SessionInsight-laget) — promoteres
-        /// til RESX (ClinicalLanguagePolicy-validert) når nøklene finnes. Faste etiketter
-        /// hentes fra eksisterende RESX der det finnes.
+        /// Tekstfeltene lokaliseres nå i produsentene (SessionInsightBuilder/RecoveryScorer)
+        /// via RESX og ClinicalLanguagePolicy, og den faste paneltittelen hentes fra
+        /// SessionInsight_Title-nøkkelen. Ingen ny brukersynlig tekst innføres her.
         /// </summary>
         private void RenderSessionInsight(SessionInsight? insight)
         {
@@ -1040,13 +1041,13 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
 
             _sessionInsightBody = new StackPanel();
 
-            // Faste etiketter via RESX der mulig. Eksisterende nøkkel finnes ikke ennå for
-            // dette panelet (eier ikke Strings.resx) ⇒ {loc}-TODO: engelsk fallback inntil
-            // COACH legger til SessionInsight_Title. Loc.Get returnerer nøkkelen ufunnet, så
-            // vi detekterer det og bruker en lesbar fallback i stedet for en rå nøkkelstreng.
+            // Fast paneltittel via RESX (SessionInsight_Title finnes nå i Strings.resx +
+            // locales, ClinicalLanguagePolicy-validert). Defensiv fallback beholdes for det
+            // tilfellet at ressursoppslaget skulle returnere selve nøkkelen i en host uten
+            // ressurser (test), så panelet aldri viser en rå nøkkelstreng.
             var localizedTitle = Loc.Get("SessionInsight_Title");
             if (string.IsNullOrWhiteSpace(localizedTitle) || localizedTitle == "SessionInsight_Title")
-                localizedTitle = "Session reflection"; // {loc}-TODO
+                localizedTitle = "Session reflection";
 
             var title = new TextBlock
             {

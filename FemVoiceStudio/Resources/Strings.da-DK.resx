@@ -71,10 +71,10 @@
     <value>Outside Comfort Zone</value>
   </data>
   <data name="Quality_Poor" xml:space="preserve">
-    <value>Dårlig</value>
+    <value>Tidlig fase</value>
   </data>
   <data name="Quality_Fair" xml:space="preserve">
-    <value>Under forventning</value>
+    <value>I udvikling</value>
   </data>
   <data name="Quality_Good" xml:space="preserve">
     <value>God</value>
@@ -3643,5 +3643,140 @@ This cannot be undone!</value>
   </data>
   <data name="Realtime_PitchAboveZoneFormat" xml:space="preserve">
     <value>Over målzonen ({0:F0} Hz). Stemmen ligger højere/lysere end den grønne zone {1:F0}-{2:F0} Hz. Lad den falde lidt og undgå pres.</value>
+  </data>
+  <data name="SessionInsight_Title" xml:space="preserve">
+    <value>Sessionsrefleksion</value>
+  </data>
+  <data name="DimensionLabel_Comfort" xml:space="preserve">
+    <value>Komfort</value>
+  </data>
+  <data name="DimensionLabel_Recovery" xml:space="preserve">
+    <value>Restitution</value>
+  </data>
+  <data name="DimensionLabel_Resonance" xml:space="preserve">
+    <value>Resonans</value>
+  </data>
+  <data name="DimensionLabel_Consistency" xml:space="preserve">
+    <value>Konsistens</value>
+  </data>
+  <data name="DimensionLabel_Intonation" xml:space="preserve">
+    <value>Intonation</value>
+  </data>
+  <data name="DimensionLabel_VocalWeight" xml:space="preserve">
+    <value>Stemmevægt</value>
+  </data>
+  <data name="DimensionLabel_Pitch" xml:space="preserve">
+    <value>Tonehøjde</value>
+  </data>
+  <data name="SessionInsight_Improvement" xml:space="preserve">
+    <value>{0} +{1} siden sidste session</value>
+  </data>
+  <data name="SessionInsight_Risk_SafetyLock" xml:space="preserve">
+    <value>Din stemme tog en beskyttende pause i denne session — et godt tidspunkt til at hvile.</value>
+  </data>
+  <data name="SessionInsight_Risk_Strain" xml:space="preserve">
+    <value>Lidt anstrengelse viste sig i din stemme — at slippe lidt op holder den behagelig.</value>
+  </data>
+  <data name="SessionInsight_Risk_ComfortBreach" xml:space="preserve">
+    <value>Din stemme drev uden for sin komfortzone et par gange — at blive inden for den føles lettere.</value>
+  </data>
+  <data name="SessionInsight_Summary_RecoveryLead" xml:space="preserve">
+    <value>Din stemme kunne trænge til lidt hvile — lad os tage det roligt.</value>
+  </data>
+  <data name="SessionInsight_Summary_Improvement" xml:space="preserve">
+    <value>Godt gået — {0} voksede {1} siden sidst.</value>
+  </data>
+  <data name="SessionInsight_Summary_FirstSession" xml:space="preserve">
+    <value>God første session — dette er dit udgangspunkt at udforske fra.</value>
+  </data>
+  <data name="SessionInsight_Summary_Steady" xml:space="preserve">
+    <value>Stabil session — du holder fast.</value>
+  </data>
+  <data name="SessionInsight_Summary_NextFocus" xml:space="preserve">
+    <value>Næste gang kan du roligt udforske {0}.</value>
+  </data>
+  <data name="Recovery_Explanation_Prefix" xml:space="preserve">
+    <value>Restitution {0} ({1}). </value>
+  </data>
+  <data name="Recovery_Explanation_NoLoad" xml:space="preserve">
+    <value>Ingen nylig træthed, anstrengelse eller sikkerhedshændelser — stemmen er godt udhvilet.</value>
+  </data>
+  <data name="Recovery_Explanation_LoweredBy" xml:space="preserve">
+    <value>Sænket af: {0}.</value>
+  </data>
+  <data name="Recovery_Explanation_DriverSeparator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="Recovery_Explanation_RestReward" xml:space="preserve">
+    <value> Hvile siden sidste session gav +{0} tilbage.</value>
+  </data>
+  <data name="Recovery_Status_WellRecovered" xml:space="preserve">
+    <value>godt udhvilet</value>
+  </data>
+  <data name="Recovery_Status_Adequate" xml:space="preserve">
+    <value>tilstrækkelig</value>
+  </data>
+  <data name="Recovery_Status_Strained" xml:space="preserve">
+    <value>anstrengt</value>
+  </data>
+  <data name="Recovery_Status_Overtrained" xml:space="preserve">
+    <value>overtrænet</value>
+  </data>
+  <data name="Recovery_Status_Unknown" xml:space="preserve">
+    <value>ukendt</value>
+  </data>
+  <data name="Recovery_Driver_SafetyLock_One" xml:space="preserve">
+    <value>{0} sikkerhedspause (dominerende)</value>
+  </data>
+  <data name="Recovery_Driver_SafetyLock_Many" xml:space="preserve">
+    <value>{0} sikkerhedspauser (dominerende)</value>
+  </data>
+  <data name="Recovery_Driver_Strain_One" xml:space="preserve">
+    <value>{0} anstrengelsesepisode</value>
+  </data>
+  <data name="Recovery_Driver_Strain_Many" xml:space="preserve">
+    <value>{0} anstrengelsesepisoder</value>
+  </data>
+  <data name="Recovery_Driver_Pause_One" xml:space="preserve">
+    <value>{0} pauseanbefaling</value>
+  </data>
+  <data name="Recovery_Driver_Pause_Many" xml:space="preserve">
+    <value>{0} pauseanbefalinger</value>
+  </data>
+  <data name="Recovery_Driver_Fatigue_One" xml:space="preserve">
+    <value>{0} træthedsindikator</value>
+  </data>
+  <data name="Recovery_Driver_Fatigue_Many" xml:space="preserve">
+    <value>{0} træthedsindikatorer</value>
+  </data>
+  <data name="Recovery_Driver_FatigueTrend" xml:space="preserve">
+    <value>stigende træthedstendens (+{0})</value>
+  </data>
+  <data name="Recovery_Driver_TrainingDensity" xml:space="preserve">
+    <value>høj træningstæthed med lidt hvile</value>
+  </data>
+  <data name="Recovery_Driver_Hydration_One" xml:space="preserve">
+    <value>{0} hydreringspåmindelse</value>
+  </data>
+  <data name="Recovery_Driver_Hydration_Many" xml:space="preserve">
+    <value>{0} hydreringspåmindelser</value>
+  </data>
+  <data name="FeedbackMode_Resonance" xml:space="preserve">
+    <value>Visuel: resonansindikator (fremre placering)</value>
+  </data>
+  <data name="IndicatorPackage_Resonance" xml:space="preserve">
+    <value>Resonans • Stabilitet</value>
+  </data>
+  <data name="ThresholdStrategy_ComfortZone" xml:space="preserve">
+    <value>Tærskel: holder tonehøjden inden for en behagelig zone.</value>
+  </data>
+  <data name="ThresholdStrategy_Continuous" xml:space="preserve">
+    <value>Tærskel: løbende feedback gennem hele øvelsen.</value>
+  </data>
+  <data name="ThresholdStrategy_Endurance" xml:space="preserve">
+    <value>Tærskel: rolig, vedvarende indsats over tid uden at presse.</value>
+  </data>
+  <data name="ThresholdStrategy_Intensity" xml:space="preserve">
+    <value>Tærskel: kortere, mere fokuserede intervaller med hvile imellem.</value>
   </data>
 </root>

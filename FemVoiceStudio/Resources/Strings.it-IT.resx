@@ -3645,4 +3645,139 @@ This cannot be undone!</value>
   <data name="Realtime_PitchAboveZoneFormat" xml:space="preserve">
     <value>Above target zone ({0:F0} Hz). The voice is higher/brighter than the green zone {1:F0}-{2:F0} Hz. Let it ease down and avoid pressure.</value>
   </data>
+  <data name="SessionInsight_Title" xml:space="preserve">
+    <value>Riflessione sulla sessione</value>
+  </data>
+  <data name="DimensionLabel_Comfort" xml:space="preserve">
+    <value>Comfort</value>
+  </data>
+  <data name="DimensionLabel_Recovery" xml:space="preserve">
+    <value>Recupero</value>
+  </data>
+  <data name="DimensionLabel_Resonance" xml:space="preserve">
+    <value>Risonanza</value>
+  </data>
+  <data name="DimensionLabel_Consistency" xml:space="preserve">
+    <value>Costanza</value>
+  </data>
+  <data name="DimensionLabel_Intonation" xml:space="preserve">
+    <value>Intonazione</value>
+  </data>
+  <data name="DimensionLabel_VocalWeight" xml:space="preserve">
+    <value>Peso vocale</value>
+  </data>
+  <data name="DimensionLabel_Pitch" xml:space="preserve">
+    <value>Altezza</value>
+  </data>
+  <data name="SessionInsight_Improvement" xml:space="preserve">
+    <value>{0} +{1} dall'ultima sessione</value>
+  </data>
+  <data name="SessionInsight_Risk_SafetyLock" xml:space="preserve">
+    <value>La tua voce ha fatto una pausa protettiva in questa sessione — un buon momento per riposare.</value>
+  </data>
+  <data name="SessionInsight_Risk_Strain" xml:space="preserve">
+    <value>È comparso un po' di sforzo nella tua voce — allentare un po' la mantiene comoda.</value>
+  </data>
+  <data name="SessionInsight_Risk_ComfortBreach" xml:space="preserve">
+    <value>La tua voce è uscita dalla sua zona di comfort alcune volte — restarci dentro risulta più facile.</value>
+  </data>
+  <data name="SessionInsight_Summary_RecoveryLead" xml:space="preserve">
+    <value>Alla tua voce servirebbe un po' di riposo — andiamo con calma.</value>
+  </data>
+  <data name="SessionInsight_Summary_Improvement" xml:space="preserve">
+    <value>Bel lavoro — {0} è cresciuta di {1} dall'ultima volta.</value>
+  </data>
+  <data name="SessionInsight_Summary_FirstSession" xml:space="preserve">
+    <value>Bella prima sessione — questo è il tuo punto di partenza da cui esplorare.</value>
+  </data>
+  <data name="SessionInsight_Summary_Steady" xml:space="preserve">
+    <value>Sessione stabile — stai mantenendo la posizione.</value>
+  </data>
+  <data name="SessionInsight_Summary_NextFocus" xml:space="preserve">
+    <value>Poi potresti esplorare con calma {0}.</value>
+  </data>
+  <data name="Recovery_Explanation_Prefix" xml:space="preserve">
+    <value>Recupero {0} ({1}). </value>
+  </data>
+  <data name="Recovery_Explanation_NoLoad" xml:space="preserve">
+    <value>Nessuna fatica, sforzo o evento di sicurezza recente — la voce è ben riposata.</value>
+  </data>
+  <data name="Recovery_Explanation_LoweredBy" xml:space="preserve">
+    <value>Abbassato da: {0}.</value>
+  </data>
+  <data name="Recovery_Explanation_DriverSeparator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="Recovery_Explanation_RestReward" xml:space="preserve">
+    <value> Il riposo dall'ultima sessione ha recuperato +{0}.</value>
+  </data>
+  <data name="Recovery_Status_WellRecovered" xml:space="preserve">
+    <value>ben riposata</value>
+  </data>
+  <data name="Recovery_Status_Adequate" xml:space="preserve">
+    <value>adeguata</value>
+  </data>
+  <data name="Recovery_Status_Strained" xml:space="preserve">
+    <value>sollecitata</value>
+  </data>
+  <data name="Recovery_Status_Overtrained" xml:space="preserve">
+    <value>sovrallenata</value>
+  </data>
+  <data name="Recovery_Status_Unknown" xml:space="preserve">
+    <value>sconosciuta</value>
+  </data>
+  <data name="Recovery_Driver_SafetyLock_One" xml:space="preserve">
+    <value>{0} pausa di sicurezza (dominante)</value>
+  </data>
+  <data name="Recovery_Driver_SafetyLock_Many" xml:space="preserve">
+    <value>{0} pause di sicurezza (dominanti)</value>
+  </data>
+  <data name="Recovery_Driver_Strain_One" xml:space="preserve">
+    <value>{0} episodio di sforzo</value>
+  </data>
+  <data name="Recovery_Driver_Strain_Many" xml:space="preserve">
+    <value>{0} episodi di sforzo</value>
+  </data>
+  <data name="Recovery_Driver_Pause_One" xml:space="preserve">
+    <value>{0} raccomandazione di pausa</value>
+  </data>
+  <data name="Recovery_Driver_Pause_Many" xml:space="preserve">
+    <value>{0} raccomandazioni di pausa</value>
+  </data>
+  <data name="Recovery_Driver_Fatigue_One" xml:space="preserve">
+    <value>{0} indicatore di fatica</value>
+  </data>
+  <data name="Recovery_Driver_Fatigue_Many" xml:space="preserve">
+    <value>{0} indicatori di fatica</value>
+  </data>
+  <data name="Recovery_Driver_FatigueTrend" xml:space="preserve">
+    <value>tendenza di fatica in aumento (+{0})</value>
+  </data>
+  <data name="Recovery_Driver_TrainingDensity" xml:space="preserve">
+    <value>alta densità di allenamento con poco riposo</value>
+  </data>
+  <data name="Recovery_Driver_Hydration_One" xml:space="preserve">
+    <value>{0} promemoria di idratazione</value>
+  </data>
+  <data name="Recovery_Driver_Hydration_Many" xml:space="preserve">
+    <value>{0} promemoria di idratazione</value>
+  </data>
+  <data name="FeedbackMode_Resonance" xml:space="preserve">
+    <value>Visivo: indicatore di risonanza (posizionamento anteriore)</value>
+  </data>
+  <data name="IndicatorPackage_Resonance" xml:space="preserve">
+    <value>Risonanza • Stabilità</value>
+  </data>
+  <data name="ThresholdStrategy_ComfortZone" xml:space="preserve">
+    <value>Soglia: mantiene l'altezza entro una zona comoda.</value>
+  </data>
+  <data name="ThresholdStrategy_Continuous" xml:space="preserve">
+    <value>Soglia: feedback continuo per tutta la durata dell'esercizio.</value>
+  </data>
+  <data name="ThresholdStrategy_Endurance" xml:space="preserve">
+    <value>Soglia: sforzo calmo e prolungato nel tempo, senza forzare.</value>
+  </data>
+  <data name="ThresholdStrategy_Intensity" xml:space="preserve">
+    <value>Soglia: intervalli più brevi e mirati, con riposo nel mezzo.</value>
+  </data>
 </root>

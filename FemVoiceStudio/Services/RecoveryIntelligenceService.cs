@@ -326,8 +326,13 @@ namespace FemVoiceStudio.Services
         /// <summary>
         /// Assembles the snapshot from store reads. Acute = [now−7d, now); the week before
         /// that (= [now−14d, now−7d)) supplies PriorFatigueIndicators; chronic = [now−28d, now).
-        /// Counts strain/safety/pause/hydration from health events; training load from each
-        /// session's intensity × duration.
+        /// Counts strain/safety/pause/hydration from health events AND from the persisted
+        /// SessionCompleted HydrationSuggestionsCount column (read via
+        /// <see cref="SessionAnalyticsStore.GetSessionsAsync"/>). The two sources are combined
+        /// with Math.Max — mirroring <see cref="SessionAnalyticsStore.GetDailySummaryAsync"/> —
+        /// so the hydration penalty is reachable even when explicit HydrationSuggested health
+        /// events are never written (VH-03). The store already wraps the repository, so no
+        /// extra plumbing is required at the call sites.
         /// </summary>
         public async Task<RecoveryHistorySnapshot> BuildSnapshotAsync(
             SessionAnalyticsStore store,
@@ -371,6 +376,19 @@ namespace FemVoiceStudio.Services
                 ? double.PositiveInfinity
                 : Math.Max(0.0, (now - lastSession.StartedAt).TotalHours);
 
+            // VH-03: the HydrationSuggested health-event path is permanently 0 in
+            // production (events are never written). The persisted
+            // SessionAnalyticsRecord.HydrationSuggestionsCount column IS written on
+            // session completion. When a repository is available we read that column
+            // and take Math.Max of the two sources — mirroring the pattern in
+            // SessionAnalyticsStore.GetDailySummaryAsync — so the penalty is reachable.
+            var eventHydrationCount = acuteEvents.Count(
+                e => e.EventType == HealthAnalyticsEventType.HydrationSuggested);
+            var acuteSessionRecords = await store
+                .GetSessionsAsync(acuteFrom, now, userId, cancellationToken)
+                .ConfigureAwait(false);
+            var sessionHydrationCount = acuteSessionRecords.Sum(s => s.HydrationSuggestionsCount);
+
             return new RecoveryHistorySnapshot
             {
                 SessionsLast7Days = acuteSessions.Count,
@@ -381,7 +399,7 @@ namespace FemVoiceStudio.Services
                 RecentStrainEpisodes = acuteEvents.Count(e => e.EventType == HealthAnalyticsEventType.StrainPeriod),
                 RecentSafetyLocks = acuteEvents.Count(e => e.EventType == HealthAnalyticsEventType.SafetyFreeze),
                 RecentPauseRecommendations = acuteEvents.Count(e => e.EventType == HealthAnalyticsEventType.PauseRecommended),
-                RecentHydrationSuggestions = acuteEvents.Count(e => e.EventType == HealthAnalyticsEventType.HydrationSuggested),
+                RecentHydrationSuggestions = Math.Max(eventHydrationCount, sessionHydrationCount),
                 AcuteTrainingLoad = acuteSessions.Sum(TrainingLoadOf),
                 ChronicTrainingLoad = chronicSessions.Sum(TrainingLoadOf),
                 RecentComfortScores = acuteSessions

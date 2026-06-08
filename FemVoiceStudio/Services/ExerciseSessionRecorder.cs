@@ -15,6 +15,17 @@ namespace FemVoiceStudio.Services
         public double AverageResonance { get; init; }
         public double AverageStability { get; init; }
 
+        /// <summary>
+        /// In-session stability STEADINESS (0–1): <c>1 − clamp(stdDev/scale, 0, 1)</c> over
+        /// the per-tick stability signal, where stdDev is the population standard deviation.
+        /// Measures REPRODUCIBILITY (how steady the signal was) rather than how high/voiced
+        /// it was — a flat 0.7 trace scores high, a 0.4/1.0-alternating mean-0.7 trace scores
+        /// low (CONS-1/2). Neutral 0.5 fallback when fewer than two voiced ticks were seen.
+        /// Feeds <c>ScoreConsistency</c>; <see cref="AverageStability"/> stays the live-UI /
+        /// MasteryEvaluator signal.
+        /// </summary>
+        public double StabilitySteadiness01 { get; init; } = 0.5;
+
         /// <summary>Share of evaluated ticks spent inside the comfort zone (0–1).</summary>
         public double ComfortCompliance { get; init; }
 
@@ -73,6 +84,16 @@ namespace FemVoiceStudio.Services
 
         /// <summary>Number of ticks that carried a measured (positive) pitch. Drives the pitch aggregates.</summary>
         public int VoicedTicks { get; init; }
+
+        /// <summary>
+        /// <c>true</c> when at least one evaluated tick carried a REAL resonance signal
+        /// (the profile's <c>UsesResonance</c> was set). <c>false</c> for a pitch-only
+        /// session, where <see cref="AverageResonance"/> is 0 because no resonance was
+        /// measured — distinct from a genuine resonance session that averaged 0. The VI
+        /// scorer uses this to keep the Resonance dimension's neutral-50 sentinel instead
+        /// of scoring the normalised-pitch proxy as resonance (RES-01).
+        /// </summary>
+        public bool UsedResonanceSignal { get; init; }
     }
 
     /// <summary>
@@ -133,7 +154,15 @@ namespace FemVoiceStudio.Services
         private DateTime _startedAt;
 
         private double _resonanceSum;
+        // Ticks that carried a REAL resonance signal (state.UsesResonanceSignal). For a
+        // pitch-only profile this stays 0 all session, so the resonance dimension keeps the
+        // neutral-50 sentinel instead of echoing the normalised-pitch proxy (RES-01).
+        private int    _resonanceTicks;
         private double _stabilitySum;
+        // Sum-of-squares of the per-tick stability signal — drives the in-session
+        // stability std-dev so Consistency measures reproducibility, not voicing
+        // clarity (CONS-1/2). Reset per session alongside _stabilitySum.
+        private double _stabilitySqSum;
         private double _maxHoldProgress;
         private int _ticks;
         private int _ticksInComfortZone;
@@ -245,7 +274,8 @@ namespace FemVoiceStudio.Services
                 _userId     = userId;
                 _startedAt  = DateTime.Now;
 
-                _resonanceSum = _stabilitySum = _maxHoldProgress = 0;
+                _resonanceSum = _stabilitySum = _stabilitySqSum = _maxHoldProgress = 0;
+                _resonanceTicks = 0;
                 _ticks = _ticksInComfortZone = 0;
                 _safetyLockEpisodes = _comfortBreachEpisodes = 0;
                 _fatigueIndicators = _strainDetections = _coachHints = 0;
@@ -316,10 +346,33 @@ namespace FemVoiceStudio.Services
                 }
                 double intonationRange = _pitchTicks > 0 ? Math.Max(0, _pitchMax - _pitchMin) : 0;
 
+                // Resonance mean over ONLY the ticks that carried a real resonance signal.
+                // 0 / no-resonance-tick ⇒ pitch-only session ⇒ the VI input keeps the Empty()
+                // sentinel below so ScoreResonance returns its neutral-50 branch (RES-01).
+                double avgResonance = _resonanceTicks > 0 ? _resonanceSum / _resonanceTicks : 0;
+
+                // In-session stability STEADINESS — population std-dev of the per-tick
+                // stability signal, mapped to 1 − clamp(stdDev/scale, 0, 1). This measures
+                // reproducibility (how STEADY the voice was), not how voiced/high it was, so
+                // Consistency stops echoing voicing clarity (CONS-1/2). Mirrors the pitch
+                // std-dev pattern above. Neutral 0.5 fallback with ≤ 1 evaluated tick, where
+                // the spread is undefined (a single sample would falsely read as perfectly steady).
+                const double StabilitySteadinessScale = 0.25; // stdDev ≥ 0.25 ⇒ steadiness 0
+                double stabilitySteadiness = 0.5;
+                if (_ticks > 1)
+                {
+                    double avgStability = _stabilitySum / _ticks;
+                    double meanSqStab = _stabilitySqSum / _ticks;
+                    double varStab = meanSqStab - (avgStability * avgStability);
+                    double stdStab = varStab > 0 ? Math.Sqrt(varStab) : 0;
+                    stabilitySteadiness = 1.0 - Math.Clamp(stdStab / StabilitySteadinessScale, 0.0, 1.0);
+                }
+
                 outcome = new ExerciseSessionOutcome
                 {
-                    AverageResonance       = _ticks > 0 ? _resonanceSum / _ticks : 0,
+                    AverageResonance       = avgResonance,
                     AverageStability       = _ticks > 0 ? _stabilitySum / _ticks : 0,
+                    StabilitySteadiness01  = stabilitySteadiness,
                     ComfortCompliance      = _ticks > 0 ? (double)_ticksInComfortZone / _ticks : 0,
                     HoldCompletion         = _maxHoldProgress,
                     SafetyLockEpisodes     = _safetyLockEpisodes,
@@ -329,6 +382,7 @@ namespace FemVoiceStudio.Services
                     CoachingHintsTriggered = _coachHints,
                     EvaluatedTicks         = _ticks,
                     SessionHealthScore     = sessionHealth,
+                    UsedResonanceSignal    = _resonanceTicks > 0,
 
                     // Raw acoustic aggregates for the Voice-Intelligence Intonation /
                     // VocalWeight / Pitch dimensions (0 / sentinel ⇒ scorer's neutral 50).
@@ -402,8 +456,19 @@ namespace FemVoiceStudio.Services
                 if (IsIdleState(state)) return;
 
                 _ticks++;
-                _resonanceSum += Clamp01(state.PrimaryMetricScore);
-                _stabilitySum += Clamp01(state.StabilityScore);
+                // Accumulate resonance ONLY when this tick carried a real resonance signal.
+                // For a pitch-only profile PrimaryMetricScore is a normalised-pitch proxy, so
+                // folding it into _resonanceSum would make the Resonance dimension echo pitch
+                // (RES-01). When no tick uses resonance the average stays the Empty() sentinel.
+                if (state.UsesResonanceSignal)
+                {
+                    _resonanceSum += Clamp01(state.PrimaryMetricScore);
+                    _resonanceTicks++;
+                }
+
+                double stability = Clamp01(state.StabilityScore);
+                _stabilitySum   += stability;
+                _stabilitySqSum += stability * stability;   // for in-session std-dev (CONS-1/2)
                 _maxHoldProgress = Math.Max(_maxHoldProgress, Clamp01(state.HoldProgress));
 
                 // Accumulate the raw acoustic signals the coordinator forwarded this tick.
@@ -691,6 +756,28 @@ namespace FemVoiceStudio.Services
                     }).ConfigureAwait(false);
                 }
 
+                // VH-02 (safety, strictly additive): the health supervisor's OBJECTIVE
+                // pause recommendations get their own journaled channel — distinct from the
+                // subjective SUBJECTIVE_HEALTH_CONCERN write (PersistSubjectiveConcernAsync).
+                // Without this, a supervisor that repeatedly recommended a pause never fed
+                // ProgressionSafetyGate.REPEATED_PAUSE_RECOMMENDATIONS nor the RecoveryScorer
+                // pause penalty (both count PauseRecommended events), so an objectively
+                // strained voice could keep progressing with no subjective report at all.
+                // One PauseRecommended event per pause-recommending session — this can only
+                // ADD a brake, never remove one.
+                if (pauseRecommendations > 0)
+                {
+                    await _analyticsStore.RecordHealthEventAsync(new HealthAnalyticsEvent
+                    {
+                        SessionId  = sessionId,
+                        UserId     = userId,
+                        EventType  = HealthAnalyticsEventType.PauseRecommended,
+                        OccurredAt = DateTime.Now,
+                        Severity   = Math.Clamp(pauseRecommendations / 10.0, 0, 1),
+                        ReasonCode = "SUPERVISOR_PAUSE"
+                    }).ConfigureAwait(false);
+                }
+
                 // En økt med gjentatte komfortbrudd journalføres som én hendelse —
                 // ProgressionSafetyGate og MasteryEvaluator teller brudd-økter, ikke enkeltbrudd.
                 if (breachEpisodes >= 3)
@@ -719,9 +806,11 @@ namespace FemVoiceStudio.Services
         /// session-end persistence is never blocked.
         ///
         /// Signal availability from the exercise path (Bølge 2 SIGNAL-wiring):
-        ///   • Resonance   ← outcome.AverageResonance   (0–1, present).
+        ///   • Resonance   ← outcome.AverageResonance, ONLY when outcome.UsedResonanceSignal
+        ///                   (pitch-only sessions keep the neutral-50 sentinel — RES-01).
         ///   • Comfort     ← outcome.ComfortCompliance + ComfortBreachEpisodes (present).
-        ///   • Consistency ← outcome.AverageStability   (0–1, present).
+        ///   • Consistency ← outcome.StabilitySteadiness01 (in-session stability std-dev →
+        ///                   reproducibility, NOT the raw voicing-clarity mean — CONS-1/2).
         ///   • Recovery    ← this session's own fatigue/strain/lock/pause/hydration counts
         ///                   (an in-session restitution snapshot; cross-session history
         ///                   — SessionsLast7Days / HoursSinceLastSession — remains the
@@ -765,12 +854,22 @@ namespace FemVoiceStudio.Services
                 // with no measurement keeps Empty()'s sentinel ⇒ scorer's neutral 50.
                 var input = VoiceIntelligenceInput.Empty() with
                 {
-                    AverageResonance01  = Clamp01(outcome.AverageResonance),
                     ComfortCompliance01 = Clamp01(outcome.ComfortCompliance),
                     ComfortBreaches     = Math.Max(0, outcome.ComfortBreachEpisodes),
-                    AverageStability01  = Clamp01(outcome.AverageStability),
+                    // Consistency now measures REPRODUCIBILITY (in-session stability std-dev),
+                    // not voicing clarity — feed the steadiness, not the raw stability mean
+                    // (CONS-1/2). A flat trace ⇒ high; an oscillating mean-equal trace ⇒ low.
+                    AverageStability01  = Clamp01(outcome.StabilitySteadiness01),
                     Recovery            = recovery,
                 };
+
+                // Resonance axis — fill the REAL resonance mean ONLY when the session
+                // actually measured resonance. For a pitch-only session PrimaryMetricScore
+                // was a normalised-pitch proxy (never folded into the mean), so we leave the
+                // Empty() sentinel (-1) ⇒ ScoreResonance returns neutral 50 instead of
+                // echoing the pitch proxy as resonance (RES-01).
+                if (outcome.UsedResonanceSignal)
+                    input = input with { AverageResonance01 = Clamp01(outcome.AverageResonance) };
 
                 // VocalWeight axis — fill only the spectral signals that were measured;
                 // leave the rest at Empty()'s "missing" sentinel. HNR has no source here.

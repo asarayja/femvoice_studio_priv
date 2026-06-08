@@ -341,15 +341,31 @@ namespace FemVoiceStudio.Services
             // strain ville presse brukeren oppover nettopp når stemmen trenger hvile —
             // brudd på Safety > Progression. Vi hopper derfor over pitch-ØKNINGsmålet
             // (Mål 1) når strain er aktiv; restitusjons-/resonansvennlige mål under
-            // beholdes uendret. (Stil-bevissthet for DarkFeminine er utelatt her — kan
-            // legges til som egen demping senere; dokumentert i contractNotes.)
+            // beholdes uendret.
             var goalHealthIssues = _database.GetRecentHealthIssues(userId: userId, days: 3);
             var strainActive = goalHealthIssues.Any(h => h.StrainDetected);
 
+            // ==== STIL-GATE: det stil-blinde +20 Hz-pitchmålet passer ikke alle stiler ====
+            // Pitch-ØKNINGsmålet (Mål 1) skyver brukeren mot LYSERE/HØYERE pitch (kappet
+            // ved 220 Hz). For DarkFeminine og Androgynous er målet en VARMERE/LAVERE,
+            // fyldigere stemme — ikke høyere pitch. Et stil-blindt +20 Hz-mål ville da
+            // jobbe MOT brukerens eget mål. Vi demper det derfor for disse stilene.
+            // Feminine (og Situational/Custom/ukjent stil) beholder målet uendret —
+            // konservativt: vi fjerner KUN målet der det beviselig motvirker stilen.
+            // Stilen leses via ResolveVoiceStyle (samme mønster som andre steder i
+            // klassen). Klinisk: dette SVEKKER ingen helse-/restitusjons-gate (den eneste
+            // effekten er å droppe et pitch-ØKENDE mål); gate-rekkefølgen i
+            // GenerateDailyRecommendation er urørt.
+            var voiceGoalProfile = _voiceGoalProfiles?.GetProfile(userId);
+            var style = ResolveVoiceStyle(userId, voiceGoalProfile);
+            var styleWantsLowerPitch =
+                style == VoiceStyleGoal.DarkFeminine || style == VoiceStyleGoal.Androgynous;
+
             // Mål 1: Pitchøkning (realistisk: 10-20 Hz økning over 8 uker)
             // Kun når ingen aktiv strain — ellers ville vi be brukeren presse pitch opp
-            // mens helse-gaten ber om restitusjon.
-            if (!strainActive)
+            // mens helse-gaten ber om restitusjon. OG kun når stilen ikke peker mot en
+            // lavere/varmere stemme (DarkFeminine/Androgynous).
+            if (!strainActive && !styleWantsLowerPitch)
             {
                 goals.Add(new SmartCoachGoal
                 {

@@ -166,6 +166,42 @@ namespace FemVoiceStudio.Services
             // "try harder" (EN) — pressure imperative. Mirrors the NO "hardere"/"push harder"
             // rules already present.
             new(@"\btry\s+harder\b", Options),
+
+            // -----------------------------------------------------------------------
+            // SAFETY-CERT-03: Medical-diagnosis forbidden patterns (defense-in-depth).
+            // The app must NEVER tell the user they have a medical condition or give
+            // them a clinical diagnosis. These patterns target the VERB/PREDICATE forms
+            // ("du har en sykdom", "you have a disease", "diagnostisert med") that
+            // constitute an active diagnostic claim — NOT the legitimate DISCLAIMER
+            // noun form "ikke medisinsk diagnose eller behandling" (which passes because
+            // "medisinsk diagnose" is not preceded by "du har" / "diagnostisert med")
+            // and NOT the anatomy description "stemmebåndene" (unbound from pathology).
+            // Patterns are word-boundary anchored for precision.
+            // -----------------------------------------------------------------------
+
+            // Norwegian: "du har (en) sykdom/lidelse/stemmeskade/stemmesykdom/patologi"
+            // — the app is telling the user they have a disease/condition.
+            // Negative look-behind exempts "ikke" ("du har ikke en sykdom") which
+            // would be a legitimate reassurance, not a diagnosis.
+            new(@"\bdu\s+har\s+(?:en\s+)?(?:sykdom|lidelse|stemmeskade|stemmesykdom|stemmebåndsskade|patologi)\b",
+                Options),
+
+            // Norwegian: "diagnostisert med" — the app telling the user they have been
+            // diagnosed (with something). Never appears in legitimate UI guidance.
+            new(@"\bdiagnostisert\s+med\b", Options),
+
+            // Norwegian: "diagnosen er / diagnosen lyder" — stating a diagnosis result.
+            // Distinct from the disclaimer "ikke medisinsk diagnose eller behandling"
+            // (which has neither "er" nor "lyder" directly after "diagnosen").
+            new(@"\bdiagnosen\s+(?:er|lyder)\b", Options),
+
+            // English: "you have a disease / disorder / laryngitis / dysphonia"
+            // — English equivalent of the Norwegian "du har sykdom/lidelse" forms.
+            new(@"\byou\s+have\s+(?:a\s+)?(?:disease|disorder|laryngitis|dysphonia|vocal\s+(?:cord\s+)?(?:damage|injury|nodule|polyp))\b",
+                Options),
+
+            // English: "diagnosed with" — states a clinical diagnosis.
+            new(@"\bdiagnosed\s+with\b", Options),
         };
 
         /// <summary>
@@ -261,6 +297,15 @@ namespace FemVoiceStudio.Services
                 ["failed"] = "God innsats",
                 ["bad voice"] = "Rolig fonasjon",
                 ["try harder"] = "Prøv forsiktig",
+
+                // SAFETY-CERT-03: medical-diagnosis alternatives.
+                ["du har sykdom"] = "Ta kontakt med en stemmefagperson",
+                ["du har lidelse"] = "Ta kontakt med en stemmefagperson",
+                ["diagnostisert med"] = "Snakk med en kvalifisert stemmefagperson",
+                ["diagnosen er"] = "Ta en pause og kontakt helsepersonell",
+                ["you have a disease"] = "Please consult a qualified voice professional",
+                ["you have a disorder"] = "Please consult a qualified voice professional",
+                ["diagnosed with"] = "Please consult a qualified voice professional",
             };
 
         /// <summary>

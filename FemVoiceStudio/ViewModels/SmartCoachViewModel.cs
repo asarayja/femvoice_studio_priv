@@ -200,14 +200,6 @@ namespace FemVoiceStudio.ViewModels
             Application.Current?.TryFindResource(HealthWarningBrushKey) as Brush;
 
         /// <summary>
-        /// Severity for helsevarselet. Et helsevarsel er klinisk en Warning; ved
-        /// StressSensitiveMode dempes den til Suggestion via
-        /// <see cref="StressSensitiveExperience.SoftenSeverity"/>. Innholdet beholdes.
-        /// </summary>
-        public MessageSeverity HealthWarningSeverity =>
-            _stressSensitive?.SoftenSeverity(MessageSeverity.Warning) ?? MessageSeverity.Warning;
-
-        /// <summary>
         /// Sann når brukeren har slått på ReducedVisualFeedback. UI bruker dette til å
         /// skjule/forenkle IKKE-kritiske sekundære badges. Helsevarsel og safety-info
         /// vises uansett (de bindes aldri til denne flaggen).

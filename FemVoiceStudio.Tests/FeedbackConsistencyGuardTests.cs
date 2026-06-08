@@ -221,7 +221,9 @@ namespace FemVoiceStudio.Tests
             var context = mapper.BuildContext(message, state);
 
             Assert.NotNull(candidate);
-            Assert.Equal("InlineCoachFeedback_HealthSafetyLock", candidate!.Message);
+            // Updated: pipeline now delegates to ExerciseCoach_* keys (same set as the coordinator)
+            // so identical wording fires regardless of which path resolves the trigger.
+            Assert.Equal("ExerciseCoach_HealthSafetyLock", candidate!.Message);
             Assert.Equal(FeedbackPriority.SafetyFreeze, candidate.Priority);
             Assert.True(context.IsSafetyFreezeActive);
             Assert.True(context.IsHealthRiskActive);
@@ -243,7 +245,9 @@ namespace FemVoiceStudio.Tests
             var candidate = mapper.Map(message);
 
             Assert.NotNull(candidate);
-            Assert.Equal("InlineCoachFeedback_HoldComplete", candidate!.Message);
+            // Updated: pipeline now delegates to ExerciseCoach_* keys (same set as the coordinator)
+            // so identical wording fires regardless of which path resolves the trigger.
+            Assert.Equal("ExerciseCoach_HoldComplete", candidate!.Message);
             Assert.Equal(FeedbackPriority.PerformancePraise, candidate.Priority);
             Assert.Equal("ExerciseIntelligenceCoordinator", candidate.Source);
         }

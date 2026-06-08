@@ -284,6 +284,103 @@ namespace FemVoiceStudio.Tests
 
         #endregion
 
+        #region Personalized Target Tests (SAFETY-CERT-01)
+
+        /// <summary>
+        /// SAFETY-CERT-01 (no-universal-target invariant): a user whose comfort zone has
+        /// been down-adjusted (e.g. 150-190 Hz) must be REWARDED for sitting in the centre
+        /// of their own zone (170 Hz), not penalised toward the universal feminine 210 Hz.
+        /// The pitch curve peaks at the centre of [TargetMinPitch, effectiveMaxPitch].
+        /// </summary>
+        [Fact]
+        public void Calculate_PitchAtCentreOfDownAdjustedZone_ScoresTop()
+        {
+            var input = CreateValidInput();
+            input.DifficultyLevel = DifficultyLevel.Middels; // no tolerance bonus/penalty
+            input.TargetMinPitch = 150;
+            input.TargetMaxPitch = 190;
+            input.AveragePitch = 170;   // exact centre of the personalized zone
+            input.PitchVariation = 10;  // stable, no variation penalty
+            input.ResonanceScore = 70;  // supports pitch, avoids resonance penalty branch
+
+            var result = _engine.Calculate(input);
+
+            // Centre of zone -> distanceFromIdeal 0 -> pitchScore 100 (pre-clamp), clamped 100.
+            Assert.Equal(100, result.PitchScore, 3);
+        }
+
+        /// <summary>
+        /// SAFETY-CERT-01: 170 Hz inside a down-adjusted 150-190 Hz zone must out-score the
+        /// same 170 Hz evaluated against the legacy universal 165-255 zone (centred on 210),
+        /// proving the score follows the user's target, not a hardcoded feminine centre.
+        /// </summary>
+        [Fact]
+        public void Calculate_DownAdjustedZone_NotPenalizedTowardUniversalTarget()
+        {
+            var personalized = CreateValidInput();
+            personalized.DifficultyLevel = DifficultyLevel.Middels;
+            personalized.TargetMinPitch = 150;
+            personalized.TargetMaxPitch = 190;
+            personalized.AveragePitch = 170;
+            personalized.PitchVariation = 10;
+            personalized.ResonanceScore = 70;
+
+            var universal = CreateValidInput();
+            universal.DifficultyLevel = DifficultyLevel.Middels;
+            universal.TargetMinPitch = 165;   // legacy universal feminine zone
+            universal.TargetMaxPitch = 255;   // centre 210 Hz
+            universal.AveragePitch = 170;
+            universal.PitchVariation = 10;
+            universal.ResonanceScore = 70;
+
+            var rPersonalized = _engine.Calculate(personalized);
+            var rUniversal = _engine.Calculate(universal);
+
+            // In the legacy universal zone, 170 Hz is ~40 Hz below the 210 Hz centre and is
+            // penalised; in the personalized zone it is the centre and is not.
+            Assert.True(rPersonalized.PitchScore > rUniversal.PitchScore,
+                "170 Hz in a down-adjusted zone must out-score 170 Hz vs the universal 210 Hz centre");
+        }
+
+        /// <summary>
+        /// SAFETY-CERT-01: the resonance curve must follow the user's personalized formant
+        /// targets. A measured F2 that sits at the bottom of a lowered personalized F2 target
+        /// scores worse than the same F2 against a higher (legacy) target window — confirming
+        /// the per-user TargetMin/MaxF2 fields, not the universal constants, drive resonance.
+        /// </summary>
+        [Fact]
+        public void Calculate_ResonanceFollowsPersonalizedFormantTargets()
+        {
+            // Use precomputed-resonance OFF so the formant math runs.
+            var lowerF2Target = CreateValidInput();
+            lowerF2Target.DifficultyLevel = DifficultyLevel.Middels;
+            lowerF2Target.ResonanceScore = 0;          // force formant-based computation
+            lowerF2Target.AverageF1 = 0;               // isolate F2 contribution
+            lowerF2Target.SpectralCentroid = 0;        // isolate F2 contribution
+            lowerF2Target.AverageF2 = 1600;
+            lowerF2Target.TargetMinF2 = 1600;          // measured F2 at the floor of target
+            lowerF2Target.TargetMaxF2 = 2000;
+
+            var higherF2Target = CreateValidInput();
+            higherF2Target.DifficultyLevel = DifficultyLevel.Middels;
+            higherF2Target.ResonanceScore = 0;
+            higherF2Target.AverageF1 = 0;
+            higherF2Target.SpectralCentroid = 0;
+            higherF2Target.AverageF2 = 1600;
+            higherF2Target.TargetMinF2 = 1400;         // measured F2 above the floor of target
+            higherF2Target.TargetMaxF2 = 2000;
+
+            var rLow = _engine.Calculate(lowerF2Target);
+            var rHigh = _engine.Calculate(higherF2Target);
+
+            // 1600 Hz is exactly at the floor of [1600,2000] (f2Score=50) but above the floor
+            // of [1400,2000] (f2Score>50). Personalized targets must change the resonance score.
+            Assert.True(rHigh.ResonanceScore > rLow.ResonanceScore,
+                "Resonance must track per-user TargetMin/MaxF2, not the universal formant constants");
+        }
+
+        #endregion
+
         #region Helper Methods
 
         private FemVoiceScoreInput CreateValidInput()

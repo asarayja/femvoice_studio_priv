@@ -11,13 +11,13 @@ namespace FemVoiceStudio.Tests
     ///
     /// Klinisk invariant gjennom HELE suiten (Safety &gt; Health &gt; ... &gt; UI):
     /// StressSensitiveMode/ReducedVisualFeedback endrer KUN HVORDAN helsevarselet vises
-    /// (brush-nøkkel/severity/sekundære badges) — ALDRI OM. HealthWarningText og
+    /// (brush-nøkkel/sekundære badges) — ALDRI OM. HealthWarningText og
     /// HasHealthWarning er alltid bevart; et helsevarsel formidles uansett.
     ///
     /// Testene bruker den ekte <see cref="StressSensitiveExperience"/> med en in-memory
     /// <see cref="TestDatabaseService"/> (ingen mocking-rammeverk). ViewModelens rene
-    /// presentasjons-egenskaper (HealthWarningBrushKey / HealthWarningSeverity /
-    /// ShowSecondaryBadges) testes uten å instansiere WPF.
+    /// presentasjons-egenskaper (HealthWarningBrushKey / ShowSecondaryBadges) testes uten å
+    /// instansiere WPF. (HealthWarningSeverity fjernet A8-F1: 0 XAML/kode-konsumenter.)
     /// </summary>
     public class SmartCoachStressSensitiveTests
     {
@@ -51,15 +51,6 @@ namespace FemVoiceStudio.Tests
             Assert.NotEqual("ErrorBrush", vm.HealthWarningBrushKey);
         }
 
-        [Fact]
-        public void HealthWarningSeverity_StressSensitiveOn_SoftensWarningToSuggestion()
-        {
-            var vm = CreateViewModel(StressService(stress: true));
-
-            // Severity dempes: Warning → Suggestion. Innholdet (teksten) er uberørt.
-            Assert.Equal(MessageSeverity.Suggestion, vm.HealthWarningSeverity);
-        }
-
         // ── Bakoverkompatibilitet: av / ingen tjeneste → rød alarm beholdes ──────────
 
         [Fact]
@@ -67,8 +58,9 @@ namespace FemVoiceStudio.Tests
         {
             var vm = CreateViewModel(StressService(stress: false));
 
+            // HealthWarningSeverity er fjernet (A8-F1): ingen XAML/kode-konsumenter —
+            // farge-dempingen skjer utelukkende via HealthWarningBrushKey.
             Assert.Equal("ErrorBrush", vm.HealthWarningBrushKey);
-            Assert.Equal(MessageSeverity.Warning, vm.HealthWarningSeverity);
         }
 
         [Fact]
@@ -78,7 +70,6 @@ namespace FemVoiceStudio.Tests
             var vm = CreateViewModel(stress: null);
 
             Assert.Equal("ErrorBrush", vm.HealthWarningBrushKey);
-            Assert.Equal(MessageSeverity.Warning, vm.HealthWarningSeverity);
         }
 
         // ── KLINISK INVARIANT: HealthWarningText er ALLTID bevart (Safety > UI) ──────
@@ -166,9 +157,8 @@ namespace FemVoiceStudio.Tests
             vm.HasHealthWarning = true;
             vm.HealthWarningText = warning;
 
-            // Farge/severity dempet:
+            // Farge dempet (HealthWarningSeverity fjernet A8-F1 — kun brush-dempingen gjenstår):
             Assert.Equal("WarningBrush", vm.HealthWarningBrushKey);
-            Assert.Equal(MessageSeverity.Suggestion, vm.HealthWarningSeverity);
             // Sekundære badges skjult:
             Assert.False(vm.ShowSecondaryBadges);
             // Men helsevarsel-INNHOLDET er uberørt (Safety > UI):

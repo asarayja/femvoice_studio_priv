@@ -73,14 +73,20 @@ namespace FemVoiceStudio.Services
         private const double StrainThreshold = 50.0;
         private const double CriticalStrainThreshold = 75.0;
         
+        // SAFETY-CERT-01: These pitch/formant "ideal" constants are NO LONGER consumed by
+        // the scoring math (CalculatePitchScore / CalculateResonanceScore now read the
+        // per-user input.TargetMin/Max* fields). They are retained only as the documented
+        // canonical default values mirrored by FemVoiceScoreInput's field initializers, so
+        // callers that supply no personalized targets fall back to the same neutral defaults.
+        // They must never be reintroduced into the scoring path (no-universal-target invariant).
         private const double IdealMinPitch = 165.0;
         private const double IdealMaxPitch = 255.0;
         private const double PitchVariationIdealMax = 25.0;
-        
+
         private const double F1IdealMin = 400.0;
         private const double F1IdealMax = 700.0;
         private const double F2IdealMin = 1400.0;
-        private const double F2IdealMax = 2200.0;
+        private const double F2IdealMax = 2000.0; // aligned to FemVoiceScoreInput.TargetMaxF2 default
         private const double SpectralCentroidIdealMin = 2000.0;
         
         private const double IntonationRangeIdealMin = 30.0;
@@ -172,21 +178,34 @@ namespace FemVoiceStudio.Services
                 return ApplyDifficultyTolerance(input.ResonanceScore, input.DifficultyLevel);
 
             double f1Score = 0, f2Score = 0, brightnessScore = 0;
-            
+
+            // SAFETY-CERT-01: Drive the resonance curve from the user's personalized
+            // formant targets (input.TargetMin/MaxF1, input.TargetMin/MaxF2) rather than
+            // the universal feminine formant constants. This removes the no-universal-target
+            // invariant breach. The F1/F2 constants now serve only as the defaults for the
+            // FemVoiceScoreInput fields, so callers that do not override them are unaffected.
+            double f1IdealMin = input.TargetMinF1;
+            double f1IdealMax = input.TargetMaxF1;
+            double f2IdealMin = input.TargetMinF2;
+            double f2IdealMax = input.TargetMaxF2;
+            // Guard against zero/negative formant spans (personalized values may collapse).
+            double f1Span = f1IdealMax - f1IdealMin; if (f1Span <= 0) f1Span = 1;
+            double f2Span = f2IdealMax - f2IdealMin; if (f2Span <= 0) f2Span = 1;
+
             if (input.AverageF1 > 0)
             {
-                if (input.AverageF1 >= F1IdealMin)
-                    f1Score = Math.Min(100, 50 + (input.AverageF1 - F1IdealMin) / (F1IdealMax - F1IdealMin) * 50);
+                if (input.AverageF1 >= f1IdealMin)
+                    f1Score = Math.Min(100, 50 + (input.AverageF1 - f1IdealMin) / f1Span * 50);
                 else
-                    f1Score = Math.Max(0, 50 - (F1IdealMin - input.AverageF1) / F1IdealMin * 50);
+                    f1Score = Math.Max(0, 50 - (f1IdealMin - input.AverageF1) / f1IdealMin * 50);
             }
-            
+
             if (input.AverageF2 > 0)
             {
-                if (input.AverageF2 >= F2IdealMin)
-                    f2Score = Math.Min(100, 50 + (input.AverageF2 - F2IdealMin) / (F2IdealMax - F2IdealMin) * 50);
+                if (input.AverageF2 >= f2IdealMin)
+                    f2Score = Math.Min(100, 50 + (input.AverageF2 - f2IdealMin) / f2Span * 50);
                 else
-                    f2Score = Math.Max(0, 50 - (F2IdealMin - input.AverageF2) / F2IdealMin * 50);
+                    f2Score = Math.Max(0, 50 - (f2IdealMin - input.AverageF2) / f2IdealMin * 50);
             }
             
             if (input.SpectralCentroid > 0)
@@ -216,9 +235,17 @@ namespace FemVoiceStudio.Services
             // Check if pitch is in target range (using adaptive max)
             if (input.AveragePitch >= input.TargetMinPitch && input.AveragePitch <= effectiveMaxPitch)
             {
-                double idealCenter = (IdealMinPitch + IdealMaxPitch) / 2;
+                // SAFETY-CERT-01: Personalize the ideal-pitch curve to the user's own
+                // comfort zone instead of the universal feminine 210 Hz centre. The peak
+                // (top pitchScore) sits at the centre of [TargetMinPitch, effectiveMaxPitch],
+                // so a user with a down-adjusted zone (e.g. 150-190 Hz) is rewarded for
+                // staying in their zone, not penalised toward a universal 210 Hz target.
+                // No-universal-target invariant: this method must never bias toward a
+                // hardcoded feminine centre. Constants remain only as input-field defaults.
+                double idealCenter = (input.TargetMinPitch + effectiveMaxPitch) / 2;
                 double distanceFromIdeal = Math.Abs(input.AveragePitch - idealCenter);
-                double idealRange = (IdealMaxPitch - IdealMinPitch) / 2;
+                double idealRange = (effectiveMaxPitch - input.TargetMinPitch) / 2;
+                if (idealRange <= 0) idealRange = 1; // guard against zero/negative span
                 pitchScore = 100 - (distanceFromIdeal / idealRange * 30);
                 
                 // If pitch is high but resonance doesn't support it, apply penalty
