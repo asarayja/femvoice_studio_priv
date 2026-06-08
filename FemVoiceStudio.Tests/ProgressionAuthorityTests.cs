@@ -482,6 +482,65 @@ namespace FemVoiceStudio.Tests
         }
 
         // ─────────────────────────────────────────────────────────────────────────
+        // 5. NO AUTO-GOAL-ESCALATION — GetWeeklySessionTarget reflects ONLY the user's
+        //    own chosen TrainingFrequencyPerWeek and never silently escalates above it.
+        //    Progression must never inflate the user's self-set cadence (Progression is
+        //    below Health/Recovery, and must never push the user harder than they chose).
+        // ─────────────────────────────────────────────────────────────────────────
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(4)]
+        [InlineData(7)]
+        public void GetWeeklySessionTarget_NeverExceedsUsersChosenTrainingFrequency(int frequency)
+        {
+            var db = new TestDatabaseService();
+            db.SaveUserVoiceProfile(new UserVoiceProfile
+            {
+                UserId = 1,
+                TrainingFrequencyPerWeek = frequency
+            });
+            var engine = new SmartCoachEngine(db);
+
+            var target = engine.GetWeeklySessionTarget(1);
+
+            // The target IS the user's own cadence — never auto-escalated above it.
+            Assert.Equal(frequency, target);
+            Assert.True(target <= frequency,
+                "GetWeeklySessionTarget must never exceed the user's chosen TrainingFrequencyPerWeek.");
+        }
+
+        [Fact]
+        public void GetWeeklySessionTarget_NoProfile_FallsBackToConservativeDefault_NoEscalation()
+        {
+            // Uten lagret profil degraderer vi til et konservativt standardmål (3), aldri
+            // til en eskalert verdi. Beviser at fraværet av en profil ikke åpner for at
+            // coachingen presser en høyere kadens enn brukeren noensinne har valgt.
+            var db = new TestDatabaseService();   // ingen profil lagret
+            var engine = new SmartCoachEngine(db);
+
+            var target = engine.GetWeeklySessionTarget(1);
+
+            Assert.Equal(3, target);
+        }
+
+        [Fact]
+        public void GetWeeklySessionTarget_LoweredFrequency_IsHonoured_NotRatchetedUp()
+        {
+            // Senker brukeren sin egen kadens skal målet FØLGE nedover — progresjon kan
+            // aldri «låse inn» et tidligere høyere mål (ingen oppover-ratchet).
+            var db = new TestDatabaseService();
+            db.SaveUserVoiceProfile(new UserVoiceProfile { UserId = 1, TrainingFrequencyPerWeek = 6 });
+            var engine = new SmartCoachEngine(db);
+            Assert.Equal(6, engine.GetWeeklySessionTarget(1));
+
+            db.SaveUserVoiceProfile(new UserVoiceProfile { UserId = 1, TrainingFrequencyPerWeek = 2 });
+
+            Assert.Equal(2, engine.GetWeeklySessionTarget(1));
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────
         // Helpers
         // ─────────────────────────────────────────────────────────────────────────
 

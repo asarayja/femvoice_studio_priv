@@ -1017,6 +1017,15 @@ namespace FemVoiceStudio.ViewModels
 
         private void RebuildGuidanceItems(ExerciseTargetProfile profile)
         {
+            // Klinisk-sikkerhets-invariant: hver \u00F8velse M\u00C5 eksponere alle fire guidance-
+            // dimensjonene (Clinical Purpose + Physical Focus + Common Mistakes + Safety).
+            // Hvis en n\u00F8kkel mangler ville panelet tidligere bare droppe dimensjonen STILLE.
+            // I DEBUG flagger vi n\u00E5 manglende dimensjoner h\u00F8yt (Debug.Assert/WriteLine) slik
+            // at en regresjon i en fabrikkprofil ikke forsvinner ubemerket \u2014 men release-
+            // UI-atferden er uendret: vi kaster aldri, og en tom n\u00F8kkel rendres fortsatt
+            // ikke (GuidanceCompletenessTests l\u00E5ser at fabrikkprofilene faktisk er komplette).
+            AssertGuidanceDimensionsComplete(profile);
+
             var items = new ObservableCollection<GuidanceItem>();
 
             if (!string.IsNullOrEmpty(profile.ClinicalPurposeKey))
@@ -1032,6 +1041,33 @@ namespace FemVoiceStudio.ViewModels
                 items.Add(new GuidanceItem { IconGlyph = "\uEA18", HeadingKey = "Guidance_SafetyInfo",      BodyKey = profile.SafetyInfoKey });
 
             GuidanceItems = items;
+        }
+
+        /// <summary>
+        /// DEBUG-only h\u00E5ndhevelse: roper h\u00F8yt hvis en av de fire klinisk-sikkerhets-
+        /// dimensjonene mangler p\u00E5 profilen. Ingen effekt i release (ingen kast, ingen
+        /// UI-endring) \u2014 kun en utviklings-tidlig advarsel mot stille tap av en dimensjon.
+        /// </summary>
+        [System.Diagnostics.Conditional("DEBUG")]
+        private static void AssertGuidanceDimensionsComplete(ExerciseTargetProfile profile)
+        {
+            void Check(string? key, string dimension)
+            {
+                if (string.IsNullOrWhiteSpace(key))
+                {
+                    System.Diagnostics.Debug.WriteLine(
+                        $"[GuidanceCompleteness] Missing {dimension} guidance key on ExerciseTargetProfile \u2014 " +
+                        "a clinical-safety dimension would silently disappear from the guidance panel.");
+                    System.Diagnostics.Debug.Assert(
+                        false,
+                        $"ExerciseTargetProfile is missing the {dimension} guidance dimension.");
+                }
+            }
+
+            Check(profile.ClinicalPurposeKey, "Clinical Purpose");
+            Check(profile.PhysicalFocusKey,   "Physical Focus");
+            Check(profile.CommonMistakesKey,  "Common Mistakes");
+            Check(profile.SafetyInfoKey,      "Safety");
         }
 
         // ─────────────────────────────────────────────────────────────────────────

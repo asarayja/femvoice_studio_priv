@@ -962,6 +962,14 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
 
                 _exerciseResonanceEngine = App.Services.GetService(typeof(ResonanceProxyEngine)) as ResonanceProxyEngine
                     ?? new ResonanceProxyEngine();
+
+                // Stil-bevisst resonans: scoringen skal peke mot brukerens faktiske
+                // klangmål, ikke en universell feminin klang. _userVoiceProfile leses i
+                // ShowExerciseDetail (samme GetUserVoiceProfile-kall som personaliseringen).
+                // Null-safe: ingen profil ⇒ Feminine-default (uendret historisk oppførsel).
+                _exerciseResonanceEngine.SetVoiceStyle(
+                    _userVoiceProfile?.PreferredVoiceStyle ?? VoiceStyleGoal.Feminine);
+
                 if (_exerciseAudioCapture.CalibrationProfile != null)
                 {
                     _exerciseResonanceEngine.RmsThreshold = Math.Clamp(

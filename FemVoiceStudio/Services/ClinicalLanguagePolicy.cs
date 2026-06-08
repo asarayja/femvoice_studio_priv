@@ -108,6 +108,64 @@ namespace FemVoiceStudio.Services
             new(@"\bunder\s+forventning\w*\b", Options),
             new(@"\bikke\s+god\w*\s+nok\b", Options),
             new(@"\bunder\s+(?:det\s+)?(?:normale\w*|normalen|forventede)\b", Options),
+
+            // -----------------------------------------------------------------------
+            // Spec-mandated gender-affirming additions (gap analysis). These target the
+            // most clinically harmful copy: telling the user their voice is "wrong",
+            // labelling it as masculine/male, and pressuring them to push pitch higher.
+            // -----------------------------------------------------------------------
+
+            // "wrong voice" (EN) — a value judgement on the user's voice. The bare word
+            // "wrong" is legitimate in education ("wrong intonation can reveal the voice",
+            // "then it will be wrong"), so we require "wrong" immediately bound to "voice"
+            // (no intervening words — "wrong intonation ... the voice" must NOT match).
+            new(@"\bwrong\s+voice\b", Options),
+
+            // "feil stemme" (NO) — the Norwegian "wrong voice". Distinct from the legitimate
+            // technical "Feil"/"Feil ved lasting"/"Kalibrering feilet": those never place
+            // "feil" directly before "stemme(n/r)". Require direct adjacency.
+            new(@"\bfeil\s+stemme\w*\b", Options),
+
+            // Masculine/male voice labelling — the single most gender-affirming-critical
+            // class: the app must NEVER tell the user their voice sounds masculine/male.
+            // Covers all four adjectives (EN masculine/male, NO maskulin/mannlig) bound to
+            // voice/stemme, and (via the optional trailing group) the "...voice/stemme
+            // detected/oppdaget" report shape. Adjacency to voice/stemme is required so the
+            // Norwegian verb "å male" (to paint) and unrelated prose ("male bilder") are
+            // never flagged.
+            new(@"\b(?:masculine|male|maskulin\w*|mannlig\w*)\s+(?:voice|stemme\w*)" +
+                @"(?:\s+(?:detected|oppdaget))?\b", Options),
+
+            // Imperative MÅL-PRESS: telling the user to push pitch "higher"/"høyere".
+            // We flag ONLY the directive shape — a pressure verb (go/aim/push/press,
+            // gå/sikt/press/push) bound directly (optionally via one short particle such
+            // as "it"/"den"/"litt") to higher/høyere, plus the "må (gå) høyere" /
+            // "must (go) higher" forms. This deliberately spares the many legitimate
+            // anatomy/resonance/position/education uses ("løft resonansen ... høyere i
+            // munnen", "høyere overtoner/formant", "fra lavere til høyere pitch", "ligger
+            // høyere/lysere enn sonen") and gentle coaching ("Prøv litt høyere") — because
+            // "løft"/"prøv"/"reinforces"/"reach"/"lavere til" are not pressure verbs and
+            // descriptive "-ing" forms ("pressing to reach higher notes") are not matched.
+            new(@"\b(?:go|aim|push|press)\s+(?:it\s+)?higher\b", Options),
+            new(@"\bmust\s+(?:go\s+)?higher\b", Options),
+            new(@"\b(?:gå|sikt|press|push)\s+(?:den\s+|litt\s+)?høyere\b", Options),
+            new(@"\bmå\s+(?:gå\s+)?høyere\b", Options),
+
+            // Failure framing aimed at the user/voice/attempt (EN). The bare technical
+            // operation errors "Loading failed"/"Calibration failed" (mirrors the NO
+            // "Feil ved lasting"/"Kalibrering feilet") are legitimate, so we exempt
+            // "failed" when it reports on a technical subject and otherwise flag the
+            // person-/voice-/attempt-directed "failure"/"failed".
+            new(@"\bfailure\b", Options),
+            new(@"(?<!\b(?:loading|calibration|save|saving|connection|upload|download|sync|export|import|initialization|operation|request|test)\s)\bfailed\b", Options),
+
+            // "bad voice" (EN) — shame label on the voice. "bad" alone is too broad
+            // (legitimate "bad signal" hardware notes), so bind it to "voice".
+            new(@"\bbad\s+voice\b", Options),
+
+            // "try harder" (EN) — pressure imperative. Mirrors the NO "hardere"/"push harder"
+            // rules already present.
+            new(@"\btry\s+harder\b", Options),
         };
 
         /// <summary>
@@ -115,6 +173,47 @@ namespace FemVoiceStudio.Services
         /// </summary>
         public static IReadOnlyList<string> ForbiddenPatterns { get; } =
             CompiledForbidden.Select(r => r.ToString()).ToArray();
+
+        // ---------------------------------------------------------------------------
+        // The English-only subset of the forbidden rules. The full <see cref="Scan"/>
+        // set is tuned for the canonical Norwegian resource (Strings.resx); several of
+        // its Norwegian-shaped rules (e.g. the imperative "press"/"forc(e)" command
+        // forms) legitimately fire against ordinary English UI copy such as "Press
+        // start" or "without extra force", which is exactly why the live-resource CI
+        // guard scans only the neutral Norwegian file. To let CI also guard the English
+        // resources we expose just the language-agnostic / English-targeted rules — the
+        // gender-affirming-critical ones that must never reach an English-speaking user.
+        // ---------------------------------------------------------------------------
+        private static readonly Regex[] CompiledEnglishForbidden =
+        {
+            new(@"\bwrong\s+voice\b", Options),
+            new(@"\b(?:masculine|male)\s+voice(?:\s+detected)?\b", Options),
+            new(@"\b(?:go|aim|push|press)\s+(?:it\s+)?higher\b", Options),
+            new(@"\bmust\s+(?:go\s+)?higher\b", Options),
+            new(@"\bfailure\b", Options),
+            new(@"(?<!\b(?:loading|calibration|save|saving|connection|upload|download|sync|export|import|initialization|operation|request|test)\s)\bfailed\b", Options),
+            new(@"\bbad\s+voice\b", Options),
+            new(@"\btry\s+harder\b", Options),
+        };
+
+        /// <summary>
+        /// The English-only forbidden rules as raw pattern strings — the subset of
+        /// <see cref="ForbiddenPatterns"/> that is safe to run against the English
+        /// resource files (Strings.en.resx / Strings_en.resx) without the Norwegian
+        /// rules producing false positives on legitimate English UI copy.
+        /// </summary>
+        public static IReadOnlyList<string> EnglishForbiddenPatterns { get; } =
+            CompiledEnglishForbidden.Select(r => r.ToString()).ToArray();
+
+        /// <summary>
+        /// Scans resource entries using only the English-targeted forbidden rules
+        /// (<see cref="EnglishForbiddenPatterns"/>). Intended for guarding the English
+        /// resource files, where the full Norwegian-tuned <see cref="Scan"/> would flag
+        /// legitimate English copy ("Press start", "without extra force").
+        /// </summary>
+        public static IReadOnlyList<ClinicalLanguageViolation> ScanEnglish(
+            IEnumerable<KeyValuePair<string, string>> texts) =>
+            ScanWith(texts, CompiledEnglishForbidden);
 
         /// <summary>
         /// Recommendation dictionary mapping discouraged phrasing to the calm, exploratory,
@@ -144,6 +243,24 @@ namespace FemVoiceStudio.Services
                 ["under forventning"] = "i utvikling",
                 ["ikke god nok"] = "på vei",
                 ["under normalen"] = "i ditt eget tempo",
+
+                // Spec-mandated gender-affirming alternatives for the new forbidden copy.
+                ["wrong voice"] = "Utforsk",
+                ["feil stemme"] = "Utforsk",
+                ["masculine voice"] = "Fremre resonans",
+                ["male voice"] = "Fremre resonans",
+                ["maskulin stemme"] = "Fremre resonans",
+                ["mannlig stemme"] = "Fremre resonans",
+                ["go higher"] = "Komfortabel",
+                ["push higher"] = "Komfortabel",
+                ["gå høyere"] = "Komfortabel",
+                ["må høyere"] = "Komfortabel",
+                ["higher"] = "Lysere",
+                ["høyere"] = "Lettere",
+                ["failure"] = "God innsats",
+                ["failed"] = "God innsats",
+                ["bad voice"] = "Rolig fonasjon",
+                ["try harder"] = "Prøv forsiktig",
             };
 
         /// <summary>
@@ -151,7 +268,11 @@ namespace FemVoiceStudio.Services
         /// <see cref="ClinicalLanguageViolation"/> per forbidden match found.
         /// </summary>
         public static IReadOnlyList<ClinicalLanguageViolation> Scan(
-            IEnumerable<KeyValuePair<string, string>> texts)
+            IEnumerable<KeyValuePair<string, string>> texts) =>
+            ScanWith(texts, CompiledForbidden);
+
+        private static IReadOnlyList<ClinicalLanguageViolation> ScanWith(
+            IEnumerable<KeyValuePair<string, string>> texts, Regex[] rules)
         {
             ArgumentNullException.ThrowIfNull(texts);
 
@@ -163,7 +284,7 @@ namespace FemVoiceStudio.Services
                 if (string.IsNullOrWhiteSpace(value))
                     continue;
 
-                foreach (var rule in CompiledForbidden)
+                foreach (var rule in rules)
                 {
                     foreach (Match match in rule.Matches(value))
                     {

@@ -541,6 +541,26 @@ namespace FemVoiceStudio.ViewModels
 
                 _database.SaveTrainingSession(session);
 
+                // Klinisk helseanalyse av den nettopp lagrede økten (MUST-FIX):
+                // AnalyzeSessionForStrain er den ENESTE produksjonsskriveren til
+                // SmartCoachHealthMonitoring, men ble aldri kalt i prod — så recovery-
+                // omdirigeringen i GenerateDailyRecommendation (som leser nettopp den
+                // tabellen) var reelt uoppnåelig live. Vi kjører den nå ved øktslutt slik
+                // at pitch_press/fatigue persisteres og health_warning rutes via pipelinen.
+                // _smartCoach er DI-instansen (full feedback-graf) når containeren finnes,
+                // ellers en degradert fallback — begge er trygge å kalle. Strengt try/catch:
+                // en feil her skal ALDRI kaste/blokkere øktslutt-stien (Safety-stien over
+                // alt annet); vi svelger trygt og logger kun til debug.
+                try
+                {
+                    _smartCoach.AnalyzeSessionForStrain(session, userId: 1);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine(
+                        $"[FemVoice][MainViewModel] AnalyzeSessionForStrain failed: {ex.Message}");
+                }
+
                 // Klinisk gate FØR progresjonsevaluering:
                 // 1) Strain-flagg fra siste FemVoiceScore → registrer hendelse (engasjerer
                 //    in-memory-låsen i ProgressionService).

@@ -492,5 +492,71 @@ namespace FemVoiceStudio.Tests
             Assert.Equal(SessionType.Maintenance, sessionType);
             Assert.NotEqual(SessionType.Progressive, sessionType);
         }
+
+        // ══════════════════════════════════════════════════════════════════════
+        //  4. ActiveStrainAlert (EKTE VocalHealthFeedbackMapper) vinner arbitreringen
+        //     over ALLE belønnings-kandidatene — ingen <= PerformancePraise slipper.
+        // ══════════════════════════════════════════════════════════════════════
+
+        private static readonly VocalHealthFeedbackMapper VocalHealth = new();
+
+        /// <summary>
+        /// En strain-detektert (ikke Lock/Restrict/Pause) helse-beslutning ⇒ den EKTE
+        /// mapperen produserer en ActiveStrainAlert(60)-kandidat — produksjonsstien for
+        /// VocalHealthSupervisor sin strain-deteksjon.
+        /// </summary>
+        private static VocalHealthDecision StrainDecision()
+            => new()
+            {
+                State = HealthSafetyState.Normal,
+                ReasonCode = "STRAIN_RISING",
+                StrainDetected = true,
+                Timestamp = DateTime.UtcNow
+            };
+
+        [Fact]
+        public void SubmitMany_ActiveStrainAlertWithAllRewards_OnlyStrainApproved_NoRewardSlipsThrough()
+        {
+            // ActiveStrainAlert (Health/Recovery-grenen) konkurrerer SAMTIDIG med alle
+            // forside-/SmartCoach-belønningene. Den ekte mapperen klassifiserer strain som
+            // ActiveStrainAlert(60); arbitreringen skal godkjenne KUN den, og hver
+            // belønning (<= PerformancePraise(20)) skal vike — både på rang og fordi
+            // strain-konteksten selv undertrykker dem.
+            var guard = FreshGuard();
+
+            var strain = VocalHealth.Map(StrainDecision())!;
+            Assert.Equal(FeedbackPriority.ActiveStrainAlert, strain.Priority);
+            Assert.Equal("STRAIN_RISING", strain.ReasonCode);
+
+            var context = VocalHealth.BuildContext(StrainDecision());
+            Assert.True(context.IsActiveStrainAlert);
+
+            var batch = new List<FeedbackCandidate> { strain };
+            batch.AddRange(AllRewardCandidates());
+
+            var decisions = guard.SubmitMany(batch, context);
+
+            var approved = decisions.Where(d => d.Kind == FeedbackDecisionKind.Approved).ToList();
+            Assert.Single(approved);
+            Assert.Equal(FeedbackPriority.ActiveStrainAlert, approved[0].Candidate.Priority);
+            // Ingen ros/prestasjon/progresjon (<= PerformancePraise) ble godkjent.
+            Assert.DoesNotContain(approved, d => d.Candidate.Priority <= FeedbackPriority.PerformancePraise);
+        }
+
+        [Fact]
+        public void ActiveStrainAlert_IsNeverSelfSuppressed_UnderItsOwnStrainContext()
+        {
+            // ActiveStrainAlert(60) ER selv et klinisk Health/Recovery-signal og skal aldri
+            // undertrykkes av sin egen strain-kontekst (matrisen dreper kun <= PerformancePraise).
+            var guard = FreshGuard();
+
+            var strain = VocalHealth.Map(StrainDecision())!;
+            var context = VocalHealth.BuildContext(StrainDecision());
+
+            var decision = guard.Submit(strain, context);
+
+            Assert.Equal(FeedbackDecisionKind.Approved, decision.Kind);
+            Assert.Equal(FeedbackPriority.ActiveStrainAlert, decision.Candidate.Priority);
+        }
     }
 }

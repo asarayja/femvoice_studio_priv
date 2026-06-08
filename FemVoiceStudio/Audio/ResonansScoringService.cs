@@ -34,19 +34,27 @@ namespace FemVoiceStudio.Audio
     {
         #region Configuration
 
-        private const double TargetF1Min = 280.0;
-        private const double TargetF1Max = 450.0;
-        private const double TargetF1Optimal = 330.0;
-        
-        private const double TargetF2Min = 1800.0;
-        private const double TargetF2Max = 2600.0;
-        private const double TargetF2Optimal = 2200.0;
-        
+        // Stil-bevisste resonansmål. Default = Feminine ⇒ NØYAKTIG de historiske
+        // konstantene (F1=330, F2=2200, F1-bånd 280-450, F2-bånd 1800-2600,
+        // centroid=2500). Ingen atferdsendring for det vanlige tilfellet. SetVoiceStyle
+        // senker F2/centroid-optima for mørkere stiler, slik at en mørkere klang
+        // scorer høyere — feedback peker mot brukerens faktiske mål.
+        private VoiceStyleGoal _voiceStyle = VoiceStyleGoal.Feminine;
+        private ResonanceStyleTarget _target = ResonanceStyleTarget.ForScoring(VoiceStyleGoal.Feminine);
+
+        private double TargetF1Min => _target.F1Min;
+        private double TargetF1Max => _target.F1Max;
+        private double TargetF1Optimal => _target.F1Optimal;
+
+        private double TargetF2Min => _target.F2Min;
+        private double TargetF2Max => _target.F2Max;
+        private double TargetF2Optimal => _target.F2Optimal;
+
         private const double ForwardRatioThreshold = 0.20;
         private const double NeutralRatioThreshold = 0.35;
-        
-        private const double TargetSpectralCentroid = 2500.0;
-        
+
+        private double TargetSpectralCentroid => _target.CentroidOptimal;
+
         private const double F1Weight = 0.30;
         private const double F2Weight = 0.35;
         private const double RatioWeight = 0.20;
@@ -72,6 +80,12 @@ namespace FemVoiceStudio.Audio
         public double CurrentSpectralCentroid { get; private set; }
         public double SessionMinScore { get; private set; }
         public double SessionMaxScore { get; private set; }
+
+        /// <summary>
+        /// Aktivt stilmål for scoringen. Default = <see cref="VoiceStyleGoal.Feminine"/>
+        /// (historisk lys/fremre feminin klang). Sett via <see cref="SetVoiceStyle"/>.
+        /// </summary>
+        public VoiceStyleGoal VoiceStyle => _voiceStyle;
 
         #endregion
 
@@ -261,6 +275,20 @@ namespace FemVoiceStudio.Audio
             }
 
             return feedback;
+        }
+
+        /// <summary>
+        /// Bytter stilmål-settet scoringen sikter mot. Mørkere stiler (DarkFeminine,
+        /// Androgynous) senker F2/centroid-optima og F2-båndet slik at en mørkere klang
+        /// scorer høyere — feedback peker mot brukerens faktiske mål, ikke en universell
+        /// feminin klang. Feminine/Situational/Custom beholder de historiske målene.
+        /// Påvirker kun fremtidige <see cref="EvaluateResonance"/>-kall; nullstiller ikke
+        /// glatting/øktstatistikk.
+        /// </summary>
+        public void SetVoiceStyle(VoiceStyleGoal style)
+        {
+            _voiceStyle = style;
+            _target = ResonanceStyleTarget.ForScoring(style);
         }
 
         /// <summary>

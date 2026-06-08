@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using FemVoiceStudio.Models;
 using NAudio.Wave;
 using NAudio.Dsp;
 
@@ -31,11 +32,19 @@ namespace FemVoiceStudio.Audio
 
     public class ResonanceProxyEngine : IDisposable
     {
-        private const double TargetF1Optimal = 320.0;
-        private const double TargetF2Optimal = 2300.0;
-        private const double TargetF3Optimal = 2900.0;
-        private const double TargetSpacingOptimal = 1900.0;
-        private const double TargetCentroidOptimal = 2500.0;
+        // Stil-bevisste resonansmål. Default = Feminine ⇒ NØYAKTIG de historiske
+        // konstantene (320/2300/2900/1900/2500), så ingen atferdsendring for det
+        // vanlige tilfellet. SetVoiceStyle bytter mål-settet slik at scoringen peker
+        // mot brukerens faktiske klangmål (mørkere for DarkFeminine/Androgynous) —
+        // dette flytter scoringsRETNINGEN, ikke bare et terskelbånd.
+        private VoiceStyleGoal _voiceStyle = VoiceStyleGoal.Feminine;
+        private ResonanceStyleTarget _target = ResonanceStyleTarget.ForEngine(VoiceStyleGoal.Feminine);
+
+        private double TargetF1Optimal => _target.F1Optimal;
+        private double TargetF2Optimal => _target.F2Optimal;
+        private double TargetF3Optimal => _target.F3Optimal;
+        private double TargetSpacingOptimal => _target.SpacingOptimal;
+        private double TargetCentroidOptimal => _target.CentroidOptimal;
         private const int DefaultSampleRate = 48000;
         private const int DefaultFftSize = 2048;
         private const int DefaultHopSize = 512;
@@ -74,6 +83,26 @@ namespace FemVoiceStudio.Audio
         public double BrightnessWeight { get => _brightnessWeight; set => _brightnessWeight = Math.Clamp(value, 0.0, 1.0); }
         public double StabilityWeight { get => _stabilityWeight; set => _stabilityWeight = Math.Clamp(value, 0.0, 1.0); }
         public double RmsThreshold { get; set; } = MinRmsThreshold;
+
+        /// <summary>
+        /// Aktivt stilmål for resonans-scoringen. Default = <see cref="VoiceStyleGoal.Feminine"/>
+        /// (historisk lys/fremre feminin klang). Sett via <see cref="SetVoiceStyle"/>.
+        /// </summary>
+        public VoiceStyleGoal VoiceStyle => _voiceStyle;
+
+        /// <summary>
+        /// Bytter stilmål-settet scoringen sikter mot. Mørkere stiler (DarkFeminine,
+        /// Androgynous) senker F2/F3/centroid-optima slik at en mørkere klang scorer
+        /// høyere — feedback peker mot brukerens faktiske mål, ikke en universell
+        /// feminin klang. Feminine/Situational/Custom beholder de historiske målene.
+        /// Trygt å kalle mellom frames; påvirker kun fremtidige scoringer.
+        /// </summary>
+        public void SetVoiceStyle(VoiceStyleGoal style)
+        {
+            _voiceStyle = style;
+            _target = ResonanceStyleTarget.ForEngine(style);
+        }
+
         public ResonanceMode Mode => _mode;
         public int SampleRate => _sampleRate;
         public int FftSize => _fftSize;

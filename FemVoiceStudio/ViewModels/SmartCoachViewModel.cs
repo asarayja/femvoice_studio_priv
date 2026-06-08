@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FemVoiceStudio.Data;
@@ -30,7 +31,14 @@ namespace FemVoiceStudio.ViewModels
         //   • ComplexityEngine constructor — requires DatabaseService, not IDatabaseService
         // All other calls go through _database (IDatabaseService).
         private readonly DatabaseService? _databaseConcrete;
-        
+
+        // Tilgjengelighet (Agent U): demper KUN presentasjonen av helsevarselet når
+        // brukeren har slått på StressSensitiveMode / ReducedVisualFeedback. Resolves
+        // null-safe via DI/App.Services. Klinisk invariant: HealthWarningText består
+        // alltid uendret (Safety > UI) — kun farge/severity og antall sekundære
+        // signaler endres. Null = ingen demping (full bakoverkompatibilitet).
+        private readonly StressSensitiveExperience? _stressSensitive;
+
         [ObservableProperty]
         private string _todayFocus = "";
         
@@ -113,13 +121,69 @@ namespace FemVoiceStudio.ViewModels
         public ObservableCollection<SmartCoachGoal> ActiveGoals { get; } = new();
         public ObservableCollection<SmartCoachMessage> RecentMessages { get; } = new();
         public ObservableCollection<WeeklyProgressItem> WeeklyProgressList { get; } = new();
+
+        // ============================
+        // Tilgjengelighet — helsevarsel-presentasjon (Agent U)
+        // ============================
+        //
+        // Klinisk invariant: disse egenskapene styrer KUN HVORDAN helsevarselet vises
+        // (farge / severity / sekundære badges), ALDRI OM. HealthWarningText og
+        // HasHealthWarning er uberørt — helsevarselet formidles alltid. Når
+        // StressSensitiveMode er på dempes alarmfargen (ErrorBrush → WarningBrush) og
+        // severity (Warning → Suggestion); når ReducedVisualFeedback er på reduseres
+        // antall samtidige sekundære signaler MENS helsevarsel + safety beholdes.
+
+        /// <summary>
+        /// Brush-nøkkel for helsevarsel-teksten. Ruter "ErrorBrush" (rød alarm) gjennom
+        /// <see cref="StressSensitiveExperience.SoftenBrushKey"/>: ved StressSensitiveMode
+        /// dempes den til "WarningBrush" (varm). Ren/testbar — avhenger kun av tjenesten.
+        /// </summary>
+        public string HealthWarningBrushKey => Soften("ErrorBrush");
+
+        /// <summary>
+        /// Tema-resolvet pensel for helsevarsel-teksten, slått opp fra nøkkelen over.
+        /// Null i test/design-kontekst uten Application-ressurser — XAML faller da trygt
+        /// tilbake på arvet/standard farge uten å krasje.
+        /// </summary>
+        public Brush? HealthWarningBrush =>
+            Application.Current?.TryFindResource(HealthWarningBrushKey) as Brush;
+
+        /// <summary>
+        /// Severity for helsevarselet. Et helsevarsel er klinisk en Warning; ved
+        /// StressSensitiveMode dempes den til Suggestion via
+        /// <see cref="StressSensitiveExperience.SoftenSeverity"/>. Innholdet beholdes.
+        /// </summary>
+        public MessageSeverity HealthWarningSeverity =>
+            _stressSensitive?.SoftenSeverity(MessageSeverity.Warning) ?? MessageSeverity.Warning;
+
+        /// <summary>
+        /// Sann når brukeren har slått på ReducedVisualFeedback. UI bruker dette til å
+        /// skjule/forenkle IKKE-kritiske sekundære badges. Helsevarsel og safety-info
+        /// vises uansett (de bindes aldri til denne flaggen).
+        /// </summary>
+        public bool IsReducedVisual => _stressSensitive?.IsReducedVisual ?? false;
+
+        /// <summary>
+        /// Sann når sekundære (ikke-kritiske) visuelle badges skal vises. Invers av
+        /// <see cref="IsReducedVisual"/>. Brukes for å dempe antall samtidige signaler i
+        /// dashboardet uten å røre helse-/safety-indikatorene.
+        /// </summary>
+        public bool ShowSecondaryBadges => !IsReducedVisual;
+
+        /// <summary>
+        /// Ruter en brush-nøkkel gjennom StressSensitiveExperience når tjenesten finnes.
+        /// Null-safe: uten tjenesten (eldre tester / ingen DI) returneres nøkkelen
+        /// uendret — full bakoverkompatibilitet (ErrorBrush forblir ErrorBrush).
+        /// </summary>
+        private string Soften(string brushKey)
+            => _stressSensitive?.SoftenBrushKey(brushKey) ?? brushKey;
         
         /// <summary>
         /// Design-time constructor (no-arg) for XAML tooling.
         /// For runtime use the DI constructor below.
         /// </summary>
         public SmartCoachViewModel()
-            : this(null!, null!) { }
+            : this(null!, null!, null) { }
 
         /// <summary>
         /// Runtime constructor. Receives the already-initialized singleton services via DI.
@@ -128,14 +192,35 @@ namespace FemVoiceStudio.ViewModels
         /// Keeping the constructor free of async/blocking calls ensures the UI thread stays
         /// responsive while the tab is being activated.
         /// </summary>
-        public SmartCoachViewModel(IDatabaseService database, SmartCoachEngine engine)
+        public SmartCoachViewModel(
+            IDatabaseService database,
+            SmartCoachEngine engine,
+            StressSensitiveExperience? stressSensitive = null)
         {
             // Accept null only from the design-time no-arg constructor path
             _database         = database!;
             _engine           = engine!;
             // Cache concrete type for methods not yet on IDatabaseService interface
             _databaseConcrete = database as DatabaseService;
+
+            // Tilgjengelighets-tjenesten injiseres når DI har den (produksjon), ellers
+            // resolves den null-safe fra App.Services. Mangler den helt (rene tester
+            // uten DI), forblir _stressSensitive null → ingen demping. Kaster aldri.
+            _stressSensitive = stressSensitive ?? ResolveStressSensitive();
             // Do NOT call LoadData() or LoadDataAsync() here.
+        }
+
+        private static StressSensitiveExperience? ResolveStressSensitive()
+        {
+            try
+            {
+                return App.Services?.GetService(typeof(StressSensitiveExperience))
+                    as StressSensitiveExperience;
+            }
+            catch
+            {
+                return null;
+            }
         }
         
         /// <summary>

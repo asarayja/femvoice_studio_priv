@@ -238,20 +238,36 @@ namespace FemVoiceStudio.Services
         {
             var goals = new List<SmartCoachGoal>();
             var baseline = GetOrCalculateBaseline(userId);
-            
+
             if (baseline == null) return goals;
-            
+
+            // ==== HEALTH GATE: anstrengelse undertrykker pitch-ØKNINGsmålet ====
+            // Samme tidlige helse-gate som GenerateDailyRecommendation/
+            // GenerateMotivationalMessages. Et ubetinget «pitch +20 Hz»-mål under aktiv
+            // strain ville presse brukeren oppover nettopp når stemmen trenger hvile —
+            // brudd på Safety > Progression. Vi hopper derfor over pitch-ØKNINGsmålet
+            // (Mål 1) når strain er aktiv; restitusjons-/resonansvennlige mål under
+            // beholdes uendret. (Stil-bevissthet for DarkFeminine er utelatt her — kan
+            // legges til som egen demping senere; dokumentert i contractNotes.)
+            var goalHealthIssues = _database.GetRecentHealthIssues(userId: userId, days: 3);
+            var strainActive = goalHealthIssues.Any(h => h.StrainDetected);
+
             // Mål 1: Pitchøkning (realistisk: 10-20 Hz økning over 8 uker)
-            goals.Add(new SmartCoachGoal
+            // Kun når ingen aktiv strain — ellers ville vi be brukeren presse pitch opp
+            // mens helse-gaten ber om restitusjon.
+            if (!strainActive)
             {
-                UserId = userId,
-                GoalType = "pitch",
-                TargetValue = Math.Min(baseline.BaselinePitch + 20, 220), // Maks 220 Hz
-                CurrentValue = baseline.BaselinePitch,
-                StartDate = DateTime.Now,
-                TargetDate = DateTime.Now.AddDays(56), // 8 uker
-                Priority = 2
-            });
+                goals.Add(new SmartCoachGoal
+                {
+                    UserId = userId,
+                    GoalType = "pitch",
+                    TargetValue = Math.Min(baseline.BaselinePitch + 20, 220), // Maks 220 Hz
+                    CurrentValue = baseline.BaselinePitch,
+                    StartDate = DateTime.Now,
+                    TargetDate = DateTime.Now.AddDays(56), // 8 uker
+                    Priority = 2
+                });
+            }
             
             // Mål 2: Resonansforbedring (prioriteres klinisk)
             if (baseline.BaselineResonanceScore < ResonancePriorityThreshold)
@@ -614,7 +630,19 @@ namespace FemVoiceStudio.Services
         {
             var progress = _database.GetRecentWeeklyProgress(1, userId).FirstOrDefault();
             if (progress == null) return;
-            
+
+            // ==== HEALTH GATE: live helse/fatigue undertrykker ros & motivasjon ====
+            // Samme tidlige helse-gate som GenerateDailyRecommendation (~324). Tidligere
+            // bygde denne metoden guard-konteksten utelukkende fra meldingens egen type og
+            // sjekket ALDRI persistert helse — en achievement/motivation-melding manglet
+            // strain-flagging og kunne slippe gjennom under aktiv anstrengelse. Nå leser vi
+            // GetRecentHealthIssues FØRST: ved aktiv strain produserer vi ingen ros/
+            // motivasjon (Safety > Coaching). Selve health_warning-meldingen rutes allerede
+            // av AnalyzeSessionForStrain ved øktslutt; her er det riktig å være stille.
+            var healthIssues = _database.GetRecentHealthIssues(userId: userId, days: 3);
+            if (healthIssues.Any(h => h.StrainDetected))
+                return;
+
             // Sjekk om det er nylig melding
             var unreadCount = _database.GetUnreadMessageCount(userId);
             if (unreadCount > 0) return;

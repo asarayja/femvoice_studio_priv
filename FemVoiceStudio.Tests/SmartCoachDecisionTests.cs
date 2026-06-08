@@ -250,19 +250,106 @@ namespace FemVoiceStudio.Tests
         {
             // Arrange
             var engine = new SmartCoachEngine(_testDatabase);
-            
+
             _testDatabase.SetSmartCoachBaseline(new SmartCoachBaseline
             {
                 UserId = 1,
                 BaselineResonanceScore = 55, // Below 70 threshold
                 ConfidenceLevel = "high"
             });
-            
+
             // Act
             var goals = engine.GenerateGoals(1);
-            
+
             // Assert
             Assert.Contains(goals, g => g.GoalType == "resonance");
+        }
+
+        [Fact]
+        public void GenerateGoals_WithStrainDetected_SkipsPitchIncreaseGoal()
+        {
+            // Arrange: a healthy-looking baseline that would normally produce the
+            // unconditional "pitch +20 Hz" goal — but an ACTIVE strain health issue
+            // must suppress that goal (Safety > Progression: don't push pitch up while
+            // the voice needs rest).
+            var engine = new SmartCoachEngine(_testDatabase);
+
+            _testDatabase.SetSmartCoachBaseline(new SmartCoachBaseline
+            {
+                UserId = 1,
+                BaselinePitch = 165,
+                BaselineResonanceScore = 80, // high → no resonance goal
+                BaselineIntonation = 80,     // high → no intonation goal
+                ConfidenceLevel = "high"
+            });
+            _testDatabase.AddHealthMonitoring(new SmartCoachHealthMonitoring
+            {
+                UserId = 1,
+                Date = DateTime.Today,
+                StrainDetected = true,
+                StrainType = "pitch_press",
+                StrainLevel = 60
+            });
+
+            // Act
+            var goals = engine.GenerateGoals(1);
+
+            // Assert: no pitch-increase goal while strain is active.
+            Assert.DoesNotContain(goals, g => g.GoalType == "pitch");
+        }
+
+        [Fact]
+        public void GenerateGoals_WithoutStrain_StillCreatesPitchGoal()
+        {
+            // Guard against an over-broad gate: with no active strain the pitch goal
+            // must still be produced (the strain gate only suppresses it under load).
+            var engine = new SmartCoachEngine(_testDatabase);
+
+            _testDatabase.SetSmartCoachBaseline(new SmartCoachBaseline
+            {
+                UserId = 1,
+                BaselinePitch = 165,
+                BaselineResonanceScore = 80,
+                BaselineIntonation = 80,
+                ConfidenceLevel = "high"
+            });
+
+            var goals = engine.GenerateGoals(1);
+
+            Assert.Contains(goals, g => g.GoalType == "pitch");
+        }
+
+        [Fact]
+        public void GenerateDailyRecommendation_WithStrain_OverridesVoiceGoalProfileFocus()
+        {
+            // A user whose voice-goal profile asks for "pitch" focus must STILL be
+            // routed to recovery when strain is active — the health gate runs before
+            // the goal-profile preference (Safety > Coaching).
+            var engine = new SmartCoachEngine(
+                _testDatabase,
+                voiceGoalProfiles: new StaticVoiceGoalProfileProvider("pitch"));
+
+            _testDatabase.SetSmartCoachBaseline(new SmartCoachBaseline
+            {
+                UserId = 1,
+                BaselinePitch = 175,
+                BaselineResonanceScore = 80, // clinically safe for pitch focus
+                BaselineIntonation = 70,
+                ConfidenceLevel = "high"
+            });
+            _testDatabase.AddHealthMonitoring(new SmartCoachHealthMonitoring
+            {
+                UserId = 1,
+                Date = DateTime.Today,
+                StrainDetected = true,
+                StrainType = "pitch_press",
+                StrainLevel = 60
+            });
+
+            var recommendation = engine.GenerateDailyRecommendation(1);
+
+            Assert.True(recommendation.HealthWarning);
+            Assert.Equal("recovery", recommendation.FocusArea);
         }
         
         [Fact]

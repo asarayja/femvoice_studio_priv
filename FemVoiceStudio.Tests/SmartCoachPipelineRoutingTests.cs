@@ -144,6 +144,42 @@ namespace FemVoiceStudio.Tests
         }
 
         [Fact]
+        public void AnalyzeSessionForStrain_PersistsHealthMonitoring_AndNextDailyRecommendationIsRecovery()
+        {
+            // END-TO-END: AnalyzeSessionForStrain is the ONLY production writer to
+            // SmartCoachHealthMonitoring. After it persists a pitch_press strain row,
+            // the very next GenerateDailyRecommendation must read that row and redirect
+            // the user to recovery — the live path that was previously unreachable
+            // because AnalyzeSessionForStrain was never called at session end.
+            var db = new TestDatabaseService();
+            var engine = new SmartCoachEngine(db);
+
+            // A pitch-press session dated today so GetRecentHealthIssues(days:3) sees it.
+            var session = new TrainingSession
+            {
+                UserId = 1,
+                StartTime = DateTime.Today.AddHours(9),
+                EndTime = DateTime.Today.AddHours(9).AddMinutes(10),
+                AveragePitch = 200, // Above the 180 Hz pitch-press threshold.
+                OverallScore = 80
+            };
+
+            // Act 1: analyze the just-saved session for strain (persists health row).
+            var health = engine.AnalyzeSessionForStrain(session, 1);
+
+            Assert.True(health.StrainDetected);
+            Assert.Equal("pitch_press", health.StrainType);
+            // The strain row is now persisted and readable by the recommendation path.
+            Assert.Contains(db.GetRecentHealthIssues(1, 3), h => h.StrainDetected);
+
+            // Act 2: the next daily recommendation must redirect to recovery.
+            var recommendation = engine.GenerateDailyRecommendation(1);
+
+            Assert.True(recommendation.HealthWarning);
+            Assert.Equal("recovery", recommendation.FocusArea);
+        }
+
+        [Fact]
         public void AnalyzeSessionForStrain_WithoutPipeline_FallsBackToDirectSaveForBackwardCompat()
         {
             // When no pipeline/mapper is wired (legacy single-arg construction), the

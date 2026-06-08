@@ -6,6 +6,7 @@ using Xunit;
 namespace FemVoiceStudio.Tests
 {
     using SmartCoachWeeklyProgress = FemVoiceStudio.Data.SmartCoachWeeklyProgress;
+    using SmartCoachHealthMonitoring = FemVoiceStudio.Data.SmartCoachHealthMonitoring;
 
     /// <summary>
     /// Tests for training-frequency as an active runtime input (Agent 2).
@@ -129,6 +130,93 @@ namespace FemVoiceStudio.Tests
             Assert.Equal(
                 LocalizationService.Instance.GetString("SmartCoach_Message_WeeklyTipTitle"),
                 messages[0].Title);
+        }
+
+        // ------------------------------------------------------------------
+        // HEALTH GATE: live strain/fatigue must suppress praise & motivation.
+        // GenerateMotivationalMessages now reads GetRecentHealthIssues FIRST and
+        // returns silently when strain is active (Safety > Coaching), instead of
+        // celebrating consistency/achievement while the voice needs rest.
+        // ------------------------------------------------------------------
+
+        [Fact]
+        public void MotivationalMessage_Suppressed_WhenStrainDetected()
+        {
+            // The user hit their own cadence (would normally earn the consistency
+            // celebration), but an active strain health issue must silence it.
+            _db.SaveUserVoiceProfile(new UserVoiceProfile { UserId = 1, TrainingFrequencyPerWeek = 3 });
+            _db.SaveWeeklyProgress(MidScoreWeek(sessions: 3));
+            _db.AddHealthMonitoring(new SmartCoachHealthMonitoring
+            {
+                UserId = 1,
+                Date = DateTime.Today,
+                StrainDetected = true,
+                StrainType = "pitch_press",
+                StrainLevel = 60
+            });
+            var engine = new SmartCoachEngine(_db);
+
+            engine.GenerateMotivationalMessages(1);
+
+            // No achievement/motivation/tip message is produced while strain is active.
+            Assert.Empty(_db.GetMessages(1));
+            Assert.Equal(0, _db.GetUnreadMessageCount(1));
+        }
+
+        [Fact]
+        public void MotivationalMessage_AchievementSuppressed_WhenStrainDetected()
+        {
+            // A high-score week would normally fire the "achievement" branch
+            // (AverageScore > 80). Under active strain it must NOT — no praise while
+            // the voice is under load.
+            _db.SaveUserVoiceProfile(new UserVoiceProfile { UserId = 1, TrainingFrequencyPerWeek = 3 });
+            _db.SaveWeeklyProgress(new SmartCoachWeeklyProgress
+            {
+                UserId = 1,
+                WeekStart = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek),
+                SessionsCount = 4,
+                TotalMinutes = 40,
+                AverageScore = 90, // achievement branch
+                PitchChange = 0,
+                ResonanceChange = 0,
+                IntonationChange = 0,
+                HealthScore = 100
+            });
+            _db.AddHealthMonitoring(new SmartCoachHealthMonitoring
+            {
+                UserId = 1,
+                Date = DateTime.Today,
+                StrainDetected = true,
+                StrainType = "fatigue",
+                StrainLevel = 45
+            });
+            var engine = new SmartCoachEngine(_db);
+
+            engine.GenerateMotivationalMessages(1);
+
+            Assert.Empty(_db.GetMessages(1));
+        }
+
+        [Fact]
+        public void MotivationalMessage_StillFires_WhenHealthRowExistsButNoStrainDetected()
+        {
+            // A health-monitoring row with StrainDetected == false must NOT gate the
+            // message — only ACTIVE strain suppresses praise. This guards against an
+            // over-broad gate that silences coaching whenever any health row exists.
+            _db.SaveUserVoiceProfile(new UserVoiceProfile { UserId = 1, TrainingFrequencyPerWeek = 3 });
+            _db.SaveWeeklyProgress(MidScoreWeek(sessions: 3));
+            _db.AddHealthMonitoring(new SmartCoachHealthMonitoring
+            {
+                UserId = 1,
+                Date = DateTime.Today,
+                StrainDetected = false,
+                StrainLevel = 0
+            });
+            var engine = new SmartCoachEngine(_db);
+
+            engine.GenerateMotivationalMessages(1);
+
+            Assert.Equal(1, _db.GetUnreadMessageCount(1));
         }
 
         // A weekly-progress row with a mid score (between 0 and 80) and zero

@@ -72,8 +72,33 @@ namespace FemVoiceStudio.Views
             
             // Subscribe to ViewModel events
             _viewModel.PropertyChanged += OnViewModelPropertyChanged;
-            
+
             Closing += OnWindowClosing;
+
+            // Tilgjengelighet: ved ReducedVisualFeedback dempes SEKUNDÆRE indikatorer
+            // (stabilitet) slik at de konkurrerer mindre om oppmerksomheten. Helse- og
+            // mic-status forblir uendret/full prominens — Safety > Health > ... > UI.
+            ApplyReducedVisualFeedback();
+        }
+
+        /// <summary>
+        /// Demper sekundære indikatorer (kun stabilitet) når brukeren har slått på
+        /// ReducedVisualFeedback. Helse-/mic-status røres ALDRI. Resolves null-safe via
+        /// App.Services (kan mangle i design/test-kontekst) og kaster aldri.
+        /// </summary>
+        private void ApplyReducedVisualFeedback()
+        {
+            StressSensitiveExperience? stressSensitive = null;
+            try { stressSensitive = App.Services?.GetService(typeof(StressSensitiveExperience)) as StressSensitiveExperience; }
+            catch { stressSensitive = null; }
+
+            if (stressSensitive?.IsReducedVisual != true)
+                return;
+
+            // Forenkling, ikke fjerning: stabilitets-badgen beholder sin informasjon,
+            // men nedtones (lavere opasitet) så den ikke konkurrerer med helse-/mic-status.
+            if (StabilityBorder != null)
+                StabilityBorder.Opacity = 0.55;
         }
         
         private PlotModel CreatePitchPlotModel()

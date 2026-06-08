@@ -133,16 +133,20 @@
                                    LineHeight="22"/>
                         
                         <!-- Health Warning -->
-                        <Border Background="#33FF5555" 
-                                CornerRadius="6" 
-                                Padding="12,10" 
+                        <!-- Tilgjengelighet: Foreground bindes til den dynamiske
+                             HealthWarningBrush (ErrorBrush→WarningBrush ved
+                             StressSensitiveMode) i stedet for den hardkodede alarmfargen.
+                             HealthWarningText er uberørt — helsevarselet formidles alltid. -->
+                        <Border Background="#33FF5555"
+                                CornerRadius="6"
+                                Padding="12,10"
                                 Margin="0,12,0,0"
                                 Visibility="{Binding HasHealthWarning, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="⚠️" FontSize="16" Margin="0,0,10,0"/>
-                                <TextBlock Text="{Binding HealthWarningText}" 
-                                           FontSize="13" 
-                                           Foreground="#FFFF8888"
+                                <TextBlock Text="{Binding HealthWarningText}"
+                                           FontSize="13"
+                                           Foreground="{Binding HealthWarningBrush, TargetNullValue=#FFFF8888, FallbackValue=#FFFF8888}"
                                            TextWrapping="Wrap"
                                            MaxWidth="500"/>
                             </StackPanel>

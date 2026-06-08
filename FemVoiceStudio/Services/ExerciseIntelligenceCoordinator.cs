@@ -40,6 +40,10 @@ namespace FemVoiceStudio.Services
         // ── Exercise context (guarded by _lock) ──────────────────────────────────────
         private ExerciseTargetProfile _currentProfile;
         private int _currentUserId = 1;
+        // Brukerens stilmål. Default = Feminine ⇒ historisk lys/fremre resonans-scoring
+        // (ingen atferdsendring). Propageres til ResonanceProxyEngine slik at scoringen
+        // peker mot brukerens faktiske klangmål, ikke en universell feminin klang.
+        private VoiceStyleGoal _voiceStyle = VoiceStyleGoal.Feminine;
 
         // ── Hold-detection state (guarded by _lock) ──────────────────────────────────
         private double _currentHoldProgress = 0;
@@ -132,6 +136,26 @@ namespace FemVoiceStudio.Services
         // ────────────────────────────────────────────────────────────────────────────
 
         /// <summary>
+        /// Sets the active voice-style goal and propagates it to the resonance engine so
+        /// scoring aims at the user's actual timbre target (darker for DarkFeminine/
+        /// Androgynous) rather than a universal feminine resonance. Default behaviour
+        /// (Feminine) is unchanged. Safe to call before or after
+        /// <see cref="SetExerciseContext(ExerciseTargetProfile,int)"/>; the style is
+        /// re-applied on every context switch.
+        /// </summary>
+        public void SetVoiceStyle(VoiceStyleGoal style)
+        {
+            lock (_lock) { _voiceStyle = style; }
+            _resonanceEngine?.SetVoiceStyle(style);
+        }
+
+        /// <summary>Returns the active voice-style goal driving resonance scoring.</summary>
+        public VoiceStyleGoal GetVoiceStyle()
+        {
+            lock (_lock) { return _voiceStyle; }
+        }
+
+        /// <summary>
         /// Switches the active exercise context. Resets all hold and rate-limit state.
         /// </summary>
         public void SetExerciseContext(ExerciseTargetProfile profile, int userId)
@@ -139,6 +163,7 @@ namespace FemVoiceStudio.Services
             if (profile == null) throw new ArgumentNullException(nameof(profile));
             if (userId <= 0)     throw new ArgumentException("User ID must be positive.", nameof(userId));
 
+            VoiceStyleGoal style;
             lock (_lock)
             {
                 _currentProfile = profile;
@@ -148,9 +173,26 @@ namespace FemVoiceStudio.Services
                 _comfortZoneSafetyLocked = false;
                 _lastEvaluationTime   = DateTime.MinValue;
                 _lastCoachMessages.Clear();
+                style = _voiceStyle;
             }
 
+            // Re-apply the style to the engine on every context switch so a freshly
+            // resolved engine (or one shared across exercises) always scores against the
+            // current user's timbre goal. Null-safe: no engine ⇒ no-op (test path).
+            _resonanceEngine?.SetVoiceStyle(style);
+
             _exerciseUpdated?.Invoke(BuildDefaultState());
+        }
+
+        /// <summary>
+        /// Style-aware overload: sets the voice-style goal, then switches the exercise
+        /// context. Equivalent to calling <see cref="SetVoiceStyle"/> followed by
+        /// <see cref="SetExerciseContext(ExerciseTargetProfile,int)"/>.
+        /// </summary>
+        public void SetExerciseContext(ExerciseTargetProfile profile, int userId, VoiceStyleGoal style)
+        {
+            SetVoiceStyle(style);
+            SetExerciseContext(profile, userId);
         }
 
         /// <summary>Returns a snapshot of the active exercise profile.</summary>
@@ -199,6 +241,17 @@ namespace FemVoiceStudio.Services
                 _isActive = true;
                 _sessionStartTimestamp = DateTime.Now;
             }
+        }
+
+        /// <summary>
+        /// Style-aware overload: applies the voice-style goal before starting the
+        /// exercise so resonance scoring aims at the user's timbre target from the first
+        /// frame. Equivalent to <see cref="SetVoiceStyle"/> + <see cref="StartExercise(ExerciseTargetProfile,int)"/>.
+        /// </summary>
+        public void StartExercise(ExerciseTargetProfile profile, int userId, VoiceStyleGoal style)
+        {
+            SetVoiceStyle(style);
+            StartExercise(profile, userId);
         }
 
         /// <summary>

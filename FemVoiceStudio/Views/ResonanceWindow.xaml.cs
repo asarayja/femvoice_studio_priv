@@ -225,8 +225,19 @@ namespace FemVoiceStudio.Views
                         0.01);
                 }
 
+                // Stil-bevisst resonans-scoring: pek scoringen mot brukerens faktiske
+                // klangmål, ikke en universell feminin klang. Samme GetUserVoiceProfile-
+                // kall som personaliseringen ellers bruker. Null-safe: ingen profil ⇒
+                // Feminine-default (uendret historisk oppførsel).
+                if (_resonanceScorer != null)
+                {
+                    var style = ResolveDatabase().GetUserVoiceProfile(1)?.PreferredVoiceStyle
+                                ?? VoiceStyleGoal.Feminine;
+                    _resonanceScorer.SetVoiceStyle(style);
+                }
+
                 _audioCapture?.StartRecording();
-                
+
                 _isRecording = true;
                 _sessionStartTime = DateTime.Now;
                 _formantHistory.Clear();
