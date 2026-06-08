@@ -72,6 +72,22 @@ namespace FemVoiceStudio.Tests
                 $"Høyere F1 skal gi høyere score (low={low.Score:F1}, high={high.Score:F1})");
         }
 
+        [Theory]
+        [InlineData(0.15, 0.45)]
+        [InlineData(0.30, 0.70)]
+        public void Score_HigherIntensity_GivesLowerScore(double lowIntensity, double highIntensity)
+        {
+            // Validering-funn: intensitet-aksen var byttet om. Hold alle andre akser like
+            // og varier KUN intensitet — høyere trykk skal gi LAVERE vokalvekt-score
+            // (tyngre/mindre feminisert), per den dokumenterte inverterte aksen.
+            var a = NewAnalyzer();
+            var lowPressure = a.Score(f1Hz: 500, spectralCentroidHz: 1700, hnrDb: 15, intensity: lowIntensity);
+            var highPressure = a.Score(f1Hz: 500, spectralCentroidHz: 1700, hnrDb: 15, intensity: highIntensity);
+
+            Assert.True(lowPressure.Score > highPressure.Score,
+                $"Lavere trykk skal gi høyere score (lavt={lowPressure.Score:F2}, høyt={highPressure.Score:F2})");
+        }
+
         // ──────────────────────────────────────────────────────────────────
         // Klinisk retning / score-bånd
         // ──────────────────────────────────────────────────────────────────

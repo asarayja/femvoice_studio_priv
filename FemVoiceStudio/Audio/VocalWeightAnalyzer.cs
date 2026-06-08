@@ -159,8 +159,11 @@ namespace FemVoiceStudio.Audio
             }
             if (IsUsable(intensity) && intensity > 0)
             {
-                // Invertert akse: lav intensitet ⇒ lett.
-                acc += WeightIntensity * MapLinear(intensity, IntensityLight, IntensityHeavy);
+                // Invertert akse: lav intensitet (lavt trykk) ⇒ lett ⇒ HØY delscore.
+                // MapLinear mapper lowAnchor⇒0, highAnchor⇒100, så for å få lav
+                // intensitet til høy score må IntensityHeavy (0.80) være lavAnker og
+                // IntensityLight (0.10) høyAnker (validering-funn: var byttet om).
+                acc += WeightIntensity * MapLinear(intensity, IntensityHeavy, IntensityLight);
                 wSum += WeightIntensity;
             }
 

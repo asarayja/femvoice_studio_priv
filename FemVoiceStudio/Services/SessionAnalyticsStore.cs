@@ -869,7 +869,13 @@ namespace FemVoiceStudio.Services
                 StrainPeriodsCount = events.Count(e => e.EventType == HealthAnalyticsEventType.StrainPeriod),
                 PauseRecommendationsCount = Math.Max(sessionPauseCount, eventPauseCount),
                 HydrationSuggestionsCount = Math.Max(sessionHydrationCount, eventHydrationCount),
-                FatigueIndicatorCount = sessions.Sum(s => s.FatigueIndicatorCount) + exercises.Sum(e => e.FatigueIndicators)
+                // Math.Max (ikke +) — samme økts fatigue skrives til BÅDE sesjons- og
+                // øvelsesraden, så summen dobbelttalt signalet (validering-funn). Max
+                // gir konsistent skala med SafetyEvents/Pause/Hydration over og med
+                // ProgressionSafetyGate (som leser exercise-summaries).
+                FatigueIndicatorCount = Math.Max(
+                    sessions.Sum(s => s.FatigueIndicatorCount),
+                    exercises.Sum(e => e.FatigueIndicators))
             };
         }
 

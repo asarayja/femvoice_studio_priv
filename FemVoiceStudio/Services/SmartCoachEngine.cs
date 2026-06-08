@@ -579,9 +579,22 @@ namespace FemVoiceStudio.Services
             var bestScore = double.MaxValue;
             var bestPriority = int.MaxValue;
 
+            // Manglende-signal-dimensjoner (Intonation/VocalWeight/Pitch ved ingen voiced
+            // tick / ingen formanter) faller tilbake til NØYAKTIG 50.0. En slik umålt
+            // dimensjon skal ALDRI velges som coaching-fokus (ellers kunne en umålt Pitch
+            // kapre fokus fra ekte målt data — validering-funn). Vi hopper derfor over
+            // kandidater som ligger på den nøytrale fallbacken. En ekte måling som ved
+            // tilfeldighet treffer 50 mister kun målrettet coaching den dagen (faller
+            // trygt til baseline-logikken), så dette er konservativt.
+            const double NeutralFallback = 50.0;
+            const double NeutralEpsilon = 1e-6;
+
             foreach (var c in candidates)
             {
                 if (c.Score >= DimensionWeakThreshold)
+                    continue;
+
+                if (Math.Abs(c.Score - NeutralFallback) < NeutralEpsilon)
                     continue;
 
                 // Strengt lavere score vinner; ved likhet vinner høyere-prioritert
