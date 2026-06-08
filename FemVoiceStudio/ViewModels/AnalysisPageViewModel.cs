@@ -96,6 +96,16 @@ namespace FemVoiceStudio.ViewModels
         [ObservableProperty]
         private PlotModel _recoveryPatternsPlotModel = CreateDimensionPlotModel("Recovery Patterns");
 
+        /// <summary>
+        /// Localised, user-facing descriptions for each detected pattern event
+        /// (Plateau / Breakthrough / Regression) in the current development profile.
+        /// Composed from Pattern_*_Description + Dimension_* keys via LocalizationService.
+        /// Empty when no events are detected or when the profile is null.
+        /// Bound to the Breakthroughs section in AnalysisWindow.xaml.
+        /// </summary>
+        [ObservableProperty]
+        private ObservableCollection<string> _patternDescriptions = new();
+
         [ObservableProperty]
         private double _averagePitch;
         
@@ -926,6 +936,37 @@ namespace FemVoiceStudio.ViewModels
             }
 
             BreakthroughsPlotModel.InvalidatePlot(false);
+
+            // Compose localised pattern descriptions (Pattern_*_Description + Dimension_*).
+            // Never show raw ReasonCode to the user — localised copy only.
+            PatternDescriptions.Clear();
+
+            if (breakthrough != null)
+            {
+                string dimKey = $"Dimension_{breakthrough.Dimension}";
+                string dimName = LocalizationService.Instance[dimKey];
+                string desc = string.Format(
+                    LocalizationService.Instance["Pattern_Breakthrough_Description"], dimName);
+                PatternDescriptions.Add(desc);
+            }
+
+            if (plateau != null)
+            {
+                string dimKey = $"Dimension_{plateau.Dimension}";
+                string dimName = LocalizationService.Instance[dimKey];
+                string desc = string.Format(
+                    LocalizationService.Instance["Pattern_Plateau_Description"], dimName);
+                PatternDescriptions.Add(desc);
+            }
+
+            if (regression != null)
+            {
+                string dimKey = $"Dimension_{regression.Dimension}";
+                string dimName = LocalizationService.Instance[dimKey];
+                string desc = string.Format(
+                    LocalizationService.Instance["Pattern_Regression_Description"], dimName);
+                PatternDescriptions.Add(desc);
+            }
         }
 
         /// <summary>

@@ -393,13 +393,13 @@ namespace FemVoiceStudio.Services
             var parts = new List<string>(3);
             if (eff.ResonanceGain > 0)
                 parts.Add(string.Create(CultureInfo.InvariantCulture,
-                    $"resonansfremgang +{eff.ResonanceGain:0.1} poeng/økt"));
+                    $"resonansfremgang +{eff.ResonanceGain:0.0} poeng/økt"));
             if (eff.ComfortGain > 0 && eff.HasComfortData)
                 parts.Add(string.Create(CultureInfo.InvariantCulture,
-                    $"komfortfremgang +{eff.ComfortGain:0.1} poeng/økt"));
+                    $"komfortfremgang +{eff.ComfortGain:0.0} poeng/økt"));
             if (eff.ConsistencyGain > 0)
                 parts.Add(string.Create(CultureInfo.InvariantCulture,
-                    $"konsistensfremgang +{eff.ConsistencyGain:0.1} poeng/økt"));
+                    $"konsistensfremgang +{eff.ConsistencyGain:0.0} poeng/økt"));
 
             return parts.Count > 0
                 ? string.Join(", ", parts)

@@ -619,5 +619,80 @@ namespace FemVoiceStudio.Tests
             Assert.NotNull(vm.WeeklyTrendPlotModel);
             Assert.NotNull(vm.RecoveryPatternsPlotModel);
         }
+
+        // ── FIX-B: PatternDescriptions — localised Plateau/Breakthrough/Regression copy ─
+
+        [Fact]
+        public void AnalysisVm_ApplyDevelopmentProfile_WithEvents_PatternDescriptionsPopulated()
+        {
+            var vm = new AnalysisPageViewModel(database: null, analyticsStore: null);
+            // Profile with all three event types to exercise all three Pattern_*_Description paths.
+            var profile = new VoiceDevelopmentProfile
+            {
+                UserId = 1,
+                GeneratedAt = new DateTime(2026, 5, 15),
+                WeeklyTrend = Array.Empty<TrendWindow>(),
+                MonthlyTrend = Array.Empty<TrendWindow>(),
+                Breakthrough = new BreakthroughState
+                {
+                    ReasonCode = "BREAKTHROUGH_Resonance",
+                    Dimension = VoiceDimension.Resonance,
+                    SeverityScore = 70,
+                    MagnitudeDelta = 1.0
+                },
+                Plateau = new PlateauState
+                {
+                    ReasonCode = "PLATEAU_Consistency",
+                    Dimension = VoiceDimension.Consistency,
+                    SeverityScore = 40,
+                    WindowDays = 7
+                },
+                Regression = new RegressionState
+                {
+                    ReasonCode = "REGRESSION_Comfort",
+                    Dimension = VoiceDimension.Comfort,
+                    SeverityScore = 55,
+                    CompoundSeverity = 60,
+                    DeclineSlope = -2.1,
+                    WindowDays = 14
+                },
+                HasEnoughData = true
+            };
+
+            vm.ApplyDevelopmentProfile(profile);
+
+            // Three events -> three descriptions.
+            Assert.Equal(3, vm.PatternDescriptions.Count);
+
+            // None of them should contain a raw ReasonCode (never shown to user).
+            foreach (var desc in vm.PatternDescriptions)
+            {
+                Assert.DoesNotContain("BREAKTHROUGH_", desc);
+                Assert.DoesNotContain("PLATEAU_", desc);
+                Assert.DoesNotContain("REGRESSION_", desc);
+                // Every description must be a non-empty string.
+                Assert.False(string.IsNullOrWhiteSpace(desc));
+            }
+        }
+
+        [Fact]
+        public void AnalysisVm_ApplyDevelopmentProfile_NoEvents_PatternDescriptionsEmpty()
+        {
+            var vm = new AnalysisPageViewModel(database: null, analyticsStore: null);
+            var emptyProfile = new VoiceDevelopmentProfile
+            {
+                UserId = 1,
+                WeeklyTrend = Array.Empty<TrendWindow>(),
+                MonthlyTrend = Array.Empty<TrendWindow>(),
+                Breakthrough = null,
+                Plateau = null,
+                Regression = null,
+                HasEnoughData = false
+            };
+
+            vm.ApplyDevelopmentProfile(emptyProfile);
+
+            Assert.Empty(vm.PatternDescriptions);
+        }
     }
 }

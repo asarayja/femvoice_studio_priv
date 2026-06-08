@@ -381,7 +381,9 @@ namespace FemVoiceStudio.Tests
             var engine = new ExerciseEffectivenessEngine(store);
 
             // Seed 4 rising-resonance sessions for the exercise within the look-back window.
-            var resonance = new[] { 0.40, 0.50, 0.60, 0.70 };
+            // All four clear the success gate (res ≥ .50, hold .80 ≥ .70) ⇒ UserSuccessRate 100;
+            // the even +0.10/session rise keeps ResonanceGain at 10.0 (OLS slope ×100).
+            var resonance = new[] { 0.50, 0.60, 0.70, 0.80 };
             for (var i = 0; i < resonance.Length; i++)
             {
                 await store.RecordExercisePerformanceAsync(new ExercisePerformanceSummary
