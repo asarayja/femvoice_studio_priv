@@ -191,6 +191,14 @@ public partial class App : Application
         services.AddSingleton(sp => new Services.Progression.ComplexityEngine(
             sp.GetRequiredService<DatabaseService>()));
 
+        // Sprint C.2, Agent 7 (Recommendation Data Provider): per-øvelse-effektivitet
+        // over den persisterte analytics-historikken. SmartCoach konsumerer den (valgfritt)
+        // for å lede LearningPath-anbefalingene mot det som faktisk har fungert. Additivt —
+        // null-motor ville gitt dagens bånd-logikk. Bygger på SessionAnalyticsStore, ved
+        // siden av RecoveryIntelligenceService/LearningPathProfileBuilder.
+        services.AddSingleton(sp => new ExerciseEffectivenessEngine(
+            sp.GetRequiredService<SessionAnalyticsStore>()));
+
         services.AddSingleton(sp => new SmartCoachEngine(
             sp.GetRequiredService<IDatabaseService>(),
             sp.GetRequiredService<ILocalizationService>(),
@@ -212,7 +220,11 @@ public partial class App : Application
             // plumbing enn denne bølgen rører. Den feirende mestrings-grenen er fullt
             // dekket av delegat-sømmen i testene; produksjonswiring kommer i en senere
             // bølge. null ⇒ ingen mestrings-melding (dagens oppførsel).
-            masteryLevelProvider: null));
+            masteryLevelProvider: null,
+            // Sprint C.2, Agent 7: effektivitets-intelligensen som data-provider. SmartCoach
+            // leder LearningPath-anbefalingene mot observert effektivitet (mest effektive
+            // først). Valgfri — null ville gitt dagens bånd-baserte anbefalinger.
+            effectivenessEngine: sp.GetRequiredService<ExerciseEffectivenessEngine>()));
         services.AddSingleton<IExerciseProfileFactory, ExerciseProfileFactory>();
 
         // ── ViewModels ────────────────────────────────────────────────────────────

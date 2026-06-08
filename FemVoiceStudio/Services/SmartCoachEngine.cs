@@ -37,6 +37,15 @@ namespace FemVoiceStudio.Services
         private readonly LearningPathProfileBuilder? _learningPathBuilder;
         private readonly ComplexityEngine? _complexityEngine;
 
+        // ── EFFEKTIVITETS-INTELLIGENS (Sprint C.2, Agent 7 — Recommendation Data Provider) ─
+        // VALGFRI. null ⇒ NØYAKTIG dagens oppførsel. Når satt, henter
+        // TryReadExerciseEffectiveness EvaluateAllAsync (async-over-sync, samme mønster som
+        // TryReadLatestVoiceIntelligence / TryBuildLearningPathProfile) og mater den
+        // observerte effektiviteten inn i LearningPath-anbefalingene (mest effektive først).
+        // KLINISK: effektivitet er KUN en berikelse av HVILKEN øvelse — den kan ALDRI
+        // overstyre health-/recovery-gaten, aksevalget eller stil-coachingen.
+        private readonly ExerciseEffectivenessEngine? _effectivenessEngine;
+
         // Bro fra MasteryEvaluator → feirende coaching. Et rent delegat (ikke en mock):
         // produksjon wirer det fra MasteryEvaluator over en representativ øvelse; tester
         // gir en enkel lambda. null ⇒ ingen mestrings-melding (dagens oppførsel).
@@ -95,7 +104,8 @@ namespace FemVoiceStudio.Services
             RecoveryIntelligenceService? recoveryIntelligence = null,
             LearningPathProfileBuilder? learningPathBuilder = null,
             ComplexityEngine? complexityEngine = null,
-            Func<int, MasteryLevel?>? masteryLevelProvider = null)
+            Func<int, MasteryLevel?>? masteryLevelProvider = null,
+            ExerciseEffectivenessEngine? effectivenessEngine = null)
         {
             _database = database ?? throw new ArgumentNullException(nameof(database));
             _localization = localization ?? LocalizationService.Instance;
@@ -107,6 +117,7 @@ namespace FemVoiceStudio.Services
             _learningPathBuilder = learningPathBuilder;
             _complexityEngine = complexityEngine;
             _masteryLevelProvider = masteryLevelProvider;
+            _effectivenessEngine = effectivenessEngine;
         }
 
         
@@ -662,10 +673,44 @@ namespace FemVoiceStudio.Services
                     };
                 }
 
-                return _learningPathBuilder.Build(trend, recovery, complexity);
+                // Effektivitets-berikelse (Sprint C.2, Agent 7): når EffectivenessEngine er
+                // injisert, mat den observerte per-øvelse-effektiviteten inn slik at
+                // LearningPath-anbefalingene ledes av det som faktisk har fungert. Valgfri
+                // (null ⇒ dagens bånd-logikk). Berik KUN HVILKEN øvelse — aldri prioritet.
+                var effectiveness = TryReadExerciseEffectiveness(userId);
+
+                return _learningPathBuilder.Build(trend, recovery, complexity, mastery: null, effectiveness);
             }
             catch
             {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Henter per-øvelse-effektivitet for ALLE reelle katalog-øvelser (1–15) via
+        /// <see cref="ExerciseEffectivenessEngine.EvaluateAllAsync"/>, eller null når motoren
+        /// ikke er injisert eller lesingen feiler. Async i kilden; her kjøres den trygt
+        /// synkront på thread-pool (Task.Run().GetAwaiter().GetResult()) for å unngå enhver
+        /// WPF-SynchronizationContext-deadlock — samme mønster som
+        /// <see cref="TryReadLatestVoiceIntelligence"/> / <see cref="TryBuildLearningPathProfile"/>.
+        /// Rent beskrivende data: påvirker KUN hvilken øvelse som anbefales, aldri en
+        /// health-/recovery-gate eller aksevalget.
+        /// </summary>
+        private IReadOnlyList<ExerciseEffectivenessProfile>? TryReadExerciseEffectiveness(int userId)
+        {
+            if (_effectivenessEngine == null)
+                return null;
+
+            try
+            {
+                return Task.Run(() =>
+                    _effectivenessEngine.EvaluateAllAsync(DateTime.Now, userId))
+                    .GetAwaiter().GetResult();
+            }
+            catch
+            {
+                // Null-safe degradering: enhver lesefeil ⇒ dagens bånd-baserte anbefalinger.
                 return null;
             }
         }

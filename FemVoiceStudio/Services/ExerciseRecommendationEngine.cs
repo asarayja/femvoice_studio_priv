@@ -99,6 +99,28 @@ namespace FemVoiceStudio.Services
         /// the user's level. Defaults to <see cref="SpeechComplexityLevel.IsolatedSounds"/>.
         /// </summary>
         public SpeechComplexityLevel ComplexityLevel { get; init; }
+
+        /// <summary>
+        /// OPTIONAL per-exercise EFFECTIVENESS intelligence (Sprint C.2, Agent EFF), keyed
+        /// by ExerciseId. PURELY a WEAK, DATA-driven tie-break/fine-tuning on the final
+        /// ranking — it never reorders ahead of the recovery gate, focus, mastery
+        /// deprioritisation, or variation. A profile only nudges ranking when
+        /// <see cref="ExerciseEffectivenessProfile.HasEnoughData"/> is true; a low-data
+        /// profile is treated as NEUTRAL ("insufficient evidence", never "ineffective" —
+        /// no lift, no penalty). null ⇒ EXACTLY today's ranking. See
+        /// <see cref="ExerciseRecommendationEngine.RankCandidates"/>.
+        /// </summary>
+        public IReadOnlyDictionary<int, ExerciseEffectivenessProfile>? EffectivenessByExercise { get; init; }
+
+        /// <summary>
+        /// OPTIONAL set of ExerciseIds that the effectiveness engine has safety-FLAGGED
+        /// (high recovery cost / fatigue / comfort decline — see
+        /// <see cref="ExerciseEffectivenessEngine.FlagConcerns"/>). A flagged exercise is
+        /// mildly DE-PRIORITISED in the ranking so a safer alternative is preferred on top
+        /// — this is DATA-driven nudging, NEVER a safety BLOCK (the ProgressionSafetyGate
+        /// owns blocking). null/empty ⇒ no de-prioritisation (today's ranking).
+        /// </summary>
+        public IReadOnlyCollection<int>? FlaggedExerciseIds { get; init; }
     }
 
     /// <summary>
@@ -205,7 +227,8 @@ namespace FemVoiceStudio.Services
                     recent: recent,
                     mastery: mastery,
                     isRecoveryOriented: true,
-                    rationale: BuildRecoveryRationale(input.Recovery));
+                    rationale: BuildRecoveryRationale(input.Recovery),
+                    input: input);
             }
 
             // ── 2. FOUNDATION — no measured history ──────────────────────────────────
@@ -218,7 +241,8 @@ namespace FemVoiceStudio.Services
                     recent: recent,
                     mastery: mastery,
                     isRecoveryOriented: false,
-                    rationale: BuildFoundationRationale(style));
+                    rationale: BuildFoundationRationale(style),
+                    input: input);
             }
 
             // ── 3+4. FOCUS = weakest measured dimension, coloured by style goal ───────
@@ -232,7 +256,8 @@ namespace FemVoiceStudio.Services
                 recent: recent,
                 mastery: mastery,
                 isRecoveryOriented: false,
-                rationale: BuildFocusRationale(focus, latest, style));
+                rationale: BuildFocusRationale(focus, latest, style),
+                input: input);
         }
 
         // ── Candidate-pool helpers ──────────────────────────────────────────────────
@@ -412,9 +437,12 @@ namespace FemVoiceStudio.Services
             IReadOnlyList<int> recent,
             IReadOnlyDictionary<int, MasteryLevel> mastery,
             bool isRecoveryOriented,
-            string rationale)
+            string rationale,
+            ExerciseRecommendationInput input)
         {
-            var ranked = RankCandidates(candidatePool, recent, mastery);
+            var ranked = RankCandidates(
+                candidatePool, recent, mastery,
+                input.EffectivenessByExercise, input.FlaggedExerciseIds);
             var primary = ranked.Count > 0 ? ranked[0] : FallbackId(candidatePool);
             // Full ranked tail (best-first) — callers take however many they need.
             var alternatives = ranked.Skip(1).ToArray();
@@ -430,36 +458,79 @@ namespace FemVoiceStudio.Services
             };
         }
 
+        /// <summary>Mild, DATA-driven penalty for a safety-FLAGGED exercise (high recovery
+        /// cost / fatigue / comfort decline). Deliberately SMALLER than the variation (+2)
+        /// and mastery (+4) penalties so it only de-prioritises a flagged id when an
+        /// otherwise-equal safer alternative exists — never a safety BLOCK (the
+        /// ProgressionSafetyGate owns blocking).</summary>
+        private const int FlagPenalty = 1;
+
         /// <summary>
         /// Stable ranking of a candidate pool. Lower sort key = better:
+        ///   • +<see cref="FlagPenalty"/> if the id is safety-flagged by the effectiveness
+        ///     engine (a mild, data-driven de-prioritisation; never a block).
         ///   • +2 if the id is in the recent variation window (avoid repeats).
         ///   • +4 if the id is already Mastered (lift weaker, under-covered areas).
-        /// Ties break by ascending id for determinism. Always returns a non-empty list
-        /// when the pool is non-empty.
+        /// Penalty is the PRIMARY key. EFFECTIVENESS is only ever a WEAK tie-break WITHIN an
+        /// equal penalty bucket: among candidates with the same penalty, a higher
+        /// CompositeEffectiveness ranks first — but ONLY for profiles with
+        /// <see cref="ExerciseEffectivenessProfile.HasEnoughData"/> = true. A low-data (or
+        /// absent) profile is treated as NEUTRAL: it neither lifts nor penalises, so
+        /// "insufficient evidence" never reads as "ineffective". The id tie-break stays last
+        /// for determinism. Always returns a non-empty list when the pool is non-empty.
+        /// null effectiveness/flags ⇒ EXACTLY the previous penalty-then-id ranking.
         /// </summary>
         private static List<int> RankCandidates(
             IReadOnlyList<int> pool,
             IReadOnlyList<int> recent,
-            IReadOnlyDictionary<int, MasteryLevel> mastery)
+            IReadOnlyDictionary<int, MasteryLevel> mastery,
+            IReadOnlyDictionary<int, ExerciseEffectivenessProfile>? effectiveness = null,
+            IReadOnlyCollection<int>? flaggedIds = null)
         {
             if (pool.Count == 0) return new List<int>();
 
             var recentSet = recent.Take(RecentVariationWindow).ToHashSet();
+            var flaggedSet = flaggedIds is null or { Count: 0 }
+                ? null
+                : flaggedIds as HashSet<int> ?? flaggedIds.ToHashSet();
 
             return pool
                 .Distinct()
                 .Select(id =>
                 {
                     var penalty = 0;
+                    if (flaggedSet != null && flaggedSet.Contains(id)) penalty += FlagPenalty;
                     if (recentSet.Contains(id)) penalty += 2;
                     if (mastery.TryGetValue(id, out var level) && level == MasteryLevel.Mastered)
                         penalty += 4;
-                    return (Id: id, Penalty: penalty);
+                    return (Id: id, Penalty: penalty, Effectiveness: EffectivenessKey(id, effectiveness));
                 })
                 .OrderBy(x => x.Penalty)
+                .ThenByDescending(x => x.Effectiveness)  // weak tie-break: more effective first
                 .ThenBy(x => x.Id)
                 .Select(x => x.Id)
                 .ToList();
+        }
+
+        /// <summary>
+        /// The weak effectiveness tie-break key for an id: the profile's
+        /// CompositeEffectiveness when there IS enough data, else the neutral midpoint so a
+        /// low-data / absent profile sorts exactly like an "average" candidate (no lift, no
+        /// penalty). Mirrors the neutral anchoring in
+        /// <see cref="ExerciseEffectivenessProfile.CompositeEffectiveness"/>.
+        /// </summary>
+        private const double NeutralEffectiveness = 50.0;
+
+        private static double EffectivenessKey(
+            int id, IReadOnlyDictionary<int, ExerciseEffectivenessProfile>? effectiveness)
+        {
+            if (effectiveness != null
+                && effectiveness.TryGetValue(id, out var profile)
+                && profile is { HasEnoughData: true })
+            {
+                return profile.CompositeEffectiveness;
+            }
+            return NeutralEffectiveness;
         }
 
         private static int FallbackId(IReadOnlyList<int> pool)

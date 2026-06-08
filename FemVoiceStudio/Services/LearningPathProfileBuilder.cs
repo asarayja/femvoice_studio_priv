@@ -81,11 +81,20 @@ namespace FemVoiceStudio.Services
         /// <param name="recovery">Recovery result from <see cref="RecoveryScorer"/>.</param>
         /// <param name="complexity">Current complexity evaluation from <see cref="ComplexityEngine"/>.</param>
         /// <param name="mastery">Optional mastery summary; nuances the stage upward only.</param>
+        /// <param name="effectiveness">
+        /// OPTIONAL per-exercise EFFECTIVENESS intelligence (Sprint C.2, Agent EFF). When
+        /// supplied, <see cref="BuildRecommendations"/> orders the current-level
+        /// recommended exercises MOST-EFFECTIVE-FIRST (by CompositeEffectiveness) for
+        /// profiles with enough data; otherwise it keeps today's provisional band logic.
+        /// Profiles without enough data sit at the neutral midpoint, so "insufficient
+        /// evidence" never reads as "ineffective". null ⇒ EXACTLY today's recommendations.
+        /// </param>
         public LearningPathProfile Build(
             IReadOnlyList<VoiceIntelligenceTrendPoint> trend,
             RecoveryResult recovery,
             ComplexityEvaluation complexity,
-            MasteryEvaluation? mastery = null)
+            MasteryEvaluation? mastery = null,
+            IReadOnlyList<ExerciseEffectivenessProfile>? effectiveness = null)
         {
             if (complexity == null) throw new ArgumentNullException(nameof(complexity));
 
@@ -118,7 +127,7 @@ namespace FemVoiceStudio.Services
                 .Select(a => a.Dimension)
                 .ToList();
 
-            var recommendations = BuildRecommendations(focusAreas, complexity.CurrentLevel);
+            var recommendations = BuildRecommendations(focusAreas, complexity.CurrentLevel, effectiveness);
             var recoveryReq = BuildRecoveryRequirement(recovery);
             var (confidenceScore, confidenceLevel, confidenceExplanation) =
                 BuildConfidence(points);
@@ -222,9 +231,15 @@ namespace FemVoiceStudio.Services
         // ── Provisional recommendations (Bølge 2 replaces this body, not the shape) ──
 
         private static IReadOnlyList<RecommendedExercise> BuildRecommendations(
-            IReadOnlyList<VoiceDimension> focusAreas, SpeechComplexityLevel level)
+            IReadOnlyList<VoiceDimension> focusAreas, SpeechComplexityLevel level,
+            IReadOnlyList<ExerciseEffectivenessProfile>? effectiveness = null)
         {
-            var levelIds = ExerciseIdsForLevel(level);
+            // Effectiveness ORDERING (Sprint C.2): when observed effectiveness is supplied,
+            // present the current-level ids MOST-EFFECTIVE-FIRST so the recommendations lead
+            // with what has been working for this learner. Ids without enough data (or with
+            // no profile) sit at the neutral midpoint and keep their natural id order — so
+            // "insufficient evidence" never reads as "ineffective". null ⇒ today's band order.
+            var levelIds = OrderByEffectiveness(ExerciseIdsForLevel(level), effectiveness);
             if (levelIds.Count == 0)
                 return Array.Empty<RecommendedExercise>();
 
@@ -262,6 +277,41 @@ namespace FemVoiceStudio.Services
                 });
             }
             return result;
+        }
+
+        /// <summary>
+        /// The neutral effectiveness midpoint a low-data / absent profile reports — anchored
+        /// at the same midpoint as <see cref="ExerciseEffectivenessProfile.CompositeEffectiveness"/>
+        /// so an unevidenced id sorts like an "average" one (no lift, no penalty).
+        /// </summary>
+        private const double NeutralEffectiveness = 50.0;
+
+        /// <summary>
+        /// Orders level ids MOST-EFFECTIVE-FIRST using observed CompositeEffectiveness for
+        /// profiles WITH enough data; absent or low-data ids use the neutral midpoint. Ties
+        /// (including the whole list when <paramref name="effectiveness"/> is null) fall back
+        /// to ascending id, so the null path is byte-identical to today's band order.
+        /// </summary>
+        private static IReadOnlyList<int> OrderByEffectiveness(
+            IReadOnlyList<int> ids,
+            IReadOnlyList<ExerciseEffectivenessProfile>? effectiveness)
+        {
+            if (effectiveness is null || effectiveness.Count == 0 || ids.Count <= 1)
+                return ids;
+
+            var byId = new Dictionary<int, double>(effectiveness.Count);
+            foreach (var p in effectiveness)
+            {
+                if (p is { HasEnoughData: true })
+                    byId[p.ExerciseId] = p.CompositeEffectiveness;
+            }
+            if (byId.Count == 0)
+                return ids;
+
+            return ids
+                .OrderByDescending(id => byId.TryGetValue(id, out var c) ? c : NeutralEffectiveness)
+                .ThenBy(id => id)
+                .ToList();
         }
 
         // Mirrors ComplexityEngine.GetExerciseIdsForComplexity's id banding WITHOUT taking
