@@ -669,8 +669,14 @@ namespace FemVoiceStudio.Services
 
         private static void AddTableHeader(TableDescriptor table, params string[] headers)
         {
-            foreach (var h in headers)
-                table.Header(header => header.Cell().Background(Colors.Grey.Lighten2).Text(h).Bold());
+            // QuestPDF: Header() must be called EXACTLY ONCE per table — every header
+            // cell goes inside the single Header layer (calling Header() per column
+            // throws "The 'Table.Header' layer has already been defined").
+            table.Header(header =>
+            {
+                foreach (var h in headers)
+                    header.Cell().Background(Colors.Grey.Lighten2).Text(h).Bold();
+            });
         }
 
         private static void AddMetricRow(TableDescriptor table, string metric, string value)

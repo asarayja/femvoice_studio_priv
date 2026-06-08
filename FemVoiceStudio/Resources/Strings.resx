@@ -4388,6 +4388,15 @@ Dette kan ikke angres!</value>
   <data name="Coach_Recommendations" xml:space="preserve">
     <value>Anbefalinger</value>
   </data>
+  <data name="Coach_Exercise" xml:space="preserve">
+    <value>Øvelse</value>
+  </data>
+  <data name="Common_Refresh" xml:space="preserve">
+    <value>Oppdater</value>
+  </data>
+  <data name="SmartCoach_NoData" xml:space="preserve">
+    <value>Ingen data ennå</value>
+  </data>
   <data name="Coach_Breakthroughs" xml:space="preserve">
     <value>Gjennombrudd</value>
   </data>

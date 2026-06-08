@@ -4085,6 +4085,15 @@ This cannot be undone!</value>
   <data name="Coach_Recommendations" xml:space="preserve">
     <value>Recommendations</value>
   </data>
+  <data name="Coach_Exercise" xml:space="preserve">
+    <value>Exercise</value>
+  </data>
+  <data name="Common_Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="SmartCoach_NoData" xml:space="preserve">
+    <value>No data yet</value>
+  </data>
   <data name="Coach_Breakthroughs" xml:space="preserve">
     <value>Breakthroughs</value>
   </data>
