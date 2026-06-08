@@ -271,51 +271,46 @@ namespace FemVoiceStudio.Services.Progression
         /// </summary>
         public List<int> GetExerciseIdsForComplexity(SpeechComplexityLevel level, bool includePreview = false)
         {
-            var nextLevel = includePreview ? DetermineNextLevel(level) : level;
-            var ids = new List<int>();
-            
-            switch (level)
+            // FANTOM-ID-FIKS: katalogen har KUN 15 reelle øvelser (ExerciseId 1–15).
+            // Tidligere returnerte denne metoden id 16–50, som ikke finnes som rader —
+            // GetExerciseById(16+) gir null, så enhver anbefaling/planlegging på de id-ene
+            // pekte på en ikke-eksisterende øvelse. De 15 øvelsene partisjoneres nå over de
+            // 7 kompleksitetsnivåene (lettere/foundational øvelser på lavere nivå).
+            // SYNK-KILDE: dette id-kartet er duplisert (pure, ingen DB-avhengighet) i
+            // ExerciseRecommendationEngine.ExerciseIdsForComplexity og
+            // LearningPathProfileBuilder.ExerciseIdsForLevel — endres ALLE tre samtidig.
+            var ids = new List<int>(CatalogIdsForLevel(level));
+
+            if (includePreview)
             {
-                case SpeechComplexityLevel.IsolatedSounds:
-                case SpeechComplexityLevel.Syllables:
-                    for (int i = 1; i <= 15; i++) ids.Add(i);
-                    break;
-                case SpeechComplexityLevel.Words:
-                case SpeechComplexityLevel.Phrases:
-                    for (int i = 16; i <= 35; i++) ids.Add(i);
-                    break;
-                case SpeechComplexityLevel.StructuredSentences:
-                case SpeechComplexityLevel.SpontaneousSpeech:
-                case SpeechComplexityLevel.Conversational:
-                    for (int i = 36; i <= 50; i++) ids.Add(i);
-                    break;
-                default:
-                    for (int i = 1; i <= 15; i++) ids.Add(i);
-                    break;
+                var nextLevel = DetermineNextLevel(level);
+                if (nextLevel != level)
+                    ids.AddRange(CatalogIdsForLevel(nextLevel));
             }
-            
-            if (includePreview && nextLevel != level)
-            {
-                switch (nextLevel)
-                {
-                    case SpeechComplexityLevel.Syllables:
-                        ids.AddRange(Enumerable.Range(1, 5));
-                        break;
-                    case SpeechComplexityLevel.Phrases:
-                        ids.AddRange(Enumerable.Range(16, 5));
-                        break;
-                    case SpeechComplexityLevel.StructuredSentences:
-                        ids.AddRange(Enumerable.Range(36, 5));
-                        break;
-                    case SpeechComplexityLevel.SpontaneousSpeech:
-                    case SpeechComplexityLevel.Conversational:
-                        ids.AddRange(Enumerable.Range(45, 5));
-                        break;
-                }
-            }
-            
+
             return ids.Distinct().ToList();
         }
+
+        /// <summary>
+        /// Maps a complexity level to its slice of the REAL catalog id space (1–15).
+        /// Every level returns a non-empty sub-range that exists as a seeded exercise row;
+        /// no phantom id is ever emitted. Kept in SYNC with the duplicated mirrors in
+        /// <see cref="ExerciseRecommendationEngine"/> and <see cref="LearningPathProfileBuilder"/>.
+        /// Partition (monotonic by SortOrder — lighter exercises on lower levels):
+        ///   IsolatedSounds 1–3 · Syllables 4–6 · Words 7–8 · Phrases 9–10 ·
+        ///   StructuredSentences 11–12 · SpontaneousSpeech 13–14 · Conversational 15.
+        /// </summary>
+        private static IReadOnlyList<int> CatalogIdsForLevel(SpeechComplexityLevel level) => level switch
+        {
+            SpeechComplexityLevel.IsolatedSounds      => new[] { 1, 2, 3 },
+            SpeechComplexityLevel.Syllables           => new[] { 4, 5, 6 },
+            SpeechComplexityLevel.Words               => new[] { 7, 8 },
+            SpeechComplexityLevel.Phrases             => new[] { 9, 10 },
+            SpeechComplexityLevel.StructuredSentences => new[] { 11, 12 },
+            SpeechComplexityLevel.SpontaneousSpeech   => new[] { 13, 14 },
+            SpeechComplexityLevel.Conversational      => new[] { 15 },
+            _                                         => new[] { 1, 2, 3 }
+        };
         
         /// <summary>
         /// Gets progression steps for UI visualization.

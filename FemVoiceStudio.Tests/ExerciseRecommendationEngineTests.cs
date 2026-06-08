@@ -20,10 +20,11 @@ namespace FemVoiceStudio.Tests
     {
         private static ExerciseRecommendationEngine Engine() => new();
 
-        // Exercise-id buckets (mirror ComplexityEngine): sounds/syllables 1..15,
-        // words/phrases 16..35, sentences/conversational 36..50.
+        // Exercise-id buckets mirror ComplexityEngine over the REAL catalog (1..15).
+        // The phantom 16..50 buckets are gone; IsolatedSounds = {1,2,3} gives the three
+        // ids the variation/mastery-ranking mechanics below need.
         private static readonly HashSet<int> LightPool = Enumerable.Range(1, 15).ToHashSet();
-        private static readonly HashSet<int> SentencePool = Enumerable.Range(36, 15).ToHashSet();
+        private static readonly HashSet<int> LevelPool = new() { 1, 2, 3 };
 
         private static RecoveryResult Recovery(double score, RecoveryStatus status)
             => new() { Score = score, Status = status, Explanation = "test" };
@@ -217,65 +218,65 @@ namespace FemVoiceStudio.Tests
         [Fact]
         public void RecommendNext_AvoidsRecentlyDoneExercise()
         {
-            // Weak resonance ⇒ resonance focus. Sentence pool is 36..50; the deterministic
-            // first pick would be 36, but it was just done, so it must be pushed down.
+            // Weak resonance ⇒ resonance focus. IsolatedSounds pool is {1,2,3}; ids 1 and 2
+            // were just done, so the fresh 3 must be picked.
             var input = new ExerciseRecommendationInput
             {
                 Recovery = Recovery(90, RecoveryStatus.WellRecovered),
                 LatestVoiceScores = Scores(resonance: 25),
-                ComplexityLevel = SpeechComplexityLevel.StructuredSentences,
-                RecentExerciseIds = new[] { 36, 37, 38 }
+                ComplexityLevel = SpeechComplexityLevel.IsolatedSounds,
+                RecentExerciseIds = new[] { 1, 2 }
             };
 
             var result = Engine().RecommendNext(input);
 
-            Assert.DoesNotContain(result.ExerciseId, new[] { 36, 37, 38 });
-            Assert.Contains(result.ExerciseId, SentencePool);
+            Assert.DoesNotContain(result.ExerciseId, new[] { 1, 2 });
+            Assert.Contains(result.ExerciseId, LevelPool);
         }
 
         // ── 11. Mastered exercise is deprioritised in favour of a fresh one ────────────
         [Fact]
         public void RecommendNext_DeprioritisesMasteredExercise()
         {
-            // Mark the natural first pick (36) Mastered — engine should lift a non-mastered
+            // Mark the natural first pick (1) Mastered — engine should lift a non-mastered
             // exercise to the top instead of drilling the solved one.
             var input = new ExerciseRecommendationInput
             {
                 Recovery = Recovery(90, RecoveryStatus.WellRecovered),
                 LatestVoiceScores = Scores(resonance: 25),
-                ComplexityLevel = SpeechComplexityLevel.StructuredSentences,
-                MasteryByExercise = new Dictionary<int, MasteryLevel> { [36] = MasteryLevel.Mastered }
+                ComplexityLevel = SpeechComplexityLevel.IsolatedSounds,
+                MasteryByExercise = new Dictionary<int, MasteryLevel> { [1] = MasteryLevel.Mastered }
             };
 
             var result = Engine().RecommendNext(input);
 
-            Assert.NotEqual(36, result.ExerciseId);
-            Assert.Contains(result.ExerciseId, SentencePool);
-            // 36 is still a valid alternative, just not the primary.
-            Assert.Contains(36, result.AlternativeExerciseIds);
+            Assert.NotEqual(1, result.ExerciseId);
+            Assert.Contains(result.ExerciseId, LevelPool);
+            // 1 is still a valid alternative, just not the primary.
+            Assert.Contains(1, result.AlternativeExerciseIds);
         }
 
         // ── 12. Mastery penalty outweighs variation penalty (a deeper deprioritisation) ─
         [Fact]
         public void RecommendNext_MasteredOutranksMerelyRecent()
         {
-            // 36 = Mastered (penalty 4), 37 = recently done (penalty 2). The fresh,
-            // non-mastered 38 (penalty 0) should win; 37 should still outrank 36.
+            // 1 = Mastered (penalty 4), 2 = recently done (penalty 2). The fresh,
+            // non-mastered 3 (penalty 0) should win; 2 should still outrank 1.
             var input = new ExerciseRecommendationInput
             {
                 Recovery = Recovery(90, RecoveryStatus.WellRecovered),
                 LatestVoiceScores = Scores(resonance: 25),
-                ComplexityLevel = SpeechComplexityLevel.StructuredSentences,
-                RecentExerciseIds = new[] { 37 },
-                MasteryByExercise = new Dictionary<int, MasteryLevel> { [36] = MasteryLevel.Mastered }
+                ComplexityLevel = SpeechComplexityLevel.IsolatedSounds,
+                RecentExerciseIds = new[] { 2 },
+                MasteryByExercise = new Dictionary<int, MasteryLevel> { [1] = MasteryLevel.Mastered }
             };
 
             var result = Engine().RecommendNext(input);
 
-            Assert.Equal(38, result.ExerciseId);
-            var orderOf37 = result.AlternativeExerciseIds.ToList().IndexOf(37);
-            var orderOf36 = result.AlternativeExerciseIds.ToList().IndexOf(36);
-            Assert.True(orderOf37 >= 0 && orderOf36 >= 0 && orderOf37 < orderOf36);
+            Assert.Equal(3, result.ExerciseId);
+            var orderOf2 = result.AlternativeExerciseIds.ToList().IndexOf(2);
+            var orderOf1 = result.AlternativeExerciseIds.ToList().IndexOf(1);
+            Assert.True(orderOf2 >= 0 && orderOf1 >= 0 && orderOf2 < orderOf1);
         }
 
         // ── 13. Style colours focus: DarkFeminine is NOT pushed toward bright resonance ─

@@ -256,7 +256,7 @@ namespace FemVoiceStudio.Services
         private static IReadOnlyList<int> LightRecoveryPool(SpeechComplexityLevel level)
         {
             // Clamp the recovery pool to at most the user's level, and never above the
-            // lightest bucket (isolated sounds / syllables, ids 1..15). A recovering voice
+            // lightest bucket (isolated sounds / syllables, ids 1..6). A recovering voice
             // is never sent to phrases/sentences even if the user normally trains there.
             var capped = level <= SpeechComplexityLevel.Syllables
                 ? level
@@ -266,33 +266,26 @@ namespace FemVoiceStudio.Services
 
         /// <summary>
         /// Pure mirror of <see cref="ComplexityEngine.GetExerciseIdsForComplexity"/>
-        /// (includePreview:false). Same id buckets: sounds/syllables 1–15, words/phrases
-        /// 16–35, sentences/spontaneous/conversational 36–50.
+        /// (includePreview:false). FANTOM-ID-FIKS: only REAL catalog ids (1–15) are ever
+        /// returned — the catalog has exactly 15 seeded exercises, so emitting 16–50 would
+        /// recommend a non-existent exercise (GetExerciseById(16+) is null). The 15
+        /// exercises are partitioned over the 7 levels (kept in SYNC with the mirrors in
+        /// <see cref="ComplexityEngine.GetExerciseIdsForComplexity"/> and
+        /// <see cref="LearningPathProfileBuilder"/>):
+        ///   IsolatedSounds 1–3 · Syllables 4–6 · Words 7–8 · Phrases 9–10 ·
+        ///   StructuredSentences 11–12 · SpontaneousSpeech 13–14 · Conversational 15.
         /// </summary>
-        private static IReadOnlyList<int> ExerciseIdsForComplexity(SpeechComplexityLevel level)
+        private static IReadOnlyList<int> ExerciseIdsForComplexity(SpeechComplexityLevel level) => level switch
         {
-            var ids = new List<int>();
-            switch (level)
-            {
-                case SpeechComplexityLevel.IsolatedSounds:
-                case SpeechComplexityLevel.Syllables:
-                    for (var i = 1; i <= 15; i++) ids.Add(i);
-                    break;
-                case SpeechComplexityLevel.Words:
-                case SpeechComplexityLevel.Phrases:
-                    for (var i = 16; i <= 35; i++) ids.Add(i);
-                    break;
-                case SpeechComplexityLevel.StructuredSentences:
-                case SpeechComplexityLevel.SpontaneousSpeech:
-                case SpeechComplexityLevel.Conversational:
-                    for (var i = 36; i <= 50; i++) ids.Add(i);
-                    break;
-                default:
-                    for (var i = 1; i <= 15; i++) ids.Add(i);
-                    break;
-            }
-            return ids;
-        }
+            SpeechComplexityLevel.IsolatedSounds      => new[] { 1, 2, 3 },
+            SpeechComplexityLevel.Syllables           => new[] { 4, 5, 6 },
+            SpeechComplexityLevel.Words               => new[] { 7, 8 },
+            SpeechComplexityLevel.Phrases             => new[] { 9, 10 },
+            SpeechComplexityLevel.StructuredSentences => new[] { 11, 12 },
+            SpeechComplexityLevel.SpontaneousSpeech   => new[] { 13, 14 },
+            SpeechComplexityLevel.Conversational      => new[] { 15 },
+            _                                         => new[] { 1, 2, 3 }
+        };
 
         // ── Recovery gate ───────────────────────────────────────────────────────────
 

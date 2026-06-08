@@ -256,12 +256,13 @@ namespace FemVoiceStudio.Tests
             var profile = Builder.Build(
                 new[] { point },
                 Scorer.Score(new RecoveryScoreInput()),
-                Complexity(SpeechComplexityLevel.Words)); // Words/Phrases ⇒ ids 16..35
+                Complexity(SpeechComplexityLevel.Words)); // Words ⇒ real catalog ids 7..8
 
             Assert.NotEmpty(profile.RecommendedExercises);
             // First focus is Recovery (highest priority), so first recommendation targets it.
             Assert.Equal(VoiceDimension.Recovery, profile.RecommendedExercises[0].TargetDimension);
-            Assert.All(profile.RecommendedExercises, r => Assert.InRange(r.ExerciseId, 16, 35));
+            // Catalog fix: the phantom 16..35 bucket is gone; Words maps to real ids 7..8.
+            Assert.All(profile.RecommendedExercises, r => Assert.InRange(r.ExerciseId, 7, 8));
         }
 
         // ── 6. Confidence: longer consistent positive trend ⇒ higher confidence ───────

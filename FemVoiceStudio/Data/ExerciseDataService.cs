@@ -446,7 +446,10 @@ namespace FemVoiceStudio.Data
                     FrequencyText = "3Ã—/uke",
                     TargetPitchMin = 165.0,
                     TargetPitchMax = 220.0,
-                    ProfileType = Models.ExerciseProfileType.CoordinatedGlideUp,
+                    // KLINISK RE-MAP: spørsmåls-intonasjon er kontinuerlig pitch-slope-sporing,
+                    // ikke glide-up. IntonationExercise gir korrekt intonasjons-guidance og
+                    // scorer ikke resonans (som CoordinatedGlideUp feilaktig gjorde).
+                    ProfileType = Models.ExerciseProfileType.IntonationExercise,
                 },
                 // Ã˜VELSE 8: Utsagns-Intonasjon
                 new { 
@@ -464,7 +467,10 @@ namespace FemVoiceStudio.Data
                     FrequencyText = "3Ã—/uke",
                     TargetPitchMin = 155.0,
                     TargetPitchMax = 210.0,
-                    ProfileType = Models.ExerciseProfileType.CoordinatedGlideUp,
+                    // KLINISK RE-MAP: utsagns-intonasjon (fallende melodi) er kontinuerlig
+                    // pitch-slope-sporing, ikke glide-up. IntonationExercise gir korrekt
+                    // intonasjons-guidance og scorer ikke resonans.
+                    ProfileType = Models.ExerciseProfileType.IntonationExercise,
                 },
                 // Ã˜VELSE 9: Fraselesing
                 new { 
@@ -537,7 +543,10 @@ namespace FemVoiceStudio.Data
                     FrequencyText = "Daglig",
                     TargetPitchMin = 165.0,
                     TargetPitchMax = 180.0,
-                    ProfileType = Models.ExerciseProfileType.CoordinatedGlideUp,
+                    // KLINISK RE-MAP: starter-pitch-memorisering er en vedvarende referansetone-
+                    // hold i målområdet (ikke en glide). PitchExercise (pitch + 3 s hold,
+                    // komfortsone-strategi) gir korrekt pitch-mål-guidance.
+                    ProfileType = Models.ExerciseProfileType.PitchExercise,
                 },
                 // Ã˜VELSE 13: Pitch Slide i Fraser
                 new { 
@@ -555,6 +564,10 @@ namespace FemVoiceStudio.Data
                     FrequencyText = "3Ã—/uke",
                     TargetPitchMin = 150.0,
                     TargetPitchMax = 220.0,
+                    // BEHOLDT BEVISST som CoordinatedGlideUp: dette er en kontinuerlig glide-i-
+                    // fraser-øvelse (stigende/fallende glide), IKKE en statisk pitch-target.
+                    // PitchExercise (3 s statisk hold) ville feilscoret glidebevegelsen, så
+                    // glide-profilen (RequiredHoldSeconds=0, kontinuerlig) er klinisk riktig her.
                     ProfileType = Models.ExerciseProfileType.CoordinatedGlideUp,
                 },
                 // Ã˜VELSE 14: Straw Phonation
@@ -573,7 +586,10 @@ namespace FemVoiceStudio.Data
                     FrequencyText = "2Ã—/uke",
                     TargetPitchMin = 140.0,
                     TargetPitchMax = 180.0,
-                    ProfileType = Models.ExerciseProfileType.StabilityTraining,
+                    // KLINISK MUST-FIX: straw phonation er SOVT/airflow, ikke endurance-hold.
+                    // StabilityTraining ga feil endurance-guidance; StrawPhonation gir korrekt
+                    // SOVT/airflow-sikkerhet (UsesIntensity + straw-spesifikke guidance-nøkler).
+                    ProfileType = Models.ExerciseProfileType.StrawPhonation,
                 },
                 // Ã˜VELSE 15: Intonasjons-Variasjon
                 new { 

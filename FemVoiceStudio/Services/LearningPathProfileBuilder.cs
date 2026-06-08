@@ -266,25 +266,24 @@ namespace FemVoiceStudio.Services
 
         // Mirrors ComplexityEngine.GetExerciseIdsForComplexity's id banding WITHOUT taking
         // a dependency on the (DB-constructing) engine instance — this builder must stay
-        // pure. Bølge 2 may delegate to the engine directly.
-        private static IReadOnlyList<int> ExerciseIdsForLevel(SpeechComplexityLevel level)
+        // pure. FANTOM-ID-FIKS: only REAL catalog ids (1–15) are returned — the catalog has
+        // exactly 15 seeded exercises, so the old 16–35 / 36–50 bands pointed at non-existent
+        // rows. The 15 exercises are partitioned over the 7 levels, kept in SYNC with the
+        // mirrors in ComplexityEngine.GetExerciseIdsForComplexity and
+        // ExerciseRecommendationEngine.ExerciseIdsForComplexity:
+        //   IsolatedSounds 1–3 · Syllables 4–6 · Words 7–8 · Phrases 9–10 ·
+        //   StructuredSentences 11–12 · SpontaneousSpeech 13–14 · Conversational 15.
+        private static IReadOnlyList<int> ExerciseIdsForLevel(SpeechComplexityLevel level) => level switch
         {
-            switch (level)
-            {
-                case SpeechComplexityLevel.IsolatedSounds:
-                case SpeechComplexityLevel.Syllables:
-                    return Enumerable.Range(1, 15).ToList();
-                case SpeechComplexityLevel.Words:
-                case SpeechComplexityLevel.Phrases:
-                    return Enumerable.Range(16, 20).ToList();
-                case SpeechComplexityLevel.StructuredSentences:
-                case SpeechComplexityLevel.SpontaneousSpeech:
-                case SpeechComplexityLevel.Conversational:
-                    return Enumerable.Range(36, 15).ToList();
-                default:
-                    return Enumerable.Range(1, 15).ToList();
-            }
-        }
+            SpeechComplexityLevel.IsolatedSounds      => new[] { 1, 2, 3 },
+            SpeechComplexityLevel.Syllables           => new[] { 4, 5, 6 },
+            SpeechComplexityLevel.Words               => new[] { 7, 8 },
+            SpeechComplexityLevel.Phrases             => new[] { 9, 10 },
+            SpeechComplexityLevel.StructuredSentences => new[] { 11, 12 },
+            SpeechComplexityLevel.SpontaneousSpeech   => new[] { 13, 14 },
+            SpeechComplexityLevel.Conversational      => new[] { 15 },
+            _                                         => new[] { 1, 2, 3 }
+        };
 
         // ── Recovery requirement (copy out of RecoveryResult, no Services coupling in model) ──
 

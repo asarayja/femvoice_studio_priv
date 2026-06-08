@@ -18,6 +18,10 @@ namespace FemVoiceStudio.Services
                 ExerciseProfileType.ResonanceVowels    => ExerciseTargetProfile.CreateResonanceVowels(),
                 ExerciseProfileType.CoordinatedGlideUp => ExerciseTargetProfile.CreateCoordinatedGlideUp(),
                 ExerciseProfileType.StabilityTraining  => ExerciseTargetProfile.CreateStabilityTraining(),
+                ExerciseProfileType.ResonanceExercise  => ExerciseTargetProfile.ResonanceExercise(),
+                ExerciseProfileType.PitchExercise      => ExerciseTargetProfile.PitchExercise(),
+                ExerciseProfileType.IntonationExercise => ExerciseTargetProfile.IntonationExercise(),
+                ExerciseProfileType.StrawPhonation     => ExerciseTargetProfile.StrawPhonation(),
                 _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
             };
     }
