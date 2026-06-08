@@ -7,6 +7,7 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using FemVoiceStudio.Audio;
+using FemVoiceStudio.Models;
 using FemVoiceStudio.Converters;
 using FemVoiceStudio.Data;
 using FemVoiceStudio.Services;
@@ -89,6 +90,10 @@ namespace FemVoiceStudio.Views
                 _audioCapture.Initialize();
                 _audioCapture.HearOwnVoice = GetHearOwnVoiceSetting();
                 _audioCapture.AudioDataAvailable += AudioCapture_AudioDataAvailable;
+                // Stil-bevisst resonansscoring: en DarkFeminine-/Androgyn-bruker skal ikke
+                // måles mot den universelle lyse feminine klangen (A.4 Goal Safety). Setter
+                // brukerens PreferredVoiceStyle før Start() — null-safe Feminine-default.
+                _resonanceEngine.SetVoiceStyle(GetPreferredVoiceStyle());
                 _resonanceEngine.Start();
                 _audioCapture.StartRecording();
                 _renderTimer.Start();
@@ -119,6 +124,19 @@ namespace FemVoiceStudio.Views
             catch
             {
                 return false;
+            }
+        }
+
+        private static VoiceStyleGoal GetPreferredVoiceStyle()
+        {
+            try
+            {
+                var db = App.Services?.GetService(typeof(DatabaseService)) as DatabaseService;
+                return db?.GetUserVoiceProfile(1)?.PreferredVoiceStyle ?? VoiceStyleGoal.Feminine;
+            }
+            catch
+            {
+                return VoiceStyleGoal.Feminine;
             }
         }
         

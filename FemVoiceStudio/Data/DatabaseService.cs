@@ -330,6 +330,7 @@ namespace FemVoiceStudio.Data
                     StrainType TEXT,
                     StrainLevel REAL DEFAULT 0,
                     Recommendation TEXT,
+                    IsRead INTEGER DEFAULT 0,
                     CreatedAt TEXT NOT NULL
                 );
 
@@ -578,6 +579,15 @@ namespace FemVoiceStudio.Data
 
             // Migration 7: Recovery sessions count toward training frequency without affecting performance averages.
             AddColumnIfNotExists(connection, "TrainingSessions", "IsRecoveryPractice", "INTEGER DEFAULT 0");
+
+            // Migration 10 (heal): SmartCoachHealthMonitoring manglet IsRead-kolonnen som
+            // SaveHealthMonitoring INSERTer og GetRecentHealthIssues leser. Latent til A.4
+            // aktiverte AnalyzeSessionForStrain ved øktslutt — da kastet hver strain-INSERT
+            // («no column named IsRead»), strain ble aldri persistert, og hele helse-/
+            // recovery-gaten var inert. ALTER legger kolonnen til på SLUTTEN av eksisterende
+            // tabeller; GetRecentHealthIssues bruker derfor eksplisitt kolonneliste (ikke
+            // SELECT *) slik at posisjonsindeksene stemmer uavhengig av fysisk rekkefølge.
+            AddColumnIfNotExists(connection, "SmartCoachHealthMonitoring", "IsRead", "INTEGER DEFAULT 0");
 
             // Migration 9: UserVoiceProfiles – baselines, preferanser og tilgjengelighetsvalg.
             // Idempotent heal: legacy-databaser som fikk tabellen før en kolonne ble lagt til
@@ -2186,8 +2196,13 @@ namespace FemVoiceStudio.Data
             connection.Open();
             
             var command = connection.CreateCommand();
+            // Eksplisitt kolonneliste (ikke SELECT *) — Migration 10 kan ha ALTER-et IsRead
+            // inn på slutten av tabellen, så posisjonsindeksene under (8=IsRead, 9=CreatedAt)
+            // må forankres i SELECT-rekkefølgen, ikke i fysisk kolonnerekkefølge.
             command.CommandText = @"
-                SELECT * FROM SmartCoachHealthMonitoring 
+                SELECT Id, UserId, Date, SessionId, StrainDetected, StrainType,
+                       StrainLevel, Recommendation, IsRead, CreatedAt
+                FROM SmartCoachHealthMonitoring
                 WHERE UserId = @UserId AND Date >= @StartDate
                 ORDER BY Date DESC, StrainLevel DESC";
             command.Parameters.AddWithValue("@UserId", userId);
