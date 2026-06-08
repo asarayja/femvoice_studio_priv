@@ -4095,4 +4095,101 @@ Dette kan ikke angres!</value>
   <data name="Realtime_PitchAboveZoneFormat" xml:space="preserve">
     <value>Over målsonen ({0:F0} Hz). Stemmen ligger høyere/lysere enn den grønne sonen {1:F0}-{2:F0} Hz. Slipp litt ned og unngå press.</value>
   </data>
+
+  <!-- ===== Voice Dimension Labels (VoiceDimension enum) ===== -->
+  <data name="Dimension_Recovery" xml:space="preserve">
+    <value>Restitusjon</value>
+  </data>
+  <data name="Dimension_Comfort" xml:space="preserve">
+    <value>Komfort</value>
+  </data>
+  <data name="Dimension_Resonance" xml:space="preserve">
+    <value>Resonans</value>
+  </data>
+  <data name="Dimension_Consistency" xml:space="preserve">
+    <value>Konsistens</value>
+  </data>
+  <data name="Dimension_Intonation" xml:space="preserve">
+    <value>Intonasjon</value>
+  </data>
+  <data name="Dimension_VocalWeight" xml:space="preserve">
+    <value>Stemmevekt</value>
+  </data>
+  <data name="Dimension_Pitch" xml:space="preserve">
+    <value>Tonehøyde</value>
+  </data>
+
+  <!-- ===== Pattern descriptions (Sprint C.3/C.4) ===== -->
+  <!-- {0} = lokalisert dimensjonsnavn (Dimension_*) -->
+  <data name="Pattern_Plateau_Description" xml:space="preserve">
+    <value>Stemmen din er i en stabil fase innen {0}. Platåer er en naturlig del av utviklingen — kroppen bearbeider og befester det den har lært.</value>
+  </data>
+  <data name="Pattern_Breakthrough_Description" xml:space="preserve">
+    <value>Det er tydelig fremgang innen {0}. Stemmen din responderer godt på treningen i denne perioden.</value>
+  </data>
+  <data name="Pattern_Regression_Description" xml:space="preserve">
+    <value>Stemmen din viser en midlertidig tilbakegang innen {0}. Dette kan skyldes tretthet, stress eller perioder med mindre trening — og er forbigående.</value>
+  </data>
+
+  <!-- ===== Longitudinal insight templates (Sprint C.3/C.4) ===== -->
+  <!-- {0} = lokalisert dimensjonsnavn, {1} = delta (numerisk) -->
+  <data name="Insight_Improvement_Template" xml:space="preserve">
+    <value>{0} har utviklet seg positivt ({1:+0.0;-0.0} poeng). Treningsarbeidet begynner å gi resultater.</value>
+  </data>
+  <data name="Insight_Decline_Template" xml:space="preserve">
+    <value>{0} har vist en nedgang på {1:0.0} poeng i denne perioden. Det kan være lurt å gi stemmen ekstra hvile og se om kurven snur seg.</value>
+  </data>
+  <data name="Insight_Stable_Template" xml:space="preserve">
+    <value>{0} holder seg stabilt. Å bevare det du har bygget opp er verdifullt i seg selv.</value>
+  </data>
+  <data name="Insight_InsufficientData" xml:space="preserve">
+    <value>Det er foreløpig ikke nok data for {0} til å vise en tydelig trend. Fortsett å trene, så bygger bildet seg opp.</value>
+  </data>
+
+  <!-- ===== Insight explanation templates (Sprint C.3/C.4) ===== -->
+  <!-- {0} = lokalisert dimensjonsnavn, {1} = delta -->
+  <data name="Explanation_WhyFocus_Template" xml:space="preserve">
+    <value>{0} er valgt som fokusområde fordi det er her treningen din har størst potensiale for vekst akkurat nå.</value>
+  </data>
+  <data name="Explanation_WhatItImproves_Template" xml:space="preserve">
+    <value>Å jobbe med {0} styrker helhetsinntrykket av stemmen og gjør den mer naturlig og behagelig.</value>
+  </data>
+  <data name="Explanation_ExpectedOutcome_Template" xml:space="preserve">
+    <value>Med jevn trening kan du forvente at {0} gradvis beveger seg i ønsket retning over de kommende ukene.</value>
+  </data>
+  <data name="Explanation_Confidence_High" xml:space="preserve">
+    <value>Høy sikkerhet</value>
+  </data>
+  <data name="Explanation_Confidence_Medium" xml:space="preserve">
+    <value>Middels sikkerhet</value>
+  </data>
+  <data name="Explanation_Confidence_Low" xml:space="preserve">
+    <value>Lav sikkerhet — begrenset datagrunnlag</value>
+  </data>
+
+  <!-- ===== Dashboard labels — Voice Intelligence (Sprint C.3/C.4) ===== -->
+  <data name="Dashboard_WeeklyTrend" xml:space="preserve">
+    <value>Ukentlig trend</value>
+  </data>
+  <data name="Dashboard_MonthlyTrend" xml:space="preserve">
+    <value>Månedlig trend</value>
+  </data>
+  <data name="Dashboard_VoiceDevelopment" xml:space="preserve">
+    <value>Stemmeutvikling</value>
+  </data>
+  <data name="Dashboard_Breakthroughs" xml:space="preserve">
+    <value>Gjennombrudd</value>
+  </data>
+  <data name="Dashboard_RecoveryPatterns" xml:space="preserve">
+    <value>Restitusjonstrender</value>
+  </data>
+  <data name="Dashboard_Axis_Sessions" xml:space="preserve">
+    <value>Økter</value>
+  </data>
+  <data name="Dashboard_Axis_Score" xml:space="preserve">
+    <value>Score (0–100)</value>
+  </data>
+  <data name="Dashboard_Axis_Date" xml:space="preserve">
+    <value>Dato</value>
+  </data>
 </root>
