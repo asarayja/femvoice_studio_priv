@@ -51,6 +51,17 @@ namespace FemVoiceStudio.Services
         // gir en enkel lambda. null ⇒ ingen mestrings-melding (dagens oppførsel).
         private readonly Func<int, MasteryLevel?>? _masteryLevelProvider;
 
+        // ── LONGITUDINALE INNSIKTER + MINNE (Sprint C.3/C.4, Bølge 2) ──────────────────
+        // Alle seks er VALGFRIE. null ⇒ NØYAKTIG dagens oppførsel (additivt +
+        // bakoverkompatibelt). Ingen av dem kan filtrere eller overstyre health/safety/
+        // recovery-gates — all ny intelligens er BESKRIVENDE og legges PÅ ETTER gaten.
+        private readonly LongitudinalInsightEngine? _insightEngine;
+        private readonly RecommendationExplanationEngine? _explanationEngine;
+        private readonly SmartCoachMemoryStore? _memory;
+        private readonly VoiceKnowledgeGraphBuilder? _knowledgeGraphBuilder;
+        private readonly TrendEngineService? _trendEngine;
+        private readonly VoicePatternDetector? _patternDetector;
+
         private readonly Random _random = new();
 
         // Konstanter for terskelverdier
@@ -105,7 +116,13 @@ namespace FemVoiceStudio.Services
             LearningPathProfileBuilder? learningPathBuilder = null,
             ComplexityEngine? complexityEngine = null,
             Func<int, MasteryLevel?>? masteryLevelProvider = null,
-            ExerciseEffectivenessEngine? effectivenessEngine = null)
+            ExerciseEffectivenessEngine? effectivenessEngine = null,
+            LongitudinalInsightEngine? insightEngine = null,
+            RecommendationExplanationEngine? explanationEngine = null,
+            SmartCoachMemoryStore? memory = null,
+            VoiceKnowledgeGraphBuilder? knowledgeGraphBuilder = null,
+            TrendEngineService? trendEngine = null,
+            VoicePatternDetector? patternDetector = null)
         {
             _database = database ?? throw new ArgumentNullException(nameof(database));
             _localization = localization ?? LocalizationService.Instance;
@@ -118,6 +135,12 @@ namespace FemVoiceStudio.Services
             _complexityEngine = complexityEngine;
             _masteryLevelProvider = masteryLevelProvider;
             _effectivenessEngine = effectivenessEngine;
+            _insightEngine = insightEngine;
+            _explanationEngine = explanationEngine;
+            _memory = memory;
+            _knowledgeGraphBuilder = knowledgeGraphBuilder;
+            _trendEngine = trendEngine;
+            _patternDetector = patternDetector;
         }
 
         
@@ -530,7 +553,61 @@ namespace FemVoiceStudio.Services
 
             _database.SaveDailyRecommendation(recommendation);
 
+            // ── MINNE-SKRIVING (Sprint C.3/C.4, Bølge 2 — spec-agent 8) ═══════════════
+            // Logg den utstedte øvelsesanbefalingen best-effort til _memory. Kjører ETTER
+            // den urørte gaten og ETTER persist — påvirker ALDRI den returnerte anbefalingen.
+            // Kun øvelsesanbefalinger (exerciseId > 0 og focusArea ikke "recovery" fra
+            // health-gaten) — health/strain-suppresjon gir tidlig return ovenfor, så vi
+            // er alltid i øvelsesgreinen her. Dedupliser per dag+fokus for å unngå spam.
+            TryLogAdviceToMemory(userId, focusArea, exerciseId, now: DateTime.Now);
+
             return recommendation;
+        }
+
+        /// <summary>
+        /// Best-effort, null-safe logg av den utstedte anbefalingen til <see cref="SmartCoachMemoryStore"/>.
+        /// ALDRI kast; ALDRI påvirk den returnerte anbefalingen. _memory==null ⇒ ingen skriving.
+        /// Dedupliserer per dag+fokus: hopper over hvis identisk fokus+øvelse allerede er
+        /// logget i dag (halvåpen [today, tomorrow)). Async-over-sync via Task.Run for å unngå
+        /// WPF SynchronizationContext-deadlock — samme mønster som de øvrige Try*-metodene.
+        /// </summary>
+        private void TryLogAdviceToMemory(int userId, string focusArea, int exerciseId, DateTime now)
+        {
+            if (_memory == null)
+                return;
+
+            try
+            {
+                var today    = now.Date;
+                var tomorrow = today.AddDays(1);
+
+                // Dedupliser: hent dagens historikk og hopp over hvis identisk fokus/øvelse.
+                var todayHistory = Task.Run(() =>
+                    _memory.GetAdviceHistoryAsync(userId, today, tomorrow))
+                    .GetAwaiter().GetResult();
+
+                if (todayHistory != null && todayHistory.Any(e =>
+                    string.Equals(e.FocusArea, focusArea, StringComparison.OrdinalIgnoreCase)
+                    && e.RecommendedExerciseId == (exerciseId > 0 ? (int?)exerciseId : null)))
+                {
+                    return; // allerede logget i dag — ingen duplikat
+                }
+
+                var entry = new SmartCoachAdviceEntry
+                {
+                    AdviceId              = Guid.NewGuid(),
+                    UserId                = userId,
+                    RecommendedAt         = now,
+                    FocusArea             = focusArea ?? string.Empty,
+                    RecommendedExerciseId = exerciseId > 0 ? (int?)exerciseId : null,
+                };
+
+                Task.Run(() => _memory.SaveAdviceAsync(entry)).GetAwaiter().GetResult();
+            }
+            catch
+            {
+                // Best-effort: enhver feil undertrykkes — minne-skriving må aldri krasje coachingen.
+            }
         }
 
         #region Stil-bevisst coaching (Sprint C, Agent 4)
@@ -715,6 +792,269 @@ namespace FemVoiceStudio.Services
             }
         }
 
+        #endregion
+
+        #region Longitudinale innsikter + Forklaring + Minne + KnowledgeGraph (Sprint C.3/C.4, Bølge 2)
+
+        /// <summary>
+        /// Bygger en komplett <see cref="VoiceDevelopmentProfile"/> via TrendEngineService
+        /// og VoicePatternDetector, eller null når en av tjenestene ikke er injisert eller
+        /// noe feiler. Async-over-sync (Task.Run) for WPF-deadlock-sikkerhet.
+        /// BESKRIVENDE INTELLIGENS: overstyre aldri en health/safety/recovery-gate.
+        /// </summary>
+        public VoiceDevelopmentProfile? TryBuildDevelopmentProfile(int userId, DateTime now)
+        {
+            if (_trendEngine == null)
+                return null;
+
+            try
+            {
+                var windows = Task.Run(() =>
+                    _trendEngine.AnalyzeAsync(now, userId))
+                    .GetAwaiter().GetResult();
+
+                PlateauState? plateau = null;
+                BreakthroughState? breakthrough = null;
+                RegressionState? regression = null;
+                if (_patternDetector != null)
+                {
+                    var (p, b, r) = _patternDetector.Compute(windows);
+                    plateau      = p;
+                    breakthrough = b;
+                    regression   = r;
+                }
+
+                // Hent råpunktene fra 180-dagers vinduet for compositescore.
+                var from = now.AddDays(-180);
+                IReadOnlyList<VoiceIntelligenceTrendPoint> allPoints;
+                if (_voiceIntelligence != null)
+                {
+                    allPoints = Task.Run(() =>
+                        _voiceIntelligence.GetVoiceIntelligenceTrendAsync(from, now, userId))
+                        .GetAwaiter().GetResult();
+                }
+                else
+                {
+                    allPoints = Array.Empty<VoiceIntelligenceTrendPoint>();
+                }
+
+                var profile = _trendEngine.BuildProfile(windows, userId, now, allPoints);
+
+                // Patch pattern-states inn — BuildProfile setter disse til null.
+                return profile with
+                {
+                    Plateau      = plateau,
+                    Breakthrough = breakthrough,
+                    Regression   = regression,
+                };
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Bygger en liste med <see cref="LongitudinalInsight"/>-objekter via
+        /// <see cref="LongitudinalInsightEngine.Compute"/>, eller null når tjenestene ikke er
+        /// injisert eller noe feiler. Bygger først VoiceDevelopmentProfile internt.
+        /// BESKRIVENDE INTELLIGENS — overstyre aldri health/safety/recovery-gater.
+        /// </summary>
+        public IReadOnlyList<LongitudinalInsight>? TryBuildLongitudinalInsights(int userId, DateTime now)
+        {
+            if (_insightEngine == null)
+                return null;
+
+            try
+            {
+                var profile = TryBuildDevelopmentProfile(userId, now);
+                if (profile == null)
+                    return null;
+
+                var allWindows = profile.WeeklyTrend.Concat(profile.MonthlyTrend).ToList();
+                return _insightEngine.Compute(
+                    allWindows,
+                    profile.Plateau,
+                    profile.Breakthrough,
+                    profile.Regression,
+                    profile);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Beregner en <see cref="InsightExplanation"/> for en gitt anbefaling via
+        /// <see cref="RecommendationExplanationEngine.Compute"/>, eller null når tjenesten
+        /// ikke er injisert eller noe feiler. Utleder fokus-dimensjon fra FocusArea-strengen;
+        /// gjenbruker recovery-data og effektivitetsprofil fra eksisterende Try*-metoder.
+        /// BESKRIVENDE INTELLIGENS — overstyre aldri health/safety/recovery-gater.
+        /// </summary>
+        public InsightExplanation? TryExplainRecommendation(
+            SmartCoachDailyRecommendation reco, int userId, DateTime now)
+        {
+            if (_explanationEngine == null)
+                return null;
+
+            try
+            {
+                var focus = FocusAreaToDimension(reco.FocusArea);
+
+                // Hent effektivitetsprofil for den anbefalte øvelsen (gjenbruk eksisterende bro).
+                ExerciseEffectivenessProfile? effectivenessProfile = null;
+                if (reco.RecommendedExerciseId > 0)
+                {
+                    var allEffectiveness = TryReadExerciseEffectiveness(userId);
+                    effectivenessProfile = allEffectiveness
+                        ?.FirstOrDefault(e => e.ExerciseId == reco.RecommendedExerciseId);
+                }
+
+                // Recovery-snapshot — bruk forecast hvis tilgjengelig, ellers standard nøytral.
+                var forecast = TryGetRecoveryForecast(userId);
+                var recovery = forecast?.Current
+                    ?? new RecoveryResult { Score = 100.0, Status = RecoveryStatus.WellRecovered, Explanation = string.Empty };
+
+                // Nyeste TrendWindow (7-dagers foretrukket, ellers 30-dagers).
+                TrendWindow? recentWindow = null;
+                if (_trendEngine != null)
+                {
+                    var windows = Task.Run(() => _trendEngine.AnalyzeAsync(now, userId))
+                        .GetAwaiter().GetResult();
+                    recentWindow = windows.FirstOrDefault(w => w.WindowDays == 7 && w.HasEnoughData)
+                                ?? windows.FirstOrDefault(w => w.WindowDays == 30 && w.HasEnoughData);
+                }
+
+                // Stil for tone-framing.
+                var voiceGoalProfile = _voiceGoalProfiles?.GetProfile(userId);
+                var style = ResolveVoiceStyle(userId, voiceGoalProfile) ?? VoiceStyleGoal.Feminine;
+
+                return _explanationEngine.Compute(focus, effectivenessProfile, recovery, recentWindow, style);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Bygger en <see cref="VoiceKnowledgeGraph"/> ved å forhåndshente nødvendige data og
+        /// kalle <see cref="VoiceKnowledgeGraphBuilder.Build"/>, eller null når builder ikke er
+        /// injisert eller noe feiler. Henter trend-punkter, goal-profil og effektivitetsprofiler.
+        /// BESKRIVENDE INTELLIGENS — overstyre aldri health/safety/recovery-gater.
+        /// </summary>
+        public VoiceKnowledgeGraph? TryBuildKnowledgeGraph(int userId, DateTime now)
+        {
+            if (_knowledgeGraphBuilder == null)
+                return null;
+
+            try
+            {
+                IReadOnlyList<VoiceIntelligenceTrendPoint> trendPoints = Array.Empty<VoiceIntelligenceTrendPoint>();
+                if (_voiceIntelligence != null)
+                {
+                    var from = now.AddDays(-180);
+                    trendPoints = Task.Run(() =>
+                        _voiceIntelligence.GetVoiceIntelligenceTrendAsync(from, now, userId))
+                        .GetAwaiter().GetResult();
+                }
+
+                var goalProfile     = _voiceGoalProfiles?.GetProfile(userId);
+                var exerciseProfiles = TryReadExerciseEffectiveness(userId)
+                    ?? Array.Empty<ExerciseEffectivenessProfile>();
+
+                var input = new VoiceKnowledgeGraphInput
+                {
+                    UserId           = userId,
+                    GoalProfile      = goalProfile,
+                    TrendPoints      = trendPoints,
+                    Insights         = Array.Empty<SessionInsight>(),
+                    ExerciseProfiles = exerciseProfiles,
+                };
+
+                return _knowledgeGraphBuilder.Build(input);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Henter råd-historikk for brukeren i det angitte tidsintervallet, eller null når
+        /// <see cref="SmartCoachMemoryStore"/> ikke er injisert eller lesingen feiler.
+        /// Async-over-sync (Task.Run) for WPF-deadlock-sikkerhet.
+        /// </summary>
+        public IReadOnlyList<SmartCoachAdviceEntry>? TryGetAdviceHistory(
+            int userId, DateTime from, DateTime to)
+        {
+            if (_memory == null)
+                return null;
+
+            try
+            {
+                return Task.Run(() => _memory.GetAdviceHistoryAsync(userId, from, to))
+                    .GetAwaiter().GetResult();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Beregner (adherenceRate, successRate) fra råd-historikken, eller (0, 0) når
+        /// <see cref="SmartCoachMemoryStore"/> ikke er injisert, lesingen feiler, eller
+        /// historikken er tom. Async-over-sync (Task.Run) for WPF-deadlock-sikkerhet.
+        /// </summary>
+        public (double adherence, double successRate) TryGetCoachMemoryStats(int userId, DateTime now)
+        {
+            if (_memory == null)
+                return (0.0, 0.0);
+
+            try
+            {
+                var from    = now.AddDays(-30);
+                var history = Task.Run(() => _memory.GetAdviceHistoryAsync(userId, from, now))
+                    .GetAwaiter().GetResult();
+
+                if (history == null || history.Count == 0)
+                    return (0.0, 0.0);
+
+                var adherence   = SmartCoachMemoryStore.ComputeAdherenceRate(history);
+                var successRate = SmartCoachMemoryStore.ComputeRecommendationSuccessRate(history);
+                return (adherence, successRate);
+            }
+            catch
+            {
+                return (0.0, 0.0);
+            }
+        }
+
+        /// <summary>
+        /// Oversetter en FocusArea-streng til nærmeste <see cref="VoiceDimension"/>.
+        /// Ukjente verdier mappes til <see cref="VoiceDimension.Resonance"/> (trygg fallback).
+        /// </summary>
+        private static VoiceDimension FocusAreaToDimension(string? focusArea)
+        {
+            return (focusArea ?? string.Empty).ToLowerInvariant() switch
+            {
+                "recovery"    => VoiceDimension.Recovery,
+                "comfort"     => VoiceDimension.Comfort,
+                "resonance"   => VoiceDimension.Resonance,
+                "consistency" => VoiceDimension.Consistency,
+                "intonation"  => VoiceDimension.Intonation,
+                "vocalweight" => VoiceDimension.VocalWeight,
+                "pitch"       => VoiceDimension.Pitch,
+                "balanced"    => VoiceDimension.Resonance,
+                "breathing"   => VoiceDimension.Comfort,
+                _             => VoiceDimension.Resonance,
+            };
+        }
+
+        #endregion
+
         /// <summary>
         /// Recovery-FØR-mål-gate. Når et prediktivt forecast melder Severity &gt;= Recommend
         /// ELLER LearningPath-profilen sier RestRecommended, gir vi restitusjons-coaching
@@ -736,8 +1076,6 @@ namespace FemVoiceStudio.Services
             var text = StyleAwareText("recovery", _localization.GetString("SmartCoach_Focus_Recovery"), style);
             return ("recovery", text, 7, 5);
         }
-
-        #endregion
 
         #region Adaptiv varighet (Sprint C, Agent 6-varighet)
 

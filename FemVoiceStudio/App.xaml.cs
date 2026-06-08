@@ -199,6 +199,31 @@ public partial class App : Application
         services.AddSingleton(sp => new ExerciseEffectivenessEngine(
             sp.GetRequiredService<SessionAnalyticsStore>()));
 
+        // ── Bølge 1/2: longitudinell intelligens (additive, alle valgfrie) ─────────
+        // TrendEngineService drives trendvindu-beregninger over SessionAnalyticsStore.
+        services.AddSingleton(sp => new TrendEngineService(
+            sp.GetRequiredService<SessionAnalyticsStore>()));
+        // VoicePatternDetector er en ren, tilstandsløs tjeneste — ingen ctor-avhengigheter.
+        services.AddSingleton<VoicePatternDetector>();
+        // LongitudinalInsightEngine bruker parameterløs ctor (bruker LocalizationService.Instance internt).
+        services.AddSingleton<LongitudinalInsightEngine>();
+        // RecommendationExplanationEngine er ren og trenger kun lokalisering.
+        services.AddSingleton(sp => new RecommendationExplanationEngine(
+            sp.GetRequiredService<ILocalizationService>()));
+        // SmartCoachMemoryStore persisterer coach-råd og utfall i femvoice.db.
+        services.AddSingleton(_ =>
+        {
+            var appDataPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "FemVoiceStudio");
+            Directory.CreateDirectory(appDataPath);
+            var databasePath = Path.Combine(appDataPath, "femvoice.db");
+            ISmartCoachMemoryRepository repo = new SqliteSmartCoachMemoryRepository($"Data Source={databasePath}");
+            return new SmartCoachMemoryStore(repo);
+        });
+        // VoiceKnowledgeGraphBuilder er en ren, tilstandsløs tjeneste — ingen ctor-avhengigheter.
+        services.AddSingleton<VoiceKnowledgeGraphBuilder>();
+
         services.AddSingleton(sp => new SmartCoachEngine(
             sp.GetRequiredService<IDatabaseService>(),
             sp.GetRequiredService<ILocalizationService>(),
@@ -224,7 +249,14 @@ public partial class App : Application
             // Sprint C.2, Agent 7: effektivitets-intelligensen som data-provider. SmartCoach
             // leder LearningPath-anbefalingene mot observert effektivitet (mest effektive
             // først). Valgfri — null ville gitt dagens bånd-baserte anbefalinger.
-            effectivenessEngine: sp.GetRequiredService<ExerciseEffectivenessEngine>()));
+            effectivenessEngine: sp.GetRequiredService<ExerciseEffectivenessEngine>(),
+            // Bølge 1/2: longitudinell intelligens. Alle er additive — null ⇒ dagens oppførsel.
+            insightEngine: sp.GetRequiredService<LongitudinalInsightEngine>(),
+            explanationEngine: sp.GetRequiredService<RecommendationExplanationEngine>(),
+            memory: sp.GetRequiredService<SmartCoachMemoryStore>(),
+            knowledgeGraphBuilder: sp.GetRequiredService<VoiceKnowledgeGraphBuilder>(),
+            trendEngine: sp.GetRequiredService<TrendEngineService>(),
+            patternDetector: sp.GetRequiredService<VoicePatternDetector>()));
         services.AddSingleton<IExerciseProfileFactory, ExerciseProfileFactory>();
 
         // ── ViewModels ────────────────────────────────────────────────────────────
