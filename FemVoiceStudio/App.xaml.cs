@@ -259,6 +259,93 @@ public partial class App : Application
             patternDetector: sp.GetRequiredService<VoicePatternDetector>()));
         services.AddSingleton<IExerciseProfileFactory, ExerciseProfileFactory>();
 
+        // ── Sprint E (Professional / Research Edition): persistens + motorer ───────
+        // Profesjonell/forsknings-edisjon. Rene lese-/montasje-tjenester og fem SQLite-
+        // backede stores mot SAMME femvoice.db som SmartCoachMemoryStore og
+        // SqliteSessionAnalyticsRepository bruker. Alt er additivt: ingen av disse rører
+        // safety/health/recovery-gatene — de LESER kun den persisterte historikken og
+        // monterer rapporter/utfallsprofiler/case-reviews. VM-ene (Clinician/Coach/
+        // Report/Override/CaseReview) selv-resolver disse via App.Services og er derfor
+        // bevisst IKKE registrert her.
+
+        // De fem stores: hver konstrueres med sin SQLite-repo mot femvoice.db, speilet
+        // EKSAKT etter mønsteret over (SmartCoachMemoryStore ~l.214-223). Hver repo tar
+        // en enkelt "Data Source=…"-streng; stores tar kun sin repository.
+        services.AddSingleton(_ =>
+        {
+            var appDataPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "FemVoiceStudio");
+            Directory.CreateDirectory(appDataPath);
+            var databasePath = Path.Combine(appDataPath, "femvoice.db");
+            return new OutcomeProfileStore(
+                new SqliteOutcomeProfileRepository($"Data Source={databasePath}"));
+        });
+        services.AddSingleton(_ =>
+        {
+            var appDataPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "FemVoiceStudio");
+            Directory.CreateDirectory(appDataPath);
+            var databasePath = Path.Combine(appDataPath, "femvoice.db");
+            return new ManualOverridesStore(
+                new SqliteManualOverridesRepository($"Data Source={databasePath}"));
+        });
+        services.AddSingleton(_ =>
+        {
+            var appDataPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "FemVoiceStudio");
+            Directory.CreateDirectory(appDataPath);
+            var databasePath = Path.Combine(appDataPath, "femvoice.db");
+            return new ClinicalNotesStore(
+                new SqliteClinicalNotesRepository($"Data Source={databasePath}"));
+        });
+        services.AddSingleton(_ =>
+        {
+            var appDataPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "FemVoiceStudio");
+            Directory.CreateDirectory(appDataPath);
+            var databasePath = Path.Combine(appDataPath, "femvoice.db");
+            return new AuditTrailStore(
+                new SqliteAuditTrailRepository($"Data Source={databasePath}"));
+        });
+        services.AddSingleton(_ =>
+        {
+            var appDataPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "FemVoiceStudio");
+            Directory.CreateDirectory(appDataPath);
+            var databasePath = Path.Combine(appDataPath, "femvoice.db");
+            return new CaseReviewsStore(
+                new SqliteCaseReviewsRepository($"Data Source={databasePath}"));
+        });
+
+        // Motorene / montasje-tjenestene. Per FAKTISK ctor:
+        // OutcomeProfileBuilder LESER gjennom tre alt-registrerte, live engines
+        // (SmartCoachEngine, ExerciseEffectivenessEngine, LongitudinalInsightEngine) —
+        // den muterer aldri state, kun monterer en OutcomeProfile fra det de eksponerer.
+        services.AddSingleton(sp => new OutcomeProfileBuilder(
+            sp.GetRequiredService<SmartCoachEngine>(),
+            sp.GetRequiredService<ExerciseEffectivenessEngine>(),
+            sp.GetRequiredService<LongitudinalInsightEngine>()));
+        // ManualOverrideEngine, ReportAssembler, ResearchAnonymizer, ResearchAggregator,
+        // CaseReviewAssembler er rene/tilstandsløse — ingen ctor-avhengigheter. De
+        // opererer udelukkende på inn-argumenter (Evaluate/Build/Anonymize/Assemble).
+        services.AddSingleton<ManualOverrideEngine>();
+        services.AddSingleton<ReportAssembler>();
+        services.AddSingleton<ResearchAnonymizer>();
+        services.AddSingleton<ResearchAggregator>();
+        services.AddSingleton<CaseReviewAssembler>();
+        // ExportWriter har kun en statisk ctor (setter QuestPDF Community-lisens én gang)
+        // og en parameterløs instans-ctor — registreres direkte.
+        services.AddSingleton<ExportWriter>();
+        // ParticipantTokenProvider: begge ctor-params er valgfrie (directory == null ⇒
+        // LocalApplicationData/FemVoiceStudio/Research; tokenFactory ⇒ tilfeldig UUID).
+        // Produksjon bruker standardene — vi registrerer den parameterløse formen.
+        services.AddSingleton(_ => new ParticipantTokenProvider());
+
         // ── ViewModels ────────────────────────────────────────────────────────────
         // SmartCoachViewModel is Transient: a new instance per tab navigation is fine
         // because it holds no long-lived state of its own — all state lives in the DB.

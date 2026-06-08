@@ -4337,4 +4337,134 @@ Dette kan ikke angres!</value>
   <data name="Recovery_Driver_Hydration_Many" xml:space="preserve">
     <value>{0} hydration nudges</value>
   </data>
+  <!-- ── Sprint E (Professional / Research Edition): navigasjon ──────────────── -->
+  <data name="Nav_ClinicianDashboard" xml:space="preserve">
+    <value>Klinisk oversikt</value>
+  </data>
+  <data name="Nav_CoachDashboard" xml:space="preserve">
+    <value>Coach-oversikt</value>
+  </data>
+  <data name="Nav_Reports" xml:space="preserve">
+    <value>Rapporter</value>
+  </data>
+  <data name="Nav_ManualOverride" xml:space="preserve">
+    <value>Manuell justering</value>
+  </data>
+  <data name="Nav_CaseReview" xml:space="preserve">
+    <value>Case-gjennomgang</value>
+  </data>
+  <!-- ── Sprint E: klinisk oversikt ─────────────────────────────────────────── -->
+  <data name="Clinician_Title" xml:space="preserve">
+    <value>Klinisk oversikt</value>
+  </data>
+  <data name="Clinician_VoiceMetrics" xml:space="preserve">
+    <value>Stemmemål</value>
+  </data>
+  <data name="Clinician_RecoveryStatus" xml:space="preserve">
+    <value>Restitusjonsstatus</value>
+  </data>
+  <data name="Clinician_ComfortTrend" xml:space="preserve">
+    <value>Komforttrend</value>
+  </data>
+  <data name="Clinician_ResonanceTrend" xml:space="preserve">
+    <value>Resonanstrend</value>
+  </data>
+  <data name="Clinician_ConsistencyTrend" xml:space="preserve">
+    <value>Konsistenstrend</value>
+  </data>
+  <data name="Clinician_ExerciseEffectiveness" xml:space="preserve">
+    <value>Øvelseseffektivitet</value>
+  </data>
+  <data name="Clinician_LearningPath" xml:space="preserve">
+    <value>Læringsløp</value>
+  </data>
+  <!-- ── Sprint E: coach-oversikt ───────────────────────────────────────────── -->
+  <data name="Coach_Title" xml:space="preserve">
+    <value>Coach-oversikt</value>
+  </data>
+  <data name="Coach_FocusAreas" xml:space="preserve">
+    <value>Fokusområder</value>
+  </data>
+  <data name="Coach_Recommendations" xml:space="preserve">
+    <value>Anbefalinger</value>
+  </data>
+  <data name="Coach_Breakthroughs" xml:space="preserve">
+    <value>Gjennombrudd</value>
+  </data>
+  <data name="Coach_PlateauWarnings" xml:space="preserve">
+    <value>Platåvarsler</value>
+  </data>
+  <data name="Coach_RecoveryNeeds" xml:space="preserve">
+    <value>Restitusjonsbehov</value>
+  </data>
+  <!-- ── Sprint E: rapporter ────────────────────────────────────────────────── -->
+  <data name="Report_Title" xml:space="preserve">
+    <value>Rapporter</value>
+  </data>
+  <data name="Report_Format" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="Report_Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="Report_Generate" xml:space="preserve">
+    <value>Generer</value>
+  </data>
+  <data name="Report_Export" xml:space="preserve">
+    <value>Eksporter</value>
+  </data>
+  <data name="Report_Clinical" xml:space="preserve">
+    <value>Klinisk rapport</value>
+  </data>
+  <data name="Report_Coach" xml:space="preserve">
+    <value>Coach-rapport</value>
+  </data>
+  <data name="Report_Outcome" xml:space="preserve">
+    <value>Utfallsrapport</value>
+  </data>
+  <data name="Report_Timeline" xml:space="preserve">
+    <value>Tidslinje</value>
+  </data>
+  <!-- ── Sprint E: manuell justering ────────────────────────────────────────── -->
+  <data name="Override_Title" xml:space="preserve">
+    <value>Manuell justering</value>
+  </data>
+  <data name="Override_Kind" xml:space="preserve">
+    <value>Type justering</value>
+  </data>
+  <data name="Override_Reason" xml:space="preserve">
+    <value>Begrunnelse</value>
+  </data>
+  <data name="Override_Apply" xml:space="preserve">
+    <value>Bruk justering</value>
+  </data>
+  <data name="Override_Clamped" xml:space="preserve">
+    <value>Justeringen ble holdt innenfor trygge rammer</value>
+  </data>
+  <data name="Override_Blocked" xml:space="preserve">
+    <value>Justeringen ble ikke gjennomført</value>
+  </data>
+  <data name="Override_Logged" xml:space="preserve">
+    <value>Justeringen er loggført</value>
+  </data>
+  <!-- ── Sprint E: case-gjennomgang ─────────────────────────────────────────── -->
+  <data name="CaseReview_Title" xml:space="preserve">
+    <value>Case-gjennomgang</value>
+  </data>
+  <data name="CaseReview_Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="CaseReview_Period" xml:space="preserve">
+    <value>Periode</value>
+  </data>
+  <data name="CaseReview_Create" xml:space="preserve">
+    <value>Opprett gjennomgang</value>
+  </data>
+  <data name="CaseReview_Complete" xml:space="preserve">
+    <value>Fullfør gjennomgang</value>
+  </data>
+  <!-- ── Sprint E: forskningseksport ────────────────────────────────────────── -->
+  <data name="Research_Export" xml:space="preserve">
+    <value>Eksporter forskningsdata</value>
+  </data>
 </root>

@@ -1,0 +1,99 @@
+<Window x:Class="FemVoiceStudio.Views.ReportExportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:converters="clr-namespace:FemVoiceStudio.Converters"
+        xmlns:loc="clr-namespace:FemVoiceStudio.Converters"
+        mc:Ignorable="d"
+        Title="{loc:Loc Report_Title}"
+        Height="380" Width="480"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{DynamicResource BackgroundSecondaryBrush}">
+
+    <Window.Resources>
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+    </Window.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
+        <StackPanel>
+
+            <!-- Header -->
+            <TextBlock Text="{loc:Loc Report_Title}"
+                       FontSize="22" FontWeight="Bold"
+                       Foreground="{DynamicResource TextPrimaryBrush}"
+                       Margin="0,0,0,20"/>
+
+            <!-- Report type -->
+            <Border Background="{DynamicResource BackgroundCardBrush}"
+                    CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc Report_Type}"
+                               FontSize="14" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               Margin="0,0,0,8"/>
+                    <ComboBox x:Name="ReportTypeComboBox"
+                              SelectedIndex="{Binding SelectedReportTypeIndex, Mode=TwoWay}"
+                              FontSize="13">
+                        <ComboBoxItem Content="{loc:Loc Report_Clinical}"/>
+                        <ComboBoxItem Content="{loc:Loc Report_Coach}"/>
+                        <ComboBoxItem Content="{loc:Loc Report_Outcome}"/>
+                        <ComboBoxItem Content="{loc:Loc Report_Timeline}"/>
+                    </ComboBox>
+                </StackPanel>
+            </Border>
+
+            <!-- Export format -->
+            <Border Background="{DynamicResource BackgroundCardBrush}"
+                    CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc Report_Format}"
+                               FontSize="14" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               Margin="0,0,0,8"/>
+                    <ComboBox x:Name="FormatComboBox"
+                              SelectedIndex="{Binding SelectedFormatIndex, Mode=TwoWay}"
+                              FontSize="13">
+                        <ComboBoxItem Content="PDF"/>
+                        <ComboBoxItem Content="CSV"/>
+                        <ComboBoxItem Content="JSON"/>
+                    </ComboBox>
+                </StackPanel>
+            </Border>
+
+            <!-- Status message -->
+            <TextBlock x:Name="StatusTextBlock"
+                       Text="{Binding StatusMessage}"
+                       TextWrapping="Wrap"
+                       FontSize="13"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       Margin="0,0,0,12"
+                       Visibility="{Binding StatusMessage, Converter={StaticResource StringToVisibilityConverter}}"/>
+
+            <!-- Buttons -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="GenerateButton"
+                        Content="{loc:Loc Report_Generate}"
+                        Command="{Binding GenerateCommand}"
+                        Padding="20,10"
+                        Margin="0,0,12,0"
+                        Background="{DynamicResource AccentPrimaryBrush}"
+                        Foreground="{DynamicResource TextOnAccentBrush}"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        FontSize="14"/>
+                <Button x:Name="ExportButton"
+                        Content="{loc:Loc Report_Export}"
+                        Command="{Binding GenerateCommand}"
+                        Padding="20,10"
+                        Background="{DynamicResource AccentSecondaryBrush}"
+                        Foreground="{DynamicResource TextOnAccentBrush}"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        FontSize="14"/>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</Window>

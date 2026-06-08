@@ -1,0 +1,158 @@
+<Window x:Class="FemVoiceStudio.Views.CaseReviewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:converters="clr-namespace:FemVoiceStudio.Converters"
+        xmlns:loc="clr-namespace:FemVoiceStudio.Converters"
+        mc:Ignorable="d"
+        Title="{loc:Loc CaseReview_Title}"
+        Height="560" Width="580"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        Background="{DynamicResource BackgroundSecondaryBrush}">
+
+    <Window.Resources>
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Padding="24,20,24,0">
+            <TextBlock Text="{loc:Loc CaseReview_Title}"
+                       FontSize="22" FontWeight="Bold"
+                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+        </Border>
+
+        <!-- Main content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24,12,24,12">
+            <StackPanel>
+
+                <!-- Create new review: type and period -->
+                <Border Background="{DynamicResource BackgroundCardBrush}"
+                        CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc CaseReview_Type}"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   Margin="0,0,0,8"/>
+                        <ComboBox x:Name="ReviewTypeComboBox"
+                                  SelectedIndex="{Binding SelectedReviewTypeIndex, Mode=TwoWay}"
+                                  FontSize="13" Margin="0,0,0,12">
+                            <ComboBoxItem Content="Monthly"/>
+                            <ComboBoxItem Content="Goal"/>
+                            <ComboBoxItem Content="Progress"/>
+                            <ComboBoxItem Content="Recovery"/>
+                        </ComboBox>
+
+                        <TextBlock Text="{loc:Loc CaseReview_Period}"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   Margin="0,0,0,8"/>
+                        <StackPanel Orientation="Horizontal">
+                            <DatePicker x:Name="PeriodStartPicker"
+                                        SelectedDate="{Binding PeriodStart, Mode=TwoWay}"
+                                        FontSize="13" Margin="0,0,12,0"/>
+                            <TextBlock Text="—"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       Margin="0,0,12,0"/>
+                            <DatePicker x:Name="PeriodEndPicker"
+                                        SelectedDate="{Binding PeriodEnd, Mode=TwoWay}"
+                                        FontSize="13"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Status message -->
+                <TextBlock x:Name="StatusTextBlock"
+                           Text="{Binding StatusMessage}"
+                           TextWrapping="Wrap"
+                           FontSize="13"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           Margin="0,0,0,12"
+                           Visibility="{Binding StatusMessage, Converter={StaticResource StringToVisibilityConverter}}"/>
+
+                <!-- Saved reviews list -->
+                <Border Background="{DynamicResource BackgroundCardBrush}"
+                        CornerRadius="8" Padding="16" Margin="0,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Lagrede reviews"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   Margin="0,0,0,8"/>
+                        <ListBox x:Name="ReviewsListBox"
+                                 ItemsSource="{Binding SavedReviews}"
+                                 SelectedItem="{Binding SelectedReview, Mode=TwoWay}"
+                                 MaxHeight="200"
+                                 FontSize="12"
+                                 Background="Transparent"
+                                 BorderThickness="0">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding ReviewType}"
+                                                   Margin="0,0,12,0"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="{Binding PeriodStart, StringFormat='yyyy-MM-dd'}"
+                                                   Margin="0,0,6,0"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                        <TextBlock Text="–"
+                                                   Margin="0,0,6,0"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                        <TextBlock Text="{Binding PeriodEnd, StringFormat='yyyy-MM-dd'}"
+                                                   Margin="0,0,12,0"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                        <TextBlock Text="{Binding Status}"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer buttons -->
+        <Border Grid.Row="2" Padding="24,12,24,20">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="LoadButton"
+                        Content="Last inn"
+                        Command="{Binding LoadReviewsCommand}"
+                        Padding="16,9" Margin="0,0,12,0"
+                        Background="{DynamicResource BackgroundCardBrush}"
+                        Foreground="{DynamicResource TextPrimaryBrush}"
+                        BorderThickness="1"
+                        Cursor="Hand"
+                        FontSize="13"/>
+                <Button x:Name="CompleteButton"
+                        Content="{loc:Loc CaseReview_Complete}"
+                        Command="{Binding CompleteCommand}"
+                        Padding="16,9" Margin="0,0,12,0"
+                        Background="{DynamicResource BackgroundCardBrush}"
+                        Foreground="{DynamicResource TextPrimaryBrush}"
+                        BorderThickness="1"
+                        Cursor="Hand"
+                        FontSize="13"/>
+                <Button x:Name="CreateButton"
+                        Content="{loc:Loc CaseReview_Create}"
+                        Command="{Binding CreateCommand}"
+                        Padding="20,10"
+                        Background="{DynamicResource AccentPrimaryBrush}"
+                        Foreground="{DynamicResource TextOnAccentBrush}"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        FontSize="14"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

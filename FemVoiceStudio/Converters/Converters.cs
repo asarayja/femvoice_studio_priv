@@ -12,12 +12,16 @@ namespace FemVoiceStudio.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool b)
+            bool invert = parameter?.ToString() == "Invert";
+            // Accept both bool and a count-style int (non-zero == "true") so callers can
+            // bind a collection's .Count directly (e.g. show a section when it has items).
+            bool truthy = value switch
             {
-                bool invert = parameter?.ToString() == "Invert";
-                return (b ^ invert) ? Visibility.Visible : Visibility.Collapsed;
-            }
-            return Visibility.Collapsed;
+                bool b => b,
+                int i => i != 0,
+                _ => false
+            };
+            return (truthy ^ invert) ? Visibility.Visible : Visibility.Collapsed;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -162,9 +166,15 @@ namespace FemVoiceStudio.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool b)
-                return b ? Visibility.Collapsed : Visibility.Visible;
-            return Visibility.Visible;
+            // Accept both bool and a count-style int (non-zero == "true") so callers can
+            // bind a collection's .Count for an empty-state placeholder (visible when 0).
+            bool truthy = value switch
+            {
+                bool b => b,
+                int i => i != 0,
+                _ => false
+            };
+            return truthy ? Visibility.Collapsed : Visibility.Visible;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

@@ -607,6 +607,71 @@ namespace FemVoiceStudio.Views
             _viewModel.ReloadUserVoiceProfile();
         }
         
+        private void OnOpenClinicianDashboard(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                new ClinicianDashboardWindow().Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(string.Format(Loc.Get("Error_OpenWindowFormat"), Loc.Get("Nav_ClinicianDashboard"), ex.Message, Environment.NewLine, ex.StackTrace),
+                    Loc.Get("UI_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void OnOpenCoachDashboard(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                new CoachDashboardWindow().Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(string.Format(Loc.Get("Error_OpenWindowFormat"), Loc.Get("Nav_CoachDashboard"), ex.Message, Environment.NewLine, ex.StackTrace),
+                    Loc.Get("UI_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void OnOpenReportExport(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                new ReportExportWindow().Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(string.Format(Loc.Get("Error_OpenWindowFormat"), Loc.Get("Nav_Reports"), ex.Message, Environment.NewLine, ex.StackTrace),
+                    Loc.Get("UI_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void OnOpenManualOverride(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                new ManualOverrideWindow().Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(string.Format(Loc.Get("Error_OpenWindowFormat"), Loc.Get("Nav_ManualOverride"), ex.Message, Environment.NewLine, ex.StackTrace),
+                    Loc.Get("UI_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void OnOpenCaseReview(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                new CaseReviewWindow().Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(string.Format(Loc.Get("Error_OpenWindowFormat"), Loc.Get("Nav_CaseReview"), ex.Message, Environment.NewLine, ex.StackTrace),
+                    Loc.Get("UI_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         public void RefreshUI()
         {
             // Refresh the UI after language or theme change

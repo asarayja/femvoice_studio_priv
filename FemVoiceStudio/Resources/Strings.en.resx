@@ -4034,4 +4034,134 @@ This cannot be undone!</value>
   <data name="ThresholdStrategy_Intensity" xml:space="preserve">
     <value>Threshold: shorter, more focused intervals with rest in between.</value>
   </data>
+  <!-- ── Sprint E (Professional / Research Edition): navigation ──────────────── -->
+  <data name="Nav_ClinicianDashboard" xml:space="preserve">
+    <value>Clinical overview</value>
+  </data>
+  <data name="Nav_CoachDashboard" xml:space="preserve">
+    <value>Coach overview</value>
+  </data>
+  <data name="Nav_Reports" xml:space="preserve">
+    <value>Reports</value>
+  </data>
+  <data name="Nav_ManualOverride" xml:space="preserve">
+    <value>Manual adjustment</value>
+  </data>
+  <data name="Nav_CaseReview" xml:space="preserve">
+    <value>Case review</value>
+  </data>
+  <!-- ── Sprint E: clinical overview ────────────────────────────────────────── -->
+  <data name="Clinician_Title" xml:space="preserve">
+    <value>Clinical overview</value>
+  </data>
+  <data name="Clinician_VoiceMetrics" xml:space="preserve">
+    <value>Voice metrics</value>
+  </data>
+  <data name="Clinician_RecoveryStatus" xml:space="preserve">
+    <value>Recovery status</value>
+  </data>
+  <data name="Clinician_ComfortTrend" xml:space="preserve">
+    <value>Comfort trend</value>
+  </data>
+  <data name="Clinician_ResonanceTrend" xml:space="preserve">
+    <value>Resonance trend</value>
+  </data>
+  <data name="Clinician_ConsistencyTrend" xml:space="preserve">
+    <value>Consistency trend</value>
+  </data>
+  <data name="Clinician_ExerciseEffectiveness" xml:space="preserve">
+    <value>Exercise effectiveness</value>
+  </data>
+  <data name="Clinician_LearningPath" xml:space="preserve">
+    <value>Learning path</value>
+  </data>
+  <!-- ── Sprint E: coach overview ───────────────────────────────────────────── -->
+  <data name="Coach_Title" xml:space="preserve">
+    <value>Coach overview</value>
+  </data>
+  <data name="Coach_FocusAreas" xml:space="preserve">
+    <value>Focus areas</value>
+  </data>
+  <data name="Coach_Recommendations" xml:space="preserve">
+    <value>Recommendations</value>
+  </data>
+  <data name="Coach_Breakthroughs" xml:space="preserve">
+    <value>Breakthroughs</value>
+  </data>
+  <data name="Coach_PlateauWarnings" xml:space="preserve">
+    <value>Plateau notices</value>
+  </data>
+  <data name="Coach_RecoveryNeeds" xml:space="preserve">
+    <value>Recovery needs</value>
+  </data>
+  <!-- ── Sprint E: reports ──────────────────────────────────────────────────── -->
+  <data name="Report_Title" xml:space="preserve">
+    <value>Reports</value>
+  </data>
+  <data name="Report_Format" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="Report_Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="Report_Generate" xml:space="preserve">
+    <value>Generate</value>
+  </data>
+  <data name="Report_Export" xml:space="preserve">
+    <value>Export</value>
+  </data>
+  <data name="Report_Clinical" xml:space="preserve">
+    <value>Clinical report</value>
+  </data>
+  <data name="Report_Coach" xml:space="preserve">
+    <value>Coach report</value>
+  </data>
+  <data name="Report_Outcome" xml:space="preserve">
+    <value>Outcome report</value>
+  </data>
+  <data name="Report_Timeline" xml:space="preserve">
+    <value>Timeline</value>
+  </data>
+  <!-- ── Sprint E: manual adjustment ────────────────────────────────────────── -->
+  <data name="Override_Title" xml:space="preserve">
+    <value>Manual adjustment</value>
+  </data>
+  <data name="Override_Kind" xml:space="preserve">
+    <value>Adjustment type</value>
+  </data>
+  <data name="Override_Reason" xml:space="preserve">
+    <value>Reason</value>
+  </data>
+  <data name="Override_Apply" xml:space="preserve">
+    <value>Apply adjustment</value>
+  </data>
+  <data name="Override_Clamped" xml:space="preserve">
+    <value>The adjustment was kept within safe limits</value>
+  </data>
+  <data name="Override_Blocked" xml:space="preserve">
+    <value>The adjustment was not applied</value>
+  </data>
+  <data name="Override_Logged" xml:space="preserve">
+    <value>The adjustment has been recorded</value>
+  </data>
+  <!-- ── Sprint E: case review ──────────────────────────────────────────────── -->
+  <data name="CaseReview_Title" xml:space="preserve">
+    <value>Case review</value>
+  </data>
+  <data name="CaseReview_Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="CaseReview_Period" xml:space="preserve">
+    <value>Period</value>
+  </data>
+  <data name="CaseReview_Create" xml:space="preserve">
+    <value>Create review</value>
+  </data>
+  <data name="CaseReview_Complete" xml:space="preserve">
+    <value>Complete review</value>
+  </data>
+  <!-- ── Sprint E: research export ──────────────────────────────────────────── -->
+  <data name="Research_Export" xml:space="preserve">
+    <value>Export research data</value>
+  </data>
 </root>

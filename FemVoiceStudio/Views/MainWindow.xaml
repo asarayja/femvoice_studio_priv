@@ -391,9 +391,22 @@
                                 Click="OnOpenProgression" Margin="0,0,8,0"/>
                         <Button Content="{loc:Loc Main_Analysis}" Style="{StaticResource StatisticsButton}" 
                                 Click="OnOpenAnalysis" Margin="0,0,8,0"/>
-                        <Button Content="{loc:Loc Main_Settings}" Style="{StaticResource SettingsButton}" 
+                        <Button Content="{loc:Loc Main_Settings}" Style="{StaticResource SettingsButton}"
                                 Click="OnOpenSettings" Margin="0,0,8,0"/>
-                        
+
+                        <!-- Professional tools -->
+                        <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="4,0"/>
+                        <Button Content="{loc:Loc Nav_ClinicianDashboard}" Style="{StaticResource StatisticsButton}"
+                                Click="OnOpenClinicianDashboard" Margin="0,0,8,0"/>
+                        <Button Content="{loc:Loc Nav_CoachDashboard}" Style="{StaticResource StatisticsButton}"
+                                Click="OnOpenCoachDashboard" Margin="0,0,8,0"/>
+                        <Button Content="{loc:Loc Nav_Reports}" Style="{StaticResource StatisticsButton}"
+                                Click="OnOpenReportExport" Margin="0,0,8,0"/>
+                        <Button Content="{loc:Loc Nav_ManualOverride}" Style="{StaticResource StatisticsButton}"
+                                Click="OnOpenManualOverride" Margin="0,0,8,0"/>
+                        <Button Content="{loc:Loc Nav_CaseReview}" Style="{StaticResource StatisticsButton}"
+                                Click="OnOpenCaseReview" Margin="0,0,8,0"/>
+
                         <!-- Mic Status -->
                         <Border CornerRadius="4" Padding="8,6" Background="{DynamicResource AccentLightBrush}">
                             <TextBlock FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}">
