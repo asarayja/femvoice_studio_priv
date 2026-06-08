@@ -62,6 +62,8 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 
                 <!-- Top Stats Row -->
@@ -188,13 +190,91 @@
                     </Border>
                 </Grid>
                 
-                <!-- Row 3: Score Breakdown + Session Summary -->
-                <Grid Grid.Row="3">
+                <!-- Row 3: Voice Intelligence — Comfort + Recovery (Health pair) -->
+                <!-- {loc}-TODO: section/chart titles are English literals; add Strings.resx keys. -->
+                <Grid Grid.Row="3" Margin="0,0,0,16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    
+
+                    <!-- Comfort Trend -->
+                    <Border Grid.Column="0" Style="{StaticResource ChartCard}" Margin="0,0,8,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="200"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Comfort" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <oxy:PlotView Grid.Row="1" x:Name="ComfortPlotView" Background="White"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Recovery Trend -->
+                    <Border Grid.Column="1" Style="{StaticResource ChartCard}" Margin="8,0,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="200"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Recovery" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <oxy:PlotView Grid.Row="1" x:Name="RecoveryPlotView" Background="White"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- Row 4: Voice Intelligence — Consistency / Vocal Weight / Voice Development -->
+                <Grid Grid.Row="4" Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Consistency Trend -->
+                    <Border Grid.Column="0" Style="{StaticResource ChartCard}" Margin="0,0,8,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="200"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Consistency" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <oxy:PlotView Grid.Row="1" x:Name="ConsistencyPlotView" Background="White"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Vocal Weight Trend -->
+                    <Border Grid.Column="1" Style="{StaticResource ChartCard}" Margin="8,0,8,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="200"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Vocal Weight" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <oxy:PlotView Grid.Row="1" x:Name="VocalWeightPlotView" Background="White"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Voice Development (composite) Trend -->
+                    <Border Grid.Column="2" Style="{StaticResource ChartCard}" Margin="8,0,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="200"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Voice Development" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <oxy:PlotView Grid.Row="1" x:Name="VoiceDevelopmentPlotView" Background="White"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- Row 5: Score Breakdown + Session Summary -->
+                <Grid Grid.Row="5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
                     <!-- Score Components -->
                     <Border Grid.Column="0" Style="{StaticResource StatCard}" Margin="0,0,8,0">
                         <StackPanel>

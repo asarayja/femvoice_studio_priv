@@ -24,15 +24,45 @@ namespace FemVoiceStudio.Views
             InitializeComponent();
             
             _viewModel = new AnalysisPageViewModel();
-            
+
             // Initialize charts
             InitializeResonanceChart();
             InitializePitchChart();
             InitializeIntonationChart();
             InitializeHealthChart();
-            
+
+            // Sprint B: bind the new Voice Intelligence dimension trend PlotViews to the
+            // VM-owned plot models (the VM owns axes/series; we just attach the model).
+            InitializeVoiceIntelligenceCharts();
+
             // Load data
             LoadLatestSessionData();
+
+            // Load the LIVE Voice Intelligence trend (Comfort/Recovery/Consistency/
+            // VocalWeight/Composite) and refresh the new charts. Fire-and-forget: the VM
+            // swallows load failures and renders empty ("ikke nok data") on no data.
+            _ = LoadVoiceIntelligenceTrendAsync();
+        }
+
+        private void InitializeVoiceIntelligenceCharts()
+        {
+            ComfortPlotView.Model = _viewModel.ComfortPlotModel;
+            RecoveryPlotView.Model = _viewModel.RecoveryPlotModel;
+            ConsistencyPlotView.Model = _viewModel.ConsistencyPlotModel;
+            VocalWeightPlotView.Model = _viewModel.VocalWeightPlotModel;
+            VoiceDevelopmentPlotView.Model = _viewModel.VoiceDevelopmentPlotModel;
+        }
+
+        private async System.Threading.Tasks.Task LoadVoiceIntelligenceTrendAsync()
+        {
+            await _viewModel.LoadVoiceIntelligenceTrendAsync().ConfigureAwait(true);
+
+            // The VM rebuilt its plot models' series; force the views to redraw.
+            ComfortPlotView.InvalidatePlot(true);
+            RecoveryPlotView.InvalidatePlot(true);
+            ConsistencyPlotView.InvalidatePlot(true);
+            VocalWeightPlotView.InvalidatePlot(true);
+            VoiceDevelopmentPlotView.InvalidatePlot(true);
         }
         
         /// <summary>

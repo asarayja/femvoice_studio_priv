@@ -25,7 +25,17 @@ namespace FemVoiceStudio.Services
         HoldLength,
         PitchComfort,
         Recovery,
-        ExerciseVariation
+        ExerciseVariation,
+
+        // Voice Development Progression-dimensjoner (Agent 10). Lagt SIST for
+        // bakoverkompatibilitet — eksisterende verdier/rekkefølge er urørt, så
+        // (int)-castinger i feedback-mappere/serialisering beholder sin betydning.
+        // Disse driver det flerdimensjonale «neste utviklingsfokus» når en
+        // VoiceIntelligenceScores-snapshot er tilgjengelig i konteksten.
+        Comfort,
+        Consistency,
+        Intonation,
+        VocalWeight
     }
 
     public sealed record ProgressionOrchestratorOptions
@@ -61,6 +71,21 @@ namespace FemVoiceStudio.Services
         /// safety trumfer stil i sikkerhetshierarkiet.
         /// </summary>
         public VoiceStyleGoal? PreferredVoiceStyle { get; init; }
+
+        /// <summary>
+        /// VALGFRITT flerdimensjonalt stemmebilde (Voice Development Progression, Agent 10).
+        /// null = ukjent ⇒ DAGENS resonans-/stabilitets-/hold-gate-kjede er uendret og
+        /// byte-identisk. Når satt lar vi «Voice Development»-vurderingen velge neste
+        /// utviklingsfokus ut fra den LAVESTE av de syv dimensjonene, brutt opp i
+        /// klinisk hierarki-rekkefølge (Health: Comfort/Recovery &gt; Resonance &gt;
+        /// Consistency &gt; Intonation &gt; VocalWeight &gt; Pitch). Pitch er ALDRI eneste
+        /// driver — den vinner kun en likhet helt nederst i hierarkiet.
+        ///
+        /// Dette er ADDITIVT: VoiceMetrics-scorer kan flytte FOKUS for et tillatt
+        /// profil-løft, men kan ALDRI oppheve en recovery-/safety-blokk (de grenene
+        /// kjøres før dette og returnerer uavhengig av Voice). Safety &gt; alt.
+        /// </summary>
+        public VoiceIntelligenceScores? Voice { get; init; }
     }
 
     public sealed record ProgressionOrchestratorDecision
@@ -248,7 +273,7 @@ namespace FemVoiceStudio.Services
                     };
             }
 
-            var decision = BuildProgressionDecision(context.CurrentProfile, recent, sessions.Count, recentComposite, baselineComposite, context.PreferredVoiceStyle);
+            var decision = BuildProgressionDecision(context.CurrentProfile, recent, sessions.Count, recentComposite, baselineComposite, context.PreferredVoiceStyle, context.Voice);
             return Publish(DifficultyAdjustmentSuggested, decision);
         }
 
@@ -343,7 +368,8 @@ namespace FemVoiceStudio.Services
             int sessionsAnalyzed,
             double recentComposite,
             double baselineComposite,
-            VoiceStyleGoal? preferredVoiceStyle = null)
+            VoiceStyleGoal? preferredVoiceStyle = null,
+            VoiceIntelligenceScores? voice = null)
         {
             var avgResonance = recent.Average(s => s.ResonanceQualityIndex);
             var avgStability = recent.Average(s => s.StabilityConsistency);
@@ -389,6 +415,24 @@ namespace FemVoiceStudio.Services
                     baselineComposite);
             }
 
+            // Alle KONSOLIDERINGS-gater (resonans/stabilitet/hold) bestått. Hvis en
+            // VoiceIntelligenceScores-snapshot er tilgjengelig, lar vi det
+            // flerdimensjonale stemmebildet velge NESTE UTVIKLINGSFOKUS additivt:
+            // den svakeste dimensjonen (i klinisk hierarki-rekkefølge) blir fokus,
+            // i stedet for å alltid skalere profilens hardkodede primærdimensjon.
+            // Dette er ren Voice Development Progression — det erstatter «pitch
+            // progression» som standard, men kan ALDRI oppheve recovery-/safety-
+            // grenene (de returnerte allerede over, uavhengig av Voice).
+            if (voice != null)
+            {
+                var voiceDecision = BuildVoiceDevelopmentDecision(
+                    profile, voice, sessionsAnalyzed, recentComposite, baselineComposite, preferredVoiceStyle);
+                if (voiceDecision != null)
+                {
+                    return voiceDecision;
+                }
+            }
+
             // Alle gater bestått → øk vanskelighet langs profilens primærdimensjon.
             // Pitch alltid sist; resonansprofiler progredierer på resonans.
             if (profile.UsesPitch)
@@ -423,6 +467,125 @@ namespace FemVoiceStudio.Services
                 sessionsAnalyzed,
                 recentComposite,
                 baselineComposite);
+        }
+
+        // ── Voice Development Progression (Agent 10) ──────────────────────────────
+        // Velg neste utviklingsfokus fra den SVAKESTE av de syv VoiceMetrics-
+        // dimensjonene, brutt opp i klinisk hierarki-rekkefølge ved likhet. Kalles
+        // KUN etter at alle helse-/recovery-/regresjons-/konsoliderings-gater er
+        // bestått — dette er en additiv FOKUS-omdirigering for et tillatt profil-
+        // løft, aldri en oppheving av en blokk.
+        //
+        // Hierarki-rekkefølge (Health først, Pitch sist):
+        //   Comfort → Recovery → Resonance → Consistency → Intonation → VocalWeight → Pitch.
+        // First-wins på strengt laveste score: en likhet brytes til fordel for den
+        // klinisk høyere dimensjonen. Pitch er aldri eneste/viktigste driver — den
+        // ligger sist, så den krever en STRENGT lavere score enn alle andre for å
+        // vinne fokus, og selv da går vi via den resonansgatede pitch-grenen.
+        private ProgressionOrchestratorDecision? BuildVoiceDevelopmentDecision(
+            ExerciseTargetProfile profile,
+            VoiceIntelligenceScores voice,
+            int sessionsAnalyzed,
+            double recentComposite,
+            double baselineComposite,
+            VoiceStyleGoal? preferredVoiceStyle)
+        {
+            var ordered = new (ProgressionAdjustmentDimension Dimension, double Score)[]
+            {
+                (ProgressionAdjustmentDimension.Comfort,      voice.Comfort.Score),
+                (ProgressionAdjustmentDimension.Recovery,     voice.Recovery.Score),
+                (ProgressionAdjustmentDimension.Resonance,    voice.Resonance.Score),
+                (ProgressionAdjustmentDimension.Consistency,  voice.Consistency.Score),
+                (ProgressionAdjustmentDimension.Intonation,   voice.Intonation.Score),
+                (ProgressionAdjustmentDimension.VocalWeight,  voice.VocalWeight.Score),
+                (ProgressionAdjustmentDimension.PitchComfort, voice.Pitch.Score),
+            };
+
+            var focus = ordered[0];
+            for (var i = 1; i < ordered.Length; i++)
+            {
+                if (ordered[i].Score < focus.Score)
+                {
+                    focus = ordered[i];
+                }
+            }
+
+            return focus.Dimension switch
+            {
+                ProgressionAdjustmentDimension.Comfort => ProfileUpdate(
+                    ProgressionAdjustmentDimension.Comfort,
+                    "VOICE_DEV_COMFORT",
+                    "Voice development focuses on comfort — the weakest dimension this period.",
+                    // Komfort svakest ⇒ konsolider snarere enn å presse: behold
+                    // profilen (ingen oppskalering) så brukeren bygger trygghet.
+                    profile,
+                    sessionsAnalyzed,
+                    recentComposite,
+                    baselineComposite),
+
+                ProgressionAdjustmentDimension.Recovery => ProfileUpdate(
+                    ProgressionAdjustmentDimension.Recovery,
+                    "VOICE_DEV_RECOVERY",
+                    "Voice development focuses on recovery — the weakest dimension this period.",
+                    // Recovery svakest ⇒ skaler NED (samme retning som recovery-grenene).
+                    ScaleForRecovery(profile),
+                    sessionsAnalyzed,
+                    recentComposite,
+                    baselineComposite),
+
+                ProgressionAdjustmentDimension.Resonance => ProfileUpdate(
+                    ProgressionAdjustmentDimension.Resonance,
+                    "VOICE_DEV_RESONANCE",
+                    "Voice development focuses on resonance — the weakest dimension this period.",
+                    ScaleResonance(profile, preferredVoiceStyle),
+                    sessionsAnalyzed,
+                    recentComposite,
+                    baselineComposite),
+
+                ProgressionAdjustmentDimension.Consistency => ProfileUpdate(
+                    ProgressionAdjustmentDimension.Consistency,
+                    "VOICE_DEV_CONSISTENCY",
+                    "Voice development focuses on consistency — the weakest dimension this period.",
+                    ScaleStability(profile),
+                    sessionsAnalyzed,
+                    recentComposite,
+                    baselineComposite),
+
+                ProgressionAdjustmentDimension.Intonation => ProfileUpdate(
+                    ProgressionAdjustmentDimension.Intonation,
+                    "VOICE_DEV_INTONATION",
+                    "Voice development focuses on intonation — the weakest dimension this period.",
+                    // Intonasjon trenes via øvelsens pitch-spenn; behold profilen
+                    // uskalert her (stimulus eies av øvelsesvalget, ikke av en delta).
+                    profile,
+                    sessionsAnalyzed,
+                    recentComposite,
+                    baselineComposite),
+
+                ProgressionAdjustmentDimension.VocalWeight => ProfileUpdate(
+                    ProgressionAdjustmentDimension.VocalWeight,
+                    "VOICE_DEV_VOCAL_WEIGHT",
+                    "Voice development focuses on vocal weight — the weakest dimension this period.",
+                    // Vokalvekt ligger klinisk nær resonans (lysere/fremre klang);
+                    // den stilbevisste resonans-oppskaleringen er trygg her.
+                    ScaleResonance(profile, preferredVoiceStyle),
+                    sessionsAnalyzed,
+                    recentComposite,
+                    baselineComposite),
+
+                // Pitch entydig svakest ⇒ går via den eksisterende resonansgatede
+                // pitch-grenen. Pitch er aldri eneste/viktigste driver.
+                ProgressionAdjustmentDimension.PitchComfort => ProfileUpdate(
+                    ProgressionAdjustmentDimension.PitchComfort,
+                    "VOICE_DEV_PITCH",
+                    "Voice development can touch pitch — but only after every other dimension is stronger.",
+                    ScalePitchComfort(profile),
+                    sessionsAnalyzed,
+                    recentComposite,
+                    baselineComposite),
+
+                _ => null
+            };
         }
 
         private ProgressionOrchestratorDecision ProfileUpdate(

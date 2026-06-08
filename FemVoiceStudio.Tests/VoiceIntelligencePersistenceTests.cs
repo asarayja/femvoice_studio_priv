@@ -310,10 +310,16 @@ namespace FemVoiceStudio.Tests
             Assert.True(s.ComfortScore100 > 50, $"Comfort was {s.ComfortScore100}");
             // No fatigue/strain/locks ⇒ Recovery stays high.
             Assert.True(s.RecoveryScore100 >= 75, $"Recovery was {s.RecoveryScore100}");
-            // Unmeasured axes fall back to neutral 50.
+            // Intonation stays neutral: a flat (constant) pitch contour has range 0.
+            // VocalWeight stays neutral: the parameterless UpdateMetrics path carries no
+            // formants (no F1/centroid). Both are intended, not gaps.
             Assert.Equal(50, s.IntonationScore100, 0);
             Assert.Equal(50, s.VocalWeightScore100, 0);
-            Assert.Equal(50, s.PitchScore100, 0);
+            // Pitch is now a REAL measurement (Bølge 2 signal-wiring): the measured F0
+            // is aggregated and scored, so it no longer falls back to neutral 50.
+            Assert.InRange(s.PitchScore100, 1, 100);
+            Assert.True(System.Math.Abs(s.PitchScore100 - 50) > 0.001,
+                $"Pitch should be a real measurement, not the neutral fallback, but was {s.PitchScore100}");
             // Composite is a real measurement on the 0–100 scale.
             Assert.InRange(s.CompositeVoiceScore, 1, 100);
 

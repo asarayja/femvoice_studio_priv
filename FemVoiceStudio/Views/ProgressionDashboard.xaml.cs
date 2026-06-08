@@ -7,6 +7,7 @@ using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FemVoiceStudio.Data;
+using FemVoiceStudio.Models;
 using FemVoiceStudio.Services;
 
 namespace FemVoiceStudio.Views
@@ -40,6 +41,10 @@ namespace FemVoiceStudio.Views
         private readonly FemVoiceScore? _scoreCalculator;
         private readonly ProgressionDashboard? _dashboard;
         private readonly ILocalizationService _localization = LocalizationService.Instance;
+
+        // Sprint B: LIVE Voice Intelligence trend source (replaces the dead
+        // FemVoiceScores table for ScoreHistory + the parameter rings/scores).
+        private readonly SessionAnalyticsStore? _analyticsStore;
         
         // Level indicator properties
         [ObservableProperty]
@@ -85,7 +90,40 @@ namespace FemVoiceStudio.Views
         
         [ObservableProperty]
         private double _voiceHealthScore;
-        
+
+        // ── Sprint B: all seven Voice Intelligence dimensions + composite (0–100) ───
+        // Hierarchy (clinical): Comfort/Recovery (Health) > Resonance > Consistency >
+        // Intonation > VocalWeight > Pitch. These are sourced from the LIVE analytics
+        // trend (SessionAnalyticsStore), not the dead FemVoiceScores table.
+        [ObservableProperty]
+        private double _comfortScore;
+
+        [ObservableProperty]
+        private double _consistencyScore;
+
+        [ObservableProperty]
+        private double _vocalWeightScore;
+
+        [ObservableProperty]
+        private double _recoveryScore;
+
+        /// <summary>Hierarchy-weighted composite ("Voice Development"), 0–100.</summary>
+        [ObservableProperty]
+        private double _compositeVoiceScore;
+
+        // Bar widths (max 200px) for the new dimension rings/bars.
+        [ObservableProperty]
+        private double _comfortBarWidth;
+
+        [ObservableProperty]
+        private double _consistencyBarWidth;
+
+        [ObservableProperty]
+        private double _vocalWeightBarWidth;
+
+        [ObservableProperty]
+        private double _recoveryBarWidth;
+
         // Direction arrows
         [ObservableProperty]
         private string _resonanceDirection = "➡";
@@ -157,7 +195,8 @@ namespace FemVoiceStudio.Views
                 _levelSystem = new LevelClassificationSystem();
                 _directionAnalyzer = new DirectionAnalyzer();
                 _scoreCalculator = new FemVoiceScore();
-                
+                _analyticsStore = ResolveAnalyticsStore();
+
                 LoadData();
             }
             catch (Exception ex)
@@ -165,7 +204,7 @@ namespace FemVoiceStudio.Views
                 System.Diagnostics.Debug.WriteLine($"ProgressionDashboardViewModel Error: {ex.Message}");
             }
         }
-        
+
         public ProgressionDashboardViewModel(ProgressionDashboard dashboard)
         {
             _dashboard = dashboard;
@@ -177,7 +216,8 @@ namespace FemVoiceStudio.Views
                 _levelSystem = new LevelClassificationSystem();
                 _directionAnalyzer = new DirectionAnalyzer();
                 _scoreCalculator = new FemVoiceScore();
-                
+                _analyticsStore = ResolveAnalyticsStore();
+
                 LoadData();
             }
             catch (Exception ex)
@@ -186,10 +226,40 @@ namespace FemVoiceStudio.Views
             }
         }
 
+        /// <summary>
+        /// Test/DI seam: construct WITHOUT touching App.Services, the database, or any
+        /// WPF host, and WITHOUT auto-loading. Lets the pure trend-mapping logic
+        /// (<see cref="ApplyScoreTrend"/>/<see cref="ApplyDimensionAverages"/>) be unit
+        /// tested with an in-memory analytics store.
+        /// </summary>
+        public ProgressionDashboardViewModel(SessionAnalyticsStore? analyticsStore, bool autoLoad)
+        {
+            _analyticsStore = analyticsStore;
+            _levelSystem = new LevelClassificationSystem();
+            _directionAnalyzer = new DirectionAnalyzer();
+            _scoreCalculator = new FemVoiceScore();
+
+            if (autoLoad)
+            {
+                LoadScoreHistory();
+            }
+        }
+
+        /// <summary>
+        /// Load only the Voice Intelligence score history/dimensions from the analytics
+        /// store. Public so a host can refresh the trend after a session completes
+        /// without rerunning level/focus/weekly loads.
+        /// </summary>
+        public void RefreshScoreHistory() => LoadScoreHistory();
+
         // DatabaseService er DI-singleton; manuelle new re-kjørte skjema-init (integrasjonsaudit-funn).
         private static DatabaseService ResolveDatabase() =>
             App.Services?.GetService(typeof(DatabaseService)) as DatabaseService
             ?? new DatabaseService();
+
+        // SessionAnalyticsStore is the live Voice Intelligence trend source (Bølge 1).
+        private static SessionAnalyticsStore? ResolveAnalyticsStore() =>
+            App.Services?.GetService(typeof(SessionAnalyticsStore)) as SessionAnalyticsStore;
 
         // DI-instansen har full feedback-graf (pipeline/mappere/goal-provider); den manuelle var degradert.
         private static SmartCoachEngine ResolveSmartCoach(DatabaseService database) =>
@@ -287,30 +357,12 @@ namespace FemVoiceStudio.Views
         
         private void LoadScoreData()
         {
-            if (_database == null) return;
-            
-            var recentScores = _database.GetRecentFemVoiceScores(10);
-            
-            if (recentScores.Count > 0)
-            {
-                ResonanceScore = Math.Round(recentScores.Average(s => s.ResonanceScore));
-                PitchScore = Math.Round(recentScores.Average(s => s.PitchScore));
-                IntonationScore = Math.Round(recentScores.Average(s => s.IntonationScore));
-                VoiceHealthScore = Math.Round(recentScores.Average(s => s.VoiceHealthScore));
-            }
-            else
-            {
-                ResonanceScore = 50;
-                PitchScore = 50;
-                IntonationScore = 50;
-                VoiceHealthScore = 100;
-            }
-            
-            // Calculate bar widths (assuming max width of 200px)
-            ResonanceBarWidth = Math.Min(200, ResonanceScore * 2);
-            PitchBarWidth = Math.Min(200, PitchScore * 2);
-            IntonationBarWidth = Math.Min(200, IntonationScore * 2);
-            VoiceHealthBarWidth = Math.Min(200, VoiceHealthScore * 2);
+            // Sprint B: the parameter scores (all seven dimensions + composite) are now
+            // derived from the LIVE Voice Intelligence trend in LoadScoreHistory ->
+            // ApplyDimensionAverages, which runs after this in LoadData(). Seed a neutral
+            // baseline here so the rings render sensibly before the trend is applied (and
+            // if no analytics store is wired). No dead-FemVoiceScores read anymore.
+            ApplyDimensionAverages(Array.Empty<ScoreSnapshot>());
         }
         
         private void LoadDirectionData()
@@ -403,41 +455,119 @@ namespace FemVoiceStudio.Views
         
         private void LoadScoreHistory()
         {
-            if (_database == null) return;
-            
-            ScoreHistory.Clear();
-            
-            var thirtyDaysAgo = DateTime.Now.AddDays(-30);
-            var scores = _database.GetFemVoiceScores(thirtyDaysAgo, DateTime.Now);
-            
-            if (scores.Count > 0)
+            // Sprint B: source the score history from the LIVE Voice Intelligence trend
+            // (SessionAnalyticsStore) instead of the dead FemVoiceScores table. The
+            // composite "Voice Development" score per session drives each bar.
+            IReadOnlyList<ScoreSnapshot> snapshots = Array.Empty<ScoreSnapshot>();
+
+            if (_analyticsStore != null)
             {
-                ShowNoDataMessage = false;
-                
-                // Group by day and take average
-                var dailyScores = scores
-                    .GroupBy(s => s.CalculatedAt.Date)
-                    .OrderBy(g => g.Key)
-                    .Select(g => new { Date = g.Key, AvgScore = g.Average(s => s.OverallScore) })
-                    .ToList();
-                
-                foreach (var day in dailyScores)
+                try
                 {
-                    ScoreHistory.Add(new ScoreHistoryItem
-                    {
-                        Date = day.Date,
-                        Score = day.AvgScore,
-                        BarHeight = day.AvgScore * 0.9, // Scale to max 90px
-                        DayLabel = day.Date.Day.ToString(),
-                        ScoreColor = GetScoreBarColor(day.AvgScore)
-                    });
+                    var to = DateTime.Now;
+                    var from = to.AddDays(-30);
+                    var trend = _analyticsStore
+                        .GetVoiceIntelligenceTrendAsync(from, to)
+                        .GetAwaiter()
+                        .GetResult();
+                    snapshots = VoiceIntelligenceTrendMapper.ToSnapshots(trend);
                 }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"LoadScoreHistory trend Error: {ex.Message}");
+                    snapshots = Array.Empty<ScoreSnapshot>();
+                }
+            }
+
+            ApplyScoreTrend(snapshots);
+        }
+
+        /// <summary>
+        /// Pure VM step (no DB, no async, no WPF host): map a chronological Voice
+        /// Intelligence trend into the daily score-history bars and the seven dimension
+        /// rings + composite. Empty trend => empty history + "ikke nok data" (no crash).
+        /// </summary>
+        public void ApplyScoreTrend(IReadOnlyList<ScoreSnapshot> snapshots)
+        {
+            ScoreHistory.Clear();
+
+            if (snapshots == null || snapshots.Count == 0)
+            {
+                ShowNoDataMessage = true;
+                ApplyDimensionAverages(Array.Empty<ScoreSnapshot>());
+                return;
+            }
+
+            ShowNoDataMessage = false;
+
+            // Group by day; each bar is the day's mean composite score.
+            var dailyScores = snapshots
+                .GroupBy(s => s.Timestamp.Date)
+                .OrderBy(g => g.Key)
+                .Select(g => new { Date = g.Key, AvgScore = g.Average(s => s.CompositeVoiceScore) })
+                .ToList();
+
+            foreach (var day in dailyScores)
+            {
+                ScoreHistory.Add(new ScoreHistoryItem
+                {
+                    Date = day.Date,
+                    Score = day.AvgScore,
+                    BarHeight = day.AvgScore * 0.9, // Scale to max 90px
+                    DayLabel = day.Date.Day.ToString(),
+                    ScoreColor = GetScoreBarColor(day.AvgScore)
+                });
+            }
+
+            ApplyDimensionAverages(snapshots);
+        }
+
+        /// <summary>
+        /// Pure VM step: expose all seven dimensions + composite as the mean over the
+        /// supplied trend (0–100), plus their bar widths. Empty trend => neutral state.
+        /// </summary>
+        public void ApplyDimensionAverages(IReadOnlyList<ScoreSnapshot> snapshots)
+        {
+            if (snapshots == null || snapshots.Count == 0)
+            {
+                // Neutral / no-data defaults — Health-protective (full recovery/comfort),
+                // training dimensions neutral. Never gates anything (measurement only).
+                ResonanceScore = 50;
+                PitchScore = 50;
+                IntonationScore = 50;
+                ConsistencyScore = 50;
+                VocalWeightScore = 50;
+                ComfortScore = 100;
+                RecoveryScore = 100;
+                VoiceHealthScore = 100;
+                CompositeVoiceScore = 0;
             }
             else
             {
-                ShowNoDataMessage = true;
+                ResonanceScore = Math.Round(snapshots.Average(s => s.ResonanceDimension));
+                PitchScore = Math.Round(snapshots.Average(s => s.PitchDimension));
+                IntonationScore = Math.Round(snapshots.Average(s => s.IntonationDimension));
+                ConsistencyScore = Math.Round(snapshots.Average(s => s.ConsistencyDimension));
+                VocalWeightScore = Math.Round(snapshots.Average(s => s.VocalWeightDimension));
+                ComfortScore = Math.Round(snapshots.Average(s => s.ComfortDimension));
+                RecoveryScore = Math.Round(snapshots.Average(s => s.RecoveryDimension));
+                // Voice health proxy = the Health pair (Comfort + Recovery), mean.
+                VoiceHealthScore = Math.Round((ComfortScore + RecoveryScore) / 2.0);
+                CompositeVoiceScore = Math.Round(snapshots.Average(s => s.CompositeVoiceScore));
             }
+
+            ResonanceBarWidth = BarWidth(ResonanceScore);
+            PitchBarWidth = BarWidth(PitchScore);
+            IntonationBarWidth = BarWidth(IntonationScore);
+            VoiceHealthBarWidth = BarWidth(VoiceHealthScore);
+            ComfortBarWidth = BarWidth(ComfortScore);
+            ConsistencyBarWidth = BarWidth(ConsistencyScore);
+            VocalWeightBarWidth = BarWidth(VocalWeightScore);
+            RecoveryBarWidth = BarWidth(RecoveryScore);
         }
+
+        // Max bar width 200px (matches existing parameter rows).
+        private static double BarWidth(double score) => Math.Min(200, Math.Max(0, score) * 2);
         
         private Brush GetScoreBarColor(double score)
         {

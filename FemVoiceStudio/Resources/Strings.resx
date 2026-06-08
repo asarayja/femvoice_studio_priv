@@ -3343,6 +3343,18 @@
   <data name="SmartCoach_Daily_Starter" xml:space="preserve">
     <value>Velkommen! Start med å bli kjent med stemmen din. Fokuser på å slappe av og puste dypt. Hold en behagelig tone i 3-5 minutter.</value>
   </data>
+  <data name="SmartCoach_Focus_Comfort" xml:space="preserve">
+    <value>Fokus i dag: Komfort. La stemmen få hvile i et avslappet, behagelig leie. Utforsk en lett og myk klang i ditt eget tempo, og legg merke til hvordan det kjennes godt ut i hals og kjeve. Ingen mål om å nå noe bestemt – bare la lyden komme rolig.</value>
+  </data>
+  <data name="SmartCoach_Focus_Resonance" xml:space="preserve">
+    <value>Fokus i dag: Resonans. Kjenn etter hvor vibrasjonene sitter – prøv å la dem flytte rolig fremover i munnen. Utforsk en lysere, mer fremre klang uten å anstrenge deg, og merk hva som føles naturlig.</value>
+  </data>
+  <data name="SmartCoach_Focus_Consistency" xml:space="preserve">
+    <value>Fokus i dag: Jevnhet. La oss utforske en rolig, stabil klang du kan hvile i fra tone til tone. Hold en behagelig lyd litt om gangen, og legg merke til når den kjennes trygg og forutsigbar. Stabilitet kommer av gjentakelse i ditt eget tempo.</value>
+  </data>
+  <data name="SmartCoach_Focus_Recovery" xml:space="preserve">
+    <value>Fokus i dag: Restitusjon. Stemmen din har gjort godt arbeid, og nå kan den få hvile. Hold økten kort og lett, med myke, avslappede lyder. Drikk litt vann og la dette være en rolig, omsorgsfull dag for stemmen.</value>
+  </data>
   <data name="SmartCoach_Strain_PitchPress" xml:space="preserve">
     <value>Unngå å presse stemmen. Fokuser på avslapping, resonans og en naturlig tone.</value>
   </data>

@@ -37,6 +37,18 @@ namespace FemVoiceStudio.Services
         private double _cachedPitchMax = 0;       // MaxPitch from ComfortZoneState
         private bool   _comfortZoneSafetyLocked = false;
 
+        // ── Cached RAW acoustic signals for Voice Intelligence (guarded by _lock) ─────
+        // Populated only when the producing source actually delivers them; otherwise they
+        // stay at their "missing" sentinel and the per-tick ExerciseLiveState carries the
+        // sentinel forward. Never fabricated.
+        //   _cachedMeasuredPitch ← measured F0 (Hz) from UpdateMetrics (production audio
+        //     path), kept STRICTLY separate from _cachedPitch (the comfort-zone optimum).
+        //   F1 / centroid / intensity ← the resonance engine's FormantSnapshot.
+        private double _cachedMeasuredPitch = 0;     // measured F0 (Hz); 0 ⇒ unvoiced/unset
+        private double _cachedFormantF1 = 0;         // 0 ⇒ not measured
+        private double _cachedSpectralCentroid = 0;  // 0 ⇒ not measured
+        private double _cachedFormantIntensity = 0;  // RmsValue 0–1; 0 ⇒ not measured
+
         // ── Exercise context (guarded by _lock) ──────────────────────────────────────
         private ExerciseTargetProfile _currentProfile;
         private int _currentUserId = 1;
@@ -285,6 +297,13 @@ namespace FemVoiceStudio.Services
                 _isSafetyLocked       = false;
                 _currentHealthScore   = 0d;
 
+                // Reset the raw Voice-Intelligence signal cache too, so no measured F1 /
+                // centroid / intensity / pitch residue survives into the next session.
+                _cachedMeasuredPitch    = 0d;
+                _cachedFormantF1        = 0d;
+                _cachedSpectralCentroid = 0d;
+                _cachedFormantIntensity = 0d;
+
                 // Capture the delegate while the lock is held so subscribers added
                 // concurrently on another thread do not race the publish below.
                 snapshot = _exerciseUpdated;
@@ -324,6 +343,11 @@ namespace FemVoiceStudio.Services
                 _cachedResonanceScore = resonanceScore;
                 _cachedStabilityScore = stability;
                 _cachedPitch          = pitch;
+                // The `pitch` argument is the MEASURED F0 (Hz) from the production audio
+                // path (ExerciseWindow → DetectPitch). Cache it separately from the
+                // comfort-zone optimum so the Voice-Intelligence Pitch/Intonation axes see
+                // the user's real pitch, not the zone centre. 0 ⇒ unvoiced ⇒ left unset.
+                _cachedMeasuredPitch  = pitch;
                 _currentHealthScore   = health;
 
                 // Derive pitch min/max from the profile if not yet seeded from zone events.
@@ -367,7 +391,21 @@ namespace FemVoiceStudio.Services
 
         private void OnFormantsUpdated(FormantSnapshot formants)
         {
-            // Formant data arrives alongside resonance score; just trigger re-evaluation.
+            // Formant data arrives alongside the resonance score. Cache the RAW spectral
+            // signals the VocalWeight dimension needs (F1, spectral centroid, RMS intensity)
+            // ONLY when the snapshot is valid — an invalid/empty snapshot leaves the prior
+            // cache untouched so a single silent frame does not zero a measured average.
+            // HNR is not part of FormantSnapshot, so it is never sourced here (stays missing).
+            if (formants.IsValid)
+            {
+                lock (_lock)
+                {
+                    if (formants.F1 > 0)               _cachedFormantF1        = formants.F1;
+                    if (formants.SpectralCentroid > 0) _cachedSpectralCentroid = formants.SpectralCentroid;
+                    if (formants.RmsValue > 0)         _cachedFormantIntensity = formants.RmsValue;
+                }
+            }
+
             EvaluateExerciseStateFromCache();
         }
 
@@ -419,20 +457,27 @@ namespace FemVoiceStudio.Services
                 return;
 
             double resonanceScore, stabilityScore, pitch, pitchMin, pitchMax, healthScore;
+            double measuredPitch, formantF1, spectralCentroid, formantIntensity;
             bool safetyLocked;
 
             lock (_lock)
             {
-                resonanceScore = _cachedResonanceScore;
-                stabilityScore = _cachedStabilityScore;
-                pitch          = _cachedPitch;
-                pitchMin       = _cachedPitchMin;
-                pitchMax       = _cachedPitchMax;
-                healthScore    = _currentHealthScore;
-                safetyLocked   = _isSafetyLocked;
+                resonanceScore   = _cachedResonanceScore;
+                stabilityScore   = _cachedStabilityScore;
+                pitch            = _cachedPitch;
+                pitchMin         = _cachedPitchMin;
+                pitchMax         = _cachedPitchMax;
+                healthScore      = _currentHealthScore;
+                safetyLocked     = _isSafetyLocked;
+                measuredPitch    = _cachedMeasuredPitch;
+                formantF1        = _cachedFormantF1;
+                spectralCentroid = _cachedSpectralCentroid;
+                formantIntensity = _cachedFormantIntensity;
             }
 
-            EvaluateExerciseStateCore(resonanceScore, pitch, pitchMin, pitchMax, stabilityScore, healthScore);
+            EvaluateExerciseStateCore(
+                resonanceScore, pitch, pitchMin, pitchMax, stabilityScore, healthScore,
+                measuredPitch, formantF1, spectralCentroid, formantIntensity);
         }
 
         /// <summary>
@@ -445,7 +490,11 @@ namespace FemVoiceStudio.Services
             double pitchMin,
             double pitchMax,
             double stabilityScore,
-            double healthScore)
+            double healthScore,
+            double measuredPitch = 0,
+            double formantF1 = 0,
+            double spectralCentroid = 0,
+            double formantIntensity = 0)
         {
             ExerciseLiveState liveState;
             var pendingMessages = new List<(string msg, string reason, MessageSeverity sev, int dismiss)>();
@@ -518,7 +567,17 @@ namespace FemVoiceStudio.Services
                     IsSafetyLocked        = effectivelySafetyLocked,
                     Quality               = quality,
                     Timestamp             = now,
-                    SessionElapsedSeconds = sessionElapsedSeconds
+                    SessionElapsedSeconds = sessionElapsedSeconds,
+
+                    // Raw acoustic signals for Voice Intelligence — forwarded ONLY when the
+                    // source actually delivered a positive measurement; otherwise the field
+                    // keeps its "missing" sentinel (0, or NaN for HNR which has no source on
+                    // this path) and the session aggregate falls back to neutral 50.
+                    F1Hz               = formantF1 > 0 ? formantF1 : 0,
+                    SpectralCentroidHz = spectralCentroid > 0 ? spectralCentroid : 0,
+                    Intensity          = formantIntensity > 0 ? formantIntensity : 0,
+                    PitchHz            = measuredPitch > 0 ? measuredPitch : 0,
+                    HnrDb              = double.NaN  // no HNR source on the exercise path
                 };
 
                 // ── Coaching triggers (collected inside lock, published outside) ─────

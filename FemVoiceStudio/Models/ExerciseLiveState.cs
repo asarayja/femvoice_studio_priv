@@ -69,6 +69,44 @@ namespace FemVoiceStudio.Models
         /// Coordinator computes this based on processed audio frames (no polling).
         /// </summary>
         public int SessionElapsedSeconds { get; init; }
+
+        // ── Raw per-tick acoustic signals (Voice Intelligence, Bølge 2) ──────────────
+        // Additive, init-only, default = "missing" sentinel (0 / NaN). These carry the
+        // RAW per-tick aggregates the VoiceIntelligenceScorer needs for the Intonation,
+        // VocalWeight and Pitch dimensions — signals the older PrimaryMetricScore /
+        // StabilityScore pair did not preserve. They are filled ONLY when the producing
+        // engine/audio path actually delivers them; otherwise they stay at their sentinel
+        // and the session aggregate falls back to the scorer's neutral 50. Never fabricated.
+
+        /// <summary>
+        /// First formant (F1) in Hz for this tick (from the resonance engine's formant
+        /// snapshot). 0 ⇒ not measured this tick. Feeds the VocalWeight dimension.
+        /// </summary>
+        public double F1Hz { get; init; }
+
+        /// <summary>
+        /// Spectral centroid in Hz for this tick (perceived "brightness"; the primary
+        /// vocal-weight signal). 0 ⇒ not measured this tick. Feeds VocalWeight.
+        /// </summary>
+        public double SpectralCentroidHz { get; init; }
+
+        /// <summary>
+        /// Harmonics-to-noise ratio in dB for this tick. <see cref="double.NaN"/> ⇒ not
+        /// measured (the exercise path does not currently surface HNR). Feeds VocalWeight.
+        /// </summary>
+        public double HnrDb { get; init; } = double.NaN;
+
+        /// <summary>
+        /// RMS intensity (0–1) for this tick. 0 ⇒ not measured this tick. Feeds VocalWeight.
+        /// </summary>
+        public double Intensity { get; init; }
+
+        /// <summary>
+        /// Measured fundamental frequency (F0) in Hz for this tick. 0 ⇒ unvoiced / not
+        /// measured. Feeds the Pitch dimension and (aggregated as range/variation) the
+        /// Intonation dimension. This is the user's ACTUAL pitch, not a comfort-zone centre.
+        /// </summary>
+        public double PitchHz { get; init; }
     }
 
     /// <summary>

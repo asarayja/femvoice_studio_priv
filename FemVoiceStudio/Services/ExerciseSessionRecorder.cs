@@ -44,6 +44,33 @@ namespace FemVoiceStudio.Services
         /// otherwise healthy session (review finding).
         /// </summary>
         public double SessionHealthScore { get; init; } = 100;
+
+        // ── Raw acoustic aggregates for Voice Intelligence (Bølge 2 SIGNAL-wiring) ────
+        // Session averages of the raw per-tick signals the coordinator now forwards on
+        // ExerciseLiveState. Each is averaged over ONLY the ticks where the signal was
+        // actually measured (a positive value); when no tick carried it the aggregate is
+        // the "missing" sentinel (<= 0 / NaN) and the scorer falls back to neutral 50.
+
+        /// <summary>Session-average F1 in Hz over ticks that measured it. 0 ⇒ never measured.</summary>
+        public double AverageF1Hz { get; init; }
+
+        /// <summary>Session-average spectral centroid in Hz over ticks that measured it. 0 ⇒ never measured.</summary>
+        public double AverageSpectralCentroidHz { get; init; }
+
+        /// <summary>Session-average RMS intensity (0–1) over ticks that measured it. 0 ⇒ never measured.</summary>
+        public double AverageIntensity { get; init; }
+
+        /// <summary>Session-average measured pitch (F0) in Hz over voiced ticks. 0 ⇒ never voiced.</summary>
+        public double AveragePitchHz { get; init; }
+
+        /// <summary>Pitch variation (Hz): population std-dev of measured pitch over voiced ticks. 0 ⇒ &lt; 2 voiced ticks.</summary>
+        public double PitchVariationHz { get; init; }
+
+        /// <summary>Intonation range (Hz): max − min measured pitch over voiced ticks. 0 ⇒ never voiced.</summary>
+        public double IntonationRangeHz { get; init; }
+
+        /// <summary>Number of ticks that carried a measured (positive) pitch. Drives the pitch aggregates.</summary>
+        public int VoicedTicks { get; init; }
     }
 
     /// <summary>
@@ -104,6 +131,19 @@ namespace FemVoiceStudio.Services
         private bool _wasInComfortZone = true;
         private double _currentHealthScore = 100;
         private double _healthScoreSum;
+
+        // ── Raw acoustic signal accumulators (Voice Intelligence SIGNAL-wiring) ───────
+        // Each spectral signal is summed over ONLY the ticks that measured it, with its
+        // own counter, so an unmeasured tick never drags the average toward zero.
+        private double _f1Sum;          private int _f1Ticks;
+        private double _centroidSum;    private int _centroidTicks;
+        private double _intensitySum;   private int _intensityTicks;
+        // Pitch: sum + sum-of-squares (population variance) + running min/max over voiced ticks.
+        private double _pitchSum;
+        private double _pitchSqSum;
+        private int    _pitchTicks;
+        private double _pitchMin;
+        private double _pitchMax;
 
         public ExerciseSessionRecorder(
             ExerciseIntelligenceCoordinator coordinator,
@@ -173,6 +213,14 @@ namespace FemVoiceStudio.Services
                 _currentHealthScore = 100;
                 _healthScoreSum = 0;
 
+                // Reset the raw acoustic accumulators so signal never leaks across sessions.
+                _f1Sum = _centroidSum = _intensitySum = 0;
+                _f1Ticks = _centroidTicks = _intensityTicks = 0;
+                _pitchSum = _pitchSqSum = 0;
+                _pitchTicks = 0;
+                _pitchMin = 0;
+                _pitchMax = 0;
+
                 _healthSupervisor.Reset();
                 _recording = true;
             }
@@ -204,6 +252,24 @@ namespace FemVoiceStudio.Services
                     ? Math.Min(averageHealth, 40)
                     : averageHealth;
 
+                // Raw acoustic aggregates — averaged over only the ticks that measured the
+                // signal. Pitch variation is the population std-dev over voiced ticks
+                // (Var = E[X²] − E[X]², floored at 0 for FP safety); intonation range is
+                // max − min over voiced ticks. All collapse to 0 when no tick carried them.
+                double avgF1        = _f1Ticks        > 0 ? _f1Sum        / _f1Ticks        : 0;
+                double avgCentroid  = _centroidTicks  > 0 ? _centroidSum  / _centroidTicks  : 0;
+                double avgIntensity = _intensityTicks > 0 ? _intensitySum / _intensityTicks : 0;
+
+                double avgPitch = _pitchTicks > 0 ? _pitchSum / _pitchTicks : 0;
+                double pitchVariation = 0;
+                if (_pitchTicks > 1)
+                {
+                    double meanSq = _pitchSqSum / _pitchTicks;
+                    double variance = meanSq - (avgPitch * avgPitch);
+                    pitchVariation = variance > 0 ? Math.Sqrt(variance) : 0;
+                }
+                double intonationRange = _pitchTicks > 0 ? Math.Max(0, _pitchMax - _pitchMin) : 0;
+
                 outcome = new ExerciseSessionOutcome
                 {
                     AverageResonance       = _ticks > 0 ? _resonanceSum / _ticks : 0,
@@ -216,7 +282,17 @@ namespace FemVoiceStudio.Services
                     StrainDetections       = _strainDetections,
                     CoachingHintsTriggered = _coachHints,
                     EvaluatedTicks         = _ticks,
-                    SessionHealthScore     = sessionHealth
+                    SessionHealthScore     = sessionHealth,
+
+                    // Raw acoustic aggregates for the Voice-Intelligence Intonation /
+                    // VocalWeight / Pitch dimensions (0 / sentinel ⇒ scorer's neutral 50).
+                    AverageF1Hz               = avgF1,
+                    AverageSpectralCentroidHz = avgCentroid,
+                    AverageIntensity          = avgIntensity,
+                    AveragePitchHz            = avgPitch,
+                    PitchVariationHz          = pitchVariation,
+                    IntonationRangeHz         = intonationRange,
+                    VoicedTicks               = _pitchTicks
                 };
 
                 sessionId  = _sessionId;
@@ -283,6 +359,11 @@ namespace FemVoiceStudio.Services
                 _resonanceSum += Clamp01(state.PrimaryMetricScore);
                 _stabilitySum += Clamp01(state.StabilityScore);
                 _maxHoldProgress = Math.Max(_maxHoldProgress, Clamp01(state.HoldProgress));
+
+                // Accumulate the raw acoustic signals the coordinator forwarded this tick.
+                // Each is gated on a positive, finite measurement (the "missing" sentinel
+                // is <= 0 / NaN) so unmeasured ticks never bias the average toward zero.
+                AccumulateRawSignals(state);
 
                 if (state.IsInComfortZone) _ticksInComfortZone++;
                 if (state.IsSafetyLocked && !_wasSafetyLocked) _safetyLockEpisodes++;
@@ -370,6 +451,39 @@ namespace FemVoiceStudio.Services
 
         private static double Clamp01(double value)
             => double.IsNaN(value) || double.IsInfinity(value) ? 0 : Math.Clamp(value, 0, 1);
+
+        /// <summary>
+        /// Folds this tick's raw acoustic signals into the per-signal accumulators.
+        /// MUST be called while <see cref="_lock"/> is held. Each axis is summed only when
+        /// the tick actually measured it (positive + finite); the "missing" sentinels
+        /// (0, or NaN for HNR) are skipped so an unmeasured tick cannot bias the mean.
+        /// </summary>
+        private void AccumulateRawSignals(ExerciseLiveState state)
+        {
+            if (IsPositiveFinite(state.F1Hz))               { _f1Sum        += state.F1Hz;               _f1Ticks++; }
+            if (IsPositiveFinite(state.SpectralCentroidHz)) { _centroidSum  += state.SpectralCentroidHz; _centroidTicks++; }
+            if (IsPositiveFinite(state.Intensity))          { _intensitySum += state.Intensity;          _intensityTicks++; }
+
+            if (IsPositiveFinite(state.PitchHz))
+            {
+                double p = state.PitchHz;
+                _pitchSum   += p;
+                _pitchSqSum += p * p;
+                if (_pitchTicks == 0)
+                {
+                    _pitchMin = _pitchMax = p;
+                }
+                else
+                {
+                    if (p < _pitchMin) _pitchMin = p;
+                    if (p > _pitchMax) _pitchMax = p;
+                }
+                _pitchTicks++;
+            }
+        }
+
+        private static bool IsPositiveFinite(double v)
+            => !double.IsNaN(v) && !double.IsInfinity(v) && v > 0;
 
         // ────────────────────────────────────────────────────────────────────────
         // Persistence
@@ -535,17 +649,23 @@ namespace FemVoiceStudio.Services
         /// throws — any failure or partial signal falls back to an all-zero result so
         /// session-end persistence is never blocked.
         ///
-        /// Signal availability from the exercise path (documented fallbacks):
+        /// Signal availability from the exercise path (Bølge 2 SIGNAL-wiring):
         ///   • Resonance   ← outcome.AverageResonance   (0–1, present).
         ///   • Comfort     ← outcome.ComfortCompliance + ComfortBreachEpisodes (present).
         ///   • Consistency ← outcome.AverageStability   (0–1, present).
         ///   • Recovery    ← this session's own fatigue/strain/lock/pause/hydration counts
-        ///                   (an in-session restitution snapshot; no cross-session history
-        ///                   is read here — that richer trend is Bølge 2's job).
-        ///   • Intonation / VocalWeight / Pitch ← NO signal on ExerciseLiveState (no
-        ///                   spectral centroid / F1 / intonation-range / pitch-Hz is
-        ///                   carried), so these axes are left at the "missing" sentinels
-        ///                   and the scorer assigns a neutral 50 with an explanation.
+        ///                   (an in-session restitution snapshot; cross-session history
+        ///                   — SessionsLast7Days / HoursSinceLastSession — remains the
+        ///                   analytics layer's job and stays at 0 here).
+        ///   • VocalWeight ← outcome.AverageF1Hz + AverageSpectralCentroidHz + AverageIntensity
+        ///                   (REAL when the resonance engine's formant snapshots fired this
+        ///                   session; HNR has no source on this path ⇒ left missing). Falls
+        ///                   back to neutral 50 only when no tick carried a formant snapshot.
+        ///   • Pitch       ← outcome.AveragePitchHz + PitchVariationHz (REAL: the measured
+        ///                   F0 from the production audio path, averaged over voiced ticks).
+        ///                   Neutral 50 only when the session had no voiced tick.
+        ///   • Intonation  ← outcome.IntonationRangeHz (REAL: max−min of measured F0 over
+        ///                   voiced ticks). Neutral 50 only when the session had no voiced tick.
         /// </summary>
         private VoiceIntelligenceScores ComputeVoiceIntelligenceScores(
             ExerciseSessionOutcome outcome,
@@ -566,9 +686,10 @@ namespace FemVoiceStudio.Services
                     HydrationSuggestionsRecent = Math.Max(0, hydrationSuggestions),
                 };
 
-                // Start from the "everything missing" sentinels, then fill the axes the
-                // exercise path actually measures. Intonation/VocalWeight/Pitch stay
-                // missing ⇒ neutral 50 (documented above).
+                // Start from the "everything missing" sentinels, then fill every axis the
+                // exercise path actually measures. Intonation / VocalWeight / Pitch now
+                // carry REAL aggregates whenever the session produced the signal; an axis
+                // with no measurement keeps Empty()'s sentinel ⇒ scorer's neutral 50.
                 var input = VoiceIntelligenceInput.Empty() with
                 {
                     AverageResonance01  = Clamp01(outcome.AverageResonance),
@@ -577,6 +698,26 @@ namespace FemVoiceStudio.Services
                     AverageStability01  = Clamp01(outcome.AverageStability),
                     Recovery            = recovery,
                 };
+
+                // VocalWeight axis — fill only the spectral signals that were measured;
+                // leave the rest at Empty()'s "missing" sentinel. HNR has no source here.
+                if (outcome.AverageF1Hz > 0)
+                    input = input with { AverageF1Hz = outcome.AverageF1Hz };
+                if (outcome.AverageSpectralCentroidHz > 0)
+                    input = input with { AverageSpectralCentroidHz = outcome.AverageSpectralCentroidHz };
+                if (outcome.AverageIntensity > 0)
+                    input = input with { AverageIntensity = outcome.AverageIntensity };
+
+                // Pitch + Intonation axes — measured F0 from the production audio path,
+                // averaged/ranged over voiced ticks. Only set when the session was voiced.
+                if (outcome.AveragePitchHz > 0)
+                    input = input with
+                    {
+                        AveragePitchHz = outcome.AveragePitchHz,
+                        PitchVariation = Math.Max(0, outcome.PitchVariationHz),
+                    };
+                if (outcome.IntonationRangeHz > 0)
+                    input = input with { IntonationRangeHz = outcome.IntonationRangeHz };
 
                 return _voiceIntelligenceScorer.Compute(input);
             }

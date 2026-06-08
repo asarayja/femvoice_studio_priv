@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using FemVoiceStudio.Data;
 using FemVoiceStudio.Models;
 
@@ -17,14 +18,33 @@ namespace FemVoiceStudio.Services
         private readonly FeedbackPipeline? _feedbackPipeline;
         private readonly SmartCoachFeedbackMapper? _feedbackMapper;
         private readonly IVoiceGoalProfileProvider? _voiceGoalProfiles;
+
+        // VALGFRI kilde til VoiceMetrics-flerdimensjonsscorer (Sprint B / Bølge 1+2).
+        // null ⇒ full bakoverkompat: motoren oppfører seg nøyaktig som før (pitch-/
+        // baseline-drevet). Når satt, leser GenerateDailyRecommendation siste
+        // VoiceIntelligence-trendpunkt og velger coaching-akse på den SVAKESTE
+        // dimensjonen — alltid ETTER health-gaten (Safety > Coaching).
+        private readonly SessionAnalyticsStore? _voiceIntelligence;
+
         private readonly Random _random = new();
-        
+
         // Konstanter for terskelverdier
         private const double ResonancePriorityThreshold = 70.0; // Prioriter resonans under 70%
         private const double PitchPressThreshold = 180.0; // Hz - over dette regnes som press
         private const double FatigueScoreDrop = 20.0; // Prosent
         private const int BaselineMinDays = 7; // Minimum dager for baseline
         private const int BaselineIdealDays = 14; // Ideelle dager for baseline
+
+        // ── VoiceMetrics-drevet aksevalg (Bølge 2) ────────────────────────────────
+        // En dimensjon regnes som «svak» (og dermed kandidat for coaching-fokus) når
+        // 0–100-scoren er under denne terskelen. Nøytral 50 (manglende signal) ligger
+        // UNDER terskelen, men selve aksevalget krever i tillegg at minst én ekte
+        // (ikke-nøytral) dimensjon trekker ned — se SelectVoiceIntelligenceFocus.
+        private const double DimensionWeakThreshold = 65.0;
+
+        // Hvor langt tilbake vi leter etter siste øktscore. Vid nok til å fange en
+        // pause i treningen, smal nok til å være «nylig».
+        private const int VoiceIntelligenceLookbackDays = 30;
 
         // Fallback for ukentlig økt-mål når brukeren ikke har en kalibrert
         // UserVoiceProfile ennå. Speiler standardverdien i UserVoiceProfile
@@ -40,13 +60,15 @@ namespace FemVoiceStudio.Services
             ILocalizationService? localization = null,
             FeedbackPipeline? feedbackPipeline = null,
             SmartCoachFeedbackMapper? feedbackMapper = null,
-            IVoiceGoalProfileProvider? voiceGoalProfiles = null)
+            IVoiceGoalProfileProvider? voiceGoalProfiles = null,
+            SessionAnalyticsStore? voiceIntelligence = null)
         {
             _database = database ?? throw new ArgumentNullException(nameof(database));
             _localization = localization ?? LocalizationService.Instance;
             _feedbackPipeline = feedbackPipeline;
             _feedbackMapper = feedbackMapper;
             _voiceGoalProfiles = voiceGoalProfiles;
+            _voiceIntelligence = voiceIntelligence;
         }
 
         
@@ -359,8 +381,20 @@ namespace FemVoiceStudio.Services
             int exerciseId;
             int duration;
 
+            // VoiceMetrics-drevet aksevalg (Bølge 2). Kjører ETTER health-gaten over
+            // (Safety > Coaching) men FØR baseline-/pitch-heuristikken: når vi har en
+            // ekte siste øktscore velger vi coaching-akse på den SVAKESTE dimensjonen,
+            // med klinisk hierarki (Comfort > Resonance > Consistency > Intonation >
+            // Pitch) som tie-break. Pitch kan aldri vinne over en svakere høyere
+            // dimensjon. null-provider eller ingen ekte score ⇒ vi faller gjennom til
+            // den eksisterende baseline-logikken (full bakoverkompat).
+            var voiceMetricsFocus = TryGetVoiceIntelligenceRecommendation(userId, baseline, recentSessions);
             var preference = TryGetGoalProfileRecommendation(voiceGoalProfile, baseline, recentSessions);
-            if (preference.HasValue)
+            if (voiceMetricsFocus.HasValue)
+            {
+                (focusArea, recommendationText, exerciseId, duration) = voiceMetricsFocus.Value;
+            }
+            else if (preference.HasValue)
             {
                 (focusArea, recommendationText, exerciseId, duration) = preference.Value;
             }
@@ -446,7 +480,189 @@ namespace FemVoiceStudio.Services
 
             return null;
         }
-        
+
+        #region VoiceMetrics-drevet aksevalg (Bølge 2)
+
+        /// <summary>
+        /// VoiceMetrics-drevet fokusvalg: leser siste VoiceIntelligence-trendpunkt og
+        /// velger coaching-akse på den SVAKESTE dimensjonen.
+        ///
+        /// KLINISK HIERARKI (tie-break): Comfort &gt; Resonance &gt; Consistency &gt;
+        /// Intonation &gt; Pitch. Recovery er en helse-dimensjon og veies høyest av alle
+        /// (Health &gt; alt annet) når den er den svakeste. Pitch velges ALDRI som fokus
+        /// så lenge en høyere-prioritert dimensjon er like svak eller svakere.
+        ///
+        /// Dette er IKKE en safety-gate: den kjører bevisst etter health-gaten i
+        /// <see cref="GenerateDailyRecommendation"/>. Returnerer null når
+        ///   • ingen VoiceIntelligence-kilde er injisert (null-provider ⇒ dagens
+        ///     oppførsel, full bakoverkompat),
+        ///   • det ikke finnes noe ekte (ikke-nøytralt) siste øktpunkt, eller
+        ///   • ingen dimensjon er under <see cref="DimensionWeakThreshold"/>.
+        /// I alle disse tilfellene faller daglig-anbefalingen tilbake til den
+        /// eksisterende baseline-/goal-profile-logikken.
+        /// </summary>
+        private (string focusArea, string text, int exerciseId, int duration)? TryGetVoiceIntelligenceRecommendation(
+            int userId,
+            SmartCoachBaseline? baseline,
+            List<TrainingSession> recentSessions)
+        {
+            var latest = TryReadLatestVoiceIntelligence(userId);
+            if (latest == null)
+                return null;
+
+            var axis = SelectVoiceIntelligenceFocus(latest);
+            if (axis == null)
+                return null;
+
+            switch (axis)
+            {
+                case "recovery":
+                    // Lav restitusjon: behandle som en støttende, lavterskel
+                    // restitusjonsdag. Speiler recovery-grenen i health-gaten, men
+                    // uten å være en blokk — en mild omdirigering, ikke en advarsel.
+                    return ("recovery", _localization.GetString("SmartCoach_Focus_Recovery"), 7, 5);
+
+                case "comfort":
+                    return ("comfort", _localization.GetString("SmartCoach_Focus_Comfort"), 7, 5);
+
+                case "resonance":
+                {
+                    var recommendation = GetResonanceRecommendation(baseline, recentSessions);
+                    return ("resonance", recommendation.text, recommendation.exerciseId, recommendation.duration);
+                }
+
+                case "consistency":
+                    return ("consistency", _localization.GetString("SmartCoach_Focus_Consistency"), 5, 6);
+
+                case "intonation":
+                {
+                    var recommendation = GetIntonationRecommendation();
+                    return ("intonation", recommendation.text, recommendation.exerciseId, recommendation.duration);
+                }
+
+                case "pitch":
+                {
+                    var recommendation = GetPitchControlRecommendation(baseline);
+                    return ("pitch", recommendation.text, recommendation.exerciseId, recommendation.duration);
+                }
+
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// Velger den svakeste VoiceMetrics-dimensjonen som coaching-akse, eller null
+        /// når ingen dimensjon er svak nok (eller når kun den nøytrale 50-fallbacken
+        /// finnes — da har vi ikke et reelt signal å handle på).
+        ///
+        /// Hierarkiet (Health-først) avgjør ved likhet: en lavere prioritetsverdi
+        /// vinner. Dermed kan Pitch — som har den HØYESTE prioritetsverdien — aldri
+        /// kapre fokus fra en like svak Comfort/Resonance/Consistency/Intonation, i
+        /// tråd med «Pitch aldri eneste/viktigste».
+        /// </summary>
+        private static string? SelectVoiceIntelligenceFocus(VoiceIntelligenceTrendPoint p)
+        {
+            // (akse, score, hierarki-prioritet) — lavere prioritet = klinisk viktigere.
+            // Recovery er Health og veies øverst; Pitch nederst.
+            var candidates = new (string Axis, double Score, int Priority)[]
+            {
+                ("recovery", p.RecoveryScore100, 0),
+                ("comfort", p.ComfortScore100, 1),
+                ("resonance", p.ResonanceScore100, 2),
+                ("consistency", p.ConsistencyScore100, 3),
+                ("intonation", p.IntonationScore100, 4),
+                ("pitch", p.PitchScore100, 5),
+            };
+
+            string? bestAxis = null;
+            var bestScore = double.MaxValue;
+            var bestPriority = int.MaxValue;
+
+            foreach (var c in candidates)
+            {
+                if (c.Score >= DimensionWeakThreshold)
+                    continue;
+
+                // Strengt lavere score vinner; ved likhet vinner høyere-prioritert
+                // (lavere Priority-tall) dimensjon.
+                if (c.Score < bestScore ||
+                    (c.Score == bestScore && c.Priority < bestPriority))
+                {
+                    bestAxis = c.Axis;
+                    bestScore = c.Score;
+                    bestPriority = c.Priority;
+                }
+            }
+
+            return bestAxis;
+        }
+
+        /// <summary>
+        /// Leser det nyeste VoiceIntelligence-trendpunktet for brukeren, eller null
+        /// når ingen kilde er injisert, lesingen feiler, eller punktet er rent nøytralt
+        /// (alle de fire råaggregat-baserte dimensjonene = 50 ⇒ intet reelt signal).
+        ///
+        /// Lesingen er async i kilden; her kjører vi den trygt synkront på en
+        /// thread-pool-tråd (Task.Run) for å unngå enhver SynchronizationContext-
+        /// deadlock i WPF. In-memory-kilden fullfører uansett synkront.
+        /// </summary>
+        private VoiceIntelligenceTrendPoint? TryReadLatestVoiceIntelligence(int userId)
+        {
+            if (_voiceIntelligence == null)
+                return null;
+
+            try
+            {
+                var to = DateTime.Now;
+                var from = to.AddDays(-VoiceIntelligenceLookbackDays);
+
+                var trend = Task.Run(() =>
+                    _voiceIntelligence.GetVoiceIntelligenceTrendAsync(from, to, userId))
+                    .GetAwaiter().GetResult();
+
+                if (trend == null || trend.Count == 0)
+                    return null;
+
+                // GetVoiceIntelligenceTrendAsync returnerer kronologisk; siste = nyeste.
+                var latest = trend[trend.Count - 1];
+
+                // Et helt nøytralt punkt (KJENT GAP fra Bølge 1: intonasjon/vekt/pitch-
+                // aggregater mangler ⇒ nøytral 50) gir ikke noe reelt signal å handle
+                // på. Krev minst én ekte dimensjon som avviker fra 50 før vi overstyrer
+                // baseline-logikken.
+                if (IsNeutralPoint(latest))
+                    return null;
+
+                return latest;
+            }
+            catch
+            {
+                // Null-safe degradering: enhver lesefeil ⇒ dagens baseline-oppførsel.
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Et trendpunkt er «nøytralt» når samtlige sju dimensjoner ligger på den
+        /// nøytrale 50-fallbacken (intet reelt VoiceMetrics-signal er tilgjengelig).
+        /// </summary>
+        private static bool IsNeutralPoint(VoiceIntelligenceTrendPoint p)
+        {
+            const double neutral = 50.0;
+            const double epsilon = 0.0001;
+
+            return Math.Abs(p.ResonanceScore100 - neutral) < epsilon
+                && Math.Abs(p.ComfortScore100 - neutral) < epsilon
+                && Math.Abs(p.ConsistencyScore100 - neutral) < epsilon
+                && Math.Abs(p.IntonationScore100 - neutral) < epsilon
+                && Math.Abs(p.VocalWeightScore100 - neutral) < epsilon
+                && Math.Abs(p.RecoveryScore100 - neutral) < epsilon
+                && Math.Abs(p.PitchScore100 - neutral) < epsilon;
+        }
+
+        #endregion
+
         private (string text, int exerciseId, int duration) GetResonanceRecommendation(SmartCoachBaseline? baseline, List<TrainingSession> recentSessions)
         {
             var resonanceScore = baseline?.BaselineResonanceScore ?? 0;

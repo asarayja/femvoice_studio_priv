@@ -256,11 +256,88 @@
                                    HorizontalAlignment="Right"
                                    Foreground="{DynamicResource TextSecondaryBrush}"/>
                         
-                        <TextBlock Grid.Column="3" 
-                                   Text="{Binding VoiceHealthDirection, Converter={StaticResource DirectionToArrow}}" 
-                                   FontSize="18" 
+                        <TextBlock Grid.Column="3"
+                                   Text="{Binding VoiceHealthDirection, Converter={StaticResource DirectionToArrow}}"
+                                   FontSize="18"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Sprint B: additional Voice Intelligence dimensions (0–100) -->
+                    <!-- {loc}-TODO: dimension labels are English literals; add Strings.resx keys. -->
+
+                    <!-- Comfort Row (Health) -->
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="40"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Comfort" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <Grid Grid.Column="1" Height="24">
+                            <Border Background="{DynamicResource BackgroundSecondaryBrush}" CornerRadius="4"/>
+                            <Border Background="{DynamicResource SuccessBrush}" CornerRadius="4" HorizontalAlignment="Left" Width="{Binding ComfortBarWidth}"/>
+                        </Grid>
+                        <TextBlock Grid.Column="2" Text="{Binding ComfortScore, StringFormat={}{0:F0}%}" VerticalAlignment="Center" HorizontalAlignment="Right" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    </Grid>
+
+                    <!-- Recovery Row (Health) -->
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="40"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Recovery" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <Grid Grid.Column="1" Height="24">
+                            <Border Background="{DynamicResource BackgroundSecondaryBrush}" CornerRadius="4"/>
+                            <Border Background="{DynamicResource InfoBrush}" CornerRadius="4" HorizontalAlignment="Left" Width="{Binding RecoveryBarWidth}"/>
+                        </Grid>
+                        <TextBlock Grid.Column="2" Text="{Binding RecoveryScore, StringFormat={}{0:F0}%}" VerticalAlignment="Center" HorizontalAlignment="Right" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    </Grid>
+
+                    <!-- Consistency Row -->
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="40"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Consistency" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <Grid Grid.Column="1" Height="24">
+                            <Border Background="{DynamicResource BackgroundSecondaryBrush}" CornerRadius="4"/>
+                            <Border Background="{DynamicResource AccentPrimaryBrush}" CornerRadius="4" HorizontalAlignment="Left" Width="{Binding ConsistencyBarWidth}"/>
+                        </Grid>
+                        <TextBlock Grid.Column="2" Text="{Binding ConsistencyScore, StringFormat={}{0:F0}%}" VerticalAlignment="Center" HorizontalAlignment="Right" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    </Grid>
+
+                    <!-- Vocal Weight Row -->
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="40"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Vocal Weight" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <Grid Grid.Column="1" Height="24">
+                            <Border Background="{DynamicResource BackgroundSecondaryBrush}" CornerRadius="4"/>
+                            <Border Background="{DynamicResource WarningBrush}" CornerRadius="4" HorizontalAlignment="Left" Width="{Binding VocalWeightBarWidth}"/>
+                        </Grid>
+                        <TextBlock Grid.Column="2" Text="{Binding VocalWeightScore, StringFormat={}{0:F0}%}" VerticalAlignment="Center" HorizontalAlignment="Right" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    </Grid>
+
+                    <!-- Voice Development (composite) -->
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Voice Development" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Column="1" Text="{Binding CompositeVoiceScore, StringFormat={}{0:F0}%}" VerticalAlignment="Center" HorizontalAlignment="Right" FontWeight="Bold" Foreground="{DynamicResource AccentPrimaryBrush}"/>
                     </Grid>
                 </StackPanel>
             </Border>

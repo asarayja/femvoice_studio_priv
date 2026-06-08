@@ -1,9 +1,98 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using FemVoiceStudio.Services;
 
 namespace FemVoiceStudio.Models
 {
     /// <summary>
-    /// Time-series data point for FemVoiceScore visualization
+    /// Pure, WPF-free mapping from the persisted Voice Intelligence trend
+    /// (<see cref="VoiceIntelligenceTrendPoint"/>) to <see cref="ScoreSnapshot"/>
+    /// view-model rows. Extracted so the mapping (0–100 preservation, chronology,
+    /// empty-history handling) is unit-testable without any WPF/OxyPlot dependency.
+    ///
+    /// Hierarchy is preserved purely as data: every dimension is carried through; the
+    /// composite is a measurement only and never gates anything here.
+    /// </summary>
+    public static class VoiceIntelligenceTrendMapper
+    {
+        private static double Clamp0To100(double value)
+        {
+            if (double.IsNaN(value)) return 0.0;
+            return Math.Clamp(value, 0.0, 100.0);
+        }
+
+        /// <summary>
+        /// Map one trend point to a <see cref="ScoreSnapshot"/>. The seven dimensions
+        /// land on both the dimension-specific fields and (for the three legacy
+        /// dimensions) the existing alias fields, so old chart bindings keep working.
+        /// </summary>
+        public static ScoreSnapshot ToSnapshot(VoiceIntelligenceTrendPoint point)
+        {
+            ArgumentNullException.ThrowIfNull(point);
+
+            var resonance = Clamp0To100(point.ResonanceScore100);
+            var comfort = Clamp0To100(point.ComfortScore100);
+            var consistency = Clamp0To100(point.ConsistencyScore100);
+            var intonation = Clamp0To100(point.IntonationScore100);
+            var vocalWeight = Clamp0To100(point.VocalWeightScore100);
+            var recovery = Clamp0To100(point.RecoveryScore100);
+            var pitch = Clamp0To100(point.PitchScore100);
+            var composite = Clamp0To100(point.CompositeVoiceScore);
+
+            return new ScoreSnapshot
+            {
+                Timestamp = point.StartedAt,
+                OverallScore = composite,
+
+                // Legacy alias fields (kept for existing bindings/charts).
+                ResonanceScore = resonance,
+                PitchScore = pitch,
+                IntonationScore = intonation,
+                // Voice health proxy = the Health pair (Comfort + Recovery), mean.
+                VoiceHealthScore = Clamp0To100((comfort + recovery) / 2.0),
+
+                // Voice Intelligence dimensions.
+                ResonanceDimension = resonance,
+                ComfortDimension = comfort,
+                ConsistencyDimension = consistency,
+                IntonationDimension = intonation,
+                VocalWeightDimension = vocalWeight,
+                RecoveryDimension = recovery,
+                PitchDimension = pitch,
+                CompositeVoiceScore = composite
+            };
+        }
+
+        /// <summary>
+        /// Map a whole trend (already chronological from the store) to snapshots,
+        /// defensively re-sorted by <see cref="VoiceIntelligenceTrendPoint.StartedAt"/>.
+        /// A null or empty trend yields an empty list (no crash, "ikke nok data").
+        /// </summary>
+        public static IReadOnlyList<ScoreSnapshot> ToSnapshots(
+            IEnumerable<VoiceIntelligenceTrendPoint>? trend)
+        {
+            if (trend is null)
+            {
+                return Array.Empty<ScoreSnapshot>();
+            }
+
+            return trend
+                .Where(p => p is not null)
+                .OrderBy(p => p.StartedAt)
+                .Select(ToSnapshot)
+                .ToList();
+        }
+    }
+
+    /// <summary>
+    /// Time-series data point for FemVoiceScore visualization.
+    ///
+    /// Sprint B (Bølge 2): extended additively with the seven explainable Voice
+    /// Intelligence dimensions (0–100) plus the hierarchy-weighted composite, so the
+    /// analysis trend charts can plot ALL dimensions — not just pitch/resonance — from
+    /// <c>SessionAnalyticsStore.GetVoiceIntelligenceTrendAsync</c>. Existing fields are
+    /// untouched; legacy consumers (e.g. MainViewModel) keep compiling.
     /// </summary>
     public class ScoreSnapshot
     {
@@ -16,6 +105,22 @@ namespace FemVoiceStudio.Models
         public double CurrentPitch { get; set; }
         public double CurrentResonance { get; set; }
         public double CurrentStability { get; set; }
+
+        // ── Voice Intelligence dimensions (Sprint B, 0–100) ──────────────────────
+        // Hierarchy order (clinical): Health (Comfort + Recovery) > Resonance >
+        // Consistency > Intonation > VocalWeight > Pitch. Pitch is never dominant.
+        // ResonanceScore / PitchScore / IntonationScore above remain the legacy
+        // aliases; the dimension-specific fields below carry the Bølge 1 scores.
+        public double ResonanceDimension { get; set; }
+        public double ComfortDimension { get; set; }
+        public double ConsistencyDimension { get; set; }
+        public double IntonationDimension { get; set; }
+        public double VocalWeightDimension { get; set; }
+        public double RecoveryDimension { get; set; }
+        public double PitchDimension { get; set; }
+
+        /// <summary>Hierarchy-weighted composite ("Voice Development"), 0–100.</summary>
+        public double CompositeVoiceScore { get; set; }
     }
 
     /// <summary>

@@ -20,25 +20,53 @@ namespace FemVoiceStudio.ViewModels
     {
         private readonly DatabaseService _database;
         private readonly FemVoiceScore _femVoiceScore;
-        
+        private readonly SessionAnalyticsStore? _analyticsStore;
+
         // Collections for charts
         public ObservableCollection<PitchSample> PitchHistory { get; } = new();
         public ObservableCollection<FormantSample> ResonanceTrend { get; } = new();
         public ObservableCollection<ScoreSnapshot> ScoreHistory { get; } = new();
         public ObservableCollection<HealthSnapshot> HealthTrend { get; } = new();
-        
+
+        // Voice Intelligence trend (Sprint B): the eight 0–100 scores per completed
+        // session, chronological, sourced from SessionAnalyticsStore (the LIVE table) —
+        // replacing the dead GetTrainingSessions/GetFemVoiceScores source for the new
+        // dimension trends. ScoreHistory above is rebuilt from the same trend.
+        public ObservableCollection<ScoreSnapshot> VoiceIntelligenceTrend { get; } = new();
+
+        // True once a Voice Intelligence trend load found at least one session.
+        [ObservableProperty]
+        private bool _hasVoiceIntelligenceData;
+
         // OxyPlot models for XAML binding - enable declarative chart definition
         [ObservableProperty]
         private PlotModel _resonancePlotModel = CreateResonancePlotModel();
-        
+
         [ObservableProperty]
         private PlotModel _pitchPlotModel = CreatePitchPlotModel();
-        
+
         [ObservableProperty]
         private PlotModel _intonationPlotModel = CreateIntonationPlotModel();
-        
+
         [ObservableProperty]
         private PlotModel _healthPlotModel = CreateHealthPlotModel();
+
+        // ── Sprint B: trend models for the previously-unvisualised dimensions ───────
+        // {loc}-TODO: dimension titles are English literals; add Strings.resx keys later.
+        [ObservableProperty]
+        private PlotModel _comfortPlotModel = CreateDimensionPlotModel("Comfort");
+
+        [ObservableProperty]
+        private PlotModel _consistencyPlotModel = CreateDimensionPlotModel("Consistency");
+
+        [ObservableProperty]
+        private PlotModel _vocalWeightPlotModel = CreateDimensionPlotModel("Vocal Weight");
+
+        [ObservableProperty]
+        private PlotModel _recoveryPlotModel = CreateDimensionPlotModel("Recovery");
+
+        [ObservableProperty]
+        private PlotModel _voiceDevelopmentPlotModel = CreateDimensionPlotModel("Voice Development");
         
         [ObservableProperty]
         private double _averagePitch;
@@ -113,6 +141,23 @@ namespace FemVoiceStudio.ViewModels
             _database = App.Services?.GetService(typeof(DatabaseService)) as DatabaseService
                         ?? new DatabaseService();
             _femVoiceScore = new FemVoiceScore();
+            // SessionAnalyticsStore is the LIVE Voice Intelligence trend source (Bølge 1).
+            // Resolve from DI; null in design-time / no-DI contexts (handled gracefully).
+            _analyticsStore = App.Services?.GetService(typeof(SessionAnalyticsStore)) as SessionAnalyticsStore;
+        }
+
+        /// <summary>
+        /// Test/DI seam: inject the analytics store directly so the Voice Intelligence
+        /// trend can be exercised without the App.Services container or any WPF host.
+        /// <paramref name="database"/> may be null for pure trend-mapping tests — the
+        /// trend path (<see cref="ApplyVoiceIntelligenceTrend"/>/
+        /// <see cref="LoadVoiceIntelligenceTrendAsync"/>) never touches the database.
+        /// </summary>
+        public AnalysisPageViewModel(DatabaseService? database, SessionAnalyticsStore? analyticsStore)
+        {
+            _database = database!;
+            _femVoiceScore = new FemVoiceScore();
+            _analyticsStore = analyticsStore;
         }
         
         /// <summary>
@@ -362,6 +407,67 @@ namespace FemVoiceStudio.ViewModels
                 });
             }
         }
+
+        /// <summary>
+        /// Sprint B: load the Voice Intelligence trend (the eight 0–100 scores per
+        /// completed session, chronological) from the LIVE
+        /// <see cref="SessionAnalyticsStore"/> — replacing the dead
+        /// <c>GetTrainingSessions</c>/<c>GetFemVoiceScores</c> tables for the new
+        /// dimension trends. Falls back to an empty trend (no crash) when no store is
+        /// wired or the window is empty.
+        /// </summary>
+        public async Task LoadVoiceIntelligenceTrendAsync(int days = 30, int userId = 1)
+        {
+            IReadOnlyList<VoiceIntelligenceTrendPoint> points = Array.Empty<VoiceIntelligenceTrendPoint>();
+
+            if (_analyticsStore != null)
+            {
+                var to = DateTime.Now;
+                var from = to.AddDays(-days);
+                try
+                {
+                    points = await _analyticsStore.GetVoiceIntelligenceTrendAsync(from, to, userId)
+                        .ConfigureAwait(false);
+                }
+                catch
+                {
+                    // Trend is a read-only visualisation; never let a load failure crash
+                    // the analysis surface. Empty trend => "ikke nok data".
+                    points = Array.Empty<VoiceIntelligenceTrendPoint>();
+                }
+            }
+
+            ApplyVoiceIntelligenceTrend(points);
+        }
+
+        /// <summary>
+        /// Pure VM step: map a Voice Intelligence trend into the bound collections and
+        /// refresh the dimension plot models. Extracted (no DB, no async, no WPF host)
+        /// so the mapping — 0–100 preservation, chronology, empty-history handling, and
+        /// exposure of all seven dimensions + composite — is unit-testable.
+        /// </summary>
+        public void ApplyVoiceIntelligenceTrend(IEnumerable<VoiceIntelligenceTrendPoint>? trend)
+        {
+            var snapshots = VoiceIntelligenceTrendMapper.ToSnapshots(trend);
+
+            VoiceIntelligenceTrend.Clear();
+            ScoreHistory.Clear();
+            foreach (var snapshot in snapshots)
+            {
+                VoiceIntelligenceTrend.Add(snapshot);
+                // Rebuild legacy ScoreHistory from the same live source so existing
+                // resonance/pitch/intonation charts no longer read the dead tables.
+                ScoreHistory.Add(snapshot);
+            }
+
+            HasVoiceIntelligenceData = snapshots.Count > 0;
+
+            UpdateComfortChartData();
+            UpdateConsistencyChartData();
+            UpdateVocalWeightChartData();
+            UpdateRecoveryChartData();
+            UpdateVoiceDevelopmentChartData();
+        }
         
         #region OxyPlot Model Creation
         
@@ -530,6 +636,104 @@ namespace FemVoiceStudio.ViewModels
             return model;
         }
         
+        /// <summary>
+        /// Creates a generic 0–100 Voice Intelligence dimension trend model (Sprint B).
+        /// Same OxyPlot template as the existing charts; one factory for all new
+        /// dimensions (Comfort/Consistency/VocalWeight/Recovery/Voice Development).
+        /// {loc}-TODO: <paramref name="title"/> is an English literal; add resx keys.
+        /// </summary>
+        private static PlotModel CreateDimensionPlotModel(string title)
+        {
+            var model = new PlotModel
+            {
+                Title = title,
+                TitleFontSize = 12,
+                TitleColor = OxyColor.FromRgb(64, 64, 64),
+                Background = OxyColors.White,
+                PlotAreaBorderColor = OxyColor.FromRgb(200, 200, 200)
+            };
+
+            model.Axes.Add(new LinearAxis
+            {
+                Position = AxisPosition.Bottom,
+                Title = LocalizationService.Instance["AnalysisChart_SessionAxis"],
+                MajorGridlineStyle = LineStyle.Solid,
+                MajorGridlineColor = OxyColor.FromRgb(240, 240, 240),
+                FontSize = 10
+            });
+
+            model.Axes.Add(new LinearAxis
+            {
+                Position = AxisPosition.Left,
+                Title = LocalizationService.Instance["AnalysisChart_LevelAxis"],
+                Minimum = 0,
+                Maximum = 100,
+                MajorGridlineStyle = LineStyle.Solid,
+                MajorGridlineColor = OxyColor.FromRgb(230, 230, 230),
+                FontSize = 10,
+                TitleFontSize = 11
+            });
+
+            return model;
+        }
+
+        /// <summary>
+        /// Shared helper: rebuild a 0–100 dimension line series from the Voice
+        /// Intelligence trend using a per-snapshot selector. Keeps chronology (index
+        /// order = chronological because the source is ordered by StartedAt).
+        /// </summary>
+        private void UpdateDimensionChartData(
+            PlotModel model,
+            string seriesTitle,
+            OxyColor color,
+            Func<ScoreSnapshot, double> selector)
+        {
+            model.Series.Clear();
+
+            var series = new LineSeries
+            {
+                Title = seriesTitle,
+                Color = color,
+                StrokeThickness = 2,
+                MarkerType = MarkerType.Circle,
+                MarkerSize = 4
+            };
+
+            int index = 0;
+            foreach (var snapshot in VoiceIntelligenceTrend)
+            {
+                series.Points.Add(new DataPoint(index++, selector(snapshot)));
+            }
+
+            model.Series.Add(series);
+            model.InvalidatePlot(false);
+        }
+
+        /// <summary>Updates the Comfort (Health) 0–100 trend.</summary>
+        public void UpdateComfortChartData() =>
+            UpdateDimensionChartData(ComfortPlotModel, "Comfort",
+                OxyColor.FromRgb(102, 187, 106), s => s.ComfortDimension);
+
+        /// <summary>Updates the Consistency 0–100 trend.</summary>
+        public void UpdateConsistencyChartData() =>
+            UpdateDimensionChartData(ConsistencyPlotModel, "Consistency",
+                OxyColor.FromRgb(126, 87, 194), s => s.ConsistencyDimension);
+
+        /// <summary>Updates the Vocal Weight 0–100 trend.</summary>
+        public void UpdateVocalWeightChartData() =>
+            UpdateDimensionChartData(VocalWeightPlotModel, "Vocal Weight",
+                OxyColor.FromRgb(255, 167, 38), s => s.VocalWeightDimension);
+
+        /// <summary>Updates the Recovery (Health) 0–100 trend.</summary>
+        public void UpdateRecoveryChartData() =>
+            UpdateDimensionChartData(RecoveryPlotModel, "Recovery",
+                OxyColor.FromRgb(38, 198, 218), s => s.RecoveryDimension);
+
+        /// <summary>Updates the composite "Voice Development" 0–100 trend.</summary>
+        public void UpdateVoiceDevelopmentChartData() =>
+            UpdateDimensionChartData(VoiceDevelopmentPlotModel, "Voice Development",
+                OxyColor.FromRgb(255, 107, 157), s => s.CompositeVoiceScore);
+
         /// <summary>
         /// Efficiently updates resonance chart data using partial invalidation
         /// </summary>

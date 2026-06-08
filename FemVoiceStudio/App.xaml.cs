@@ -185,7 +185,11 @@ public partial class App : Application
             sp.GetRequiredService<ILocalizationService>(),
             sp.GetRequiredService<FeedbackPipeline>(),
             sp.GetRequiredService<SmartCoachFeedbackMapper>(),
-            sp.GetRequiredService<IVoiceGoalProfileProvider>()));
+            sp.GetRequiredService<IVoiceGoalProfileProvider>(),
+            // Bølge 2: gi SmartCoach lesetilgang til VoiceMetrics-trenden slik at
+            // daglig-anbefalingen kan velge coaching-akse på den svakeste dimensjonen
+            // (etter health-gaten). Valgfri param — null ville gitt dagens oppførsel.
+            sp.GetRequiredService<SessionAnalyticsStore>()));
         services.AddSingleton<IExerciseProfileFactory, ExerciseProfileFactory>();
 
         // ── ViewModels ────────────────────────────────────────────────────────────

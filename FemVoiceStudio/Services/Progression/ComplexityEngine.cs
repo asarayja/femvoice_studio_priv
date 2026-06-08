@@ -29,6 +29,16 @@ namespace FemVoiceStudio.Services.Progression
         private const int MinSessionsAtLevel = 5;
         private const double MinSuccessRate = 70.0;
         private const double MinSessionsPerWeek = 2.0;
+
+        // Voice Development Progression-terskler (Agent 10). EKSTRA AND-betingelser i
+        // CanAdvanceToNextLevel — de gjør avansement STRENGERE, aldri lettere, og
+        // anvendes KUN når et VoiceIntelligenceScores-snapshot er tilgjengelig
+        // (additivt + bakoverkompatibelt). Health > Progression: Recovery-terskelen
+        // sikrer at en overbelastet stemme aldri avanseres selv om resonans/pitch er
+        // høye; Comfort/Consistency speiler det kliniske hierarkiet (Comfort > Resonance).
+        private const double MinVoiceComfortForProgression = 60.0;
+        private const double MinVoiceConsistencyForProgression = 55.0;
+        private const double MinVoiceRecoveryForProgression = 55.0;
         
         // Cached evaluation
         private ComplexityEvaluation? _cachedEvaluation;
@@ -129,36 +139,64 @@ namespace FemVoiceStudio.Services.Progression
         
         /// <summary>
         /// Determines if user can advance to the next complexity level.
+        ///
+        /// The optional <paramref name="voice"/> snapshot adds Voice Development
+        /// Progression gates (Agent 10): when supplied, Comfort/Consistency/Recovery
+        /// must each clear their threshold as EXTRA AND-conditions. These are purely
+        /// ADDITIVE — they can only make advancement STRICTER, never easier (every
+        /// existing threshold above is untouched). When <paramref name="voice"/> is
+        /// null the behaviour is byte-identical to before.
+        ///
+        /// Health &gt; Progression: the Recovery gate ensures an overloaded voice is
+        /// never advanced even when resonance/pitch look strong.
         /// </summary>
-        public bool CanAdvanceToNextLevel(ComplexityEvaluation evaluation)
+        public bool CanAdvanceToNextLevel(ComplexityEvaluation evaluation, VoiceIntelligenceScores? voice = null)
         {
             if (evaluation.SessionsAtCurrentLevel < MinSessionsAtLevel)
                 return false;
-            
+
             if (evaluation.SuccessRate < MinSuccessRate)
                 return false;
-            
+
             if (evaluation.AverageResonance < MinResonanceForProgression)
                 return false;
-            
+
             if (evaluation.PitchStability < MinPitchStabilityForProgression)
                 return false;
-            
+
             if (evaluation.IntonationScore < MinIntonationForProgression)
                 return false;
-            
+
             if (!evaluation.HealthAllowsProgression)
                 return false;
-            
+
             if (evaluation.VoiceHealthScore < MinVoiceHealthForProgression)
                 return false;
-            
+
             if (evaluation.StrainLevel >= MaxStrainForProgression)
                 return false;
-            
+
             if (evaluation.SessionsPerWeek < MinSessionsPerWeek)
                 return false;
-            
+
+            // ── Voice Development Progression gates (additive AND-conditions) ──────
+            // Only tightened when a multidimensional voice snapshot is available;
+            // these never relax any existing gate. Health (Comfort + Recovery) and
+            // Consistency must each be consolidated before advancing — a high
+            // resonance/pitch can NEVER buy progression past an overloaded or
+            // uncomfortable voice (Health/Comfort > Progression).
+            if (voice != null)
+            {
+                if (voice.Comfort.Score < MinVoiceComfortForProgression)
+                    return false;
+
+                if (voice.Consistency.Score < MinVoiceConsistencyForProgression)
+                    return false;
+
+                if (voice.Recovery.Score < MinVoiceRecoveryForProgression)
+                    return false;
+            }
+
             return true;
         }
         
