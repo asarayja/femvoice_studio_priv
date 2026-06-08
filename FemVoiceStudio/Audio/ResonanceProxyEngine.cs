@@ -324,6 +324,19 @@ namespace FemVoiceStudio.Audio
             else Raise();
         }
 
+        /// <summary>
+        /// Test-seam: reiser FormantsUpdated med et oppgitt snapshot, uten å gå gjennom
+        /// DSP-ens peak-deteksjon/confidence (som er ikke-deterministisk for syntetiske
+        /// rentoner i et headless testmiljø). Brukes til å verifisere DOWNSTREAM-wiringen
+        /// (snapshot → koordinatorens cache → ExerciseLiveState → VocalWeight) deterministisk.
+        /// Selve formant-EKSTRAKSJONEN dekkes av egne tester. Ingen produksjonskaller.
+        /// </summary>
+        internal void EmitFormantsForTesting(FormantSnapshot snapshot)
+        {
+            if (_syncContext != null) _syncContext.Post(_ => FormantsUpdated?.Invoke(snapshot), null);
+            else FormantsUpdated?.Invoke(snapshot);
+        }
+
         private double CalculateRms(float[] buffer, int length)
         {
             double sum = 0;
