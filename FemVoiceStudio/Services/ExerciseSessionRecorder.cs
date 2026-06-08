@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using FemVoiceStudio.Models;
 
@@ -106,6 +108,21 @@ namespace FemVoiceStudio.Services
         // dimension scores + composite at session end. Reused across sessions.
         private readonly VoiceIntelligenceScorer _voiceIntelligenceScorer = new();
 
+        // Predictive cross-session recovery (Bølge 1, Agent 3). Builds a FULL
+        // RecoveryScoreInput from the persisted analytics history so the recovery axis
+        // and the SessionInsight recovery-need reflect real cross-session restitution —
+        // not just this session's in-memory counts (the dormant scorer branches now fire).
+        private readonly RecoveryIntelligenceService _recoveryIntelligence;
+
+        // Pure end-of-session insight assembler (Bølge 1, Agent 5). Combines the freshly
+        // computed Voice-Intelligence scores, the prior trend and the recovery snapshot
+        // into one explainable, clinically safe SessionInsight.
+        private readonly SessionInsightBuilder _sessionInsightBuilder;
+
+        // Pure recovery scorer — converts the cross-session RecoveryScoreInput into the
+        // RecoveryResult the SessionInsight carries (same scorer the VI recovery axis uses).
+        private readonly RecoveryScorer _recoveryScorer = new();
+
         private readonly object _lock = new();
 
         private bool _recording;
@@ -152,7 +169,9 @@ namespace FemVoiceStudio.Services
             HydrationAdvisor? hydrationAdvisor = null,
             FeedbackPipeline? feedbackPipeline = null,
             VocalHealthFeedbackMapper? vocalHealthMapper = null,
-            HydrationFeedbackMapper? hydrationMapper = null)
+            HydrationFeedbackMapper? hydrationMapper = null,
+            RecoveryIntelligenceService? recoveryIntelligence = null,
+            SessionInsightBuilder? sessionInsightBuilder = null)
         {
             _coordinator      = coordinator      ?? throw new ArgumentNullException(nameof(coordinator));
             _healthSupervisor = healthSupervisor ?? throw new ArgumentNullException(nameof(healthSupervisor));
@@ -161,6 +180,11 @@ namespace FemVoiceStudio.Services
             _feedbackPipeline = feedbackPipeline;
             _vocalHealthMapper = vocalHealthMapper;
             _hydrationMapper  = hydrationMapper;
+
+            // Default to the pure Bølge-1 services so existing 3-/7-arg call sites keep
+            // working unchanged; tests can inject their own (no mocking — real classes).
+            _recoveryIntelligence  = recoveryIntelligence  ?? new RecoveryIntelligenceService();
+            _sessionInsightBuilder = sessionInsightBuilder ?? new SessionInsightBuilder();
 
             _coordinator.ExerciseUpdated    += OnExerciseUpdated;
             _coordinator.InlineCoachUpdated += OnInlineCoachUpdated;
@@ -188,6 +212,24 @@ namespace FemVoiceStudio.Services
         /// skriv-race mot fire-and-forget-persisteringen). Feil svelges internt.
         /// </summary>
         public Task? LastPersistTask { get; private set; }
+
+        /// <summary>
+        /// The end-of-session <see cref="SessionInsight"/> assembled by the most recent
+        /// <see cref="CompleteSession"/> (Bølge 1, Agent 5 wiring). Built on the same async
+        /// path as persistence, so it is only guaranteed populated once
+        /// <see cref="LastPersistTask"/> has completed. <c>null</c> when the session was
+        /// empty/invalid (no evaluated ticks) or when insight building failed — a consumer
+        /// should null-check and simply hide its insight surface in that case.
+        /// </summary>
+        public SessionInsight? LastSessionInsight { get; private set; }
+
+        /// <summary>
+        /// Raised on the thread that finishes the persistence/insight task once a fresh
+        /// <see cref="SessionInsight"/> is available at session end. Never raised when the
+        /// session produced no insight (empty session / build failure). Subscribers must
+        /// marshal to the UI thread themselves (the recorder is UI-agnostic).
+        /// </summary>
+        public event Action<SessionInsight>? SessionInsightReady;
 
         /// <summary>
         /// Starts aggregation for a new session. Resets the health supervisor so each
@@ -224,6 +266,10 @@ namespace FemVoiceStudio.Services
                 _healthSupervisor.Reset();
                 _recording = true;
             }
+
+            // Clear any prior session's insight so a UI that polls the property between
+            // sessions never shows a stale card while the new session is in progress.
+            LastSessionInsight = null;
 
             // Sesjonsnivå-journalføring: SessionAnalyticsSessions-tabellen ble aldri
             // skrevet før (integrasjonsauditen) — daglig/ukentlig trend var alltid tom.
@@ -546,12 +592,35 @@ namespace FemVoiceStudio.Services
         {
             try
             {
+                // ── Cross-session recovery (Bølge 1, Agent 3 wiring) ─────────────────
+                // Build a FULL RecoveryScoreInput from the persisted analytics history BEFORE
+                // scoring the Voice-Intelligence recovery axis, so SessionsLast7Days /
+                // HoursSinceLastSession / PriorFatigueIndicators are real and the scorer's
+                // dormant overtraining/trend branches actually fire. The snapshot is taken as
+                // of "now" but EXCLUDES the session just completing (it is not journaled yet),
+                // so recovery reflects the load leading INTO this session. Never blocks
+                // session end: any failure falls back to the in-session-only input.
+                var fullRecoveryInput = await BuildCrossSessionRecoveryInputAsync(userId)
+                    .ConfigureAwait(false);
+
+                // Prior Voice-Intelligence trend, used as the per-dimension improvement
+                // reference for the SessionInsight. Read BEFORE this session is written and
+                // defensively filtered to exclude the current sessionId. Failure ⇒ empty
+                // (treated as a first session) — never blocks.
+                var priorTrend = await GetPriorTrendAsync(userId, sessionId)
+                    .ConfigureAwait(false);
+
                 // Voice Intelligence: derive the seven explainable 0–100 dimension scores
                 // plus the hierarchy-weighted composite from the session aggregates we have.
                 // Robust — never throws (see ComputeVoiceIntelligenceScores); a failed or
                 // partial computation falls back to all-zero so session-end never blocks.
                 var vi = ComputeVoiceIntelligenceScores(
-                    outcome, pauseRecommendations, hydrationSuggestions);
+                    outcome, pauseRecommendations, hydrationSuggestions, fullRecoveryInput);
+
+                // End-of-session insight (Bølge 1, Agent 5 wiring). Built from the freshly
+                // scored VI, the prior trend and the cross-session recovery result. Total —
+                // any failure leaves LastSessionInsight null so the UI just hides its card.
+                BuildAndPublishInsight(vi, priorTrend, outcome, fullRecoveryInput, sessionId);
 
                 // Sesjonsnivå-raden (driver GetDailySummaryAsync/GetWeeklyTrendAsync —
                 // aggregatene var tomme før fordi denne aldri ble skrevet).
@@ -670,14 +739,18 @@ namespace FemVoiceStudio.Services
         private VoiceIntelligenceScores ComputeVoiceIntelligenceScores(
             ExerciseSessionOutcome outcome,
             int pauseRecommendations,
-            int hydrationSuggestions)
+            int hydrationSuggestions,
+            RecoveryScoreInput? crossSessionRecovery = null)
         {
             try
             {
-                // In-session recovery snapshot: this session is the "recent window".
-                // Higher counts ⇒ lower recovery. SessionsLast7Days is left at 0 (no
-                // cross-session history available here) so no overtraining penalty fires.
-                var recovery = new RecoveryScoreInput
+                // Recovery snapshot. Prefer the FULL cross-session input built from analytics
+                // history (Agent 3 wiring) so SessionsLast7Days / HoursSinceLastSession /
+                // PriorFatigueIndicators are real and the dormant scorer branches fire. When
+                // that history read failed it is null ⇒ fall back to the in-session snapshot
+                // (this session is the "recent window"; cross-session fields stay 0 — the
+                // pre-wiring behaviour, preserved so session end never regresses).
+                var recovery = crossSessionRecovery ?? new RecoveryScoreInput
                 {
                     RecentFatigueIndicators    = Math.Max(0, outcome.FatigueIndicators),
                     RecentStrainEpisodes       = Math.Max(0, outcome.StrainDetections),
@@ -726,6 +799,128 @@ namespace FemVoiceStudio.Services
                 System.Diagnostics.Debug.WriteLine(
                     $"[ExerciseSessionRecorder] Voice Intelligence scoring failed: {ex.Message}");
                 return ZeroVoiceIntelligenceScores();
+            }
+        }
+
+        // ────────────────────────────────────────────────────────────────────────
+        // Cross-session recovery + insight (Bølge 1 wiring — Agents 3 & 5)
+        // ────────────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Builds a FULL cross-session <see cref="RecoveryScoreInput"/> from the persisted
+        /// analytics history via <see cref="RecoveryIntelligenceService"/> (Agent 3 wiring),
+        /// so the recovery axis reflects real training density / rest / fatigue-trend rather
+        /// than this session's in-memory counts alone. Total: NEVER throws — any read or
+        /// build failure returns <c>null</c> so the caller falls back to the in-session input
+        /// and session end is never blocked. The snapshot is taken as of <c>DateTime.Now</c>
+        /// and reflects the history leading INTO the just-finished session (which has not been
+        /// journaled yet), which is exactly the recovery context the score should capture.
+        /// </summary>
+        private async Task<RecoveryScoreInput?> BuildCrossSessionRecoveryInputAsync(int userId)
+        {
+            try
+            {
+                var snapshot = await _recoveryIntelligence
+                    .BuildSnapshotAsync(_analyticsStore, DateTime.Now, userId)
+                    .ConfigureAwait(false);
+                return RecoveryIntelligenceService.BuildScoreInput(snapshot);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"[ExerciseSessionRecorder] Cross-session recovery build failed: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Reads the prior Voice-Intelligence trend used as the SessionInsight improvement
+        /// reference (Agent 5 wiring). Read BEFORE the current session is journaled and
+        /// defensively filtered to EXCLUDE <paramref name="currentSessionId"/> so an early
+        /// write (or a re-run) cannot make a session improve against itself. Total: any
+        /// failure returns an empty list (treated as a first session) — never blocks.
+        /// </summary>
+        private async Task<IReadOnlyList<VoiceIntelligenceTrendPoint>> GetPriorTrendAsync(
+            int userId, int currentSessionId)
+        {
+            try
+            {
+                // Wide-but-bounded historical window; the builder only uses the most recent
+                // point as the improvement reference, so a generous lookback is safe.
+                var to   = DateTime.Now;
+                var from = to.AddDays(-RecoveryIntelligenceService.ChronicWindowDays);
+                var trend = await _analyticsStore
+                    .GetVoiceIntelligenceTrendAsync(from, to, userId)
+                    .ConfigureAwait(false);
+
+                if (trend.Count == 0) return Array.Empty<VoiceIntelligenceTrendPoint>();
+
+                // Exclude the session currently completing — it must never be its own
+                // improvement reference.
+                return trend.Where(p => p.SessionId != currentSessionId).ToList();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"[ExerciseSessionRecorder] Prior-trend read failed: {ex.Message}");
+                return Array.Empty<VoiceIntelligenceTrendPoint>();
+            }
+        }
+
+        /// <summary>
+        /// Assembles the end-of-session <see cref="SessionInsight"/> via
+        /// <see cref="SessionInsightBuilder"/> (Agent 5 wiring), stores it on
+        /// <see cref="LastSessionInsight"/> and raises <see cref="SessionInsightReady"/>.
+        /// Skipped for an empty/invalid session (no evaluated ticks) — there is nothing
+        /// meaningful to reflect on, so the property stays null and the UI hides its card.
+        /// Total: any failure leaves the property null and never blocks session end.
+        /// </summary>
+        private void BuildAndPublishInsight(
+            VoiceIntelligenceScores vi,
+            IReadOnlyList<VoiceIntelligenceTrendPoint> priorTrend,
+            ExerciseSessionOutcome outcome,
+            RecoveryScoreInput? crossSessionRecovery,
+            int sessionId)
+        {
+            try
+            {
+                // Empty session ⇒ no clinical content to reflect on. Leave the insight null.
+                if (outcome.EvaluatedTicks <= 0)
+                {
+                    LastSessionInsight = null;
+                    return;
+                }
+
+                // Use the SAME recovery snapshot the VI recovery axis was scored from so the
+                // insight's recovery-need is consistent with the dimension score. Fall back to
+                // the in-session input when the cross-session read failed (mirrors the scorer).
+                var recoveryInput = crossSessionRecovery ?? new RecoveryScoreInput
+                {
+                    RecentFatigueIndicators    = Math.Max(0, outcome.FatigueIndicators),
+                    RecentStrainEpisodes       = Math.Max(0, outcome.StrainDetections),
+                    RecentSafetyLocks          = Math.Max(0, outcome.SafetyLockEpisodes),
+                };
+                var recovery = _recoveryScorer.Score(recoveryInput);
+
+                var insight = _sessionInsightBuilder.Build(
+                    vi, priorTrend, outcome, recovery, sessionId);
+
+                LastSessionInsight = insight;
+
+                // Notify subscribers separately so a throwing handler never wipes the
+                // successfully-built LastSessionInsight (it stays available to pollers).
+                try { SessionInsightReady?.Invoke(insight); }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine(
+                        $"[ExerciseSessionRecorder] SessionInsightReady subscriber threw: {ex.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"[ExerciseSessionRecorder] Session insight build failed: {ex.Message}");
+                LastSessionInsight = null;
             }
         }
 

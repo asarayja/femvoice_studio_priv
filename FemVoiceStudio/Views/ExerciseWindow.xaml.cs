@@ -48,6 +48,13 @@ namespace FemVoiceStudio.Views
         private int              _elapsedSeconds;
         private bool             _isRunning;
         private SubjectiveReport? _lastSubjectiveReport;
+
+        // ── Øktslutt-innsikt (Bølge 1, Agent 5 UI) ───────────────────────────────
+        // Bygges programmatisk i code-behind (eier ikke .xaml) og settes inn rett før
+        // SubjectiveReportPanel. Skjult som standard; vises kun når recorderen produserte
+        // en SessionInsight. Referansen gjenbrukes så vi ikke lager nye Border-er per økt.
+        private Border? _sessionInsightPanel;
+        private StackPanel? _sessionInsightBody;
         private AudioCaptureService? _exerciseAudioCapture;
         private PitchDetectionService? _exercisePitchDetector;
         private ResonanceProxyEngine? _exerciseResonanceEngine;
@@ -428,6 +435,7 @@ namespace FemVoiceStudio.Views
             // Ny økt = ny selvrapport. Panelet vises igjen ved øktslutt.
             _lastSubjectiveReport = null;
             SubjectiveReportPanel.Visibility = Visibility.Collapsed;
+            RenderSessionInsight(null);   // skjul forrige økts insight-kort ved ny start
 
             // Delegate exercise start to ViewModel command.
             if (_viewModel != null)
@@ -547,6 +555,13 @@ namespace FemVoiceStudio.Views
                 {
                     try { await persistTask; } catch { /* persist-feil svelges i recorderen */ }
                 }
+
+                // Øktslutt-innsikt (Bølge 1, Agent 5 UI). SessionInsight bygges på samme
+                // async-sti som persisteringen, så den er klar etter await-en over. Helt
+                // null-safe: ingen innsikt (tom/ugyldig økt eller byggefeil) ⇒ panelet
+                // forblir skjult. Bygges fra SessionInsight sine allerede klinisk-validerte
+                // tekstfelt; engelsk forklarings-tekst er {loc}-TODO inntil RESX-nøkler finnes.
+                RenderSessionInsight(_sessionRecorder?.LastSessionInsight);
 
                 // Adaptiv progresjon (fase 2): orchestratoren leser den persisterte
                 // analytics-historikken (inkl. økten som nettopp ble journalført) og
@@ -669,6 +684,7 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
     FeedbackText.Text = "";
     LiveFeedbackPanel.Visibility = Visibility.Collapsed;
     SubjectiveReportPanel.Visibility = Visibility.Collapsed;   // ny øvelse = nytt skjema
+    RenderSessionInsight(null);                                // skjul insight-kort ved navigasjon
     _lastSubjectiveReport = null;
 
     // 🔧 ENSURE VIEWMODEL EXISTS BEFORE APPLYING PROFILE
@@ -942,6 +958,148 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
             {
                 SubjectiveReportStatusText.Text = Loc.Get("SubjectiveReport_SaveFailed");
             }
+        }
+
+        // ────────────────────────────────────────────────────────────────────────
+        // Øktslutt-innsikt (Bølge 1, Agent 5 UI)
+        // ────────────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Viser et kort, klinisk trygt øktslutt-insight ved siden av selvrapport-panelet.
+        /// Bygges fra <see cref="SessionInsight"/> sine ALLEREDE klinisk-validerte tekstfelt
+        /// (Summary + improvements/risks/recovery), så ingen ny brukersynlig tekst innføres
+        /// her. Helt null-safe: ingen insight ⇒ panelet skjules. Bygges/oppdateres
+        /// programmatisk fordi denne agenten ikke eier ExerciseWindow.xaml.
+        ///
+        /// {loc}-TODO: tekstfeltene er foreløpig engelske (SessionInsight-laget) — promoteres
+        /// til RESX (ClinicalLanguagePolicy-validert) når nøklene finnes. Faste etiketter
+        /// hentes fra eksisterende RESX der det finnes.
+        /// </summary>
+        private void RenderSessionInsight(SessionInsight? insight)
+        {
+            try
+            {
+                if (insight == null)
+                {
+                    if (_sessionInsightPanel != null)
+                        _sessionInsightPanel.Visibility = Visibility.Collapsed;
+                    return;
+                }
+
+                EnsureSessionInsightPanel();
+                if (_sessionInsightBody == null || _sessionInsightPanel == null) return;
+
+                _sessionInsightBody.Children.Clear();
+
+                // 1) Oppsummeringslinje — allerede klinisk trygg (mestrings-/utforsknings-
+                //    vinkling, ingen skam/press; recovery løftes først ved behov).
+                if (!string.IsNullOrWhiteSpace(insight.Summary))
+                    _sessionInsightBody.Children.Add(InsightLine(insight.Summary, primary: true));
+
+                // 2) Forbedringer (positivt rammet «+N siden sist»).
+                foreach (var improvement in insight.Improvements)
+                {
+                    if (!string.IsNullOrWhiteSpace(improvement.Explanation))
+                        _sessionInsightBody.Children.Add(InsightLine("• " + improvement.Explanation));
+                }
+
+                // 3) Risiko-flagg (rolig, ikke-skammende kopi fra SessionRisk.Description).
+                foreach (var risk in insight.Risks)
+                {
+                    if (!string.IsNullOrWhiteSpace(risk.Description))
+                        _sessionInsightBody.Children.Add(InsightLine("• " + risk.Description));
+                }
+
+                // 4) Restitusjon — vis kun forklaringen når den trenger oppmerksomhet
+                //    (Health før Goals). RecoveryNeed.Explanation er klinisk validert.
+                if (insight.RecoveryNeeds.NeedsAttention
+                    && !string.IsNullOrWhiteSpace(insight.RecoveryNeeds.Explanation))
+                {
+                    _sessionInsightBody.Children.Add(InsightLine("• " + insight.RecoveryNeeds.Explanation));
+                }
+
+                _sessionInsightPanel.Visibility = Visibility.Visible;
+            }
+            catch (Exception ex)
+            {
+                // UI-bygging skal ALDRI velte øktslutt — skjul panelet ved feil.
+                System.Diagnostics.Debug.WriteLine($"[SessionInsight UI] Render failed: {ex.Message}");
+                if (_sessionInsightPanel != null)
+                    _sessionInsightPanel.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        /// <summary>
+        /// Lager (én gang) insight-kortet og setter det inn rett FØR SubjectiveReportPanel i
+        /// samme StackPanel. Idempotent — gjenbruker den eksisterende Border-en ved senere økter.
+        /// </summary>
+        private void EnsureSessionInsightPanel()
+        {
+            if (_sessionInsightPanel != null) return;
+            if (SubjectiveReportPanel?.Parent is not Panel parent) return;
+
+            _sessionInsightBody = new StackPanel();
+
+            // Faste etiketter via RESX der mulig. Eksisterende nøkkel finnes ikke ennå for
+            // dette panelet (eier ikke Strings.resx) ⇒ {loc}-TODO: engelsk fallback inntil
+            // COACH legger til SessionInsight_Title. Loc.Get returnerer nøkkelen ufunnet, så
+            // vi detekterer det og bruker en lesbar fallback i stedet for en rå nøkkelstreng.
+            var localizedTitle = Loc.Get("SessionInsight_Title");
+            if (string.IsNullOrWhiteSpace(localizedTitle) || localizedTitle == "SessionInsight_Title")
+                localizedTitle = "Session reflection"; // {loc}-TODO
+
+            var title = new TextBlock
+            {
+                Text = localizedTitle,
+                FontSize = 16,
+                FontWeight = FontWeights.SemiBold,
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+            ApplyDynamicForeground(title, "TextPrimaryBrush");
+
+            var container = new StackPanel();
+            container.Children.Add(title);
+            container.Children.Add(_sessionInsightBody);
+
+            _sessionInsightPanel = new Border
+            {
+                CornerRadius = new CornerRadius(12),
+                Padding = new Thickness(20),
+                Margin = new Thickness(0, 16, 0, 0),
+                Visibility = Visibility.Collapsed,
+                Child = container
+            };
+            ApplyDynamicBackground(_sessionInsightPanel, "BackgroundCardBrush");
+
+            var index = parent.Children.IndexOf(SubjectiveReportPanel);
+            if (index >= 0) parent.Children.Insert(index, _sessionInsightPanel);
+            else parent.Children.Add(_sessionInsightPanel);
+        }
+
+        private TextBlock InsightLine(string text, bool primary = false)
+        {
+            var line = new TextBlock
+            {
+                Text = text,
+                FontSize = primary ? 13 : 12,
+                FontWeight = primary ? FontWeights.SemiBold : FontWeights.Normal,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, primary ? 0 : 2, 0, primary ? 6 : 0)
+            };
+            ApplyDynamicForeground(line, primary ? "TextPrimaryBrush" : "TextSecondaryBrush");
+            return line;
+        }
+
+        private static void ApplyDynamicForeground(TextBlock target, string resourceKey)
+        {
+            try { target.SetResourceReference(TextBlock.ForegroundProperty, resourceKey); }
+            catch { /* tema-ressurs mangler i test/host → behold standardfarge */ }
+        }
+
+        private static void ApplyDynamicBackground(Border target, string resourceKey)
+        {
+            try { target.SetResourceReference(Border.BackgroundProperty, resourceKey); }
+            catch { /* tema-ressurs mangler i test/host → behold standardbakgrunn */ }
         }
 
         private void StartExerciseAudio()

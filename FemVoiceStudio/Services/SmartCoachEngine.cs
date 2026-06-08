@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FemVoiceStudio.Data;
 using FemVoiceStudio.Models;
+using FemVoiceStudio.Services.Progression;
 
 namespace FemVoiceStudio.Services
 {
@@ -25,6 +26,21 @@ namespace FemVoiceStudio.Services
         // VoiceIntelligence-trendpunkt og velger coaching-akse på den SVAKESTE
         // dimensjonen — alltid ETTER health-gaten (Safety > Coaching).
         private readonly SessionAnalyticsStore? _voiceIntelligence;
+
+        // ── GOAL-/STIL-/CONFIDENCE-/VARIGHET-evolusjon (Sprint C, Bølge 2) ─────────────
+        // Alle VALGFRIE. Hver enkelt er null ⇒ NØYAKTIG dagens oppførsel for den biten
+        // (additivt + bakoverkompatibelt). Sammen lar de coachingen forstå brukerens
+        // STAGE + langtids-fokus (LearningPathProfile), prediktiv restitusjon
+        // (RecoveryForecast), STIL (DarkFeminine ≠ Feminine for samme fokus), og MESTRING
+        // (positiv, feirende ramme) — uten å røre health-gaten eller aksevalget.
+        private readonly RecoveryIntelligenceService? _recoveryIntelligence;
+        private readonly LearningPathProfileBuilder? _learningPathBuilder;
+        private readonly ComplexityEngine? _complexityEngine;
+
+        // Bro fra MasteryEvaluator → feirende coaching. Et rent delegat (ikke en mock):
+        // produksjon wirer det fra MasteryEvaluator over en representativ øvelse; tester
+        // gir en enkel lambda. null ⇒ ingen mestrings-melding (dagens oppførsel).
+        private readonly Func<int, MasteryLevel?>? _masteryLevelProvider;
 
         private readonly Random _random = new();
 
@@ -51,7 +67,21 @@ namespace FemVoiceStudio.Services
         // (TrainingFrequencyPerWeek = 3) og WeeklyGoals-tabellen (TargetSessions
         // DEFAULT 3), så ingen ny parallell konstant innføres.
         private const int DefaultWeeklySessionTarget = 3;
-        
+
+        // ── Adaptiv øktvarighet (Sprint C, Agent 6-varighet) ──────────────────────────
+        // RecommendedDurationMinutes var faste konstanter (kun strain ⇒ 5 min). Vi skalerer
+        // nå MILDT fra recovery/konsistens, ALLTID innenfor trygge, snevre grenser.
+        // KLINISK: skalering kan KUN STRAMME (gjøre kortere) ved restitusjonsbehov; en liten
+        // forlengelse er bare tillatt når BÅDE recovery er god OG konsistensen er høy, og
+        // aldri forbi taket. Health/Recovery > Goals: en kort økt presses aldri lengre.
+        private const int MinAdaptiveDurationMinutes = 3;   // gulv — aldri kortere enn dette
+        private const int MaxAdaptiveDurationMinutes = 12;  // tak — aldri lengre enn dette
+        private const double DurationRecoveryShortenThreshold = 50.0;  // < dette ⇒ kort ned
+        private const double DurationRecoveryLengthenThreshold = 80.0; // ≥ dette (+ konsist.) ⇒ litt lengre
+        private const double DurationConsistencyLengthenThreshold = 75.0;
+        private const int DurationShortenStepMinutes = 2;   // hvor mye vi korter
+        private const int DurationLengthenStepMinutes = 1;  // hvor mye vi (forsiktig) forlenger
+
         /// <summary>
         /// Constructor with dependency injection (recommended)
         /// </summary>
@@ -61,7 +91,11 @@ namespace FemVoiceStudio.Services
             FeedbackPipeline? feedbackPipeline = null,
             SmartCoachFeedbackMapper? feedbackMapper = null,
             IVoiceGoalProfileProvider? voiceGoalProfiles = null,
-            SessionAnalyticsStore? voiceIntelligence = null)
+            SessionAnalyticsStore? voiceIntelligence = null,
+            RecoveryIntelligenceService? recoveryIntelligence = null,
+            LearningPathProfileBuilder? learningPathBuilder = null,
+            ComplexityEngine? complexityEngine = null,
+            Func<int, MasteryLevel?>? masteryLevelProvider = null)
         {
             _database = database ?? throw new ArgumentNullException(nameof(database));
             _localization = localization ?? LocalizationService.Instance;
@@ -69,6 +103,10 @@ namespace FemVoiceStudio.Services
             _feedbackMapper = feedbackMapper;
             _voiceGoalProfiles = voiceGoalProfiles;
             _voiceIntelligence = voiceIntelligence;
+            _recoveryIntelligence = recoveryIntelligence;
+            _learningPathBuilder = learningPathBuilder;
+            _complexityEngine = complexityEngine;
+            _masteryLevelProvider = masteryLevelProvider;
         }
 
         
@@ -357,52 +395,82 @@ namespace FemVoiceStudio.Services
             var healthIssues = _database.GetRecentHealthIssues(userId: userId, days: 3);
             var baseline = GetOrCalculateBaseline(userId);
             var voiceGoalProfile = _voiceGoalProfiles?.GetProfile(userId);
-            
+
+            // STIL leses ÉN gang og bæres gjennom hele anbefalingen, slik at f.eks.
+            // resonans-coaching kan differensieres (DarkFeminine/Androgynous skal IKKE
+            // pushes mot lysere/fremre klang). null ⇒ ingen stil-info ⇒ dagens tekst.
+            var style = ResolveVoiceStyle(userId, voiceGoalProfile);
+
             // ==== HEALTH CHECK: Sjekk for anstrengelse ====
             if (healthIssues.Any(h => h.StrainDetected))
             {
                 var lastIssue = healthIssues.First();
                 recommendation.HealthWarning = true;
                 recommendation.HealthWarningText = lastIssue.Recommendation;
-                
+
                 // Endre fokus til restitusjon
                 recommendation.FocusArea = "recovery";
                 recommendation.RecommendationText = GetRecoveryRecommendation(lastIssue.StrainType);
-                recommendation.RecommendedDurationMinutes = 5;
-                
+                // Adaptiv varighet kan KUN stramme her (recovery-behov ⇒ kort). Vi sender
+                // en lav recovery-score (strain ⇒ overbelastet) inn i skaleringen og
+                // garanterer dermed en kort økt — aldri lengre enn de gamle 5 min.
+                recommendation.RecommendedDurationMinutes =
+                    ScaleDuration(5, recoveryScore: 0.0, consistencyScore: null, recoveryOriented: true);
+
                 _database.SaveDailyRecommendation(recommendation);
                 return recommendation;
             }
-            
+
+            // ==== GOAL-/STAGE-/RECOVERY-FORECAST-LAG (Sprint C, Bølge 2) ════════════════
+            // Bygg (når tjenestene er injisert) det prediktive bildet ÉN gang: en
+            // RecoveryForecast og en LearningPathProfile. Begge er VALGFRIE og rene —
+            // null-tjenester ⇒ null bilde ⇒ dagens oppførsel. Disse driver to ting:
+            //   1) Recovery > Goals: en prediktiv overload (Severity >= Recommend) eller et
+            //      RestRecommended-flagg fra LearningPath gir restitusjons-coaching FØR
+            //      ethvert mål — men det er IKKE en strain-advarsel (ingen HealthWarning).
+            //   2) En adaptiv recovery-/consistency-score som skalerer varigheten.
+            var forecast = TryGetRecoveryForecast(userId);
+            var learningPath = TryBuildLearningPathProfile(userId, forecast);
+
             // ==== ANALYSE: Bestem fokusområde ====
             // Klinisk prioritering: resonans > pitch > intonasjon > pust
             string focusArea;
             string recommendationText;
             int exerciseId;
             int duration;
+            bool recoveryOriented = false;
 
-            // VoiceMetrics-drevet aksevalg (Bølge 2). Kjører ETTER health-gaten over
-            // (Safety > Coaching) men FØR baseline-/pitch-heuristikken: når vi har en
-            // ekte siste øktscore velger vi coaching-akse på den SVAKESTE dimensjonen,
-            // med klinisk hierarki (Comfort > Resonance > Consistency > Intonation >
-            // Pitch) som tie-break. Pitch kan aldri vinne over en svakere høyere
-            // dimensjon. null-provider eller ingen ekte score ⇒ vi faller gjennom til
-            // den eksisterende baseline-logikken (full bakoverkompat).
+            // RECOVERY-FØR-MÅL-gate (Health/Recovery > Goals). Kjører ETTER strain-gaten
+            // (Safety) men FØR aksevalg/goal-profile. En mild, omsorgsfull omdirigering —
+            // ingen advarsel heises.
+            var recoveryForecastFocus = TryGetRecoveryForecastRecommendation(forecast, learningPath, style);
+
             var voiceMetricsFocus = TryGetVoiceIntelligenceRecommendation(userId, baseline, recentSessions);
             var preference = TryGetGoalProfileRecommendation(voiceGoalProfile, baseline, recentSessions);
-            if (voiceMetricsFocus.HasValue)
+            if (recoveryForecastFocus.HasValue)
+            {
+                (focusArea, recommendationText, exerciseId, duration) = recoveryForecastFocus.Value;
+                recoveryOriented = true;
+            }
+            else if (voiceMetricsFocus.HasValue)
             {
                 (focusArea, recommendationText, exerciseId, duration) = voiceMetricsFocus.Value;
+                // Stil-bevisst overstyring av resonans-/recovery-tekst (samme akse,
+                // ulik stemme per stil). Pitch/consistency/intonation berøres ikke.
+                recommendationText = StyleAwareText(focusArea, recommendationText, style);
+                recoveryOriented = focusArea == "recovery";
             }
             else if (preference.HasValue)
             {
                 (focusArea, recommendationText, exerciseId, duration) = preference.Value;
+                recommendationText = StyleAwareText(focusArea, recommendationText, style);
             }
             else if (baseline != null && baseline.BaselineResonanceScore < ResonancePriorityThreshold)
             {
                 // Prioriter resonans
                 focusArea = "resonance";
                 (recommendationText, exerciseId, duration) = GetResonanceRecommendation(baseline, recentSessions);
+                recommendationText = StyleAwareText(focusArea, recommendationText, style);
             }
             else if (recentSessions.Count > 0)
             {
@@ -436,16 +504,272 @@ namespace FemVoiceStudio.Services
                 focusArea = "pitch";
                 (recommendationText, exerciseId, duration) = GetStarterRecommendation();
             }
-            
+
+            // ==== ADAPTIV VARIGHET (Sprint C, Agent 6-varighet) ════════════════════════
+            // Skaler den valgte basis-varigheten fra recovery/konsistens. Kun strammere
+            // ved restitusjonsbehov; en liten forlengelse bare ved god recovery + høy
+            // konsistens. recoveryOriented ⇒ alltid kort. Manglende signal ⇒ uendret.
+            var (recoveryScore01, consistencyScore01) = ResolveDurationSignals(forecast, learningPath);
+            duration = ScaleDuration(duration, recoveryScore01, consistencyScore01, recoveryOriented);
+
             recommendation.FocusArea = focusArea;
             recommendation.RecommendationText = recommendationText;
             recommendation.RecommendedExerciseId = exerciseId;
             recommendation.RecommendedDurationMinutes = duration;
-            
+
             _database.SaveDailyRecommendation(recommendation);
-            
+
             return recommendation;
         }
+
+        #region Stil-bevisst coaching (Sprint C, Agent 4)
+
+        /// <summary>
+        /// Leser brukerens ønskede stemme-STIL. Prioritet: en kalibrert
+        /// <see cref="UserVoiceProfile.PreferredVoiceStyle"/> (brukerens eget valg) går
+        /// foran <see cref="VoiceGoalProfile.GoalStyleKey"/>. Mangler begge ⇒ null
+        /// (stil-nøytral — dagens coaching-tekst beholdes uendret).
+        ///
+        /// KLINISK: stil endrer KUN hvordan vi formulerer fokuset, aldri prioritetene.
+        /// DarkFeminine/Androgynous er like gyldige mål som Feminine; en DarkFeminine-
+        /// bruker skal aldri presses mot en lysere/fremre klang hun ikke ønsker.
+        /// </summary>
+        private VoiceStyleGoal? ResolveVoiceStyle(int userId, VoiceGoalProfile? voiceGoalProfile)
+        {
+            try
+            {
+                var profile = _database.GetUserVoiceProfile(userId);
+                if (profile != null)
+                    return profile.PreferredVoiceStyle;
+            }
+            catch
+            {
+                // Null-safe degradering: lesefeil ⇒ fall tilbake på goal-profilens nøkkel.
+            }
+
+            if (voiceGoalProfile != null && !string.IsNullOrWhiteSpace(voiceGoalProfile.GoalStyleKey))
+                return UserVoiceProfile.FromGoalStyleKey(voiceGoalProfile.GoalStyleKey);
+
+            return null;
+        }
+
+        /// <summary>
+        /// Velger stil-bevisst coaching-tekst for et gitt fokus. Returnerer ALLTID en
+        /// klinisk trygg streng. Per i dag differensieres RESONANS og RECOVERY:
+        ///   • Resonans: Feminine ⇒ lysere/fremre klang; DarkFeminine/Androgynous ⇒
+        ///     SENKE/fyldigere, varm resonans (aldri «lysere/fremre»); Situational ⇒
+        ///     fleksibel; Custom/null ⇒ den opprinnelige (stil-nøytrale) teksten.
+        ///   • Recovery: en mild, stil-fargelagt restitusjons-formulering.
+        /// Andre fokus (pitch/consistency/intonation/comfort/breathing/balanced) er
+        /// allerede stil-nøytrale og returneres uendret.
+        /// </summary>
+        private string StyleAwareText(string focusArea, string fallbackText, VoiceStyleGoal? style)
+        {
+            if (style == null)
+                return fallbackText;
+
+            switch (focusArea)
+            {
+                case "resonance":
+                    return style switch
+                    {
+                        VoiceStyleGoal.Feminine     => _localization.GetString("SmartCoach_Style_Resonance_Feminine"),
+                        VoiceStyleGoal.Androgynous  => _localization.GetString("SmartCoach_Style_Resonance_Androgynous"),
+                        VoiceStyleGoal.DarkFeminine => _localization.GetString("SmartCoach_Style_Resonance_DarkFeminine"),
+                        VoiceStyleGoal.Situational  => _localization.GetString("SmartCoach_Style_Resonance_Situational"),
+                        _                           => fallbackText
+                    };
+
+                case "recovery":
+                    return style switch
+                    {
+                        VoiceStyleGoal.Feminine     => _localization.GetString("SmartCoach_Style_Recovery_Feminine"),
+                        VoiceStyleGoal.Androgynous  => _localization.GetString("SmartCoach_Style_Recovery_Androgynous"),
+                        VoiceStyleGoal.DarkFeminine => _localization.GetString("SmartCoach_Style_Recovery_DarkFeminine"),
+                        VoiceStyleGoal.Situational  => _localization.GetString("SmartCoach_Style_Recovery_Situational"),
+                        _                           => fallbackText
+                    };
+
+                default:
+                    return fallbackText;
+            }
+        }
+
+        #endregion
+
+        #region Recovery-forecast + LearningPath (Sprint C, Agent 8)
+
+        /// <summary>
+        /// Henter en prediktiv <see cref="RecoveryForecast"/> fra persistert historikk,
+        /// eller null når ingen <see cref="RecoveryIntelligenceService"/> /
+        /// <see cref="SessionAnalyticsStore"/> er injisert eller lesingen feiler. Kjører
+        /// trygt synkront på thread-pool (in-memory-kilden fullfører uansett synkront).
+        /// </summary>
+        private RecoveryForecast? TryGetRecoveryForecast(int userId)
+        {
+            if (_recoveryIntelligence == null || _voiceIntelligence == null)
+                return null;
+
+            try
+            {
+                return Task.Run(() =>
+                    _recoveryIntelligence.ForecastFromHistoryAsync(_voiceIntelligence, DateTime.Now, userId))
+                    .GetAwaiter().GetResult();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Bygger en <see cref="LearningPathProfile"/> fra trend + recovery + complexity,
+        /// eller null når byggeren ikke er injisert eller noe feiler. Trenden hentes fra
+        /// VoiceIntelligence-kilden; recovery fra forecastet (eller en nøytral
+        /// WellRecovered-default); complexity fra <see cref="ComplexityEngine"/> (eller en
+        /// Foundation-default når motoren ikke er tilgjengelig — f.eks. i tester).
+        /// </summary>
+        private LearningPathProfile? TryBuildLearningPathProfile(int userId, RecoveryForecast? forecast)
+        {
+            if (_learningPathBuilder == null)
+                return null;
+
+            try
+            {
+                IReadOnlyList<VoiceIntelligenceTrendPoint> trend = Array.Empty<VoiceIntelligenceTrendPoint>();
+                if (_voiceIntelligence != null)
+                {
+                    var to = DateTime.Now;
+                    var from = to.AddDays(-VoiceIntelligenceLookbackDays);
+                    trend = Task.Run(() =>
+                        _voiceIntelligence.GetVoiceIntelligenceTrendAsync(from, to, userId))
+                        .GetAwaiter().GetResult();
+                }
+
+                var recovery = forecast?.Current
+                    ?? new RecoveryResult { Score = 100.0, Status = RecoveryStatus.WellRecovered, Explanation = string.Empty };
+
+                ComplexityEvaluation complexity;
+                if (_complexityEngine != null)
+                {
+                    complexity = _complexityEngine.EvaluateCurrentLevel(userId);
+                }
+                else
+                {
+                    complexity = new ComplexityEvaluation
+                    {
+                        CurrentLevel = SpeechComplexityLevel.IsolatedSounds
+                    };
+                }
+
+                return _learningPathBuilder.Build(trend, recovery, complexity);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Recovery-FØR-mål-gate. Når et prediktivt forecast melder Severity &gt;= Recommend
+        /// ELLER LearningPath-profilen sier RestRecommended, gir vi restitusjons-coaching
+        /// (stil-fargelagt) FØR ethvert mål — Health/Recovery &gt; Goals. Dette er IKKE en
+        /// safety-blokk: ingen helse-advarsel heises (den eies av strain-gaten over).
+        /// Returnerer null når ingen av tjenestene er injisert eller terskelen ikke nås.
+        /// </summary>
+        private (string focusArea, string text, int exerciseId, int duration)? TryGetRecoveryForecastRecommendation(
+            RecoveryForecast? forecast,
+            LearningPathProfile? learningPath,
+            VoiceStyleGoal? style)
+        {
+            var forecastWantsRest = forecast.HasValue && forecast.Value.Severity >= RecoverySeverity.Recommend;
+            var learningPathWantsRest = learningPath?.RecoveryRequirements.RestRecommended == true;
+
+            if (!forecastWantsRest && !learningPathWantsRest)
+                return null;
+
+            var text = StyleAwareText("recovery", _localization.GetString("SmartCoach_Focus_Recovery"), style);
+            return ("recovery", text, 7, 5);
+        }
+
+        #endregion
+
+        #region Adaptiv varighet (Sprint C, Agent 6-varighet)
+
+        /// <summary>
+        /// Henter (recovery, consistency) som 0–1-signaler for varighetsskalering, eller
+        /// (null, null) når intet bilde finnes. Recovery tas fra forecastets reaktive score;
+        /// consistency fra LearningPath-svakhetsvurderingen (siste trendpunkt). Begge er
+        /// rent beskrivende — de strammer/forlenger varighet, aldri prioritet.
+        /// </summary>
+        private static (double? recovery01, double? consistency01) ResolveDurationSignals(
+            RecoveryForecast? forecast, LearningPathProfile? learningPath)
+        {
+            double? recovery01 = forecast.HasValue
+                ? Math.Clamp(forecast.Value.Current.Score, 0.0, 100.0)
+                : (double?)null;
+
+            double? consistency01 = null;
+            if (learningPath != null)
+            {
+                // Finn consistency-dimensjonens siste score blant strengths/weaknesses.
+                var all = learningPath.Strengths.Concat(learningPath.Weaknesses);
+                var consistency = all.FirstOrDefault(a => a.Dimension == VoiceDimension.Consistency);
+                if (consistency != null)
+                    consistency01 = Math.Clamp(consistency.Score, 0.0, 100.0);
+            }
+
+            return (recovery01, consistency01);
+        }
+
+        /// <summary>
+        /// Skalerer en basis-varighet (minutter) fra recovery/konsistens innenfor de
+        /// trygge grensene [<see cref="MinAdaptiveDurationMinutes"/>,
+        /// <see cref="MaxAdaptiveDurationMinutes"/>].
+        ///
+        /// REGLER (Health/Recovery &gt; Goals):
+        ///   • recoveryOriented ⇒ alltid kort ned (en restitusjonsdag skal være lett).
+        ///   • Lav recovery (&lt; <see cref="DurationRecoveryShortenThreshold"/>) ⇒ kort ned.
+        ///   • God recovery (&gt;= <see cref="DurationRecoveryLengthenThreshold"/>) OG høy
+        ///     konsistens (&gt;= <see cref="DurationConsistencyLengthenThreshold"/>) ⇒ litt
+        ///     lengre — men ALDRI forbi taket, og bare med ett lite steg.
+        ///   • Ellers / manglende signal ⇒ uendret basis (clampet til grensene).
+        /// Forlengelse er bevisst konservativ: vi forlenger aldri en allerede strammet økt.
+        /// </summary>
+        private static int ScaleDuration(
+            int baseMinutes, double? recoveryScore, double? consistencyScore, bool recoveryOriented)
+        {
+            var minutes = baseMinutes;
+
+            if (recoveryOriented)
+            {
+                // En restitusjonsorientert økt skal være lett: kort ned, aldri forleng.
+                minutes -= DurationShortenStepMinutes;
+                return Clamp(minutes);
+            }
+
+            var shortened = false;
+            if (recoveryScore.HasValue && recoveryScore.Value < DurationRecoveryShortenThreshold)
+            {
+                minutes -= DurationShortenStepMinutes;
+                shortened = true;
+            }
+
+            // Forleng KUN ved god recovery + høy konsistens, og aldri en allerede strammet økt.
+            if (!shortened
+                && recoveryScore.HasValue && recoveryScore.Value >= DurationRecoveryLengthenThreshold
+                && consistencyScore.HasValue && consistencyScore.Value >= DurationConsistencyLengthenThreshold)
+            {
+                minutes += DurationLengthenStepMinutes;
+            }
+
+            return Clamp(minutes);
+
+            static int Clamp(int m) =>
+                Math.Clamp(m, MinAdaptiveDurationMinutes, MaxAdaptiveDurationMinutes);
+        }
+
+        #endregion
 
         private (string focusArea, string text, int exerciseId, int duration)? TryGetGoalProfileRecommendation(
             VoiceGoalProfile? profile,
@@ -879,7 +1203,37 @@ namespace FemVoiceStudio.Services
             string messageType;
             string title;
             string message;
-            
+
+            // ==== MESTRING/CONFIDENCE (Sprint C, Agent 7) ══════════════════════════════
+            // POSITIV ramme: bygg en bro fra MasteryEvaluator (Stable/Mastered) til en
+            // FEIRENDE, BEKREFTENDE melding. Tidligere fantes kun NEGATIVE rammeverk (forby
+            // skam / demp). Når brukeren har konsolidert en øvelse (mestring), feirer vi det
+            // som mestring og oppmuntrer TRYGG utforskning — aldri press. Kjører ETTER
+            // health-gaten (Safety > Coaching) og foran de score-baserte rosene, fordi en
+            // verifisert mestring er det sterkeste positive signalet vi har. null-provider
+            // (eller Beginner/Developing) ⇒ vi faller trygt gjennom til dagens oppførsel.
+            var masteryLevel = _masteryLevelProvider?.Invoke(userId);
+            if (masteryLevel is MasteryLevel.Stable or MasteryLevel.Mastered)
+            {
+                messageType = "achievement";
+                title = _localization.GetString("SmartCoach_Mastery_Title");
+                message = masteryLevel == MasteryLevel.Mastered
+                    ? _localization.GetString("SmartCoach_Mastery_Mastered")
+                    : _localization.GetString("SmartCoach_Mastery_Stable");
+
+                var masteryMessage = new SmartCoachMessage
+                {
+                    UserId = userId,
+                    Date = DateTime.Today,
+                    MessageType = messageType,
+                    Title = title,
+                    Message = message,
+                    CreatedAt = DateTime.Now
+                };
+                SaveCoachMessageThroughPipeline(masteryMessage);
+                return;
+            }
+
             // Basert på progresjon
             if (progress.AverageScore > 80)
             {

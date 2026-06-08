@@ -111,9 +111,60 @@ namespace FemVoiceStudio.ViewModels
         
         [ObservableProperty]
         private bool _isLoading = true;
-        
+
         [ObservableProperty]
         private bool _hasData;
+
+        // ============================
+        // Anbefalt øvelse-surfacing (Agent VOL — Sprint C)
+        // ============================
+        //
+        // SmartCoachs daglige anbefaling bærer en RecommendedExerciseId (øvelsesbibliotek
+        // 1–50) som tidligere ALDRI ble eksponert — dashboardet viste kun FocusArea +
+        // tekst. Vi surfacer den nå som et HINT/forslag (ikke et tvunget valg): forsidens
+        // treningsløkke bruker lesetekster per vanskelighet, et annet domene, så å tvinge
+        // ID-en inn der ville vært feil. Hintet vises ved siden av fokus-teksten.
+        //
+        // Recovery-orientering respekteres: når anbefalingen er helse-/recovery-drevet
+        // (HealthWarning eller FocusArea == "recovery") settes IsRecommendationRecoveryOriented
+        // slik at UI kan dempe/markere forslaget — Health > Goals.
+
+        [ObservableProperty]
+        private int _recommendedExerciseId;
+
+        [ObservableProperty]
+        private bool _hasRecommendedExercise;
+
+        [ObservableProperty]
+        private string _recommendedExerciseHint = "";
+
+        [ObservableProperty]
+        private bool _isRecommendationRecoveryOriented;
+
+        // ============================
+        // Adaptivt øktvolum (Agent VOL — Sprint C, 6-volum)
+        // ============================
+        //
+        // Øvelsesvolum (antall øvelser + sett per økt) ble aldri foreslått. Vi beregner
+        // det rent via AdaptiveDifficultyService.RecommendVolume ut fra Recovery/Comfort/
+        // Consistency/Health og surfacer forslaget. Klinisk invariant: Health > Progression
+        // — lav recovery/helse strammer ALLTID inn (IsVolumeReducedForRecovery), uansett
+        // hvor god konsistensen er.
+
+        [ObservableProperty]
+        private int _suggestedExerciseCount = AdaptiveDifficultyService.BaselineExerciseCount;
+
+        [ObservableProperty]
+        private int _suggestedSetCount = 2;
+
+        [ObservableProperty]
+        private string _suggestedVolumeText = "";
+
+        [ObservableProperty]
+        private bool _isVolumeReducedForRecovery;
+
+        [ObservableProperty]
+        private string _volumeReason = "";
         
         [ObservableProperty]
         private int _unreadMessageCount;
@@ -352,6 +403,12 @@ namespace FemVoiceStudio.ViewModels
                     MinutesThisWeek  = weeklyProgress.TotalMinutes;
                     HealthScore      = weeklyProgress.HealthScore;
 
+                    // Anbefalt øvelse-surfacing + adaptivt volum (Agent VOL). Begge er rene
+                    // beregninger over data vi alt har her — recovery-orientering tvinger
+                    // inn-stramming (Health > Progression/Goals).
+                    ApplyRecommendedExerciseSurfacing(recommendation);
+                    ApplyVolumeSuggestion(recommendation, weeklyProgress.HealthScore);
+
                     WeeklyProgressList.Clear();
                     foreach (var week in recentWeeks.OrderBy(w => w.WeekStart))
                     {
@@ -488,6 +545,112 @@ namespace FemVoiceStudio.ViewModels
             await LoadDataAsync();
         }
         
+        /// <summary>
+        /// Skriver de UI-bundne egenskapene for anbefalt-øvelse-hintet. Må kalles på
+        /// UI-tråden (gjør kun property-skriving). Null-safe via den rene helperen.
+        /// </summary>
+        private void ApplyRecommendedExerciseSurfacing(SmartCoachDailyRecommendation? recommendation)
+        {
+            var (hasExercise, exerciseId, hint, isRecoveryOriented) =
+                BuildRecommendedExerciseHint(recommendation);
+
+            HasRecommendedExercise          = hasExercise;
+            RecommendedExerciseId           = exerciseId;
+            RecommendedExerciseHint         = hint;
+            IsRecommendationRecoveryOriented = isRecoveryOriented;
+        }
+
+        /// <summary>
+        /// Skriver de UI-bundne egenskapene for volum-forslaget. Må kalles på UI-tråden.
+        /// Konsistens-scoren utledes fra komplexitets-/intonasjons-progresjon vi alt har;
+        /// vi bruker HealthScore som den dominerende health-aksen i dette laget.
+        /// </summary>
+        private void ApplyVolumeSuggestion(SmartCoachDailyRecommendation? recommendation, double healthScore)
+        {
+            // Komfort/konsistens er ikke direkte tilgjengelig som rene 0–100-scorer i
+            // dette VM-laget; vi bruker IntonationProgress (allerede satt over) som en
+            // forsiktig konsistens-proxy og lar komfort følge helse-scoren. Begge er
+            // klampet i RecommendVolume. Health > Progression håndteres i helperen.
+            var consistencyProxy = Math.Clamp(IntonationProgress, 0.0, 100.0);
+
+            var volume = BuildVolumeSuggestion(
+                recommendation: recommendation,
+                healthScore: healthScore,
+                comfortScore: healthScore,
+                consistencyScore: consistencyProxy);
+
+            SuggestedExerciseCount     = volume.ExerciseCount;
+            SuggestedSetCount          = volume.SetCount;
+            IsVolumeReducedForRecovery = volume.IsReducedForRecovery;
+            VolumeReason               = volume.Reason;
+            SuggestedVolumeText        = LocalizationService.Instance.GetFormattedString(
+                "SmartCoach_SuggestedVolumeFormat", volume.ExerciseCount, volume.SetCount);
+        }
+
+        /// <summary>
+        /// Ren surfacing av den daglige anbefalingens øvelses-ID som et HINT. Returnerer
+        /// (harExercise, exerciseId, hintTekst, erRecoveryOrientert). Et helse-/recovery-
+        /// drevet forslag (HealthWarning eller FocusArea == "recovery") markeres som
+        /// recovery-orientert — Health &gt; Goals. Null-anbefaling ⇒ ingen hint, ingen krasj.
+        /// </summary>
+        internal static (bool HasExercise, int ExerciseId, string Hint, bool IsRecoveryOriented)
+            BuildRecommendedExerciseHint(SmartCoachDailyRecommendation? recommendation)
+        {
+            if (recommendation?.RecommendedExerciseId is not int id || id <= 0)
+                return (false, 0, "", IsRecoveryFocused(recommendation));
+
+            var isRecovery = IsRecoveryFocused(recommendation);
+            var hint = LocalizationService.Instance.GetFormattedString(
+                "SmartCoach_RecommendedExerciseFormat", id);
+            return (true, id, hint, isRecovery);
+        }
+
+        private static bool IsRecoveryFocused(SmartCoachDailyRecommendation? recommendation)
+        {
+            if (recommendation == null)
+                return false;
+            return recommendation.HealthWarning
+                || string.Equals(recommendation.FocusArea, "recovery", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Ren beregning av øktvolum-forslaget fra den daglige anbefalingen + helse-/
+        /// progresjons-aksene. Recovery-orientering tvinger inn-stramming uavhengig av
+        /// tallene (Health &gt; Progression): et helse-/recovery-drevet råd mapper alltid
+        /// til Strained-status før <see cref="AdaptiveDifficultyService.RecommendVolume"/>
+        /// kjøres, så konsistens aldri kan løfte volumet på en hvile-dag.
+        /// </summary>
+        internal static VolumeRecommendation BuildVolumeSuggestion(
+            SmartCoachDailyRecommendation? recommendation,
+            double healthScore,
+            double comfortScore = 70,
+            double consistencyScore = 70,
+            AdaptiveDifficultyService? service = null)
+        {
+            service ??= new AdaptiveDifficultyService();
+
+            // Helse-/recovery-drevet anbefaling ⇒ behandle recovery som Strained slik at
+            // RecommendVolume-gaten alltid strammer inn (Health > Progression). Ellers
+            // utleder vi en recovery-proxy fra helse-scoren (vi har ingen egen recovery-
+            // score i dette VM-laget, men helse er den dominerende health-aksen her).
+            var recoveryProxyScore = IsRecoveryFocused(recommendation)
+                ? AdaptiveDifficultyService.LowRecoveryHealthThreshold / 2.0
+                : healthScore;
+
+            var recovery = new RecoveryResult
+            {
+                Score = recoveryProxyScore,
+                Status = RecoveryScorer.ClassifyStatus(recoveryProxyScore),
+                Explanation = ""
+            };
+
+            return service.RecommendVolume(
+                recovery: recovery,
+                comfortScore: comfortScore,
+                consistencyScore: consistencyScore,
+                healthScore: healthScore);
+        }
+
         private static string GetFocusAreaDisplay(string focusArea)
         {
             return focusArea switch

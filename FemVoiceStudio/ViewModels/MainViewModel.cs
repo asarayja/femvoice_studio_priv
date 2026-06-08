@@ -191,6 +191,23 @@ namespace FemVoiceStudio.ViewModels
         [ObservableProperty]
         private string _coachExplanation = "";
 
+        // ── Anbefalt øvelse-HINT (Agent VOL — Sprint C) ─────────────────────────────
+        // SmartCoachs daglige anbefaling bærer en RecommendedExerciseId som forsiden
+        // tidligere aldri viste. Forsidens treningsløkke (LoadNextExercise → GetRandomText)
+        // velger lesetekster per vanskelighet — et ANNET domene enn øvelsesbiblioteket
+        // (ID 1–50) anbefaleren returnerer. Vi TVINGER derfor ikke ID-en inn i løkka
+        // (det ville vært en domene-feil); vi SURFACER den som et ikke-bindende hint som
+        // forsiden kan vise. Recovery-orientering respekteres (Health > Goals):
+        // CoachRecommendationIsRecoveryOriented settes når rådet er helse-/recovery-drevet.
+        [ObservableProperty]
+        private bool _hasCoachRecommendation;
+
+        [ObservableProperty]
+        private string _coachRecommendationHint = "";
+
+        [ObservableProperty]
+        private bool _coachRecommendationIsRecoveryOriented;
+
         [ObservableProperty]
         private int _livePitchUpdateSequence;
         
@@ -312,6 +329,64 @@ namespace FemVoiceStudio.ViewModels
             // Hent persistert recovery-status én gang (DB-tung gate-evaluering) uten å
             // blokkere ctor — krymper forsidens målsone hvis brukeren alt er i recovery.
             _ = InitializeRecoveryStateAsync();
+
+            // Surface SmartCoachs anbefalte øvelse som et ikke-bindende hint (DB-tung
+            // GenerateDailyRecommendation kjøres på trådpuljen). Null-safe.
+            _ = InitializeCoachRecommendationAsync();
+        }
+
+        /// <summary>
+        /// Henter SmartCoachs daglige anbefaling én gang og surfacer den anbefalte øvelsen
+        /// som et IKKE-bindende hint på forsiden. Vi TVINGER aldri ID-en inn i den
+        /// tekstbaserte treningsløkka (domenene matcher ikke) — kun visning. DB-tungt
+        /// arbeid på trådpuljen; egenskaps-skriving marshales til UI-tråden. Null-safe:
+        /// uten SmartCoach (tester/ingen DI) skjer ingenting, og dagens oppførsel beholdes.
+        /// </summary>
+        private async Task InitializeCoachRecommendationAsync()
+        {
+            if (_smartCoach == null)
+                return;
+
+            try
+            {
+                var recommendation = await Task.Run(() => _smartCoach.GenerateDailyRecommendation(1))
+                    .ConfigureAwait(false);
+
+                var (hasHint, hint, isRecovery) = BuildCoachRecommendationHint(recommendation);
+
+                Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    HasCoachRecommendation                 = hasHint;
+                    CoachRecommendationHint                = hint;
+                    CoachRecommendationIsRecoveryOriented  = isRecovery;
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"[FemVoice][MainViewModel] InitializeCoachRecommendationAsync failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Ren mapping fra en daglig anbefaling til forsidens øvelses-hint. Returnerer
+        /// (harHint, hintTekst, erRecoveryOrientert). Recovery-orientering (HealthWarning
+        /// eller FocusArea == "recovery") propageres slik at UI kan markere/dempe forslaget
+        /// — Health &gt; Goals. Null-anbefaling ⇒ ingen hint.
+        /// </summary>
+        internal static (bool HasHint, string Hint, bool IsRecoveryOriented)
+            BuildCoachRecommendationHint(SmartCoachDailyRecommendation? recommendation)
+        {
+            var isRecovery = recommendation != null
+                && (recommendation.HealthWarning
+                    || string.Equals(recommendation.FocusArea, "recovery", StringComparison.OrdinalIgnoreCase));
+
+            if (recommendation?.RecommendedExerciseId is not int id || id <= 0)
+                return (false, "", isRecovery);
+
+            var hint = LocalizationService.Instance.GetFormattedString(
+                "SmartCoach_RecommendedExerciseFormat", id);
+            return (true, hint, isRecovery);
         }
         
         /// <summary>

@@ -2794,6 +2794,21 @@
   <data name="AdaptiveDifficulty_IntonationFocus" xml:space="preserve">
     <value>Øv på spørsmål og stigende intonasjon.</value>
   </data>
+  <data name="AdaptiveVolume_ReducedForRecovery" xml:space="preserve">
+    <value>Vi holder økten kort i dag så stemmen får hvile. Litt færre øvelser nå støtter restitusjonen.</value>
+  </data>
+  <data name="AdaptiveVolume_Baseline" xml:space="preserve">
+    <value>Et passe antall øvelser for en jevn økt.</value>
+  </data>
+  <data name="AdaptiveVolume_IncreasedConsistency" xml:space="preserve">
+    <value>Fin og jevn fremgang — du kan gjerne legge til litt mer denne økten hvis du har lyst.</value>
+  </data>
+  <data name="SmartCoach_SuggestedVolumeFormat" xml:space="preserve">
+    <value>Forslag: {0} øvelser × {1} sett</value>
+  </data>
+  <data name="SmartCoach_RecommendedExerciseFormat" xml:space="preserve">
+    <value>Foreslått øvelse: #{0}</value>
+  </data>
   <data name="VoiceHealthMonitor_CriticalStrain" xml:space="preserve">
     <value>Kritisk stemmebelastning detektert.</value>
   </data>
@@ -3354,6 +3369,39 @@
   </data>
   <data name="SmartCoach_Focus_Recovery" xml:space="preserve">
     <value>Fokus i dag: Restitusjon. Stemmen din har gjort godt arbeid, og nå kan den få hvile. Hold økten kort og lett, med myke, avslappede lyder. Drikk litt vann og la dette være en rolig, omsorgsfull dag for stemmen.</value>
+  </data>
+  <data name="SmartCoach_Style_Resonance_Feminine" xml:space="preserve">
+    <value>Fokus i dag: Resonans i din feminine retning. Kjenn etter vibrasjonene og la dem gjerne flytte rolig fremover i munnen. Utforsk en lettere, lysere klang i ditt eget tempo, og merk hva som føles naturlig og behagelig.</value>
+  </data>
+  <data name="SmartCoach_Style_Resonance_Androgynous" xml:space="preserve">
+    <value>Fokus i dag: Resonans i en balansert, androgyn retning. Hold klangen et sted midt imellom – verken spesielt fremre eller fyldig. Utforsk en jevn, behagelig resonans i ditt eget tempo, og la den lande der den kjennes mest deg.</value>
+  </data>
+  <data name="SmartCoach_Style_Resonance_DarkFeminine" xml:space="preserve">
+    <value>Fokus i dag: Resonans i en varm, dyp feminin retning. Her er målet en rund, fyldig klang – la gjerne resonansen hvile lenger bak og nede, uten å løfte den fremover. Utforsk en myk, mørkere varme i ditt eget tempo, og merk når den kjennes god.</value>
+  </data>
+  <data name="SmartCoach_Style_Resonance_Situational" xml:space="preserve">
+    <value>Fokus i dag: Fleksibel resonans. Du veksler mellom ulike sammenhenger, så øv på å finne klangen som passer situasjonen. Utforsk både en lettere og en fyldigere resonans i ditt eget tempo, og legg merke til hvilken som kjennes riktig når.</value>
+  </data>
+  <data name="SmartCoach_Style_Recovery_Feminine" xml:space="preserve">
+    <value>Fokus i dag: Restitusjon. La den lette, lyse klangen du jobber mot få hvile i dag. Hold økten kort og myk, drikk litt vann, og la dette være en rolig, omsorgsfull dag for stemmen din.</value>
+  </data>
+  <data name="SmartCoach_Style_Recovery_Androgynous" xml:space="preserve">
+    <value>Fokus i dag: Restitusjon. La den balanserte klangen du jobber mot få hvile i dag. Hold økten kort og myk, drikk litt vann, og la dette være en rolig, omsorgsfull dag for stemmen din.</value>
+  </data>
+  <data name="SmartCoach_Style_Recovery_DarkFeminine" xml:space="preserve">
+    <value>Fokus i dag: Restitusjon. La den varme, fyldige klangen du jobber mot få hvile i dag. Hold økten kort og myk, drikk litt vann, og la dette være en rolig, omsorgsfull dag for stemmen din.</value>
+  </data>
+  <data name="SmartCoach_Style_Recovery_Situational" xml:space="preserve">
+    <value>Fokus i dag: Restitusjon. La stemmen hvile uansett hvilken klang du veksler mellom. Hold økten kort og myk, drikk litt vann, og la dette være en rolig, omsorgsfull dag for stemmen din.</value>
+  </data>
+  <data name="SmartCoach_Mastery_Title" xml:space="preserve">
+    <value>Du mestrer dette!</value>
+  </data>
+  <data name="SmartCoach_Mastery_Stable" xml:space="preserve">
+    <value>Du har funnet en trygg, jevn klang i denne øvelsen – det er virkelig fint arbeid. Nå som dette sitter godt, kan du la deg utforske litt videre i ditt eget tempo når du har lyst. Det er helt opp til deg.</value>
+  </data>
+  <data name="SmartCoach_Mastery_Mastered" xml:space="preserve">
+    <value>For en flott utvikling – du har gjort denne øvelsen virkelig til din egen. Stemmen din kjenner dette godt nå, og du kan trygt utforske nye uttrykk når du føler deg klar. Vær stolt av hvor langt du har kommet.</value>
   </data>
   <data name="SmartCoach_Strain_PitchPress" xml:space="preserve">
     <value>Unngå å presse stemmen. Fokuser på avslapping, resonans og en naturlig tone.</value>

@@ -180,6 +180,17 @@ public partial class App : Application
         services.AddSingleton(sp => new HydrationAdvisor(sp.GetRequiredService<HydrationAdvisorOptions>()));
         services.AddSingleton<HydrationFeedbackMapper>();
         services.AddSingleton<IVoiceGoalProfileProvider, LocalVoiceGoalProfileStore>();
+
+        // ── Adaptiv coach-lag (Sprint C, Bølge 2) ──────────────────────────────────
+        // Rene/lese-tjenester som SmartCoach konsumerer for GOAL-/STAGE-/RECOVERY-
+        // bevisst coaching. Alle er additive: SmartCoach faller tilbake til dagens
+        // oppførsel dersom noen mangler (valgfrie ctor-params).
+        services.AddSingleton<RecoveryScorer>();
+        services.AddSingleton(sp => new RecoveryIntelligenceService(sp.GetRequiredService<RecoveryScorer>()));
+        services.AddSingleton<LearningPathProfileBuilder>();
+        services.AddSingleton(sp => new Services.Progression.ComplexityEngine(
+            sp.GetRequiredService<DatabaseService>()));
+
         services.AddSingleton(sp => new SmartCoachEngine(
             sp.GetRequiredService<IDatabaseService>(),
             sp.GetRequiredService<ILocalizationService>(),
@@ -189,7 +200,19 @@ public partial class App : Application
             // Bølge 2: gi SmartCoach lesetilgang til VoiceMetrics-trenden slik at
             // daglig-anbefalingen kan velge coaching-akse på den svakeste dimensjonen
             // (etter health-gaten). Valgfri param — null ville gitt dagens oppførsel.
-            sp.GetRequiredService<SessionAnalyticsStore>()));
+            sp.GetRequiredService<SessionAnalyticsStore>(),
+            // Sprint C, Bølge 2: prediktiv restitusjon + LearningPath-stage + complexity.
+            // Recovery > Goals: en forecast med Severity >= Recommend (eller RestRecommended)
+            // gir restitusjons-coaching FØR mål, og recovery/konsistens skalerer varigheten.
+            sp.GetRequiredService<RecoveryIntelligenceService>(),
+            sp.GetRequiredService<LearningPathProfileBuilder>(),
+            sp.GetRequiredService<Services.Progression.ComplexityEngine>(),
+            // masteryLevelProvider: foreløpig null i produksjon. MasteryEvaluator er
+            // øvelses-/profil-scoped og async; en trygg per-bruker-bro krever mer
+            // plumbing enn denne bølgen rører. Den feirende mestrings-grenen er fullt
+            // dekket av delegat-sømmen i testene; produksjonswiring kommer i en senere
+            // bølge. null ⇒ ingen mestrings-melding (dagens oppførsel).
+            masteryLevelProvider: null));
         services.AddSingleton<IExerciseProfileFactory, ExerciseProfileFactory>();
 
         // ── ViewModels ────────────────────────────────────────────────────────────
