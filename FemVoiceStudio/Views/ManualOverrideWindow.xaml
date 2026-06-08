@@ -124,13 +124,13 @@
 
                     <!-- Status indicators -->
                     <TextBlock Text="{loc:Loc Override_Clamped}"
-                               Foreground="#E65100" FontWeight="SemiBold"
+                               Foreground="{DynamicResource WarningBrush}" FontWeight="SemiBold"
                                Visibility="{Binding WasClamped, Converter={StaticResource BoolToVisibility}}"/>
                     <TextBlock Text="{loc:Loc Override_Blocked}"
-                               Foreground="#C62828" FontWeight="SemiBold"
+                               Foreground="{DynamicResource ErrorBrush}" FontWeight="SemiBold"
                                Visibility="{Binding WasBlocked, Converter={StaticResource BoolToVisibility}}"/>
                     <TextBlock Text="{loc:Loc Override_Logged}"
-                               Foreground="#2E7D32"
+                               Foreground="{DynamicResource SuccessBrush}"
                                Visibility="{Binding WasLogged, Converter={StaticResource BoolToVisibility}}"/>
 
                     <!-- The clamped (applied) requirement values — the only values shown. -->

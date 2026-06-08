@@ -76,22 +76,12 @@
                 <Button x:Name="GenerateButton"
                         Content="{loc:Loc Report_Generate}"
                         Command="{Binding GenerateCommand}"
-                        Padding="20,10"
                         Margin="0,0,12,0"
-                        Background="{DynamicResource AccentPrimaryBrush}"
-                        Foreground="{DynamicResource TextOnAccentBrush}"
-                        BorderThickness="0"
-                        Cursor="Hand"
-                        FontSize="14"/>
+                        Style="{DynamicResource PrimaryButtonStyle}"/>
                 <Button x:Name="ExportButton"
                         Content="{loc:Loc Report_Export}"
                         Command="{Binding GenerateCommand}"
-                        Padding="20,10"
-                        Background="{DynamicResource AccentSecondaryBrush}"
-                        Foreground="{DynamicResource TextOnAccentBrush}"
-                        BorderThickness="0"
-                        Cursor="Hand"
-                        FontSize="14"/>
+                        Style="{DynamicResource SecondaryButtonStyle}"/>
             </StackPanel>
 
         </StackPanel>

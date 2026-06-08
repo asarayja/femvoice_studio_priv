@@ -4472,6 +4472,218 @@ Dette kan ikke angres!</value>
   <data name="CaseReview_Complete" xml:space="preserve">
     <value>Fullfør gjennomgang</value>
   </data>
+  <data name="CaseReview_Monthly" xml:space="preserve">
+    <value>Månedlig</value>
+  </data>
+  <data name="CaseReview_Goal" xml:space="preserve">
+    <value>Mål</value>
+  </data>
+  <data name="CaseReview_Progress" xml:space="preserve">
+    <value>Progresjon</value>
+  </data>
+  <data name="CaseReview_Recovery" xml:space="preserve">
+    <value>Restitusjon</value>
+  </data>
+  <data name="CaseReview_SavedReviews" xml:space="preserve">
+    <value>Lagrede gjennomganger</value>
+  </data>
+  <data name="CaseReview_Load" xml:space="preserve">
+    <value>Last inn</value>
+  </data>
+  <data name="CaseReview_StatusServicesUnavailable" xml:space="preserve">
+    <value>Tjenester er ikke tilgjengelige – kan ikke opprette gjennomgang.</value>
+  </data>
+  <data name="CaseReview_StatusCreatedFormat" xml:space="preserve">
+    <value>Gjennomgang opprettet (utkast): {0}</value>
+  </data>
+  <data name="CaseReview_StatusCreateErrorFormat" xml:space="preserve">
+    <value>Feil ved oppretting: {0}</value>
+  </data>
+  <data name="CaseReview_StatusNotFound" xml:space="preserve">
+    <value>Gjennomgangen ble ikke funnet.</value>
+  </data>
+  <data name="CaseReview_StatusCompleted" xml:space="preserve">
+    <value>Gjennomgang fullført.</value>
+  </data>
+  <data name="CaseReview_StatusCompleteErrorFormat" xml:space="preserve">
+    <value>Feil ved fullføring: {0}</value>
+  </data>
+  <data name="CaseReview_StatusLoadErrorFormat" xml:space="preserve">
+    <value>Feil ved lasting av gjennomganger: {0}</value>
+  </data>
+  <data name="Clinician_RecoveryDebtLabel" xml:space="preserve">
+    <value>Gjeld: </value>
+  </data>
+  <data name="Clinician_OvertrainingPredicted" xml:space="preserve">
+    <value>Overtrening forutsagt</value>
+  </data>
+  <data name="Clinician_GridEffectiveness" xml:space="preserve">
+    <value>Effektivitet</value>
+  </data>
+  <data name="Clinician_GridResonanceGain" xml:space="preserve">
+    <value>Resonansgevinst</value>
+  </data>
+  <data name="Clinician_GridComfortGain" xml:space="preserve">
+    <value>Komfortgevinst</value>
+  </data>
+  <data name="Clinician_GridRecoveryCost" xml:space="preserve">
+    <value>Gjenkostn.</value>
+  </data>
+  <data name="Clinician_GridSuccess" xml:space="preserve">
+    <value>Suksess%</value>
+  </data>
+  <data name="Clinician_GridSessions" xml:space="preserve">
+    <value>Økter</value>
+  </data>
+  <data name="Clinician_SafetyLabel" xml:space="preserve">
+    <value>Sikkerhet: </value>
+  </data>
+  <data name="Clinician_FocusAreasLabel" xml:space="preserve">
+    <value>Fokusområder:</value>
+  </data>
+  <data name="Clinician_Strengths" xml:space="preserve">
+    <value>Styrker:</value>
+  </data>
+  <data name="Clinician_Weaknesses" xml:space="preserve">
+    <value>Svakheter:</value>
+  </data>
+  <data name="Clinician_GoalProgress" xml:space="preserve">
+    <value>Målfremdrift</value>
+  </data>
+  <data name="Clinician_GridGoal" xml:space="preserve">
+    <value>Mål</value>
+  </data>
+  <data name="Clinician_GridCurrentValue" xml:space="preserve">
+    <value>Nåverdi</value>
+  </data>
+  <data name="Clinician_GridTargetValue" xml:space="preserve">
+    <value>Mål</value>
+  </data>
+  <data name="Clinician_LongitudinalInsights" xml:space="preserve">
+    <value>Longitudinale innsikter</value>
+  </data>
+  <data name="Report_StatusServicesUnavailable" xml:space="preserve">
+    <value>Tjenester er ikke tilgjengelige – kan ikke generere rapport.</value>
+  </data>
+  <data name="Report_StatusExportedToFormat" xml:space="preserve">
+    <value>Eksportert til: {0}</value>
+  </data>
+  <data name="Report_StatusExportErrorFormat" xml:space="preserve">
+    <value>Feil ved eksport: {0}</value>
+  </data>
+  <data name="Report_FileFilterPdf" xml:space="preserve">
+    <value>PDF-filer (*.pdf)|*.pdf</value>
+  </data>
+  <data name="Report_FileFilterCsv" xml:space="preserve">
+    <value>CSV-filer (*.csv)|*.csv</value>
+  </data>
+  <data name="Report_FileFilterJson" xml:space="preserve">
+    <value>JSON-filer (*.json)|*.json</value>
+  </data>
+  <data name="Report_FileFilterAll" xml:space="preserve">
+    <value>Alle filer (*.*)|*.*</value>
+  </data>
+  <data name="Report_DialogTitle" xml:space="preserve">
+    <value>Eksporter rapport</value>
+  </data>
+  <data name="Report_TitleClinicalProgressFormat" xml:space="preserve">
+    <value>Klinisk progresjonsrapport — {0}</value>
+  </data>
+  <data name="Report_TitleCoachingSummaryFormat" xml:space="preserve">
+    <value>Coach-oppsummering — {0}</value>
+  </data>
+  <data name="Report_TitleOutcomeSummaryFormat" xml:space="preserve">
+    <value>Utfallsoppsummering — {0}</value>
+  </data>
+  <data name="Report_TitleVoiceTimelineFormat" xml:space="preserve">
+    <value>Stemmeutvikling over tid — {0}</value>
+  </data>
+  <data name="Report_DirectionInsufficientData" xml:space="preserve">
+    <value>Ikke nok data</value>
+  </data>
+  <data name="Report_DirectionImproving" xml:space="preserve">
+    <value>Forbedres</value>
+  </data>
+  <data name="Report_DirectionDeclining" xml:space="preserve">
+    <value>Synker</value>
+  </data>
+  <data name="Report_DirectionStable" xml:space="preserve">
+    <value>Stabil</value>
+  </data>
+  <data name="Report_FocusBreakthroughFormat" xml:space="preserve">
+    <value>{0} — gjennombrudd oppdaget</value>
+  </data>
+  <data name="Report_FocusPlateauFormat" xml:space="preserve">
+    <value>{0} — platå oppdaget</value>
+  </data>
+  <data name="Report_FocusRegressionFormat" xml:space="preserve">
+    <value>{0} — tilbakegang oppdaget</value>
+  </data>
+  <data name="Report_FocusGoalInProgressFormat" xml:space="preserve">
+    <value>{0} — mål pågår ({1:F0}%)</value>
+  </data>
+  <data name="Report_FocusGoalAchievedFormat" xml:space="preserve">
+    <value>{0} — mål oppnådd</value>
+  </data>
+  <data name="Report_FocusRecoveryOvertraining" xml:space="preserve">
+    <value>Restitusjon — overtrening forutsagt</value>
+  </data>
+  <data name="Report_FocusRecoveryStatusFormat" xml:space="preserve">
+    <value>Restitusjon — {0}</value>
+  </data>
+  <data name="Report_FocusExerciseConcernFormat" xml:space="preserve">
+    <value>Øvelse {0} — {1}</value>
+  </data>
+  <data name="Report_RecommendationDeprioritizeFormat" xml:space="preserve">
+    <value>Prioriter øvelse {0} lavere: {1}</value>
+  </data>
+  <data name="ReportPdf_ClinicalNotes" xml:space="preserve"><value>Kliniske notater</value></data>
+  <data name="ReportPdf_Date" xml:space="preserve"><value>Dato</value></data>
+  <data name="ReportPdf_AuthorRole" xml:space="preserve"><value>Rolle</value></data>
+  <data name="ReportPdf_Note" xml:space="preserve"><value>Notat</value></data>
+  <data name="ReportPdf_AuditTrail" xml:space="preserve"><value>Revisjonsspor</value></data>
+  <data name="ReportPdf_EntityType" xml:space="preserve"><value>Entitetstype</value></data>
+  <data name="ReportPdf_ReasonCode" xml:space="preserve"><value>Årsakskode</value></data>
+  <data name="ReportPdf_GeneratedPrefix" xml:space="preserve"><value>Generert: </value></data>
+  <data name="ReportPdf_DetectedPatterns" xml:space="preserve"><value>Oppdagede mønstre</value></data>
+  <data name="ReportPdf_BreakthroughFormat" xml:space="preserve"><value>Gjennombrudd: {0} ({1})</value></data>
+  <data name="ReportPdf_PlateauFormat" xml:space="preserve"><value>Platå: {0} ({1})</value></data>
+  <data name="ReportPdf_RegressionFormat" xml:space="preserve"><value>Tilbakegang: {0} ({1})</value></data>
+  <data name="ReportPdf_FocusAreas" xml:space="preserve"><value>Fokusområder</value></data>
+  <data name="ReportPdf_Recommendations" xml:space="preserve"><value>Anbefalinger</value></data>
+  <data name="ReportPdf_CompositeVoiceScoreFormat" xml:space="preserve"><value>Samlet stemmescore: {0:F1} / 100</value></data>
+  <data name="ReportPdf_RecoveryFormat" xml:space="preserve"><value>Restitusjon: {0} ({1:F1}/100)</value></data>
+  <data name="ReportPdf_DataSufficientFormat" xml:space="preserve"><value>Nok data: {0}</value></data>
+  <data name="ReportPdf_GoalProgress" xml:space="preserve"><value>Målfremdrift</value></data>
+  <data name="ReportPdf_GoalType" xml:space="preserve"><value>Måltype</value></data>
+  <data name="ReportPdf_Target" xml:space="preserve"><value>Mål</value></data>
+  <data name="ReportPdf_Current" xml:space="preserve"><value>Nåverdi</value></data>
+  <data name="ReportPdf_ProgressPercent" xml:space="preserve"><value>Fremdrift %</value></data>
+  <data name="ReportPdf_Achieved" xml:space="preserve"><value>Oppnådd</value></data>
+  <data name="ReportPdf_ExerciseEffectivenessRanked" xml:space="preserve"><value>Øvelseseffektivitet (rangert)</value></data>
+  <data name="ReportPdf_ExerciseId" xml:space="preserve"><value>Øvelse-ID</value></data>
+  <data name="ReportPdf_Composite" xml:space="preserve"><value>Samlet</value></data>
+  <data name="ReportPdf_RecoveryCost" xml:space="preserve"><value>Restitusjonskostnad</value></data>
+  <data name="ReportPdf_VoiceDevelopmentTimeline" xml:space="preserve"><value>Stemmeutvikling over tid</value></data>
+  <data name="ReportPdf_Period" xml:space="preserve"><value>Periode</value></data>
+  <data name="ReportPdf_Sessions" xml:space="preserve"><value>Økter</value></data>
+  <data name="ReportPdf_MeanScore" xml:space="preserve"><value>Snittscore</value></data>
+  <data name="ReportPdf_Slope" xml:space="preserve"><value>Trend</value></data>
+  <data name="ReportPdf_Direction" xml:space="preserve"><value>Retning</value></data>
+  <data name="ReportPdf_NoTimelineData" xml:space="preserve"><value>Ingen tidslinjedata er tilgjengelige for denne perioden.</value></data>
+  <data name="ReportPdf_NoSpecificLayout" xml:space="preserve"><value>Ingen spesifikk layout for denne rapporttypen.</value></data>
+  <data name="ReportPdf_PeriodLineFormat" xml:space="preserve"><value>Periode: {0} – {1}</value></data>
+  <data name="ReportPdf_OutcomeSummary" xml:space="preserve"><value>Utfallsoppsummering</value></data>
+  <data name="ReportPdf_Metric" xml:space="preserve"><value>Metrikk</value></data>
+  <data name="ReportPdf_Value" xml:space="preserve"><value>Verdi</value></data>
+  <data name="ReportPdf_CompositeVoiceScore" xml:space="preserve"><value>Samlet stemmescore</value></data>
+  <data name="ReportPdf_RecoveryStatus" xml:space="preserve"><value>Restitusjonsstatus</value></data>
+  <data name="ReportPdf_RecoveryDebt" xml:space="preserve"><value>Restitusjonsgjeld</value></data>
+  <data name="ReportPdf_OvertrainingPredicted" xml:space="preserve"><value>Overtrening forutsagt</value></data>
+  <data name="ReportPdf_GoalsTracked" xml:space="preserve"><value>Mål fulgt</value></data>
+  <data name="ReportPdf_ExercisesRanked" xml:space="preserve"><value>Øvelser rangert</value></data>
+  <data name="ReportPdf_DataSufficient" xml:space="preserve"><value>Nok data</value></data>
+  <data name="ReportPdf_RecoveryRecommendationFormat" xml:space="preserve"><value>Restitusjonsanbefaling: {0}</value></data>
   <!-- ── Sprint E: forskningseksport ────────────────────────────────────────── -->
   <data name="Research_Export" xml:space="preserve">
     <value>Eksporter forskningsdata</value>

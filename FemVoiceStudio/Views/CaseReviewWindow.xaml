@@ -45,10 +45,10 @@
                         <ComboBox x:Name="ReviewTypeComboBox"
                                   SelectedIndex="{Binding SelectedReviewTypeIndex, Mode=TwoWay}"
                                   FontSize="13" Margin="0,0,0,12">
-                            <ComboBoxItem Content="Monthly"/>
-                            <ComboBoxItem Content="Goal"/>
-                            <ComboBoxItem Content="Progress"/>
-                            <ComboBoxItem Content="Recovery"/>
+                            <ComboBoxItem Content="{loc:Loc CaseReview_Monthly}"/>
+                            <ComboBoxItem Content="{loc:Loc CaseReview_Goal}"/>
+                            <ComboBoxItem Content="{loc:Loc CaseReview_Progress}"/>
+                            <ComboBoxItem Content="{loc:Loc CaseReview_Recovery}"/>
                         </ComboBox>
 
                         <TextBlock Text="{loc:Loc CaseReview_Period}"
@@ -83,7 +83,7 @@
                 <Border Background="{DynamicResource BackgroundCardBrush}"
                         CornerRadius="8" Padding="16" Margin="0,0,0,0">
                     <StackPanel>
-                        <TextBlock Text="Lagrede reviews"
+                        <TextBlock Text="{loc:Loc CaseReview_SavedReviews}"
                                    FontSize="14" FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                    Margin="0,0,0,8"/>
@@ -126,32 +126,19 @@
         <Border Grid.Row="2" Padding="24,12,24,20">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button x:Name="LoadButton"
-                        Content="Last inn"
+                        Content="{loc:Loc CaseReview_Load}"
                         Command="{Binding LoadReviewsCommand}"
-                        Padding="16,9" Margin="0,0,12,0"
-                        Background="{DynamicResource BackgroundCardBrush}"
-                        Foreground="{DynamicResource TextPrimaryBrush}"
-                        BorderThickness="1"
-                        Cursor="Hand"
-                        FontSize="13"/>
+                        Margin="0,0,12,0"
+                        Style="{DynamicResource SecondaryButtonStyle}"/>
                 <Button x:Name="CompleteButton"
                         Content="{loc:Loc CaseReview_Complete}"
                         Command="{Binding CompleteCommand}"
-                        Padding="16,9" Margin="0,0,12,0"
-                        Background="{DynamicResource BackgroundCardBrush}"
-                        Foreground="{DynamicResource TextPrimaryBrush}"
-                        BorderThickness="1"
-                        Cursor="Hand"
-                        FontSize="13"/>
+                        Margin="0,0,12,0"
+                        Style="{DynamicResource SecondaryButtonStyle}"/>
                 <Button x:Name="CreateButton"
                         Content="{loc:Loc CaseReview_Create}"
                         Command="{Binding CreateCommand}"
-                        Padding="20,10"
-                        Background="{DynamicResource AccentPrimaryBrush}"
-                        Foreground="{DynamicResource TextOnAccentBrush}"
-                        BorderThickness="0"
-                        Cursor="Hand"
-                        FontSize="14"/>
+                        Style="{DynamicResource PrimaryButtonStyle}"/>
             </StackPanel>
         </Border>
     </Grid>

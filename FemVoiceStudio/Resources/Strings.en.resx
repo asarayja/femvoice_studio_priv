@@ -4169,6 +4169,108 @@ This cannot be undone!</value>
   <data name="CaseReview_Complete" xml:space="preserve">
     <value>Complete review</value>
   </data>
+  <data name="CaseReview_Monthly" xml:space="preserve"><value>Monthly</value></data>
+  <data name="CaseReview_Goal" xml:space="preserve"><value>Goal</value></data>
+  <data name="CaseReview_Progress" xml:space="preserve"><value>Progress</value></data>
+  <data name="CaseReview_Recovery" xml:space="preserve"><value>Recovery</value></data>
+  <data name="CaseReview_SavedReviews" xml:space="preserve"><value>Saved reviews</value></data>
+  <data name="CaseReview_Load" xml:space="preserve"><value>Load</value></data>
+  <data name="CaseReview_StatusServicesUnavailable" xml:space="preserve"><value>Services unavailable - cannot create review.</value></data>
+  <data name="CaseReview_StatusCreatedFormat" xml:space="preserve"><value>Review created (draft): {0}</value></data>
+  <data name="CaseReview_StatusCreateErrorFormat" xml:space="preserve"><value>Error creating review: {0}</value></data>
+  <data name="CaseReview_StatusNotFound" xml:space="preserve"><value>Review not found.</value></data>
+  <data name="CaseReview_StatusCompleted" xml:space="preserve"><value>Review completed.</value></data>
+  <data name="CaseReview_StatusCompleteErrorFormat" xml:space="preserve"><value>Error completing review: {0}</value></data>
+  <data name="CaseReview_StatusLoadErrorFormat" xml:space="preserve"><value>Error loading reviews: {0}</value></data>
+  <data name="Clinician_RecoveryDebtLabel" xml:space="preserve"><value>Debt: </value></data>
+  <data name="Clinician_OvertrainingPredicted" xml:space="preserve"><value>Overtraining predicted</value></data>
+  <data name="Clinician_GridEffectiveness" xml:space="preserve"><value>Effectiveness</value></data>
+  <data name="Clinician_GridResonanceGain" xml:space="preserve"><value>Resonance gain</value></data>
+  <data name="Clinician_GridComfortGain" xml:space="preserve"><value>Comfort gain</value></data>
+  <data name="Clinician_GridRecoveryCost" xml:space="preserve"><value>Recovery cost</value></data>
+  <data name="Clinician_GridSuccess" xml:space="preserve"><value>Success%</value></data>
+  <data name="Clinician_GridSessions" xml:space="preserve"><value>Sessions</value></data>
+  <data name="Clinician_SafetyLabel" xml:space="preserve"><value>Safety: </value></data>
+  <data name="Clinician_FocusAreasLabel" xml:space="preserve"><value>Focus areas:</value></data>
+  <data name="Clinician_Strengths" xml:space="preserve"><value>Strengths:</value></data>
+  <data name="Clinician_Weaknesses" xml:space="preserve"><value>Growth areas:</value></data>
+  <data name="Clinician_GoalProgress" xml:space="preserve"><value>Goal progress</value></data>
+  <data name="Clinician_GridGoal" xml:space="preserve"><value>Goal</value></data>
+  <data name="Clinician_GridCurrentValue" xml:space="preserve"><value>Current</value></data>
+  <data name="Clinician_GridTargetValue" xml:space="preserve"><value>Target</value></data>
+  <data name="Clinician_LongitudinalInsights" xml:space="preserve"><value>Longitudinal insights</value></data>
+  <data name="Report_StatusServicesUnavailable" xml:space="preserve"><value>Services unavailable - cannot generate report.</value></data>
+  <data name="Report_StatusExportedToFormat" xml:space="preserve"><value>Exported to: {0}</value></data>
+  <data name="Report_StatusExportErrorFormat" xml:space="preserve"><value>Export error: {0}</value></data>
+  <data name="Report_FileFilterPdf" xml:space="preserve"><value>PDF files (*.pdf)|*.pdf</value></data>
+  <data name="Report_FileFilterCsv" xml:space="preserve"><value>CSV files (*.csv)|*.csv</value></data>
+  <data name="Report_FileFilterJson" xml:space="preserve"><value>JSON files (*.json)|*.json</value></data>
+  <data name="Report_FileFilterAll" xml:space="preserve"><value>All files (*.*)|*.*</value></data>
+  <data name="Report_DialogTitle" xml:space="preserve"><value>Export report</value></data>
+  <data name="Report_TitleClinicalProgressFormat" xml:space="preserve"><value>Clinical Progress Report — {0}</value></data>
+  <data name="Report_TitleCoachingSummaryFormat" xml:space="preserve"><value>Coaching Summary — {0}</value></data>
+  <data name="Report_TitleOutcomeSummaryFormat" xml:space="preserve"><value>Outcome Summary — {0}</value></data>
+  <data name="Report_TitleVoiceTimelineFormat" xml:space="preserve"><value>Voice Development Timeline — {0}</value></data>
+  <data name="Report_DirectionInsufficientData" xml:space="preserve"><value>Insufficient data</value></data>
+  <data name="Report_DirectionImproving" xml:space="preserve"><value>Improving</value></data>
+  <data name="Report_DirectionDeclining" xml:space="preserve"><value>Declining</value></data>
+  <data name="Report_DirectionStable" xml:space="preserve"><value>Stable</value></data>
+  <data name="Report_FocusBreakthroughFormat" xml:space="preserve"><value>{0} — breakthrough detected</value></data>
+  <data name="Report_FocusPlateauFormat" xml:space="preserve"><value>{0} — plateau detected</value></data>
+  <data name="Report_FocusRegressionFormat" xml:space="preserve"><value>{0} — regression detected</value></data>
+  <data name="Report_FocusGoalInProgressFormat" xml:space="preserve"><value>{0} — goal in progress ({1:F0}%)</value></data>
+  <data name="Report_FocusGoalAchievedFormat" xml:space="preserve"><value>{0} — goal achieved</value></data>
+  <data name="Report_FocusRecoveryOvertraining" xml:space="preserve"><value>Recovery — overtraining predicted</value></data>
+  <data name="Report_FocusRecoveryStatusFormat" xml:space="preserve"><value>Recovery — {0}</value></data>
+  <data name="Report_FocusExerciseConcernFormat" xml:space="preserve"><value>Exercise {0} — {1}</value></data>
+  <data name="Report_RecommendationDeprioritizeFormat" xml:space="preserve"><value>De-prioritise exercise {0}: {1}</value></data>
+  <data name="ReportPdf_ClinicalNotes" xml:space="preserve"><value>Clinical Notes</value></data>
+  <data name="ReportPdf_Date" xml:space="preserve"><value>Date</value></data>
+  <data name="ReportPdf_AuthorRole" xml:space="preserve"><value>Author Role</value></data>
+  <data name="ReportPdf_Note" xml:space="preserve"><value>Note</value></data>
+  <data name="ReportPdf_AuditTrail" xml:space="preserve"><value>Audit Trail</value></data>
+  <data name="ReportPdf_EntityType" xml:space="preserve"><value>Entity Type</value></data>
+  <data name="ReportPdf_ReasonCode" xml:space="preserve"><value>Reason Code</value></data>
+  <data name="ReportPdf_GeneratedPrefix" xml:space="preserve"><value>Generated: </value></data>
+  <data name="ReportPdf_DetectedPatterns" xml:space="preserve"><value>Detected Patterns</value></data>
+  <data name="ReportPdf_BreakthroughFormat" xml:space="preserve"><value>Breakthrough: {0} ({1})</value></data>
+  <data name="ReportPdf_PlateauFormat" xml:space="preserve"><value>Plateau: {0} ({1})</value></data>
+  <data name="ReportPdf_RegressionFormat" xml:space="preserve"><value>Regression: {0} ({1})</value></data>
+  <data name="ReportPdf_FocusAreas" xml:space="preserve"><value>Focus Areas</value></data>
+  <data name="ReportPdf_Recommendations" xml:space="preserve"><value>Recommendations</value></data>
+  <data name="ReportPdf_CompositeVoiceScoreFormat" xml:space="preserve"><value>Composite Voice Score: {0:F1} / 100</value></data>
+  <data name="ReportPdf_RecoveryFormat" xml:space="preserve"><value>Recovery: {0} ({1:F1}/100)</value></data>
+  <data name="ReportPdf_DataSufficientFormat" xml:space="preserve"><value>Data sufficient: {0}</value></data>
+  <data name="ReportPdf_GoalProgress" xml:space="preserve"><value>Goal Progress</value></data>
+  <data name="ReportPdf_GoalType" xml:space="preserve"><value>Goal Type</value></data>
+  <data name="ReportPdf_Target" xml:space="preserve"><value>Target</value></data>
+  <data name="ReportPdf_Current" xml:space="preserve"><value>Current</value></data>
+  <data name="ReportPdf_ProgressPercent" xml:space="preserve"><value>Progress %</value></data>
+  <data name="ReportPdf_Achieved" xml:space="preserve"><value>Achieved</value></data>
+  <data name="ReportPdf_ExerciseEffectivenessRanked" xml:space="preserve"><value>Exercise Effectiveness (ranked)</value></data>
+  <data name="ReportPdf_ExerciseId" xml:space="preserve"><value>Ex ID</value></data>
+  <data name="ReportPdf_Composite" xml:space="preserve"><value>Composite</value></data>
+  <data name="ReportPdf_RecoveryCost" xml:space="preserve"><value>Recovery Cost</value></data>
+  <data name="ReportPdf_VoiceDevelopmentTimeline" xml:space="preserve"><value>Voice Development Timeline</value></data>
+  <data name="ReportPdf_Period" xml:space="preserve"><value>Period</value></data>
+  <data name="ReportPdf_Sessions" xml:space="preserve"><value>Sessions</value></data>
+  <data name="ReportPdf_MeanScore" xml:space="preserve"><value>Mean Score</value></data>
+  <data name="ReportPdf_Slope" xml:space="preserve"><value>Slope</value></data>
+  <data name="ReportPdf_Direction" xml:space="preserve"><value>Direction</value></data>
+  <data name="ReportPdf_NoTimelineData" xml:space="preserve"><value>No timeline data available for this period.</value></data>
+  <data name="ReportPdf_NoSpecificLayout" xml:space="preserve"><value>No specific layout for this report type.</value></data>
+  <data name="ReportPdf_PeriodLineFormat" xml:space="preserve"><value>Period: {0} – {1}</value></data>
+  <data name="ReportPdf_OutcomeSummary" xml:space="preserve"><value>Outcome Summary</value></data>
+  <data name="ReportPdf_Metric" xml:space="preserve"><value>Metric</value></data>
+  <data name="ReportPdf_Value" xml:space="preserve"><value>Value</value></data>
+  <data name="ReportPdf_CompositeVoiceScore" xml:space="preserve"><value>Composite Voice Score</value></data>
+  <data name="ReportPdf_RecoveryStatus" xml:space="preserve"><value>Recovery Status</value></data>
+  <data name="ReportPdf_RecoveryDebt" xml:space="preserve"><value>Recovery Debt</value></data>
+  <data name="ReportPdf_OvertrainingPredicted" xml:space="preserve"><value>Overtraining Predicted</value></data>
+  <data name="ReportPdf_GoalsTracked" xml:space="preserve"><value>Goals Tracked</value></data>
+  <data name="ReportPdf_ExercisesRanked" xml:space="preserve"><value>Exercises Ranked</value></data>
+  <data name="ReportPdf_DataSufficient" xml:space="preserve"><value>Data Sufficient</value></data>
+  <data name="ReportPdf_RecoveryRecommendationFormat" xml:space="preserve"><value>Recovery recommendation: {0}</value></data>
   <!-- ── Sprint E: research export ──────────────────────────────────────────── -->
   <data name="Research_Export" xml:space="preserve">
     <value>Export research data</value>

@@ -345,6 +345,10 @@ namespace FemVoiceStudio.Services
 
         // ── PDF document builders ─────────────────────────────────────────────────
 
+        private static string T(string key) => LocalizationService.Instance.GetString(key);
+        private static string Tf(string key, params object[] args) =>
+            LocalizationService.Instance.GetFormattedString(key, args);
+
         private static IDocument BuildClinicalPdf(ClinicalReport r) =>
             Document.Create(container =>
             {
@@ -369,7 +373,7 @@ namespace FemVoiceStudio.Services
                         if (r.Notes.Count > 0)
                         {
                             col.Item().PaddingTop(0.5f, Unit.Centimetre)
-                                .Text("Clinical Notes").FontSize(13).Bold();
+                                .Text(T("ReportPdf_ClinicalNotes")).FontSize(13).Bold();
                             col.Item().Table(table =>
                             {
                                 table.ColumnsDefinition(columns =>
@@ -378,7 +382,7 @@ namespace FemVoiceStudio.Services
                                     columns.RelativeColumn(2);
                                     columns.RelativeColumn(7);
                                 });
-                                AddTableHeader(table, "Date", "Author Role", "Note");
+                                AddTableHeader(table, T("ReportPdf_Date"), T("ReportPdf_AuthorRole"), T("ReportPdf_Note"));
                                 foreach (var note in r.Notes)
                                 {
                                     table.Cell().Text(note.CreatedAt.ToString("yyyy-MM-dd"));
@@ -392,7 +396,7 @@ namespace FemVoiceStudio.Services
                         if (r.AuditEvents.Count > 0)
                         {
                             col.Item().PaddingTop(0.5f, Unit.Centimetre)
-                                .Text("Audit Trail").FontSize(13).Bold();
+                                .Text(T("ReportPdf_AuditTrail")).FontSize(13).Bold();
                             col.Item().Table(table =>
                             {
                                 table.ColumnsDefinition(columns =>
@@ -401,7 +405,7 @@ namespace FemVoiceStudio.Services
                                     columns.RelativeColumn(3);
                                     columns.RelativeColumn(4);
                                 });
-                                AddTableHeader(table, "Date", "Entity Type", "Reason Code");
+                                AddTableHeader(table, T("ReportPdf_Date"), T("ReportPdf_EntityType"), T("ReportPdf_ReasonCode"));
                                 foreach (var ev in r.AuditEvents)
                                 {
                                     table.Cell().Text(ev.OccurredAt.ToString("yyyy-MM-dd"));
@@ -414,7 +418,7 @@ namespace FemVoiceStudio.Services
 
                     page.Footer().AlignRight().Text(t =>
                     {
-                        t.Span("Generated: ").FontSize(9);
+                        t.Span(T("ReportPdf_GeneratedPrefix")).FontSize(9);
                         t.Span(r.Period.GeneratedAt.ToString("yyyy-MM-dd HH:mm UTC")).FontSize(9);
                     });
                 });
@@ -442,19 +446,19 @@ namespace FemVoiceStudio.Services
                         // Patterns
                         if (r.Breakthrough is not null || r.Plateau is not null || r.Regression is not null)
                         {
-                            col.Item().PaddingTop(0.5f, Unit.Centimetre).Text("Detected Patterns").FontSize(13).Bold();
+                            col.Item().PaddingTop(0.5f, Unit.Centimetre).Text(T("ReportPdf_DetectedPatterns")).FontSize(13).Bold();
                             if (r.Breakthrough is not null)
-                                col.Item().Text($"Breakthrough: {r.Breakthrough.ReasonCode} ({r.Breakthrough.Dimension})");
+                                col.Item().Text(Tf("ReportPdf_BreakthroughFormat", r.Breakthrough.ReasonCode, r.Breakthrough.Dimension));
                             if (r.Plateau is not null)
-                                col.Item().Text($"Plateau: {r.Plateau.ReasonCode} ({r.Plateau.Dimension})");
+                                col.Item().Text(Tf("ReportPdf_PlateauFormat", r.Plateau.ReasonCode, r.Plateau.Dimension));
                             if (r.Regression is not null)
-                                col.Item().Text($"Regression: {r.Regression.ReasonCode} ({r.Regression.Dimension})");
+                                col.Item().Text(Tf("ReportPdf_RegressionFormat", r.Regression.ReasonCode, r.Regression.Dimension));
                         }
 
                         // Focus areas
                         if (r.FocusAreas.Count > 0)
                         {
-                            col.Item().PaddingTop(0.5f, Unit.Centimetre).Text("Focus Areas").FontSize(13).Bold();
+                            col.Item().PaddingTop(0.5f, Unit.Centimetre).Text(T("ReportPdf_FocusAreas")).FontSize(13).Bold();
                             foreach (var fa in r.FocusAreas)
                                 col.Item().Text($"• {fa}");
                         }
@@ -462,7 +466,7 @@ namespace FemVoiceStudio.Services
                         // Recommendations
                         if (r.Recommendations.Count > 0)
                         {
-                            col.Item().PaddingTop(0.5f, Unit.Centimetre).Text("Recommendations").FontSize(13).Bold();
+                            col.Item().PaddingTop(0.5f, Unit.Centimetre).Text(T("ReportPdf_Recommendations")).FontSize(13).Bold();
                             foreach (var rec in r.Recommendations)
                                 col.Item().Text($"• {rec}");
                         }
@@ -470,7 +474,7 @@ namespace FemVoiceStudio.Services
 
                     page.Footer().AlignRight().Text(t =>
                     {
-                        t.Span("Generated: ").FontSize(9);
+                        t.Span(T("ReportPdf_GeneratedPrefix")).FontSize(9);
                         t.Span(r.Period.GeneratedAt.ToString("yyyy-MM-dd HH:mm UTC")).FontSize(9);
                     });
                 });
@@ -493,14 +497,14 @@ namespace FemVoiceStudio.Services
 
                     page.Content().PaddingTop(1, Unit.Centimetre).Column(col =>
                     {
-                        col.Item().Text($"Composite Voice Score: {r.CompositeVoiceScore:F1} / 100").FontSize(12);
-                        col.Item().Text($"Recovery: {r.RecoveryStatus} ({r.RecoveryScore:F1}/100)");
-                        col.Item().Text($"Data sufficient: {r.HasEnoughData}");
+                        col.Item().Text(Tf("ReportPdf_CompositeVoiceScoreFormat", r.CompositeVoiceScore)).FontSize(12);
+                        col.Item().Text(Tf("ReportPdf_RecoveryFormat", r.RecoveryStatus, r.RecoveryScore));
+                        col.Item().Text(Tf("ReportPdf_DataSufficientFormat", r.HasEnoughData ? T("Common_Yes") : T("Common_No")));
 
                         // Goals table
                         if (r.GoalProgress.Count > 0)
                         {
-                            col.Item().PaddingTop(0.5f, Unit.Centimetre).Text("Goal Progress").FontSize(13).Bold();
+                            col.Item().PaddingTop(0.5f, Unit.Centimetre).Text(T("ReportPdf_GoalProgress")).FontSize(13).Bold();
                             col.Item().Table(table =>
                             {
                                 table.ColumnsDefinition(columns =>
@@ -511,14 +515,14 @@ namespace FemVoiceStudio.Services
                                     columns.RelativeColumn(2);
                                     columns.RelativeColumn(1);
                                 });
-                                AddTableHeader(table, "Goal Type", "Target", "Current", "Progress %", "Achieved");
+                                AddTableHeader(table, T("ReportPdf_GoalType"), T("ReportPdf_Target"), T("ReportPdf_Current"), T("ReportPdf_ProgressPercent"), T("ReportPdf_Achieved"));
                                 foreach (var g in r.GoalProgress)
                                 {
                                     table.Cell().Text(g.GoalType);
                                     table.Cell().Text(g.TargetValue.ToString("F2"));
                                     table.Cell().Text(g.CurrentValue.ToString("F2"));
                                     table.Cell().Text(g.PercentComplete.ToString("F0") + "%");
-                                    table.Cell().Text(g.IsAchieved ? "Yes" : "No");
+                                    table.Cell().Text(g.IsAchieved ? T("Common_Yes") : T("Common_No"));
                                 }
                             });
                         }
@@ -526,7 +530,7 @@ namespace FemVoiceStudio.Services
                         // Exercise effectiveness table
                         if (r.TopExercises.Count > 0)
                         {
-                            col.Item().PaddingTop(0.5f, Unit.Centimetre).Text("Exercise Effectiveness (ranked)").FontSize(13).Bold();
+                            col.Item().PaddingTop(0.5f, Unit.Centimetre).Text(T("ReportPdf_ExerciseEffectivenessRanked")).FontSize(13).Bold();
                             col.Item().Table(table =>
                             {
                                 table.ColumnsDefinition(columns =>
@@ -537,7 +541,7 @@ namespace FemVoiceStudio.Services
                                     columns.RelativeColumn(2);
                                     columns.RelativeColumn(2);
                                 });
-                                AddTableHeader(table, "Ex ID", "Composite", "Resonance", "Comfort", "RecoveryCost");
+                                AddTableHeader(table, T("ReportPdf_ExerciseId"), T("ReportPdf_Composite"), T("Dimension_Resonance"), T("Dimension_Comfort"), T("ReportPdf_RecoveryCost"));
                                 foreach (var ex in r.TopExercises)
                                 {
                                     table.Cell().Text(ex.ExerciseId.ToString());
@@ -552,7 +556,7 @@ namespace FemVoiceStudio.Services
 
                     page.Footer().AlignRight().Text(t =>
                     {
-                        t.Span("Generated: ").FontSize(9);
+                        t.Span(T("ReportPdf_GeneratedPrefix")).FontSize(9);
                         t.Span(r.Period.GeneratedAt.ToString("yyyy-MM-dd HH:mm UTC")).FontSize(9);
                     });
                 });
@@ -575,11 +579,11 @@ namespace FemVoiceStudio.Services
 
                     page.Content().PaddingTop(1, Unit.Centimetre).Column(col =>
                     {
-                        col.Item().Text($"Composite Voice Score: {r.Outcome.LongTermDevelopment.CompositeVoiceScore:F1} / 100").FontSize(12);
+                        col.Item().Text(Tf("ReportPdf_CompositeVoiceScoreFormat", r.Outcome.LongTermDevelopment.CompositeVoiceScore)).FontSize(12);
 
                         if (r.TimelineEntries.Count > 0)
                         {
-                            col.Item().PaddingTop(0.5f, Unit.Centimetre).Text("Voice Development Timeline").FontSize(13).Bold();
+                            col.Item().PaddingTop(0.5f, Unit.Centimetre).Text(T("ReportPdf_VoiceDevelopmentTimeline")).FontSize(13).Bold();
                             col.Item().Table(table =>
                             {
                                 table.ColumnsDefinition(columns =>
@@ -590,7 +594,7 @@ namespace FemVoiceStudio.Services
                                     columns.RelativeColumn(2);
                                     columns.RelativeColumn(3);
                                 });
-                                AddTableHeader(table, "Period", "Sessions", "Mean Score", "Slope", "Direction");
+                                AddTableHeader(table, T("ReportPdf_Period"), T("ReportPdf_Sessions"), T("ReportPdf_MeanScore"), T("ReportPdf_Slope"), T("ReportPdf_Direction"));
                                 foreach (var entry in r.TimelineEntries)
                                 {
                                     table.Cell().Text(entry.Label);
@@ -603,13 +607,13 @@ namespace FemVoiceStudio.Services
                         }
                         else
                         {
-                            col.Item().Text("No timeline data available for this period.");
+                            col.Item().Text(T("ReportPdf_NoTimelineData"));
                         }
                     });
 
                     page.Footer().AlignRight().Text(t =>
                     {
-                        t.Span("Generated: ").FontSize(9);
+                        t.Span(T("ReportPdf_GeneratedPrefix")).FontSize(9);
                         t.Span(r.Period.GeneratedAt.ToString("yyyy-MM-dd HH:mm UTC")).FontSize(9);
                     });
                 });
@@ -623,18 +627,18 @@ namespace FemVoiceStudio.Services
                     page.Size(PageSizes.A4);
                     page.Margin(2, Unit.Centimetre);
                     page.Header().Text(report.GetType().Name).FontSize(16).Bold();
-                    page.Content().PaddingTop(1, Unit.Centimetre).Text("No specific layout for this report type.");
+                    page.Content().PaddingTop(1, Unit.Centimetre).Text(T("ReportPdf_NoSpecificLayout"));
                 });
             });
 
         // ── Shared PDF helpers ────────────────────────────────────────────────────
 
         private static string PeriodLine(ReportPeriod period) =>
-            $"Period: {period.PeriodStart:yyyy-MM-dd} – {period.PeriodEnd:yyyy-MM-dd}";
+            Tf("ReportPdf_PeriodLineFormat", period.PeriodStart.ToString("yyyy-MM-dd"), period.PeriodEnd.ToString("yyyy-MM-dd"));
 
         private static void AddOutcomeSection(ColumnDescriptor col, OutcomeProfile outcome)
         {
-            col.Item().Text("Outcome Summary").FontSize(13).Bold();
+            col.Item().Text(T("ReportPdf_OutcomeSummary")).FontSize(13).Bold();
             col.Item().Table(table =>
             {
                 table.ColumnsDefinition(columns =>
@@ -642,27 +646,27 @@ namespace FemVoiceStudio.Services
                     columns.RelativeColumn(4);
                     columns.RelativeColumn(6);
                 });
-                AddTableHeader(table, "Metric", "Value");
-                AddMetricRow(table, "Composite Voice Score",
+                AddTableHeader(table, T("ReportPdf_Metric"), T("ReportPdf_Value"));
+                AddMetricRow(table, T("ReportPdf_CompositeVoiceScore"),
                     $"{outcome.LongTermDevelopment.CompositeVoiceScore:F1} / 100");
-                AddMetricRow(table, "Recovery Status",
+                AddMetricRow(table, T("ReportPdf_RecoveryStatus"),
                     $"{outcome.RecoveryProgress.Status} ({outcome.RecoveryProgress.CurrentScore0to100:F1}/100)");
-                AddMetricRow(table, "Recovery Debt",
+                AddMetricRow(table, T("ReportPdf_RecoveryDebt"),
                     outcome.RecoveryProgress.RecoveryDebt.ToString("F1"));
-                AddMetricRow(table, "Overtraining Predicted",
-                    outcome.RecoveryProgress.OvertrainingPredicted ? "Yes" : "No");
-                AddMetricRow(table, "Goals Tracked",
+                AddMetricRow(table, T("ReportPdf_OvertrainingPredicted"),
+                    outcome.RecoveryProgress.OvertrainingPredicted ? T("Common_Yes") : T("Common_No"));
+                AddMetricRow(table, T("ReportPdf_GoalsTracked"),
                     outcome.GoalProgress.Goals.Count.ToString());
-                AddMetricRow(table, "Exercises Ranked",
+                AddMetricRow(table, T("ReportPdf_ExercisesRanked"),
                     outcome.ExerciseEffectiveness.Ranked.Count.ToString());
-                AddMetricRow(table, "Data Sufficient",
-                    outcome.HasEnoughData ? "Yes" : "No");
+                AddMetricRow(table, T("ReportPdf_DataSufficient"),
+                    outcome.HasEnoughData ? T("Common_Yes") : T("Common_No"));
             });
 
             if (!string.IsNullOrEmpty(outcome.RecoveryProgress.RecommendationText))
             {
                 col.Item().PaddingTop(0.3f, Unit.Centimetre)
-                    .Text($"Recovery recommendation: {outcome.RecoveryProgress.RecommendationText}")
+                    .Text(Tf("ReportPdf_RecoveryRecommendationFormat", outcome.RecoveryProgress.RecommendationText))
                     .Italic();
             }
         }

@@ -109,7 +109,7 @@ namespace FemVoiceStudio.ViewModels
         {
             if (_outcomeProfileBuilder is null || _assembler is null || _store is null || _database is null)
             {
-                StatusMessage = "Services unavailable — cannot create review.";
+                StatusMessage = LocalizationService.Instance.GetString("CaseReview_StatusServicesUnavailable");
                 return;
             }
 
@@ -152,11 +152,11 @@ namespace FemVoiceStudio.ViewModels
                 // 5) Add to observable list (on UI thread — this is a fire-and-forget path in tests too).
                 SavedReviews.Insert(0, review);
 
-                StatusMessage = $"Review opprettet (Draft): {review.ReviewId:D}";
+                StatusMessage = LocalizationService.Instance.GetFormattedString("CaseReview_StatusCreatedFormat", review.ReviewId);
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Feil ved oppretting: {ex.Message}";
+                StatusMessage = LocalizationService.Instance.GetFormattedString("CaseReview_StatusCreateErrorFormat", ex.Message);
             }
             finally
             {
@@ -183,7 +183,7 @@ namespace FemVoiceStudio.ViewModels
 
                 if (completed is null)
                 {
-                    StatusMessage = "Review ikke funnet.";
+                    StatusMessage = LocalizationService.Instance.GetString("CaseReview_StatusNotFound");
                     return;
                 }
 
@@ -193,11 +193,11 @@ namespace FemVoiceStudio.ViewModels
                     SavedReviews[idx] = completed;
 
                 SelectedReview = completed;
-                StatusMessage = "Review fullfort.";
+                StatusMessage = LocalizationService.Instance.GetString("CaseReview_StatusCompleted");
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Feil ved fullstendiggjoring: {ex.Message}";
+                StatusMessage = LocalizationService.Instance.GetFormattedString("CaseReview_StatusCompleteErrorFormat", ex.Message);
             }
         }
 
@@ -221,7 +221,7 @@ namespace FemVoiceStudio.ViewModels
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Feil ved lasting av reviews: {ex.Message}";
+                StatusMessage = LocalizationService.Instance.GetFormattedString("CaseReview_StatusLoadErrorFormat", ex.Message);
             }
         }
 

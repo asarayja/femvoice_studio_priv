@@ -3779,4 +3779,142 @@ This cannot be undone!</value>
   <data name="ThresholdStrategy_Intensity" xml:space="preserve">
     <value>Tærskel: kortere, mere fokuserede intervaller med hvile imellem.</value>
   </data>
+  <data name="Coach_Title" xml:space="preserve"><value>Coach-oversigt</value></data>
+  <data name="Coach_FocusAreas" xml:space="preserve"><value>Fokusområder</value></data>
+  <data name="Coach_Recommendations" xml:space="preserve"><value>Anbefalinger</value></data>
+  <data name="Coach_Breakthroughs" xml:space="preserve"><value>Gennembrud</value></data>
+  <data name="Coach_PlateauWarnings" xml:space="preserve"><value>Plateauvarsler</value></data>
+  <data name="Coach_RecoveryNeeds" xml:space="preserve"><value>Restitutionsbehov</value></data>
+  <data name="Coach_Exercise" xml:space="preserve"><value>Øvelse</value></data>
+  <data name="Clinician_Title" xml:space="preserve"><value>Klinisk oversigt</value></data>
+  <data name="Clinician_VoiceMetrics" xml:space="preserve"><value>Stemmemetrikker</value></data>
+  <data name="Clinician_RecoveryStatus" xml:space="preserve"><value>Restitutionsstatus</value></data>
+  <data name="Clinician_ComfortTrend" xml:space="preserve"><value>Komforttrend</value></data>
+  <data name="Clinician_ResonanceTrend" xml:space="preserve"><value>Resonanstrend</value></data>
+  <data name="Clinician_ConsistencyTrend" xml:space="preserve"><value>Konsistenstrend</value></data>
+  <data name="Clinician_ExerciseEffectiveness" xml:space="preserve"><value>Øvelseseffektivitet</value></data>
+  <data name="Clinician_LearningPath" xml:space="preserve"><value>Læringssti</value></data>
+  <data name="Clinician_RecoveryDebtLabel" xml:space="preserve"><value>Gæld: </value></data>
+  <data name="Clinician_OvertrainingPredicted" xml:space="preserve"><value>Overtræning forudsagt</value></data>
+  <data name="Clinician_GridEffectiveness" xml:space="preserve"><value>Effektivitet</value></data>
+  <data name="Clinician_GridResonanceGain" xml:space="preserve"><value>Resonansgevinst</value></data>
+  <data name="Clinician_GridComfortGain" xml:space="preserve"><value>Komfortgevinst</value></data>
+  <data name="Clinician_GridRecoveryCost" xml:space="preserve"><value>Restitutionskostnad</value></data>
+  <data name="Clinician_GridSuccess" xml:space="preserve"><value>Succes%</value></data>
+  <data name="Clinician_GridSessions" xml:space="preserve"><value>Sessioner</value></data>
+  <data name="Clinician_SafetyLabel" xml:space="preserve"><value>Sikkerhed: </value></data>
+  <data name="Clinician_FocusAreasLabel" xml:space="preserve"><value>Fokusområder:</value></data>
+  <data name="Clinician_Strengths" xml:space="preserve"><value>Styrker:</value></data>
+  <data name="Clinician_Weaknesses" xml:space="preserve"><value>Udviklingsområder:</value></data>
+  <data name="Clinician_GoalProgress" xml:space="preserve"><value>Målfremdrift</value></data>
+  <data name="Clinician_GridGoal" xml:space="preserve"><value>Mål</value></data>
+  <data name="Clinician_GridCurrentValue" xml:space="preserve"><value>Nuværende</value></data>
+  <data name="Clinician_GridTargetValue" xml:space="preserve"><value>Mål</value></data>
+  <data name="Clinician_LongitudinalInsights" xml:space="preserve"><value>Longitudinelle indsigter</value></data>
+  <data name="Report_Title" xml:space="preserve"><value>Rapporter</value></data>
+  <data name="Report_Format" xml:space="preserve"><value>Format</value></data>
+  <data name="Report_Type" xml:space="preserve"><value>Type</value></data>
+  <data name="Report_Generate" xml:space="preserve"><value>Generér</value></data>
+  <data name="Report_Export" xml:space="preserve"><value>Eksportér</value></data>
+  <data name="Report_Clinical" xml:space="preserve"><value>Klinisk rapport</value></data>
+  <data name="Report_Coach" xml:space="preserve"><value>Coach-rapport</value></data>
+  <data name="Report_Outcome" xml:space="preserve"><value>Resultatrapport</value></data>
+  <data name="Report_Timeline" xml:space="preserve"><value>Tidslinje</value></data>
+  <data name="Report_StatusServicesUnavailable" xml:space="preserve"><value>Tjenester er ikke tilgængelige - kan ikke generere rapport.</value></data>
+  <data name="Report_StatusExportedToFormat" xml:space="preserve"><value>Eksporteret til: {0}</value></data>
+  <data name="Report_StatusExportErrorFormat" xml:space="preserve"><value>Fejl ved eksport: {0}</value></data>
+  <data name="Report_FileFilterPdf" xml:space="preserve"><value>PDF-filer (*.pdf)|*.pdf</value></data>
+  <data name="Report_FileFilterCsv" xml:space="preserve"><value>CSV-filer (*.csv)|*.csv</value></data>
+  <data name="Report_FileFilterJson" xml:space="preserve"><value>JSON-filer (*.json)|*.json</value></data>
+  <data name="Report_FileFilterAll" xml:space="preserve"><value>Alle filer (*.*)|*.*</value></data>
+  <data name="Report_DialogTitle" xml:space="preserve"><value>Eksportér rapport</value></data>
+  <data name="Report_TitleClinicalProgressFormat" xml:space="preserve"><value>Klinisk fremdriftsrapport — {0}</value></data>
+  <data name="Report_TitleCoachingSummaryFormat" xml:space="preserve"><value>Coach-opsummering — {0}</value></data>
+  <data name="Report_TitleOutcomeSummaryFormat" xml:space="preserve"><value>Resultatopsummering — {0}</value></data>
+  <data name="Report_TitleVoiceTimelineFormat" xml:space="preserve"><value>Stemmeudvikling over tid — {0}</value></data>
+  <data name="Report_DirectionInsufficientData" xml:space="preserve"><value>Ikke nok data</value></data>
+  <data name="Report_DirectionImproving" xml:space="preserve"><value>Forbedres</value></data>
+  <data name="Report_DirectionDeclining" xml:space="preserve"><value>Falder</value></data>
+  <data name="Report_DirectionStable" xml:space="preserve"><value>Stabil</value></data>
+  <data name="Report_FocusBreakthroughFormat" xml:space="preserve"><value>{0} — gennembrud registreret</value></data>
+  <data name="Report_FocusPlateauFormat" xml:space="preserve"><value>{0} — plateau registreret</value></data>
+  <data name="Report_FocusRegressionFormat" xml:space="preserve"><value>{0} — tilbagegang registreret</value></data>
+  <data name="Report_FocusGoalInProgressFormat" xml:space="preserve"><value>{0} — mål i gang ({1:F0}%)</value></data>
+  <data name="Report_FocusGoalAchievedFormat" xml:space="preserve"><value>{0} — mål opnået</value></data>
+  <data name="Report_FocusRecoveryOvertraining" xml:space="preserve"><value>Restitution — overtræning forudsagt</value></data>
+  <data name="Report_FocusRecoveryStatusFormat" xml:space="preserve"><value>Restitution — {0}</value></data>
+  <data name="Report_FocusExerciseConcernFormat" xml:space="preserve"><value>Øvelse {0} — {1}</value></data>
+  <data name="Report_RecommendationDeprioritizeFormat" xml:space="preserve"><value>Nedprioritér øvelse {0}: {1}</value></data>
+  <data name="Override_Title" xml:space="preserve"><value>Manuel justering</value></data>
+  <data name="Override_Kind" xml:space="preserve"><value>Justeringstype</value></data>
+  <data name="Override_Reason" xml:space="preserve"><value>Begrundelse</value></data>
+  <data name="Override_Apply" xml:space="preserve"><value>Anvend justering</value></data>
+  <data name="Override_Clamped" xml:space="preserve"><value>Justeringen blev holdt inden for sikre rammer</value></data>
+  <data name="Override_Blocked" xml:space="preserve"><value>Justeringen blev ikke anvendt</value></data>
+  <data name="Override_Logged" xml:space="preserve"><value>Justeringen er logført</value></data>
+  <data name="CaseReview_Title" xml:space="preserve"><value>Case-gennemgang</value></data>
+  <data name="CaseReview_Type" xml:space="preserve"><value>Type</value></data>
+  <data name="CaseReview_Period" xml:space="preserve"><value>Periode</value></data>
+  <data name="CaseReview_Create" xml:space="preserve"><value>Opret gennemgang</value></data>
+  <data name="CaseReview_Complete" xml:space="preserve"><value>Fuldfør gennemgang</value></data>
+  <data name="CaseReview_Monthly" xml:space="preserve"><value>Månedlig</value></data>
+  <data name="CaseReview_Goal" xml:space="preserve"><value>Mål</value></data>
+  <data name="CaseReview_Progress" xml:space="preserve"><value>Fremdrift</value></data>
+  <data name="CaseReview_Recovery" xml:space="preserve"><value>Restitution</value></data>
+  <data name="CaseReview_SavedReviews" xml:space="preserve"><value>Gemte gennemgange</value></data>
+  <data name="CaseReview_Load" xml:space="preserve"><value>Indlæs</value></data>
+  <data name="CaseReview_StatusServicesUnavailable" xml:space="preserve"><value>Tjenester er ikke tilgængelige - kan ikke oprette gennemgang.</value></data>
+  <data name="CaseReview_StatusCreatedFormat" xml:space="preserve"><value>Gennemgang oprettet (kladde): {0}</value></data>
+  <data name="CaseReview_StatusCreateErrorFormat" xml:space="preserve"><value>Fejl ved oprettelse: {0}</value></data>
+  <data name="CaseReview_StatusNotFound" xml:space="preserve"><value>Gennemgangen blev ikke fundet.</value></data>
+  <data name="CaseReview_StatusCompleted" xml:space="preserve"><value>Gennemgang fuldført.</value></data>
+  <data name="CaseReview_StatusCompleteErrorFormat" xml:space="preserve"><value>Fejl ved fuldførelse: {0}</value></data>
+  <data name="CaseReview_StatusLoadErrorFormat" xml:space="preserve"><value>Fejl ved indlæsning af gennemgange: {0}</value></data>
+  <data name="ReportPdf_ClinicalNotes" xml:space="preserve"><value>Kliniske noter</value></data>
+  <data name="ReportPdf_Date" xml:space="preserve"><value>Dato</value></data>
+  <data name="ReportPdf_AuthorRole" xml:space="preserve"><value>Rolle</value></data>
+  <data name="ReportPdf_Note" xml:space="preserve"><value>Note</value></data>
+  <data name="ReportPdf_AuditTrail" xml:space="preserve"><value>Revisionsspor</value></data>
+  <data name="ReportPdf_EntityType" xml:space="preserve"><value>Entitetstype</value></data>
+  <data name="ReportPdf_ReasonCode" xml:space="preserve"><value>Årsagskode</value></data>
+  <data name="ReportPdf_GeneratedPrefix" xml:space="preserve"><value>Genereret: </value></data>
+  <data name="ReportPdf_DetectedPatterns" xml:space="preserve"><value>Registrerede mønstre</value></data>
+  <data name="ReportPdf_BreakthroughFormat" xml:space="preserve"><value>Gennembrud: {0} ({1})</value></data>
+  <data name="ReportPdf_PlateauFormat" xml:space="preserve"><value>Plateau: {0} ({1})</value></data>
+  <data name="ReportPdf_RegressionFormat" xml:space="preserve"><value>Tilbagegang: {0} ({1})</value></data>
+  <data name="ReportPdf_FocusAreas" xml:space="preserve"><value>Fokusområder</value></data>
+  <data name="ReportPdf_Recommendations" xml:space="preserve"><value>Anbefalinger</value></data>
+  <data name="ReportPdf_CompositeVoiceScoreFormat" xml:space="preserve"><value>Samlet stemmescore: {0:F1} / 100</value></data>
+  <data name="ReportPdf_RecoveryFormat" xml:space="preserve"><value>Restitution: {0} ({1:F1}/100)</value></data>
+  <data name="ReportPdf_DataSufficientFormat" xml:space="preserve"><value>Nok data: {0}</value></data>
+  <data name="ReportPdf_GoalProgress" xml:space="preserve"><value>Målfremdrift</value></data>
+  <data name="ReportPdf_GoalType" xml:space="preserve"><value>Måltype</value></data>
+  <data name="ReportPdf_Target" xml:space="preserve"><value>Mål</value></data>
+  <data name="ReportPdf_Current" xml:space="preserve"><value>Nuværende</value></data>
+  <data name="ReportPdf_ProgressPercent" xml:space="preserve"><value>Fremdrift %</value></data>
+  <data name="ReportPdf_Achieved" xml:space="preserve"><value>Opnået</value></data>
+  <data name="ReportPdf_ExerciseEffectivenessRanked" xml:space="preserve"><value>Øvelseseffektivitet (rangeret)</value></data>
+  <data name="ReportPdf_ExerciseId" xml:space="preserve"><value>Øvelse-ID</value></data>
+  <data name="ReportPdf_Composite" xml:space="preserve"><value>Samlet</value></data>
+  <data name="ReportPdf_RecoveryCost" xml:space="preserve"><value>Restitutionskostnad</value></data>
+  <data name="ReportPdf_VoiceDevelopmentTimeline" xml:space="preserve"><value>Stemmeudvikling over tid</value></data>
+  <data name="ReportPdf_Period" xml:space="preserve"><value>Periode</value></data>
+  <data name="ReportPdf_Sessions" xml:space="preserve"><value>Sessioner</value></data>
+  <data name="ReportPdf_MeanScore" xml:space="preserve"><value>Gennemsnitsscore</value></data>
+  <data name="ReportPdf_Slope" xml:space="preserve"><value>Trend</value></data>
+  <data name="ReportPdf_Direction" xml:space="preserve"><value>Retning</value></data>
+  <data name="ReportPdf_NoTimelineData" xml:space="preserve"><value>Ingen tidslinjedata er tilgængelige for denne periode.</value></data>
+  <data name="ReportPdf_NoSpecificLayout" xml:space="preserve"><value>Ingen specifik layout for denne rapporttype.</value></data>
+  <data name="ReportPdf_PeriodLineFormat" xml:space="preserve"><value>Periode: {0} – {1}</value></data>
+  <data name="ReportPdf_OutcomeSummary" xml:space="preserve"><value>Resultatopsummering</value></data>
+  <data name="ReportPdf_Metric" xml:space="preserve"><value>Metrik</value></data>
+  <data name="ReportPdf_Value" xml:space="preserve"><value>Værdi</value></data>
+  <data name="ReportPdf_CompositeVoiceScore" xml:space="preserve"><value>Samlet stemmescore</value></data>
+  <data name="ReportPdf_RecoveryStatus" xml:space="preserve"><value>Restitutionsstatus</value></data>
+  <data name="ReportPdf_RecoveryDebt" xml:space="preserve"><value>Restitutionsgæld</value></data>
+  <data name="ReportPdf_OvertrainingPredicted" xml:space="preserve"><value>Overtræning forudsagt</value></data>
+  <data name="ReportPdf_GoalsTracked" xml:space="preserve"><value>Mål fulgt</value></data>
+  <data name="ReportPdf_ExercisesRanked" xml:space="preserve"><value>Øvelser rangeret</value></data>
+  <data name="ReportPdf_DataSufficient" xml:space="preserve"><value>Nok data</value></data>
+  <data name="ReportPdf_RecoveryRecommendationFormat" xml:space="preserve"><value>Restitutionsanbefaling: {0}</value></data>
 </root>

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using FemVoiceStudio.Models;
 
@@ -204,11 +205,11 @@ namespace FemVoiceStudio.Services
         {
             // Same month/year → "May 2026"; different → "Apr 1 – May 31, 2026"
             if (start.Year == end.Year && start.Month == end.Month)
-                return end.ToString("MMMM yyyy");
+                return end.ToString("MMMM yyyy", CultureInfo.InvariantCulture);
 
             return start.Year == end.Year
-                ? $"{start:MMM d} – {end:MMM d, yyyy}"
-                : $"{start:MMM d, yyyy} – {end:MMM d, yyyy}";
+                ? $"{start.ToString("MMM d", CultureInfo.InvariantCulture)} – {end.ToString("MMM d, yyyy", CultureInfo.InvariantCulture)}"
+                : $"{start.ToString("MMM d, yyyy", CultureInfo.InvariantCulture)} – {end.ToString("MMM d, yyyy", CultureInfo.InvariantCulture)}";
         }
 
         private static string ComputeDirection(TrendWindow w)

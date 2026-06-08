@@ -54,7 +54,7 @@
             </StackPanel>
 
             <!-- ── Recovery Needs (shown first per Health > Development priority) ── -->
-            <Border Background="{DynamicResource AccentWarningBrush}"
+            <Border Background="{DynamicResource WarningBrush}"
                     CornerRadius="8" Padding="12" Margin="0,0,0,12"
                     Visibility="{Binding RecoveryNeeds.Count, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel>
@@ -163,7 +163,7 @@
                                 <StackPanel Orientation="Horizontal" Margin="0,3">
                                     <TextBlock Text="&#xE735;"
                                                FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                               Foreground="#FF4CAF50"
+                                               Foreground="{DynamicResource SuccessBrush}"
                                                VerticalAlignment="Center" Margin="0,0,8,0"/>
                                     <TextBlock Text="{Binding}"
                                                Foreground="{DynamicResource TextPrimaryBrush}"
@@ -197,7 +197,7 @@
                                 <StackPanel Orientation="Horizontal" Margin="0,3">
                                     <TextBlock Text="&#xE7BA;"
                                                FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                               Foreground="#FFFF9800"
+                                               Foreground="{DynamicResource WarningBrush}"
                                                VerticalAlignment="Center" Margin="0,0,8,0"/>
                                     <TextBlock Text="{Binding}"
                                                Foreground="{DynamicResource TextPrimaryBrush}"

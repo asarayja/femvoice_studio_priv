@@ -111,7 +111,7 @@ namespace FemVoiceStudio.ViewModels
         {
             if (_outcomeProfileBuilder is null || _reportAssembler is null || _exportWriter is null || _database is null)
             {
-                StatusMessage = "Services unavailable — cannot generate report.";
+                StatusMessage = LocalizationService.Instance.GetString("Report_StatusServicesUnavailable");
                 return;
             }
 
@@ -174,11 +174,11 @@ namespace FemVoiceStudio.ViewModels
                 await using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
                 _exportWriter.Write(report, format, stream);
 
-                StatusMessage = $"Eksportert til: {filePath}";
+                StatusMessage = LocalizationService.Instance.GetFormattedString("Report_StatusExportedToFormat", filePath);
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Feil ved eksport: {ex.Message}";
+                StatusMessage = LocalizationService.Instance.GetFormattedString("Report_StatusExportErrorFormat", ex.Message);
             }
             finally
             {
@@ -203,15 +203,15 @@ namespace FemVoiceStudio.ViewModels
             // WPF/Win32 dialog — only reachable at runtime, never in tests.
             var (filter, ext) = format switch
             {
-                ExportFormat.Pdf  => ("PDF-filer (*.pdf)|*.pdf",  ".pdf"),
-                ExportFormat.Csv  => ("CSV-filer (*.csv)|*.csv",  ".csv"),
-                ExportFormat.Json => ("JSON-filer (*.json)|*.json", ".json"),
-                _                 => ("Alle filer (*.*)|*.*",       "")
+                ExportFormat.Pdf  => (LocalizationService.Instance.GetString("Report_FileFilterPdf"),  ".pdf"),
+                ExportFormat.Csv  => (LocalizationService.Instance.GetString("Report_FileFilterCsv"),  ".csv"),
+                ExportFormat.Json => (LocalizationService.Instance.GetString("Report_FileFilterJson"), ".json"),
+                _                 => (LocalizationService.Instance.GetString("Report_FileFilterAll"),       "")
             };
 
             var dlg = new Microsoft.Win32.SaveFileDialog
             {
-                Title      = "Eksporter rapport",
+                Title      = LocalizationService.Instance.GetString("Report_DialogTitle"),
                 Filter     = filter,
                 DefaultExt = ext,
                 FileName   = $"FemVoice_Report_{DateTime.Now:yyyyMMdd_HHmm}{ext}"

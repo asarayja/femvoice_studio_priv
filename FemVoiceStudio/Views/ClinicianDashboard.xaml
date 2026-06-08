@@ -184,10 +184,10 @@
                             <TextBlock FontSize="11"
                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                        Margin="0,0,0,4">
-                                <Run Text="Gjeld: "/>
+                                <Run Text="{loc:Loc Clinician_RecoveryDebtLabel}"/>
                                 <Run Text="{Binding RecoveryDebt, StringFormat={}{0:F0}/100}"/>
                             </TextBlock>
-                            <TextBlock Text="Overtrening forutsagt"
+                            <TextBlock Text="{loc:Loc Clinician_OvertrainingPredicted}"
                                        FontSize="12"
                                        Foreground="{DynamicResource ErrorBrush}"
                                        Visibility="{Binding OvertrainingPredicted, Converter={StaticResource BoolToVisibility}}"/>
@@ -303,22 +303,22 @@
                             <DataGridTextColumn Header="ID"
                                                 Binding="{Binding ExerciseId}"
                                                 Width="38" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="Effektivitet"
+                            <DataGridTextColumn Header="{loc:Loc Clinician_GridEffectiveness}"
                                                 Binding="{Binding CompositeEffectiveness, StringFormat={}{0:F1}}"
                                                 Width="80" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="Resonansgevinst"
+                            <DataGridTextColumn Header="{loc:Loc Clinician_GridResonanceGain}"
                                                 Binding="{Binding ResonanceGain, StringFormat={}{0:+0.00;-0.00;0.00}}"
                                                 Width="110" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="Komfortgevinst"
+                            <DataGridTextColumn Header="{loc:Loc Clinician_GridComfortGain}"
                                                 Binding="{Binding ComfortGain, StringFormat={}{0:+0.00;-0.00;0.00}}"
                                                 Width="105" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="Gjenkostn."
+                            <DataGridTextColumn Header="{loc:Loc Clinician_GridRecoveryCost}"
                                                 Binding="{Binding RecoveryCost, StringFormat={}{0:F1}}"
                                                 Width="78" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="Suksess%"
+                            <DataGridTextColumn Header="{loc:Loc Clinician_GridSuccess}"
                                                 Binding="{Binding UserSuccessRate, StringFormat={}{0:F0}%}"
                                                 Width="72" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="Økter"
+                            <DataGridTextColumn Header="{loc:Loc Clinician_GridSessions}"
                                                 Binding="{Binding SessionCount}"
                                                 Width="50" IsReadOnly="True"/>
                         </DataGrid.Columns>
@@ -330,7 +330,10 @@
                                 <TextBlock TextWrapping="Wrap" Margin="0,2"
                                            FontSize="11"
                                            Foreground="{DynamicResource WarningBrush}">
-                                    <Run Text="{Binding ExerciseId, StringFormat=Øvelse {0}: }"/>
+                                    <Run Text="{loc:Loc Coach_Exercise}"/>
+                                    <Run Text=" "/>
+                                    <Run Text="{Binding ExerciseId}"/>
+                                    <Run Text=": "/>
                                     <Run Text="{Binding Explanation}"/>
                                 </TextBlock>
                             </DataTemplate>
@@ -360,13 +363,13 @@
                                    Margin="0,4,0,8"/>
                         <TextBlock FontSize="11"
                                    Foreground="{DynamicResource TextTertiaryBrush}">
-                            <Run Text="Sikkerhet: "/>
+                            <Run Text="{loc:Loc Clinician_SafetyLabel}"/>
                             <Run Text="{Binding ConfidenceLabel}"/>
                             <Run Text=" ("/>
                             <Run Text="{Binding ConfidenceScore, StringFormat={}{0:F0}}"/>
                             <Run Text=")"/>
                         </TextBlock>
-                        <TextBlock Text="Fokusområder:"
+                        <TextBlock Text="{loc:Loc Clinician_FocusAreasLabel}"
                                    FontSize="12" FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                    Margin="0,10,0,4"/>
@@ -385,7 +388,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Margin="10,0,10,0">
-                        <TextBlock Text="Styrker:" Style="{StaticResource SectionTitle}"/>
+                        <TextBlock Text="{loc:Loc Clinician_Strengths}" Style="{StaticResource SectionTitle}"/>
                         <ItemsControl ItemsSource="{Binding Strengths}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -411,7 +414,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" Margin="10,0,0,0">
-                        <TextBlock Text="Svakheter:" Style="{StaticResource SectionTitle}"/>
+                        <TextBlock Text="{loc:Loc Clinician_Weaknesses}" Style="{StaticResource SectionTitle}"/>
                         <ItemsControl ItemsSource="{Binding Weaknesses}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -441,7 +444,7 @@
             <!-- ── 6: GOAL PROGRESS ──────────────────────────────────────────────── -->
             <Border Grid.Row="6" Style="{StaticResource CardBorder}">
                 <StackPanel>
-                    <TextBlock Text="Målfremdrift" Style="{StaticResource SectionTitle}"/>
+                    <TextBlock Text="{loc:Loc Clinician_GoalProgress}" Style="{StaticResource SectionTitle}"/>
                     <DataGrid ItemsSource="{Binding GoalProgressItems}"
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
@@ -454,13 +457,13 @@
                               BorderThickness="0"
                               MaxHeight="160">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Mål"
+                            <DataGridTextColumn Header="{loc:Loc Clinician_GridGoal}"
                                                 Binding="{Binding GoalType}"
                                                 Width="*" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="Nåverdi"
+                            <DataGridTextColumn Header="{loc:Loc Clinician_GridCurrentValue}"
                                                 Binding="{Binding CurrentValue, StringFormat={}{0:F1}}"
                                                 Width="75" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="Mål"
+                            <DataGridTextColumn Header="{loc:Loc Clinician_GridTargetValue}"
                                                 Binding="{Binding TargetValue, StringFormat={}{0:F1}}"
                                                 Width="65" IsReadOnly="True"/>
                             <DataGridTextColumn Header="%"
@@ -474,7 +477,7 @@
             <!-- ── 7: LONGITUDINAL INSIGHTS ─────────────────────────────────────── -->
             <Border Grid.Row="7" Style="{StaticResource CardBorder}">
                 <StackPanel>
-                    <TextBlock Text="Longitudinale innsikter" Style="{StaticResource SectionTitle}"/>
+                    <TextBlock Text="{loc:Loc Clinician_LongitudinalInsights}" Style="{StaticResource SectionTitle}"/>
 
                     <ItemsControl ItemsSource="{Binding Insights}">
                         <ItemsControl.ItemTemplate>
