@@ -604,8 +604,12 @@ namespace FemVoiceStudio.Services
         private static double SanitiseHours(double hours)
         {
             if (double.IsNaN(hours) || hours < 0) return 0.0;
-            // +∞ ("no recent session") sanitises to 0 for the scorer's own rules (it does
-            // the same), which is safe: infinite rest ⇒ never overtraining, no debt.
+            // +∞ ("no recent session") is mapped to a very large FINITE value here so it
+            // represents "effectively unlimited rest" ⇒ capped rest reward, zero recovery
+            // debt, never overtraining. NB: this DIFFERS from RecoveryScorer.SanitiseHours,
+            // which maps +∞ → 0; both are clinically equivalent (rest reward saturates / debt
+            // floors at 0 either way), and the ∞ path is effectively unreachable in the live
+            // completion flow (the current session's start row is already journaled).
             if (double.IsInfinity(hours)) return double.MaxValue / 4.0;
             return hours;
         }

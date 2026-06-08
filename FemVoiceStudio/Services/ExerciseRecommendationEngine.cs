@@ -48,8 +48,12 @@ namespace FemVoiceStudio.Services
     /// (Voice Intelligence trend, RecoveryScorer, MasteryEvaluator, recent sessions,
     /// goal/profile). The engine never reads a DB itself — it only reasons over numbers.
     ///
-    /// An all-default instance represents a brand-new user with no history; the engine
-    /// then returns a safe <see cref="RecommendationFocus.Foundation"/> starter.
+    /// NB: an all-default instance has Recovery = default(RecoveryResult), whose Status is
+    /// Overtrained (enum value 0) and Score 0 — so the recovery gate fires first and the
+    /// engine returns a safe RECOVERY-oriented light pick, not a Foundation starter. A
+    /// Foundation starter requires an explicit WellRecovered/Adequate Recovery (Score above
+    /// LowRecoveryThreshold) together with a null/neutral LatestVoiceScores — which is how a
+    /// genuine new user is represented. Either outcome is clinically safe (light exercise).
     /// </summary>
     public readonly record struct ExerciseRecommendationInput
     {
