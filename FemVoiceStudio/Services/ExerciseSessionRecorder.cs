@@ -74,6 +74,11 @@ namespace FemVoiceStudio.Services
         private readonly FeedbackPipeline? _feedbackPipeline;
         private readonly VocalHealthFeedbackMapper? _vocalHealthMapper;
         private readonly HydrationFeedbackMapper? _hydrationMapper;
+
+        // Pure, stateless scorer (no DB/IO) — derives the seven explainable 0–100
+        // dimension scores + composite at session end. Reused across sessions.
+        private readonly VoiceIntelligenceScorer _voiceIntelligenceScorer = new();
+
         private readonly object _lock = new();
 
         private bool _recording;
@@ -427,6 +432,13 @@ namespace FemVoiceStudio.Services
         {
             try
             {
+                // Voice Intelligence: derive the seven explainable 0–100 dimension scores
+                // plus the hierarchy-weighted composite from the session aggregates we have.
+                // Robust — never throws (see ComputeVoiceIntelligenceScores); a failed or
+                // partial computation falls back to all-zero so session-end never blocks.
+                var vi = ComputeVoiceIntelligenceScores(
+                    outcome, pauseRecommendations, hydrationSuggestions);
+
                 // Sesjonsnivå-raden (driver GetDailySummaryAsync/GetWeeklyTrendAsync —
                 // aggregatene var tomme før fordi denne aldri ble skrevet).
                 await _analyticsStore.RecordSessionCompletedAsync(new SessionAnalyticsRecord
@@ -443,7 +455,16 @@ namespace FemVoiceStudio.Services
                     SafetyEventsCount         = lockEpisodes,
                     PauseRecommendationsCount = pauseRecommendations,
                     HydrationSuggestionsCount = hydrationSuggestions,
-                    FatigueIndicatorCount     = outcome.FatigueIndicators
+                    FatigueIndicatorCount     = outcome.FatigueIndicators,
+                    // Eight Voice Intelligence scores (0–100). Default 0 if scoring failed.
+                    ResonanceScore100         = vi.Resonance.Score,
+                    ComfortScore100           = vi.Comfort.Score,
+                    ConsistencyScore100       = vi.Consistency.Score,
+                    IntonationScore100        = vi.Intonation.Score,
+                    VocalWeightScore100       = vi.VocalWeight.Score,
+                    RecoveryScore100          = vi.Recovery.Score,
+                    PitchScore100             = vi.Pitch.Score,
+                    CompositeVoiceScore       = vi.CompositeVoiceScore
                 }).ConfigureAwait(false);
 
                 await _analyticsStore.RecordExercisePerformanceAsync(new ExercisePerformanceSummary
@@ -506,6 +527,83 @@ namespace FemVoiceStudio.Services
             {
                 System.Diagnostics.Debug.WriteLine($"[ExerciseSessionRecorder] Persist failed: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Derives the Voice Intelligence scores (seven explainable 0–100 dimensions +
+        /// hierarchy-weighted composite) from the session outcome. Total/robust: never
+        /// throws — any failure or partial signal falls back to an all-zero result so
+        /// session-end persistence is never blocked.
+        ///
+        /// Signal availability from the exercise path (documented fallbacks):
+        ///   • Resonance   ← outcome.AverageResonance   (0–1, present).
+        ///   • Comfort     ← outcome.ComfortCompliance + ComfortBreachEpisodes (present).
+        ///   • Consistency ← outcome.AverageStability   (0–1, present).
+        ///   • Recovery    ← this session's own fatigue/strain/lock/pause/hydration counts
+        ///                   (an in-session restitution snapshot; no cross-session history
+        ///                   is read here — that richer trend is Bølge 2's job).
+        ///   • Intonation / VocalWeight / Pitch ← NO signal on ExerciseLiveState (no
+        ///                   spectral centroid / F1 / intonation-range / pitch-Hz is
+        ///                   carried), so these axes are left at the "missing" sentinels
+        ///                   and the scorer assigns a neutral 50 with an explanation.
+        /// </summary>
+        private VoiceIntelligenceScores ComputeVoiceIntelligenceScores(
+            ExerciseSessionOutcome outcome,
+            int pauseRecommendations,
+            int hydrationSuggestions)
+        {
+            try
+            {
+                // In-session recovery snapshot: this session is the "recent window".
+                // Higher counts ⇒ lower recovery. SessionsLast7Days is left at 0 (no
+                // cross-session history available here) so no overtraining penalty fires.
+                var recovery = new RecoveryScoreInput
+                {
+                    RecentFatigueIndicators    = Math.Max(0, outcome.FatigueIndicators),
+                    RecentStrainEpisodes       = Math.Max(0, outcome.StrainDetections),
+                    RecentSafetyLocks          = Math.Max(0, outcome.SafetyLockEpisodes),
+                    RecentPauseRecommendations = Math.Max(0, pauseRecommendations),
+                    HydrationSuggestionsRecent = Math.Max(0, hydrationSuggestions),
+                };
+
+                // Start from the "everything missing" sentinels, then fill the axes the
+                // exercise path actually measures. Intonation/VocalWeight/Pitch stay
+                // missing ⇒ neutral 50 (documented above).
+                var input = VoiceIntelligenceInput.Empty() with
+                {
+                    AverageResonance01  = Clamp01(outcome.AverageResonance),
+                    ComfortCompliance01 = Clamp01(outcome.ComfortCompliance),
+                    ComfortBreaches     = Math.Max(0, outcome.ComfortBreachEpisodes),
+                    AverageStability01  = Clamp01(outcome.AverageStability),
+                    Recovery            = recovery,
+                };
+
+                return _voiceIntelligenceScorer.Compute(input);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"[ExerciseSessionRecorder] Voice Intelligence scoring failed: {ex.Message}");
+                return ZeroVoiceIntelligenceScores();
+            }
+        }
+
+        /// <summary>All-zero fallback — used only when scoring throws. Carries an
+        /// explanation so a downstream reader can tell a real 0 from a scoring failure.</summary>
+        private static VoiceIntelligenceScores ZeroVoiceIntelligenceScores()
+        {
+            var zero = new DimensionScore(0, "No score — Voice Intelligence scoring failed at session end.");
+            return new VoiceIntelligenceScores
+            {
+                Resonance = zero,
+                Comfort = zero,
+                Consistency = zero,
+                Intonation = zero,
+                VocalWeight = zero,
+                Recovery = zero,
+                Pitch = zero,
+                CompositeVoiceScore = 0
+            };
         }
 
         public void Dispose()

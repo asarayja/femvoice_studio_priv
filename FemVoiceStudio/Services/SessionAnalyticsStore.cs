@@ -35,10 +35,49 @@ namespace FemVoiceStudio.Services
         public int HydrationSuggestionsCount { get; init; }
         public int FatigueIndicatorCount { get; init; }
 
+        // ── Voice Intelligence dimension scores (0–100, NOT 0–1) ─────────────────
+        // Sprint B: the seven explainable dimension scores plus the hierarchy-weighted
+        // composite, persisted durably so Bølge 2 (analytics/viz/coaching) can read
+        // trend. These are on a 0–100 scale — do NOT confuse with the Average*-fields
+        // above, which are 0–1. Default 0 ⇒ "no score computed" (e.g. legacy rows
+        // written before this column existed, healed by the ALTER migration).
+        public double ResonanceScore100 { get; init; }
+        public double ComfortScore100 { get; init; }
+        public double ConsistencyScore100 { get; init; }
+        public double IntonationScore100 { get; init; }
+        public double VocalWeightScore100 { get; init; }
+        public double RecoveryScore100 { get; init; }
+        public double PitchScore100 { get; init; }
+
+        /// <summary>Hierarchy-weighted composite voice score, 0–100. A measurement,
+        /// never a safety gate (see VoiceIntelligenceScores). Default 0 ⇒ not computed.</summary>
+        public double CompositeVoiceScore { get; init; }
+
         public TimeSpan Duration =>
             EndedAt.HasValue && EndedAt.Value >= StartedAt
                 ? EndedAt.Value - StartedAt
                 : TimeSpan.Zero;
+    }
+
+    /// <summary>
+    /// A single point in the Voice Intelligence trend: the eight 0–100 scores for one
+    /// completed session, in chronological order. Read by Bølge 2 (analytics/viz/
+    /// coaching) via <see cref="SessionAnalyticsStore.GetVoiceIntelligenceTrendAsync"/>.
+    /// </summary>
+    public sealed record VoiceIntelligenceTrendPoint
+    {
+        public int SessionId { get; init; }
+        public int UserId { get; init; } = 1;
+        public DateTime StartedAt { get; init; }
+        public DateTime? EndedAt { get; init; }
+        public double ResonanceScore100 { get; init; }
+        public double ComfortScore100 { get; init; }
+        public double ConsistencyScore100 { get; init; }
+        public double IntonationScore100 { get; init; }
+        public double VocalWeightScore100 { get; init; }
+        public double RecoveryScore100 { get; init; }
+        public double PitchScore100 { get; init; }
+        public double CompositeVoiceScore { get; init; }
     }
 
     public sealed record ExercisePerformanceSummary
@@ -115,8 +154,29 @@ namespace FemVoiceStudio.Services
         Task<IReadOnlyList<HealthAnalyticsEvent>> GetHealthEventsAsync(int userId, DateTime from, DateTime to, CancellationToken cancellationToken = default);
     }
 
-    public sealed class SqliteSessionAnalyticsRepository : ISessionAnalyticsRepository
+    /// <summary>
+    /// Optional capability: read the Voice Intelligence score trend (Sprint B). Kept on
+    /// a separate interface so existing <see cref="ISessionAnalyticsRepository"/>
+    /// implementations stay source-compatible; both in-repo repositories implement it.
+    /// </summary>
+    public interface IVoiceIntelligenceTrendSource
     {
+        Task<IReadOnlyList<VoiceIntelligenceTrendPoint>> GetVoiceIntelligenceTrendAsync(
+            int userId, DateTime from, DateTime to, CancellationToken cancellationToken = default);
+    }
+
+    public sealed class SqliteSessionAnalyticsRepository : ISessionAnalyticsRepository, IVoiceIntelligenceTrendSource
+    {
+        // Explicit column list for the sessions table — used by SELECTs so positional
+        // indices survive ALTER-added columns (NEVER SELECT *). Voice Intelligence
+        // columns are appended last by the idempotent ALTER migration in EnsureSchema.
+        private const string SessionColumns =
+            "SessionId, UserId, StartedAt, EndedAt, ExerciseCount, " +
+            "AverageResonance, AverageStability, AveragePitchComfort, AverageHealthScore, " +
+            "SafetyEventsCount, PauseRecommendationsCount, HydrationSuggestionsCount, FatigueIndicatorCount, " +
+            "ResonanceScore100, ComfortScore100, ConsistencyScore100, IntonationScore100, " +
+            "VocalWeightScore100, RecoveryScore100, PitchScore100, CompositeVoiceScore";
+
         private readonly string _connectionString;
 
         public SqliteSessionAnalyticsRepository(string connectionString)
@@ -135,11 +195,15 @@ namespace FemVoiceStudio.Services
                 INSERT INTO SessionAnalyticsSessions (
                     SessionId, UserId, StartedAt, EndedAt, ExerciseCount,
                     AverageResonance, AverageStability, AveragePitchComfort, AverageHealthScore,
-                    SafetyEventsCount, PauseRecommendationsCount, HydrationSuggestionsCount, FatigueIndicatorCount)
+                    SafetyEventsCount, PauseRecommendationsCount, HydrationSuggestionsCount, FatigueIndicatorCount,
+                    ResonanceScore100, ComfortScore100, ConsistencyScore100, IntonationScore100,
+                    VocalWeightScore100, RecoveryScore100, PitchScore100, CompositeVoiceScore)
                 VALUES (
                     @SessionId, @UserId, @StartedAt, @EndedAt, @ExerciseCount,
                     @AverageResonance, @AverageStability, @AveragePitchComfort, @AverageHealthScore,
-                    @SafetyEventsCount, @PauseRecommendationsCount, @HydrationSuggestionsCount, @FatigueIndicatorCount)
+                    @SafetyEventsCount, @PauseRecommendationsCount, @HydrationSuggestionsCount, @FatigueIndicatorCount,
+                    @ResonanceScore100, @ComfortScore100, @ConsistencyScore100, @IntonationScore100,
+                    @VocalWeightScore100, @RecoveryScore100, @PitchScore100, @CompositeVoiceScore)
                 ON CONFLICT(SessionId) DO UPDATE SET
                     UserId = excluded.UserId,
                     StartedAt = excluded.StartedAt,
@@ -152,7 +216,15 @@ namespace FemVoiceStudio.Services
                     SafetyEventsCount = excluded.SafetyEventsCount,
                     PauseRecommendationsCount = excluded.PauseRecommendationsCount,
                     HydrationSuggestionsCount = excluded.HydrationSuggestionsCount,
-                    FatigueIndicatorCount = excluded.FatigueIndicatorCount;";
+                    FatigueIndicatorCount = excluded.FatigueIndicatorCount,
+                    ResonanceScore100 = excluded.ResonanceScore100,
+                    ComfortScore100 = excluded.ComfortScore100,
+                    ConsistencyScore100 = excluded.ConsistencyScore100,
+                    IntonationScore100 = excluded.IntonationScore100,
+                    VocalWeightScore100 = excluded.VocalWeightScore100,
+                    RecoveryScore100 = excluded.RecoveryScore100,
+                    PitchScore100 = excluded.PitchScore100,
+                    CompositeVoiceScore = excluded.CompositeVoiceScore;";
 
             AddSessionParameters(command, session);
             await command.ExecuteNonQueryAsync(cancellationToken);
@@ -228,8 +300,8 @@ namespace FemVoiceStudio.Services
         {
             await using var connection = await OpenConnectionAsync(cancellationToken);
             await using var command = connection.CreateCommand();
-            command.CommandText = @"
-                SELECT * FROM SessionAnalyticsSessions
+            command.CommandText = $@"
+                SELECT {SessionColumns} FROM SessionAnalyticsSessions
                 WHERE UserId = @UserId AND StartedAt >= @From AND StartedAt < @To
                 ORDER BY StartedAt;";
             AddRangeParameters(command, userId, from, to);
@@ -242,6 +314,30 @@ namespace FemVoiceStudio.Services
             }
 
             return sessions;
+        }
+
+        public async Task<IReadOnlyList<VoiceIntelligenceTrendPoint>> GetVoiceIntelligenceTrendAsync(
+            int userId,
+            DateTime from,
+            DateTime to,
+            CancellationToken cancellationToken = default)
+        {
+            await using var connection = await OpenConnectionAsync(cancellationToken);
+            await using var command = connection.CreateCommand();
+            command.CommandText = $@"
+                SELECT {SessionColumns} FROM SessionAnalyticsSessions
+                WHERE UserId = @UserId AND StartedAt >= @From AND StartedAt < @To
+                ORDER BY StartedAt;";
+            AddRangeParameters(command, userId, from, to);
+
+            var points = new List<VoiceIntelligenceTrendPoint>();
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                points.Add(MapTrendPoint(reader));
+            }
+
+            return points;
         }
 
         public async Task<IReadOnlyList<ExercisePerformanceSummary>> GetExerciseSummariesAsync(
@@ -313,7 +409,15 @@ namespace FemVoiceStudio.Services
                     SafetyEventsCount INTEGER NOT NULL DEFAULT 0,
                     PauseRecommendationsCount INTEGER NOT NULL DEFAULT 0,
                     HydrationSuggestionsCount INTEGER NOT NULL DEFAULT 0,
-                    FatigueIndicatorCount INTEGER NOT NULL DEFAULT 0
+                    FatigueIndicatorCount INTEGER NOT NULL DEFAULT 0,
+                    ResonanceScore100 REAL NOT NULL DEFAULT 0,
+                    ComfortScore100 REAL NOT NULL DEFAULT 0,
+                    ConsistencyScore100 REAL NOT NULL DEFAULT 0,
+                    IntonationScore100 REAL NOT NULL DEFAULT 0,
+                    VocalWeightScore100 REAL NOT NULL DEFAULT 0,
+                    RecoveryScore100 REAL NOT NULL DEFAULT 0,
+                    PitchScore100 REAL NOT NULL DEFAULT 0,
+                    CompositeVoiceScore REAL NOT NULL DEFAULT 0
                 );
 
                 CREATE TABLE IF NOT EXISTS SessionAnalyticsExerciseSummaries (
@@ -348,7 +452,64 @@ namespace FemVoiceStudio.Services
                 CREATE INDEX IF NOT EXISTS idx_sessionanalytics_events_user_occurred
                     ON SessionAnalyticsHealthEvents(UserId, OccurredAt);";
             command.ExecuteNonQuery();
+
+            // Heal pre-existing databases created before the Voice Intelligence columns
+            // existed: ALTER each missing 0–100 score column in (idempotent — only adds
+            // what PRAGMA table_info shows is absent, so existing femvoice.db data is kept).
+            EnsureSessionScoreColumns(connection, transaction);
+
             transaction.Commit();
+        }
+
+        /// <summary>
+        /// Idempotent ALTER-migration: adds any of the eight Voice Intelligence 0–100
+        /// score columns that a pre-existing SessionAnalyticsSessions table is missing.
+        /// Safe to run repeatedly — already-present columns are skipped, so re-running
+        /// EnsureSchema never throws "duplicate column".
+        /// </summary>
+        private static void EnsureSessionScoreColumns(SqliteConnection connection, SqliteTransaction transaction)
+        {
+            var existing = ReadColumnNames(connection, transaction, "SessionAnalyticsSessions");
+
+            // (column, REAL default 0). Order matches SessionColumns so positional reads align.
+            (string Name, string Ddl)[] scoreColumns =
+            {
+                ("ResonanceScore100",   "REAL NOT NULL DEFAULT 0"),
+                ("ComfortScore100",     "REAL NOT NULL DEFAULT 0"),
+                ("ConsistencyScore100", "REAL NOT NULL DEFAULT 0"),
+                ("IntonationScore100",  "REAL NOT NULL DEFAULT 0"),
+                ("VocalWeightScore100", "REAL NOT NULL DEFAULT 0"),
+                ("RecoveryScore100",    "REAL NOT NULL DEFAULT 0"),
+                ("PitchScore100",       "REAL NOT NULL DEFAULT 0"),
+                ("CompositeVoiceScore", "REAL NOT NULL DEFAULT 0"),
+            };
+
+            foreach (var (name, ddl) in scoreColumns)
+            {
+                if (existing.Contains(name)) continue;
+
+                using var alter = connection.CreateCommand();
+                alter.Transaction = transaction;
+                // Column names are compile-time constants here (never user input) → safe.
+                alter.CommandText = $"ALTER TABLE SessionAnalyticsSessions ADD COLUMN {name} {ddl};";
+                alter.ExecuteNonQuery();
+            }
+        }
+
+        private static HashSet<string> ReadColumnNames(
+            SqliteConnection connection, SqliteTransaction transaction, string table)
+        {
+            var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            using var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = $"PRAGMA table_info({table});";
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                // PRAGMA table_info columns: cid, name, type, notnull, dflt_value, pk
+                columns.Add(reader.GetString(reader.GetOrdinal("name")));
+            }
+            return columns;
         }
 
         private async Task<SqliteConnection> OpenConnectionAsync(CancellationToken cancellationToken)
@@ -380,6 +541,14 @@ namespace FemVoiceStudio.Services
             command.Parameters.AddWithValue("@PauseRecommendationsCount", session.PauseRecommendationsCount);
             command.Parameters.AddWithValue("@HydrationSuggestionsCount", session.HydrationSuggestionsCount);
             command.Parameters.AddWithValue("@FatigueIndicatorCount", session.FatigueIndicatorCount);
+            command.Parameters.AddWithValue("@ResonanceScore100", session.ResonanceScore100);
+            command.Parameters.AddWithValue("@ComfortScore100", session.ComfortScore100);
+            command.Parameters.AddWithValue("@ConsistencyScore100", session.ConsistencyScore100);
+            command.Parameters.AddWithValue("@IntonationScore100", session.IntonationScore100);
+            command.Parameters.AddWithValue("@VocalWeightScore100", session.VocalWeightScore100);
+            command.Parameters.AddWithValue("@RecoveryScore100", session.RecoveryScore100);
+            command.Parameters.AddWithValue("@PitchScore100", session.PitchScore100);
+            command.Parameters.AddWithValue("@CompositeVoiceScore", session.CompositeVoiceScore);
         }
 
         private static void AddExerciseParameters(SqliteCommand command, ExercisePerformanceSummary summary)
@@ -413,7 +582,34 @@ namespace FemVoiceStudio.Services
                 SafetyEventsCount = ReadInt(reader, "SafetyEventsCount"),
                 PauseRecommendationsCount = ReadInt(reader, "PauseRecommendationsCount"),
                 HydrationSuggestionsCount = ReadInt(reader, "HydrationSuggestionsCount"),
-                FatigueIndicatorCount = ReadInt(reader, "FatigueIndicatorCount")
+                FatigueIndicatorCount = ReadInt(reader, "FatigueIndicatorCount"),
+                ResonanceScore100 = ReadDouble(reader, "ResonanceScore100"),
+                ComfortScore100 = ReadDouble(reader, "ComfortScore100"),
+                ConsistencyScore100 = ReadDouble(reader, "ConsistencyScore100"),
+                IntonationScore100 = ReadDouble(reader, "IntonationScore100"),
+                VocalWeightScore100 = ReadDouble(reader, "VocalWeightScore100"),
+                RecoveryScore100 = ReadDouble(reader, "RecoveryScore100"),
+                PitchScore100 = ReadDouble(reader, "PitchScore100"),
+                CompositeVoiceScore = ReadDouble(reader, "CompositeVoiceScore")
+            };
+        }
+
+        private static VoiceIntelligenceTrendPoint MapTrendPoint(SqliteDataReader reader)
+        {
+            return new VoiceIntelligenceTrendPoint
+            {
+                SessionId = ReadInt(reader, "SessionId"),
+                UserId = ReadInt(reader, "UserId"),
+                StartedAt = ReadDateTime(reader, "StartedAt"),
+                EndedAt = ReadNullableDateTime(reader, "EndedAt"),
+                ResonanceScore100 = ReadDouble(reader, "ResonanceScore100"),
+                ComfortScore100 = ReadDouble(reader, "ComfortScore100"),
+                ConsistencyScore100 = ReadDouble(reader, "ConsistencyScore100"),
+                IntonationScore100 = ReadDouble(reader, "IntonationScore100"),
+                VocalWeightScore100 = ReadDouble(reader, "VocalWeightScore100"),
+                RecoveryScore100 = ReadDouble(reader, "RecoveryScore100"),
+                PitchScore100 = ReadDouble(reader, "PitchScore100"),
+                CompositeVoiceScore = ReadDouble(reader, "CompositeVoiceScore")
             };
         }
 
@@ -467,7 +663,7 @@ namespace FemVoiceStudio.Services
         }
     }
 
-    public sealed class InMemorySessionAnalyticsRepository : ISessionAnalyticsRepository
+    public sealed class InMemorySessionAnalyticsRepository : ISessionAnalyticsRepository, IVoiceIntelligenceTrendSource
     {
         private readonly object _sync = new();
         private readonly Dictionary<int, SessionAnalyticsRecord> _sessions = new();
@@ -525,6 +721,39 @@ namespace FemVoiceStudio.Services
                     .OrderBy(s => s.StartedAt)
                     .ToList();
                 return Task.FromResult<IReadOnlyList<SessionAnalyticsRecord>>(result);
+            }
+        }
+
+        public Task<IReadOnlyList<VoiceIntelligenceTrendPoint>> GetVoiceIntelligenceTrendAsync(
+            int userId,
+            DateTime from,
+            DateTime to,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            lock (_sync)
+            {
+                var result = _sessions.Values
+                    .Where(s => s.UserId == userId && s.StartedAt >= from && s.StartedAt < to)
+                    .OrderBy(s => s.StartedAt)
+                    .Select(s => new VoiceIntelligenceTrendPoint
+                    {
+                        SessionId = s.SessionId,
+                        UserId = s.UserId,
+                        StartedAt = s.StartedAt,
+                        EndedAt = s.EndedAt,
+                        ResonanceScore100 = s.ResonanceScore100,
+                        ComfortScore100 = s.ComfortScore100,
+                        ConsistencyScore100 = s.ConsistencyScore100,
+                        IntonationScore100 = s.IntonationScore100,
+                        VocalWeightScore100 = s.VocalWeightScore100,
+                        RecoveryScore100 = s.RecoveryScore100,
+                        PitchScore100 = s.PitchScore100,
+                        CompositeVoiceScore = s.CompositeVoiceScore
+                    })
+                    .ToList();
+                return Task.FromResult<IReadOnlyList<VoiceIntelligenceTrendPoint>>(result);
             }
         }
 
@@ -702,6 +931,29 @@ namespace FemVoiceStudio.Services
                 .ToList();
         }
 
+        /// <summary>
+        /// Voice Intelligence trend (Sprint B): the eight 0–100 scores per completed
+        /// session in the window, chronological. Read by Bølge 2 (analytics/viz/coaching).
+        /// Returns an empty list if the backing repository does not expose the trend
+        /// source (keeps older repositories source-compatible).
+        /// </summary>
+        public async Task<IReadOnlyList<VoiceIntelligenceTrendPoint>> GetVoiceIntelligenceTrendAsync(
+            DateTime from,
+            DateTime to,
+            int userId = 1,
+            CancellationToken cancellationToken = default)
+        {
+            if (_repository is not IVoiceIntelligenceTrendSource trendSource)
+            {
+                return Array.Empty<VoiceIntelligenceTrendPoint>();
+            }
+
+            var points = await trendSource.GetVoiceIntelligenceTrendAsync(userId, from, to, cancellationToken);
+            return points
+                .OrderBy(p => p.StartedAt)
+                .ToList();
+        }
+
         private static SessionAnalyticsRecord Normalize(SessionAnalyticsRecord session)
         {
             return session with
@@ -714,7 +966,17 @@ namespace FemVoiceStudio.Services
                 SafetyEventsCount = Math.Max(0, session.SafetyEventsCount),
                 PauseRecommendationsCount = Math.Max(0, session.PauseRecommendationsCount),
                 HydrationSuggestionsCount = Math.Max(0, session.HydrationSuggestionsCount),
-                FatigueIndicatorCount = Math.Max(0, session.FatigueIndicatorCount)
+                FatigueIndicatorCount = Math.Max(0, session.FatigueIndicatorCount),
+                // Voice Intelligence scores are 0–100 (NOT 0–1) — clamp on the 0–100
+                // scale; reusing Clamp01 here would silently crush every real score to 1.
+                ResonanceScore100 = Clamp0To100(session.ResonanceScore100),
+                ComfortScore100 = Clamp0To100(session.ComfortScore100),
+                ConsistencyScore100 = Clamp0To100(session.ConsistencyScore100),
+                IntonationScore100 = Clamp0To100(session.IntonationScore100),
+                VocalWeightScore100 = Clamp0To100(session.VocalWeightScore100),
+                RecoveryScore100 = Clamp0To100(session.RecoveryScore100),
+                PitchScore100 = Clamp0To100(session.PitchScore100),
+                CompositeVoiceScore = Clamp0To100(session.CompositeVoiceScore)
             };
         }
 
@@ -749,6 +1011,18 @@ namespace FemVoiceStudio.Services
             }
 
             return Math.Clamp(value, 0, 1);
+        }
+
+        /// <summary>Clamp a Voice Intelligence score onto its 0–100 scale (NaN/∞ ⇒ 0).
+        /// Separate from <see cref="Clamp01"/> so the two scales never get mixed.</summary>
+        private static double Clamp0To100(double value)
+        {
+            if (double.IsNaN(value) || double.IsInfinity(value))
+            {
+                return 0;
+            }
+
+            return Math.Clamp(value, 0, 100);
         }
 
         private static double Average(IEnumerable<double> values)
