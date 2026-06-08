@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -21,6 +22,10 @@ namespace FemVoiceStudio.ViewModels
         private readonly DatabaseService _database;
         private readonly FemVoiceScore _femVoiceScore;
         private readonly SessionAnalyticsStore? _analyticsStore;
+
+        // SmartCoachEngine: source for longitudinal development profile (Bølge 2).
+        // Resolved from DI; null in design-time / test contexts (handled gracefully).
+        private readonly SmartCoachEngine? _smartCoach;
 
         // Collections for charts
         public ObservableCollection<PitchSample> PitchHistory { get; } = new();
@@ -67,7 +72,30 @@ namespace FemVoiceStudio.ViewModels
 
         [ObservableProperty]
         private PlotModel _voiceDevelopmentPlotModel = CreateDimensionPlotModel("Voice Development");
-        
+
+        // ── A9-Dashboard: five longitudinal sections sourced from SmartCoachEngine ──
+        // Titles via {loc:Loc Dashboard_*} in XAML; models use window-bucketed data.
+
+        /// <summary>Weekly trend windows (7/30 d) — composite slope per window.</summary>
+        [ObservableProperty]
+        private PlotModel _weeklyTrendPlotModel = CreateDimensionPlotModel("Weekly Trend");
+
+        /// <summary>Monthly trend windows (90/180 d) — composite slope per window.</summary>
+        [ObservableProperty]
+        private PlotModel _monthlyTrendPlotModel = CreateDimensionPlotModel("Monthly Trend");
+
+        /// <summary>Voice Development — composite score across all windows.</summary>
+        [ObservableProperty]
+        private PlotModel _voiceDevelopmentLongPlotModel = CreateDimensionPlotModel("Voice Development");
+
+        /// <summary>Breakthroughs / Plateau / Regression — severity per detected event.</summary>
+        [ObservableProperty]
+        private PlotModel _breakthroughsPlotModel = CreateDimensionPlotModel("Breakthroughs");
+
+        /// <summary>Recovery patterns — Recovery-dimension slope per window.</summary>
+        [ObservableProperty]
+        private PlotModel _recoveryPatternsPlotModel = CreateDimensionPlotModel("Recovery Patterns");
+
         [ObservableProperty]
         private double _averagePitch;
         
@@ -144,20 +172,28 @@ namespace FemVoiceStudio.ViewModels
             // SessionAnalyticsStore is the LIVE Voice Intelligence trend source (Bølge 1).
             // Resolve from DI; null in design-time / no-DI contexts (handled gracefully).
             _analyticsStore = App.Services?.GetService(typeof(SessionAnalyticsStore)) as SessionAnalyticsStore;
+            // SmartCoachEngine is the source for the longitudinal development profile (Bølge 2).
+            // Same resolution pattern as MainViewModel. Null if DI container is not available.
+            _smartCoach = App.Services?.GetService(typeof(SmartCoachEngine)) as SmartCoachEngine;
         }
 
         /// <summary>
-        /// Test/DI seam: inject the analytics store directly so the Voice Intelligence
-        /// trend can be exercised without the App.Services container or any WPF host.
+        /// Test/DI seam: inject the analytics store and (optionally) SmartCoachEngine
+        /// directly so both the Voice Intelligence trend and the longitudinal development
+        /// profile can be exercised without the App.Services container or any WPF host.
         /// <paramref name="database"/> may be null for pure trend-mapping tests — the
         /// trend path (<see cref="ApplyVoiceIntelligenceTrend"/>/
         /// <see cref="LoadVoiceIntelligenceTrendAsync"/>) never touches the database.
         /// </summary>
-        public AnalysisPageViewModel(DatabaseService? database, SessionAnalyticsStore? analyticsStore)
+        public AnalysisPageViewModel(
+            DatabaseService? database,
+            SessionAnalyticsStore? analyticsStore,
+            SmartCoachEngine? smartCoach = null)
         {
             _database = database!;
             _femVoiceScore = new FemVoiceScore();
             _analyticsStore = analyticsStore;
+            _smartCoach = smartCoach;
         }
         
         /// <summary>
@@ -467,6 +503,10 @@ namespace FemVoiceStudio.ViewModels
             UpdateVocalWeightChartData();
             UpdateRecoveryChartData();
             UpdateVoiceDevelopmentChartData();
+
+            // A9: refresh the five longitudinal (window-bucketed) sections.
+            // RefreshDevelopmentProfileCharts is null-safe — no crash if _smartCoach is null.
+            RefreshDevelopmentProfileCharts();
         }
         
         #region OxyPlot Model Creation
@@ -733,6 +773,242 @@ namespace FemVoiceStudio.ViewModels
         public void UpdateVoiceDevelopmentChartData() =>
             UpdateDimensionChartData(VoiceDevelopmentPlotModel, "Voice Development",
                 OxyColor.FromRgb(255, 107, 157), s => s.CompositeVoiceScore);
+
+        // ── A9-Dashboard: longitudinal window-bucketed chart updates ─────────────────
+        // These five methods consume VoiceDevelopmentProfile (window-bucketed, one point
+        // per TrendWindow) rather than VoiceIntelligenceTrend (per-session). They share
+        // the same CreateDimensionPlotModel template and are orchestrated by
+        // ApplyDevelopmentProfile, called from ApplyVoiceIntelligenceTrend.
+
+        /// <summary>
+        /// Shared helper: build a window-bucketed LineSeries from a list of TrendWindows.
+        /// One DataPoint per window; X = window index (chronological), Y = selector result.
+        /// Safe for empty/null window lists (yields an empty but valid chart).
+        /// </summary>
+        private static void UpdateWindowChartData(
+            PlotModel model,
+            string seriesTitle,
+            OxyColor color,
+            IReadOnlyList<TrendWindow> windows,
+            Func<TrendWindow, double> ySelector)
+        {
+            model.Series.Clear();
+
+            var series = new LineSeries
+            {
+                Title = seriesTitle,
+                Color = color,
+                StrokeThickness = 2,
+                MarkerType = MarkerType.Circle,
+                MarkerSize = 4
+            };
+
+            for (int i = 0; i < windows.Count; i++)
+            {
+                series.Points.Add(new DataPoint(i, ySelector(windows[i])));
+            }
+
+            model.Series.Add(series);
+            model.InvalidatePlot(false);
+        }
+
+        /// <summary>
+        /// Updates the Weekly Trend chart from WeeklyTrend windows (7/30 d).
+        /// Plots composite mean per window; clears and shows placeholder on no data.
+        /// </summary>
+        public void UpdateWeeklyTrendChartData(IReadOnlyList<TrendWindow>? windows)
+        {
+            var safe = windows ?? Array.Empty<TrendWindow>();
+            UpdateWindowChartData(
+                WeeklyTrendPlotModel,
+                LocalizationService.Instance["Dashboard_WeeklyTrend"],
+                OxyColor.FromRgb(126, 87, 194),
+                safe,
+                w => w.CompositeMean);
+        }
+
+        /// <summary>
+        /// Updates the Monthly Trend chart from MonthlyTrend windows (90/180 d).
+        /// </summary>
+        public void UpdateMonthlyTrendChartData(IReadOnlyList<TrendWindow>? windows)
+        {
+            var safe = windows ?? Array.Empty<TrendWindow>();
+            UpdateWindowChartData(
+                MonthlyTrendPlotModel,
+                LocalizationService.Instance["Dashboard_MonthlyTrend"],
+                OxyColor.FromRgb(38, 198, 218),
+                safe,
+                w => w.CompositeMean);
+        }
+
+        /// <summary>
+        /// Updates the Voice Development (longitudinal) chart: composite score per window,
+        /// all windows (weekly + monthly) in chronological order by From date.
+        /// </summary>
+        public void UpdateVoiceDevelopmentLongChartData(
+            IReadOnlyList<TrendWindow>? weeklyWindows,
+            IReadOnlyList<TrendWindow>? monthlyWindows)
+        {
+            VoiceDevelopmentLongPlotModel.Series.Clear();
+
+            var allWindows = (weeklyWindows ?? Array.Empty<TrendWindow>())
+                .Concat(monthlyWindows ?? Array.Empty<TrendWindow>())
+                .OrderBy(w => w.From)
+                .ToList();
+
+            var series = new LineSeries
+            {
+                Title = LocalizationService.Instance["Dashboard_VoiceDevelopment"],
+                Color = OxyColor.FromRgb(255, 107, 157),
+                StrokeThickness = 2,
+                MarkerType = MarkerType.Circle,
+                MarkerSize = 4
+            };
+
+            for (int i = 0; i < allWindows.Count; i++)
+            {
+                series.Points.Add(new DataPoint(i, allWindows[i].CompositeMean));
+            }
+
+            VoiceDevelopmentLongPlotModel.Series.Add(series);
+            VoiceDevelopmentLongPlotModel.InvalidatePlot(false);
+        }
+
+        /// <summary>
+        /// Updates the Breakthroughs chart: visualises detected Breakthrough, Plateau and
+        /// Regression events as vertical bars. Each event maps to a severity score on the
+        /// Y-axis; X-axis is a sequential event-index. Empty when no events detected.
+        /// LinearBarSeries is used (OxyPlot 2.x compatible; uses DataPoints on linear axes).
+        /// </summary>
+        public void UpdateBreakthroughsChartData(
+            BreakthroughState? breakthrough,
+            PlateauState? plateau,
+            RegressionState? regression)
+        {
+            BreakthroughsPlotModel.Series.Clear();
+
+            // Build (label, value, color) triples for each detected event.
+            var events = new List<(string label, double severity, OxyColor color)>();
+            if (breakthrough != null)
+                events.Add(("B", breakthrough.SeverityScore, OxyColor.FromRgb(102, 187, 106)));
+            if (plateau != null)
+                events.Add(("P", plateau.SeverityScore, OxyColor.FromRgb(255, 167, 38)));
+            if (regression != null)
+                events.Add(("R", regression.CompoundSeverity, OxyColor.FromRgb(244, 67, 54)));
+
+            if (events.Count > 0)
+            {
+                // One LinearBarSeries per event so each can have its own colour.
+                for (int i = 0; i < events.Count; i++)
+                {
+                    var (label, severity, color) = events[i];
+                    var bar = new LinearBarSeries
+                    {
+                        Title = label,
+                        FillColor = color,
+                        StrokeColor = OxyColors.White,
+                        StrokeThickness = 1,
+                        BarWidth = 0.6
+                    };
+                    bar.Points.Add(new DataPoint(i, severity));
+                    BreakthroughsPlotModel.Series.Add(bar);
+                }
+            }
+            else
+            {
+                // Placeholder: empty series — chart is valid, just blank.
+                BreakthroughsPlotModel.Series.Add(new LineSeries
+                {
+                    Title = LocalizationService.Instance["Dashboard_Breakthroughs"],
+                    Color = OxyColor.FromRgb(200, 200, 200),
+                    StrokeThickness = 1
+                });
+            }
+
+            BreakthroughsPlotModel.InvalidatePlot(false);
+        }
+
+        /// <summary>
+        /// Updates the Recovery Patterns chart: Recovery-dimension slope per window
+        /// (weekly + monthly, chronological). Positive slope = improving recovery.
+        /// </summary>
+        public void UpdateRecoveryPatternsChartData(
+            IReadOnlyList<TrendWindow>? weeklyWindows,
+            IReadOnlyList<TrendWindow>? monthlyWindows)
+        {
+            RecoveryPatternsPlotModel.Series.Clear();
+
+            var allWindows = (weeklyWindows ?? Array.Empty<TrendWindow>())
+                .Concat(monthlyWindows ?? Array.Empty<TrendWindow>())
+                .OrderBy(w => w.From)
+                .ToList();
+
+            var series = new LineSeries
+            {
+                Title = LocalizationService.Instance["Dashboard_RecoveryPatterns"],
+                Color = OxyColor.FromRgb(38, 198, 218),
+                StrokeThickness = 2,
+                MarkerType = MarkerType.Circle,
+                MarkerSize = 4
+            };
+
+            for (int i = 0; i < allWindows.Count; i++)
+            {
+                var w = allWindows[i];
+                double recoverySlope = w.DimensionSlopes.TryGetValue(VoiceDimension.Recovery, out var slope)
+                    ? slope
+                    : 0.0;
+                series.Points.Add(new DataPoint(i, recoverySlope));
+            }
+
+            RecoveryPatternsPlotModel.Series.Add(series);
+            RecoveryPatternsPlotModel.InvalidatePlot(false);
+        }
+
+        /// <summary>
+        /// Orchestrates all five A9 longitudinal charts from a
+        /// <see cref="VoiceDevelopmentProfile"/>. Null-safe: null profile or
+        /// HasEnoughData==false leaves the charts empty (no crash).
+        /// Called from <see cref="ApplyVoiceIntelligenceTrend"/> via
+        /// <see cref="RefreshDevelopmentProfileCharts"/>.
+        /// </summary>
+        public void ApplyDevelopmentProfile(VoiceDevelopmentProfile? profile)
+        {
+            if (profile == null)
+            {
+                // Render empty placeholder charts — no crash.
+                UpdateWeeklyTrendChartData(null);
+                UpdateMonthlyTrendChartData(null);
+                UpdateVoiceDevelopmentLongChartData(null, null);
+                UpdateBreakthroughsChartData(null, null, null);
+                UpdateRecoveryPatternsChartData(null, null);
+                return;
+            }
+
+            UpdateWeeklyTrendChartData(profile.WeeklyTrend);
+            UpdateMonthlyTrendChartData(profile.MonthlyTrend);
+            UpdateVoiceDevelopmentLongChartData(profile.WeeklyTrend, profile.MonthlyTrend);
+            UpdateBreakthroughsChartData(profile.Breakthrough, profile.Plateau, profile.Regression);
+            UpdateRecoveryPatternsChartData(profile.WeeklyTrend, profile.MonthlyTrend);
+        }
+
+        /// <summary>
+        /// Fetches the development profile from SmartCoachEngine (null-safe) and
+        /// applies it to the five longitudinal charts. Never throws.
+        /// </summary>
+        public void RefreshDevelopmentProfileCharts(int userId = 1)
+        {
+            try
+            {
+                var profile = _smartCoach?.TryBuildDevelopmentProfile(userId, DateTime.Now);
+                ApplyDevelopmentProfile(profile);
+            }
+            catch
+            {
+                // Descriptive visualisation only — never crash the dashboard.
+                ApplyDevelopmentProfile(null);
+            }
+        }
 
         /// <summary>
         /// Efficiently updates resonance chart data using partial invalidation

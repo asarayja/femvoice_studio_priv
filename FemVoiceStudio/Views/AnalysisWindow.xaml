@@ -64,6 +64,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 
                 <!-- Top Stats Row -->
@@ -268,8 +269,94 @@
                     </Border>
                 </Grid>
 
-                <!-- Row 5: Score Breakdown + Session Summary -->
-                <Grid Grid.Row="5">
+                <!-- Row 5: A9 — Longitudinal Intelligence: Weekly/Monthly Trends + Voice Development + Breakthroughs + Recovery Patterns -->
+                <!-- Data sourced from SmartCoachEngine.TryBuildDevelopmentProfile (Bølge 2). -->
+                <Grid Grid.Row="5" Margin="0,0,0,16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Row 5a: Weekly Trend + Monthly Trend + Voice Development (longitudinal) -->
+                    <Grid Grid.Row="0" Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Weekly Trend -->
+                        <Border Grid.Column="0" Style="{StaticResource ChartCard}" Margin="0,0,8,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="200"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="{loc:Loc Dashboard_WeeklyTrend}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                <oxy:PlotView Grid.Row="1" x:Name="WeeklyTrendPlotView" Background="White"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Monthly Trend -->
+                        <Border Grid.Column="1" Style="{StaticResource ChartCard}" Margin="8,0,8,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="200"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="{loc:Loc Dashboard_MonthlyTrend}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                <oxy:PlotView Grid.Row="1" x:Name="MonthlyTrendPlotView" Background="White"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Voice Development (longitudinal composite) -->
+                        <Border Grid.Column="2" Style="{StaticResource ChartCard}" Margin="8,0,0,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="200"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="{loc:Loc Dashboard_VoiceDevelopment}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                <oxy:PlotView Grid.Row="1" x:Name="VoiceDevelopmentLongPlotView" Background="White"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- Row 5b: Breakthroughs + Recovery Patterns -->
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Breakthroughs -->
+                        <Border Grid.Column="0" Style="{StaticResource ChartCard}" Margin="0,0,8,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="200"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="{loc:Loc Dashboard_Breakthroughs}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                <oxy:PlotView Grid.Row="1" x:Name="BreakthroughsPlotView" Background="White"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Recovery Patterns -->
+                        <Border Grid.Column="1" Style="{StaticResource ChartCard}" Margin="8,0,0,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="200"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="{loc:Loc Dashboard_RecoveryPatterns}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                <oxy:PlotView Grid.Row="1" x:Name="RecoveryPatternsPlotView" Background="White"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Grid>
+
+                <!-- Row 6: Score Breakdown + Session Summary -->
+                <Grid Grid.Row="6">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using FemVoiceStudio.Models;
 using FemVoiceStudio.Services;
 using FemVoiceStudio.ViewModels;
+using OxyPlot.Series;
 using Xunit;
 
 namespace FemVoiceStudio.Tests
@@ -357,6 +358,266 @@ namespace FemVoiceStudio.Tests
             Assert.Equal(65, vm.ComfortScore);
             Assert.Equal(75, vm.RecoveryScore);
             Assert.Equal(48, vm.CompositeVoiceScore);
+        }
+
+        // ── A9-Dashboard: five longitudinal PlotModel properties ─────────────────────
+
+        /// <summary>
+        /// Helper: build a minimal VoiceDevelopmentProfile with two weekly windows
+        /// and one monthly window, all with HasEnoughData=true.
+        /// </summary>
+        private static VoiceDevelopmentProfile BuildTestProfile()
+        {
+            var now = new DateTime(2026, 5, 15, 12, 0, 0);
+            var w7 = new TrendWindow
+            {
+                WindowDays = 7,
+                From = now.AddDays(-7),
+                To = now,
+                CompositeMean = 60,
+                CompositeSlope = 1.5,
+                SessionCount = 4,
+                HasEnoughData = true,
+                DimensionSlopes = new Dictionary<VoiceDimension, double>
+                {
+                    { VoiceDimension.Recovery, 0.8 },
+                    { VoiceDimension.Resonance, 1.2 }
+                }
+            };
+            var w30 = new TrendWindow
+            {
+                WindowDays = 30,
+                From = now.AddDays(-30),
+                To = now,
+                CompositeMean = 55,
+                CompositeSlope = 0.7,
+                SessionCount = 10,
+                HasEnoughData = true,
+                DimensionSlopes = new Dictionary<VoiceDimension, double>
+                {
+                    { VoiceDimension.Recovery, 0.3 }
+                }
+            };
+            var w90 = new TrendWindow
+            {
+                WindowDays = 90,
+                From = now.AddDays(-90),
+                To = now,
+                CompositeMean = 50,
+                CompositeSlope = 0.4,
+                SessionCount = 20,
+                HasEnoughData = true,
+                DimensionSlopes = new Dictionary<VoiceDimension, double>
+                {
+                    { VoiceDimension.Recovery, 0.1 }
+                }
+            };
+
+            return new VoiceDevelopmentProfile
+            {
+                UserId = 1,
+                GeneratedAt = now,
+                WeeklyTrend = new[] { w7, w30 },
+                MonthlyTrend = new[] { w90 },
+                Breakthrough = new BreakthroughState
+                {
+                    ReasonCode = "BREAKTHROUGH_Resonance",
+                    Dimension = VoiceDimension.Resonance,
+                    SeverityScore = 72,
+                    MagnitudeDelta = 1.1
+                },
+                Plateau = null,
+                Regression = null,
+                CompositeVoiceScore = 58,
+                HasEnoughData = true
+            };
+        }
+
+        [Fact]
+        public void AnalysisVm_ApplyDevelopmentProfile_AllFivePlotModelsNotNull()
+        {
+            var vm = new AnalysisPageViewModel(database: null, analyticsStore: null);
+            var profile = BuildTestProfile();
+
+            vm.ApplyDevelopmentProfile(profile);
+
+            Assert.NotNull(vm.WeeklyTrendPlotModel);
+            Assert.NotNull(vm.MonthlyTrendPlotModel);
+            Assert.NotNull(vm.VoiceDevelopmentLongPlotModel);
+            Assert.NotNull(vm.BreakthroughsPlotModel);
+            Assert.NotNull(vm.RecoveryPatternsPlotModel);
+        }
+
+        [Fact]
+        public void AnalysisVm_ApplyDevelopmentProfile_WeeklyTrendSeriesHasWindowCount()
+        {
+            var vm = new AnalysisPageViewModel(database: null, analyticsStore: null);
+            var profile = BuildTestProfile(); // 2 weekly windows
+
+            vm.ApplyDevelopmentProfile(profile);
+
+            var series = vm.WeeklyTrendPlotModel.Series
+                .OfType<LineSeries>()
+                .FirstOrDefault();
+            Assert.NotNull(series);
+            Assert.Equal(2, series!.Points.Count);
+        }
+
+        [Fact]
+        public void AnalysisVm_ApplyDevelopmentProfile_MonthlyTrendSeriesHasWindowCount()
+        {
+            var vm = new AnalysisPageViewModel(database: null, analyticsStore: null);
+            var profile = BuildTestProfile(); // 1 monthly window
+
+            vm.ApplyDevelopmentProfile(profile);
+
+            var series = vm.MonthlyTrendPlotModel.Series
+                .OfType<LineSeries>()
+                .FirstOrDefault();
+            Assert.NotNull(series);
+            Assert.Single(series!.Points);
+        }
+
+        [Fact]
+        public void AnalysisVm_ApplyDevelopmentProfile_VoiceDevelopmentLongCoversAllWindows()
+        {
+            var vm = new AnalysisPageViewModel(database: null, analyticsStore: null);
+            var profile = BuildTestProfile(); // 2 weekly + 1 monthly = 3 total
+
+            vm.ApplyDevelopmentProfile(profile);
+
+            var series = vm.VoiceDevelopmentLongPlotModel.Series
+                .OfType<LineSeries>()
+                .FirstOrDefault();
+            Assert.NotNull(series);
+            // All three windows (sorted by From date).
+            Assert.Equal(3, series!.Points.Count);
+        }
+
+        [Fact]
+        public void AnalysisVm_ApplyDevelopmentProfile_BreakthroughsChartHasSeries()
+        {
+            var vm = new AnalysisPageViewModel(database: null, analyticsStore: null);
+            var profile = BuildTestProfile(); // has Breakthrough, no Plateau/Regression
+
+            vm.ApplyDevelopmentProfile(profile);
+
+            // Exactly one LinearBarSeries for the Breakthrough event.
+            var bars = vm.BreakthroughsPlotModel.Series.OfType<LinearBarSeries>().ToList();
+            Assert.Single(bars);
+            Assert.Single(bars[0].Points);
+            Assert.Equal(72, bars[0].Points[0].Y, precision: 1);
+        }
+
+        [Fact]
+        public void AnalysisVm_ApplyDevelopmentProfile_RecoveryPatternsSeriesHasWindowCount()
+        {
+            var vm = new AnalysisPageViewModel(database: null, analyticsStore: null);
+            var profile = BuildTestProfile(); // 2 weekly + 1 monthly = 3 windows
+
+            vm.ApplyDevelopmentProfile(profile);
+
+            var series = vm.RecoveryPatternsPlotModel.Series
+                .OfType<LineSeries>()
+                .FirstOrDefault();
+            Assert.NotNull(series);
+            Assert.Equal(3, series!.Points.Count);
+        }
+
+        [Fact]
+        public void AnalysisVm_ApplyDevelopmentProfile_NullProfile_NoCrashAndModelsNotNull()
+        {
+            var vm = new AnalysisPageViewModel(database: null, analyticsStore: null);
+
+            // Should not throw even with null profile.
+            vm.ApplyDevelopmentProfile(null);
+
+            Assert.NotNull(vm.WeeklyTrendPlotModel);
+            Assert.NotNull(vm.MonthlyTrendPlotModel);
+            Assert.NotNull(vm.VoiceDevelopmentLongPlotModel);
+            Assert.NotNull(vm.BreakthroughsPlotModel);
+            Assert.NotNull(vm.RecoveryPatternsPlotModel);
+        }
+
+        [Fact]
+        public void AnalysisVm_ApplyDevelopmentProfile_NullProfile_ChartsAreEmpty()
+        {
+            var vm = new AnalysisPageViewModel(database: null, analyticsStore: null);
+
+            vm.ApplyDevelopmentProfile(null);
+
+            // Weekly/Monthly/VoiceDevelopmentLong: LineSeries with 0 points.
+            var weekSeries = vm.WeeklyTrendPlotModel.Series.OfType<LineSeries>().FirstOrDefault();
+            Assert.NotNull(weekSeries);
+            Assert.Empty(weekSeries!.Points);
+
+            var monthSeries = vm.MonthlyTrendPlotModel.Series.OfType<LineSeries>().FirstOrDefault();
+            Assert.NotNull(monthSeries);
+            Assert.Empty(monthSeries!.Points);
+
+            var devSeries = vm.VoiceDevelopmentLongPlotModel.Series.OfType<LineSeries>().FirstOrDefault();
+            Assert.NotNull(devSeries);
+            Assert.Empty(devSeries!.Points);
+        }
+
+        [Fact]
+        public void AnalysisVm_ApplyDevelopmentProfile_NoEvents_BreakthroughsPlaceholderNotNull()
+        {
+            var vm = new AnalysisPageViewModel(database: null, analyticsStore: null);
+            // Profile without any pattern events.
+            var emptyProfile = new VoiceDevelopmentProfile
+            {
+                UserId = 1,
+                WeeklyTrend = Array.Empty<TrendWindow>(),
+                MonthlyTrend = Array.Empty<TrendWindow>(),
+                Breakthrough = null,
+                Plateau = null,
+                Regression = null,
+                HasEnoughData = false
+            };
+
+            vm.ApplyDevelopmentProfile(emptyProfile);
+
+            // No LinearBarSeries (no events detected); placeholder LineSeries present.
+            Assert.Empty(vm.BreakthroughsPlotModel.Series.OfType<LinearBarSeries>());
+            Assert.NotEmpty(vm.BreakthroughsPlotModel.Series.OfType<LineSeries>());
+        }
+
+        [Fact]
+        public void AnalysisVm_RefreshDevelopmentProfileCharts_NullSmartCoach_NoCrash()
+        {
+            // smartCoach=null simulates DI unavailable — should degrade silently.
+            var vm = new AnalysisPageViewModel(database: null, analyticsStore: null, smartCoach: null);
+
+            // Should not throw.
+            vm.RefreshDevelopmentProfileCharts();
+
+            // Models must still be non-null (initialised to empty placeholder state).
+            Assert.NotNull(vm.WeeklyTrendPlotModel);
+            Assert.NotNull(vm.MonthlyTrendPlotModel);
+            Assert.NotNull(vm.VoiceDevelopmentLongPlotModel);
+            Assert.NotNull(vm.BreakthroughsPlotModel);
+            Assert.NotNull(vm.RecoveryPatternsPlotModel);
+        }
+
+        [Fact]
+        public void AnalysisVm_ApplyVoiceIntelligenceTrend_AlsoCallsRefreshDevelopmentProfile_NoCrash()
+        {
+            // Verify that the combined orchestration path does not crash when
+            // _smartCoach is null (common in test contexts).
+            var vm = new AnalysisPageViewModel(database: null, analyticsStore: null, smartCoach: null);
+
+            vm.ApplyVoiceIntelligenceTrend(new[]
+            {
+                Point(1, new DateTime(2026, 5, 1), composite: 55),
+                Point(2, new DateTime(2026, 5, 2), composite: 60),
+            });
+
+            // Per-session charts still populated.
+            Assert.Equal(2, vm.VoiceIntelligenceTrend.Count);
+            // Longitudinal models not null (empty placeholder state).
+            Assert.NotNull(vm.WeeklyTrendPlotModel);
+            Assert.NotNull(vm.RecoveryPatternsPlotModel);
         }
     }
 }

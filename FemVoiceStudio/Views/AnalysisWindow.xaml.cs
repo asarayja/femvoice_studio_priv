@@ -51,6 +51,13 @@ namespace FemVoiceStudio.Views
             ConsistencyPlotView.Model = _viewModel.ConsistencyPlotModel;
             VocalWeightPlotView.Model = _viewModel.VocalWeightPlotModel;
             VoiceDevelopmentPlotView.Model = _viewModel.VoiceDevelopmentPlotModel;
+
+            // A9: bind longitudinal development-profile chart models.
+            WeeklyTrendPlotView.Model = _viewModel.WeeklyTrendPlotModel;
+            MonthlyTrendPlotView.Model = _viewModel.MonthlyTrendPlotModel;
+            VoiceDevelopmentLongPlotView.Model = _viewModel.VoiceDevelopmentLongPlotModel;
+            BreakthroughsPlotView.Model = _viewModel.BreakthroughsPlotModel;
+            RecoveryPatternsPlotView.Model = _viewModel.RecoveryPatternsPlotModel;
         }
 
         private async System.Threading.Tasks.Task LoadVoiceIntelligenceTrendAsync()
@@ -63,6 +70,13 @@ namespace FemVoiceStudio.Views
             ConsistencyPlotView.InvalidatePlot(true);
             VocalWeightPlotView.InvalidatePlot(true);
             VoiceDevelopmentPlotView.InvalidatePlot(true);
+
+            // A9: redraw the longitudinal development-profile charts.
+            WeeklyTrendPlotView.InvalidatePlot(true);
+            MonthlyTrendPlotView.InvalidatePlot(true);
+            VoiceDevelopmentLongPlotView.InvalidatePlot(true);
+            BreakthroughsPlotView.InvalidatePlot(true);
+            RecoveryPatternsPlotView.InvalidatePlot(true);
         }
         
         /// <summary>
