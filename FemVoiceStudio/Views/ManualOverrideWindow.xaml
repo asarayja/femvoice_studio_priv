@@ -69,14 +69,16 @@
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Override_Kind}" Style="{StaticResource FieldLabel}"/>
                     <ComboBox ItemsSource="{Binding Source={StaticResource OverrideKinds}}"
-                              SelectedItem="{Binding SelectedKind, Mode=TwoWay}"/>
+                              SelectedItem="{Binding SelectedKind, Mode=TwoWay}"
+                              Style="{DynamicResource StandardComboBoxStyle}"/>
 
                     <TextBlock Text="{loc:Loc Dimension_Resonance}" Style="{StaticResource FieldLabel}"/>
                     <ComboBox ItemsSource="{Binding Source={StaticResource ProfileTypes}}"
-                              SelectedItem="{Binding BaselineProfileType, Mode=TwoWay}"/>
+                              SelectedItem="{Binding BaselineProfileType, Mode=TwoWay}"
+                              Style="{DynamicResource StandardComboBoxStyle}"/>
 
                     <TextBlock Text="{loc:Loc Override_Reason}" Style="{StaticResource FieldLabel}"/>
-                    <TextBox Text="{Binding ReasonCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBox Text="{Binding ReasonCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource StandardTextBoxStyle}"/>
                 </StackPanel>
             </Border>
 
@@ -85,7 +87,8 @@
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Dimension_VocalWeight}" Style="{StaticResource FieldLabel}"/>
                     <ComboBox ItemsSource="{Binding Source={StaticResource StyleGoals}}"
-                              SelectedItem="{Binding StyleGoal, Mode=TwoWay}"/>
+                              SelectedItem="{Binding StyleGoal, Mode=TwoWay}"
+                              Style="{DynamicResource StandardComboBoxStyle}"/>
 
                     <Grid Margin="0,8,0,0">
                         <Grid.ColumnDefinitions>
@@ -94,7 +97,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Margin="0,0,8,0">
                             <TextBlock Text="{loc:Loc Dimension_Resonance}" Style="{StaticResource FieldLabel}"/>
-                            <TextBox Text="{Binding IntendedResonanceMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Text="{Binding IntendedResonanceMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource StandardTextBoxStyle}"/>
                             <TextBox Text="{Binding IntendedResonanceMax, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                      Margin="0,4,0,0"/>
                         </StackPanel>

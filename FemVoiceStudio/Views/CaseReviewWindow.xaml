@@ -44,7 +44,9 @@
                                    Margin="0,0,0,8"/>
                         <ComboBox x:Name="ReviewTypeComboBox"
                                   SelectedIndex="{Binding SelectedReviewTypeIndex, Mode=TwoWay}"
-                                  FontSize="13" Margin="0,0,0,12">
+                                  Style="{DynamicResource StandardComboBoxStyle}"
+                                  Margin="0,0,0,12">
+
                             <ComboBoxItem Content="{loc:Loc CaseReview_Monthly}"/>
                             <ComboBoxItem Content="{loc:Loc CaseReview_Goal}"/>
                             <ComboBoxItem Content="{loc:Loc CaseReview_Progress}"/>
@@ -58,14 +60,18 @@
                         <StackPanel Orientation="Horizontal">
                             <DatePicker x:Name="PeriodStartPicker"
                                         SelectedDate="{Binding PeriodStart, Mode=TwoWay}"
-                                        FontSize="13" Margin="0,0,12,0"/>
+                                        FontSize="13" 
+                                        Style="{DynamicResource StandardDatePickerStyle}" 
+                                        Margin="0,0,12,0"/>
                             <TextBlock Text="—"
                                        VerticalAlignment="Center"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        Margin="0,0,12,0"/>
                             <DatePicker x:Name="PeriodEndPicker"
                                         SelectedDate="{Binding PeriodEnd, Mode=TwoWay}"
-                                        FontSize="13"/>
+                                        FontSize="13" 
+                                        Style="{DynamicResource StandardDatePickerStyle}"/>
+
                         </StackPanel>
                     </StackPanel>
                 </Border>

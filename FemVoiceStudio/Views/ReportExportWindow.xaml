@@ -35,7 +35,9 @@
                                Margin="0,0,0,8"/>
                     <ComboBox x:Name="ReportTypeComboBox"
                               SelectedIndex="{Binding SelectedReportTypeIndex, Mode=TwoWay}"
-                              FontSize="13">
+                              Style="{DynamicResource StandardComboBoxStyle}"
+                              Margin="0,0,0,0">
+
                         <ComboBoxItem Content="{loc:Loc Report_Clinical}"/>
                         <ComboBoxItem Content="{loc:Loc Report_Coach}"/>
                         <ComboBoxItem Content="{loc:Loc Report_Outcome}"/>
@@ -54,7 +56,9 @@
                                Margin="0,0,0,8"/>
                     <ComboBox x:Name="FormatComboBox"
                               SelectedIndex="{Binding SelectedFormatIndex, Mode=TwoWay}"
-                              FontSize="13">
+                              Style="{DynamicResource StandardComboBoxStyle}"
+                              Margin="0,0,0,0">
+
                         <ComboBoxItem Content="PDF"/>
                         <ComboBoxItem Content="CSV"/>
                         <ComboBoxItem Content="JSON"/>

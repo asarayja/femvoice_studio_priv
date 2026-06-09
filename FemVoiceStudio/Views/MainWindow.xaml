@@ -360,65 +360,63 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                
-                <!-- Left side: Difficulty + Extra buttons -->
-                <StackPanel Grid.Column="0">
-                    <!-- Difficulty Selector -->
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <Button Content="{loc:Loc Difficulty_Beginner}" Style="{StaticResource BeginnerButton}" 
-                                Command="{Binding SetDifficultyCommand}" CommandParameter="Nybegynner" Margin="0,0,8,0"/>
-                        <Button Content="{loc:Loc Difficulty_Intermediate}" Style="{StaticResource IntermediateButton}" 
-                                Command="{Binding SetDifficultyCommand}" CommandParameter="Middels" Margin="0,0,8,0"/>
-                        <Button Content="{loc:Loc Difficulty_Advanced}" Style="{StaticResource AdvancedButton}" 
-                                Command="{Binding SetDifficultyCommand}" CommandParameter="Avansert"/>
-                    </StackPanel>
-                    
-                    <!-- Extra buttons row -->
-                    <StackPanel Orientation="Horizontal">
-                        <Button Content="{loc:Loc Main_Calendar}" Style="{StaticResource CalendarButton}" 
-                                Click="OnOpenCalendar" Margin="0,0,8,0"/>
-                        <Button Content="{loc:Loc Main_Statistics}" Style="{StaticResource StatisticsButton}" 
-                                Click="OnOpenStatistics" Margin="0,0,8,0"/>
-                        <Button Content="{loc:Loc Main_ExerciseGuide}" Style="{StaticResource ExerciseGuideButton}" 
-                                Click="OnOpenExerciseGuide" Margin="0,0,8,0"/>
-                        <Button Content="{loc:Loc Main_Analyzer}" Style="{StaticResource AnalyzerButton}" 
-                                Click="OnOpenAnalyzer" Margin="0,0,8,0"/>
-                        <Button Content="{loc:Loc Main_SmartCoach}" Style="{StaticResource ExerciseGuideButton}" 
-                                Click="OnOpenSmartCoach" Margin="0,0,8,0"/>
-                        <Button Content="{loc:Loc Main_Resonance}" Style="{StaticResource AnalyzerButton}" 
-                                Click="OnOpenResonance" Margin="0,0,8,0"/>
-                        <Button Content="{loc:Loc Main_Progression}" Style="{StaticResource StatisticsButton}" 
-                                Click="OnOpenProgression" Margin="0,0,8,0"/>
-                        <Button Content="{loc:Loc Main_Analysis}" Style="{StaticResource StatisticsButton}" 
-                                Click="OnOpenAnalysis" Margin="0,0,8,0"/>
-                        <Button Content="{loc:Loc Main_Settings}" Style="{StaticResource SettingsButton}"
-                                Click="OnOpenSettings" Margin="0,0,8,0"/>
 
-                        <!-- Professional tools -->
-                        <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="4,0"/>
-                        <Button Content="{loc:Loc Nav_ClinicianDashboard}" Style="{StaticResource StatisticsButton}"
-                                Click="OnOpenClinicianDashboard" Margin="0,0,8,0"/>
-                        <Button Content="{loc:Loc Nav_CoachDashboard}" Style="{StaticResource StatisticsButton}"
-                                Click="OnOpenCoachDashboard" Margin="0,0,8,0"/>
-                        <Button Content="{loc:Loc Nav_Reports}" Style="{StaticResource StatisticsButton}"
-                                Click="OnOpenReportExport" Margin="0,0,8,0"/>
-                        <Button Content="{loc:Loc Nav_ManualOverride}" Style="{StaticResource StatisticsButton}"
-                                Click="OnOpenManualOverride" Margin="0,0,8,0"/>
-                        <Button Content="{loc:Loc Nav_CaseReview}" Style="{StaticResource StatisticsButton}"
-                                Click="OnOpenCaseReview" Margin="0,0,8,0"/>
+                <!-- Left side: Difficulty + Navigation (split into 2 deterministic rows) -->
+                <Grid Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                        <!-- Mic Status -->
-                        <Border CornerRadius="4" Padding="8,6" Background="{DynamicResource AccentLightBrush}">
-                            <TextBlock FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}">
-                                <Run Text="🎤 "/>
-                                <Run Text="{Binding StatusText}"/>
-                            </TextBlock>
-                        </Border>
+                    <!-- Row 0: Difficulty + Main navigation -->
+                    <StackPanel Grid.Row="0" Orientation="Vertical">
+                        <!-- Difficulty Selector -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <Button Content="{loc:Loc Difficulty_Beginner}" Style="{StaticResource BeginnerButton}"
+                                    Command="{Binding SetDifficultyCommand}" CommandParameter="Nybegynner" Margin="0,0,8,0"/>
+                            <Button Content="{loc:Loc Difficulty_Intermediate}" Style="{StaticResource IntermediateButton}"
+                                    Command="{Binding SetDifficultyCommand}" CommandParameter="Middels" Margin="0,0,8,0"/>
+                            <Button Content="{loc:Loc Difficulty_Advanced}" Style="{StaticResource AdvancedButton}"
+                                    Command="{Binding SetDifficultyCommand}" CommandParameter="Avansert"/>
+                        </StackPanel>
+
+                        <!-- Main navigation (kept as the primary row) -->
+                        <WrapPanel Orientation="Horizontal">
+                            <Button Content="{loc:Loc Main_Calendar}" Style="{StaticResource CalendarButton}" Click="OnOpenCalendar" Margin="0,0,8,0"/>
+                            <Button Content="{loc:Loc Main_Statistics}" Style="{StaticResource StatisticsButton}" Click="OnOpenStatistics" Margin="0,0,8,0"/>
+                            <Button Content="{loc:Loc Main_ExerciseGuide}" Style="{StaticResource ExerciseGuideButton}" Click="OnOpenExerciseGuide" Margin="0,0,8,0"/>
+                            <Button Content="{loc:Loc Main_Analyzer}" Style="{StaticResource AnalyzerButton}" Click="OnOpenAnalyzer" Margin="0,0,8,0"/>
+                            <Button Content="{loc:Loc Main_SmartCoach}" Style="{StaticResource ExerciseGuideButton}" Click="OnOpenSmartCoach" Margin="0,0,8,0"/>
+                            <Button Content="{loc:Loc Main_Resonance}" Style="{StaticResource AnalyzerButton}" Click="OnOpenResonance" Margin="0,0,8,0"/>
+                            <Button Content="{loc:Loc Main_Progression}" Style="{StaticResource StatisticsButton}" Click="OnOpenProgression" Margin="0,0,8,0"/>
+                            <Button Content="{loc:Loc Main_Analysis}" Style="{StaticResource StatisticsButton}" Click="OnOpenAnalysis" Margin="0,0,8,0"/>
+                            <Button Content="{loc:Loc Main_Settings}" Style="{StaticResource SettingsButton}" Click="OnOpenSettings" Margin="0,0,8,0"/>
+                        </WrapPanel>
                     </StackPanel>
-                </StackPanel>
-                
-                <!-- Right side: Record Button -->
-                <Button Grid.Column="1" 
+
+                    <!-- Row 1: Professional Tools (separate section so no overlap/hitbox with main nav) -->
+                    <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,8,0,0">
+                        <TextBlock Text="{loc:Loc Nav_ProfessionalToolsTitle}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                        <WrapPanel Orientation="Horizontal">
+                            <Button Content="{loc:Loc Nav_ClinicianDashboard}" Style="{StaticResource StatisticsButton}" Click="OnOpenClinicianDashboard" Margin="0,0,8,0"/>
+                            <Button Content="{loc:Loc Nav_CoachDashboard}" Style="{StaticResource StatisticsButton}" Click="OnOpenCoachDashboard" Margin="0,0,8,0"/>
+                            <Button Content="{loc:Loc Nav_Reports}" Style="{StaticResource StatisticsButton}" Click="OnOpenReportExport" Margin="0,0,8,0"/>
+                            <Button Content="{loc:Loc Nav_ManualOverride}" Style="{StaticResource StatisticsButton}" Click="OnOpenManualOverride" Margin="0,0,8,0"/>
+                            <Button Content="{loc:Loc Nav_CaseReview}" Style="{StaticResource StatisticsButton}" Click="OnOpenCaseReview" Margin="0,0,8,0"/>
+
+                            <!-- Mic Status (moved into the same deterministic row) -->
+                            <Border CornerRadius="4" Padding="8,6" Background="{DynamicResource AccentLightBrush}">
+                                <TextBlock FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}">
+                                    <Run Text="🎤 "/>
+                                    <Run Text="{Binding StatusText}"/>
+                                </TextBlock>
+                            </Border>
+                        </WrapPanel>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Right side: Record Button (isolated in Grid.Column=1) -->
+                <Button Grid.Column="1"
                         Style="{StaticResource PrimaryButton}"
                         Command="{Binding StartRecordingCommand}"
                         Visibility="{Binding IsRecording, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}"
@@ -428,8 +426,8 @@
                         <TextBlock Text="{loc:Loc UI_StartSession}"/>
                     </StackPanel>
                 </Button>
-                
-                <Button Grid.Column="1" 
+
+                <Button Grid.Column="1"
                         Style="{StaticResource PrimaryButton}"
                         Command="{Binding StopRecordingCommand}"
                         Visibility="{Binding IsRecording, Converter={StaticResource BoolToVisibility}}"
@@ -441,6 +439,7 @@
                     </StackPanel>
                 </Button>
             </Grid>
+
         </Grid>
         
         <!-- Right Sidebar -->
