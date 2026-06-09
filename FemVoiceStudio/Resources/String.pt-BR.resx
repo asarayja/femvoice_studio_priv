@@ -334,7 +334,7 @@
     <value>Deslizar em vez de 'espalhar' a voz proporciona transições de tom mais suaves e menos tensão. A ascensão controlada é a chave para o tom feminino.</value>
   </data>
   <data name="Exercise_103_Steps" xml:space="preserve">
-    <value>Start on a comfortable note|Glide slowly upward over 3 seconds|Hold the top note for 2 seconds|Glide slowly down again|Watch the pitch display</value>
+    <value>Start på en behagelig tone|Gli sakte oppover i 3 sekunder|Hold den høyeste tonen i 2 sekunder|Gli sakte nedover igjen|Følg med på pitch-skjermen</value>
   </data>
   <data name="Exercise_103_Title" xml:space="preserve">
     <value>Tons crescentes (deslizamento para cima)</value>
@@ -346,7 +346,7 @@
     <value>Controlled downward gliding strengthens pitch-control muscles and builds muscle memory for the target range.</value>
   </data>
   <data name="Exercise_104_Steps" xml:space="preserve">
-    <value>Start high and comfortable|Glide slowly downward over 3 seconds|Hold the low note for 2 seconds|Repeat with different starting points|Focus on an even glide</value>
+    <value>Start høyt og komfortabelt|Gli sakte nedover over 3 sekunder|Hold den lave tonen i 2 sekunder|Gjenta med forskjellige startpunkter|Fokuser på en jevn glidning</value>
   </data>
   <data name="Exercise_104_Title" xml:space="preserve">
     <value>Tons caindo (deslizar para baixo)</value>
@@ -358,7 +358,7 @@
     <value>Stable pitch in the target range is critical for feminization. Consistent phonation gives a natural voice.</value>
   </data>
   <data name="Exercise_105_Steps" xml:space="preserve">
-    <value>Find your target tone|Hold the tone for 5 seconds|Check the pitch graph for stability|Take a breath|Repeat 5 times</value>
+    <value>Finn din måltone|Hold tonen i 5 sekunder|Sjekk pitch-grafen for stabilitet|Ta en pustepause|Gjenta 5 ganger</value>
   </data>
   <data name="Exercise_105_Title" xml:space="preserve">
     <value>Treinamento de consistência</value>
@@ -382,7 +382,7 @@
     <value>As perguntas em norueguês aumentam de 2 a 4 semitons. A entonação correta é fundamental – a entonação errada pode revelar a voz.</value>
   </data>
   <data name="Exercise_107_Steps" xml:space="preserve">
-    <value>Diga 'Qual é o seu nome?' | Observe o aumento no final | Pratique 5 perguntas diferentes | Tente aumentar até mesmo | Varie a intensidade</value>
+    <value>Diga 'Qual é o seu nome?'|Perceba a subida no final|Pratique 5 perguntas diferentes|Tente manter uma subida uniforme na altura|Varie a intensidade vocal enquanto fala</value>
   </data>
   <data name="Exercise_107_Title" xml:space="preserve">
     <value>Melodia de perguntas</value>
@@ -394,7 +394,7 @@
     <value>As declarações terminam com tom decrescente. Terminar com um tom crescente pode fazer você parecer inseguro.</value>
   </data>
   <data name="Exercise_108_Steps" xml:space="preserve">
-    <value>Diga 'Meu nome é Marie.' | Observe a queda no final | Pratique 5 afirmações diferentes | Experimente a queda natural | Varie o tom inicial</value>
+    <value>Diga 'Meu nome é Marie.'|Perceba como a entonação cai no final|Pratique 5 afirmações diferentes|Tente obter uma queda natural na voz|Varie a altura com que começa</value>
   </data>
   <data name="Exercise_108_Title" xml:space="preserve">
     <value>Melodia de Declaração</value>
@@ -406,7 +406,7 @@
     <value>A fala contínua na faixa alvo é o objetivo da feminização. A transferência para a fala espontânea é mais importante.</value>
   </data>
   <data name="Exercise_109_Steps" xml:space="preserve">
-    <value>Choose a text|Read with focus on pitch in the target range|Stop at difficult words|Read the whole text|Play back and evaluate</value>
+    <value>Escolha um texto|Leia com foco na altura dentro da faixa alvo|Pare em palavras difíceis|Leia o texto todo|Reproduza e avalie o resultado</value>
   </data>
   <data name="Exercise_109_Title" xml:space="preserve">
     <value>Leitura de frases</value>
@@ -430,7 +430,7 @@
     <value>Manter o tom feminino na fala espontânea é o objetivo. O exercício de transferência mais importante.</value>
   </data>
   <data name="Exercise_110_Steps" xml:space="preserve">
-    <value>Pense em perguntas comuns|Responda com entonação natural|Varia entre perguntas/afirmações|Siga o argumento de venda|Experimente 5 cenários diferentes</value>
+    <value>Pense em perguntas comuns|Responda com uma melodia de fala natural|Varie entre perguntas e afirmações|Observe a altura no ecrã|Tente 5 cenários diferentes</value>
   </data>
   <data name="Exercise_110_Title" xml:space="preserve">
     <value>Simulação de conversa</value>
@@ -442,7 +442,7 @@
     <value>A ressonância direta cria uma 'voz de cabeça' e reforça tons mais altos. Medido por frequências de formantes mais altas (especialmente F2).</value>
   </data>
   <data name="Exercise_111_Steps" xml:space="preserve">
-    <value>Hum 'mmm' - sinta os lábios/nariz vibrarem|Transfira para 'nnn'|Então 'yyy' (norueguês 'j')|Tente sílabas 'ene'|Repita com palavras curtas</value>
+    <value>Hum 'mmm' - sinta os lábios e o nariz vibrarem|Transfira para 'nnn' longo|Depois para um som 'j' longo (como um longo 'iiijjj')|Tente sílabas simples (como ma, ne, jo)|Repita o padrão com palavras curtas e simples</value>
   </data>
   <data name="Exercise_111_Title" xml:space="preserve">
     <value>Mudança de ressonância - posicionamento para frente</value>
@@ -454,7 +454,7 @@
     <value>A memória muscular para iniciar o arremesso é crítica. A maioria das pessoas começa muito baixo e 'trava' ainda mais - automatize o tom inicial correto.</value>
   </data>
   <data name="Exercise_112_Steps" xml:space="preserve">
-    <value>Sing a comfortable reference tone|Start speech on this tone|Check the starting pitch with the app|Adjust upward if needed|Repeat until automatic</value>
+    <value>Cante uma nota de referência confortável|Comece a falar nessa nota|Verifique a nota inicial com o app|Ajuste para cima se necessário|Repita até que se torne automático</value>
   </data>
   <data name="Exercise_112_Title" xml:space="preserve">
     <value>Iniciando a memorização do tom</value>
@@ -466,7 +466,7 @@
     <value>Deslizar entre as palavras proporciona uma progressão mais suave e menos tensão do que 'espalhar' a voz para um novo tom.</value>
   </data>
   <data name="Exercise_113_Steps" xml:space="preserve">
-    <value>'Olá' com deslizamento ascendente|'Olá' com deslizamento descendente|'Sim?' como uma pergunta|Frases curtas com deslizamento|Variar subida/descida</value>
+    <value>Diga 'Olá' enquanto sua voz desliza para cima|Diga 'Olá' enquanto sua voz desliza para baixo|Diga 'Sim?' como uma pergunta onde a tonalidade sobe|Tente frases curtas com deslizamento de tonalidade|Varie entre entonação ascendente e descendente</value>
   </data>
   <data name="Exercise_113_Title" xml:space="preserve">
     <value>Apresentar slide em frases</value>
@@ -478,7 +478,7 @@
     <value>O trato vocal semiocluído (SOVT) reduz a tensão nas cordas vocais e melhora o controle do fluxo de ar.</value>
   </data>
   <data name="Exercise_114_Steps" xml:space="preserve">
-    <value>Pegue um canudo | Sopre suavemente | Cante 'ooo' através do canudo | Segure por 5 segundos | Repita com tons diferentes</value>
+    <value>Pegue um canudo|Sopre suavemente através dele|Cante um som 'ooo' através do canudo|Segure a nota por 5 segundos|Repita com diferentes alturas</value>
   </data>
   <data name="Exercise_114_Title" xml:space="preserve">
     <value>Fonação de Palha</value>
@@ -490,7 +490,7 @@
     <value>Maior variação de entonação é característica da fala feminina. Isso ajuda a 'encaixar-se' socialmente.</value>
   </data>
   <data name="Exercise_115_Steps" xml:space="preserve">
-    <value>'Não' - neutro|'Não?' - surpreso|'Não!' - frustrado|'Não...' - resignado|Repita com frases diferentes</value>
+    <value>Diga 'Não' com voz completamente neutra|Diga 'Não?' de forma que pareça surpreso|Diga 'Não!' com tom frustrado e firme|Diga 'Não...' de forma que pareça chateado ou resignado|Repita o mesmo padrão emocional com outras palavras ou frases</value>
   </data>
   <data name="Exercise_115_Title" xml:space="preserve">
     <value>Variação de entonação</value>

@@ -136,13 +136,13 @@
   </data>
   <!-- Exercise Steps - Voice Training -->
   <data name="Exercise_101_Steps" xml:space="preserve">
-    <value>Relax your shoulders and neck|Breathe deeply through your nose|Hum a comfortable tone|Move the hum sensation toward your lips and nose|Hold the tone for 5-10 seconds</value>
+    <value>Relax your shoulders and neck|Breathe deeply through your nose|Hum a comfortable tone|Move the humming and vibration toward your lips and nose|Hold the tone for 5-10 seconds</value>
   </data>
   <data name="Exercise_102_Steps" xml:space="preserve">
-    <value>Say 'ahhh' - open your mouth wide|Say 'eee' - pull the corners back|Say 'ooo' - round your lips|Combine: 'ah-ee-oo'|Repeat the pattern 5 times</value>
+    <value>Say 'ahhh' - open your mouth wide|Say 'eee' - pull the corners back|Say 'ooo' - round your lips|Combine sounds: 'ah-ee-oo'|Repeat the pattern 5 times</value>
   </data>
   <data name="Exercise_103_Steps" xml:space="preserve">
-    <value>Start on a comfortable note|Glide slowly upward over 3 seconds|Hold the top note for 2 seconds|Glide slowly down again|Watch the pitch display</value>
+    <value>Start on a comfortable tone|Glide slowly up for 3 seconds|Hold the highest note for 2 seconds|Glide slowly down again|Watch the pitch screen</value>
   </data>
   <data name="Exercise_104_Steps" xml:space="preserve">
     <value>Start high and comfortable|Glide slowly downward over 3 seconds|Hold the low note for 2 seconds|Repeat with different starting points|Focus on an even glide</value>
@@ -151,34 +151,34 @@
     <value>Find your target tone|Hold the tone for 5 seconds|Check the pitch graph for stability|Take a breath|Repeat 5 times</value>
   </data>
   <data name="Exercise_106_Steps" xml:space="preserve">
-    <value>Say 'ssssssss' - long S-sound|Follow the pitch graph|Try to keep the sound stable|Gradually increase to 10 seconds|Repeat 3 times</value>
+    <value>Say 'ssssssss' - long S-sound|Watch the on-screen timer|Try to keep the airflow completely steady|Gradually increase to 10 seconds|Repeat 3 times</value>
   </data>
   <data name="Exercise_107_Steps" xml:space="preserve">
-    <value>Say 'What is your name?'|Notice the rise at the end|Practice 5 different questions|Try even rising|Vary the intensity</value>
+    <value>Say 'What is your name?'|Notice the rise at the end|Practice 5 different questions|Try to keep an even rise in pitch|Vary vocal intensity while speaking</value>
   </data>
   <data name="Exercise_108_Steps" xml:space="preserve">
-    <value>Say 'My name is Marie.'|Notice the fall at the end|Practice 5 different statements|Try natural fall|Vary starting pitch</value>
+    <value>Say 'My name is Marie.'|Notice how the tone falls at the end|Practice 5 different statements|Try to produce a natural fall in your voice|Vary the pitch you start on</value>
   </data>
   <data name="Exercise_109_Steps" xml:space="preserve">
-    <value>Choose a text|Read with focus on pitch in the target range|Stop at difficult words|Read the whole text|Play back and evaluate</value>
+    <value>Choose a text|Read with focus on pitch in the target range|Stop at difficult words|Read the whole text|Play back and evaluate the result</value>
   </data>
   <data name="Exercise_110_Steps" xml:space="preserve">
-    <value>Think of common questions|Answer with natural intonation|Vary between questions/statements|Follow the pitch|Try 5 different scenarios</value>
+    <value>Think of common questions|Answer with a natural speech melody|Vary between asking questions and giving answers|Watch the pitch on the screen|Try 5 different situations</value>
   </data>
   <data name="Exercise_111_Steps" xml:space="preserve">
-    <value>Hum 'mmm' - feel lips/nose vibrate|Transfer to 'nnn'|Then 'yyy' (Norwegian 'j')|Try 'ene' syllables|Repeat with short words</value>
+    <value>Hum 'mmm' - feel lips and nose vibrate|Move the sound to a long 'nnn'|Then switch to a long 'j' sound (like a long 'iiijjj')|Try simple syllables (like ma, ne, jo)|Repeat the pattern with short, simple words</value>
   </data>
   <data name="Exercise_112_Steps" xml:space="preserve">
-    <value>Sing a comfortable reference tone|Start speech on this tone|Check the starting pitch with the app|Adjust upward if needed|Repeat until automatic</value>
+    <value>Sing a comfortable reference tone|Start speaking on this tone|Check your starting pitch with the app|Adjust upward if needed|Repeat until it becomes automatic</value>
   </data>
   <data name="Exercise_113_Steps" xml:space="preserve">
-    <value>'Hello' with rising glide|'Hi' with falling glide|'Yes?' as a question|Short phrases with glide|Vary rising/falling</value>
+    <value>Say 'Hello' while your voice glides upward|Say 'Hi' while your voice glides downward|Say 'Yes?' as a question where the tone rises|Try short sentences with gliding pitch|Vary between rising and falling intonation</value>
   </data>
   <data name="Exercise_114_Steps" xml:space="preserve">
-    <value>Take a straw|Blow gently through|Sing 'ooo' through the straw|Hold for 5 seconds|Repeat with different tones</value>
+    <value>Take a straw|Blow gently through it|Sing an 'ooo' sound through the straw|Hold the tone for 5 seconds|Repeat with different pitches</value>
   </data>
   <data name="Exercise_115_Steps" xml:space="preserve">
-    <value>'No' - neutral|'No?' - surprised|'No!' - frustrated|'No...' - resigned|Repeat with different sentences</value>
+    <value>Say 'No' in a completely neutral voice|Say 'No?' so you sound surprised|Say 'No!' with a frustrated and firm tone|Say 'No...' sounding upset or resigned|Repeat the same emotional pattern with other words or sentences</value>
   </data>
   <!-- Scientific Rationale - Voice Training -->
   <data name="Exercise_101_Rationale" xml:space="preserve">

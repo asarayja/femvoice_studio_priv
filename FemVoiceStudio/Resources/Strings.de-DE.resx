@@ -340,7 +340,7 @@
     <value>Das Summen aktiviert Vorwärtsresonatoren und bereitet die Stimme ohne Spannung auf höhere Tonlagen vor. Vibrationen in den Lippen/Nase zeigen die korrekte Vorwärtsresonanz an.</value>
   </data>
   <data name="Exercise_101_Steps" xml:space="preserve">
-    <value>Entspannen Sie Ihre Schultern und Ihren Nacken.|Atmen Sie tief durch die Nase.|Summen Sie einen angenehmen Ton.|Bewegen Sie das Brummgefühl in Richtung Ihrer Lippen und Nase.|Halten Sie den Ton 5–10 Sekunden lang gedrückt</value>
+    <value>Start på en behagelig tone|Gli sakte oppover i 3 sekunder|Hold den høyeste tonen i 2 sekunder|Gli sakte nedover igjen|Følg med på pitch-skjermen</value>
   </data>
   <data name="Exercise_101_Title" xml:space="preserve">
     <value>Grundlegendes Summen</value>
@@ -385,7 +385,7 @@
     <value>Resonance • Stability</value>
   </data>
   <data name="Exercise_102_Steps" xml:space="preserve">
-    <value>Sagen Sie "ahhh" – öffnen Sie Ihren Mund weit. | Sagen Sie "eee" – ziehen Sie die Mundwinkel nach hinten</value>
+    <value>Start høyt og komfortabelt|Gli sakte nedover over 3 sekunder|Hold den lave tonen i 2 sekunder|Gjenta med forskjellige startpunkter|Fokuser på en jevn glidning</value>
   </data>
   <data name="Exercise_102_Title" xml:space="preserve">
     <value>Vokale – Vorwärtsresonanz</value>
@@ -397,7 +397,7 @@
     <value>Das Gleiten statt "Ausbreiten" der Stimme führt zu sanfteren Tonhöhenübergängen und weniger Spannung. Kontrollierter Anstieg ist der Schlüssel zu einer weiblichen Tonhöhe.</value>
   </data>
   <data name="Exercise_103_Steps" xml:space="preserve">
-    <value>Start on a comfortable note|Glide slowly upward over 3 seconds|Hold the top note for 2 seconds|Glide slowly down again|Watch the pitch display</value>
+    <value>Finn din måltone|Hold tonen i 5 sekunder|Sjekk pitch-grafen for stabilitet|Ta en pustepause|Gjenta 5 ganger</value>
   </data>
   <data name="Exercise_103_Title" xml:space="preserve">
     <value>Steigende Töne (Glide Up)</value>
@@ -409,7 +409,7 @@
     <value>Controlled downward gliding strengthens pitch-control muscles and builds muscle memory for the target range.</value>
   </data>
   <data name="Exercise_104_Steps" xml:space="preserve">
-    <value>Start high and comfortable|Glide slowly downward over 3 seconds|Hold the low note for 2 seconds|Repeat with different starting points|Focus on an even glide</value>
+    <value>Start høyt og komfortabelt|Gli sakte nedover over 3 sekunder|Hold den lave tonen i 2 sekunder|Gjenta med forskjellige startpunkter|Fokuser på en jevn glidning</value>
   </data>
   <data name="Exercise_104_Title" xml:space="preserve">
     <value>Fallende Töne (Glide Down)</value>
@@ -419,9 +419,6 @@
   </data>
   <data name="Exercise_105_Rationale" xml:space="preserve">
     <value>Stable pitch in the target range is critical for feminization. Consistent phonation gives a natural voice.</value>
-  </data>
-  <data name="Exercise_105_Steps" xml:space="preserve">
-    <value>Find your target tone|Hold the tone for 5 seconds|Check the pitch graph for stability|Take a breath|Repeat 5 times</value>
   </data>
   <data name="Exercise_105_Title" xml:space="preserve">
     <value>Konsistenztraining</value>
@@ -445,7 +442,7 @@
     <value>Fragen auf Norwegisch werden um 2–4 Halbtöne erhöht. Die richtige Intonation ist entscheidend – eine falsche Intonation kann die Stimme offenbaren.</value>
   </data>
   <data name="Exercise_107_Steps" xml:space="preserve">
-    <value>Sagen Sie "Wie ist Ihr Name?"|Beachten Sie die Erhöhung am Ende|Üben Sie 5 verschiedene Fragen|Versuchen Sie es mit gleichmäßiger Erhöhung|Variieren Sie die Intensität</value>
+    <value>Sag 'Wie heißt du?'|Achte auf die Anhebung am Ende|Übe 5 verschiedene Fragen|Versuche, einen gleichmäßigen Anstieg in der Tonhöhe zu halten|Variiere die Lautstärke während des Sprechens</value>
   </data>
   <data name="Exercise_107_Title" xml:space="preserve">
     <value>Fragemelodie</value>
@@ -457,7 +454,7 @@
     <value>Aussagen enden mit fallendem Ton. Wenn Sie mit einem ansteigenden Ton enden, können Sie unsicher wirken.</value>
   </data>
   <data name="Exercise_108_Steps" xml:space="preserve">
-    <value>Sagen Sie "Mein Name ist Marie."|Beachten Sie den Fall am Ende|Üben Sie 5 verschiedene Aussagen|Versuchen Sie es mit dem natürlichen Fall|Variieren Sie die Starthöhe</value>
+    <value>Sag 'Ich heiße Marie.'|Achte darauf, wie die Stimme am Ende fällt|Übe 5 verschiedene Aussagen|Versuche, ein natürliches Absinken der Stimme zu erzeugen|Variiere die Tonhöhe, mit der du beginnst</value>
   </data>
   <data name="Exercise_108_Title" xml:space="preserve">
     <value>Statement-Melodie</value>
@@ -469,7 +466,7 @@
     <value>Kontinuierliches Sprechen im Zieltonbereich ist das Ziel der Feminisierung. Am wichtigsten ist die Übertragung auf spontane Sprache.</value>
   </data>
   <data name="Exercise_109_Steps" xml:space="preserve">
-    <value>Choose a text|Read with focus on pitch in the target range|Stop at difficult words|Read the whole text|Play back and evaluate</value>
+    <value>Wähle einen Text|Lies mit Fokus auf Tonhöhe im Zielbereich|Halte bei schwierigen Wörtern an|Lies den gesamten Text|Spiele die Aufnahme ab und bewerte das Ergebnis</value>
   </data>
   <data name="Exercise_109_Title" xml:space="preserve">
     <value>Phrasenlesen</value>
@@ -493,7 +490,7 @@
     <value>Das Ziel besteht darin, die weibliche Tonlage in der spontanen Rede beizubehalten. Die wichtigste Transferübung.</value>
   </data>
   <data name="Exercise_110_Steps" xml:space="preserve">
-    <value>Singen Sie einen Referenzton, der sich komfortabel anfühlt|Starten Sie die Sprache auf diesem Ton|Überprüfen Sie die Starttonhöhe mit der App|Passen Sie bei Bedarf an|Wiederholen Sie, bis es automatisch ist</value>
+    <value>Denke an häufige Fragen|Antworte mit natürlicher Sprachmelodie|Variiere zwischen Fragen und Antworten|Beobachte die Tonhöhe auf dem Bildschirm|Probiere 5 verschiedene Situationen</value>
   </data>
   <data name="Exercise_110_Title" xml:space="preserve">
     <value>Gesprächssimulation</value>
@@ -505,7 +502,7 @@
     <value>Vorwärtsresonanz erzeugt eine "Kopfstimme" und verstärkt höhere Obertöne. Gemessen an höheren Formantfrequenzen (insbesondere F2).</value>
   </data>
   <data name="Exercise_111_Steps" xml:space="preserve">
-    <value>Summen Sie "mmm" – spüren Sie, wie Lippen/Nase vibrieren | Übertragen Sie es auf "nnn" | Dann auf "yyy" (norwegisches "j"). Versuchen Sie es mit "ene" Silben. Wiederholen Sie dies mit kurzen Wörtern</value>
+    <value>Summ 'mmm' - spüre Lippen und Nase vibrieren|Verlagere den Klang zu einem langen 'nnn'|Wechsle dann zu einem langen 'j'-Laut (wie ein langes 'iiijjj')|Probiere einfache Silben (wie ma, ne, jo)|Wiederhole das Muster mit kurzen, einfachen Wörtern</value>
   </data>
   <data name="Exercise_111_Title" xml:space="preserve">
     <value>Resonanzverschiebung – Vorwärtsplatzierung</value>
@@ -517,7 +514,7 @@
     <value>Das Muskelgedächtnis für die Tonhöhe ist von entscheidender Bedeutung. Die meisten Leute beginnen zu tief und "stürzen" weiter ab – automatisieren Sie die korrekte Starthöhe.</value>
   </data>
   <data name="Exercise_112_Steps" xml:space="preserve">
-    <value>Sing a comfortable reference tone|Start speech on this tone|Check the starting pitch with the app|Adjust upward if needed|Repeat until automatic</value>
+    <value>Singe einen angenehmen Referenzton|Beginne zu sprechen auf diesem Ton|Überprüfe deine Starttonhöhe mit der App|Justiere nach oben, falls nötig|Wiederhole, bis es automatisch wird</value>
   </data>
   <data name="Exercise_112_Title" xml:space="preserve">
     <value>Mit dem Auswendiglernen der Tonhöhe beginnen</value>
@@ -529,7 +526,7 @@
     <value>Das Gleiten zwischen den Wörtern sorgt für einen sanfteren Fortschritt und weniger Spannung als das "Ausbreiten" der Stimme auf eine neue Tonhöhe.</value>
   </data>
   <data name="Exercise_113_Steps" xml:space="preserve">
-    <value>'Hallo' bei steigendem Gleitflug|'Hallo' bei fallendem Gleitflug|'Ja?' als Frage|Kurze Sätze mit Glide|Variieren Sie steigend/fallend</value>
+    <value>Sag 'Hallo' während deine Stimme nach oben gleitet|Sag 'Hi' während deine Stimme nach unten gleitet|Sag 'Ja?' als Frage, bei der die Tonhöhe ansteigt|Versuche kurze Sätze mit Gleiten in der Tonhöhe|Variiere zwischen ansteigender und abfallender Intonation</value>
   </data>
   <data name="Exercise_113_Title" xml:space="preserve">
     <value>Pitch Slide in Phrasen</value>

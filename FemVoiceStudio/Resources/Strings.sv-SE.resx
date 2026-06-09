@@ -337,7 +337,7 @@
     <value>Humming aktiverar framåtresonatorer och förbereder rösten för högre tonhöjd utan spänning. Vibrationer i läppar/näsa indikerar korrekt framåtresonans.</value>
   </data>
   <data name="Exercise_101_Steps" xml:space="preserve">
-    <value>Börja på en bekväm ton|Glid långsamt upp under 3 sekunder|Håll topptonen i 2 sekunder|Glid långsamt ner igen|Följ tonhöjdsdisplayen</value>
+    <value>Säg 'Vad heter du?'|Lägg märke till stigningen i slutet|Öva på 5 olika frågor|Försök att hålla en jämn stigande tonhöjd|Variera röststyrkan när du talar</value>
   </data>
   <data name="Exercise_101_Title" xml:space="preserve">
     <value>Grundläggande nynnande</value>
@@ -376,7 +376,7 @@
     <value>Stabil tonhöjd i målområdet är avgörande för feminisering. Konsekvent fonation ger en naturlig röst.</value>
   </data>
   <data name="Exercise_103_Steps" xml:space="preserve">
-    <value>Start on a comfortable note|Glide slowly upward over 3 seconds|Hold the top note for 2 seconds|Glide slowly down again|Watch the pitch display</value>
+    <value>Start on a comfortable tone|Glide slowly up for 3 seconds|Hold the highest note for 2 seconds|Glide slowly down again|Watch the pitch screen</value>
   </data>
   <data name="Exercise_103_Title" xml:space="preserve">
     <value>Stigande toner (glid upp)</value>
@@ -436,7 +436,7 @@
     <value>Uttalanden slutar med fallande ton. Att avsluta med stigande ton kan få dig att verka osäker.</value>
   </data>
   <data name="Exercise_108_Steps" xml:space="preserve">
-    <value>Säg "Jag heter Marie."|Lägg märke till hösten i slutet|Öva 5 olika påståenden|Testa naturligt fall|Variera startplanen</value>
+    <value>Säg 'Jag heter Marie.'|Lägg märke till hur tonen faller i slutet|Öva på 5 olika påståenden|Försök få ett naturligt fall i rösten|Variera den tonhöjd du börjar på</value>
   </data>
   <data name="Exercise_108_Title" xml:space="preserve">
     <value>Statement Melodi</value>
@@ -448,7 +448,7 @@
     <value>Kontinuerligt tal inom måltavlan är målet för feminisering. Övergång till spontant tal är viktigast.</value>
   </data>
   <data name="Exercise_109_Steps" xml:space="preserve">
-    <value>Choose a text|Read with focus on pitch in the target range|Stop at difficult words|Read the whole text|Play back and evaluate</value>
+    <value>Välj en text|Läs med fokus på tonhöjd i målområdet|Stanna vid svåra ord|Läs hela texten|Spela upp och utvärdera resultatet</value>
   </data>
   <data name="Exercise_109_Title" xml:space="preserve">
     <value>Frasläsning</value>
@@ -472,7 +472,7 @@
     <value>Att bibehålla kvinnlig tonhöjd i spontant tal är målet. Den viktigaste överföringsövningen.</value>
   </data>
   <data name="Exercise_110_Steps" xml:space="preserve">
-    <value>Sjunga en referenston som känns bekväm|Starta talet på denna ton|Kontrollera starttonen med appen|Justera vid behov|Upprepa tills automatiskt</value>
+    <value>Tänk på vanliga frågor|Svara med en naturlig röstmelodi|Variera mellan att ställa frågor och ge svar|Följ tonhöjden på skärmen|Prova 5 olika situationer</value>
   </data>
   <data name="Exercise_110_Title" xml:space="preserve">
     <value>Konversationssimulering</value>
@@ -484,7 +484,7 @@
     <value>Framåtresonans skapar "huvudröst" och förstärker högre övertoner. Mätt med högre formantfrekvenser (särskilt F2).</value>
   </data>
   <data name="Exercise_111_Steps" xml:space="preserve">
-    <value>Hum 'mmm' - känn läpparna/näsan vibrera|Överför till 'nnn'|Sedan 'ååå' (norska 'j')|Testa 'ene' stavelser|Upprepa med korta ord</value>
+    <value>Hum 'mmm' - känn läpparna och näsan vibrera|Flytta ljudet till ett långt 'nnn'|Gå sedan över till ett långt 'j'-ljud (som ett långt 'iiijjj')|Prova enkla stavelser (som ma, ne, jo)|Upprepa mönstret med korta, enkla ord</value>
   </data>
   <data name="Exercise_111_Title" xml:space="preserve">
     <value>Resonansförskjutning - Framåtplacering</value>
@@ -496,7 +496,7 @@
     <value>Muskelminne för startpitch är avgörande. De flesta börjar för lågt och "kraschar" ytterligare - automatisera korrekt startpitch.</value>
   </data>
   <data name="Exercise_112_Steps" xml:space="preserve">
-    <value>Sing a comfortable reference tone|Start speech on this tone|Check the starting pitch with the app|Adjust upward if needed|Repeat until automatic</value>
+    <value>Sjung en behaglig referenston|Börja tala på denna ton|Kontrollera starttonen i appen|Justera uppåt vid behov|Upprepa tills det blir automatiskt</value>
   </data>
   <data name="Exercise_112_Title" xml:space="preserve">
     <value>Startar Pitch Memorization</value>
@@ -508,7 +508,7 @@
     <value>Glidningar mellan orden ger mjukare progression och mindre spänning än att "sprida" rösten till ny tonhöjd.</value>
   </data>
   <data name="Exercise_113_Steps" xml:space="preserve">
-    <value>'Hej' med stigande glid|'Hej' med fallande glid|'Ja?' som en fråga|Korta fraser med glid|Variera stigande/fallande</value>
+    <value>Säg 'Hallo' medan rösten glider uppåt|Säg 'Hej' medan rösten glider nedåt|Säg 'Ja?' som en fråga där tonen går upp|Pröva korta meningar med glidning i tonen|Variera mellan stigande och sjunkande intonation</value>
   </data>
   <data name="Exercise_113_Title" xml:space="preserve">
     <value>Pitch Slide in fraser</value>
@@ -520,7 +520,7 @@
     <value>Semi-occluded vocal tract (SOVT) minskar belastningen på stämbanden och förbättrar luftflödeskontrollen.</value>
   </data>
   <data name="Exercise_114_Steps" xml:space="preserve">
-    <value>Ta ett sugrör|Bläs försiktigt igenom|Sjung "ooo" genom sugröret|Håll i 5 sekunder|Upprepa med olika toner</value>
+    <value>Ta ett sugrör|Blås försiktigt genom det|Sjung 'ooo' genom sugröret|Håll tonen i 5 sekunder|Upprepa med olika tonhöjder</value>
   </data>
   <data name="Exercise_114_Title" xml:space="preserve">
     <value>Straw Phonation</value>
@@ -532,7 +532,7 @@
     <value>Större intonationsvariation är karakteristisk för kvinnligt tal. Detta hjälper till att "passa in" socialt.</value>
   </data>
   <data name="Exercise_115_Steps" xml:space="preserve">
-    <value>'Nej' - neutral|'Nej?' - förvånad|"Nej!" - frustrerad|'Nej...' - resignerad|Upprepa med olika meningar</value>
+    <value>Säg 'Nej' med helt neutral röst|Säg 'Nej?' så att du låter förvånad|Säg 'Nej!' med frustrerad och bestämd ton|Säg 'Nej...' så att du låter uppgiven eller resignierad|Upprepa samma känslomönster med andra ord eller meningar</value>
   </data>
   <data name="Exercise_115_Title" xml:space="preserve">
     <value>Intonationsvariation</value>

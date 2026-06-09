@@ -132,49 +132,49 @@
   </data>
   <!-- Exercise Steps - Voice Training -->
   <data name="Exercise_101_Steps" xml:space="preserve">
-    <value>Slapp av i skuldrene og nakken|Pust dypt inn gjennom nesen|Hum en behagelig tone|Flytt hummotsetningen mot nesen og leppene|Hold tonen i 5-10 sekunder</value>
+    <value>Slapp av i skuldrene og nakken|Pust dypt inn gjennom nesen|Hum en behagelig tone|Flytt hummingen og vibrasjonen mot nesen og leppene|Hold tonen i 5-10 sekunder</value>
   </data>
   <data name="Exercise_102_Steps" xml:space="preserve">
-    <value>Si 'ahhh' - åpne munnen bred|Si 'eee' - trekk munnvikene bakover|Si 'ooo' - runde lepper|Kombiner: 'ah-ee-oo'|Gjenta mønsteret 5 ganger</value>
+    <value>Si 'ahhh' - åpne munnen bredt|Si 'eee' - trekk munnvikene bakover|Si 'ooo' - rund leppene|Kombiner lyder: 'ah-ee-oo'|Gjenta mønsteret 5 ganger</value>
   </data>
   <data name="Exercise_103_Steps" xml:space="preserve">
-    <value>Start on a comfortable note|Glide slowly upward over 3 seconds|Hold the top note for 2 seconds|Glide slowly down again|Watch the pitch display</value>
+    <value>Start på en behagelig tone|Gli sakte oppover i 3 sekunder|Hold den høyeste tonen i 2 sekunder|Gli sakte nedover igjen|Følg med på pitch-skjermen</value>
   </data>
   <data name="Exercise_104_Steps" xml:space="preserve">
-    <value>Start high and comfortable|Glide slowly downward over 3 seconds|Hold the low note for 2 seconds|Repeat with different starting points|Focus on an even glide</value>
+    <value>Start høyt og komfortabelt|Gli sakte nedover over 3 sekunder|Hold den lave tonen i 2 sekunder|Gjenta med forskjellige startpunkter|Fokuser på en jevn glidning</value>
   </data>
   <data name="Exercise_105_Steps" xml:space="preserve">
-    <value>Find your target tone|Hold the tone for 5 seconds|Check the pitch graph for stability|Take a breath|Repeat 5 times</value>
+    <value>Finn din måltone|Hold tonen i 5 sekunder|Sjekk pitch-grafen for stabilitet|Ta en pustepause|Gjenta 5 ganger</value>
   </data>
   <data name="Exercise_106_Steps" xml:space="preserve">
-    <value>Si 'ssssssss' - lang S-lyd|Følg med på pitch-grafen|Prøv å holde lyden stabil|Øk gradvis til 10 sekunder|Gjenta 3 ganger</value>
+    <value>Si 'ssssssss' - lang S-lyd|Følg med på tidsmåleren på skjermen|Prøv å holde luftstrømmen helt jevn|Øk gradvis til 10 sekunder|Gjenta 3 ganger</value>
   </data>
   <data name="Exercise_107_Steps" xml:space="preserve">
-    <value>Si 'Hva heter du?'|Legg merke til stigningen på slutten|Øv på 5 ulike spørsmål|Prøv jevn stigning|Varier styrken</value>
+    <value>Si 'Hva heter du?'|Legg merke til stigningen på slutten|Øv på 5 forskjellige spørsmål|Prøv å holde en jevn stigning i tonehøyden|Varier stemmestyrken mens du snakker</value>
   </data>
   <data name="Exercise_108_Steps" xml:space="preserve">
-    <value>Si 'Jeg heter Marie.'|Legg merke til fallet på slutten|Øv på 5 ulike utsagn|Prøv naturlig fall|Varier start-pitch</value>
+    <value>Si 'Jeg heter Marie.'|Legg merke til hvordan tonen faller på slutten|Øv på 5 forskjellige utsagn|Prøv å få til et naturlig fall i stemmen|Varier tonehøyden du starter på</value>
   </data>
   <data name="Exercise_109_Steps" xml:space="preserve">
-    <value>Choose a text|Read with focus on pitch in the target range|Stop at difficult words|Read the whole text|Play back and evaluate</value>
+    <value>Velg en tekst|Les med fokus på tonehøyde i målområdet|Stopp ved vanskelige ord|Les hele teksten|Spill av og vurder resultatet</value>
   </data>
   <data name="Exercise_110_Steps" xml:space="preserve">
-    <value>Tenk på vanlige spørsmål|Svar med naturlig intonasjon|Varier mellom spørsmål/utsagn|Følg med på pitch|Prøv 5 ulike scenarier</value>
+    <value>Tenk på vanlige spørsmål|Svar med en naturlig stemmemelodi|Varier mellom å stille spørsmål og gi svar|Følg med på tonehøyden på skjermen|Prøv 5 forskjellige situasjoner</value>
   </data>
   <data name="Exercise_111_Steps" xml:space="preserve">
-    <value>Hum 'mmm' - kjenn lepper/nese vibrere|Overfør til 'nnn'|Deretter 'yyy' (norsk 'j')|Prøv 'ene'-stavelser|Gjenta med korte ord</value>
+    <value>Hum 'mmm' - kjenn at leppene og nesen vibrerer|Flytt lyden over til en lang 'nnn'|Gå deretter over til en lang 'j-lyd' (som en lang 'iiijjj')|Prøv enkle stavelser (som ma, ne, jo)|Gjenta mønsteret med korte, enkle ord</value>
   </data>
   <data name="Exercise_112_Steps" xml:space="preserve">
-    <value>Sing a comfortable reference tone|Start speech on this tone|Check the starting pitch with the app|Adjust upward if needed|Repeat until automatic</value>
+    <value>Syng en behagelig referansetone|Start å snakke på denne tonen|Sjekk starttonen din med appen|Juster oppover om det trengs|Gjenta helt til det går av seg selv</value>
   </data>
   <data name="Exercise_113_Steps" xml:space="preserve">
-    <value>'Hallo' med stigende glide|'Hei' med fallende glide|'Ja?' som spørsmål|Korte fraser med glide|Varier stigende/synkende</value>
+    <value>Si 'Hallo' mens stemmen glir oppover|Si 'Hei' mens stemmen glir nedover|Si 'Ja?' som et spørsmål der tonen går opp|Prøv korte setninger med glidning i tonen|Varier mellom stigende og synkende tonefall</value>
   </data>
   <data name="Exercise_114_Steps" xml:space="preserve">
-    <value>Ta en sugerør|Blås lett gjennom|Syng 'ooo' gjennom strået|Hold i 5 sekunder|Gjenta med ulike toner</value>
+    <value>Ta et sugerør|Blås lett gjennom det|Syng en 'ooo'-lyd gjennom sugerøret|Hold tonen i 5 sekunder|Gjenta med forskjellige tonehøyder</value>
   </data>
   <data name="Exercise_115_Steps" xml:space="preserve">
-    <value>'Nei' - nøytralt|'Nei?' - overrasket|'Nei!' - frustrert|'Nei...' - resignert|Gjenta med ulike setninger</value>
+    <value>Si 'Nei' med en helt nøytral stemme|Si 'Nei?' slik at du høres overrasket ut|Si 'Nei!' med en frustrert og bestemt tone|Si 'Nei...' slik at du høres oppgitt eller resignert ut|Gjenta samme følelsesmønster med andre ord eller setninger</value>
   </data>
   <!-- Scientific Rationale - Voice Training -->
   <data name="Exercise_101_Rationale" xml:space="preserve">
@@ -187,10 +187,10 @@
     <value>Gliding fremfor å 'spre' stemmen gir jevnere pitch-overgang og mindre spenning. Kontrollert stigning er nøkkelen til feminin pitch.</value>
   </data>
   <data name="Exercise_104_Rationale" xml:space="preserve">
-    <value>Controlled downward gliding strengthens pitch-control muscles and builds muscle memory for the target range.</value>
+    <value>Kontrollert nedglidning styrker musklene for tonehøyde-kontroll og bygger muskelminne for målområdet.</value>
   </data>
   <data name="Exercise_105_Rationale" xml:space="preserve">
-    <value>Stable pitch in the target range is critical for feminization. Consistent phonation gives a natural voice.</value>
+    <value>Stabil tonehøyde i målområdet er kritisk for feminisering. Konsistent fonasjon gir en naturlig stemme.</value>
   </data>
   <!-- Guidance headings used by GuidanceItem templates -->
   <data name="Guidance_ClinicalPurpose" xml:space="preserve">
