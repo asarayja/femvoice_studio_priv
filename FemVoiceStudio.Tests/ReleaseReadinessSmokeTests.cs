@@ -67,8 +67,29 @@ namespace FemVoiceStudio.Tests
 
             services.RemoveAll<DatabaseService>();
             services.RemoveAll<IDatabaseService>();
+            services.RemoveAll<ISessionAnalyticsRepository>();
+            services.RemoveAll<IExerciseProfileStore>();
+            services.RemoveAll<ExerciseDataService>();
+            services.RemoveAll<SmartCoachMemoryStore>();
+            services.RemoveAll<OutcomeProfileStore>();
+            services.RemoveAll<ManualOverridesStore>();
+            services.RemoveAll<ClinicalNotesStore>();
+            services.RemoveAll<AuditTrailStore>();
+            services.RemoveAll<CaseReviewsStore>();
+
+            var connectionString = $"Data Source={databasePath}";
+
             services.AddSingleton(_ => new DatabaseService(databasePath));
             services.AddSingleton<IDatabaseService>(sp => sp.GetRequiredService<DatabaseService>());
+            services.AddSingleton<ISessionAnalyticsRepository>(_ => new SqliteSessionAnalyticsRepository(connectionString));
+            services.AddSingleton<IExerciseProfileStore>(_ => new SqliteExerciseProfileStore(connectionString));
+            services.AddSingleton(_ => new ExerciseDataService(connectionString));
+            services.AddSingleton(_ => new SmartCoachMemoryStore(new SqliteSmartCoachMemoryRepository(connectionString)));
+            services.AddSingleton(_ => new OutcomeProfileStore(new SqliteOutcomeProfileRepository(connectionString)));
+            services.AddSingleton(_ => new ManualOverridesStore(new SqliteManualOverridesRepository(connectionString)));
+            services.AddSingleton(_ => new ClinicalNotesStore(new SqliteClinicalNotesRepository(connectionString)));
+            services.AddSingleton(_ => new AuditTrailStore(new SqliteAuditTrailRepository(connectionString)));
+            services.AddSingleton(_ => new CaseReviewsStore(new SqliteCaseReviewsRepository(connectionString)));
         }
     }
 }

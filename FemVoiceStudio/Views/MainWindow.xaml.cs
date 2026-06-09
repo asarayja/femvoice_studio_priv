@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using FemVoiceStudio.ViewModels;
@@ -43,13 +44,6 @@ namespace FemVoiceStudio.Views
         
         // Data points with stability and health info
         private readonly List<(double X, double Y, bool InRange, StabilityState Stability, HealthState Health)> _pitchDataPoints = new();
-        
-        // Color constants - following clinical principle: green = comfortable/safe, yellow = outside zone, red = strain/health warning
-        private static readonly OxyColor ColorInZone = OxyColor.FromRgb(76, 175, 80);      // Green - comfortable
-        private static readonly OxyColor ColorOutOfZone = OxyColor.FromRgb(255, 193, 7);   // Yellow - outside comfort
-        private static readonly OxyColor ColorStrain = OxyColor.FromRgb(244, 67, 54);      // Red - strain/health warning
-        private static readonly OxyColor ColorNoVoice = OxyColor.FromRgb(158, 158, 158);   // Gray - no voice
-        private static readonly OxyColor ColorComfortZoneFill = OxyColor.FromArgb(40, 76, 175, 80); // Green transparent
         
         public MainWindow()
         {
@@ -147,12 +141,13 @@ namespace FemVoiceStudio.Views
             });
             
             // Comfort zone as an annotation so it always spans the visible chart width.
+            var comfortZoneColor = GetOxyColor("ChartTargetAreaBrush", OxyColors.Green);
             _comfortZoneAnnotation = new RectangleAnnotation
             {
                 MinimumY = 165,
                 MaximumY = 255,
-                Fill = ColorComfortZoneFill,
-                Stroke = OxyColor.FromArgb(100, 76, 175, 80),
+                Fill = OxyColor.FromAColor(40, comfortZoneColor),
+                Stroke = OxyColor.FromAColor(100, comfortZoneColor),
                 StrokeThickness = 1,
                 Layer = AnnotationLayer.BelowSeries
             };
@@ -162,12 +157,12 @@ namespace FemVoiceStudio.Views
             _pitchSeries = new LineSeries
             {
                 Title = Loc.Get("Main_YourPitch"),
-                Color = OxyColor.FromRgb(0, 120, 215),
+                Color = GetOxyColor("ChartPitchBrush", OxyColors.OrangeRed),
                 StrokeThickness = 2,
                 MarkerType = MarkerType.Circle,
                 MarkerSize = 4,
-                MarkerFill = OxyColor.FromRgb(0, 120, 215),
-                MarkerStroke = OxyColor.FromRgb(0, 80, 160),
+                MarkerFill = GetOxyColor("ChartPitchBrush", OxyColors.OrangeRed),
+                MarkerStroke = GetOxyColor("ChartPitchBrush", OxyColors.OrangeRed),
                 MarkerStrokeThickness = 1
             };
             model.Series.Add(_pitchSeries);
@@ -179,11 +174,11 @@ namespace FemVoiceStudio.Views
 
         private void ApplyPlotTheme(PlotModel model)
         {
-            var text = GetOxyColor("TextPrimaryBrush", OxyColor.FromRgb(64, 64, 64));
-            var secondaryText = GetOxyColor("TextSecondaryBrush", OxyColor.FromRgb(102, 102, 102));
+            var text = GetOxyColor("TextPrimaryBrush", OxyColors.Black);
+            var secondaryText = GetOxyColor("TextSecondaryBrush", OxyColors.DimGray);
             var background = GetOxyColor("ChartBackgroundBrush", OxyColors.White);
-            var grid = GetOxyColor("ChartGridBrush", OxyColor.FromRgb(230, 230, 230));
-            var border = GetOxyColor("BorderPrimaryBrush", OxyColor.FromRgb(200, 200, 200));
+            var grid = GetOxyColor("ChartGridBrush", OxyColors.LightGray);
+            var border = GetOxyColor("BorderPrimaryBrush", OxyColors.Gray);
 
             model.Background = background;
             model.TextColor = text;
@@ -286,23 +281,23 @@ namespace FemVoiceStudio.Views
                 switch (stability)
                 {
                     case StabilityState.VeryStable:
-                        StabilityBorder.Background = new SolidColorBrush(Color.FromRgb(76, 175, 80));
+                        SetStatusBackground(StabilityBorder, "SuccessBrush");
                         StabilityText.Text = Loc.Get("Stability_VeryStable");
                         break;
                     case StabilityState.Stable:
-                        StabilityBorder.Background = new SolidColorBrush(Color.FromRgb(139, 195, 74));
+                        SetStatusBackground(StabilityBorder, "SuccessBrush");
                         StabilityText.Text = Loc.Get("Stability_Stable");
                         break;
                     case StabilityState.Developing:
-                        StabilityBorder.Background = new SolidColorBrush(Color.FromRgb(255, 193, 7));
+                        SetStatusBackground(StabilityBorder, "WarningBrush");
                         StabilityText.Text = Loc.Get("Stability_Developing");
                         break;
                     case StabilityState.Unstable:
-                        StabilityBorder.Background = new SolidColorBrush(Color.FromRgb(255, 152, 0));
+                        SetStatusBackground(StabilityBorder, "WarningBrush");
                         StabilityText.Text = Loc.Get("Stability_Unstable");
                         break;
                     default:
-                        StabilityBorder.Background = new SolidColorBrush(Color.FromRgb(158, 158, 158));
+                        SetStatusBackground(StabilityBorder, "BackgroundTertiaryBrush");
                         StabilityText.Text = Loc.Get("Stability_NoVoice");
                         break;
                 }
@@ -327,31 +322,32 @@ namespace FemVoiceStudio.Views
                 switch (health)
                 {
                     case HealthState.Safe:
-                        HealthBorder.Background = new SolidColorBrush(Color.FromRgb(76, 175, 80));
+                        SetStatusBackground(HealthBorder, "SuccessBrush");
                         HealthText.Text = Loc.Get("Health_Safe");
                         break;
                     case HealthState.Monitor:
-                        HealthBorder.Background = new SolidColorBrush(Color.FromRgb(255, 193, 7));
+                        SetStatusBackground(HealthBorder, "WarningBrush");
                         HealthText.Text = Loc.Get("Health_Monitor");
                         break;
                     case HealthState.Warning:
-                        HealthBorder.Background = new SolidColorBrush(Color.FromRgb(255, 152, 0));
+                        SetStatusBackground(HealthBorder, "WarningBrush");
                         HealthText.Text = Loc.Get("Health_Warning");
                         break;
                     case HealthState.Danger:
-                        // Rød (244,67,54) erstattes av varm advarselsfarge (255,152,0)
-                        // når StressSensitiveMode er på. Teksten er identisk uansett.
-                        HealthBorder.Background = softenDanger
-                            ? new SolidColorBrush(Color.FromRgb(255, 152, 0))
-                            : new SolidColorBrush(Color.FromRgb(244, 67, 54));
+                        SetStatusBackground(HealthBorder, softenDanger ? "WarningBrush" : "ErrorBrush");
                         HealthText.Text = Loc.Get("Health_Danger");
                         break;
                     default:
-                        HealthBorder.Background = new SolidColorBrush(Color.FromRgb(158, 158, 158));
+                        SetStatusBackground(HealthBorder, "BackgroundTertiaryBrush");
                         HealthText.Text = Loc.Get("Stability_NoVoice");
                         break;
                 }
             });
+        }
+
+        private static void SetStatusBackground(Border border, string resourceKey)
+        {
+            border.SetResourceReference(Border.BackgroundProperty, resourceKey);
         }
         
         private void OnChartUpdate(object? sender, EventArgs e)
@@ -411,19 +407,19 @@ namespace FemVoiceStudio.Views
             OxyColor lineColor;
             if (latestPoint.Y <= 0)
             {
-                lineColor = ColorNoVoice;
+                lineColor = GetOxyColor("TextTertiaryBrush", OxyColors.Gray);
             }
             else if (latestPoint.Health == HealthState.Danger || latestPoint.Health == HealthState.Warning)
             {
-                lineColor = ColorStrain;
+                lineColor = GetOxyColor("ErrorBrush", OxyColors.Red);
             }
             else if (latestPoint.InRange)
             {
-                lineColor = ColorInZone;
+                lineColor = GetOxyColor("SuccessBrush", OxyColors.Green);
             }
             else
             {
-                lineColor = ColorOutOfZone;
+                lineColor = GetOxyColor("WarningBrush", OxyColors.Orange);
             }
             _pitchSeries.Color = lineColor;
             _pitchSeries.MarkerFill = lineColor;

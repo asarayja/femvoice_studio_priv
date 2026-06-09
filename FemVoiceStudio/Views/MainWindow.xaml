@@ -234,13 +234,13 @@
                         <!-- Stability Indicator -->
                         <Border x:Name="StabilityBorder" CornerRadius="4" Padding="8,4" Margin="12,0,0,0"
                                 Background="{DynamicResource SuccessBrush}">
-                            <TextBlock x:Name="StabilityText" Text="{loc:Loc Stability_Stable}" FontSize="11" Foreground="White"/>
+                            <TextBlock x:Name="StabilityText" Text="{loc:Loc Stability_Stable}" FontSize="11" Foreground="{DynamicResource TextOnAccentBrush}"/>
                         </Border>
                         
                         <!-- Health Indicator -->
                         <Border x:Name="HealthBorder" CornerRadius="4" Padding="8,4" Margin="8,0,0,0"
                                 Background="{DynamicResource SuccessBrush}">
-                            <TextBlock x:Name="HealthText" Text="{loc:Loc Health_Safe}" FontSize="11" Foreground="White"/>
+                            <TextBlock x:Name="HealthText" Text="{loc:Loc Health_Safe}" FontSize="11" Foreground="{DynamicResource TextOnAccentBrush}"/>
                         </Border>
                     </StackPanel>
                     
@@ -263,7 +263,7 @@
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
                         <TextBlock Text="{loc:Loc Dashboard_Score}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         <Border Background="{DynamicResource AccentPrimaryBrush}" CornerRadius="4" Padding="12,4" Margin="16,0,0,0">
-                            <TextBlock Text="{Binding OverallScore, StringFormat={}{0:F0}%}" FontSize="16" FontWeight="Bold" Foreground="White"/>
+                            <TextBlock Text="{Binding OverallScore, StringFormat={}{0:F0}%}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextOnAccentBrush}"/>
                         </Border>
                         <TextBlock x:Name="CoachExplanationText" Text="{Binding CoachExplanation}" FontSize="12" 
                                    Foreground="{DynamicResource TextSecondaryBrush}" Margin="16,0,0,0" 
@@ -284,7 +284,7 @@
                             <TextBlock Text="{loc:Loc Dashboard_Resonance}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,4"/>
                             <Grid Height="8">
                                 <Border Background="{DynamicResource BackgroundTertiaryBrush}" CornerRadius="4"/>
-                                <Border x:Name="ResonanceBar" Background="#FF6B9D" CornerRadius="4" HorizontalAlignment="Left">
+                                <Border x:Name="ResonanceBar" Background="{DynamicResource AccentMutedBrush}" CornerRadius="4" HorizontalAlignment="Left">
                                     <Border.Width>
                                         <MultiBinding Converter="{StaticResource ScoreToWidthConverter}">
                                             <Binding Path="ResonanceScore"/>
@@ -302,7 +302,7 @@
                             <TextBlock Text="{loc:Loc Dashboard_Pitch}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,4"/>
                             <Grid Height="8">
                                 <Border Background="{DynamicResource BackgroundTertiaryBrush}" CornerRadius="4"/>
-                                <Border x:Name="PitchBar" Background="#4FC3F7" CornerRadius="4" HorizontalAlignment="Left">
+                                <Border x:Name="PitchBar" Background="{DynamicResource InfoBrush}" CornerRadius="4" HorizontalAlignment="Left">
                                     <Border.Width>
                                         <MultiBinding Converter="{StaticResource ScoreToWidthConverter}">
                                             <Binding Path="PitchScore"/>
@@ -320,7 +320,7 @@
                             <TextBlock Text="{loc:Loc Dashboard_Intonation}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,4"/>
                             <Grid Height="8">
                                 <Border Background="{DynamicResource BackgroundTertiaryBrush}" CornerRadius="4"/>
-                                <Border x:Name="IntonationBar" Background="#81C784" CornerRadius="4" HorizontalAlignment="Left">
+                                <Border x:Name="IntonationBar" Background="{DynamicResource SuccessBrush}" CornerRadius="4" HorizontalAlignment="Left">
                                     <Border.Width>
                                         <MultiBinding Converter="{StaticResource ScoreToWidthConverter}">
                                             <Binding Path="IntonationScore"/>
@@ -338,7 +338,7 @@
                             <TextBlock Text="{loc:Loc Dashboard_VoiceHealth}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,4"/>
                             <Grid Height="8">
                                 <Border Background="{DynamicResource BackgroundTertiaryBrush}" CornerRadius="4"/>
-                                <Border x:Name="HealthScoreBar" Background="#FFD54F" CornerRadius="4" HorizontalAlignment="Left">
+                                <Border x:Name="HealthScoreBar" Background="{DynamicResource WarningBrush}" CornerRadius="4" HorizontalAlignment="Left">
                                     <Border.Width>
                                         <MultiBinding Converter="{StaticResource ScoreToWidthConverter}">
                                             <Binding Path="VoiceHealthScore"/>
@@ -517,9 +517,9 @@
                             <TextBlock Text="{Binding RealtimeFeedback}" FontSize="14" TextWrapping="Wrap" Margin="0,8,0,0" Foreground="{DynamicResource TextPrimaryBrush}"/>
                             
                             <!-- Debug Info -->
-                            <Border Background="#333333" CornerRadius="4" Padding="8,4" Margin="0,8,0,0"
+                            <Border Background="{DynamicResource BackgroundTertiaryBrush}" CornerRadius="4" Padding="8,4" Margin="0,8,0,0"
                                     Visibility="{Binding DebugInfo, Converter={StaticResource StringToVisibility}}">
-                                <TextBlock Text="{Binding DebugInfo}" FontSize="11" FontFamily="Consolas" Foreground="#00FF00"/>
+                                <TextBlock Text="{Binding DebugInfo}" FontSize="11" FontFamily="Consolas" Foreground="{DynamicResource SuccessBrush}"/>
                             </Border>
                         </StackPanel>
                     </Border>

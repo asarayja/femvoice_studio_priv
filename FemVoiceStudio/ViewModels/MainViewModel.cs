@@ -530,14 +530,10 @@ namespace FemVoiceStudio.ViewModels
                 VoiceHealthScore = 0;
                 CoachExplanation = "";
                 
-                // Start event-driven audio engine for real-time pitch streaming.
-                // IKKE kall Initialize() her — Start() initialiserer selv ved behov.
-                // Dobbeltkallet skapte en forlatt WasapiCapture-instans per øktstart
-                // (med event-handlere fortsatt påkoblet); når den forlatte instansen
-                // stoppet/finaliserte, fyrte OnRecordingStopped med exception →
-                // «audiofeil»-ruta vistes selv om den aktive capturen virket.
-                _audioEngine.Start();
-                
+                // AudioAnalyzerService er eneste aktive mikrofon-pipeline på forsiden.
+                // Pitch-grafen drives av OnPitchAnalyzed -> LivePitchUpdateSequence.
+                // Å starte AudioAnalysisEngine samtidig åpnet samme capture device to
+                // ganger og kunne gi WASAPI/device-feil ved Start Økt.
                 _audioAnalyzer.StartAnalysis();
                 IsRecording = true;
                 _uiUpdateTimer.Start();
@@ -560,9 +556,6 @@ namespace FemVoiceStudio.ViewModels
                 _uiUpdateTimer.Stop();
                 IsRecording = false;
                 DebugInfo = "";
-                
-                // Stop event-driven audio engine
-                _audioEngine.Stop();
                 
                 // Close debug log files
                 DebugSettingsService.Instance.CloseLogs();
@@ -1110,20 +1103,7 @@ namespace FemVoiceStudio.ViewModels
         /// </summary>
         private void OnAudioEngineError(string error)
         {
-            // _audioEngine er en REDUNDANT pitch-streaming-kilde; analyse, score og den
-            // lagrede økten drives av _audioAnalyzer. En feil i denne redundante engine-en
-            // (typisk WASAPI-hikke / enhetskontensjon når begge pipelines åpner samme
-            // mikrofon i StartRecording) skal logges i ErrorMessage for diagnostikk, men
-            // IKKE overstyre forsidens StatusText til «Audiofeil» mens analysen faktisk
-            // virker — det var årsaken til den PERMANENTE FALSKE «Audiofeil» (engine-feilen
-            // ankom asynkront via RaiseError→Post og overskrev «Recording...», og ble
-            // aldri tømt). Reelle feil på den load-bearing pipelinen varsles via
-            // _audioAnalyzer.ErrorOccurred → OnError («Feil oppstått»). DeviceLost fra
-            // denne redundante engine-en er ikke lenger en autoritet for øktstopp.
-            Application.Current?.Dispatcher.Invoke(() =>
-            {
-                ErrorMessage = error;
-            });
+            System.Diagnostics.Debug.WriteLine($"[FemVoice][MainViewModel] Redundant audio engine error: {error}");
         }
 
         /// <summary>

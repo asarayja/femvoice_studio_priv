@@ -116,8 +116,8 @@
     <SolidColorBrush x:Key="ChartPitchBrush" Color="{StaticResource ChartPitchColor}"/>
     
     <!-- Title Bar -->
-    <SolidColorBrush x:Key="TitleBarBackgroundBrush" Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="TitleBarForegroundBrush" Color="#1A1D28"/>
+    <SolidColorBrush x:Key="TitleBarBackgroundBrush" Color="{StaticResource BackgroundPrimaryColor}"/>
+    <SolidColorBrush x:Key="TitleBarForegroundBrush" Color="{StaticResource TextPrimaryColor}"/>
 
     <!-- ============================================================================
          CONTROL STYLES
@@ -210,13 +210,13 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#B71C1C"/>
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource ErrorBrush}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#C62828"/>
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource ErrorBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="border" Property="Background" Value="#EF9A9A"/>
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource BackgroundTertiaryBrush}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -234,6 +234,8 @@
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="CaretBrush" Value="{StaticResource TextPrimaryBrush}"/>
     </Style>
+
+    <Style TargetType="TextBox" BasedOn="{StaticResource StandardTextBoxStyle}"/>
 
     <!-- CheckBox Style -->
     <Style x:Key="StandardCheckBoxStyle" TargetType="CheckBox">
@@ -280,10 +282,23 @@
         <Setter Property="FontSize" Value="14"/>
     </Style>
 
+    <Style TargetType="ComboBox" BasedOn="{StaticResource StandardComboBoxStyle}"/>
+
     <!-- ComboBoxItem Style -->
     <Style x:Key="StandardComboBoxItemStyle" TargetType="ComboBoxItem">
         <Setter Property="Background" Value="{StaticResource BackgroundPrimaryBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="Padding" Value="10,8"/>
+        <Setter Property="FontSize" Value="14"/>
+    </Style>
+
+    <Style TargetType="ComboBoxItem" BasedOn="{StaticResource StandardComboBoxItemStyle}"/>
+
+    <Style TargetType="DatePicker">
+        <Setter Property="Background" Value="{StaticResource BackgroundPrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderPrimaryBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="10,8"/>
         <Setter Property="FontSize" Value="14"/>
     </Style>
