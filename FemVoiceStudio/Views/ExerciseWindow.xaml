@@ -18,6 +18,8 @@
         <loc:InverseBoolToVisibilityConverter   x:Key="InverseBoolToVisibility"/>
         <loc:IconConverter                       x:Key="IconConverter"/>
         <loc:NullToVisibilityConverter           x:Key="NullToVisibility"/>
+        <loc:LegacyIconValidityConverter       x:Key="LegacyIconValidity"/>
+
         <loc:ProgressToPercentConverter         x:Key="ProgressToPercent"/>
         <loc:SeverityToBrushConverter           x:Key="SeverityToBrush"/>
 
@@ -300,7 +302,9 @@
                                                   Visibility="{Binding Icon, Converter={StaticResource NullToVisibility}}"/>
                                             <TextBlock Text="{Binding Icon}" FontSize="20"
                                                        Foreground="{DynamicResource TextOnAccentBrush}"
-                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Visibility="{Binding Icon, Converter={StaticResource LegacyIconValidity}}"/>
+
                                         </Grid>
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
@@ -320,7 +324,8 @@
                                                     </Style>
                                                 </Border.Style>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding GoalIcon}" FontSize="10" Margin="0,0,4,0"/>
+                                                    <TextBlock Text="{Binding GoalIcon}" FontSize="10" Margin="0,0,4,0" Visibility="{Binding GoalIcon, Converter={StaticResource LegacyIconValidity}}"/>
+
                                                     <TextBlock Text="{Binding Goal}" FontSize="10">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
