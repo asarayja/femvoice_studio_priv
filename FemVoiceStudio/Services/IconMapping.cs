@@ -9,24 +9,15 @@ namespace FemVoiceStudio.Services
         public static readonly Dictionary<string, IconKey> LegacyToKey = new()
         {
             { "🎤", IconKey.Microphone },
-            { "ðŸŽµ", IconKey.Microphone }, // mojibake variants
             { "🎵", IconKey.MusicNote },
-            { "ðŸ“Š", IconKey.MusicNote },
             { "📈", IconKey.TrendingUp },
-            { "ðŸ“ˆ", IconKey.TrendingUp },
             { "📉", IconKey.TrendingDown },
-            { "ðŸ“‰", IconKey.TrendingDown },
             { "🔊", IconKey.Volume },
-            { "ðŸ”Š", IconKey.Volume },
             { "💨", IconKey.Breath },
-            { "ðŸ’¨", IconKey.Breath },
             { "💬", IconKey.Chat },
-            { "ðŸ’¬", IconKey.Chat },
             { "📖", IconKey.Book },
-            { "ðŸ“–", IconKey.Book },
             { "⭐", IconKey.Star },
             { "â­", IconKey.Goal },
-            { "â", IconKey.Goal }
         };
 
         public static IconKey Map(string value)
