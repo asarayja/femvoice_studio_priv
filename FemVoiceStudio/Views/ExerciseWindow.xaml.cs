@@ -422,6 +422,9 @@ namespace FemVoiceStudio.Views
         {
             if (_currentExercise == null || _exerciseService == null) return;
 
+            if (!StartExerciseAudio())
+                return;
+
             _sessionStartTime  = DateTime.Now;
             _currentSessionId  = _exerciseService.StartSession(_currentExercise.ExerciseId);
             _elapsedSeconds    = 0;
@@ -445,11 +448,9 @@ namespace FemVoiceStudio.Views
             }
 
             // Start aggregering ETTER StartExerciseCommand (koordinatorens synthetiske
-            // default-state ved SetExerciseContext skal ikke inn i øktsnittet) og FØR
-            // lydstart, slik at alle reelle evalueringsticks fanges.
+            // default-state ved SetExerciseContext skal ikke inn i øktsnittet). Lydstart
+            // er allerede verifisert over; ellers skal ingen session/timer starte.
             _sessionRecorder?.BeginSession(_currentExercise.ExerciseId, _currentSessionId);
-
-            StartExerciseAudio();
 
             // Adaptiv komfortsone: last brukerens sonetilstand. Soneoppdateringen
             // (UpdateZoneAsync) skjer ved øktslutt med øktsnittene; ZoneUpdated-eventet
@@ -1103,7 +1104,7 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
             catch { /* tema-ressurs mangler i test/host → behold standardbakgrunn */ }
         }
 
-        private void StartExerciseAudio()
+        private bool StartExerciseAudio()
         {
             StopExerciseAudio();
 
@@ -1144,11 +1145,16 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
                 _exerciseAudioCapture.ErrorOccurred += OnExerciseAudioError;
                 _exerciseAudioCapture.DeviceLost += OnExerciseAudioDeviceLost;
                 _exerciseAudioCapture.StartRecording();
+                if (!_exerciseAudioCapture.IsRecording)
+                    throw new InvalidOperationException(Loc.Get("UI_MicNotReady"));
+
+                return true;
             }
             catch (Exception ex)
             {
                 FeedbackText.Text = string.Format(Loc.Get("Audio_MicrophoneStartFailedFormat"), ex.Message);
                 StopExerciseAudio();
+                return false;
             }
         }
 

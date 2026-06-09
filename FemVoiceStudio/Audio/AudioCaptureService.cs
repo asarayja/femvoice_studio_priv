@@ -14,6 +14,12 @@ using FemVoiceStudio.Models;
 
 namespace FemVoiceStudio.Audio
 {
+    public class AudioCaptureStartException : InvalidOperationException
+    {
+        public AudioCaptureStartException(string message) : base(message) { }
+        public AudioCaptureStartException(string message, Exception innerException) : base(message, innerException) { }
+    }
+
     /// <summary>
     /// Audio capture service som håndterer mikrofonopptak med NAudio.
     /// Implementerer lav-latens kontinuerlig opptak med buffer-håndtering.
@@ -72,6 +78,12 @@ namespace FemVoiceStudio.Audio
         public int TargetLatencyMs => (_bufferSize * 1000) / _sampleRate;
         
         public bool IsRecording => _isRecording;
+        public bool HasReceivedAudioData { get; private set; }
+        public bool IsMonitoringActive =>
+            _hearOwnVoice &&
+            _isRecording &&
+            HasReceivedAudioData &&
+            _waveOut?.PlaybackState == PlaybackState.Playing;
         public int SampleRate => _sampleRate;
         public int InputDeviceNumber { get; private set; } = -1;
         public string InputDeviceName { get; private set; } = "Default microphone";
@@ -205,6 +217,14 @@ namespace FemVoiceStudio.Audio
         {
             try
             {
+                var deviceCount = WaveInEvent.DeviceCount;
+                if (deviceCount == 0)
+                {
+                    const string message = "Ingen mikrofon funnet. Koble til en mikrofon og prøv igjen.";
+                    ErrorOccurred?.Invoke(this, message);
+                    throw new AudioCaptureStartException(message);
+                }
+
                 _waveIn = new WaveInEvent
                 {
                     WaveFormat = new WaveFormat(_sampleRate, _bitsPerSample, _channels),
@@ -218,17 +238,16 @@ namespace FemVoiceStudio.Audio
                 
                 _waveIn.DataAvailable += OnDataAvailable;
                 _waveIn.RecordingStopped += OnRecordingStopped;
-                
-                // Sjekk tilgjengelige enheter
-                var deviceCount = WaveInEvent.DeviceCount;
-                if (deviceCount == 0)
-                {
-                    ErrorOccurred?.Invoke(this, "Ingen mikrofon funnet. Koble til en mikrofon og prøv igjen.");
-                }
+            }
+            catch (AudioCaptureStartException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
-                ErrorOccurred?.Invoke(this, $"Feil ved initialisering av mikrofon: {ex.Message}");
+                var message = $"Feil ved initialisering av mikrofon: {ex.Message}";
+                ErrorOccurred?.Invoke(this, message);
+                throw new InvalidOperationException(message, ex);
             }
         }
 
@@ -258,12 +277,16 @@ namespace FemVoiceStudio.Audio
         /// </summary>
         public void StartRecording()
         {
-            if (_isRecording || _waveIn == null)
+            if (_isRecording)
                 return;
+
+            if (_waveIn == null)
+                throw new InvalidOperationException("Audio capture er ikke initialisert. Kall Initialize() før StartRecording().");
                 
             try
             {
                 _audioBuffer.Clear();
+                HasReceivedAudioData = false;
                 if (!_hearOwnVoice)
                 {
                     _waveOut?.Pause();
@@ -277,8 +300,10 @@ namespace FemVoiceStudio.Audio
             }
             catch (Exception ex)
             {
-                ErrorOccurred?.Invoke(this, $"Feil ved start av opptak: {ex.Message}");
+                var message = $"Feil ved start av opptak: {ex.Message}";
+                ErrorOccurred?.Invoke(this, message);
                 _isRecording = false;
+                throw new InvalidOperationException(message, ex);
             }
         }
         
@@ -333,6 +358,7 @@ namespace FemVoiceStudio.Audio
             }
             
             // Send data til event subscribers
+            HasReceivedAudioData = true;
             AudioDataAvailable?.Invoke(this, samples);
             
             // Spill av lyden hvis HearOwnVoice er aktivert

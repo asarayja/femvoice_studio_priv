@@ -107,6 +107,9 @@ namespace FemVoiceStudio.Subsystems.Audio
                     
                     _audioCapture.Initialize();
                     _audioCapture.StartRecording();
+                    if (!_audioCapture.IsRecording)
+                        throw new InvalidOperationException("Audio capture startet ikke.");
+
                     _isCapturing = true;
                 }
                 catch (Exception ex)

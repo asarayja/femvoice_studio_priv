@@ -84,8 +84,9 @@
                         Style="{DynamicResource PrimaryButtonStyle}"/>
                 <Button x:Name="ExportButton"
                         Content="{loc:Loc Report_Export}"
-                        Command="{Binding GenerateCommand}"
+                        Command="{Binding ExportCommand}"
                         Style="{DynamicResource SecondaryButtonStyle}"/>
+
             </StackPanel>
 
         </StackPanel>

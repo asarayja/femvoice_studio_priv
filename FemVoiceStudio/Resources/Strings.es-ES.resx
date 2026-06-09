@@ -3780,4 +3780,7 @@ This cannot be undone!</value>
   <data name="ThresholdStrategy_Intensity" xml:space="preserve">
     <value>Umbral: intervalos más cortos y enfocados, con descanso entre ellos.</value>
   </data>
+  <data name="Nav_ProfessionalToolsTitle" xml:space="preserve">
+    <value>Herramientas profesionales</value>
+  </data>
 </root>

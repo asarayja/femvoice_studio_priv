@@ -96,10 +96,15 @@ namespace FemVoiceStudio.Views
                 _resonanceEngine.SetVoiceStyle(GetPreferredVoiceStyle());
                 _resonanceEngine.Start();
                 _audioCapture.StartRecording();
+                if (!_audioCapture.IsRecording)
+                    throw new InvalidOperationException(Loc.Get("UI_MicNotReady"));
+
                 _renderTimer.Start();
             }
             catch (Exception ex)
             {
+                _renderTimer.Stop();
+                _resonanceEngine.Stop();
                 MessageBox.Show(string.Format(Loc.Get("Audio_MicrophoneStartFailedFormat"), ex.Message), Loc.Get("UI_Error"),
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }

@@ -151,6 +151,8 @@ namespace FemVoiceStudio.Audio
             ResetSmoothing();
             
             _audioCapture.StartRecording();
+            if (!_audioCapture.IsRecording)
+                throw new InvalidOperationException("Audio capture startet ikke. Realtime analysis ble ikke startet.");
         }
         
         public SessionAnalysisSummary StopAnalysis()

@@ -71,6 +71,8 @@ namespace FemVoiceStudio.Audio
         {
             _analysisHistory.Clear();
             _audioCapture.StartRecording();
+            if (!_audioCapture.IsRecording)
+                throw new InvalidOperationException("Audio capture startet ikke. Analyse ble ikke startet.");
         }
         
         /// <summary>

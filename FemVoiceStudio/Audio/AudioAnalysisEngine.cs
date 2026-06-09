@@ -498,8 +498,14 @@ namespace FemVoiceStudio.Audio
         /// </summary>
         public void StartCapture()
         {
-            if (_isRecording || _isDisposed)
+            if (_isRecording)
                 return;
+
+            if (_isDisposed)
+                throw new ObjectDisposedException(nameof(AudioAnalysisEngine));
+
+            if (_waveIn == null)
+                throw new InvalidOperationException("Audio capture er ikke initialisert. Kall Initialize() før StartCapture().");
 
             try
             {
@@ -512,7 +518,7 @@ namespace FemVoiceStudio.Audio
                 }
                 else
                 {
-                    _waveIn?.StartRecording();
+                    _waveIn.StartRecording();
                 }
 
                 _isRecording = true;
@@ -521,6 +527,7 @@ namespace FemVoiceStudio.Audio
             {
                 RaiseError($"Failed to start recording: {ex.Message}");
                 _isRecording = false;
+                throw new InvalidOperationException($"Failed to start recording: {ex.Message}", ex);
             }
         }
 

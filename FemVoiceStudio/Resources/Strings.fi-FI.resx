@@ -3779,4 +3779,7 @@ This cannot be undone!</value>
   <data name="ThresholdStrategy_Intensity" xml:space="preserve">
     <value>Kynnys: lyhyempiä, keskittyneempiä jaksoja, joiden välissä lepoa.</value>
   </data>
+  <data name="Nav_ProfessionalToolsTitle" xml:space="preserve">
+    <value>Ammatilliset työkalut</value>
+  </data>
 </root>

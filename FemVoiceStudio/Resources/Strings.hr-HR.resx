@@ -3779,4 +3779,7 @@ This cannot be undone!</value>
   <data name="ThresholdStrategy_Intensity" xml:space="preserve">
     <value>Prag: kraći, usredotočeniji intervali s odmorom između.</value>
   </data>
+  <data name="Nav_ProfessionalToolsTitle" xml:space="preserve">
+    <value>Profesionalni alati</value>
+  </data>
 </root>

@@ -4034,4 +4034,7 @@ This cannot be undone!</value>
   <data name="ThresholdStrategy_Intensity" xml:space="preserve">
     <value>Threshold: shorter, more focused intervals with rest in between.</value>
   </data>
+  <data name="Nav_ProfessionalToolsTitle" xml:space="preserve">
+    <value>Professional tools</value>
+  </data>
 </root>

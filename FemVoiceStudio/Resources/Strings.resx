@@ -4338,6 +4338,9 @@ Dette kan ikke angres!</value>
     <value>{0} hydration nudges</value>
   </data>
   <!-- ── Sprint E (Professional / Research Edition): navigasjon ──────────────── -->
+  <data name="Nav_ProfessionalToolsTitle" xml:space="preserve">
+    <value>Profesjonelle verktøy</value>
+  </data>
   <data name="Nav_ClinicianDashboard" xml:space="preserve">
     <value>Klinisk oversikt</value>
   </data>

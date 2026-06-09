@@ -3801,4 +3801,7 @@ This cannot be undone!</value>
   <data name="ThresholdStrategy_Intensity" xml:space="preserve">
     <value>Schwelle: kürzere, fokussiertere Intervalle mit Ruhe dazwischen.</value>
   </data>
+  <data name="Nav_ProfessionalToolsTitle" xml:space="preserve">
+    <value>Professionelle Werkzeuge</value>
+  </data>
 </root>

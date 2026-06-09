@@ -3780,4 +3780,7 @@ This cannot be undone!</value>
   <data name="ThresholdStrategy_Intensity" xml:space="preserve">
     <value>Tröskel: kortare, mer fokuserade intervaller med vila emellan.</value>
   </data>
+  <data name="Nav_ProfessionalToolsTitle" xml:space="preserve">
+    <value>Professionella verktyg</value>
+  </data>
 </root>

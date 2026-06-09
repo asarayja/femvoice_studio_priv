@@ -236,7 +236,12 @@ namespace FemVoiceStudio.Views
                     _resonanceScorer.SetVoiceStyle(style);
                 }
 
-                _audioCapture?.StartRecording();
+                if (_audioCapture == null)
+                    throw new InvalidOperationException(Loc.Get("UI_MicNotReady"));
+
+                _audioCapture.StartRecording();
+                if (!_audioCapture.IsRecording)
+                    throw new InvalidOperationException(Loc.Get("UI_MicNotReady"));
 
                 _isRecording = true;
                 _sessionStartTime = DateTime.Now;

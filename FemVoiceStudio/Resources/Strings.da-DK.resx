@@ -3917,4 +3917,7 @@ This cannot be undone!</value>
   <data name="ReportPdf_ExercisesRanked" xml:space="preserve"><value>Øvelser rangeret</value></data>
   <data name="ReportPdf_DataSufficient" xml:space="preserve"><value>Nok data</value></data>
   <data name="ReportPdf_RecoveryRecommendationFormat" xml:space="preserve"><value>Restitutionsanbefaling: {0}</value></data>
+  <data name="Nav_ProfessionalToolsTitle" xml:space="preserve">
+    <value>Professionelle værktøjer</value>
+  </data>
 </root>

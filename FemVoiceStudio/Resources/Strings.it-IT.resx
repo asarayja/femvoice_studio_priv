@@ -3780,4 +3780,7 @@ This cannot be undone!</value>
   <data name="ThresholdStrategy_Intensity" xml:space="preserve">
     <value>Soglia: intervalli più brevi e mirati, con riposo nel mezzo.</value>
   </data>
+  <data name="Nav_ProfessionalToolsTitle" xml:space="preserve">
+    <value>Strumenti professionali</value>
+  </data>
 </root>

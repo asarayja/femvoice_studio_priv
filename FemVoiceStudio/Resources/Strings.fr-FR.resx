@@ -3779,4 +3779,7 @@ This cannot be undone!</value>
   <data name="ThresholdStrategy_Intensity" xml:space="preserve">
     <value>Seuil : intervalles plus courts et plus ciblés, avec repos entre eux.</value>
   </data>
+  <data name="Nav_ProfessionalToolsTitle" xml:space="preserve">
+    <value>Outils professionnels</value>
+  </data>
 </root>
