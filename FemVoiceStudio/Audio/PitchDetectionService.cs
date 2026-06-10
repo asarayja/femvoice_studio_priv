@@ -73,6 +73,16 @@ namespace FemVoiceStudio.Audio
                 result.IsVoiced = true;
                 result.Pitch = autocorrResult.frequency;
                 result.Confidence = autocorrResult.probability;
+                // If accepted despite being below the calibrated voiced threshold, record RC-0 diagnostic with variance
+                if (result.RmsValue < VoicedRmsThreshold)
+                {
+                    try
+                    {
+                        Rc0RuntimeLog.Write("PitchDetection",
+                            $"AcceptedBelowVoicedThreshold: RMS={result.RmsValue:F6}, VoiceThreshold={VoicedRmsThreshold:F6}, Confidence={result.Confidence:F3}, Variance={autocorrResult.variance:E6}, Reason=AUTOCORR_HIGH_CONFIDENCE");
+                    }
+                    catch { }
+                }
                 return result;
             }
 
@@ -163,47 +173,63 @@ namespace FemVoiceStudio.Audio
         /// <summary>
         /// Autocorrelation pitch detection - backup metode
         /// </summary>
-        private (double frequency, double probability) AutocorrelationPitchDetection(float[] samples)
+        private (double frequency, double probability, double variance) AutocorrelationPitchDetection(float[] samples)
         {
             int minLag = _sampleRate / (int)_maxFrequency;
             int maxLag = _sampleRate / (int)_minFrequency;
-            
+
             double maxCorrelation = 0;
             int bestLag = 0;
-            
-            // Beregn autocorrelation
+            double computedVariance = 0;
+
+            // Quick DC / variance check: subtract mean and compute variance to reject near-constant frames
+            double mean = 0;
+            for (int i = 0; i < samples.Length; i++) mean += samples[i];
+            mean /= Math.Max(1, samples.Length);
+            double varSum = 0;
+            for (int i = 0; i < samples.Length; i++) { varSum += (samples[i] - mean) * (samples[i] - mean); }
+            computedVariance = varSum / Math.Max(1, samples.Length);
+            // If variance is vanishingly small, reject early as constant/DC
+            if (computedVariance < 1e-10)
+            {
+                return (0, 0, computedVariance);
+            }
+
+            // Beregn autocorrelation using zero-mean signals to avoid DC bias
             for (int lag = minLag; lag < maxLag && lag < samples.Length / 2; lag++)
             {
                 double correlation = 0;
                 double norm1 = 0;
                 double norm2 = 0;
-                
+
                 for (int i = 0; i < samples.Length - lag; i++)
                 {
-                    correlation += samples[i] * samples[i + lag];
-                    norm1 += samples[i] * samples[i];
-                    norm2 += samples[i + lag] * samples[i + lag];
+                    double x = samples[i] - mean;
+                    double y = samples[i + lag] - mean;
+                    correlation += x * y;
+                    norm1 += x * x;
+                    norm2 += y * y;
                 }
-                
+
                 if (norm1 > 0 && norm2 > 0)
                 {
                     correlation /= Math.Sqrt(norm1 * norm2);
                 }
-                
+
                 if (correlation > maxCorrelation)
                 {
                     maxCorrelation = correlation;
                     bestLag = lag;
                 }
             }
-            
+
             if (maxCorrelation > 0.5 && bestLag > 0)
             {
                 double frequency = (double)_sampleRate / bestLag;
-                return (frequency, maxCorrelation);
+                return (frequency, maxCorrelation, computedVariance);
             }
-            
-            return (0, 0);
+
+            return (0, 0, computedVariance);
         }
         
         /// <summary>
