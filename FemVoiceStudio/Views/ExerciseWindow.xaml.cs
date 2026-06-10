@@ -638,6 +638,7 @@ namespace FemVoiceStudio.Views
                                 : Array.Empty<string>(),
                             ResonanceFallbackCount = 0,
                             ResonanceRealSampleCount = _rc0ResonanceSamples,
+                            ResonanceFailureClassification = "",
                             GraphUpdateCount = rc0GraphUpdates,
                             GuidanceItemCount = rc0GuidanceCount,
                             SmartCoachGenerated = _sessionRecorder?.LastSessionInsight != null,
@@ -675,6 +676,22 @@ namespace FemVoiceStudio.Views
                                 {
                                     evidence = evidence with { PersistenceReadBackStatus = "FAIL" };
                                 }
+                                // If resonance engine ran but accepted no samples, classify as input-too-low-for-resonance
+                                if (evidence.ResonanceEngineCalledCount > 0 && evidence.ResonanceAcceptedCount == 0)
+                                {
+                                    var reason = "INPUT_TOO_LOW_FOR_RESONANCE";
+                                    if (evidence.ResonanceRejectedReasons != null && evidence.ResonanceRejectedReasons.Length > 0
+                                        && evidence.ResonanceRejectedReasons[0].Contains("BELOW_RMS_THRESHOLD", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        reason = "RESONANCE_REJECTED_BELOW_RMS_THRESHOLD";
+                                    }
+                                    evidence = evidence with { ResonanceFailureClassification = reason };
+                                    var prevWarnings = evidence.Warnings ?? Array.Empty<string>();
+                                    var merged = new string[prevWarnings.Length + 1];
+                                    Array.Copy(prevWarnings, merged, prevWarnings.Length);
+                                    merged[merged.Length - 1] = "Input signal is too low for resonance analysis.";
+                                    evidence = evidence with { Warnings = merged };
+                                }
                             }
                         }
                         catch (Exception ex)
@@ -685,7 +702,7 @@ namespace FemVoiceStudio.Views
                             var merged = new string[prev.Length + 1];
                             Array.Copy(prev, merged, prev.Length);
                             merged[merged.Length - 1] = ex.ToString();
-                            evidence = evidence with { Errors = merged };
+                            evidence = evidence with { Errors = merged, PersistenceReadBackError = ex.ToString() };
                         }
                         var folder = Rc0EvidenceExporter.Export(
                             evidence, rc0AudioSnapshot ?? new AudioCaptureDiagnosticsSnapshot());

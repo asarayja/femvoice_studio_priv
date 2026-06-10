@@ -36,6 +36,7 @@ namespace FemVoiceStudio.Services
             public string[] ResonanceRejectedReasons { get; init; } = Array.Empty<string>();
             public long ResonanceFallbackCount { get; init; }
             public long ResonanceRealSampleCount { get; init; }
+            public string ResonanceFailureClassification { get; init; } = "";
             public long GraphUpdateCount { get; init; }
             public int GuidanceItemCount { get; init; }
             public bool SmartCoachGenerated { get; init; }
@@ -50,6 +51,7 @@ namespace FemVoiceStudio.Services
             public string OutcomeReportStatus { get; init; } = "NOT_VERIFIED";
             public string TimelineReportStatus { get; init; } = "NOT_VERIFIED";
             public string[] ReportVerificationErrors { get; init; } = Array.Empty<string>();
+            public string? PersistenceReadBackError { get; init; }
             public bool ClinicalReportGenerated { get; init; }
             public bool CoachReportGenerated { get; init; }
             public bool OutcomeReportGenerated { get; init; }
@@ -210,12 +212,21 @@ namespace FemVoiceStudio.Services
             AppendCheck(sb, "SmartCoach DateTime parsing", evidence.SmartCoachGenerated, "No DateTime parsing error was reported in this run.");
             AppendCheck(sb, "Voice Health policies", evidence.VoiceHealthEvaluated, "Health score was evaluated during the exercise.");
             // Use tri-state statuses when available
-            AppendCheck(sb, "Analytics write/read", evidence.AnalyticsWritten && string.Equals(evidence.PersistenceReadBackStatus, "PASS", StringComparison.OrdinalIgnoreCase), $"AnalyticsWritten={evidence.AnalyticsWritten}, ReadBackStatus={evidence.PersistenceReadBackStatus}");
-            AppendCheck(sb, "Persistence save/load", evidence.PersistenceSaved && string.Equals(evidence.PersistenceReadBackStatus, "PASS", StringComparison.OrdinalIgnoreCase), $"Saved={evidence.PersistenceSaved}, ReadBackStatus={evidence.PersistenceReadBackStatus}");
-            AppendCheck(sb, "Clinical Report", string.Equals(evidence.ClinicalReportStatus, "PASS", StringComparison.OrdinalIgnoreCase), $"ClinicalReportStatus={evidence.ClinicalReportStatus}");
-            AppendCheck(sb, "Coach Report", string.Equals(evidence.CoachReportStatus, "PASS", StringComparison.OrdinalIgnoreCase), $"CoachReportStatus={evidence.CoachReportStatus}");
-            AppendCheck(sb, "Outcome Report", string.Equals(evidence.OutcomeReportStatus, "PASS", StringComparison.OrdinalIgnoreCase), $"OutcomeReportStatus={evidence.OutcomeReportStatus}");
-            AppendCheck(sb, "Timeline Report", string.Equals(evidence.TimelineReportStatus, "PASS", StringComparison.OrdinalIgnoreCase), $"TimelineReportStatus={evidence.TimelineReportStatus}");
+            // Analytics / persistence tri-state
+            var analyticsStatus = evidence.AnalyticsWritten && string.Equals(evidence.PersistenceReadBackStatus, "PASS", StringComparison.OrdinalIgnoreCase)
+                ? "PASS"
+                : string.Equals(evidence.PersistenceReadBackStatus, "NOT_VERIFIED", StringComparison.OrdinalIgnoreCase) ? "NOT_VERIFIED" : "FAIL";
+            AppendCheckStatus(sb, "Analytics write/read", analyticsStatus, $"AnalyticsWritten={evidence.AnalyticsWritten}, ReadBackStatus={evidence.PersistenceReadBackStatus}");
+
+            var persistenceStatus = evidence.PersistenceSaved && string.Equals(evidence.PersistenceReadBackStatus, "PASS", StringComparison.OrdinalIgnoreCase)
+                ? "PASS"
+                : string.Equals(evidence.PersistenceReadBackStatus, "NOT_VERIFIED", StringComparison.OrdinalIgnoreCase) ? "NOT_VERIFIED" : "FAIL";
+            AppendCheckStatus(sb, "Persistence save/load", persistenceStatus, $"Saved={evidence.PersistenceSaved}, ReadBackStatus={evidence.PersistenceReadBackStatus}");
+
+            AppendCheckStatus(sb, "Clinical Report", evidence.ClinicalReportStatus, $"ClinicalReportStatus={evidence.ClinicalReportStatus}");
+            AppendCheckStatus(sb, "Coach Report", evidence.CoachReportStatus, $"CoachReportStatus={evidence.CoachReportStatus}");
+            AppendCheckStatus(sb, "Outcome Report", evidence.OutcomeReportStatus, $"OutcomeReportStatus={evidence.OutcomeReportStatus}");
+            AppendCheckStatus(sb, "Timeline Report", evidence.TimelineReportStatus, $"TimelineReportStatus={evidence.TimelineReportStatus}");
             sb.AppendLine();
             sb.AppendLine($"## RC-0 Result: {result}");
             sb.AppendLine();
@@ -283,6 +294,7 @@ namespace FemVoiceStudio.Services
             sb.AppendLine($"- ResonanceRejectedReasons: {string.Join("; ", evidence.ResonanceRejectedReasons ?? Array.Empty<string>())}");
             sb.AppendLine($"- ResonanceFallbackCount: {evidence.ResonanceFallbackCount}");
             sb.AppendLine($"- ResonanceRealSampleCount: {evidence.ResonanceRealSampleCount}");
+            sb.AppendLine($"- ResonanceFailureClassification: {evidence.ResonanceFailureClassification}");
             sb.AppendLine();
             sb.AppendLine("## Score Calculation Evidence");
             sb.AppendLine($"- ScoreSource: {evidence.ScoreSource}");
@@ -315,6 +327,7 @@ namespace FemVoiceStudio.Services
                 ResonanceRejectedReasons = evidence.ResonanceRejectedReasons,
                 ResonanceFallbackCount = evidence.ResonanceFallbackCount,
                 ResonanceRealSampleCount = evidence.ResonanceRealSampleCount,
+                ResonanceFailureClassification = evidence.ResonanceFailureClassification,
                 GuidanceItemCount = evidence.GuidanceItemCount,
                 AnalyticsWritten = evidence.AnalyticsWritten,
                 PersistenceSaved = evidence.PersistenceSaved,
@@ -338,6 +351,7 @@ namespace FemVoiceStudio.Services
                     TimelineReportStatus = evidence.TimelineReportStatus,
                     ReportVerificationErrors = evidence.ReportVerificationErrors
                 },
+                PersistenceReadBackError = evidence.PersistenceReadBackError,
                 DeviceName = audio.DeviceName,
                 DeviceId = audio.DeviceId,
                 CaptureStatus = audio.FailureClassification == AudioFailureClassification.UNKNOWN ? "UNKNOWN_OR_OK" : audio.FailureClassification.ToString(),
@@ -420,6 +434,9 @@ namespace FemVoiceStudio.Services
 
         private static void AppendCheck(StringBuilder sb, string name, bool passed, string detail)
             => sb.AppendLine($"- {(passed ? "PASS" : "FAIL")} {name}: {detail}");
+
+        private static void AppendCheckStatus(StringBuilder sb, string name, string status, string detail)
+            => sb.AppendLine($"- {status} {name}: {detail}");
 
         private static double SuccessRate(long success, long attempts)
             => attempts <= 0 ? 0 : (double)success / attempts;

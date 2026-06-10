@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using FemVoiceStudio.Models;
+using FemVoiceStudio.Services;
 
 namespace FemVoiceStudio.Audio
 {
@@ -251,40 +252,86 @@ namespace FemVoiceStudio.Audio
         public static IntonationAnalysis AnalyzeIntonation(double[] pitches, double[] intensities)
         {
             var analysis = new IntonationAnalysis();
-            
-            if (pitches.Length < 10)
-                return analysis;
-                
-            var validPitches = pitches.Where(p => p > 0).ToArray();
-            if (validPitches.Length < 10)
-                return analysis;
-                
-            // Sjekk for stigende intonasjon (spørsmål)
-            int risingCount = 0;
-            int windowSize = validPitches.Length / 4;
-            
-            for (int i = 0; i < validPitches.Length - windowSize; i++)
+
+            try
             {
-                double startAvg = 0, endAvg = 0;
-                for (int j = 0; j < windowSize; j++)
+                if (pitches == null || pitches.Length == 0)
                 {
-                    startAvg += validPitches[i + j];
-                    endAvg += validPitches[i + windowSize + j];
+                    analysis.FailureReason = "INSUFFICIENT_PITCH_DATA";
+                    Rc0RuntimeLog.Write("PitchDetection", "AnalyzeIntonation: no pitch data (INSUFFICIENT_PITCH_DATA)");
+                    return analysis;
                 }
-                startAvg /= windowSize;
-                endAvg /= windowSize;
-                
-                if (endAvg > startAvg * 1.05) // 5% økning
-                    risingCount++;
+
+                if (intensities == null || intensities.Length == 0)
+                {
+                    // we allow pitch-based analysis even without intensities, but record reason
+                    analysis.FailureReason = "INSUFFICIENT_INTENSITY_DATA";
+                    Rc0RuntimeLog.Write("PitchDetection", "AnalyzeIntonation: intensity array missing (INSUFFICIENT_INTENSITY_DATA)");
+                    // continue with pitch-only analysis
+                }
+
+                if (intensities != null && pitches.Length != intensities.Length)
+                {
+                    analysis.FailureReason = "MISMATCHED_SIGNAL_ARRAY_LENGTHS";
+                    Rc0RuntimeLog.Write("PitchDetection", $"AnalyzeIntonation: mismatched arrays: pitches={pitches.Length}, intensities={(intensities==null?0:intensities.Length)}");
+                    // prefer to operate on the minimum length
+                    int minLen = Math.Min(pitches.Length, intensities?.Length ?? pitches.Length);
+                    pitches = pitches.Take(minLen).ToArray();
+                    if (intensities != null) intensities = intensities.Take(minLen).ToArray();
+                }
+
+                var validPitches = pitches.Where(p => p > 0).ToArray();
+                if (validPitches.Length < 2)
+                {
+                    analysis.FailureReason ??= "INSUFFICIENT_PITCH_DATA";
+                    Rc0RuntimeLog.Write("PitchDetection", "AnalyzeIntonation: too few valid pitch samples (INSUFFICIENT_PITCH_DATA)");
+                    return analysis;
+                }
+
+                // Sjekk for stigende intonasjon (spørsmål)
+                int risingCount = 0;
+                int windowSize = Math.Max(1, validPitches.Length / 4);
+
+                for (int i = 0; i <= validPitches.Length - 2 * windowSize; i++)
+                {
+                    double startAvg = 0, endAvg = 0;
+                    for (int j = 0; j < windowSize; j++)
+                    {
+                        startAvg += validPitches[i + j];
+                        endAvg += validPitches[i + windowSize + j];
+                    }
+                    startAvg /= windowSize;
+                    endAvg /= windowSize;
+
+                    if (endAvg > startAvg * 1.05) // 5% økning
+                        risingCount++;
+                }
+
+                analysis.RisingIntonationRatio = (double)risingCount / Math.Max(1, (validPitches.Length - 2 * windowSize + 1));
+
+                // Sjekk pitch range
+                double max = validPitches.Max();
+                double min = validPitches.Min();
+                if (min <= 0 || double.IsInfinity(max / min) || double.IsNaN(max / min))
+                {
+                    analysis.PitchRange = 0;
+                    analysis.PitchRangeSemitones = 0;
+                }
+                else
+                {
+                    analysis.PitchRange = max - min;
+                    analysis.PitchRangeSemitones = 12 * Math.Log2(max / min);
+                }
+
+                return analysis;
             }
-            
-            analysis.RisingIntonationRatio = (double)risingCount / (validPitches.Length - windowSize);
-            
-            // Sjekk pitch range
-            analysis.PitchRange = validPitches.Max() - validPitches.Min();
-            analysis.PitchRangeSemitones = 12 * Math.Log2(validPitches.Max() / validPitches.Min());
-            
-            return analysis;
+            catch (Exception ex)
+            {
+                // Never throw — log and return neutral analysis
+                try { Rc0RuntimeLog.Write("PitchDetection", $"AnalyzeIntonation exception: {ex}"); } catch { }
+                analysis.FailureReason ??= "EMPTY_SESSION_ANALYSIS";
+                return analysis;
+            }
         }
     }
     
@@ -293,5 +340,7 @@ namespace FemVoiceStudio.Audio
         public double RisingIntonationRatio { get; set; }
         public double PitchRange { get; set; }
         public double PitchRangeSemitones { get; set; }
+        // If analysis could not be computed, this explains why (INSUFFICIENT_PITCH_DATA, etc.)
+        public string? FailureReason { get; set; }
     }
 }
