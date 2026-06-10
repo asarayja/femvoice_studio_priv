@@ -19,20 +19,20 @@ namespace FemVoiceStudio.Services
             { "⭐", IconKey.Star },
             { "â­", IconKey.Goal },
             // Common mojibake (double-encoded) legacy variants seen in older data files
-            { "ðŸŽµ", IconKey.Microphone },
-            { "ðŸ“Š", IconKey.MusicNote },
-            { "ðŸ“ˆ", IconKey.TrendingUp },
-            { "ðŸ“‰", IconKey.TrendingDown },
+            { "\u00f0\u0178\u017d\u00b5", IconKey.Microphone },
+            { "\u00f0\u0178\u201c\u0160", IconKey.MusicNote },
+            { "\u00f0\u0178\u201c\u02c6", IconKey.TrendingUp },
+            { "\u00f0\u0178\u201c\u2030", IconKey.TrendingDown },
         };
 
         public static IconKey Map(string value)
         {
             if (string.IsNullOrEmpty(value)) return IconKey.Unknown;
             // Minimal explicit compatibility checks for common mojibake variants
-            if (value.Equals("ðŸŽµ", StringComparison.Ordinal)) return IconKey.Microphone;
-            if (value.Equals("ðŸ“Š", StringComparison.Ordinal)) return IconKey.MusicNote;
-            if (value.Equals("ðŸ“ˆ", StringComparison.Ordinal)) return IconKey.TrendingUp;
-            if (value.Equals("ðŸ“‰", StringComparison.Ordinal)) return IconKey.TrendingDown;
+            if (value.Equals("\u00f0\u0178\u017d\u00b5", StringComparison.Ordinal)) return IconKey.Microphone;
+            if (value.Equals("\u00f0\u0178\u201c\u0160", StringComparison.Ordinal)) return IconKey.MusicNote;
+            if (value.Equals("\u00f0\u0178\u201c\u02c6", StringComparison.Ordinal)) return IconKey.TrendingUp;
+            if (value.Equals("\u00f0\u0178\u201c\u2030", StringComparison.Ordinal)) return IconKey.TrendingDown;
             if (LegacyToKey.TryGetValue(value, out var key)) return key;
 
             // Log unmapped incoming value for diagnostic purposes (RC-0)
