@@ -781,7 +781,8 @@ namespace FemVoiceStudio.ViewModels
             }
             catch (Exception ex)
             {
-                Rc0RuntimeLog.Write("FrontPagePitchMonitor", $"StopRecording FAILED; {ex.GetType().Name}: {ex.Message}");
+                // Log full exception (including stack) to RC0 runtime log for post-mortem
+                try { Rc0RuntimeLog.Write("FrontPagePitchMonitor", ex.ToString()); } catch { }
                 ErrorMessage = string.Format(Loc.Get("Recording_StopFailedFormat"), ex.Message);
             }
         }
@@ -1123,19 +1124,22 @@ namespace FemVoiceStudio.ViewModels
             if (smoothedPitch <= 0 || !IsRecording)
                 return;
             
-            // Throttle data point additions
-            var now = DateTime.Now;
-            if (PitchHistory.Count > 0)
-            {
-                var lastPoint = PitchHistory[PitchHistory.Count - 1];
-                if ((now - lastPoint.Time).TotalMilliseconds < 33) // ~30 FPS max
-                    return;
-            }
-            
             Application.Current?.Dispatcher.Invoke(() =>
             {
+                if (smoothedPitch <= 0 || !IsRecording)
+                    return;
+
+                // Throttle data point additions
+                var now = DateTime.Now;
+                if (PitchHistory.Count > 0)
+                {
+                    var lastPoint = PitchHistory[PitchHistory.Count - 1];
+                    if ((now - lastPoint.Time).TotalMilliseconds < 33) // ~30 FPS max
+                        return;
+                }
+
                 bool isInComfortZone = smoothedPitch >= ComfortZone.Min && smoothedPitch <= ComfortZone.Max;
-                
+
                 PitchHistory.Add(new PitchDataPoint
                 {
                     Time = now,
@@ -1145,7 +1149,7 @@ namespace FemVoiceStudio.ViewModels
                     Stability = PitchStability,
                     Health = HealthIndicator
                 });
-                
+
                 // Keep only last N points
                 while (PitchHistory.Count > MaxPitchHistoryPoints)
                 {

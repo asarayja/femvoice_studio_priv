@@ -613,6 +613,7 @@ namespace FemVoiceStudio.Views
                 {
                     try
                     {
+                        // Build RC-0 session evidence with resonance engine counters and a best-effort persistence readback.
                         var evidence = new Rc0EvidenceExporter.SessionEvidence
                         {
                             SessionId = sessionId,
@@ -629,6 +630,14 @@ namespace FemVoiceStudio.Views
                             PitchSamplesCount = rc0PitchSamples,
                             PitchRejectedCount = rc0PitchRejected,
                             ResonanceSamplesCount = rc0ResonanceSamples,
+                            ResonanceEngineCalledCount = _exerciseResonanceEngine?.ResonanceCalledCount ?? 0,
+                            ResonanceAcceptedCount = _exerciseResonanceEngine?.ResonanceAcceptedCount ?? 0,
+                            ResonanceRejectedCount = _exerciseResonanceEngine?.ResonanceRejectedCount ?? 0,
+                            ResonanceRejectedReasons = _exerciseResonanceEngine != null && !string.IsNullOrEmpty(_exerciseResonanceEngine.ResonanceLastRejectionReason)
+                                ? new[] { _exerciseResonanceEngine.ResonanceLastRejectionReason }
+                                : Array.Empty<string>(),
+                            ResonanceFallbackCount = 0,
+                            ResonanceRealSampleCount = _rc0ResonanceSamples,
                             GraphUpdateCount = rc0GraphUpdates,
                             GuidanceItemCount = rc0GuidanceCount,
                             SmartCoachGenerated = _sessionRecorder?.LastSessionInsight != null,
@@ -636,12 +645,48 @@ namespace FemVoiceStudio.Views
                             AnalyticsWritten = rc0PersistenceSaved,
                             PersistenceSaved = rc0PersistenceSaved,
                             PersistenceReadBack = false,
+                            PersistenceReadBackStatus = "NOT_VERIFIED",
+                            ClinicalReportStatus = "NOT_VERIFIED",
+                            CoachReportStatus = "NOT_VERIFIED",
+                            OutcomeReportStatus = "NOT_VERIFIED",
+                            TimelineReportStatus = "NOT_VERIFIED",
                             Notes = new[]
                             {
                                 "PitchDetectorCalledCount counts 100ms-throttled analysis frames (~10/s), not raw audio callbacks.",
-                                "PersistenceReadBack is not verified by this export.",
+                                "PersistenceReadBack is not verified by this export unless the DB readback step succeeds.",
                             },
                         };
+
+                        // Best-effort: attempt to read back the saved session from the DB and mark status.
+                        try
+                        {
+                            if (_database != null && sessionId > 0)
+                            {
+                                var from = rc0StartTime.AddMinutes(-1);
+                                var to = DateTime.Now.AddMinutes(1);
+                                var sessions = _database.GetTrainingSessions(from, to);
+                                var found = sessions?.Find(s => s.Id == sessionId) ??
+                                            sessions?.Find(s => s.ExerciseTextId == exercise.ExerciseId && Math.Abs((s.StartTime - rc0StartTime).TotalSeconds) < 10);
+                                if (found != null)
+                                {
+                                    evidence = evidence with { PersistenceReadBack = true, PersistenceReadBackStatus = "PASS" };
+                                }
+                                else
+                                {
+                                    evidence = evidence with { PersistenceReadBackStatus = "FAIL" };
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            evidence = evidence with { PersistenceReadBackStatus = "FAIL" };
+                            // record the error for RC0_ERRORS_ONLY
+                            var prev = evidence.Errors ?? Array.Empty<string>();
+                            var merged = new string[prev.Length + 1];
+                            Array.Copy(prev, merged, prev.Length);
+                            merged[merged.Length - 1] = ex.ToString();
+                            evidence = evidence with { Errors = merged };
+                        }
                         var folder = Rc0EvidenceExporter.Export(
                             evidence, rc0AudioSnapshot ?? new AudioCaptureDiagnosticsSnapshot());
                         Rc0RuntimeLog.Write("ExerciseLifecycle",

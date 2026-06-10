@@ -29,6 +29,13 @@ namespace FemVoiceStudio.Services
             public long PitchSamplesCount { get; init; }
             public long PitchRejectedCount { get; init; }
             public long ResonanceSamplesCount { get; init; }
+            // Resonance engine diagnostics
+            public long ResonanceEngineCalledCount { get; init; }
+            public long ResonanceAcceptedCount { get; init; }
+            public long ResonanceRejectedCount { get; init; }
+            public string[] ResonanceRejectedReasons { get; init; } = Array.Empty<string>();
+            public long ResonanceFallbackCount { get; init; }
+            public long ResonanceRealSampleCount { get; init; }
             public long GraphUpdateCount { get; init; }
             public int GuidanceItemCount { get; init; }
             public bool SmartCoachGenerated { get; init; }
@@ -36,6 +43,13 @@ namespace FemVoiceStudio.Services
             public bool AnalyticsWritten { get; init; }
             public bool PersistenceSaved { get; init; }
             public bool PersistenceReadBack { get; init; }
+            // Tri-state statuses for verification steps. Use "PASS", "FAIL", "NOT_VERIFIED" or "NOT_APPLICABLE".
+            public string PersistenceReadBackStatus { get; init; } = "NOT_VERIFIED";
+            public string ClinicalReportStatus { get; init; } = "NOT_VERIFIED";
+            public string CoachReportStatus { get; init; } = "NOT_VERIFIED";
+            public string OutcomeReportStatus { get; init; } = "NOT_VERIFIED";
+            public string TimelineReportStatus { get; init; } = "NOT_VERIFIED";
+            public string[] ReportVerificationErrors { get; init; } = Array.Empty<string>();
             public bool ClinicalReportGenerated { get; init; }
             public bool CoachReportGenerated { get; init; }
             public bool OutcomeReportGenerated { get; init; }
@@ -189,17 +203,19 @@ namespace FemVoiceStudio.Services
             AppendCheck(sb, "Start Økt", evidence.SessionId > 0 && (audio.IsRecording || audio.DataAvailableCount > 0), "Session was created after audio start was attempted.");
             AppendCheck(sb, "Audio pipeline", audio.DataAvailableCount > 0, $"DataAvailableCount={audio.DataAvailableCount}");
             AppendCheck(sb, "Pitch data", evidence.PitchSamplesCount > 0, $"PitchSamplesCount={evidence.PitchSamplesCount}, Calls={evidence.PitchDetectorCalledCount}");
-            AppendCheck(sb, "Resonance data", evidence.ResonanceSamplesCount > 0, $"ResonanceSamplesCount={evidence.ResonanceSamplesCount}");
+            // Prefer real-sample counter (engine-accepted). Fallback samples are not counted as real evidence.
+            AppendCheck(sb, "Resonance data", evidence.ResonanceRealSampleCount > 0, $"ResonanceRealSampleCount={evidence.ResonanceRealSampleCount}, EngineCalls={evidence.ResonanceEngineCalledCount}, Accepted={evidence.ResonanceAcceptedCount}, Rejected={evidence.ResonanceRejectedCount}");
             AppendCheck(sb, "Guidance items", evidence.GuidanceItemCount > 0, $"GuidanceItemCount={evidence.GuidanceItemCount}");
             AppendCheck(sb, "SmartCoach loading", evidence.SmartCoachGenerated, "Session insight / coach output generated.");
             AppendCheck(sb, "SmartCoach DateTime parsing", evidence.SmartCoachGenerated, "No DateTime parsing error was reported in this run.");
             AppendCheck(sb, "Voice Health policies", evidence.VoiceHealthEvaluated, "Health score was evaluated during the exercise.");
-            AppendCheck(sb, "Analytics write/read", evidence.AnalyticsWritten && evidence.PersistenceReadBack, $"AnalyticsWritten={evidence.AnalyticsWritten}, ReadBack={evidence.PersistenceReadBack}");
-            AppendCheck(sb, "Persistence save/load", evidence.PersistenceSaved && evidence.PersistenceReadBack, $"Saved={evidence.PersistenceSaved}, ReadBack={evidence.PersistenceReadBack}");
-            AppendCheck(sb, "Clinical Report", evidence.ClinicalReportGenerated, "Existing report generation evidence.");
-            AppendCheck(sb, "Coach Report", evidence.CoachReportGenerated, "Existing report generation evidence.");
-            AppendCheck(sb, "Outcome Report", evidence.OutcomeReportGenerated, "Existing report generation evidence.");
-            AppendCheck(sb, "Timeline Report", evidence.TimelineReportGenerated, "Existing report generation evidence.");
+            // Use tri-state statuses when available
+            AppendCheck(sb, "Analytics write/read", evidence.AnalyticsWritten && string.Equals(evidence.PersistenceReadBackStatus, "PASS", StringComparison.OrdinalIgnoreCase), $"AnalyticsWritten={evidence.AnalyticsWritten}, ReadBackStatus={evidence.PersistenceReadBackStatus}");
+            AppendCheck(sb, "Persistence save/load", evidence.PersistenceSaved && string.Equals(evidence.PersistenceReadBackStatus, "PASS", StringComparison.OrdinalIgnoreCase), $"Saved={evidence.PersistenceSaved}, ReadBackStatus={evidence.PersistenceReadBackStatus}");
+            AppendCheck(sb, "Clinical Report", string.Equals(evidence.ClinicalReportStatus, "PASS", StringComparison.OrdinalIgnoreCase), $"ClinicalReportStatus={evidence.ClinicalReportStatus}");
+            AppendCheck(sb, "Coach Report", string.Equals(evidence.CoachReportStatus, "PASS", StringComparison.OrdinalIgnoreCase), $"CoachReportStatus={evidence.CoachReportStatus}");
+            AppendCheck(sb, "Outcome Report", string.Equals(evidence.OutcomeReportStatus, "PASS", StringComparison.OrdinalIgnoreCase), $"OutcomeReportStatus={evidence.OutcomeReportStatus}");
+            AppendCheck(sb, "Timeline Report", string.Equals(evidence.TimelineReportStatus, "PASS", StringComparison.OrdinalIgnoreCase), $"TimelineReportStatus={evidence.TimelineReportStatus}");
             sb.AppendLine();
             sb.AppendLine($"## RC-0 Result: {result}");
             sb.AppendLine();
@@ -260,6 +276,14 @@ namespace FemVoiceStudio.Services
             sb.AppendLine("## Graph Update Timeline");
             sb.AppendLine($"- GraphUpdateCount: {evidence.GraphUpdateCount}");
             sb.AppendLine();
+            sb.AppendLine("## Resonance Engine Diagnostics");
+            sb.AppendLine($"- ResonanceEngineCalledCount: {evidence.ResonanceEngineCalledCount}");
+            sb.AppendLine($"- ResonanceAcceptedCount: {evidence.ResonanceAcceptedCount}");
+            sb.AppendLine($"- ResonanceRejectedCount: {evidence.ResonanceRejectedCount}");
+            sb.AppendLine($"- ResonanceRejectedReasons: {string.Join("; ", evidence.ResonanceRejectedReasons ?? Array.Empty<string>())}");
+            sb.AppendLine($"- ResonanceFallbackCount: {evidence.ResonanceFallbackCount}");
+            sb.AppendLine($"- ResonanceRealSampleCount: {evidence.ResonanceRealSampleCount}");
+            sb.AppendLine();
             sb.AppendLine("## Score Calculation Evidence");
             sb.AppendLine($"- ScoreSource: {evidence.ScoreSource}");
             sb.AppendLine($"- Score: {evidence.Score:F1}");
@@ -285,10 +309,17 @@ namespace FemVoiceStudio.Services
                 DataAvailableCount = audio.DataAvailableCount,
                 PitchSamplesCount = evidence.PitchSamplesCount,
                 ResonanceSamplesCount = evidence.ResonanceSamplesCount,
+                ResonanceEngineCalledCount = evidence.ResonanceEngineCalledCount,
+                ResonanceAcceptedCount = evidence.ResonanceAcceptedCount,
+                ResonanceRejectedCount = evidence.ResonanceRejectedCount,
+                ResonanceRejectedReasons = evidence.ResonanceRejectedReasons,
+                ResonanceFallbackCount = evidence.ResonanceFallbackCount,
+                ResonanceRealSampleCount = evidence.ResonanceRealSampleCount,
                 GuidanceItemCount = evidence.GuidanceItemCount,
                 AnalyticsWritten = evidence.AnalyticsWritten,
                 PersistenceSaved = evidence.PersistenceSaved,
                 PersistenceReadBack = evidence.PersistenceReadBack,
+                PersistenceReadBackStatus = evidence.PersistenceReadBackStatus,
                 SmartCoachGenerated = evidence.SmartCoachGenerated,
                 VoiceHealthEvaluated = evidence.VoiceHealthEvaluated,
                 ReportsGenerated = new
@@ -297,6 +328,15 @@ namespace FemVoiceStudio.Services
                     Coach = evidence.CoachReportGenerated,
                     Outcome = evidence.OutcomeReportGenerated,
                     Timeline = evidence.TimelineReportGenerated
+                },
+                ReportVerification = new
+                {
+                    PersistenceReadBackStatus = evidence.PersistenceReadBackStatus,
+                    ClinicalReportStatus = evidence.ClinicalReportStatus,
+                    CoachReportStatus = evidence.CoachReportStatus,
+                    OutcomeReportStatus = evidence.OutcomeReportStatus,
+                    TimelineReportStatus = evidence.TimelineReportStatus,
+                    ReportVerificationErrors = evidence.ReportVerificationErrors
                 },
                 DeviceName = audio.DeviceName,
                 DeviceId = audio.DeviceId,

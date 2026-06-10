@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using FemVoiceStudio.Models;
+using FemVoiceStudio.Services;
 using NAudio.Wave;
 using NAudio.Dsp;
 
@@ -32,6 +33,16 @@ namespace FemVoiceStudio.Audio
 
     public class ResonanceProxyEngine : IDisposable
     {
+        // Diagnostic counters for RC-0 visibility. Incremented per analyzed frame.
+        private long _resonanceCalledCount;
+        private long _resonanceAcceptedCount;
+        private long _resonanceRejectedCount;
+        private string _lastRejectionReason = "";
+
+        public long ResonanceCalledCount => _resonanceCalledCount;
+        public long ResonanceAcceptedCount => _resonanceAcceptedCount;
+        public long ResonanceRejectedCount => _resonanceRejectedCount;
+        public string ResonanceLastRejectionReason => _lastRejectionReason;
         // Stil-bevisste resonansmål. Default = Feminine ⇒ NØYAKTIG de historiske
         // konstantene (320/2300/2900/1900/2500), så ingen atferdsendring for det
         // vanlige tilfellet. SetVoiceStyle bytter mål-settet slik at scoringen peker
@@ -175,25 +186,47 @@ namespace FemVoiceStudio.Audio
             try
             {
                 _frameCount++;
+                Interlocked.Increment(ref _resonanceCalledCount);
                 double rms = CalculateRms(_inputBuffer, _fftSize);
-                if (rms < RmsThreshold) return;
+                if (rms < RmsThreshold)
+                {
+                    Interlocked.Increment(ref _resonanceRejectedCount);
+                    _lastRejectionReason = "BELOW_RMS_THRESHOLD";
+                    try { DebugSettingsService.Instance.LogAnalyzerData("Resonance", rms, _lastRejectionReason); } catch { }
+                    return;
+                }
                 for (int i = 0; i < _fftSize; i++) { _fftBuffer[i].X = _inputBuffer[i] * _windowBuffer[i]; _fftBuffer[i].Y = 0; }
                 FastFourierTransform.FFT(true, (int)Math.Log2(_fftSize), _fftBuffer);
                 float[] magnitudes = new float[_fftSize / 2];
                 double totalEnergy = 0;
                 for (int i = 0; i < magnitudes.Length; i++) { magnitudes[i] = (float)Math.Sqrt(_fftBuffer[i].X * _fftBuffer[i].X + _fftBuffer[i].Y * _fftBuffer[i].Y); totalEnergy += magnitudes[i] * magnitudes[i]; }
-                if (totalEnergy < 0.0001f) return;
+                if (totalEnergy < 0.0001f)
+                {
+                    Interlocked.Increment(ref _resonanceRejectedCount);
+                    _lastRejectionReason = "LOW_ENERGY";
+                    try { DebugSettingsService.Instance.LogAnalyzerData("Resonance", totalEnergy, _lastRejectionReason); } catch { }
+                    return;
+                }
                 double centroid = CalculateSpectralCentroid(magnitudes, totalEnergy);
                 var formants = ExtractFormants(magnitudes);
                 formants.SpectralCentroid = centroid;
                 formants.RmsValue = rms;
                 formants.Confidence = CalculateFormantConfidence(magnitudes, formants);
                 formants.Timestamp = _frameCount;
-                if (!formants.IsValid) return;
+                if (!formants.IsValid)
+                {
+                    Interlocked.Increment(ref _resonanceRejectedCount);
+                    _lastRejectionReason = "NO_FORMANTS_OR_LOW_CONFIDENCE";
+                    try { DebugSettingsService.Instance.LogAnalyzerData("Resonance", formants.Confidence, _lastRejectionReason); } catch { }
+                    return;
+                }
                 double stability = CalculateStability(formants);
                 formants.Stability = stability;
                 ApplySmoothing(formants);
                 double resonanceScore = CalculateResonanceScore(formants, stability);
+                Interlocked.Increment(ref _resonanceAcceptedCount);
+                _lastRejectionReason = string.Empty;
+                try { DebugSettingsService.Instance.LogAnalyzerData("Resonance", resonanceScore, "ACCEPTED"); } catch { }
                 RaiseEvents(resonanceScore, formants);
             }
             catch (Exception ex)
