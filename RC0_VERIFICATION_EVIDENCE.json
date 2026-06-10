@@ -1,0 +1,80 @@
+{
+  "evidenceId": "RC0-BLOCKED-NO-RUNTIME-AUDIO",
+  "generatedAt": "2026-06-10T00:00:00.0000000Z",
+  "rc0Result": "BLOCKED",
+  "session": {
+    "sessionId": null,
+    "exerciseId": null,
+    "exerciseName": "not captured",
+    "language": "nb-NO",
+    "startTime": null,
+    "endTime": null,
+    "duration": null,
+    "completionStatus": "not verified"
+  },
+  "audio": {
+    "audioCaptureStarted": false,
+    "recordingActive": false,
+    "dataAvailableTriggered": false,
+    "audioSamplesReceived": 0,
+    "pitchValuesReceived": 0,
+    "resonanceValuesReceived": 0,
+    "monitoringActive": false,
+    "audioErrors": []
+  },
+  "guidance": {
+    "guidanceItemsLoaded": false,
+    "guidanceStepCount": 0,
+    "emptyGuidanceCheck": false,
+    "localizationCheck": false,
+    "mojibakeInvalidCharacterCheck": false,
+    "iconCheck": false
+  },
+  "smartCoach": {
+    "smartCoachLoaded": false,
+    "smartCoachInsightGenerated": false,
+    "dateTimeParsingOk": false,
+    "noFallbackDefaultInvalidData": false,
+    "smartCoachPersistenceOk": false
+  },
+  "voiceHealth": {
+    "fatigueDetectionPolicyExecuted": false,
+    "strainDetectionPolicyExecuted": false,
+    "recoveryPolicyExecuted": false,
+    "hydrationAdvisorExecuted": false,
+    "noInvalidClinicalWarnings": false
+  },
+  "analytics": {
+    "sessionAnalyticsStoreUpdated": false,
+    "trendAnalysisUpdated": false,
+    "metricsStored": false,
+    "dataCanBeReadBack": false,
+    "noMissingAnalyticsFields": false
+  },
+  "reports": {
+    "clinicalReportGenerated": false,
+    "coachReportGenerated": false,
+    "outcomeReportGenerated": false,
+    "timelineReportGenerated": false
+  },
+  "persistence": {
+    "sessionSaved": false,
+    "sessionLoaded": false,
+    "exerciseDataSaved": false,
+    "analyticsSaved": false,
+    "smartCoachDataSaved": false,
+    "voiceHealthDataSaved": false
+  },
+  "rcBlockers": [
+    "RC0_BLOCKER_AUDIO_RUNTIME_EVIDENCE_MISSING"
+  ],
+  "warnings": [
+    "This internal report harness is present, but no real exercise-session evidence has been captured in this environment.",
+    "RC-0 cannot be marked PASS until DataAvailable and audio-derived pitch/resonance samples are recorded from runtime.",
+    "dotnet is not installed in this environment, so the xUnit report generator could not be executed here."
+  ],
+  "logReferences": [
+    "Run the app or an integration harness with microphone capture enabled, then populate this evidence object from runtime counters."
+  ],
+  "suggestedNextAction": "Run a real exercise session with audio capture instrumentation enabled and regenerate this report from captured runtime counters."
+}

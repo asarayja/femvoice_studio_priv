@@ -31,12 +31,14 @@ namespace FemVoiceStudio.Models
         public List<MetricType> MetricsToTrack { get; set; } = new();
         public string MetricsJson { get; set; } = "[]";
         public string Category { get; set; } = ""; // pitch, resonance, intonation, breathing, etc.
-        public string Icon { get; set; } = "🎤";
+        public string Icon { get; set; } = "\uE720";
+        public string IconGlyph => ExerciseIconGlyphs.GetExerciseGlyph(this);
         public int SortOrder { get; set; } = 0;
         
         // Nye felt for utvidet øvelsesmodul
         public GoalCategory Goal { get; set; } = GoalCategory.Pitch;
-        public string GoalIcon { get; set; } = "🎵";
+        public string GoalIcon { get; set; } = "\uE8D6";
+        public string GoalIconGlyph => ExerciseIconGlyphs.GetGoalGlyph(Goal, GoalIcon);
         public string ScientificRationale { get; set; } = "";
         public string FrequencyText { get; set; } = "Daglig";
         public bool HasStreak { get; set; }
@@ -151,13 +153,74 @@ namespace FemVoiceStudio.Models
         {
             return Goal switch
             {
-                GoalCategory.Pitch => "🎵",
-                GoalCategory.Resonance => "🔊",
-                GoalCategory.Intonation => "📈",
-                GoalCategory.Breathing => "💨",
-                GoalCategory.Combined => "⭐",
-                _ => "🎵"
+                GoalCategory.Pitch => "\uE8D6",
+                GoalCategory.Resonance => "\uE9D9",
+                GoalCategory.Intonation => "\uE8E1",
+                GoalCategory.Breathing => "\uE81C",
+                GoalCategory.Combined => "\uE7BC",
+                _ => "\uE8D6"
             };
+        }
+    }
+
+    public static class ExerciseIconGlyphs
+    {
+        public const string DefaultExercise = "\uE720";
+        public const string Pitch = "\uE8D6";
+        public const string Resonance = "\uE9D9";
+        public const string Intonation = "\uE8E1";
+        public const string Breathing = "\uE81C";
+        public const string Combined = "\uE7BC";
+
+        public static string GetExerciseGlyph(Exercise exercise)
+        {
+            if (IsSegoeGlyph(exercise.Icon))
+                return exercise.Icon;
+
+            return exercise.SortOrder switch
+            {
+                1 => Resonance,
+                2 => DefaultExercise,
+                3 => Intonation,
+                4 => Intonation,
+                5 => "\uEA86",
+                6 => Breathing,
+                7 => "\uE945",
+                8 => "\uE787",
+                9 => "\uE8D6",
+                10 => "\uE720",
+                11 => Resonance,
+                12 => "\uE916",
+                13 => Intonation,
+                14 => Breathing,
+                15 => Combined,
+                _ => GetGoalGlyph(exercise.Goal, exercise.GoalIcon)
+            };
+        }
+
+        public static string GetGoalGlyph(GoalCategory goal, string? storedValue = null)
+        {
+            if (IsSegoeGlyph(storedValue))
+                return storedValue!;
+
+            return goal switch
+            {
+                GoalCategory.Pitch => Pitch,
+                GoalCategory.Resonance => Resonance,
+                GoalCategory.Intonation => Intonation,
+                GoalCategory.Breathing => Breathing,
+                GoalCategory.Combined => Combined,
+                _ => Pitch
+            };
+        }
+
+        private static bool IsSegoeGlyph(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value) || value.Length != 1)
+                return false;
+
+            var code = value[0];
+            return code >= '\uE700' && code <= '\uF8FF';
         }
     }
     

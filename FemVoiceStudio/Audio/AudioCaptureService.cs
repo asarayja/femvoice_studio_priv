@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 using FemVoiceStudio.Models;
+using FemVoiceStudio.Services;
 
 // Eksponerer internal medlemmer (f.eks. HandleRecordingStopped) for enhetstesting
 // av safety-stien uten en fysisk lydenhet.
@@ -34,6 +35,26 @@ namespace FemVoiceStudio.Audio
         private readonly int _bitsPerSample;
         private bool _isRecording;
         private bool _isDisposed;
+        private long _dataAvailableCount;
+        private long _bytesReceived;
+        private long _samplesReceived;
+        private long _silenceDetectedCount;
+        private long _droppedCallbackCount;
+        private DateTime? _lastDataAvailableTime;
+        private DateTime? _previousDataAvailableTime;
+        private DateTime _lastDiagnosticLogTime = DateTime.MinValue;
+        private double _lastCallbackIntervalMs;
+        private double _lastRmsLevel;
+        private double _lastPeakLevel;
+        private double _lowestRmsLevel = double.MaxValue;
+        private double _highestRmsLevel;
+        private double _noiseFloorEstimate;
+        private bool _lastSilenceDetected;
+        private bool _lastSignalAccepted;
+        private string _lastSignalRejectedReason = "";
+        private string _defaultInputDeviceName = "";
+        private string _defaultCommunicationsDeviceName = "";
+        private string _sessionStartDeviceName = "";
         
         // Buffer for akkumulering av audio data
         private readonly CircularBuffer<float> _audioBuffer;
@@ -85,11 +106,13 @@ namespace FemVoiceStudio.Audio
             HasReceivedAudioData &&
             _waveOut?.PlaybackState == PlaybackState.Playing;
         public int SampleRate => _sampleRate;
+        public int BitsPerSample => _bitsPerSample;
         public int InputDeviceNumber { get; private set; } = -1;
         public string InputDeviceName { get; private set; } = "Default microphone";
         public int Channels => _channels;
         public MicrophoneCalibrationProfile? CalibrationProfile { get; private set; }
         public bool ApplyInputProcessing { get; set; } = true;
+        public AudioCaptureDiagnosticsSnapshot DiagnosticsSnapshot => CreateDiagnosticsSnapshot();
         
         // Noise filtering
         private float _noiseGateThreshold = 0.01f;
@@ -231,10 +254,16 @@ namespace FemVoiceStudio.Audio
                     BufferMilliseconds = (_bufferSize * 1000) / _sampleRate
                 };
                 
+                _defaultInputDeviceName = GetDefaultCaptureDeviceName(Role.Console) ?? "";
+                _defaultCommunicationsDeviceName = GetDefaultCaptureDeviceName(Role.Communications) ?? "";
                 InputDeviceNumber = SelectPreferredInputDevice();
                 InputDeviceName = GetInputDeviceName(InputDeviceNumber);
                 _waveIn.DeviceNumber = InputDeviceNumber;
                 ApplyStoredCalibration();
+                Rc0RuntimeLog.Write("AudioCaptureService",
+                    $"Initialized DeviceNumber={InputDeviceNumber}; DeviceName=\"{InputDeviceName}\"; " +
+                    $"DefaultInput=\"{_defaultInputDeviceName}\"; DefaultCommunications=\"{_defaultCommunicationsDeviceName}\"; " +
+                    $"SampleRate={_sampleRate}; Channels={_channels}; BitDepth={_bitsPerSample}; BufferMs={_waveIn.BufferMilliseconds}; Api=NAudio WaveInEvent");
                 
                 _waveIn.DataAvailable += OnDataAvailable;
                 _waveIn.RecordingStopped += OnRecordingStopped;
@@ -286,6 +315,7 @@ namespace FemVoiceStudio.Audio
             try
             {
                 _audioBuffer.Clear();
+                ResetDiagnostics();
                 HasReceivedAudioData = false;
                 if (!_hearOwnVoice)
                 {
@@ -295,14 +325,18 @@ namespace FemVoiceStudio.Audio
                 _waveIn.BufferMilliseconds = (_bufferSize * 1000) / _sampleRate;
                 // Lagre aktiv enhet slik at vi kan rapportere hvilken kilde som gikk tapt.
                 ActiveDeviceName = InputDeviceName;
+                _sessionStartDeviceName = InputDeviceName;
                 _waveIn.StartRecording();
                 _isRecording = true;
+                Rc0RuntimeLog.Write("AudioCaptureService",
+                    $"StartRecording OK; DeviceName=\"{InputDeviceName}\"; IsRecording={_isRecording}; MonitoringRequested={_hearOwnVoice}");
             }
             catch (Exception ex)
             {
                 var message = $"Feil ved start av opptak: {ex.Message}";
                 ErrorOccurred?.Invoke(this, message);
                 _isRecording = false;
+                Rc0RuntimeLog.Write("AudioCaptureService", $"StartRecording FAILED; {message}");
                 throw new InvalidOperationException(message, ex);
             }
         }
@@ -321,6 +355,7 @@ namespace FemVoiceStudio.Audio
                 _waveOut?.Pause();
                 _playbackBuffer?.ClearBuffer();
                 _isRecording = false;
+                Rc0RuntimeLog.Write("AudioCaptureService", $"StopRecording; {FormatDiagnostics(CreateDiagnosticsSnapshot())}");
             }
             catch (Exception ex)
             {
@@ -338,6 +373,20 @@ namespace FemVoiceStudio.Audio
                 
             // Konverter byte data til float samples
             var samples = ConvertToFloatSamples(e.Buffer, e.BytesRecorded);
+            var rawRms = CalculateRms(samples);
+            var rawPeak = CalculatePeak(samples);
+            _previousDataAvailableTime = _lastDataAvailableTime;
+            _lastDataAvailableTime = DateTime.UtcNow;
+            if (_previousDataAvailableTime.HasValue)
+            {
+                _lastCallbackIntervalMs = (_lastDataAvailableTime.Value - _previousDataAvailableTime.Value).TotalMilliseconds;
+                var expectedMs = Math.Max(1, (_bufferSize * 1000.0) / _sampleRate);
+                if (_lastCallbackIntervalMs > expectedMs * 3.5)
+                    _droppedCallbackCount++;
+            }
+            _dataAvailableCount++;
+            _bytesReceived += e.BytesRecorded;
+            _samplesReceived += samples.Length;
             
             // Apply input processing for normal analysis. Calibration captures raw samples.
             if (ApplyInputProcessing && _noiseGateThreshold > 0)
@@ -350,6 +399,9 @@ namespace FemVoiceStudio.Audio
             {
                 samples = ApplyHighPassFilter(samples);
             }
+            var processedRms = CalculateRms(samples);
+            var processedPeak = CalculatePeak(samples);
+            UpdateSignalDiagnostics(rawRms, rawPeak, processedRms, processedPeak);
             
             // Legg til i circular buffer
             foreach (var sample in samples)
@@ -360,6 +412,7 @@ namespace FemVoiceStudio.Audio
             // Send data til event subscribers
             HasReceivedAudioData = true;
             AudioDataAvailable?.Invoke(this, samples);
+            LogDiagnosticsEverySecond();
             
             // Spill av lyden hvis HearOwnVoice er aktivert
             if (_hearOwnVoice && _playbackBuffer != null && _isRecording)
@@ -393,6 +446,142 @@ namespace FemVoiceStudio.Audio
             }
             return samples;
         }
+
+        private void ResetDiagnostics()
+        {
+            _dataAvailableCount = 0;
+            _bytesReceived = 0;
+            _samplesReceived = 0;
+            _silenceDetectedCount = 0;
+            _droppedCallbackCount = 0;
+            _lastDataAvailableTime = null;
+            _previousDataAvailableTime = null;
+            _lastDiagnosticLogTime = DateTime.MinValue;
+            _lastCallbackIntervalMs = 0;
+            _lastRmsLevel = 0;
+            _lastPeakLevel = 0;
+            _lowestRmsLevel = double.MaxValue;
+            _highestRmsLevel = 0;
+            _noiseFloorEstimate = CalibrationProfile?.NoiseFloorRms ?? 0;
+            _lastSilenceDetected = false;
+            _lastSignalAccepted = false;
+            _lastSignalRejectedReason = "";
+        }
+
+        private void UpdateSignalDiagnostics(double rawRms, double rawPeak, double processedRms, double processedPeak)
+        {
+            _lastRmsLevel = processedRms;
+            _lastPeakLevel = processedPeak;
+            _lowestRmsLevel = Math.Min(_lowestRmsLevel, processedRms);
+            _highestRmsLevel = Math.Max(_highestRmsLevel, processedRms);
+
+            if (rawRms > 0)
+            {
+                _noiseFloorEstimate = _noiseFloorEstimate <= 0
+                    ? rawRms
+                    : Math.Min(_noiseFloorEstimate * 0.995 + rawRms * 0.005, rawRms);
+            }
+
+            _lastSilenceDetected = processedRms < _noiseGateThreshold;
+            _lastSignalAccepted = !_lastSilenceDetected && processedPeak > 0;
+            if (_lastSilenceDetected)
+            {
+                _silenceDetectedCount++;
+                _lastSignalRejectedReason = processedRms <= 0
+                    ? "noise gate attenuated frame to near-zero"
+                    : "rms below current silence threshold";
+            }
+            else
+            {
+                _lastSignalRejectedReason = "";
+            }
+        }
+
+        private void LogDiagnosticsEverySecond()
+        {
+            var now = DateTime.UtcNow;
+            if ((now - _lastDiagnosticLogTime).TotalSeconds < 1)
+                return;
+
+            _lastDiagnosticLogTime = now;
+            Rc0RuntimeLog.Write("AudioCaptureHealth", FormatDiagnostics(CreateDiagnosticsSnapshot()));
+        }
+
+        private AudioCaptureDiagnosticsSnapshot CreateDiagnosticsSnapshot()
+        {
+            var now = DateTime.UtcNow;
+            var timeSince = _lastDataAvailableTime.HasValue
+                ? (now - _lastDataAvailableTime.Value).TotalSeconds
+                : 0;
+            var snr = _noiseFloorEstimate > 0
+                ? MicrophoneCalibrationService.CalculateDbFs(_lastRmsLevel) - MicrophoneCalibrationService.CalculateDbFs(_noiseFloorEstimate)
+                : 0;
+            var levelCollapsed = _highestRmsLevel > 0.01 && _lastRmsLevel < _highestRmsLevel * 0.2;
+            var classification = !_isRecording && _dataAvailableCount > 0
+                ? AudioFailureClassification.CAPTURE_STOPS
+                : levelCollapsed
+                    ? AudioFailureClassification.SIGNAL_LEVEL_COLLAPSES
+                    : _lastSilenceDetected && _dataAvailableCount > 0
+                        ? AudioFailureClassification.SILENCE_GATE_REJECTS_SIGNAL
+                        : AudioFailureClassification.UNKNOWN;
+
+            return new AudioCaptureDiagnosticsSnapshot
+            {
+                DeviceName = InputDeviceName,
+                DeviceId = InputDeviceNumber.ToString(),
+                DefaultInputDeviceName = _defaultInputDeviceName,
+                DefaultCommunicationsDeviceName = _defaultCommunicationsDeviceName,
+                DeviceSelectedByFemVoice = InputDeviceName,
+                DeviceChangedDuringSession = !string.IsNullOrEmpty(_sessionStartDeviceName)
+                    && !string.Equals(_sessionStartDeviceName, InputDeviceName, StringComparison.OrdinalIgnoreCase),
+                SampleRate = _sampleRate,
+                Channels = _channels,
+                BitDepth = _bitsPerSample,
+                BufferMilliseconds = _waveIn?.BufferMilliseconds ?? TargetLatencyMs,
+                IsRecording = _isRecording,
+                DataAvailableCount = _dataAvailableCount,
+                BytesReceived = _bytesReceived,
+                SamplesReceived = _samplesReceived,
+                CallbackIntervalMs = _lastCallbackIntervalMs,
+                DroppedCallbackCount = _droppedCallbackCount,
+                LastDataAvailableTime = _lastDataAvailableTime,
+                TimeSinceLastAudioFrameSeconds = timeSince,
+                RmsLevel = _lastRmsLevel,
+                PeakLevel = _lastPeakLevel,
+                InputLevelPercent = Math.Clamp(_lastRmsLevel / 0.05 * 100, 0, 100),
+                NoiseFloorEstimate = _noiseFloorEstimate,
+                SignalToNoiseEstimateDb = snr,
+                LowestLevel = _lowestRmsLevel == double.MaxValue ? 0 : _lowestRmsLevel,
+                HighestLevel = _highestRmsLevel,
+                LevelCollapsed = levelCollapsed,
+                SilenceDetected = _lastSilenceDetected,
+                SilenceDetectedCount = _silenceDetectedCount,
+                CurrentSilenceThreshold = _noiseGateThreshold,
+                IsSignalAccepted = _lastSignalAccepted,
+                IsSignalRejected = !_lastSignalAccepted && _dataAvailableCount > 0,
+                SignalRejectedReason = _lastSignalRejectedReason,
+                MonitoringActive = IsMonitoringActive,
+                FailureClassification = classification
+            };
+        }
+
+        private static string FormatDiagnostics(AudioCaptureDiagnosticsSnapshot snapshot)
+        {
+            return $"IsRecording={snapshot.IsRecording}; Device=\"{snapshot.DeviceName}\"; DataAvailableCount={snapshot.DataAvailableCount}; " +
+                   $"BytesReceived={snapshot.BytesReceived}; SamplesReceived={snapshot.SamplesReceived}; CallbackIntervalMs={snapshot.CallbackIntervalMs:F1}; " +
+                   $"DroppedCallbacks={snapshot.DroppedCallbackCount}; LastData={snapshot.LastDataAvailableTime:O}; TimeSinceLastFrame={snapshot.TimeSinceLastAudioFrameSeconds:F2}s; " +
+                   $"Rms={snapshot.RmsLevel:F5}; Peak={snapshot.PeakLevel:F5}; InputLevel={snapshot.InputLevelPercent:F1}%; NoiseFloor={snapshot.NoiseFloorEstimate:F5}; " +
+                   $"SnrDb={snapshot.SignalToNoiseEstimateDb:F1}; Low={snapshot.LowestLevel:F5}; High={snapshot.HighestLevel:F5}; LevelCollapsed={snapshot.LevelCollapsed}; " +
+                   $"SilenceDetected={snapshot.SilenceDetected}; SilenceCount={snapshot.SilenceDetectedCount}; Threshold={snapshot.CurrentSilenceThreshold:F5}; " +
+                   $"Accepted={snapshot.IsSignalAccepted}; Rejected={snapshot.IsSignalRejected}; RejectReason=\"{snapshot.SignalRejectedReason}\"; " +
+                   $"MonitoringActive={snapshot.MonitoringActive}; Classification={snapshot.FailureClassification}";
+        }
+
+        private static double CalculateRms(float[] samples)
+            => samples.Length == 0 ? 0 : Math.Sqrt(samples.Sum(sample => (double)sample * sample) / samples.Length);
+
+        private static double CalculatePeak(float[] samples)
+            => samples.Length == 0 ? 0 : samples.Max(sample => Math.Abs((double)sample));
         
         /// <summary>
         /// Simple high-pass filter using difference equation
@@ -532,12 +721,12 @@ namespace FemVoiceStudio.Audio
             return 0;
         }
 
-        private static string? GetDefaultCaptureDeviceName()
+        private static string? GetDefaultCaptureDeviceName(Role role = Role.Console)
         {
             try
             {
                 using var enumerator = new MMDeviceEnumerator();
-                return enumerator.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Console).FriendlyName;
+                return enumerator.GetDefaultAudioEndpoint(DataFlow.Capture, role).FriendlyName;
             }
             catch
             {

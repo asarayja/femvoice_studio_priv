@@ -16,10 +16,6 @@
         <!-- ── Converters (uendret) ───────────────────────────────────────────── -->
         <loc:BoolToVisibilityConverter          x:Key="BoolToVisibility"/>
         <loc:InverseBoolToVisibilityConverter   x:Key="InverseBoolToVisibility"/>
-        <loc:IconConverter                       x:Key="IconConverter"/>
-        <loc:NullToVisibilityConverter           x:Key="NullToVisibility"/>
-        <loc:LegacyIconValidityConverter       x:Key="LegacyIconValidity"/>
-
         <loc:ProgressToPercentConverter         x:Key="ProgressToPercent"/>
         <loc:SeverityToBrushConverter           x:Key="SeverityToBrush"/>
 
@@ -296,49 +292,28 @@
                                     </Grid.ColumnDefinitions>
                                     <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20"
                                             Background="{DynamicResource AccentPrimaryBrush}">
-                                        <Grid>
-                                              <Image Source="{Binding Icon, Converter={StaticResource IconConverter}}"
-                                                  Width="20" Height="20" Stretch="Uniform"
-                                                  Visibility="{Binding Icon, Converter={StaticResource NullToVisibility}}"/>
-                                            <TextBlock Text="{Binding Icon}" FontSize="20"
-                                                       Foreground="{DynamicResource TextOnAccentBrush}"
-                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                       Visibility="{Binding Icon, Converter={StaticResource LegacyIconValidity}}"/>
-
-                                        </Grid>
+                                        <TextBlock Text="{Binding IconGlyph}"
+                                                   FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="24"
+                                                   Foreground="{DynamicResource TextOnAccentBrush}"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
                                     </Border>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
                                         <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}"/>
                                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                            <Border CornerRadius="8" Padding="6,2" Margin="0,0,8,0">
-                                                <Border.Style>
-                                                    <Style TargetType="Border">
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Goal}" Value="Pitch">      <Setter Property="Background" Value="#FCE4EC"/></DataTrigger>
-                                                            <DataTrigger Binding="{Binding Goal}" Value="Resonance">  <Setter Property="Background" Value="#F3E5F5"/></DataTrigger>
-                                                            <DataTrigger Binding="{Binding Goal}" Value="Intonation"> <Setter Property="Background" Value="#E3F2FD"/></DataTrigger>
-                                                            <DataTrigger Binding="{Binding Goal}" Value="Breathing">  <Setter Property="Background" Value="#E8F5E9"/></DataTrigger>
-                                                            <DataTrigger Binding="{Binding Goal}" Value="Combined">   <Setter Property="Background" Value="#FFF3E0"/></DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Style>
+                                            <Border CornerRadius="8" Padding="6,2" Margin="0,0,8,0"
+                                                    Background="{DynamicResource AccentLightBrush}">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding GoalIcon}" FontSize="10" Margin="0,0,4,0" Visibility="{Binding GoalIcon, Converter={StaticResource LegacyIconValidity}}"/>
+                                                    <TextBlock Text="{Binding GoalIconGlyph}"
+                                                               FontFamily="Segoe MDL2 Assets"
+                                                               FontSize="10"
+                                                               Margin="0,0,4,0"
+                                                               Foreground="{DynamicResource AccentPrimaryBrush}"/>
 
-                                                    <TextBlock Text="{Binding Goal}" FontSize="10">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Goal}" Value="Pitch">      <Setter Property="Foreground" Value="#E91E63"/></DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Goal}" Value="Resonance">  <Setter Property="Foreground" Value="#9C27B0"/></DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Goal}" Value="Intonation"> <Setter Property="Foreground" Value="#2196F3"/></DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Goal}" Value="Breathing">  <Setter Property="Foreground" Value="#4CAF50"/></DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Goal}" Value="Combined">   <Setter Property="Foreground" Value="#FF9800"/></DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
+                                                    <TextBlock Text="{Binding Goal}" FontSize="10"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"/>
                                                 </StackPanel>
                                             </Border>
                                             <TextBlock Text="{Binding DisplayDifficulty}" FontSize="12"

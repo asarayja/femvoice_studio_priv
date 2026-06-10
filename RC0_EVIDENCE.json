@@ -1,0 +1,41 @@
+{
+  "SessionId": null,
+  "ExerciseId": null,
+  "ExerciseName": null,
+  "StartTime": null,
+  "EndTime": null,
+  "Duration": null,
+  "AudioStarted": false,
+  "RecordingActive": false,
+  "DataAvailableCount": 0,
+  "PitchSamplesCount": 0,
+  "ResonanceSamplesCount": 0,
+  "GuidanceItemCount": 0,
+  "AnalyticsWritten": false,
+  "PersistenceSaved": false,
+  "PersistenceReadBack": false,
+  "SmartCoachGenerated": false,
+  "VoiceHealthEvaluated": false,
+  "ReportsGenerated": {
+    "Clinical": false,
+    "Coach": false,
+    "Outcome": false,
+    "Timeline": false
+  },
+  "DeviceName": null,
+  "DeviceId": null,
+  "CaptureStatus": "NOT_RUN",
+  "TimeSinceLastAudioFrame": null,
+  "AverageRmsLevel": null,
+  "SustainedRmsLevel": null,
+  "PitchDetectionSuccessRate": 0,
+  "GraphUpdateCount": 0,
+  "ScoreSource": "NOT_RUN",
+  "FailureClassification": "UNKNOWN",
+  "Errors": [],
+  "Warnings": [
+    "No real exercise session has been run in this environment. Use the generated RC0_EVIDENCE_yyyy-MM-dd_HHmm folder after testing in the Windows app.",
+    "Existing report generation must still be verified through the existing Clinical, Coach, Outcome, and Timeline report workflow."
+  ],
+  "Result": "BLOCKED"
+}

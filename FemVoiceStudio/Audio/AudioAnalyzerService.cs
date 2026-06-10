@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FemVoiceStudio.Models;
+using FemVoiceStudio.Services;
 
 namespace FemVoiceStudio.Audio
 {
@@ -19,6 +20,11 @@ namespace FemVoiceStudio.Audio
         // Buffer for analyseresultater
         private readonly List<PitchAnalysisResult> _analysisHistory;
         private readonly object _historyLock = new();
+        private long _pitchDetectorCalledCount;
+        private long _pitchSamplesCount;
+        private long _pitchRejectedCount;
+        private DateTime? _lastPitchDetectedTime;
+        private DateTime _lastPitchDiagnosticLogTime = DateTime.MinValue;
         
         // Analyse-parametere
         private readonly int _analysisWindowMs;
@@ -31,6 +37,11 @@ namespace FemVoiceStudio.Audio
         // Status
         public bool IsAnalyzing => _audioCapture.IsRecording;
         public int SampleRate => _audioCapture.SampleRate;
+        public AudioCaptureDiagnosticsSnapshot CaptureDiagnostics => _audioCapture.DiagnosticsSnapshot;
+        public long PitchDetectorCalledCount => _pitchDetectorCalledCount;
+        public long PitchSamplesCount => _pitchSamplesCount;
+        public long PitchRejectedCount => _pitchRejectedCount;
+        public double PitchDetectionSuccessRate => _pitchDetectorCalledCount == 0 ? 0 : (double)_pitchSamplesCount / _pitchDetectorCalledCount;
         
         // Expose HearOwnVoice from AudioCapture
         public bool HearOwnVoice
@@ -70,6 +81,12 @@ namespace FemVoiceStudio.Audio
         public void StartAnalysis()
         {
             _analysisHistory.Clear();
+            _pitchDetectorCalledCount = 0;
+            _pitchSamplesCount = 0;
+            _pitchRejectedCount = 0;
+            _lastPitchDetectedTime = null;
+            _lastPitchDiagnosticLogTime = DateTime.MinValue;
+            Rc0RuntimeLog.Write("FrontPagePitchMonitor", "Start Økt requested; starting AudioAnalyzerService");
             _audioCapture.StartRecording();
             if (!_audioCapture.IsRecording)
                 throw new InvalidOperationException("Audio capture startet ikke. Analyse ble ikke startet.");
@@ -81,6 +98,9 @@ namespace FemVoiceStudio.Audio
         public SessionAnalysis StopAnalysis()
         {
             _audioCapture.StopRecording();
+            Rc0RuntimeLog.Write("FrontPagePitchMonitor",
+                $"StopAnalysis; PitchDetectorCalls={_pitchDetectorCalledCount}; PitchSamples={_pitchSamplesCount}; " +
+                $"PitchRejected={_pitchRejectedCount}; SuccessRate={PitchDetectionSuccessRate:P1}");
             return CalculateSessionAnalysis();
         }
         
@@ -93,6 +113,17 @@ namespace FemVoiceStudio.Audio
             Task.Run(() =>
             {
                 var result = _pitchDetector.DetectPitch(samples);
+                Interlocked.Increment(ref _pitchDetectorCalledCount);
+                if (result.IsVoiced && result.Pitch > 0)
+                {
+                    Interlocked.Increment(ref _pitchSamplesCount);
+                    _lastPitchDetectedTime = DateTime.UtcNow;
+                }
+                else
+                {
+                    Interlocked.Increment(ref _pitchRejectedCount);
+                }
+                LogPitchDiagnosticsEverySecond(result);
                 
                 // Legg til historikk
                 lock (_historyLock)
@@ -107,6 +138,25 @@ namespace FemVoiceStudio.Audio
                 // Send resultat til subscribers
                 PitchAnalyzed?.Invoke(this, result);
             });
+        }
+
+        private void LogPitchDiagnosticsEverySecond(PitchAnalysisResult result)
+        {
+            var now = DateTime.UtcNow;
+            if ((now - _lastPitchDiagnosticLogTime).TotalSeconds < 1)
+                return;
+
+            _lastPitchDiagnosticLogTime = now;
+            var reason = result.IsVoiced
+                ? ""
+                : result.RmsValue < _pitchDetector.VoicedRmsThreshold
+                    ? "rms below voiced threshold"
+                    : "pitch detector confidence below acceptance";
+
+            Rc0RuntimeLog.Write("PitchPipeline",
+                $"PitchDetectorCalled=True; Pitch={result.Pitch:F1}; Confidence={result.Confidence:F3}; Rms={result.RmsValue:F5}; " +
+                $"IsVoiced={result.IsVoiced}; PitchSamplesCount={_pitchSamplesCount}; PitchDetectionSuccessRate={PitchDetectionSuccessRate:P1}; " +
+                $"PitchRejectedCount={_pitchRejectedCount}; RejectedReason=\"{reason}\"; LastPitchDetected={_lastPitchDetectedTime:O}");
         }
         
         /// <summary>

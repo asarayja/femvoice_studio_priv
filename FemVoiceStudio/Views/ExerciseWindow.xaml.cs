@@ -629,7 +629,7 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
     _currentExercise = exercise;
     var locKey = exercise.SortOrder + 100;
 
-    DetailIcon.Text = exercise.Icon;
+    DetailIcon.Text = exercise.IconGlyph;
 
     var localizedName = _exerciseTextService?.GetLocalizedTitle(locKey);
     DetailName.Text = !string.IsNullOrEmpty(localizedName) ? localizedName : exercise.Name;
