@@ -53,5 +53,18 @@ namespace FemVoiceStudio.Audio
         public string SignalRejectedReason { get; init; } = "";
         public bool MonitoringActive { get; init; }
         public AudioFailureClassification FailureClassification { get; init; } = AudioFailureClassification.UNKNOWN;
+        // Session-level statistics
+        public double RmsMean { get; init; }
+        public double RmsMedian { get; init; }
+        public double RmsP10 { get; init; }
+        public double RmsP90 { get; init; }
+        public double PeakMax { get; init; }
+        public double ClippingPercent { get; init; }
+        public double VoicedFramePercent { get; init; }
+        public double ValidPitchPercent { get; init; }
+        public double ResonanceAcceptedPercent { get; init; }
+        public double DropoutDurationSeconds { get; init; }
+        public DateTime? LastValidPitchTime { get; init; }
+        public DateTime? LastValidResonanceTime { get; init; }
     }
 }

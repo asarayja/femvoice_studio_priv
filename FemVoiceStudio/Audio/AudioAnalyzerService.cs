@@ -74,7 +74,9 @@ namespace FemVoiceStudio.Audio
         {
             _audioCapture.Initialize();
             if (_audioCapture.CalibrationProfile != null)
-                _pitchDetector.VoicedRmsThreshold = _audioCapture.CalibrationProfile.VoicedRmsThreshold;
+                _pitchDetector.VoicedRmsThreshold = _audioCapture.CalibrationProfile.EffectiveVoicedRmsThreshold != 0
+                    ? _audioCapture.CalibrationProfile.EffectiveVoicedRmsThreshold
+                    : _audioCapture.CalibrationProfile.VoicedRmsThreshold;
         }
         
         /// <summary>

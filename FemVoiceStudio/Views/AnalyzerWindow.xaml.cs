@@ -94,6 +94,19 @@ namespace FemVoiceStudio.Views
                 // måles mot den universelle lyse feminine klangen (A.4 Goal Safety). Setter
                 // brukerens PreferredVoiceStyle før Start() — null-safe Feminine-default.
                 _resonanceEngine.SetVoiceStyle(GetPreferredVoiceStyle());
+                // Configure resonance RMS threshold from calibration if available
+                try
+                {
+                    var profile = _audioCapture.CalibrationProfile;
+                    if (profile != null)
+                        _resonanceEngine.ConfigureAdaptiveRmsThreshold(profile.CalibrationNoiseFloorRms, profile.CalibrationSpeechMedianRms);
+                    else
+                    {
+                        var snap = _audioCapture.DiagnosticsSnapshot;
+                        _resonanceEngine.ConfigureAdaptiveRmsThreshold(snap.NoiseFloorEstimate, snap.RmsLevel);
+                    }
+                }
+                catch { }
                 _resonanceEngine.Start();
                 _audioCapture.StartRecording();
                 if (!_audioCapture.IsRecording)

@@ -7,8 +7,13 @@ namespace FemVoiceStudio.Audio
         public string DeviceName { get; set; } = "";
         public double NoiseFloorRms { get; set; }
         public double SpeechRms { get; set; }
+        public double CalibrationNoiseFloorRms { get; set; }
+        public double CalibrationSpeechMedianRms { get; set; }
+        public double CalibrationSpeechP90Rms { get; set; }
         public double NoiseGateThreshold { get; set; } = 0.01;
         public double VoicedRmsThreshold { get; set; } = 0.01;
+        public double EffectiveNoiseGateThreshold { get; set; }
+        public double EffectiveVoicedRmsThreshold { get; set; }
         public double SignalToNoiseDb { get; set; }
         public double PeakDbFs { get; set; }
         public MicrophoneCompatibilityFlags CompatibilityFlags { get; set; } = MicrophoneCompatibilityFlags.None;

@@ -270,12 +270,17 @@ namespace FemVoiceStudio.Services
             sb.AppendLine($"- TimeSinceLastAudioFrame: {audio.TimeSinceLastAudioFrameSeconds:F2}s");
             sb.AppendLine();
             sb.AppendLine("## Input Level Timeline");
-            sb.AppendLine($"- AverageRmsLevel: {audio.RmsLevel:F5}");
-            sb.AppendLine($"- PeakLevel: {audio.PeakLevel:F5}");
+            sb.AppendLine($"- RmsMean: {audio.RmsMean:F6}");
+            sb.AppendLine($"- RmsMedian: {audio.RmsMedian:F6}");
+            sb.AppendLine($"- RmsP10: {audio.RmsP10:F6}");
+            sb.AppendLine($"- RmsP90: {audio.RmsP90:F6}");
+            sb.AppendLine($"- PeakLevel: {audio.PeakLevel:F6}");
+            sb.AppendLine($"- PeakMax: {audio.PeakMax:F6}");
             sb.AppendLine($"- InputLevelPercent: {audio.InputLevelPercent:F1}");
-            sb.AppendLine($"- NoiseFloorEstimate: {audio.NoiseFloorEstimate:F5}");
+            sb.AppendLine($"- NoiseFloorEstimate: {audio.NoiseFloorEstimate:F6}");
             sb.AppendLine($"- SignalToNoiseEstimateDb: {audio.SignalToNoiseEstimateDb:F1}");
-            sb.AppendLine($"- SustainedRmsLevel: {audio.RmsLevel:F5}");
+            sb.AppendLine($"- ClippingPercent: {audio.ClippingPercent:F2}%");
+            sb.AppendLine($"- VoicedFramePercent: {audio.VoicedFramePercent:F2}%");
             sb.AppendLine($"- LevelCollapsed: {audio.LevelCollapsed}");
             sb.AppendLine();
             sb.AppendLine("## Pitch Detection Timeline");
@@ -356,7 +361,10 @@ namespace FemVoiceStudio.Services
                 DeviceId = audio.DeviceId,
                 CaptureStatus = audio.FailureClassification == AudioFailureClassification.UNKNOWN ? "UNKNOWN_OR_OK" : audio.FailureClassification.ToString(),
                 TimeSinceLastAudioFrame = audio.TimeSinceLastAudioFrameSeconds,
-                AverageRmsLevel = audio.RmsLevel,
+                RmsMean = audio.RmsMean,
+                RmsMedian = audio.RmsMedian,
+                RmsP10 = audio.RmsP10,
+                RmsP90 = audio.RmsP90,
                 SustainedRmsLevel = audio.RmsLevel,
                 PitchDetectionSuccessRate = SuccessRate(evidence.PitchSamplesCount, evidence.PitchDetectorCalledCount),
                 GraphUpdateCount = evidence.GraphUpdateCount,

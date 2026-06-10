@@ -1285,7 +1285,9 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
                 _exerciseAudioCapture.InitializeLowLatency();
                 _exerciseAudioCapture.HearOwnVoice = GetHearOwnVoiceSetting();
                 if (_exerciseAudioCapture.CalibrationProfile != null)
-                    _exercisePitchDetector.VoicedRmsThreshold = _exerciseAudioCapture.CalibrationProfile.VoicedRmsThreshold;
+                    _exercisePitchDetector.VoicedRmsThreshold = _exerciseAudioCapture.CalibrationProfile.EffectiveVoicedRmsThreshold != 0
+                        ? _exerciseAudioCapture.CalibrationProfile.EffectiveVoicedRmsThreshold
+                        : _exerciseAudioCapture.CalibrationProfile.VoicedRmsThreshold;
 
                 _exerciseResonanceEngine = App.Services.GetService(typeof(ResonanceProxyEngine)) as ResonanceProxyEngine
                     ?? new ResonanceProxyEngine();
@@ -1299,10 +1301,12 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
 
                 if (_exerciseAudioCapture.CalibrationProfile != null)
                 {
-                    _exerciseResonanceEngine.RmsThreshold = Math.Clamp(
-                        _exerciseAudioCapture.CalibrationProfile.VoicedRmsThreshold * 0.75,
-                        0.001,
-                        0.01);
+                    try
+                    {
+                        var profile = _exerciseAudioCapture.CalibrationProfile;
+                        _exerciseResonanceEngine.ConfigureAdaptiveRmsThreshold(profile.CalibrationNoiseFloorRms, profile.CalibrationSpeechMedianRms);
+                    }
+                    catch { }
                 }
 
                 _exerciseResonanceEngine.ResonanceScoreUpdated += OnExerciseResonanceScoreUpdated;

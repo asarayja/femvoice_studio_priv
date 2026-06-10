@@ -96,6 +96,24 @@ namespace FemVoiceStudio.Audio
         public double RmsThreshold { get; set; } = MinRmsThreshold;
 
         /// <summary>
+        /// Configure the RMS threshold adaptively using calibration/session stats.
+        /// noiseFloorRms: estimated noise floor RMS
+        /// speechMedianRms: median speech RMS from calibration/session
+        /// </summary>
+        public void ConfigureAdaptiveRmsThreshold(double noiseFloorRms, double speechMedianRms)
+        {
+            try
+            {
+                // Use a fraction of the speech median, but no lower than a small absolute floor
+                var candidate = Math.Max(noiseFloorRms * 1.2, Math.Max(speechMedianRms * 0.12, MinRmsThreshold * 0.02));
+                // Prevent threshold being set extremely high from close-mic calibration
+                candidate = Math.Min(candidate, Math.Max(0.02, speechMedianRms * 0.6));
+                RmsThreshold = Math.Clamp(candidate, MinRmsThreshold * 0.0001, 0.2);
+            }
+            catch { }
+        }
+
+        /// <summary>
         /// Aktivt stilmål for resonans-scoringen. Default = <see cref="VoiceStyleGoal.Feminine"/>
         /// (historisk lys/fremre feminin klang). Sett via <see cref="SetVoiceStyle"/>.
         /// </summary>

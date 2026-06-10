@@ -49,6 +49,11 @@ namespace FemVoiceStudio.Audio
         private double _lowestRmsLevel = double.MaxValue;
         private double _highestRmsLevel;
         private double _noiseFloorEstimate;
+        private readonly System.Collections.Generic.List<double> _rmsHistory = new System.Collections.Generic.List<double>(1024);
+        private long _acceptedFrameCount;
+        private long _clippingCount;
+        private DateTime? _lastValidPitchTime;
+        private DateTime? _lastValidResonanceTime;
         private bool _lastSilenceDetected;
         private bool _lastSignalAccepted;
         private string _lastSignalRejectedReason = "";
@@ -495,6 +500,11 @@ namespace FemVoiceStudio.Audio
             _lastPeakLevel = 0;
             _lowestRmsLevel = double.MaxValue;
             _highestRmsLevel = 0;
+            _rmsHistory.Clear();
+            _acceptedFrameCount = 0;
+            _clippingCount = 0;
+            _lastValidPitchTime = null;
+            _lastValidResonanceTime = null;
             _noiseFloorEstimate = CalibrationProfile?.NoiseFloorRms ?? 0;
             _lastSilenceDetected = false;
             _lastSignalAccepted = false;
@@ -553,6 +563,15 @@ namespace FemVoiceStudio.Audio
             _lowestRmsLevel = Math.Min(_lowestRmsLevel, processedRms);
             _highestRmsLevel = Math.Max(_highestRmsLevel, processedRms);
 
+            // Track per-frame RMS history for session statistics
+            try
+            {
+                _rmsHistory.Add(processedRms);
+                if (_rmsHistory.Count > 10000)
+                    _rmsHistory.RemoveRange(0, _rmsHistory.Count - 8000);
+            }
+            catch { }
+
             if (rawRms > 0)
             {
                 _noiseFloorEstimate = _noiseFloorEstimate <= 0
@@ -562,6 +581,10 @@ namespace FemVoiceStudio.Audio
 
             _lastSilenceDetected = processedRms < _noiseGateThreshold;
             _lastSignalAccepted = !_lastSilenceDetected && processedPeak > 0;
+            if (_lastSignalAccepted)
+                Interlocked.Increment(ref _acceptedFrameCount);
+            if (processedPeak >= 0.9999)
+                Interlocked.Increment(ref _clippingCount);
             if (_lastSilenceDetected)
             {
                 _silenceDetectedCount++;
@@ -645,8 +668,43 @@ namespace FemVoiceStudio.Audio
                 IsSignalRejected = !_lastSignalAccepted && _dataAvailableCount > 0,
                 SignalRejectedReason = _lastSignalRejectedReason,
                 MonitoringActive = IsMonitoringActive,
-                FailureClassification = classification
+                FailureClassification = classification,
+                // Session-level statistics
+                RmsMean = _rmsHistory.Count == 0 ? 0 : _rmsHistory.Sum() / _rmsHistory.Count,
+                RmsMedian = _rmsHistory.Count == 0 ? 0 : Median(_rmsHistory),
+                RmsP10 = _rmsHistory.Count == 0 ? 0 : Percentile(_rmsHistory, 10),
+                RmsP90 = _rmsHistory.Count == 0 ? 0 : Percentile(_rmsHistory, 90),
+                PeakMax = _highestRmsLevel,
+                ClippingPercent = _dataAvailableCount == 0 ? 0 : (double)_clippingCount / _dataAvailableCount * 100.0,
+                VoicedFramePercent = _dataAvailableCount == 0 ? 0 : (double)_acceptedFrameCount / _dataAvailableCount * 100.0,
+                ValidPitchPercent = 0, // filled by analyzer if available
+                ResonanceAcceptedPercent = 0, // filled by resonance engine if available
+                DropoutDurationSeconds = timeSince,
+                LastValidPitchTime = _lastValidPitchTime,
+                LastValidResonanceTime = _lastValidResonanceTime
             };
+        }
+
+        private static double Median(System.Collections.Generic.List<double> list)
+        {
+            var arr = list.ToArray();
+            Array.Sort(arr);
+            int n = arr.Length;
+            if (n % 2 == 1) return arr[n/2];
+            return (arr[n/2 - 1] + arr[n/2]) / 2.0;
+        }
+
+        private static double Percentile(System.Collections.Generic.List<double> list, double pct)
+        {
+            var arr = list.ToArray();
+            Array.Sort(arr);
+            if (arr.Length == 0) return 0;
+            double rank = (pct / 100.0) * (arr.Length - 1);
+            int lower = (int)Math.Floor(rank);
+            int upper = (int)Math.Ceiling(rank);
+            if (lower == upper) return arr[lower];
+            double weight = rank - lower;
+            return arr[lower] * (1 - weight) + arr[upper] * weight;
         }
 
         private static string FormatDiagnostics(AudioCaptureDiagnosticsSnapshot snapshot)

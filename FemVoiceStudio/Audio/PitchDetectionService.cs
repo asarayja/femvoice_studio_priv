@@ -43,40 +43,44 @@ namespace FemVoiceStudio.Audio
             };
             
             // Sjekk om det er nok volum til å analysere
-            if (result.RmsValue < VoicedRmsThreshold) // Stille / below calibrated voiced threshold
+            // Conservative early reject only on extreme low RMS; otherwise allow detector
+            if (result.RmsValue <= 0)
             {
                 result.IsVoiced = false;
                 result.Pitch = 0;
                 result.Confidence = 0;
                 return result;
             }
-            
-            // Kjør YIN-algoritmen
+
+            // Run YIN first; combine RMS and detector confidence for acceptance.
             var yinResult = YinPitchDetection(samples);
-            
             if (yinResult.frequency > 0 && yinResult.probability > _threshold)
             {
-                result.IsVoiced = true;
-                result.Pitch = yinResult.frequency;
-                result.Confidence = yinResult.probability;
-            }
-            else
-            {
-                // Prøv autocorrelation som backup
-                var autocorrResult = AutocorrelationPitchDetection(samples);
-                if (autocorrResult.frequency > 0)
+                // Accept if RMS meets threshold or the detector confidence is high enough
+                if (result.RmsValue >= VoicedRmsThreshold * 0.6 || yinResult.probability > 0.80)
                 {
                     result.IsVoiced = true;
-                    result.Pitch = autocorrResult.frequency;
-                    result.Confidence = autocorrResult.probability;
-                }
-                else
-                {
-                    result.IsVoiced = false;
-                    result.Pitch = 0;
-                    result.Confidence = 0;
+                    result.Pitch = yinResult.frequency;
+                    result.Confidence = yinResult.probability;
+                    return result;
                 }
             }
+
+            // Try autocorrelation as backup; accept if strong correlation or RMS reasonably high
+            var autocorrResult = AutocorrelationPitchDetection(samples);
+            if (autocorrResult.frequency > 0 && (autocorrResult.probability > 0.75 || result.RmsValue >= VoicedRmsThreshold * 0.8))
+            {
+                result.IsVoiced = true;
+                result.Pitch = autocorrResult.frequency;
+                result.Confidence = autocorrResult.probability;
+                return result;
+            }
+
+            // Otherwise mark unvoiced
+            result.IsVoiced = false;
+            result.Pitch = 0;
+            result.Confidence = 0;
+            return result;
             
             return result;
         }
