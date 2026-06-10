@@ -91,8 +91,6 @@ namespace FemVoiceStudio.Audio
             result.Pitch = 0;
             result.Confidence = 0;
             return result;
-            
-            return result;
         }
         
         /// <summary>
