@@ -9,7 +9,7 @@ namespace FemVoiceStudio.Tests
         [Fact]
         public void AnalyzeIntonation_NullArrays_DoesNotThrow_ReturnsFailureReason()
         {
-            var res = PitchDetectionService.AnalyzeIntonation(null, null);
+            var res = PitchDetectionService.AnalyzeIntonation(null!, null!);
             Assert.NotNull(res);
             Assert.Equal("INSUFFICIENT_PITCH_DATA", res.FailureReason);
         }

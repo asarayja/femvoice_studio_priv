@@ -22,7 +22,7 @@ namespace FemVoiceStudio.Tests
             // Act
             var result = IconProvider.GetImageForValue("🎤");
             var converter = new FemVoiceStudio.Converters.NullToVisibilityConverter();
-            var vis = (Visibility)converter.Convert("🎤", typeof(Visibility), null, System.Globalization.CultureInfo.InvariantCulture);
+            var vis = (Visibility)converter.Convert("🎤", typeof(Visibility), null!, System.Globalization.CultureInfo.InvariantCulture);
 
             // Assert
             Assert.NotNull(result);
@@ -38,7 +38,7 @@ namespace FemVoiceStudio.Tests
             // Act
             var result = IconProvider.GetImageForValue("unknown_icon_value");
             var converter = new FemVoiceStudio.Converters.NullToVisibilityConverter();
-            var vis = (Visibility)converter.Convert("unknown_icon_value", typeof(Visibility), null, System.Globalization.CultureInfo.InvariantCulture);
+            var vis = (Visibility)converter.Convert("unknown_icon_value", typeof(Visibility), null!, System.Globalization.CultureInfo.InvariantCulture);
 
             // Assert
             Assert.Null(result);
