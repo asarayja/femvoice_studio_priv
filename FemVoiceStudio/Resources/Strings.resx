@@ -2275,6 +2275,12 @@
   <data name="VoiceHealthFeedback_Hydration" xml:space="preserve">
     <value>Litt vann kan hjelpe. Ta noen rolige slurker og fortsett forsiktig.</value>
   </data>
+  <data name="VoiceHealthFeedback_HydrationSustained" xml:space="preserve">
+    <value>Stemmen har jobbet en stund. Ta deg en vannpause før du fortsetter.</value>
+  </data>
+  <data name="VoiceHealthFeedback_HydrationWithRest" xml:space="preserve">
+    <value>Pust rolig og ta noen slurker vann mens du hviler stemmen litt.</value>
+  </data>
   <data name="ProgressionFeedback_Paused" xml:space="preserve">
     <value>Progresjonen settes på pause mens stemmen henter seg inn.</value>
   </data>

@@ -257,6 +257,16 @@ namespace FemVoiceStudio.Services
         }
     }
 
+    /// <summary>
+    /// Delte ReasonCode-konstanter for hydrering. <see cref="Basic"/> brukes av BÅDE den
+    /// frittstående HydrationAdvisor-stien og VocalHealthSupervisor-stien for den daglige
+    /// basis-meldingen, slik at guardens per-ReasonCode rate-limit koalescerer duplikater.
+    /// </summary>
+    public static class HydrationReasonCodes
+    {
+        public const string Basic = "HYDRATION_SUGGESTED";
+    }
+
     public sealed class HydrationFeedbackMapper
     {
         public FeedbackCandidate? Map(HydrationAdvice advice)
@@ -265,9 +275,22 @@ namespace FemVoiceStudio.Services
             if (!advice.Suggested)
                 return null;
 
+            // Velg melding ut fra advisor-nivået. Basic-nudge deler den faste
+            // ReasonCode "HYDRATION_SUGGESTED" med VocalHealthSupervisor-stien, slik at
+            // guardens per-ReasonCode rate-limit (2s) koalescerer de to produsentenes
+            // identiske basis-melding på samme tick. De sterkere nivåene har egne
+            // ReasonCodes (de fyrer minutter fra hverandre pga. cooldown, så de
+            // rate-limiter ikke hverandre). Prioritet/ConflictKey er uendret.
+            var (message, reasonCode) = advice.ReasonCode switch
+            {
+                "HYDRATION_SUSTAINED" => ("VoiceHealthFeedback_HydrationSustained", "HYDRATION_SUSTAINED"),
+                "HYDRATION_WITH_REST" => ("VoiceHealthFeedback_HydrationWithRest", "HYDRATION_WITH_REST"),
+                _ => ("VoiceHealthFeedback_Hydration", HydrationReasonCodes.Basic),
+            };
+
             return new FeedbackCandidate(
-                "VoiceHealthFeedback_Hydration",
-                advice.ReasonCode,
+                message,
+                reasonCode,
                 FeedbackPriority.HydrationSuggestion,
                 Models.MessageSeverity.Suggestion,
                 "HydrationAdvisor",
@@ -345,7 +368,10 @@ namespace FemVoiceStudio.Services
             {
                 return Candidate(
                     "VoiceHealthFeedback_Hydration",
-                    decision.ReasonCode,
+                    // Delt ReasonCode med HydrationAdvisor-stien så guardens 2s
+                    // per-ReasonCode-grense slår sammen den identiske basis-meldingen
+                    // når begge produsenter fyrer på samme tick (dedupe).
+                    HydrationReasonCodes.Basic,
                     FeedbackPriority.HydrationSuggestion,
                     Models.MessageSeverity.Suggestion,
                     "HEALTH_HYDRATION");

@@ -17,6 +17,21 @@ namespace FemVoiceStudio.Services
         public double SuggestionThreshold { get; init; } = 0.65;
         public double LoadDecay { get; init; } = 0.96;
         public TimeSpan MinimumSuggestionInterval { get; init; } = TimeSpan.FromMinutes(2);
+
+        /// <summary>
+        /// Minste reelle øvetid (sekunder) før det første hydreringsnudge kan vises.
+        /// Hindrer "drikk vann" rett etter at en bruker så vidt har startet. Gates kun
+        /// når state.SessionElapsedSeconds er populert (>0); 0 tolkes som "ukjent" og
+        /// blokkerer ikke (bevarer test-/hjelpe-state uten elapsed-tid).
+        /// </summary>
+        public int MinimumPracticeSeconds { get; init; } = 120;
+
+        /// <summary>
+        /// Maks antall hydreringsforslag per økt. Etter budsjettet er brukt opp gir
+        /// advisoren ingen flere forslag før Reset() (kalt ved øktstart). Hindrer
+        /// gjentatt "drikk vann"-spam, men beholder noen få nyttige påminnelser.
+        /// </summary>
+        public int SuggestionBudget { get; init; } = 3;
     }
 
     public sealed record HydrationAdvice
@@ -44,6 +59,7 @@ namespace FemVoiceStudio.Services
         private double _stabilityVariance;
         private double _accumulatedLoad;
         private DateTime? _lastSuggestionAt;
+        private int _suggestionsThisSession;
 
         public HydrationAdvisor(HydrationAdvisorOptions? options = null)
         {
@@ -52,7 +68,17 @@ namespace FemVoiceStudio.Services
 
         public event EventHandler<HydrationAdvice>? HydrationSuggested;
 
-        public HydrationAdvice Evaluate(ExerciseLiveState state)
+        /// <summary>
+        /// Evaluerer hydreringsbehov for én live-state-tick. Fatigue/strain er valgfrie
+        /// kontekst-signaler (allerede beregnet av VocalHealthSupervisor samme tick) som
+        /// KUN påvirker ReasonCode/meldingsvalg — aldri prioritet. Defaultede params holder
+        /// eksisterende kallsteder kildekompatible.
+        /// </summary>
+        public HydrationAdvice Evaluate(
+            ExerciseLiveState state,
+            double fatigueScore = 0,
+            bool fatigueDetected = false,
+            bool strainDetected = false)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
 
@@ -77,17 +103,31 @@ namespace FemVoiceStudio.Services
                 var timestamp = state.Timestamp == default ? DateTime.Now : state.Timestamp;
                 var eligibleForSuggestion = !_lastSuggestionAt.HasValue
                     || timestamp - _lastSuggestionAt.Value >= _options.MinimumSuggestionInterval;
+                // Gate på reell øvetid. == 0 tolkes som "ukjent elapsed" og blokkerer ikke
+                // (bevarer eksisterende tester/hjelpere som ikke setter SessionElapsedSeconds).
+                var practiceTimeOk = state.SessionElapsedSeconds == 0
+                    || state.SessionElapsedSeconds >= _options.MinimumPracticeSeconds;
+                var withinBudget = _suggestionsThisSession < _options.SuggestionBudget;
+                var isFirstSuggestion = _suggestionsThisSession == 0;
+
                 var suggested = score >= _options.SuggestionThreshold
                     && !state.IsSafetyLocked
-                    && eligibleForSuggestion;
+                    && eligibleForSuggestion
+                    && practiceTimeOk
+                    && withinBudget;
 
                 if (suggested)
+                {
                     _lastSuggestionAt = timestamp;
+                    _suggestionsThisSession++;
+                }
 
                 advice = new HydrationAdvice
                 {
                     Suggested = suggested,
-                    ReasonCode = suggested ? DetermineReasonCode(resonanceDrift) : "HYDRATION_NORMAL",
+                    ReasonCode = suggested
+                        ? DetermineReasonCode(resonanceDrift, fatigueDetected, strainDetected, isFirstSuggestion)
+                        : "HYDRATION_NORMAL",
                     Score = score,
                     ResonanceDrift = resonanceDrift,
                     StabilityVariance = _stabilityVariance,
@@ -116,6 +156,7 @@ namespace FemVoiceStudio.Services
                 _stabilityVariance = 0;
                 _accumulatedLoad = 0;
                 _lastSuggestionAt = null;
+                _suggestionsThisSession = 0;
             }
         }
 
@@ -175,9 +216,25 @@ namespace FemVoiceStudio.Services
         private static double Smooth(double previous, double current, double alpha)
             => previous + (current - previous) * Math.Clamp(alpha, 0, 1);
 
-        private static string DetermineReasonCode(double resonanceDrift)
-            => resonanceDrift > 0
+        // Hydreringsnivå uttrykt som ReasonCode (mapper velger melding ut fra denne):
+        //  - fatigue/strain aktiv samme tick  → HYDRATION_WITH_REST (paret med hvile)
+        //  - ikke første forslag i økten       → HYDRATION_SUSTAINED (fastere påminnelse)
+        //  - ellers (første, daglig nudge)     → HYDRATION_RESONANCE_DRIFT / HYDRATION_LOAD
+        // Fatigue/strain endrer KUN denne etiketten, aldri prioritet (mapper holder
+        // FeedbackPriority.HydrationSuggestion uansett, under pause/hvile-meldinger).
+        private static string DetermineReasonCode(
+            double resonanceDrift,
+            bool fatigueDetected,
+            bool strainDetected,
+            bool isFirstSuggestion)
+        {
+            if (fatigueDetected || strainDetected)
+                return "HYDRATION_WITH_REST";
+            if (!isFirstSuggestion)
+                return "HYDRATION_SUSTAINED";
+            return resonanceDrift > 0
                 ? "HYDRATION_RESONANCE_DRIFT"
                 : "HYDRATION_LOAD";
+        }
     }
 }

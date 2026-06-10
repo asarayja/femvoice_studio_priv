@@ -294,6 +294,10 @@ namespace FemVoiceStudio.Services
                 _pitchMax = 0;
 
                 _healthSupervisor.Reset();
+                // Hydreringsadvisoren er en DI-singleton; uten denne lekket _lastSuggestionAt
+                // og _accumulatedLoad mellom økter (2-min cooldown ble effektivt per-app-
+                // levetid). Reset gjør cooldown + akkumulert last per-økt.
+                _hydrationAdvisor?.Reset();
                 _recording = true;
             }
 
@@ -485,7 +489,10 @@ namespace FemVoiceStudio.Services
 
             // Supervisor has its own internal lock; never call it while holding ours.
             var decision = _healthSupervisor.Evaluate(state);
-            var hydrationAdvice = _hydrationAdvisor?.Evaluate(state);
+            // Gi advisoren supervisorens fatigue/strain-kontekst (samme tick) — kun for
+            // ReasonCode/meldingsvalg; hydrering forblir lavere prioritet enn pause/hvile.
+            var hydrationAdvice = _hydrationAdvisor?.Evaluate(
+                state, decision.FatigueScore, decision.FatigueDetected, decision.StrainDetected);
 
             lock (_lock)
             {
