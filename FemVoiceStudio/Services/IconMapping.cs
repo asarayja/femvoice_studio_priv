@@ -28,6 +28,11 @@ namespace FemVoiceStudio.Services
         public static IconKey Map(string value)
         {
             if (string.IsNullOrEmpty(value)) return IconKey.Unknown;
+            // Minimal explicit compatibility checks for common mojibake variants
+            if (value.Equals("ðŸŽµ", StringComparison.Ordinal)) return IconKey.Microphone;
+            if (value.Equals("ðŸ“Š", StringComparison.Ordinal)) return IconKey.MusicNote;
+            if (value.Equals("ðŸ“ˆ", StringComparison.Ordinal)) return IconKey.TrendingUp;
+            if (value.Equals("ðŸ“‰", StringComparison.Ordinal)) return IconKey.TrendingDown;
             if (LegacyToKey.TryGetValue(value, out var key)) return key;
 
             // Log unmapped incoming value for diagnostic purposes (RC-0)
