@@ -42,28 +42,77 @@ namespace FemVoiceStudio.Services
             public bool TimelineReportGenerated { get; init; }
             public string[] Errors { get; init; } = Array.Empty<string>();
             public string[] Warnings { get; init; } = Array.Empty<string>();
+
+            // Faste forklaringer om hva evidensen dekker (counter-semantikk o.l.).
+            // Skilles fra Warnings fordi Warnings nedgraderer Result til WARNING —
+            // en alltid-tilstede note ville gjort PASS uoppnåelig.
+            public string[] Notes { get; init; } = Array.Empty<string>();
         }
+
+        // Primary evidence root lives in %LOCALAPPDATA%: it is never OneDrive-redirected
+        // and not subject to Controlled Folder Access, unlike Documents.
+        private static readonly string PrimaryEvidenceRoot = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "FemVoiceStudio",
+            "RC0_Evidence");
+
+        private static readonly string DocumentsEvidenceRoot = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            "FemVoiceStudio",
+            "RC0_Evidence");
+
+        public static string EvidenceRoot => PrimaryEvidenceRoot;
+        public static string DocumentsMirrorRoot => DocumentsEvidenceRoot;
 
         public static string Export(SessionEvidence evidence, AudioCaptureDiagnosticsSnapshot audio)
         {
-            var root = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                "FemVoiceStudio",
-                "RC0_Evidence");
-            var folder = Path.Combine(root, $"RC0_EVIDENCE_{DateTime.Now:yyyy-MM-dd_HHmm}");
-            Directory.CreateDirectory(folder);
+            try
+            {
+                var folder = Path.Combine(PrimaryEvidenceRoot, $"RC0_EVIDENCE_{DateTime.Now:yyyy-MM-dd_HHmmss}");
+                // To eksporter i samme sekund (øvelse + forsidemonitor) må ikke
+                // overskrive hverandre.
+                for (var suffix = 2; Directory.Exists(folder); suffix++)
+                    folder = Path.Combine(PrimaryEvidenceRoot, $"RC0_EVIDENCE_{DateTime.Now:yyyy-MM-dd_HHmmss}_{suffix}");
+                Directory.CreateDirectory(folder);
 
-            var result = ResolveResult(evidence, audio);
-            WriteSessionSummary(folder, evidence, audio, result);
-            WriteRuntimeLog(folder);
-            WriteVerificationReport(folder, evidence, audio, result);
-            WriteDiagnosticReport(folder, evidence, audio, result);
-            WriteJson(folder, evidence, audio, result);
-            WriteErrorsOnly(folder, evidence, audio);
-            WriteScreenshotChecklist(folder);
+                var result = ResolveResult(evidence, audio);
+                WriteSessionSummary(folder, evidence, audio, result);
+                WriteRuntimeLog(folder);
+                WriteVerificationReport(folder, evidence, audio, result);
+                WriteDiagnosticReport(folder, evidence, audio, result);
+                WriteJson(folder, evidence, audio, result);
+                WriteErrorsOnly(folder, evidence, audio);
+                WriteScreenshotChecklist(folder);
 
-            Rc0RuntimeLog.Write("RC0EvidenceExport", $"ExportedFolder=\"{folder}\"; Result={result}");
-            return folder;
+                Rc0RuntimeLog.Write("RC0EvidenceExport", $"ExportedFolder=\"{folder}\"; Result={result}");
+                TryMirrorToDocuments(folder);
+                return folder;
+            }
+            catch (Exception ex)
+            {
+                Rc0WriteFailureSink.Report("Rc0EvidenceExporter.Export", PrimaryEvidenceRoot, ex);
+                Rc0RuntimeLog.Write("RC0EvidenceExport", $"Export FAILED; {ex.GetType().Name}: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Best-effort visibility copy into Documents\FemVoiceStudio\RC0_Evidence so the
+        /// user finds the evidence without digging into %LOCALAPPDATA%.
+        /// </summary>
+        private static void TryMirrorToDocuments(string folder)
+        {
+            try
+            {
+                var destination = Path.Combine(DocumentsEvidenceRoot, Path.GetFileName(folder));
+                Directory.CreateDirectory(destination);
+                foreach (var file in Directory.GetFiles(folder))
+                    File.Copy(file, Path.Combine(destination, Path.GetFileName(file)), overwrite: true);
+            }
+            catch (Exception ex)
+            {
+                Rc0WriteFailureSink.Report("Rc0EvidenceExporter.MirrorToDocuments", DocumentsEvidenceRoot, ex);
+            }
         }
 
         private static string ResolveResult(SessionEvidence evidence, AudioCaptureDiagnosticsSnapshot audio)
@@ -71,13 +120,23 @@ namespace FemVoiceStudio.Services
             if (audio.DataAvailableCount <= 0 || evidence.PitchDetectorCalledCount <= 0)
                 return "BLOCKED";
 
-            if (evidence.Errors.Length > 0 || audio.FailureClassification != AudioFailureClassification.UNKNOWN)
+            // Bare harde feil gir FAIL. SILENCE_GATE/SIGNAL_LEVEL beskriver den SISTE
+            // lydrammen ved stopp — en bruker som er stille idet hun klikker Stopp er
+            // ikke en mislykket økt; det rapporteres som WARNING under.
+            var hardFailure = audio.FailureClassification
+                is AudioFailureClassification.CAPTURE_STOPS
+                or AudioFailureClassification.DEVICE_SELECTION_ERROR
+                or AudioFailureClassification.WINDOWS_OR_DRIVER_LEVEL_ISSUE;
+
+            if (evidence.Errors.Length > 0 || hardFailure)
                 return "FAIL";
 
             if (!evidence.PersistenceSaved || !evidence.AnalyticsWritten || evidence.PitchSamplesCount <= 0)
                 return "FAIL";
 
-            return evidence.Warnings.Length > 0 ? "WARNING" : "PASS";
+            return evidence.Warnings.Length > 0 || audio.FailureClassification != AudioFailureClassification.UNKNOWN
+                ? "WARNING"
+                : "PASS";
         }
 
         private static void WriteSessionSummary(string folder, SessionEvidence evidence, AudioCaptureDiagnosticsSnapshot audio, string result)
@@ -103,15 +162,23 @@ namespace FemVoiceStudio.Services
             var destination = Path.Combine(folder, "RC0_RUNTIME_LOG.txt");
             try
             {
-                if (File.Exists(Rc0RuntimeLog.CurrentLogPath))
-                {
-                    File.Copy(Rc0RuntimeLog.CurrentLogPath, destination, overwrite: true);
+                if (Rc0RuntimeLog.TryCopyTo(destination))
                     return;
-                }
-            }
-            catch { }
 
-            File.WriteAllText(destination, "No RC0 runtime log was available for this export.");
+                File.WriteAllText(destination,
+                    $"No RC0 runtime log existed at \"{Rc0RuntimeLog.CurrentLogPath}\" for this export.");
+            }
+            catch (Exception ex)
+            {
+                // A failed copy must not masquerade as "no log existed".
+                Rc0WriteFailureSink.Report("Rc0EvidenceExporter.WriteRuntimeLog", destination, ex);
+                try
+                {
+                    File.WriteAllText(destination,
+                        $"Failed to copy runtime log from \"{Rc0RuntimeLog.CurrentLogPath}\": {ex.GetType().Name}: {ex.Message}");
+                }
+                catch { }
+            }
         }
 
         private static void WriteVerificationReport(string folder, SessionEvidence evidence, AudioCaptureDiagnosticsSnapshot audio, string result)
@@ -243,6 +310,7 @@ namespace FemVoiceStudio.Services
                 FailureClassification = audio.FailureClassification.ToString(),
                 evidence.Errors,
                 evidence.Warnings,
+                evidence.Notes,
                 Result = result
             };
 
@@ -263,6 +331,8 @@ namespace FemVoiceStudio.Services
                 sb.AppendLine("Missing pitch detection: PitchDetectorCalledCount=0");
             if (evidence.PersistenceSaved && !evidence.PersistenceReadBack)
                 sb.AppendLine("Persistence readback was not verified.");
+            if (Rc0WriteFailureSink.FirstWriteError is { } firstWriteError)
+                sb.AppendLine($"RC0 write failure detected this process: {firstWriteError}");
 
             TryAppendRuntimeErrorLines(sb);
             File.WriteAllText(Path.Combine(folder, "RC0_ERRORS_ONLY.txt"), sb.Length == 0 ? "No errors captured." : sb.ToString());
@@ -287,7 +357,10 @@ namespace FemVoiceStudio.Services
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Rc0WriteFailureSink.Report("Rc0EvidenceExporter.TryAppendRuntimeErrorLines", Rc0RuntimeLog.CurrentLogPath, ex);
+            }
         }
 
         private static void WriteScreenshotChecklist(string folder)

@@ -55,7 +55,9 @@ namespace FemVoiceStudio.Audio
         
         public AudioAnalyzerService(int sampleRate = 44100, int analysisWindowMs = 50, int overlapMs = 25)
         {
-            _audioCapture = new AudioCaptureService(sampleRate);
+            // FrontPage-taggen skiller forside-monitorens capture-logglinjer fra
+            // øvelsesvinduets i den delte RC0-runtimeloggen.
+            _audioCapture = new AudioCaptureService(sampleRate) { PipelineLabel = "FrontPage" };
             _pitchDetector = new PitchDetectionService(sampleRate);
             _analysisWindowMs = analysisWindowMs;
             _analysisOverlapMs = overlapMs;

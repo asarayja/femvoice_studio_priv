@@ -1,6 +1,8 @@
 {
+  "_NOTE": "MAL/DECOY: Denne fila leses ALDRI av appen. Runtime leser %USERPROFILE%\\Documents\\FemVoiceStudio\\settings.json (kan ligge under OneDrive\\Documents ved Known Folder Move). Rediger den fila for å skru på flaggene.",
   "Debug": {
     "EnablePitchDebug": false,
-    "EnableAnalyzerDebug": false
+    "EnableAnalyzerDebug": false,
+    "EnableRc0Diagnostics": false
   }
 }

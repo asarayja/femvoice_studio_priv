@@ -24,6 +24,11 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        RegisterGlobalExceptionLogging();
+        // RC-0 evidence bootstrap (Test A): kjøres før DI/vinduer slik at en
+        // oppstartskrasj likevel etterlater sentinel + baseline-evidence. Kaster aldri.
+        Rc0StartupBootstrap.Run();
+
         try
         {
             var serviceCollection = new ServiceCollection();
@@ -64,6 +69,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
+            Rc0RuntimeLog.Write("AppStartup", $"OnStartup FAILED; {ex}");
             MessageBox.Show($"Feil ved oppstart: {ex.Message}\n\nDetaljer:\n{ex.StackTrace}",
                 "Feil", MessageBoxButton.OK, MessageBoxImage.Error);
 
@@ -79,6 +85,34 @@ public partial class App : Application
                 Shutdown(1);
             }
         }
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        Rc0RuntimeLog.Write("AppShutdown", $"CleanShutdown; ExitCode={e.ApplicationExitCode}");
+        base.OnExit(e);
+    }
+
+    /// <summary>
+    /// Globale exception-sinker: logger til RC0-runtimeloggen uten å endre hvordan
+    /// unntakene ellers håndteres (Handled settes ikke).
+    /// </summary>
+    private void RegisterGlobalExceptionLogging()
+    {
+        // Lambda-kroppene try-wrappes: strenginterpolasjonen (Exception.ToString())
+        // skjer FØR Write-kallet, og en kastende ToString skulle aldri få eskalere.
+        DispatcherUnhandledException += (_, args) =>
+        {
+            try { Rc0RuntimeLog.Write("UnhandledException", $"Dispatcher: {args.Exception}"); } catch { }
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            try { Rc0RuntimeLog.Write("UnhandledException", $"AppDomain (IsTerminating={args.IsTerminating}): {args.ExceptionObject}"); } catch { }
+        };
+        System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            try { Rc0RuntimeLog.Write("UnhandledException", $"UnobservedTask: {args.Exception}"); } catch { }
+        };
     }
 
     /// <summary>

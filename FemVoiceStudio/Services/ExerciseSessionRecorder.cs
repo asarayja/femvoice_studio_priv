@@ -613,7 +613,9 @@ namespace FemVoiceStudio.Services
             }
             catch (Exception ex)
             {
+                // Debug.WriteLine kompileres bort i Release — RC0-loggen er eneste spor.
                 System.Diagnostics.Debug.WriteLine($"[ExerciseSessionRecorder] Session-start persist failed: {ex.Message}");
+                Rc0RuntimeLog.Write("Persistence", $"SessionStartPersist FAILED; SessionId={sessionId}; {ex.GetType().Name}: {ex.Message}");
             }
         }
 
@@ -639,6 +641,7 @@ namespace FemVoiceStudio.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ExerciseSessionRecorder] Subjective persist failed: {ex.Message}");
+                Rc0RuntimeLog.Write("Persistence", $"SubjectivePersist FAILED; SessionId={sessionId}; {ex.GetType().Name}: {ex.Message}");
             }
         }
 
@@ -796,6 +799,7 @@ namespace FemVoiceStudio.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ExerciseSessionRecorder] Persist failed: {ex.Message}");
+                Rc0RuntimeLog.Write("Persistence", $"SessionPersist FAILED; SessionId={sessionId}; {ex.GetType().Name}: {ex.Message}");
             }
         }
 

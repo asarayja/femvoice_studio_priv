@@ -15,29 +15,29 @@ namespace FemVoiceStudio.Tests
         [Fact]
         public void GenerateInternalRc0VerificationReport_BlocksWithoutRuntimeAudioEvidence()
         {
-            var evidence = Rc0VerificationEvidence.CreateBlockedBaseline();
-            var writer = new Rc0VerificationReportWriter(new ReportAssembler());
-            var output = writer.Write(evidence, FindRepositoryRoot());
+            // Must never write into the repository: a repo-root target makes every test run
+            // overwrite real evidence with this hardcoded BLOCKED baseline.
+            var outputDirectory = Path.Combine(
+                Path.GetTempPath(), "FemVoiceStudio.Tests", "Rc0Verification", Guid.NewGuid().ToString("N"));
 
-            Assert.Equal("BLOCKED", output.Result);
-            Assert.True(File.Exists(output.MarkdownPath));
-            Assert.True(File.Exists(output.JsonPath));
-            Assert.Contains("RC-0 Result: BLOCKED", File.ReadAllText(output.MarkdownPath));
-            Assert.Contains("RC0_BLOCKER_AUDIO_RUNTIME_EVIDENCE_MISSING", File.ReadAllText(output.JsonPath));
-        }
-
-        private static string FindRepositoryRoot()
-        {
-            var directory = new DirectoryInfo(AppContext.BaseDirectory);
-            while (directory is not null)
+            try
             {
-                if (File.Exists(Path.Combine(directory.FullName, "FemVoiceStudio.slnx")))
-                    return directory.FullName;
+                var evidence = Rc0VerificationEvidence.CreateBlockedBaseline();
+                var writer = new Rc0VerificationReportWriter(new ReportAssembler());
+                var output = writer.Write(evidence, outputDirectory);
 
-                directory = directory.Parent;
+                Assert.Equal("BLOCKED", output.Result);
+                Assert.True(File.Exists(output.MarkdownPath));
+                Assert.True(File.Exists(output.JsonPath));
+                Assert.Contains("RC-0 Result: BLOCKED", File.ReadAllText(output.MarkdownPath));
+                Assert.Contains("RC0_BLOCKER_AUDIO_RUNTIME_EVIDENCE_MISSING", File.ReadAllText(output.JsonPath));
             }
-
-            return Directory.GetCurrentDirectory();
+            finally
+            {
+                // Opprydding må aldri maskere testresultatet (heller ikke ved
+                // UnauthorizedAccessException fra antivirus/indeksering på Windows).
+                try { Directory.Delete(outputDirectory, recursive: true); } catch { }
+            }
         }
     }
 

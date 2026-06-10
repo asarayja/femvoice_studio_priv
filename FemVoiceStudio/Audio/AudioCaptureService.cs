@@ -55,6 +55,12 @@ namespace FemVoiceStudio.Audio
         private string _defaultInputDeviceName = "";
         private string _defaultCommunicationsDeviceName = "";
         private string _sessionStartDeviceName = "";
+        private bool _stopRequested;
+        private bool _initializationFailed;
+        private bool _driverLevelFailure;
+        private bool _watchdogStalled;
+        private Timer? _watchdog;
+        private DateTime _recordingStartedUtc;
         
         // Buffer for akkumulering av audio data
         private readonly CircularBuffer<float> _audioBuffer;
@@ -113,6 +119,16 @@ namespace FemVoiceStudio.Audio
         public MicrophoneCalibrationProfile? CalibrationProfile { get; private set; }
         public bool ApplyInputProcessing { get; set; } = true;
         public AudioCaptureDiagnosticsSnapshot DiagnosticsSnapshot => CreateDiagnosticsSnapshot();
+
+        /// <summary>
+        /// Merker loggområdene med hvilken pipeline denne instansen tilhører
+        /// (Exercise / FrontPage / Calibration), slik at samtidige instanser kan
+        /// skilles fra hverandre i den delte runtime-loggen.
+        /// </summary>
+        public string PipelineLabel { get; set; } = "";
+
+        private string Area(string baseArea)
+            => string.IsNullOrEmpty(PipelineLabel) ? baseArea : $"{baseArea}/{PipelineLabel}";
         
         // Noise filtering
         private float _noiseGateThreshold = 0.01f;
@@ -244,6 +260,8 @@ namespace FemVoiceStudio.Audio
                 if (deviceCount == 0)
                 {
                     const string message = "Ingen mikrofon funnet. Koble til en mikrofon og prøv igjen.";
+                    _initializationFailed = true;
+                    Rc0RuntimeLog.Write(Area("AudioCaptureService"), "Initialize FAILED; no input devices found (DeviceCount=0)");
                     ErrorOccurred?.Invoke(this, message);
                     throw new AudioCaptureStartException(message);
                 }
@@ -260,7 +278,7 @@ namespace FemVoiceStudio.Audio
                 InputDeviceName = GetInputDeviceName(InputDeviceNumber);
                 _waveIn.DeviceNumber = InputDeviceNumber;
                 ApplyStoredCalibration();
-                Rc0RuntimeLog.Write("AudioCaptureService",
+                Rc0RuntimeLog.Write(Area("AudioCaptureService"),
                     $"Initialized DeviceNumber={InputDeviceNumber}; DeviceName=\"{InputDeviceName}\"; " +
                     $"DefaultInput=\"{_defaultInputDeviceName}\"; DefaultCommunications=\"{_defaultCommunicationsDeviceName}\"; " +
                     $"SampleRate={_sampleRate}; Channels={_channels}; BitDepth={_bitsPerSample}; BufferMs={_waveIn.BufferMilliseconds}; Api=NAudio WaveInEvent");
@@ -275,6 +293,8 @@ namespace FemVoiceStudio.Audio
             catch (Exception ex)
             {
                 var message = $"Feil ved initialisering av mikrofon: {ex.Message}";
+                _initializationFailed = true;
+                Rc0RuntimeLog.Write(Area("AudioCaptureService"), $"Initialize FAILED; {ex.GetType().Name}: {ex.Message}");
                 ErrorOccurred?.Invoke(this, message);
                 throw new InvalidOperationException(message, ex);
             }
@@ -328,7 +348,9 @@ namespace FemVoiceStudio.Audio
                 _sessionStartDeviceName = InputDeviceName;
                 _waveIn.StartRecording();
                 _isRecording = true;
-                Rc0RuntimeLog.Write("AudioCaptureService",
+                _recordingStartedUtc = DateTime.UtcNow;
+                StartWatchdog();
+                Rc0RuntimeLog.Write(Area("AudioCaptureService"),
                     $"StartRecording OK; DeviceName=\"{InputDeviceName}\"; IsRecording={_isRecording}; MonitoringRequested={_hearOwnVoice}");
             }
             catch (Exception ex)
@@ -336,7 +358,7 @@ namespace FemVoiceStudio.Audio
                 var message = $"Feil ved start av opptak: {ex.Message}";
                 ErrorOccurred?.Invoke(this, message);
                 _isRecording = false;
-                Rc0RuntimeLog.Write("AudioCaptureService", $"StartRecording FAILED; {message}");
+                Rc0RuntimeLog.Write(Area("AudioCaptureService"), $"StartRecording FAILED; {message}");
                 throw new InvalidOperationException(message, ex);
             }
         }
@@ -348,18 +370,24 @@ namespace FemVoiceStudio.Audio
         {
             if (!_isRecording || _waveIn == null)
                 return;
-                
+
             try
             {
+                // Marker stoppet som ønsket og snapshot FØR opptaket stoppes, slik at
+                // en ren stopp ikke klassifiseres som CAPTURE_STOPS (=FAIL i evidence).
+                _stopRequested = true;
+                var finalSnapshot = CreateDiagnosticsSnapshot();
+                StopWatchdog();
                 _waveIn.StopRecording();
                 _waveOut?.Pause();
                 _playbackBuffer?.ClearBuffer();
                 _isRecording = false;
-                Rc0RuntimeLog.Write("AudioCaptureService", $"StopRecording; {FormatDiagnostics(CreateDiagnosticsSnapshot())}");
+                Rc0RuntimeLog.Write(Area("AudioCaptureService"), $"StopRecording (requested); {FormatDiagnostics(finalSnapshot)}");
             }
             catch (Exception ex)
             {
                 ErrorOccurred?.Invoke(this, $"Feil ved stopp av opptak: {ex.Message}");
+                Rc0RuntimeLog.Write(Area("AudioCaptureService"), $"StopRecording FAILED; {ex.GetType().Name}: {ex.Message}");
             }
         }
         
@@ -377,6 +405,11 @@ namespace FemVoiceStudio.Audio
             var rawPeak = CalculatePeak(samples);
             _previousDataAvailableTime = _lastDataAvailableTime;
             _lastDataAvailableTime = DateTime.UtcNow;
+            if (_watchdogStalled)
+            {
+                _watchdogStalled = false;
+                Rc0RuntimeLog.Write(Area("AudioCaptureWatchdog"), "DataAvailable resumed after stall");
+            }
             if (_previousDataAvailableTime.HasValue)
             {
                 _lastCallbackIntervalMs = (_lastDataAvailableTime.Value - _previousDataAvailableTime.Value).TotalMilliseconds;
@@ -466,6 +499,51 @@ namespace FemVoiceStudio.Audio
             _lastSilenceDetected = false;
             _lastSignalAccepted = false;
             _lastSignalRejectedReason = "";
+            _stopRequested = false;
+            _driverLevelFailure = false;
+            _watchdogStalled = false;
+        }
+
+        /// <summary>
+        /// Uavhengig watchdog (~2 s): den callback-drevne helse-loggen går stille i det
+        /// øyeblikket capture dør, så stall må oppdages av en egen timer.
+        /// </summary>
+        private void StartWatchdog()
+        {
+            StopWatchdog();
+            _watchdog = new Timer(_ => CheckCaptureStall(), null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+        }
+
+        private void StopWatchdog()
+        {
+            _watchdog?.Dispose();
+            _watchdog = null;
+        }
+
+        private void CheckCaptureStall()
+        {
+            try
+            {
+                if (!_isRecording || _watchdogStalled)
+                    return;
+
+                // Uten noen mottatt frame måles stall fra opptaksstart — den kanoniske
+                // dødcapture-situasjonen er nettopp at DataAvailable ALDRI fyrer
+                // (f.eks. Windows mic privacy som blokkerer desktop-apper).
+                var reference = _lastDataAvailableTime ?? _recordingStartedUtc;
+                var stalledSeconds = (DateTime.UtcNow - reference).TotalSeconds;
+                if (stalledSeconds < 2)
+                    return;
+
+                _watchdogStalled = true;
+                Rc0RuntimeLog.Write(Area("AudioCaptureWatchdog"),
+                    $"DataAvailable stalled for {stalledSeconds:F1}s while IsRecording=true " +
+                    $"(framesReceived={_dataAvailableCount}); {FormatDiagnostics(CreateDiagnosticsSnapshot())}");
+            }
+            catch
+            {
+                // Watchdog må aldri påvirke opptaket.
+            }
         }
 
         private void UpdateSignalDiagnostics(double rawRms, double rawPeak, double processedRms, double processedPeak)
@@ -504,7 +582,7 @@ namespace FemVoiceStudio.Audio
                 return;
 
             _lastDiagnosticLogTime = now;
-            Rc0RuntimeLog.Write("AudioCaptureHealth", FormatDiagnostics(CreateDiagnosticsSnapshot()));
+            Rc0RuntimeLog.Write(Area("AudioCaptureHealth"), FormatDiagnostics(CreateDiagnosticsSnapshot()));
         }
 
         private AudioCaptureDiagnosticsSnapshot CreateDiagnosticsSnapshot()
@@ -517,13 +595,19 @@ namespace FemVoiceStudio.Audio
                 ? MicrophoneCalibrationService.CalculateDbFs(_lastRmsLevel) - MicrophoneCalibrationService.CalculateDbFs(_noiseFloorEstimate)
                 : 0;
             var levelCollapsed = _highestRmsLevel > 0.01 && _lastRmsLevel < _highestRmsLevel * 0.2;
-            var classification = !_isRecording && _dataAvailableCount > 0
-                ? AudioFailureClassification.CAPTURE_STOPS
-                : levelCollapsed
-                    ? AudioFailureClassification.SIGNAL_LEVEL_COLLAPSES
-                    : _lastSilenceDetected && _dataAvailableCount > 0
-                        ? AudioFailureClassification.SILENCE_GATE_REJECTS_SIGNAL
-                        : AudioFailureClassification.UNKNOWN;
+            // Diagnose-etikett, aldri lydadferd. En ønsket stopp (_stopRequested) skal
+            // ikke leses som CAPTURE_STOPS — det stempler hver vellykket økt som FAIL.
+            var classification = _initializationFailed
+                ? AudioFailureClassification.DEVICE_SELECTION_ERROR
+                : _driverLevelFailure
+                    ? AudioFailureClassification.WINDOWS_OR_DRIVER_LEVEL_ISSUE
+                    : _watchdogStalled || (!_isRecording && _dataAvailableCount > 0 && !_stopRequested)
+                        ? AudioFailureClassification.CAPTURE_STOPS
+                        : levelCollapsed
+                            ? AudioFailureClassification.SIGNAL_LEVEL_COLLAPSES
+                            : _lastSilenceDetected && _dataAvailableCount > 0
+                                ? AudioFailureClassification.SILENCE_GATE_REJECTS_SIGNAL
+                                : AudioFailureClassification.UNKNOWN;
 
             return new AudioCaptureDiagnosticsSnapshot
             {
@@ -652,13 +736,24 @@ namespace FemVoiceStudio.Audio
         internal void HandleRecordingStopped(Exception? exception)
         {
             _isRecording = false;
+            StopWatchdog();
 
             if (exception != null)
             {
+                _driverLevelFailure = true;
+                Rc0RuntimeLog.Write(Area("AudioCaptureService"),
+                    $"RecordingStopped with exception; {exception.GetType().Name}: {exception.Message}; {FormatDiagnostics(CreateDiagnosticsSnapshot())}");
                 var reason = exception.Message;
                 ErrorOccurred?.Invoke(this, $"Opptak stoppet på grunn av feil: {reason}");
                 // Safety: signaler tapt lydkilde slik at økten kan pauses trygt.
                 DeviceLost?.Invoke(this, reason);
+            }
+            else if (!_stopRequested)
+            {
+                // Capture-tråden døde uten exception og uten at noen ba om stopp —
+                // tidligere helt usynlig i loggene.
+                Rc0RuntimeLog.Write(Area("AudioCaptureService"),
+                    $"RecordingStopped UNEXPECTEDLY without exception; {FormatDiagnostics(CreateDiagnosticsSnapshot())}");
             }
         }
         
@@ -782,8 +877,9 @@ namespace FemVoiceStudio.Audio
         {
             if (_isDisposed)
                 return;
-                
+
             StopRecording();
+            StopWatchdog();
             _waveIn?.Dispose();
             _waveOut?.Stop();
             _waveOut?.Dispose();

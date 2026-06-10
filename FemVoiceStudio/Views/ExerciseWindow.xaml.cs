@@ -61,6 +61,17 @@ namespace FemVoiceStudio.Views
         private double _latestExerciseResonanceScore;
         private DateTime _lastExerciseMetricUpdateUtc = DateTime.MinValue;
 
+        // RC-0 evidence-tellere: ren observasjon av øvelses-pipelinen, påvirker aldri
+        // scoring eller øvelseslogikk. NB: pitch-tellerne teller 100 ms-throttlede
+        // analyserammer (~10/s), ikke rå audio-callbacks (~43/s).
+        private long _rc0PitchDetectorCalled;
+        private long _rc0PitchSamples;
+        private long _rc0PitchRejected;
+        private long _rc0ResonanceSamples;
+        private long _rc0GraphUpdates;
+        private DateTime _rc0LastFeedLogUtc = DateTime.MinValue;
+        private string _rc0ScoreSource = "NOT_COMPUTED";
+
         // ── Live Feedback — ViewModel (typed; resolved via DI) ──────────────────
         // Kept as dynamic to preserve graceful degradation when DI is unavailable.
         private ExerciseDetailViewModel? _viewModel;
@@ -431,6 +442,10 @@ namespace FemVoiceStudio.Views
             _isRunning         = true;
             _timer?.Start();
 
+            Rc0RuntimeLog.Write("ExerciseLifecycle",
+                $"ExerciseStarted; SessionId={_currentSessionId}; ExerciseId={_currentExercise.ExerciseId}; " +
+                $"Name=\"{_currentExercise.Name}\"; GuidanceItemCount={_viewModel?.GuidanceItems.Count ?? 0}");
+
             StartButton.IsEnabled = false;
             StopButton.IsEnabled  = true;
             FeedbackText.Text     = Loc.Feedback_ExerciseStarted;
@@ -490,14 +505,31 @@ namespace FemVoiceStudio.Views
             // personaliserte) — se _activeBaseProfile. Fallback til _activeProfile om
             // base ikke ble satt (defensivt; bevarer dagens oppførsel).
             var baseProfile = _activeBaseProfile ?? _activeProfile;
+            // RC-0: snapshot lyddiagnostikk OG tellere FØR awaits — StopExerciseAudio()
+            // nederst disposer capturen, og StartButton re-enables under awaits slik at
+            // en ny økt kan nullstille telleverket før eksporten leser det.
+            var rc0AudioSnapshot = _exerciseAudioCapture?.DiagnosticsSnapshot;
+            var rc0PitchCalled = _rc0PitchDetectorCalled;
+            var rc0PitchSamples = _rc0PitchSamples;
+            var rc0PitchRejected = _rc0PitchRejected;
+            var rc0ResonanceSamples = _rc0ResonanceSamples;
+            var rc0GraphUpdates = _rc0GraphUpdates;
+            var rc0StartTime = _sessionStartTime;
+            var rc0ElapsedSeconds = _elapsedSeconds;
+            var rc0GuidanceCount = _viewModel?.GuidanceItems.Count ?? 0;
             _currentSessionId = 0;
             StopButton.IsEnabled  = false;
             StartButton.IsEnabled = true;
 
             if (sessionId > 0 && exercise != null)
             {
+                Rc0RuntimeLog.Write("ExerciseLifecycle",
+                    $"ExerciseStopped; SessionId={sessionId}; ExerciseId={exercise.ExerciseId}; ElapsedSeconds={_elapsedSeconds}");
                 var score = CompleteSessionAndCalculateScore();
+                var rc0ScoreSource = _rc0ScoreSource;   // satt synkront over; snapshot før awaits
                 _exerciseService.CompleteSession(sessionId, _elapsedSeconds, score, "");
+                Rc0RuntimeLog.Write("ExerciseLifecycle",
+                    $"SessionSaved; SessionId={sessionId}; Score={score:F1}; ScoreSource={rc0ScoreSource}");
                 FeedbackText.Text   = GetCompletionFeedback(score);
                 DetailProgress.Text = string.Format(Loc.Exercise_StepsProgress,
                                           exercise.TotalSessions + 1, score.ToString("F0"));
@@ -552,9 +584,10 @@ namespace FemVoiceStudio.Views
 
                 // Vent på at øktjournalføringen er committet før orchestratoren leser
                 // historikken (review-funn: lese-etter-skriv-race mot fire-and-forget).
+                var rc0PersistenceSaved = false;
                 if (_sessionRecorder?.LastPersistTask is { } persistTask)
                 {
-                    try { await persistTask; } catch { /* persist-feil svelges i recorderen */ }
+                    try { await persistTask; rc0PersistenceSaved = true; } catch { /* persist-feil svelges i recorderen */ }
                 }
 
                 // Øktslutt-innsikt (Bølge 1, Agent 5 UI). SessionInsight bygges på samme
@@ -572,6 +605,53 @@ namespace FemVoiceStudio.Views
                 // Evalueres mot den stil-NØYTRALE base-profilen så stil-resonansdeltaen
                 // ikke kompounderer gjennom override-rundturen (runtime-validation-funn).
                 await EvaluateAdaptiveProgressionAsync(exercise, baseProfile);
+
+                // RC-0 evidence-eksport: dette er det eneste punktet der øktidentitet,
+                // klinisk score, persist-status OG lyddiagnostikk finnes samtidig.
+                // Ren observasjon over allerede beregnede verdier.
+                if (DebugSettingsService.Instance.EnableRc0Diagnostics)
+                {
+                    try
+                    {
+                        var evidence = new Rc0EvidenceExporter.SessionEvidence
+                        {
+                            SessionId = sessionId,
+                            ExerciseId = exercise.ExerciseId,
+                            ExerciseName = exercise.Name,
+                            Language = LocalizationService.Instance.CurrentLanguage,
+                            StartTime = rc0StartTime,
+                            EndTime = DateTime.Now,
+                            Duration = TimeSpan.FromSeconds(rc0ElapsedSeconds),
+                            CompletionStatus = "COMPLETED",
+                            Score = score,
+                            ScoreSource = rc0ScoreSource,
+                            PitchDetectorCalledCount = rc0PitchCalled,
+                            PitchSamplesCount = rc0PitchSamples,
+                            PitchRejectedCount = rc0PitchRejected,
+                            ResonanceSamplesCount = rc0ResonanceSamples,
+                            GraphUpdateCount = rc0GraphUpdates,
+                            GuidanceItemCount = rc0GuidanceCount,
+                            SmartCoachGenerated = _sessionRecorder?.LastSessionInsight != null,
+                            VoiceHealthEvaluated = _lastSessionOutcome != null,
+                            AnalyticsWritten = rc0PersistenceSaved,
+                            PersistenceSaved = rc0PersistenceSaved,
+                            PersistenceReadBack = false,
+                            Notes = new[]
+                            {
+                                "PitchDetectorCalledCount counts 100ms-throttled analysis frames (~10/s), not raw audio callbacks.",
+                                "PersistenceReadBack is not verified by this export.",
+                            },
+                        };
+                        var folder = Rc0EvidenceExporter.Export(
+                            evidence, rc0AudioSnapshot ?? new AudioCaptureDiagnosticsSnapshot());
+                        Rc0RuntimeLog.Write("ExerciseLifecycle",
+                            $"EvidenceExported; SessionId={sessionId}; Folder=\"{folder}\"");
+                    }
+                    catch (Exception ex)
+                    {
+                        Rc0WriteFailureSink.Report("ExerciseWindow.EvidenceExport", null, ex);
+                    }
+                }
             }
 
             // Delegate stop to ViewModel command.
@@ -588,6 +668,8 @@ namespace FemVoiceStudio.Views
         {
             _timer?.Stop();
             _isRunning = false;
+            if (_currentSessionId > 0)
+                Rc0RuntimeLog.Write("ExerciseLifecycle", $"ExerciseAborted; SessionId={_currentSessionId}");
             StopExerciseAudio();
             _sessionRecorder?.AbortSession();   // avbrutt økt journalføres ikke
             if (_currentSessionId > 0)
@@ -627,6 +709,8 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
         private async void ShowExerciseDetail(Exercise exercise)
 {
     _currentExercise = exercise;
+    Rc0RuntimeLog.Write("ExerciseLifecycle",
+        $"ExerciseSelected; ExerciseId={exercise.ExerciseId}; Name=\"{exercise.Name}\"");
     var locKey = exercise.SortOrder + 100;
 
     DetailIcon.Text = exercise.IconGlyph;
@@ -914,13 +998,27 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
             var outcome = _sessionRecorder?.CompleteSession();
             _lastSessionOutcome = outcome;   // brukes av komfortsone-oppdateringen ved øktslutt
             if (outcome == null || _activeProfile == null)
+            {
+                // 0 her er ikke en klinisk score, men fravær av verifiserte stemmedata —
+                // ScoreSource gjør det skillet synlig i evidence/logg.
+                _rc0ScoreSource = "NO_VERIFIED_VOICE_DATA";
+                Rc0RuntimeLog.Write("ExerciseScore",
+                    $"ScoreSource={_rc0ScoreSource}; Score=0; OutcomeNull={outcome == null}; ProfileNull={_activeProfile == null}");
                 return 0;   // ingen verifiserte stemmedata → ingen score
+            }
 
-            return ClinicalSessionScore.Calculate(
+            var score = ClinicalSessionScore.Calculate(
                 outcome,
                 _activeProfile,
                 _elapsedSeconds,
                 _currentExercise.DurationMinutes * 60);
+            _rc0ScoreSource = "CLINICAL_SESSION_SCORE";
+            Rc0RuntimeLog.Write("ExerciseScore",
+                $"ScoreSource={_rc0ScoreSource}; Score={score:F1}; EvaluatedTicks={outcome.EvaluatedTicks}; " +
+                $"AvgResonance={outcome.AverageResonance:F3}; AvgStability={outcome.AverageStability:F3}; " +
+                $"ComfortCompliance={outcome.ComfortCompliance:F3}; SessionHealthScore={outcome.SessionHealthScore:F1}; " +
+                $"ElapsedSeconds={_elapsedSeconds}; RequiredSeconds={_currentExercise.DurationMinutes * 60}");
+            return score;
         }
 
         private string GetCompletionFeedback(double score)
@@ -1112,9 +1210,16 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
             {
                 _latestExerciseResonanceScore = 0;
                 _lastExerciseMetricUpdateUtc = DateTime.MinValue;
+                _rc0PitchDetectorCalled = 0;
+                _rc0PitchSamples = 0;
+                _rc0PitchRejected = 0;
+                _rc0ResonanceSamples = 0;
+                _rc0GraphUpdates = 0;
+                _rc0LastFeedLogUtc = DateTime.MinValue;
+                _rc0ScoreSource = "NOT_COMPUTED";
 
                 _exercisePitchDetector = new PitchDetectionService();
-                _exerciseAudioCapture = new AudioCaptureService();
+                _exerciseAudioCapture = new AudioCaptureService { PipelineLabel = "Exercise" };
                 _exerciseAudioCapture.InitializeLowLatency();
                 _exerciseAudioCapture.HearOwnVoice = GetHearOwnVoiceSetting();
                 if (_exerciseAudioCapture.CalibrationProfile != null)
@@ -1152,6 +1257,7 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
             }
             catch (Exception ex)
             {
+                Rc0RuntimeLog.Write("ExerciseLifecycle", $"StartExerciseAudio FAILED; {ex.GetType().Name}: {ex.Message}");
                 FeedbackText.Text = string.Format(Loc.Get("Audio_MicrophoneStartFailedFormat"), ex.Message);
                 StopExerciseAudio();
                 return false;
@@ -1180,7 +1286,10 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
         }
 
         private void OnExerciseResonanceScoreUpdated(double score)
-            => _latestExerciseResonanceScore = Math.Clamp(score, 0, 1);
+        {
+            _rc0ResonanceSamples++;
+            _latestExerciseResonanceScore = Math.Clamp(score, 0, 1);
+        }
 
         private void OnExerciseAudioDataAvailable(object? sender, float[] samples)
         {
@@ -1194,7 +1303,12 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
                 return;
 
             _lastExerciseMetricUpdateUtc = now;
+            _rc0PitchDetectorCalled++;
             var pitch = _exercisePitchDetector.DetectPitch(samples);
+            if (pitch.IsVoiced && pitch.Pitch > 0)
+                _rc0PitchSamples++;
+            else
+                _rc0PitchRejected++;
             var rms = MicrophoneCalibrationService.CalculateRms(samples);
             var fallbackResonance = _exerciseAudioCapture?.CalibrationProfile != null
                 ? Math.Clamp((rms - _exerciseAudioCapture.CalibrationProfile.NoiseFloorRms)
@@ -1207,6 +1321,20 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
             // Health hentes fra VocalHealthSupervisor-tilstanden via recorderen
             // (tidligere hardkodet 100, som gjorde at <70-sikkerhetslåsen i
             // koordinatoren aldri kunne utløses fra øvelsesløkka).
+            _rc0GraphUpdates++;
+            if (DebugSettingsService.Instance.EnableRc0Diagnostics
+                && (now - _rc0LastFeedLogUtc).TotalSeconds >= 1)
+            {
+                _rc0LastFeedLogUtc = now;
+                var fallbackContribution = fallbackResonance * 0.45;
+                Rc0RuntimeLog.Write("ExerciseFeed",
+                    $"Rms={rms:F5}; IsVoiced={pitch.IsVoiced}; Pitch={(pitch.IsVoiced ? pitch.Pitch : 0):F1}; " +
+                    $"EngineResonance={_latestExerciseResonanceScore:F3}; FallbackResonance={fallbackContribution:F3}; " +
+                    $"ResonanceSource={(_latestExerciseResonanceScore >= fallbackContribution ? "ENGINE" : "FALLBACK")}; " +
+                    $"PitchCalled={_rc0PitchDetectorCalled}; PitchAccepted={_rc0PitchSamples}; PitchRejected={_rc0PitchRejected}; " +
+                    $"ResonanceSamples={_rc0ResonanceSamples}; GraphUpdates={_rc0GraphUpdates}");
+            }
+
             _viewModel.UpdateLiveMetrics(
                 resonance,
                 pitch.IsVoiced ? pitch.Pitch : 0,

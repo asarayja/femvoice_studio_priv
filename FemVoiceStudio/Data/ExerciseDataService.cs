@@ -190,7 +190,9 @@ namespace FemVoiceStudio.Data
             command.Parameters.AddWithValue("@Score", score);
             command.Parameters.AddWithValue("@Notes", notes);
             command.ExecuteNonQuery();
-            
+            Services.Rc0RuntimeLog.Write("Persistence",
+                $"ExerciseSessionCompleted; SessionId={sessionId}; DurationSeconds={durationSeconds}; Score={score:F1}");
+
             // Oppdater progresjon
             UpdateExerciseProgress(connection, sessionId, durationSeconds, score);
         }

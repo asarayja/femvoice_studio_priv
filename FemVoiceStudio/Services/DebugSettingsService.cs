@@ -16,6 +16,7 @@ namespace FemVoiceStudio.Services
         
         public bool EnablePitchDebug { get; set; } = false;
         public bool EnableAnalyzerDebug { get; set; } = false;
+        public bool EnableRc0Diagnostics { get; set; } = false;
         
         private readonly string _settingsPath;
         private readonly string _logsPath;
@@ -45,17 +46,26 @@ namespace FemVoiceStudio.Services
             var appDataPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                 "FemVoiceStudio");
-            
-            if (!Directory.Exists(appDataPath))
-                Directory.CreateDirectory(appDataPath);
-            
+
             _settingsPath = Path.Combine(appDataPath, "settings.json");
             _logsPath = Path.Combine(appDataPath, "logs");
-            
-            if (!Directory.Exists(_logsPath))
-                Directory.CreateDirectory(_logsPath);
-            
-            LoadSettings();
+
+            // Ctor må aldri kaste: Instance leses bl.a. fra audio-callbacks og
+            // evidence-gating — en kastende singleton-ctor ville propagere dit.
+            try
+            {
+                if (!Directory.Exists(appDataPath))
+                    Directory.CreateDirectory(appDataPath);
+
+                if (!Directory.Exists(_logsPath))
+                    Directory.CreateDirectory(_logsPath);
+
+                LoadSettings();
+            }
+            catch (Exception ex)
+            {
+                Rc0WriteFailureSink.Report("DebugSettingsService.ctor", _settingsPath, ex);
+            }
         }
         
         /// <summary>
@@ -68,8 +78,8 @@ namespace FemVoiceStudio.Services
                 if (File.Exists(_settingsPath))
                 {
                     var json = File.ReadAllText(_settingsPath);
-                    var settings = JsonSerializer.Deserialize<AppSettings>(json);
-                    
+                    var settings = JsonSerializer.Deserialize<AppSettings>(json, AppSettingsJson.Options);
+
                     if (settings?.Debug == null)
                     {
                         // Add missing Debug section to existing settings
@@ -79,6 +89,7 @@ namespace FemVoiceStudio.Services
                     {
                         EnablePitchDebug = settings.Debug.EnablePitchDebug;
                         EnableAnalyzerDebug = settings.Debug.EnableAnalyzerDebug;
+                        EnableRc0Diagnostics = settings.Debug.EnableRc0Diagnostics;
                     }
                 }
                 else
@@ -90,6 +101,7 @@ namespace FemVoiceStudio.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading debug settings: {ex.Message}");
+                Rc0WriteFailureSink.Report("DebugSettingsService.LoadSettings", _settingsPath, ex);
                 // Create default settings if loading fails
                 SaveSettings();
             }
@@ -104,24 +116,22 @@ namespace FemVoiceStudio.Services
             {
                 // Load existing settings first to preserve other sections
                 var existingSettings = LoadExistingSettings();
-                
-                // Merge debug settings
-                existingSettings.Debug = new DebugSettings
-                {
-                    EnablePitchDebug = EnablePitchDebug,
-                    EnableAnalyzerDebug = EnableAnalyzerDebug
-                };
-                
-                var json = JsonSerializer.Serialize(existingSettings, new JsonSerializerOptions 
-                { 
-                    WriteIndented = true 
-                });
-                
+
+                // Merge debug settings (mutate the existing object so unknown
+                // hand-added keys in the Debug section survive via ExtensionData)
+                existingSettings.Debug ??= new DebugSettings();
+                existingSettings.Debug.EnablePitchDebug = EnablePitchDebug;
+                existingSettings.Debug.EnableAnalyzerDebug = EnableAnalyzerDebug;
+                existingSettings.Debug.EnableRc0Diagnostics = EnableRc0Diagnostics;
+
+                var json = JsonSerializer.Serialize(existingSettings, AppSettingsJson.Options);
+
                 File.WriteAllText(_settingsPath, json);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error saving debug settings: {ex.Message}");
+                Rc0WriteFailureSink.Report("DebugSettingsService.SaveSettings", _settingsPath, ex);
             }
         }
         
@@ -135,13 +145,14 @@ namespace FemVoiceStudio.Services
                 if (File.Exists(_settingsPath))
                 {
                     var json = File.ReadAllText(_settingsPath);
-                    var settings = JsonSerializer.Deserialize<AppSettings>(json);
+                    var settings = JsonSerializer.Deserialize<AppSettings>(json, AppSettingsJson.Options);
                     return settings ?? new AppSettings();
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading existing settings: {ex.Message}");
+                Rc0WriteFailureSink.Report("DebugSettingsService.LoadExistingSettings", _settingsPath, ex);
             }
             
             return new AppSettings();
@@ -157,21 +168,17 @@ namespace FemVoiceStudio.Services
                 if (File.Exists(_settingsPath))
                 {
                     var json = File.ReadAllText(_settingsPath);
-                    var settings = JsonSerializer.Deserialize<AppSettings>(json);
-                    
+                    var settings = JsonSerializer.Deserialize<AppSettings>(json, AppSettingsJson.Options);
+
                     if (settings?.Debug == null)
                     {
                         // Add missing Debug section (with default false values)
                         if (settings == null)
                             settings = new AppSettings();
-                        
-                        settings.Debug = new DebugSettings
-                        {
-                            EnablePitchDebug = false,
-                            EnableAnalyzerDebug = false
-                        };
-                        
-                        var updatedJson = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+
+                        settings.Debug = new DebugSettings();
+
+                        var updatedJson = JsonSerializer.Serialize(settings, AppSettingsJson.Options);
                         File.WriteAllText(_settingsPath, updatedJson);
                     }
                     else
@@ -179,6 +186,7 @@ namespace FemVoiceStudio.Services
                         // Debug section exists - preserve existing values
                         EnablePitchDebug = settings.Debug.EnablePitchDebug;
                         EnableAnalyzerDebug = settings.Debug.EnableAnalyzerDebug;
+                        EnableRc0Diagnostics = settings.Debug.EnableRc0Diagnostics;
                     }
                 }
                 else
@@ -190,6 +198,7 @@ namespace FemVoiceStudio.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error ensuring debug section: {ex.Message}");
+                Rc0WriteFailureSink.Report("DebugSettingsService.EnsureDebugSection", _settingsPath, ex);
                 SaveSettings();
             }
         }

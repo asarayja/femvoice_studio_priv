@@ -31,6 +31,16 @@ namespace FemVoiceStudio.Views
         private DateTime _chartSessionStartTime;
         private DateTime _lastChartRenderAt = DateTime.MinValue;
         private int _lastRenderedPitchSequence;
+
+        // RC-0 graf-evidens: teller hvorfor forsidegrafen ev. slutter å tegne.
+        // Ren observasjon — endrer aldri hva som rendres.
+        private long _rc0GraphRendered;
+        private long _rc0GraphSkipNotRecording;
+        private long _rc0GraphSkipNoPitch;
+        private long _rc0GraphSkipStabilizer;
+        private long _rc0GraphSkipDuplicate;
+        private DateTime _rc0LastGraphLogUtc = DateTime.MinValue;
+        private bool _rc0GraphWasRecording;
         private double _lastRenderedPitch;
         private double _chartVoiceSeconds;
         
@@ -358,25 +368,48 @@ namespace FemVoiceStudio.Views
         private void RenderLatestPitchPoint()
         {
             if (!_viewModel.IsRecording)
+            {
+                _rc0GraphSkipNotRecording++;
+                if (_rc0GraphWasRecording)
+                {
+                    // Test B: «graph stop reason if stopped» — én sluttlinje med
+                    // tellerstanden idet opptaket gikk fra aktivt til stoppet.
+                    _rc0GraphWasRecording = false;
+                    _rc0LastGraphLogUtc = DateTime.MinValue;
+                    LogFrontPageGraphCounters();
+                }
                 return;
+            }
+            _rc0GraphWasRecording = true;
 
             var rawPitch = _viewModel.CurrentPitch > 0 ? _viewModel.CurrentPitch : _viewModel.SmoothedPitch;
             if (rawPitch <= 0)
+            {
+                _rc0GraphSkipNoPitch++;
+                LogFrontPageGraphCounters();
                 return;
+            }
 
             var now = DateTime.Now;
             var pitch = _pitchTraceStabilizer.Filter(rawPitch, now);
             if (pitch <= 0)
+            {
+                _rc0GraphSkipStabilizer++;
+                LogFrontPageGraphCounters();
                 return;
+            }
 
             var currentSequence = _viewModel.LivePitchUpdateSequence;
             if (currentSequence == _lastRenderedPitchSequence &&
                 Math.Abs(pitch - _lastRenderedPitch) < 0.5 &&
                 (now - _lastChartRenderAt).TotalMilliseconds < 100)
             {
+                _rc0GraphSkipDuplicate++;
                 return;
             }
 
+            _rc0GraphRendered++;
+            LogFrontPageGraphCounters();
             _lastRenderedPitchSequence = currentSequence;
             _lastRenderedPitch = pitch;
             _lastChartRenderAt = now;
@@ -428,6 +461,26 @@ namespace FemVoiceStudio.Views
             UpdateLiveXAxis(xPos);
             UpdateLiveYAxis(xPos);
             _pitchPlotModel.InvalidatePlot(false);
+        }
+
+        /// <summary>
+        /// 1 Hz tellerlinje for forsidegrafen (RC-0): viser om grafstopp skyldes
+        /// manglende pitch, stabilizer-avvisning eller at opptaket er stoppet.
+        /// </summary>
+        private void LogFrontPageGraphCounters()
+        {
+            if (!DebugSettingsService.Instance.EnableRc0Diagnostics)
+                return;
+
+            var now = DateTime.UtcNow;
+            if ((now - _rc0LastGraphLogUtc).TotalSeconds < 1)
+                return;
+
+            _rc0LastGraphLogUtc = now;
+            Rc0RuntimeLog.Write("FrontPageGraph",
+                $"Rendered={_rc0GraphRendered}; SkipNotRecording={_rc0GraphSkipNotRecording}; " +
+                $"SkipNoPitch={_rc0GraphSkipNoPitch}; SkipStabilizerRejected={_rc0GraphSkipStabilizer}; " +
+                $"SkipDuplicate={_rc0GraphSkipDuplicate}");
         }
 
         private void UpdateLiveXAxis(double elapsedSeconds)

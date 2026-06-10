@@ -467,6 +467,9 @@ namespace FemVoiceStudio.ViewModels
             }
             catch (Exception ex)
             {
+                // Tidligere det stille no-mic-hullet: feilen oppsto FØR første
+                // capture-logglinje, så et manglende lydoppsett var usynlig i loggen.
+                Rc0RuntimeLog.Write("FrontPagePitchMonitor", $"InitializeAudio FAILED; {ex.GetType().Name}: {ex.Message}");
                 ErrorMessage = string.Format(Loc.Get("Audio_MicrophoneStartFailedFormat"), ex.Message);
                 IsMicrophoneReady = false;
                 StatusText = Loc.UI_MicNotReady;
@@ -541,6 +544,7 @@ namespace FemVoiceStudio.ViewModels
             }
             catch (Exception ex)
             {
+                Rc0RuntimeLog.Write("FrontPagePitchMonitor", $"StartRecording FAILED; {ex.GetType().Name}: {ex.Message}");
                 ErrorMessage = string.Format(Loc.Get("Recording_StartFailedFormat"), ex.Message);
             }
         }
@@ -559,7 +563,14 @@ namespace FemVoiceStudio.ViewModels
                 
                 // Close debug log files
                 DebugSettingsService.Instance.CloseLogs();
-                
+
+                // RC-0: snapshot diagnostikk og tellere FØR awaits lenger ned — et
+                // re-klikk på Start under await-ene nullstiller analyzer-telleverket.
+                var rc0AudioSnapshot = _audioAnalyzer.CaptureDiagnostics;
+                var rc0PitchCalled = _audioAnalyzer.PitchDetectorCalledCount;
+                var rc0PitchSamples = _audioAnalyzer.PitchSamplesCount;
+                var rc0PitchRejected = _audioAnalyzer.PitchRejectedCount;
+                var rc0StartTime = _sessionStartTime;
                 var analysis = _audioAnalyzer.StopAnalysis();
                 
                 // Vis resultater
@@ -607,7 +618,10 @@ namespace FemVoiceStudio.ViewModels
                     DifficultyLevel = CurrentDifficulty
                 };
 
-                _database.SaveTrainingSession(session);
+                var rc0SessionDbId = _database.SaveTrainingSession(session);
+                Rc0RuntimeLog.Write("FrontPagePitchMonitor",
+                    $"SessionSaved; SessionId={rc0SessionDbId}; OverallScore={feedbackCollection.OverallScore:F1}; " +
+                    $"AvgPitch={analysis.AveragePitch:F1}; PitchSamples={_audioAnalyzer.PitchSamplesCount}");
 
                 // Klinisk helseanalyse av den nettopp lagrede økten (MUST-FIX):
                 // AnalyzeSessionForStrain er den ENESTE produksjonsskriveren til
@@ -723,9 +737,51 @@ namespace FemVoiceStudio.ViewModels
                     analysis.AveragePitch, ComfortZone);
                 var sessionHealthScore = session.VoiceHealthScore;
                 _ = PersistComfortZoneCalibrationAsync(sessionComfortRatio, sessionHealthScore);
+
+                // RC-0 evidence-eksport for forside-monitoren (Test B). Ren observasjon
+                // over allerede beregnede verdier.
+                if (DebugSettingsService.Instance.EnableRc0Diagnostics)
+                {
+                    try
+                    {
+                        var evidence = new Rc0EvidenceExporter.SessionEvidence
+                        {
+                            SessionId = rc0SessionDbId,
+                            ExerciseId = CurrentExercise?.Id ?? 0,
+                            ExerciseName = "FrontPagePitchMonitor",
+                            Language = LocalizationService.Instance.CurrentLanguage,
+                            StartTime = rc0StartTime,
+                            EndTime = DateTime.Now,
+                            Duration = DateTime.Now - rc0StartTime,
+                            CompletionStatus = "COMPLETED",
+                            Score = feedbackCollection.OverallScore,
+                            ScoreSource = "FEEDBACK_OVERALL_SCORE",
+                            PitchDetectorCalledCount = rc0PitchCalled,
+                            PitchSamplesCount = rc0PitchSamples,
+                            PitchRejectedCount = rc0PitchRejected,
+                            VoiceHealthEvaluated = true,
+                            AnalyticsWritten = rc0SessionDbId > 0,
+                            PersistenceSaved = rc0SessionDbId > 0,
+                            PersistenceReadBack = false,
+                            Notes = new[]
+                            {
+                                "Front-page monitor evidence: ResonanceSamplesCount/GraphUpdateCount/GuidanceItemCount " +
+                                "are not tracked by this pipeline; graph behavior is logged under FrontPageGraph in the runtime log.",
+                            },
+                        };
+                        var folder = Rc0EvidenceExporter.Export(evidence, rc0AudioSnapshot);
+                        Rc0RuntimeLog.Write("FrontPagePitchMonitor",
+                            $"EvidenceExported; SessionId={rc0SessionDbId}; Folder=\"{folder}\"");
+                    }
+                    catch (Exception ex)
+                    {
+                        Rc0WriteFailureSink.Report("MainViewModel.EvidenceExport", null, ex);
+                    }
+                }
             }
             catch (Exception ex)
             {
+                Rc0RuntimeLog.Write("FrontPagePitchMonitor", $"StopRecording FAILED; {ex.GetType().Name}: {ex.Message}");
                 ErrorMessage = string.Format(Loc.Get("Recording_StopFailedFormat"), ex.Message);
             }
         }
@@ -1386,6 +1442,7 @@ namespace FemVoiceStudio.ViewModels
         
         private void OnError(object? sender, string error)
         {
+            Rc0RuntimeLog.Write("FrontPagePitchMonitor", $"ErrorOccurred; {error}");
             ErrorMessage = error;
             StatusText = Loc.Get("Error_Occurred");
         }

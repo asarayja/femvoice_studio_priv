@@ -39,7 +39,7 @@ namespace FemVoiceStudio.Views
 
             try
             {
-                _capture = new AudioCaptureService();
+                _capture = new AudioCaptureService { PipelineLabel = "Calibration" };
                 _capture.ApplyInputProcessing = false;
                 _capture.HearOwnVoice = GetHearOwnVoiceSetting();
                 _capture.AudioDataAvailable += OnAudioDataAvailable;
@@ -154,6 +154,10 @@ namespace FemVoiceStudio.Views
 
             var profile = calibration.BuildAdaptiveProfile(_capture.InputDeviceName, _backgroundSamples, _voiceSamples);
             calibration.Save(profile);
+            Services.Rc0RuntimeLog.Write("Calibration",
+                $"CalibrationCompleted; Device=\"{_capture.InputDeviceName}\"; NoiseFloorRms={profile.NoiseFloorRms:F5}; " +
+                $"SpeechRms={profile.SpeechRms:F5}; NoiseGateThreshold={profile.NoiseGateThreshold:F5}; " +
+                $"VoicedRmsThreshold={profile.VoicedRmsThreshold:F5}; SnrDb={profile.SignalToNoiseDb:F1}");
 
             _step = CalibrationStep.Completed;
             StopCapture();

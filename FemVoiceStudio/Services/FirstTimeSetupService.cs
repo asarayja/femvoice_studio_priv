@@ -66,8 +66,8 @@ namespace FemVoiceStudio.Services
                 if (File.Exists(SettingsFilePath))
                 {
                     var json = File.ReadAllText(SettingsFilePath);
-                    var settings = JsonSerializer.Deserialize<AppSettings>(json);
-                    
+                    var settings = JsonSerializer.Deserialize<AppSettings>(json, AppSettingsJson.Options);
+
                     // Check if first-time setup was completed
                     if (settings != null)
                     {
@@ -102,7 +102,7 @@ namespace FemVoiceStudio.Services
                 if (File.Exists(SettingsFilePath))
                 {
                     var json = File.ReadAllText(SettingsFilePath);
-                    settings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+                    settings = JsonSerializer.Deserialize<AppSettings>(json, AppSettingsJson.Options) ?? new AppSettings();
                 }
                 else
                 {
@@ -111,10 +111,7 @@ namespace FemVoiceStudio.Services
 
                 settings.FirstTimeSetupCompleted = true;
 
-                var updatedJson = JsonSerializer.Serialize(settings, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
+                var updatedJson = JsonSerializer.Serialize(settings, AppSettingsJson.Options);
 
                 var directory = Path.GetDirectoryName(SettingsFilePath);
                 if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
@@ -129,6 +126,7 @@ namespace FemVoiceStudio.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error marking setup completed: {ex.Message}");
+                Rc0WriteFailureSink.Report("FirstTimeSetupService.MarkSetupCompleted", SettingsFilePath, ex);
             }
         }
 
@@ -142,13 +140,10 @@ namespace FemVoiceStudio.Services
                 if (File.Exists(SettingsFilePath))
                 {
                     var json = File.ReadAllText(SettingsFilePath);
-                    var settings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+                    var settings = JsonSerializer.Deserialize<AppSettings>(json, AppSettingsJson.Options) ?? new AppSettings();
                     settings.FirstTimeSetupCompleted = false;
 
-                    var updatedJson = JsonSerializer.Serialize(settings, new JsonSerializerOptions
-                    {
-                        WriteIndented = true
-                    });
+                    var updatedJson = JsonSerializer.Serialize(settings, AppSettingsJson.Options);
 
                     File.WriteAllText(SettingsFilePath, updatedJson);
                     _settings = settings;
@@ -171,7 +166,7 @@ namespace FemVoiceStudio.Services
                 if (File.Exists(SettingsFilePath))
                 {
                     var json = File.ReadAllText(SettingsFilePath);
-                    _settings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+                    _settings = JsonSerializer.Deserialize<AppSettings>(json, AppSettingsJson.Options) ?? new AppSettings();
                 }
             }
             catch (Exception ex)
@@ -194,17 +189,15 @@ namespace FemVoiceStudio.Services
                     Directory.CreateDirectory(directory);
                 }
                 
-                var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
-                
+                var json = JsonSerializer.Serialize(settings, AppSettingsJson.Options);
+
                 File.WriteAllText(SettingsFilePath, json);
                 _settings = settings;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error saving settings: {ex.Message}");
+                Rc0WriteFailureSink.Report("FirstTimeSetupService.SaveSettings", SettingsFilePath, ex);
             }
         }
     }

@@ -348,7 +348,9 @@ namespace FemVoiceStudio.Views
             }
             catch (Exception ex)
             {
+                // Debug.WriteLine kompileres bort i Release — RC0-loggen er eneste spor.
                 System.Diagnostics.Debug.WriteLine($"Error saving session: {ex.Message}");
+                Rc0RuntimeLog.Write("Persistence", $"ResonanceSessionSave FAILED; {ex.GetType().Name}: {ex.Message}");
             }
         }
         

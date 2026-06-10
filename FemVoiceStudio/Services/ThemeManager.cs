@@ -27,8 +27,14 @@ namespace FemVoiceStudio.Services
         public bool HearOwnVoice { get; set; } = false;
         public bool FirstTimeSetupCompleted { get; set; } = false;
         public DebugSettings? Debug { get; set; }
+
+        // Hand-edited keys this model doesn't know about must survive the
+        // load-modify-save round-trips done by ThemeManager, DebugSettingsService
+        // and FirstTimeSetupService.
+        [System.Text.Json.Serialization.JsonExtensionData]
+        public System.Collections.Generic.Dictionary<string, System.Text.Json.JsonElement>? ExtensionData { get; set; }
     }
-    
+
     /// <summary>
     /// Debug settings model
     /// </summary>
@@ -36,6 +42,28 @@ namespace FemVoiceStudio.Services
     {
         public bool EnablePitchDebug { get; set; } = false;
         public bool EnableAnalyzerDebug { get; set; } = false;
+        public bool EnableRc0Diagnostics { get; set; } = false;
+
+        [System.Text.Json.Serialization.JsonExtensionData]
+        public System.Collections.Generic.Dictionary<string, System.Text.Json.JsonElement>? ExtensionData { get; set; }
+    }
+
+    /// <summary>
+    /// Shared serializer options for settings.json. All three settings writers
+    /// (ThemeManager, DebugSettingsService, FirstTimeSetupService) must use the same
+    /// options so a hand-edited file (e.g. "Theme": "Dark" as a string) never fails
+    /// deserialization and gets reset to defaults.
+    /// </summary>
+    public static class AppSettingsJson
+    {
+        public static readonly JsonSerializerOptions Options = new()
+        {
+            WriteIndented = true,
+            // Håndredigert fil er den dokumenterte måten å skru på debug-flaggene —
+            // feil casing skal ikke gjøre et flagg stille false.
+            PropertyNameCaseInsensitive = true,
+            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+        };
     }
 
     /// <summary>
@@ -281,7 +309,7 @@ namespace FemVoiceStudio.Services
                 if (File.Exists(SettingsFilePath))
                 {
                     var json = File.ReadAllText(SettingsFilePath);
-                    var settings = JsonSerializer.Deserialize<AppSettings>(json);
+                    var settings = JsonSerializer.Deserialize<AppSettings>(json, AppSettingsJson.Options);
                     _settings = settings ?? new AppSettings();
                     return _settings;
                 }
@@ -289,6 +317,7 @@ namespace FemVoiceStudio.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading settings: {ex.Message}");
+                Rc0WriteFailureSink.Report("ThemeManager.LoadSettings", SettingsFilePath, ex);
             }
             
             _settings = new AppSettings();
@@ -326,17 +355,15 @@ namespace FemVoiceStudio.Services
                 settings.Theme = _currentThemeMode;
                 settings.HearOwnVoice = GetHearOwnVoiceSetting();
 
-                var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions 
-                { 
-                    WriteIndented = true 
-                });
-                
+                var json = JsonSerializer.Serialize(settings, AppSettingsJson.Options);
+
                 File.WriteAllText(SettingsFilePath, json);
                 _settings = settings;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error saving settings: {ex.Message}");
+                Rc0WriteFailureSink.Report("ThemeManager.SaveSettings", SettingsFilePath, ex);
             }
         }
 

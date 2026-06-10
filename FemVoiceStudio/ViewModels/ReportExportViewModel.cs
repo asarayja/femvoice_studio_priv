@@ -174,10 +174,14 @@ namespace FemVoiceStudio.ViewModels
                 await using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
                 _exportWriter.Write(report, format, stream);
 
+                Rc0RuntimeLog.Write("ReportGeneration",
+                    $"ReportGenerated; Type={ReportTypeName(SelectedReportTypeIndex)}; Format={format}; Path=\"{filePath}\"");
                 StatusMessage = LocalizationService.Instance.GetFormattedString("Report_StatusExportedToFormat", filePath);
             }
             catch (Exception ex)
             {
+                Rc0RuntimeLog.Write("ReportGeneration",
+                    $"ReportGeneration FAILED; Type={ReportTypeName(SelectedReportTypeIndex)}; {ex.GetType().Name}: {ex.Message}");
                 StatusMessage = LocalizationService.Instance.GetFormattedString("Report_StatusExportErrorFormat", ex.Message);
             }
             finally
@@ -187,6 +191,15 @@ namespace FemVoiceStudio.ViewModels
         }
 
         private bool CanGenerate() => !IsGenerating;
+
+        private static string ReportTypeName(int index) => index switch
+        {
+            0 => "Clinical",
+            1 => "Coach",
+            2 => "Outcome",
+            3 => "Timeline",
+            _ => "Outcome"
+        };
 
         // ── Private helpers ───────────────────────────────────────────────────────
 

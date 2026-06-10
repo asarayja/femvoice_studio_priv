@@ -1069,8 +1069,11 @@ namespace FemVoiceStudio.Data
             command.Parameters.AddWithValue("@Feedback", session.Feedback ?? "");
             command.Parameters.AddWithValue("@DifficultyLevel", (int)session.DifficultyLevel);
             command.Parameters.AddWithValue("@IsRecoveryPractice", session.IsRecoveryPractice ? 1 : 0);
-            
-            return Convert.ToInt32(command.ExecuteScalar());
+
+            var savedId = Convert.ToInt32(command.ExecuteScalar());
+            Rc0RuntimeLog.Write("Persistence",
+                $"TrainingSessionSaved; Id={savedId}; OverallScore={session.OverallScore:F1}; AveragePitch={session.AveragePitch:F1}");
+            return savedId;
         }
         
         /// <summary>
