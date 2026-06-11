@@ -9,7 +9,13 @@ namespace FemVoiceStudio.Services
     public static class DiagnosticsNaming
     {
         public const string ValidationProfile = "RC0";
-        public const bool EnableRc0CompatibilityExport = true;
+
+        // static readonly (not const) on purpose: this is a single closeout toggle for the
+        // RC-0 backward-compatibility export. Keeping it non-const means the `if (!flag)`
+        // guard clauses that consume it do not fold to a compile-time constant, so the
+        // compiler no longer flags their bodies as unreachable (CS0162). Behaviour is
+        // unchanged (still true); flip to false to drop the legacy aliases.
+        public static readonly bool EnableRc0CompatibilityExport = true;
 
         public const string EvidenceJson = "EVIDENCE.json";
         public const string RuntimeLog = "RUNTIME_LOG.txt";
