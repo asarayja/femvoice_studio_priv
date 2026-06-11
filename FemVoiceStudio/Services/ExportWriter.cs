@@ -537,12 +537,12 @@ namespace FemVoiceStudio.Services
                                 table.ColumnsDefinition(columns =>
                                 {
                                     columns.RelativeColumn(3);
-                                    columns.RelativeColumn(2);
-                                    columns.RelativeColumn(2);
-                                    columns.RelativeColumn(2);
-                                    columns.RelativeColumn(2);
+                                    columns.RelativeColumn(1.5f);
+                                    columns.RelativeColumn(1.6f);
+                                    columns.RelativeColumn(1.6f);
+                                    columns.RelativeColumn(2.8f);
                                 });
-                                AddTableHeader(table, T("ReportPdf_Exercise"), T("ReportPdf_Composite"), T("Dimension_Resonance"), T("Dimension_Comfort"), T("ReportPdf_RecoveryCost"));
+                                AddTableHeader(table, T("ReportPdf_Exercise"), T("ReportPdf_Composite"), T("Dimension_Resonance"), T("Dimension_Comfort"), T("ReportPdf_RecoveryCostShort"));
                                 foreach (var ex in r.TopExercises)
                                 {
                                     table.Cell().Text(ReportAssembler.ResolveExerciseName(ex.ExerciseId));
@@ -680,7 +680,12 @@ namespace FemVoiceStudio.Services
             table.Header(header =>
             {
                 foreach (var h in headers)
-                    header.Cell().Background(Colors.Grey.Lighten2).Text(h).Bold();
+                    header.Cell()
+                        .Background(Colors.Grey.Lighten2)
+                        .Padding(2)
+                        .Text(h)
+                        .FontSize(8)
+                        .Bold();
             });
         }
 
