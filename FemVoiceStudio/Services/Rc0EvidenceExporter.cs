@@ -67,15 +67,9 @@ namespace FemVoiceStudio.Services
 
         // Primary evidence root lives in %LOCALAPPDATA%: it is never OneDrive-redirected
         // and not subject to Controlled Folder Access, unlike Documents.
-        private static readonly string PrimaryEvidenceRoot = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "FemVoiceStudio",
-            "RC0_Evidence");
+        private static readonly string PrimaryEvidenceRoot = DiagnosticsNaming.PrimaryRoot;
 
-        private static readonly string DocumentsEvidenceRoot = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            "FemVoiceStudio",
-            "RC0_Evidence");
+        private static readonly string DocumentsEvidenceRoot = DiagnosticsNaming.DocumentsMirrorRoot;
 
         public static string EvidenceRoot => PrimaryEvidenceRoot;
         public static string DocumentsMirrorRoot => DocumentsEvidenceRoot;
@@ -84,13 +78,15 @@ namespace FemVoiceStudio.Services
         {
             try
             {
-                var folder = Path.Combine(PrimaryEvidenceRoot, $"RC0_EVIDENCE_{DateTime.Now:yyyy-MM-dd_HHmmss}");
+                var timestamp = DateTime.Now;
+                var folder = Path.Combine(PrimaryEvidenceRoot, DiagnosticsNaming.MakeEvidenceFolderName(timestamp));
                 // To eksporter i samme sekund (øvelse + forsidemonitor) må ikke
                 // overskrive hverandre.
                 for (var suffix = 2; Directory.Exists(folder); suffix++)
-                    folder = Path.Combine(PrimaryEvidenceRoot, $"RC0_EVIDENCE_{DateTime.Now:yyyy-MM-dd_HHmmss}_{suffix}");
+                    folder = Path.Combine(PrimaryEvidenceRoot, $"{DiagnosticsNaming.MakeEvidenceFolderName(timestamp)}_{suffix}");
                 Directory.CreateDirectory(folder);
 
+                var sessionFailureClassification = ResolveSessionFailureClassification(evidence, audio);
                 var result = ResolveResult(evidence, audio);
                 WriteSessionSummary(folder, evidence, audio, result);
                 WriteRuntimeLog(folder);
@@ -100,20 +96,21 @@ namespace FemVoiceStudio.Services
                 WriteErrorsOnly(folder, evidence, audio);
                 WriteScreenshotChecklist(folder);
 
-                Rc0RuntimeLog.Write("RC0EvidenceExport", $"ExportedFolder=\"{folder}\"; Result={result}");
+                Rc0RuntimeLog.Write("EvidenceExport", $"ExportedFolder=\"{folder}\"; Result={result}; FailureClassification={sessionFailureClassification}");
                 TryMirrorToDocuments(folder);
+                TryWriteRc0CompatibilityExport(folder, timestamp);
                 return folder;
             }
             catch (Exception ex)
             {
                 Rc0WriteFailureSink.Report("Rc0EvidenceExporter.Export", PrimaryEvidenceRoot, ex);
-                Rc0RuntimeLog.Write("RC0EvidenceExport", $"Export FAILED; {ex.GetType().Name}: {ex.Message}");
+                Rc0RuntimeLog.Write("EvidenceExport", $"Export FAILED; {ex.GetType().Name}: {ex.Message}");
                 return string.Empty;
             }
         }
 
         /// <summary>
-        /// Best-effort visibility copy into Documents\FemVoiceStudio\RC0_Evidence so the
+        /// Best-effort visibility copy into Documents\FemVoiceStudio\Diagnostics so the
         /// user finds the evidence without digging into %LOCALAPPDATA%.
         /// </summary>
         private static void TryMirrorToDocuments(string folder)
@@ -130,6 +127,49 @@ namespace FemVoiceStudio.Services
                 Rc0WriteFailureSink.Report("Rc0EvidenceExporter.MirrorToDocuments", DocumentsEvidenceRoot, ex);
             }
         }
+
+        private static void TryWriteRc0CompatibilityExport(string folder, DateTime timestamp)
+        {
+            if (!DiagnosticsNaming.EnableRc0CompatibilityExport)
+                return;
+
+            try
+            {
+                var legacyFolder = Path.Combine(DiagnosticsNaming.LegacyPrimaryRoot, DiagnosticsNaming.MakeLegacyEvidenceFolderName(timestamp));
+                for (var suffix = 2; Directory.Exists(legacyFolder); suffix++)
+                    legacyFolder = Path.Combine(DiagnosticsNaming.LegacyPrimaryRoot, $"{DiagnosticsNaming.MakeLegacyEvidenceFolderName(timestamp)}_{suffix}");
+                CopyDirectory(folder, legacyFolder, useRc0Names: true);
+
+                var legacyDocumentsFolder = Path.Combine(DiagnosticsNaming.LegacyDocumentsMirrorRoot, Path.GetFileName(legacyFolder));
+                CopyDirectory(folder, legacyDocumentsFolder, useRc0Names: true);
+            }
+            catch (Exception ex)
+            {
+                Rc0WriteFailureSink.Report("Rc0EvidenceExporter.Rc0CompatibilityExport", DiagnosticsNaming.LegacyPrimaryRoot, ex);
+            }
+        }
+
+        private static void CopyDirectory(string source, string destination, bool useRc0Names)
+        {
+            Directory.CreateDirectory(destination);
+            foreach (var file in Directory.GetFiles(source))
+            {
+                var targetName = useRc0Names ? ToRc0FileName(Path.GetFileName(file)) : Path.GetFileName(file);
+                File.Copy(file, Path.Combine(destination, targetName), overwrite: true);
+            }
+        }
+
+        private static string ToRc0FileName(string fileName) => fileName switch
+        {
+            var name when string.Equals(name, DiagnosticsNaming.EvidenceJson, StringComparison.OrdinalIgnoreCase) => DiagnosticsNaming.Rc0EvidenceJson,
+            var name when string.Equals(name, DiagnosticsNaming.RuntimeLog, StringComparison.OrdinalIgnoreCase) => DiagnosticsNaming.Rc0RuntimeLog,
+            var name when string.Equals(name, DiagnosticsNaming.VerificationReport, StringComparison.OrdinalIgnoreCase) => DiagnosticsNaming.Rc0VerificationReport,
+            var name when string.Equals(name, DiagnosticsNaming.AudioPipelineDiagnosticReport, StringComparison.OrdinalIgnoreCase) => DiagnosticsNaming.Rc0AudioPipelineDiagnosticReport,
+            var name when string.Equals(name, DiagnosticsNaming.SessionSummary, StringComparison.OrdinalIgnoreCase) => DiagnosticsNaming.Rc0SessionSummary,
+            var name when string.Equals(name, DiagnosticsNaming.ErrorsOnly, StringComparison.OrdinalIgnoreCase) => DiagnosticsNaming.Rc0ErrorsOnly,
+            var name when string.Equals(name, DiagnosticsNaming.ScreenshotChecklist, StringComparison.OrdinalIgnoreCase) => DiagnosticsNaming.Rc0ScreenshotChecklist,
+            _ => fileName
+        };
 
         public static string NormalizeVerificationStatus(string input)
         {
@@ -151,15 +191,60 @@ namespace FemVoiceStudio.Services
                                 : "NOT_VERIFIED";
         }
 
+        public static AudioFailureClassification ResolveSessionFailureClassification(SessionEvidence evidence, AudioCaptureDiagnosticsSnapshot audio)
+        {
+            if (audio.FailureClassification != AudioFailureClassification.SIGNAL_LEVEL_COLLAPSES
+                && audio.FailureClassification != AudioFailureClassification.SILENCE_GATE_REJECTS_SIGNAL)
+                return audio.FailureClassification;
+
+            return HasUsableActiveVoiceEvidence(evidence, audio)
+                ? AudioFailureClassification.UNKNOWN
+                : audio.FailureClassification;
+        }
+
+        public static string ResolveResultForDiagnostics(SessionEvidence evidence, AudioCaptureDiagnosticsSnapshot audio)
+            => ResolveResult(evidence, audio);
+
+        private static bool HasUsableActiveVoiceEvidence(SessionEvidence evidence, AudioCaptureDiagnosticsSnapshot audio)
+        {
+            var persistencePass = string.Equals(
+                NormalizeVerificationStatus(evidence.PersistenceReadBackStatus),
+                "PASS",
+                StringComparison.OrdinalIgnoreCase);
+
+            var coreEvidencePasses =
+                audio.DataAvailableCount > 0
+                && evidence.GraphUpdateCount > 0
+                && evidence.PitchSamplesCount > 0
+                && evidence.ResonanceRealSampleCount > 0
+                && evidence.ResonanceAcceptedCount > 0
+                && persistencePass
+                && evidence.Errors.Length == 0;
+
+            if (!coreEvidencePasses)
+                return false;
+
+            var pitchSuccessRate = SuccessRate(evidence.PitchSamplesCount, evidence.PitchDetectorCalledCount);
+            var meaningfulActiveVoice =
+                audio.VoicedFramePercent >= 25
+                || pitchSuccessRate >= 0.30
+                || evidence.ResonanceRealSampleCount >= 10
+                || (audio.CurrentSilenceThreshold > 0 && audio.RmsP90 > audio.CurrentSilenceThreshold);
+
+            return meaningfulActiveVoice;
+        }
+
         private static string ResolveResult(SessionEvidence evidence, AudioCaptureDiagnosticsSnapshot audio)
         {
             if (audio.DataAvailableCount <= 0 || evidence.PitchDetectorCalledCount <= 0)
                 return "BLOCKED";
 
-            // Bare harde feil gir FAIL. SILENCE_GATE/SIGNAL_LEVEL beskriver den SISTE
-            // lydrammen ved stopp — en bruker som er stille idet hun klikker Stopp er
-            // ikke en mislykket økt; det rapporteres som WARNING under.
-            var hardFailure = audio.FailureClassification
+            var sessionFailureClassification = ResolveSessionFailureClassification(evidence, audio);
+
+            // Bare harde feil gir FAIL. SILENCE_GATE/SIGNAL_LEVEL kan beskrive den
+            // siste lydrammen ved stopp; når økten har aktiv stemme-evidence normaliseres
+            // dette til session-level OK, mens rå snapshot beholdes i Raw* feltene.
+            var hardFailure = sessionFailureClassification
                 is AudioFailureClassification.CAPTURE_STOPS
                 or AudioFailureClassification.DEVICE_SELECTION_ERROR
                 or AudioFailureClassification.WINDOWS_OR_DRIVER_LEVEL_ISSUE;
@@ -170,7 +255,7 @@ namespace FemVoiceStudio.Services
             if (!evidence.PersistenceSaved || !evidence.AnalyticsWritten || evidence.PitchSamplesCount <= 0)
                 return "FAIL";
 
-            return evidence.Warnings.Length > 0 || audio.FailureClassification != AudioFailureClassification.UNKNOWN
+            return evidence.Warnings.Length > 0 || sessionFailureClassification != AudioFailureClassification.UNKNOWN
                 ? "WARNING"
                 : "PASS";
         }
@@ -189,20 +274,21 @@ namespace FemVoiceStudio.Services
             sb.AppendLine($"- Completion status: {evidence.CompletionStatus}");
             sb.AppendLine($"- Result: {result}");
             sb.AppendLine($"- Device: {audio.DeviceName}");
-            sb.AppendLine($"- Failure classification: {audio.FailureClassification}");
-            File.WriteAllText(Path.Combine(folder, "RC0_SESSION_SUMMARY.md"), sb.ToString());
+            sb.AppendLine($"- Failure classification: {ResolveSessionFailureClassification(evidence, audio)}");
+            sb.AppendLine($"- Raw capture classification: {audio.FailureClassification}");
+            File.WriteAllText(Path.Combine(folder, DiagnosticsNaming.SessionSummary), sb.ToString());
         }
 
         private static void WriteRuntimeLog(string folder)
         {
-            var destination = Path.Combine(folder, "RC0_RUNTIME_LOG.txt");
+            var destination = Path.Combine(folder, DiagnosticsNaming.RuntimeLog);
             try
             {
                 if (Rc0RuntimeLog.TryCopyTo(destination))
                     return;
 
                 File.WriteAllText(destination,
-                    $"No RC0 runtime log existed at \"{Rc0RuntimeLog.CurrentLogPath}\" for this export.");
+                    $"No runtime diagnostics log existed at \"{Rc0RuntimeLog.CurrentLogPath}\" for this export.");
             }
             catch (Exception ex)
             {
@@ -243,16 +329,21 @@ namespace FemVoiceStudio.Services
                 : string.Equals(evidence.PersistenceReadBackStatus, "NOT_VERIFIED", StringComparison.OrdinalIgnoreCase) ? "NOT_VERIFIED" : "FAIL";
             AppendCheckStatus(sb, "Persistence save/load", persistenceStatus, $"Saved={evidence.PersistenceSaved}, ReadBackStatus={evidence.PersistenceReadBackStatus}");
 
-            AppendCheckStatus(sb, "Clinical Report", evidence.ClinicalReportStatus, $"ClinicalReportStatus={evidence.ClinicalReportStatus}");
-            AppendCheckStatus(sb, "Coach Report", evidence.CoachReportStatus, $"CoachReportStatus={evidence.CoachReportStatus}");
-            AppendCheckStatus(sb, "Outcome Report", evidence.OutcomeReportStatus, $"OutcomeReportStatus={evidence.OutcomeReportStatus}");
-            AppendCheckStatus(sb, "Timeline Report", evidence.TimelineReportStatus, $"TimelineReportStatus={evidence.TimelineReportStatus}");
+            var clinicalReportStatus = NormalizeVerificationStatus(evidence.ClinicalReportStatus);
+            var coachReportStatus = NormalizeVerificationStatus(evidence.CoachReportStatus);
+            var outcomeReportStatus = NormalizeVerificationStatus(evidence.OutcomeReportStatus);
+            var timelineReportStatus = NormalizeVerificationStatus(evidence.TimelineReportStatus);
+            AppendCheckStatus(sb, "Clinical Report", clinicalReportStatus, $"ClinicalReportStatus={clinicalReportStatus}");
+            AppendCheckStatus(sb, "Coach Report", coachReportStatus, $"CoachReportStatus={coachReportStatus}");
+            AppendCheckStatus(sb, "Outcome Report", outcomeReportStatus, $"OutcomeReportStatus={outcomeReportStatus}");
+            AppendCheckStatus(sb, "Timeline Report", timelineReportStatus, $"TimelineReportStatus={timelineReportStatus}");
             sb.AppendLine();
             sb.AppendLine($"## RC-0 Result: {result}");
             sb.AppendLine();
-            sb.AppendLine($"- FailureClassification: {audio.FailureClassification}");
+            sb.AppendLine($"- FailureClassification: {ResolveSessionFailureClassification(evidence, audio)}");
             sb.AppendLine($"- ScoreSource: {evidence.ScoreSource}");
-            File.WriteAllText(Path.Combine(folder, "RC0_VERIFICATION_REPORT.md"), sb.ToString());
+            sb.AppendLine($"- RawCaptureFailureClassification: {audio.FailureClassification}");
+            File.WriteAllText(Path.Combine(folder, DiagnosticsNaming.VerificationReport), sb.ToString());
         }
 
         private static void WriteDiagnosticReport(string folder, SessionEvidence evidence, AudioCaptureDiagnosticsSnapshot audio, string result)
@@ -262,7 +353,8 @@ namespace FemVoiceStudio.Services
             sb.AppendLine();
             sb.AppendLine("## Summary");
             sb.AppendLine($"Result: {result}");
-            sb.AppendLine($"Root cause classification: {audio.FailureClassification}");
+            sb.AppendLine($"Root cause classification: {ResolveSessionFailureClassification(evidence, audio)}");
+            sb.AppendLine($"Raw capture classification: {audio.FailureClassification}");
             sb.AppendLine();
             sb.AppendLine("## Device Comparison");
             sb.AppendLine($"- DeviceName: {audio.DeviceName}");
@@ -273,7 +365,7 @@ namespace FemVoiceStudio.Services
             sb.AppendLine($"- DeviceChangedDuringSession: {audio.DeviceChangedDuringSession}");
             sb.AppendLine();
             sb.AppendLine("## Front-page Pitch Graph Findings");
-            sb.AppendLine("Front-page evidence is written to RC0_RUNTIME_LOG.txt under FrontPagePitchMonitor and PitchPipeline entries.");
+            sb.AppendLine("Front-page evidence is written to RUNTIME_LOG.txt under FrontPagePitchMonitor and PitchPipeline entries.");
             sb.AppendLine();
             sb.AppendLine("## Exercise Score Findings");
             sb.AppendLine($"- Score: {evidence.Score:F1}");
@@ -327,13 +419,19 @@ namespace FemVoiceStudio.Services
             sb.AppendLine();
             sb.AppendLine("## Recommended RC-0 Fix");
             sb.AppendLine("Use this evidence to classify whether the issue is capture, signal level, silence gate, pitch rejection, graph update, or score fallback before changing clinical scoring.");
-            File.WriteAllText(Path.Combine(folder, "RC0_AUDIO_PIPELINE_DIAGNOSTIC_REPORT.md"), sb.ToString());
+            File.WriteAllText(Path.Combine(folder, DiagnosticsNaming.AudioPipelineDiagnosticReport), sb.ToString());
         }
 
         private static void WriteJson(string folder, SessionEvidence evidence, AudioCaptureDiagnosticsSnapshot audio, string result)
         {
+            var sessionFailureClassification = ResolveSessionFailureClassification(evidence, audio);
+            var clinicalReportStatus = NormalizeVerificationStatus(evidence.ClinicalReportStatus);
+            var coachReportStatus = NormalizeVerificationStatus(evidence.CoachReportStatus);
+            var outcomeReportStatus = NormalizeVerificationStatus(evidence.OutcomeReportStatus);
+            var timelineReportStatus = NormalizeVerificationStatus(evidence.TimelineReportStatus);
             var payload = new
             {
+                ValidationProfile = DiagnosticsNaming.ValidationProfile,
                 evidence.SessionId,
                 evidence.ExerciseId,
                 evidence.ExerciseName,
@@ -362,24 +460,25 @@ namespace FemVoiceStudio.Services
                 VoiceHealthEvaluated = evidence.VoiceHealthEvaluated,
                 ReportsGenerated = new
                 {
-                    Clinical = evidence.ClinicalReportGenerated,
-                    Coach = evidence.CoachReportGenerated,
-                    Outcome = evidence.OutcomeReportGenerated,
-                    Timeline = evidence.TimelineReportGenerated
+                    Clinical = string.Equals(clinicalReportStatus, "PASS", StringComparison.OrdinalIgnoreCase),
+                    Coach = string.Equals(coachReportStatus, "PASS", StringComparison.OrdinalIgnoreCase),
+                    Outcome = string.Equals(outcomeReportStatus, "PASS", StringComparison.OrdinalIgnoreCase),
+                    Timeline = string.Equals(timelineReportStatus, "PASS", StringComparison.OrdinalIgnoreCase)
                 },
                 ReportVerification = new
                 {
                     PersistenceReadBackStatus = evidence.PersistenceReadBackStatus,
-                    ClinicalReportStatus = evidence.ClinicalReportStatus,
-                    CoachReportStatus = evidence.CoachReportStatus,
-                    OutcomeReportStatus = evidence.OutcomeReportStatus,
-                    TimelineReportStatus = evidence.TimelineReportStatus,
+                    ClinicalReportStatus = clinicalReportStatus,
+                    CoachReportStatus = coachReportStatus,
+                    OutcomeReportStatus = outcomeReportStatus,
+                    TimelineReportStatus = timelineReportStatus,
                     ReportVerificationErrors = evidence.ReportVerificationErrors
                 },
                 PersistenceReadBackError = evidence.PersistenceReadBackError,
                 DeviceName = audio.DeviceName,
                 DeviceId = audio.DeviceId,
-                CaptureStatus = audio.FailureClassification == AudioFailureClassification.UNKNOWN ? "UNKNOWN_OR_OK" : audio.FailureClassification.ToString(),
+                CaptureStatus = sessionFailureClassification == AudioFailureClassification.UNKNOWN ? "UNKNOWN_OR_OK" : sessionFailureClassification.ToString(),
+                RawCaptureStatus = audio.FailureClassification == AudioFailureClassification.UNKNOWN ? "UNKNOWN_OR_OK" : audio.FailureClassification.ToString(),
                 TimeSinceLastAudioFrame = audio.TimeSinceLastAudioFrameSeconds,
                 RmsMean = audio.RmsMean,
                 RmsMedian = audio.RmsMedian,
@@ -389,7 +488,8 @@ namespace FemVoiceStudio.Services
                 PitchDetectionSuccessRate = SuccessRate(evidence.PitchSamplesCount, evidence.PitchDetectorCalledCount),
                 GraphUpdateCount = evidence.GraphUpdateCount,
                 evidence.ScoreSource,
-                FailureClassification = audio.FailureClassification.ToString(),
+                FailureClassification = sessionFailureClassification.ToString(),
+                RawFailureClassification = audio.FailureClassification.ToString(),
                 evidence.Errors,
                 evidence.Warnings,
                 evidence.Notes,
@@ -397,7 +497,7 @@ namespace FemVoiceStudio.Services
             };
 
             File.WriteAllText(
-                Path.Combine(folder, "RC0_EVIDENCE.json"),
+                Path.Combine(folder, DiagnosticsNaming.EvidenceJson),
                 JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }));
         }
 
@@ -417,7 +517,7 @@ namespace FemVoiceStudio.Services
                 sb.AppendLine($"RC0 write failure detected this process: {firstWriteError}");
 
             TryAppendRuntimeErrorLines(sb);
-            File.WriteAllText(Path.Combine(folder, "RC0_ERRORS_ONLY.txt"), sb.Length == 0 ? "No errors captured." : sb.ToString());
+            File.WriteAllText(Path.Combine(folder, DiagnosticsNaming.ErrorsOnly), sb.Length == 0 ? "No errors captured." : sb.ToString());
         }
 
         private static void TryAppendRuntimeErrorLines(StringBuilder sb)
@@ -447,7 +547,7 @@ namespace FemVoiceStudio.Services
 
         private static void WriteScreenshotChecklist(string folder)
         {
-            File.WriteAllText(Path.Combine(folder, "RC0_SCREENSHOT_CHECKLIST.md"),
+            File.WriteAllText(Path.Combine(folder, DiagnosticsNaming.ScreenshotChecklist),
                 "# RC0 Screenshot Checklist\n\n" +
                 "- [ ] Exercise list looks correct\n" +
                 "- [ ] Exercise icons visible\n" +

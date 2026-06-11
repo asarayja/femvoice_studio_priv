@@ -613,6 +613,7 @@ namespace FemVoiceStudio.Views
                 {
                     try
                     {
+                        var reportVerification = ReportVerificationTracker.Snapshot();
                         // Build RC-0 session evidence with resonance engine counters and a best-effort persistence readback.
                         var evidence = new Rc0EvidenceExporter.SessionEvidence
                         {
@@ -647,10 +648,15 @@ namespace FemVoiceStudio.Views
                             PersistenceSaved = rc0PersistenceSaved,
                             PersistenceReadBack = false,
                             PersistenceReadBackStatus = "NOT_VERIFIED",
-                            ClinicalReportStatus = "NOT_VERIFIED",
-                            CoachReportStatus = "NOT_VERIFIED",
-                            OutcomeReportStatus = "NOT_VERIFIED",
-                            TimelineReportStatus = "NOT_VERIFIED",
+                            ClinicalReportStatus = reportVerification.ClinicalReportStatus,
+                            CoachReportStatus = reportVerification.CoachReportStatus,
+                            OutcomeReportStatus = reportVerification.OutcomeReportStatus,
+                            TimelineReportStatus = reportVerification.TimelineReportStatus,
+                            ReportVerificationErrors = reportVerification.ReportVerificationErrors,
+                            ClinicalReportGenerated = reportVerification.ClinicalReportGenerated,
+                            CoachReportGenerated = reportVerification.CoachReportGenerated,
+                            OutcomeReportGenerated = reportVerification.OutcomeReportGenerated,
+                            TimelineReportGenerated = reportVerification.TimelineReportGenerated,
                             Notes = new[]
                             {
                                 "PitchDetectorCalledCount counts 100ms-throttled analysis frames (~10/s), not raw audio callbacks.",

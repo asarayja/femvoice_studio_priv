@@ -49,8 +49,9 @@ namespace FemVoiceStudio.Services
                 Try(() => WriteInitialEvidenceJson(root, debug), "InitialEvidenceJson");
                 Try(() => WriteInitialDiagnosticReport(root), "InitialDiagnosticReport");
                 TryCopySentinelToDocuments(root);
+                TryCopyStartupBaselineToLegacy(root);
 
-                Rc0RuntimeLog.Write("AppStartup", $"RC0 startup bootstrap completed; EvidenceRoot=\"{root}\"");
+                Rc0RuntimeLog.Write("AppStartup", $"Diagnostics startup bootstrap completed; EvidenceRoot=\"{root}\"");
             }
             catch (Exception ex)
             {
@@ -73,7 +74,8 @@ namespace FemVoiceStudio.Services
         private static void WriteStartupSentinel(string root, DebugSettingsService debug)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("RC0 STARTUP SENTINEL");
+            sb.AppendLine("DIAGNOSTICS STARTUP SENTINEL");
+            sb.AppendLine($"ValidationProfile={DiagnosticsNaming.ValidationProfile}");
             sb.AppendLine($"Timestamp={DateTime.Now:O}");
             sb.AppendLine($"SettingsPath={ThemeManager.SettingsPath}");
             sb.AppendLine($"EnableRc0Diagnostics={debug.EnableRc0Diagnostics}");
@@ -83,29 +85,33 @@ namespace FemVoiceStudio.Services
             sb.AppendLine($"EvidenceRoot={root}");
             sb.AppendLine($"DocumentsFolder={Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}");
             sb.AppendLine($"LocalAppDataFolder={Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}");
-            File.WriteAllText(Path.Combine(root, "RC0_STARTUP_SENTINEL.txt"), sb.ToString());
+            File.WriteAllText(Path.Combine(root, DiagnosticsNaming.StartupSentinel), sb.ToString());
+            WriteRc0Alias(root, DiagnosticsNaming.StartupSentinel, DiagnosticsNaming.Rc0StartupSentinel);
         }
 
         private static void WriteInitialRuntimeLogCopy(string root)
         {
-            var destination = Path.Combine(root, "RC0_RUNTIME_LOG.txt");
+            var destination = Path.Combine(root, DiagnosticsNaming.RuntimeLog);
             if (!Rc0RuntimeLog.TryCopyTo(destination))
                 File.WriteAllText(destination,
                     $"Startup snapshot. The live runtime log for this process is \"{Rc0RuntimeLog.CurrentLogPath}\".");
+            WriteRc0Alias(root, DiagnosticsNaming.RuntimeLog, DiagnosticsNaming.Rc0RuntimeLog);
         }
 
         private static void WriteInitialErrorsOnly(string root)
         {
             var content = Rc0WriteFailureSink.FirstWriteError is { } firstWriteError
-                ? $"RC0 write failure detected during startup: {firstWriteError}{Environment.NewLine}"
+                ? $"Diagnostics write failure detected during startup: {firstWriteError}{Environment.NewLine}"
                 : "No errors captured at startup.";
-            File.WriteAllText(Path.Combine(root, "RC0_ERRORS_ONLY.txt"), content);
+            File.WriteAllText(Path.Combine(root, DiagnosticsNaming.ErrorsOnly), content);
+            WriteRc0Alias(root, DiagnosticsNaming.ErrorsOnly, DiagnosticsNaming.Rc0ErrorsOnly);
         }
 
         private static void WriteInitialEvidenceJson(string root, DebugSettingsService debug)
         {
             var payload = new
             {
+                ValidationProfile = DiagnosticsNaming.ValidationProfile,
                 StartupCompleted = true,
                 Timestamp = DateTime.Now,
                 SettingsPath = ThemeManager.SettingsPath,
@@ -116,27 +122,29 @@ namespace FemVoiceStudio.Services
                 EnableAnalyzerDebug = debug.EnableAnalyzerDebug,
                 CaptureStatus = "STARTUP_ONLY",
                 Note = "Written by Rc0StartupBootstrap at app launch, before any session. " +
-                       "Per-session evidence folders (RC0_EVIDENCE_<timestamp>) are created next to this file when a session ends."
+                       "Per-session evidence folders (EVIDENCE_<timestamp>) are created next to this file when a session ends."
             };
             File.WriteAllText(
-                Path.Combine(root, "RC0_EVIDENCE.json"),
+                Path.Combine(root, DiagnosticsNaming.EvidenceJson),
                 JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }));
+            WriteRc0Alias(root, DiagnosticsNaming.EvidenceJson, DiagnosticsNaming.Rc0EvidenceJson);
         }
 
         private static void WriteInitialDiagnosticReport(string root)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("# RC0 Audio Pipeline Diagnostic Report (startup baseline)");
+            sb.AppendLine("# Audio Pipeline Diagnostic Report (startup baseline)");
             sb.AppendLine();
             sb.AppendLine($"Generated at: {DateTime.Now:O}");
             sb.AppendLine();
-            sb.AppendLine("No session has run yet in this process. This file proves RC-0 diagnostics");
+            sb.AppendLine("No session has run yet in this process. This file proves diagnostics");
             sb.AppendLine("bootstrapped at startup; a per-session report is written into each");
-            sb.AppendLine("RC0_EVIDENCE_<timestamp> folder when a session ends.");
+            sb.AppendLine("EVIDENCE_<timestamp> folder when a session ends.");
             sb.AppendLine();
             sb.AppendLine($"- Runtime log: {Rc0RuntimeLog.CurrentLogPath}");
             sb.AppendLine($"- Evidence root: {root}");
-            File.WriteAllText(Path.Combine(root, "RC0_AUDIO_PIPELINE_DIAGNOSTIC_REPORT.md"), sb.ToString());
+            File.WriteAllText(Path.Combine(root, DiagnosticsNaming.AudioPipelineDiagnosticReport), sb.ToString());
+            WriteRc0Alias(root, DiagnosticsNaming.AudioPipelineDiagnosticReport, DiagnosticsNaming.Rc0AudioPipelineDiagnosticReport);
         }
 
         private static void TryCopySentinelToDocuments(string root)
@@ -146,14 +154,54 @@ namespace FemVoiceStudio.Services
                 var destination = Rc0EvidenceExporter.DocumentsMirrorRoot;
                 Directory.CreateDirectory(destination);
                 File.Copy(
-                    Path.Combine(root, "RC0_STARTUP_SENTINEL.txt"),
-                    Path.Combine(destination, "RC0_STARTUP_SENTINEL.txt"),
+                    Path.Combine(root, DiagnosticsNaming.StartupSentinel),
+                    Path.Combine(destination, DiagnosticsNaming.StartupSentinel),
                     overwrite: true);
+                if (DiagnosticsNaming.EnableRc0CompatibilityExport)
+                {
+                    File.Copy(
+                        Path.Combine(root, DiagnosticsNaming.Rc0StartupSentinel),
+                        Path.Combine(destination, DiagnosticsNaming.Rc0StartupSentinel),
+                        overwrite: true);
+                }
             }
             catch (Exception ex)
             {
                 Rc0WriteFailureSink.Report("Rc0StartupBootstrap.CopySentinelToDocuments", Rc0EvidenceExporter.DocumentsMirrorRoot, ex);
             }
+        }
+
+        private static void TryCopyStartupBaselineToLegacy(string root)
+        {
+            if (!DiagnosticsNaming.EnableRc0CompatibilityExport)
+                return;
+
+            try
+            {
+                Directory.CreateDirectory(DiagnosticsNaming.LegacyPrimaryRoot);
+                foreach (var file in Directory.GetFiles(root, "RC0_*"))
+                {
+                    File.Copy(
+                        file,
+                        Path.Combine(DiagnosticsNaming.LegacyPrimaryRoot, Path.GetFileName(file)),
+                        overwrite: true);
+                }
+            }
+            catch (Exception ex)
+            {
+                Rc0WriteFailureSink.Report("Rc0StartupBootstrap.CopyStartupBaselineToLegacy", DiagnosticsNaming.LegacyPrimaryRoot, ex);
+            }
+        }
+
+        private static void WriteRc0Alias(string root, string neutralName, string rc0Name)
+        {
+            if (!DiagnosticsNaming.EnableRc0CompatibilityExport)
+                return;
+
+            File.Copy(
+                Path.Combine(root, neutralName),
+                Path.Combine(root, rc0Name),
+                overwrite: true);
         }
     }
 }

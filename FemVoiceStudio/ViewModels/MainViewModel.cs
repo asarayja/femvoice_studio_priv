@@ -744,6 +744,7 @@ namespace FemVoiceStudio.ViewModels
                 {
                     try
                     {
+                        var reportVerification = ReportVerificationTracker.Snapshot();
                         var evidence = new Rc0EvidenceExporter.SessionEvidence
                         {
                             SessionId = rc0SessionDbId,
@@ -763,6 +764,15 @@ namespace FemVoiceStudio.ViewModels
                             AnalyticsWritten = rc0SessionDbId > 0,
                             PersistenceSaved = rc0SessionDbId > 0,
                             PersistenceReadBack = false,
+                            ClinicalReportStatus = reportVerification.ClinicalReportStatus,
+                            CoachReportStatus = reportVerification.CoachReportStatus,
+                            OutcomeReportStatus = reportVerification.OutcomeReportStatus,
+                            TimelineReportStatus = reportVerification.TimelineReportStatus,
+                            ReportVerificationErrors = reportVerification.ReportVerificationErrors,
+                            ClinicalReportGenerated = reportVerification.ClinicalReportGenerated,
+                            CoachReportGenerated = reportVerification.CoachReportGenerated,
+                            OutcomeReportGenerated = reportVerification.OutcomeReportGenerated,
+                            TimelineReportGenerated = reportVerification.TimelineReportGenerated,
                             Notes = new[]
                             {
                                 "Front-page monitor evidence: ResonanceSamplesCount/GraphUpdateCount/GuidanceItemCount " +

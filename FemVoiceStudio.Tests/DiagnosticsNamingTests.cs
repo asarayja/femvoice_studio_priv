@@ -14,6 +14,8 @@ namespace FemVoiceStudio.Tests
             Assert.Equal("VERIFICATION_REPORT.md", DiagnosticsNaming.VerificationReport);
             Assert.Contains("Diagnostics", DiagnosticsNaming.PrimaryRoot);
             Assert.Contains("RuntimeDiagnostics", DiagnosticsNaming.RuntimeDirectory);
+            Assert.StartsWith("EVIDENCE_", DiagnosticsNaming.MakeEvidenceFolderName(new System.DateTime(2026, 6, 11, 21, 45, 0)));
+            Assert.StartsWith("RUNTIME_", DiagnosticsNaming.MakeRuntimeLogName(new System.DateTime(2026, 6, 11, 21, 45, 0)));
         }
 
         [Fact]

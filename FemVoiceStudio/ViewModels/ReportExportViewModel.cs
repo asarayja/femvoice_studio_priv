@@ -174,12 +174,14 @@ namespace FemVoiceStudio.ViewModels
                 await using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
                 _exportWriter.Write(report, format, stream);
 
+                ReportVerificationTracker.MarkSucceeded(ReportTypeName(SelectedReportTypeIndex));
                 Rc0RuntimeLog.Write("ReportGeneration",
                     $"ReportGenerated; Type={ReportTypeName(SelectedReportTypeIndex)}; Format={format}; Path=\"{filePath}\"");
                 StatusMessage = LocalizationService.Instance.GetFormattedString("Report_StatusExportedToFormat", filePath);
             }
             catch (Exception ex)
             {
+                ReportVerificationTracker.MarkFailed(ReportTypeName(SelectedReportTypeIndex), ex.Message);
                 Rc0RuntimeLog.Write("ReportGeneration",
                     $"ReportGeneration FAILED; Type={ReportTypeName(SelectedReportTypeIndex)}; {ex.GetType().Name}: {ex.Message}");
                 StatusMessage = LocalizationService.Instance.GetFormattedString("Report_StatusExportErrorFormat", ex.Message);
