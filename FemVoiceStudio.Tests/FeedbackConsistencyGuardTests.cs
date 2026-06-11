@@ -205,6 +205,169 @@ namespace FemVoiceStudio.Tests
         }
 
         [Fact]
+        public void FreshSession_SuppressesGenericHydrationFeedback()
+        {
+            var now = new DateTime(2026, 6, 11, 12, 0, 0, DateTimeKind.Utc);
+            var guard = new FeedbackConsistencyGuard(() => now, minimumInterval: TimeSpan.Zero);
+            guard.BeginSession(now);
+            var hydration = new FeedbackCandidate(
+                "VoiceHealthFeedback_Hydration",
+                HydrationReasonCodes.Basic,
+                FeedbackPriority.HydrationSuggestion,
+                MessageSeverity.Suggestion,
+                "HydrationAdvisor",
+                "HEALTH_HYDRATION");
+
+            var decision = guard.Submit(
+                hydration,
+                new FeedbackGuardContext(SessionElapsedSeconds: 30));
+
+            Assert.Equal(FeedbackDecisionKind.Suppressed, decision.Kind);
+            Assert.Contains("Fresh session", decision.Reason);
+        }
+
+        [Fact]
+        public void CriticalWarnings_BypassFreshSessionSuppression()
+        {
+            var now = new DateTime(2026, 6, 11, 12, 0, 0, DateTimeKind.Utc);
+            var guard = new FeedbackConsistencyGuard(() => now, minimumInterval: TimeSpan.Zero);
+            guard.BeginSession(now);
+            var warning = new FeedbackCandidate(
+                "VoiceHealthFeedback_Strain",
+                "STRAIN_DETECTED",
+                FeedbackPriority.ActiveStrainAlert,
+                MessageSeverity.Warning,
+                "VocalHealthSupervisor",
+                "HEALTH_STRAIN");
+
+            var decision = guard.Submit(
+                warning,
+                new FeedbackGuardContext(IsActiveStrainAlert: true, SessionElapsedSeconds: 30));
+
+            Assert.Equal(FeedbackDecisionKind.Approved, decision.Kind);
+        }
+
+        [Fact]
+        public void StalePreviousSession_LowPriorityMessageIsRemoved()
+        {
+            var now = new DateTime(2026, 6, 11, 12, 0, 0, DateTimeKind.Utc);
+            var guard = new FeedbackConsistencyGuard(() => now, minimumInterval: TimeSpan.Zero);
+            guard.BeginSession(now);
+            var stale = new FeedbackCandidate(
+                "ProgressionFeedback_Update",
+                "PROFILE_UPDATED",
+                FeedbackPriority.ProgressionUpdate,
+                MessageSeverity.Info,
+                "ProgressionOrchestrator",
+                "PROGRESSION_UPDATE",
+                CreatedAt: now.AddMinutes(-61));
+
+            var decision = guard.Submit(
+                stale,
+                new FeedbackGuardContext(SessionElapsedSeconds: 300));
+
+            Assert.Equal(FeedbackDecisionKind.Suppressed, decision.Kind);
+            Assert.Contains("Stale", decision.Reason);
+        }
+
+        [Fact]
+        public void DuplicateReasonOrConflict_SuppressesSecondHydrationCandidate()
+        {
+            var now = new DateTime(2026, 6, 11, 12, 0, 0, DateTimeKind.Utc);
+            var guard = new FeedbackConsistencyGuard(() => now, minimumInterval: TimeSpan.Zero);
+            guard.BeginSession(now);
+            var context = new FeedbackGuardContext(SessionElapsedSeconds: 300);
+            var first = new FeedbackCandidate(
+                "VoiceHealthFeedback_Hydration",
+                HydrationReasonCodes.Basic,
+                FeedbackPriority.HydrationSuggestion,
+                MessageSeverity.Suggestion,
+                "HydrationAdvisor",
+                "HEALTH_HYDRATION");
+            var second = first with { ReasonCode = "HYDRATION_SUSTAINED" };
+
+            var firstDecision = guard.Submit(first, context);
+            var secondDecision = guard.Submit(second, context);
+
+            Assert.Equal(FeedbackDecisionKind.Approved, firstDecision.Kind);
+            Assert.Equal(FeedbackDecisionKind.Suppressed, secondDecision.Kind);
+            Assert.Contains("conflict key", secondDecision.Reason);
+        }
+
+        [Fact]
+        public void LowPriorityMessage_PerSessionLimitSuppressesFurtherRepeats()
+        {
+            var now = new DateTime(2026, 6, 11, 12, 0, 0, DateTimeKind.Utc);
+            var guard = new FeedbackConsistencyGuard(() => now, minimumInterval: TimeSpan.Zero);
+            guard.BeginSession(now);
+            var context = new FeedbackGuardContext(SessionElapsedSeconds: 300);
+            var generic = new FeedbackCandidate(
+                "InlineCoachFeedback_Generic",
+                "GENERIC_HINT",
+                FeedbackPriority.TechniqueCorrection,
+                MessageSeverity.Suggestion,
+                "ExerciseIntelligenceCoordinator",
+                "INLINE_GENERIC");
+
+            var first = guard.Submit(generic, context);
+            now = now.AddMinutes(6);
+            var second = guard.Submit(generic with { CreatedAt = now }, context);
+
+            Assert.Equal(FeedbackDecisionKind.Approved, first.Kind);
+            Assert.Equal(FeedbackDecisionKind.Suppressed, second.Kind);
+            Assert.Contains("Per-session display limit", second.Reason);
+        }
+
+        [Fact]
+        public void SubmitMany_FatigueOrRestOutranksHydration()
+        {
+            var guard = new FeedbackConsistencyGuard(minimumInterval: TimeSpan.Zero);
+            guard.BeginSession(new DateTime(2026, 6, 11, 12, 0, 0, DateTimeKind.Utc));
+            var hydration = new FeedbackCandidate(
+                "VoiceHealthFeedback_Hydration",
+                HydrationReasonCodes.Basic,
+                FeedbackPriority.HydrationSuggestion,
+                MessageSeverity.Suggestion,
+                "HydrationAdvisor",
+                "HEALTH_HYDRATION");
+            var fatigue = new FeedbackCandidate(
+                "VoiceHealthFeedback_Fatigue",
+                "FATIGUE_DETECTED",
+                FeedbackPriority.HealthWarning,
+                MessageSeverity.Warning,
+                "VocalHealthSupervisor",
+                "HEALTH_FATIGUE");
+
+            var decisions = guard.SubmitMany(
+                new[] { hydration, fatigue },
+                new FeedbackGuardContext(IsFatigueActive: true, SessionElapsedSeconds: 300));
+
+            var approved = Assert.Single(decisions.Where(d => d.Kind == FeedbackDecisionKind.Approved));
+            Assert.Equal("FATIGUE_DETECTED", approved.Candidate.ReasonCode);
+        }
+
+        [Fact]
+        public void DynamicRecheck_SuppressesCandidateWhenContextChangesBeforeDisplay()
+        {
+            var now = new DateTime(2026, 6, 11, 12, 0, 0, DateTimeKind.Utc);
+            var guard = new FeedbackConsistencyGuard(() => now, minimumInterval: TimeSpan.Zero);
+            guard.BeginSession(now);
+            var candidate = new FeedbackCandidate(
+                "VoiceHealthFeedback_Hydration",
+                HydrationReasonCodes.Basic,
+                FeedbackPriority.HydrationSuggestion,
+                MessageSeverity.Suggestion,
+                "HydrationAdvisor",
+                "HEALTH_HYDRATION");
+
+            var earlyContext = new FeedbackGuardContext(SessionElapsedSeconds: 30);
+            var decision = guard.Submit(candidate, earlyContext);
+
+            Assert.Equal(FeedbackDecisionKind.Suppressed, decision.Kind);
+            Assert.Contains("Fresh session", decision.Reason);
+        }
+
+        [Fact]
         public void InlineCoachFeedbackMapper_MapsSafetyLockToSafetyFreeze()
         {
             var mapper = new InlineCoachFeedbackMapper();

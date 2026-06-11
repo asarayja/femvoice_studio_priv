@@ -35,7 +35,8 @@ namespace FemVoiceStudio.Services
         // simultaneous hints»-anti-flommen scopes per kanal, slik at distinkte
         // paneler ikke sulter hverandre ut. Tom kanal ("") = den delte coach-
         // panel-overflaten (EDVM/SmartCoach/Progresjon/Helse) — uendret oppførsel.
-        string Channel = "");
+        string Channel = "",
+        DateTime CreatedAt = default);
 
     public sealed record FeedbackGuardContext(
         bool IsSafetyFreezeActive = false,
@@ -43,7 +44,10 @@ namespace FemVoiceStudio.Services
         bool IsActiveStrainAlert = false,
         bool IsPauseRecommended = false,
         bool IsFatigueActive = false,
-        bool IsHoldStable = true);
+        bool IsHoldStable = true,
+        int SessionElapsedSeconds = 0,
+        DateTime? SessionStartedAt = null,
+        double VoiceLoad = 0);
 
     public sealed record FeedbackDecision(
         FeedbackDecisionKind Kind,
@@ -57,10 +61,21 @@ namespace FemVoiceStudio.Services
         private readonly TimeSpan _minimumInterval;
         private readonly int _escalationThreshold;
         private readonly Dictionary<string, DateTime> _lastApprovedByReason = new();
+        private readonly Dictionary<string, DateTime> _lastApprovedByConflict = new();
+        private readonly Dictionary<string, DateTime> _lastApprovedByMessage = new();
         private readonly Dictionary<string, DateTime> _lastApprovedAtByChannel = new();
+        private readonly Dictionary<string, int> _shownThisSessionByBudgetKey = new();
         private readonly Dictionary<string, int> _suppressionCounts = new();
         private DateTime _lastApprovedAt = DateTime.MinValue;
+        private DateTime _sessionStartedAt = DateTime.MinValue;
         private FeedbackCandidate? _activeWarning;
+
+        public static readonly TimeSpan StaleFeedbackMaxAge = TimeSpan.FromMinutes(60);
+        public static readonly TimeSpan LowPriorityRepeatCooldown = TimeSpan.FromSeconds(300);
+        public const int FreshSessionGenericSuppressSeconds = 120;
+        public const int LowPriorityPerSessionLimit = 1;
+        public const int HydrationPerSessionLimit = 2;
+        public const int GenericEncouragementPerSessionLimit = 2;
 
         public FeedbackConsistencyGuard(
             Func<DateTime>? clock = null,
@@ -75,6 +90,22 @@ namespace FemVoiceStudio.Services
         public event Action<FeedbackCandidate>? FeedbackApproved;
         public event Action<FeedbackCandidate, string>? FeedbackSuppressed;
         public event Action<FeedbackCandidate, string>? FeedbackEscalated;
+
+        public void BeginSession(DateTime? startedAt = null)
+        {
+            lock (_lock)
+            {
+                _sessionStartedAt = startedAt ?? _clock();
+                _lastApprovedByReason.Clear();
+                _lastApprovedByConflict.Clear();
+                _lastApprovedByMessage.Clear();
+                _lastApprovedAtByChannel.Clear();
+                _shownThisSessionByBudgetKey.Clear();
+                _suppressionCounts.Clear();
+                _lastApprovedAt = DateTime.MinValue;
+                _activeWarning = null;
+            }
+        }
 
         public IReadOnlyList<FeedbackDecision> SubmitMany(
             IEnumerable<FeedbackCandidate> candidates,
@@ -124,6 +155,10 @@ namespace FemVoiceStudio.Services
                     return SuppressLocked(candidate, clinicalBlock);
 
                 var now = _clock();
+                var eligibilityBlock = GetEligibilitySuppressionReason(candidate, context, now);
+                if (eligibilityBlock != null)
+                    return SuppressLocked(candidate, eligibilityBlock);
+
                 if (_lastApprovedByReason.TryGetValue(candidate.ReasonCode, out var lastForReason)
                     && now - lastForReason < _minimumInterval)
                 {
@@ -159,6 +194,10 @@ namespace FemVoiceStudio.Services
                 _lastApprovedAt = now;
                 _lastApprovedAtByChannel[channel] = now;
                 _lastApprovedByReason[candidate.ReasonCode] = now;
+                if (!string.IsNullOrWhiteSpace(candidate.ConflictKey))
+                    _lastApprovedByConflict[candidate.ConflictKey] = now;
+                _lastApprovedByMessage[candidate.Message] = now;
+                IncrementSessionBudget(candidate);
                 _suppressionCounts.Remove(GetSuppressionKey(candidate));
 
                 if (candidate.Priority >= FeedbackPriority.HealthWarning)
@@ -199,6 +238,150 @@ namespace FemVoiceStudio.Services
                 return "Active freeze suppresses hydration hints.";
 
             return null;
+        }
+
+        private string? GetEligibilitySuppressionReason(
+            FeedbackCandidate candidate,
+            FeedbackGuardContext context,
+            DateTime now)
+        {
+            if (IsHighPriorityBypass(candidate, context))
+                return null;
+
+            var createdAt = candidate.CreatedAt == default ? now : candidate.CreatedAt;
+            if (IsLowPriority(candidate) && now - createdAt > StaleFeedbackMaxAge)
+                return "Stale low-priority feedback candidate was removed.";
+
+            var elapsed = context.SessionElapsedSeconds;
+            if (elapsed <= 0 && context.SessionStartedAt.HasValue)
+                elapsed = Math.Max(0, (int)(now - context.SessionStartedAt.Value).TotalSeconds);
+            if (elapsed <= 0 && _sessionStartedAt != DateTime.MinValue)
+                elapsed = Math.Max(0, (int)(now - _sessionStartedAt).TotalSeconds);
+
+            if (elapsed > 0
+                && elapsed < FreshSessionGenericSuppressSeconds
+                && IsFreshSessionSuppressed(candidate))
+            {
+                return "Fresh session suppresses generic or low-priority feedback until enough context exists.";
+            }
+
+            if (!string.IsNullOrWhiteSpace(candidate.ConflictKey)
+                && _lastApprovedByConflict.TryGetValue(candidate.ConflictKey, out var lastConflict)
+                && IsLowPriority(candidate)
+                && now - lastConflict < LowPriorityRepeatCooldown)
+            {
+                return "Duplicate conflict key is still cooling down.";
+            }
+
+            if (_lastApprovedByMessage.TryGetValue(candidate.Message, out var lastMessage)
+                && IsLowPriority(candidate)
+                && now - lastMessage < LowPriorityRepeatCooldown)
+            {
+                return "Duplicate message text/resource key is still cooling down.";
+            }
+
+            if (_lastApprovedByReason.TryGetValue(candidate.ReasonCode, out var lastReason)
+                && IsLowPriority(candidate)
+                && now - lastReason < LowPriorityRepeatCooldown)
+            {
+                return "Low-priority reason code is still cooling down.";
+            }
+
+            var budgetKey = GetSessionBudgetKey(candidate);
+            if (_shownThisSessionByBudgetKey.TryGetValue(budgetKey, out var shown)
+                && shown >= GetSessionLimit(candidate))
+            {
+                return "Per-session display limit reached for this feedback category.";
+            }
+
+            return null;
+        }
+
+        private static bool IsHighPriorityBypass(FeedbackCandidate candidate, FeedbackGuardContext context)
+            => candidate.Priority >= FeedbackPriority.PauseRecommendation
+               || candidate.Severity == MessageSeverity.Warning
+               || context.IsSafetyFreezeActive
+               || context.IsHealthRiskActive
+               || context.IsActiveStrainAlert
+               || context.IsPauseRecommended
+               || context.IsFatigueActive;
+
+        private static bool IsLowPriority(FeedbackCandidate candidate)
+            => candidate.Priority <= FeedbackPriority.HydrationSuggestion;
+
+        private static bool IsFreshSessionSuppressed(FeedbackCandidate candidate)
+            => candidate.Priority is FeedbackPriority.ProgressionUpdate
+                    or FeedbackPriority.PerformancePraise
+                    or FeedbackPriority.HydrationSuggestion
+               || IsGeneric(candidate);
+
+        private static bool IsGeneric(FeedbackCandidate candidate)
+        {
+            var reason = candidate.ReasonCode ?? string.Empty;
+            var conflict = candidate.ConflictKey ?? string.Empty;
+            var source = candidate.Source ?? string.Empty;
+            var message = candidate.Message ?? string.Empty;
+
+            return reason.Contains("GENERIC", StringComparison.OrdinalIgnoreCase)
+                || reason.Contains("MOTIVATION", StringComparison.OrdinalIgnoreCase)
+                || reason.Contains("ACHIEVEMENT", StringComparison.OrdinalIgnoreCase)
+                || reason.Contains("HYDRATION", StringComparison.OrdinalIgnoreCase)
+                || conflict.Contains("HYDRATION", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("Generic", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("Hydration", StringComparison.OrdinalIgnoreCase)
+                || source.Equals("HydrationAdvisor", StringComparison.OrdinalIgnoreCase)
+                || source.Equals("SmartCoachEngine", StringComparison.OrdinalIgnoreCase)
+                    && candidate.Priority < FeedbackPriority.HealthWarning;
+        }
+
+        private static string GetSessionBudgetKey(FeedbackCandidate candidate)
+        {
+            if (IsHydration(candidate))
+                return "HYDRATION";
+
+            if (IsGenericEncouragement(candidate))
+                return "GENERIC_ENCOURAGEMENT";
+
+            if (IsGeneric(candidate))
+                return $"GENERIC:{candidate.ConflictKey}:{candidate.ReasonCode}";
+
+            return $"LOW:{candidate.ConflictKey}:{candidate.ReasonCode}";
+        }
+
+        private static int GetSessionLimit(FeedbackCandidate candidate)
+        {
+            if (IsHydration(candidate))
+                return HydrationPerSessionLimit;
+
+            if (IsGenericEncouragement(candidate))
+                return GenericEncouragementPerSessionLimit;
+
+            if (IsGeneric(candidate) || candidate.Priority <= FeedbackPriority.PerformancePraise)
+                return LowPriorityPerSessionLimit;
+
+            return int.MaxValue;
+        }
+
+        private static bool IsHydration(FeedbackCandidate candidate)
+            => (candidate.ReasonCode ?? string.Empty).Contains("HYDRATION", StringComparison.OrdinalIgnoreCase)
+               || (candidate.ConflictKey ?? string.Empty).Contains("HYDRATION", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(candidate.Source, "HydrationAdvisor", StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsGenericEncouragement(FeedbackCandidate candidate)
+            => candidate.Priority == FeedbackPriority.PerformancePraise
+               || (candidate.ReasonCode ?? string.Empty).Contains("MOTIVATION", StringComparison.OrdinalIgnoreCase)
+               || (candidate.ReasonCode ?? string.Empty).Contains("ACHIEVEMENT", StringComparison.OrdinalIgnoreCase)
+               || (candidate.Source ?? string.Empty).Equals("SmartCoachEngine", StringComparison.OrdinalIgnoreCase)
+                    && candidate.Priority < FeedbackPriority.HealthWarning;
+
+        private void IncrementSessionBudget(FeedbackCandidate candidate)
+        {
+            if (!IsLowPriority(candidate))
+                return;
+
+            var budgetKey = GetSessionBudgetKey(candidate);
+            _shownThisSessionByBudgetKey.TryGetValue(budgetKey, out var shown);
+            _shownThisSessionByBudgetKey[budgetKey] = shown + 1;
         }
 
         private FeedbackDecision Suppress(FeedbackCandidate candidate, string reason)

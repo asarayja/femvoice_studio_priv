@@ -734,6 +734,7 @@ namespace FemVoiceStudio.ViewModels
         private void ExecuteStart(object? _)
         {
             if (!CanStart(null)) return;
+            _feedbackPipeline?.BeginSession(DateTime.UtcNow);
             _coordinator.StartExercise(_activeProfile, userId: 1);
             IsExerciseActive = true;
             IsExercisePaused = false;

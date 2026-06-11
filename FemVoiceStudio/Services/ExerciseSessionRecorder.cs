@@ -298,6 +298,7 @@ namespace FemVoiceStudio.Services
                 // og _accumulatedLoad mellom økter (2-min cooldown ble effektivt per-app-
                 // levetid). Reset gjør cooldown + akkumulert last per-økt.
                 _hydrationAdvisor?.Reset();
+                _feedbackPipeline?.BeginSession(_startedAt.ToUniversalTime());
                 _recording = true;
             }
 

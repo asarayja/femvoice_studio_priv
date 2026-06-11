@@ -17,6 +17,9 @@ namespace FemVoiceStudio.Services
         public event EventHandler<FeedbackDecision>? FeedbackSuppressed;
         public event EventHandler<FeedbackDecision>? FeedbackEscalated;
 
+        public void BeginSession(DateTime? startedAt = null)
+            => _guard.BeginSession(startedAt);
+
         public FeedbackDecision Submit(FeedbackCandidate candidate, FeedbackGuardContext? context = null)
         {
             var decision = _guard.Submit(candidate, context);
@@ -148,7 +151,8 @@ namespace FemVoiceStudio.Services
                 IsSafetyFreezeActive: liveState?.IsSafetyLocked == true || isSafetyReason,
                 IsHealthRiskActive: liveState?.IsSafetyLocked == true || isHealthReason,
                 IsPauseRecommended: isSafetyReason,
-                IsHoldStable: liveState?.IsHoldingCorrectly ?? true);
+                IsHoldStable: liveState?.IsHoldingCorrectly ?? true,
+                SessionElapsedSeconds: liveState?.SessionElapsedSeconds ?? 0);
         }
 
         private static FeedbackPriority GetPriority(InlineCoachMessage message)
@@ -304,7 +308,8 @@ namespace FemVoiceStudio.Services
             return new FeedbackGuardContext(
                 IsSafetyFreezeActive: liveState?.IsSafetyLocked == true,
                 IsHealthRiskActive: liveState?.IsSafetyLocked == true,
-                IsHoldStable: liveState?.IsHoldingCorrectly ?? true);
+                IsHoldStable: liveState?.IsHoldingCorrectly ?? true,
+                SessionElapsedSeconds: liveState?.SessionElapsedSeconds ?? 0);
         }
     }
 
