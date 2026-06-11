@@ -325,7 +325,7 @@ public partial class App : Application
             return new ManualOverridesStore(
                 new SqliteManualOverridesRepository($"Data Source={databasePath}"));
         });
-        services.AddSingleton(_ =>
+        services.AddSingleton(sp =>
         {
             var appDataPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
@@ -333,7 +333,8 @@ public partial class App : Application
             Directory.CreateDirectory(appDataPath);
             var databasePath = Path.Combine(appDataPath, "femvoice.db");
             return new ClinicalNotesStore(
-                new SqliteClinicalNotesRepository($"Data Source={databasePath}"));
+                new SqliteClinicalNotesRepository($"Data Source={databasePath}"),
+                sp.GetRequiredService<AuditTrailStore>());
         });
         services.AddSingleton(_ =>
         {

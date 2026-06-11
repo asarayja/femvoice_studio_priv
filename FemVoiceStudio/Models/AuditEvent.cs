@@ -20,7 +20,19 @@ namespace FemVoiceStudio.Models
         RecoveryEvent,
 
         /// <summary>A case review action was recorded (e.g. review opened, approved).</summary>
-        ReviewAction
+        ReviewAction,
+
+        // ── Sprint E (Agent 12) additive event categories. TEXT-stored, append-only —
+        //    safe to add; never rename or reorder existing members. ──
+
+        /// <summary>A professional report was generated/exported (success or failure).</summary>
+        ReportGeneration,
+
+        /// <summary>A research dataset/export was produced.</summary>
+        ResearchExport,
+
+        /// <summary>A professional note (coach/clinical/review) was created or edited.</summary>
+        ProfessionalNote
     }
 
     /// <summary>

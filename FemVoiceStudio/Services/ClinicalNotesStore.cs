@@ -339,18 +339,47 @@ namespace FemVoiceStudio.Services
     public sealed class ClinicalNotesStore
     {
         private readonly IClinicalNotesRepository _repository;
+        private readonly AuditTrailStore? _auditTrail;
 
-        public ClinicalNotesStore(IClinicalNotesRepository repository)
+        // auditTrail is OPTIONAL so existing callers/tests that construct the store with a
+        // repository alone keep compiling; when supplied (production DI), every note save
+        // emits a ProfessionalNote audit event (Sprint E Agent 12 — audit completeness).
+        public ClinicalNotesStore(IClinicalNotesRepository repository, AuditTrailStore? auditTrail = null)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _auditTrail = auditTrail;
         }
 
         /// <summary>
         /// Saves a note. Coach/Clinical are upserted; Review/GoalReview are append-only
-        /// (a second save with the same NoteId is silently ignored).
+        /// (a second save with the same NoteId is silently ignored). When an audit trail
+        /// is configured, a ProfessionalNote audit event is appended (best-effort — audit
+        /// must never block or fail a note save).
         /// </summary>
-        public Task SaveNoteAsync(ClinicalNote note, CancellationToken cancellationToken = default)
-            => _repository.SaveNoteAsync(note, cancellationToken);
+        public async Task SaveNoteAsync(ClinicalNote note, CancellationToken cancellationToken = default)
+        {
+            await _repository.SaveNoteAsync(note, cancellationToken).ConfigureAwait(false);
+
+            if (_auditTrail is null) return;
+            try
+            {
+                await _auditTrail.AppendAsync(new AuditEvent
+                {
+                    UserId = note.UserId,
+                    OccurredAt = DateTime.UtcNow,
+                    EntityType = AuditEntityType.ProfessionalNote,
+                    EntityId = note.NoteId.ToString("D"),
+                    ActorRole = string.IsNullOrWhiteSpace(note.AuthorRole) ? "Professional" : note.AuthorRole,
+                    ReasonCode = "PROFESSIONAL_NOTE_SAVED",
+                    AfterJson = $"{{\"noteType\":\"{note.NoteType}\"}}"
+                }, cancellationToken).ConfigureAwait(false);
+            }
+            catch
+            {
+                // Audit is a traceability side-effect; a failure here must not surface to the
+                // note-save caller or break the professional workflow.
+            }
+        }
 
         /// <summary>
         /// Returns all notes for <paramref name="userId"/> of <paramref name="noteType"/>

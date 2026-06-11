@@ -46,6 +46,51 @@ namespace FemVoiceStudio.Tests
             Assert.Null(got.LinkedEntityId);
         }
 
+        // ── Sprint E (Agent 12): a configured audit trail records a ProfessionalNote
+        //    event on every note save — closes the audit-completeness gap. ──
+        [Fact]
+        public async Task SaveNote_WithAuditTrail_EmitsProfessionalNoteAuditEvent()
+        {
+            var audit = new AuditTrailStore(new InMemoryAuditTrailRepository());
+            var store = new ClinicalNotesStore(new InMemoryClinicalNotesRepository(), audit);
+            var note = new ClinicalNote
+            {
+                NoteId = Guid.NewGuid(), UserId = 7, NoteType = ClinicalNoteType.Clinical,
+                AuthorRole = "Clinician",
+                CreatedAt = new DateTime(2026, 6, 1, 9, 0, 0, DateTimeKind.Utc),
+                BodyText = "Resonance improving."
+            };
+
+            await store.SaveNoteAsync(note);
+
+            var audits = await audit.QueryAsync(7, AuditEntityType.ProfessionalNote);
+            var ev = Assert.Single(audits);
+            Assert.Equal(AuditEntityType.ProfessionalNote, ev.EntityType);
+            Assert.Equal(note.NoteId.ToString("D"), ev.EntityId);
+            Assert.Equal("Clinician", ev.ActorRole);
+            Assert.Equal("PROFESSIONAL_NOTE_SAVED", ev.ReasonCode);
+        }
+
+        // ── Sprint E: notes are NOT used in score calculation and the audit trail is
+        //    optional — without one, save still works and never throws. ──
+        [Fact]
+        public async Task SaveNote_WithoutAuditTrail_StillSavesAndDoesNotThrow()
+        {
+            var store = new ClinicalNotesStore(new InMemoryClinicalNotesRepository());
+            var note = new ClinicalNote
+            {
+                NoteId = Guid.NewGuid(), UserId = 1, NoteType = ClinicalNoteType.Coach,
+                AuthorRole = "Coach",
+                CreatedAt = new DateTime(2026, 6, 1, 9, 0, 0, DateTimeKind.Utc),
+                BodyText = "No audit configured."
+            };
+
+            await store.SaveNoteAsync(note);
+
+            var results = await store.GetNotesAsync(1, ClinicalNoteType.Coach, WindowFrom, WindowTo);
+            Assert.Single(results);
+        }
+
         // ── 2. InMemory upsert: saving same NoteId twice for Coach keeps latest ──
         [Fact]
         public async Task InMemory_CoachNote_SaveTwice_UpsertKeepsLatest()

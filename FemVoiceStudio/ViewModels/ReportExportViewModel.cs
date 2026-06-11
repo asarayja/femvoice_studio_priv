@@ -36,6 +36,10 @@ namespace FemVoiceStudio.ViewModels
         private readonly IVoiceGoalProfileProvider? _goalProfileProvider;
         private readonly RecoveryIntelligenceService? _recoveryService;
         private readonly SessionAnalyticsStore? _analyticsStore;
+        // Sprint E: real notes + audit flow into the clinical report, and each generation
+        // attempt is itself audited. Optional/null-safe so tests and design-time still load.
+        private readonly ClinicalNotesStore? _clinicalNotes;
+        private readonly AuditTrailStore? _auditTrail;
 
         // ── Test seam: bypass SaveFileDialog by injecting the output path ─────────
         /// <summary>
@@ -77,6 +81,8 @@ namespace FemVoiceStudio.ViewModels
             _goalProfileProvider    = App.Services?.GetService(typeof(IVoiceGoalProfileProvider)) as IVoiceGoalProfileProvider;
             _recoveryService        = App.Services?.GetService(typeof(RecoveryIntelligenceService)) as RecoveryIntelligenceService;
             _analyticsStore         = App.Services?.GetService(typeof(SessionAnalyticsStore))   as SessionAnalyticsStore;
+            _clinicalNotes          = App.Services?.GetService(typeof(ClinicalNotesStore))      as ClinicalNotesStore;
+            _auditTrail             = App.Services?.GetService(typeof(AuditTrailStore))         as AuditTrailStore;
         }
 
         /// <summary>
@@ -89,7 +95,9 @@ namespace FemVoiceStudio.ViewModels
             IDatabaseService database,
             IVoiceGoalProfileProvider? goalProfileProvider = null,
             RecoveryIntelligenceService? recoveryService = null,
-            SessionAnalyticsStore? analyticsStore = null)
+            SessionAnalyticsStore? analyticsStore = null,
+            ClinicalNotesStore? clinicalNotes = null,
+            AuditTrailStore? auditTrail = null)
         {
             _outcomeProfileBuilder = outcomeProfileBuilder ?? throw new ArgumentNullException(nameof(outcomeProfileBuilder));
             _reportAssembler       = reportAssembler       ?? throw new ArgumentNullException(nameof(reportAssembler));
@@ -98,6 +106,8 @@ namespace FemVoiceStudio.ViewModels
             _goalProfileProvider   = goalProfileProvider;
             _recoveryService       = recoveryService;
             _analyticsStore        = analyticsStore;
+            _clinicalNotes         = clinicalNotes;
+            _auditTrail            = auditTrail;
         }
 
         // ── Commands ──────────────────────────────────────────────────────────────
@@ -136,13 +146,33 @@ namespace FemVoiceStudio.ViewModels
                     now,
                     userId: 1).ConfigureAwait(false);
 
-                // 2) Assemble the chosen report DTO.
+                // 2a) For the clinical report, pull the REAL clinical notes + audit events
+                //     for the period from the stores (Sprint E wiring). Null-safe: when the
+                //     stores are absent (tests/design-time) this falls back to empty, the
+                //     previous behavior.
+                System.Collections.Generic.IReadOnlyList<FemVoiceStudio.Models.ClinicalNote> clinicalNotes
+                    = System.Array.Empty<FemVoiceStudio.Models.ClinicalNote>();
+                System.Collections.Generic.IReadOnlyList<FemVoiceStudio.Models.AuditEvent> auditEvents
+                    = System.Array.Empty<FemVoiceStudio.Models.AuditEvent>();
+                if (SelectedReportTypeIndex == 0)
+                {
+                    if (_clinicalNotes is not null)
+                        clinicalNotes = await _clinicalNotes
+                            .GetNotesAsync(1, FemVoiceStudio.Models.ClinicalNoteType.Clinical, periodStart, now)
+                            .ConfigureAwait(false);
+                    if (_auditTrail is not null)
+                        auditEvents = await _auditTrail
+                            .QueryAsync(1, from: periodStart, to: now)
+                            .ConfigureAwait(false);
+                }
+
+                // 2b) Assemble the chosen report DTO.
                 object report = SelectedReportTypeIndex switch
                 {
                     0 => _reportAssembler.BuildClinicalReport(
                         outcome,
-                        notes: System.Array.Empty<FemVoiceStudio.Models.ClinicalNote>(),
-                        auditEvents: System.Array.Empty<FemVoiceStudio.Models.AuditEvent>(),
+                        notes: clinicalNotes,
+                        auditEvents: auditEvents,
                         periodStart: periodStart,
                         periodEnd: now,
                         now: now),
@@ -177,6 +207,7 @@ namespace FemVoiceStudio.ViewModels
                 ReportVerificationTracker.MarkSucceeded(ReportTypeName(SelectedReportTypeIndex));
                 Rc0RuntimeLog.Write("ReportGeneration",
                     $"ReportGenerated; Type={ReportTypeName(SelectedReportTypeIndex)}; Format={format}; Path=\"{filePath}\"");
+                await AppendReportAuditAsync("REPORT_GENERATED", format.ToString()).ConfigureAwait(false);
                 StatusMessage = LocalizationService.Instance.GetFormattedString("Report_StatusExportedToFormat", filePath);
             }
             catch (Exception ex)
@@ -184,6 +215,7 @@ namespace FemVoiceStudio.ViewModels
                 ReportVerificationTracker.MarkFailed(ReportTypeName(SelectedReportTypeIndex), ex.Message);
                 Rc0RuntimeLog.Write("ReportGeneration",
                     $"ReportGeneration FAILED; Type={ReportTypeName(SelectedReportTypeIndex)}; {ex.GetType().Name}: {ex.Message}");
+                await AppendReportAuditAsync("REPORT_GENERATION_FAILED", ex.GetType().Name).ConfigureAwait(false);
                 StatusMessage = LocalizationService.Instance.GetFormattedString("Report_StatusExportErrorFormat", ex.Message);
             }
             finally
@@ -202,6 +234,30 @@ namespace FemVoiceStudio.ViewModels
             3 => "Timeline",
             _ => "Outcome"
         };
+
+        // Best-effort audit of a report-generation attempt (Sprint E Agent 12). Never throws
+        // into the export flow — audit is traceability, not part of the user-facing result.
+        private async Task AppendReportAuditAsync(string reasonCode, string detail)
+        {
+            if (_auditTrail is null) return;
+            try
+            {
+                await _auditTrail.AppendAsync(new FemVoiceStudio.Models.AuditEvent
+                {
+                    UserId = 1,
+                    OccurredAt = DateTime.UtcNow,
+                    EntityType = FemVoiceStudio.Models.AuditEntityType.ReportGeneration,
+                    EntityId = ReportTypeName(SelectedReportTypeIndex),
+                    ActorRole = "Professional",
+                    ReasonCode = reasonCode,
+                    AfterJson = $"{{\"detail\":\"{detail}\"}}"
+                }).ConfigureAwait(false);
+            }
+            catch
+            {
+                // Swallow — see method summary.
+            }
+        }
 
         // ── Private helpers ───────────────────────────────────────────────────────
 
