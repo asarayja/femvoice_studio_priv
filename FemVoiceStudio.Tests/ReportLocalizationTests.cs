@@ -51,7 +51,23 @@ namespace FemVoiceStudio.Tests
             "Report_RecommendationHighFatigueFormat",
             "Report_RecommendationHighRecoveryCostFormat",
             "Report_InsightImprovementFormat",
-            "Report_GenerationFailed"
+            "Report_GenerationFailed",
+            "Report_TimeWindow_Days",
+            "Report_TimeWindow_LabelFormat",
+            "Report_Term_Fatigue",
+            "Report_Term_FatigueSignals",
+            "Report_Term_VoiceFatigue",
+            "Report_Term_VoiceFatigueSignals",
+            "Report_Term_TrainingLoad",
+            "Report_Term_RecentActivity",
+            "Report_Term_RestBehindRecentActivity",
+            "Report_Status_SIGNAL_LEVEL_COLLAPSES",
+            "Report_Status_EXPECTED_SILENCE",
+            "Report_Status_SILENCE_TAIL",
+            "Report_Reason_COMFORT_DECLINE",
+            "Report_Status_COMFORT_DECLINE",
+            "Report_RecommendationComfortDeclineFormat",
+            "ReportPdf_RecoveryCostShort"
         };
 
         [Fact]
@@ -79,6 +95,80 @@ namespace FemVoiceStudio.Tests
         }
 
         [Fact]
+        public void NorwegianCoachReport_DoesNotContainEnglishFatigueTerms()
+        {
+            LocalizationService.Instance.SetLanguage("nb");
+            var outcome = MakeOutcome() with
+            {
+                ExerciseEffectiveness = new ExerciseEffectivenessSummary
+                {
+                    Concerns = new[]
+                    {
+                        new ExerciseEffectivenessFlag
+                        {
+                            ExerciseId = 1,
+                            ReasonCode = "HIGH_FATIGUE",
+                            Magnitude = 2.5,
+                            Explanation = "Exercise 1 shows repeated fatigue signals."
+                        }
+                    }
+                }
+            };
+            var report = new ReportAssembler().BuildCoachReport(outcome, T0, T1, Now);
+            var text = string.Join("\n", report.FocusAreas.Concat(report.Recommendations));
+
+            Assert.DoesNotContain("fatigue", text, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("fatigue-signaler", text, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("Høy fatigue", text, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("stemmetretthet", text, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void NorwegianCoachReport_DoesNotContainRawComfortDeclineEnum()
+        {
+            LocalizationService.Instance.SetLanguage("nb");
+            var outcome = MakeOutcome() with
+            {
+                ExerciseEffectiveness = new ExerciseEffectivenessSummary
+                {
+                    Concerns = new[]
+                    {
+                        new ExerciseEffectivenessFlag
+                        {
+                            ExerciseId = 3,
+                            ReasonCode = "COMFORT_DECLINE",
+                            Magnitude = -2.2,
+                            Explanation = "Comfort has been easing down."
+                        }
+                    }
+                }
+            };
+            var report = new ReportAssembler().BuildCoachReport(outcome, T0, T1, Now);
+            var text = string.Join("\n", report.FocusAreas.Concat(report.Recommendations));
+
+            Assert.DoesNotContain("COMFORT_DECLINE", text);
+            Assert.DoesNotContain("_DECLINE", text);
+            Assert.DoesNotContain("HIGH_", text);
+            Assert.Contains("Redusert komfort", text, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("Stigende toner", text, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void NorwegianTimelineReport_LocalizesWindowLabels()
+        {
+            LocalizationService.Instance.SetLanguage("nb");
+            var report = new ReportAssembler().BuildTimelineReport(MakeOutcomeWithWindows(), T0, T1, Now);
+            var labels = string.Join("\n", report.TimelineEntries.Select(e => e.Label));
+
+            Assert.Contains("7 dager", labels);
+            Assert.Contains("30 dager", labels);
+            Assert.Contains("90 dager", labels);
+            Assert.Contains("180 dager", labels);
+            Assert.DoesNotContain("-day", labels, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(" days", labels, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
         public void GermanReport_UsesLocalizedTitleAndDirectionLabels()
         {
             LocalizationService.Instance.SetLanguage("de-DE");
@@ -102,9 +192,21 @@ namespace FemVoiceStudio.Tests
         [Fact]
         public void ReportTextSanitizer_RemovesBrokenControlArtifacts_ButKeepsLocalizedCharacters()
         {
-            var cleaned = ReportTextSanitizer.Clean("de\uFFFEprioritising æøå é ü ñ ç ã ö ä ß – —");
+            var cleaned = ReportTextSanitizer.Clean("de\uFFFEprioritising æøå ÆØÅ é ü ñ ç ã ö ä ß – — −");
 
-            Assert.Equal("deprioritising æøå é ü ñ ç ã ö ä ß – —", cleaned);
+            Assert.Equal("deprioritising æøå ÆØÅ é ü ñ ç ã ö ä ß – — −", cleaned);
+        }
+
+        [Fact]
+        public void ExportWriter_UsesCompactHeadersAndWiderRecoveryCostColumn()
+        {
+            var sourcePath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..",
+                "FemVoiceStudio", "Services", "ExportWriter.cs");
+            var source = File.ReadAllText(sourcePath);
+
+            Assert.Contains("columns.RelativeColumn(2.8f)", source);
+            Assert.Contains(".FontSize(8)", source);
+            Assert.Contains("ReportPdf_RecoveryCostShort", source);
         }
 
         private static readonly DateTime T0 = new(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -169,6 +271,38 @@ namespace FemVoiceStudio.Tests
                     }
                 }
             }
+        };
+
+        private static OutcomeProfile MakeOutcomeWithWindows()
+        {
+            var outcome = MakeOutcome();
+            return outcome with
+            {
+                LongTermDevelopment = outcome.LongTermDevelopment with
+                {
+                    WeeklyTrend = new[]
+                    {
+                        Window(7, T0),
+                        Window(30, T0.AddDays(8))
+                    },
+                    MonthlyTrend = new[]
+                    {
+                        Window(90, T0.AddDays(39)),
+                        Window(180, T0.AddDays(130))
+                    }
+                }
+            };
+        }
+
+        private static TrendWindow Window(int days, DateTime from) => new()
+        {
+            WindowDays = days,
+            From = from,
+            To = from.AddDays(days),
+            CompositeSlope = 1.0,
+            CompositeMean = 70,
+            SessionCount = 4,
+            HasEnoughData = true
         };
 
         private static Dictionary<string, string> LoadResx(string file)

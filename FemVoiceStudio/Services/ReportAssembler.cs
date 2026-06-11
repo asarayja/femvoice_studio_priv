@@ -182,7 +182,7 @@ namespace FemVoiceStudio.Services
 
             var entries = allWindows.Select(w => new TimelineEntry
             {
-                Label = $"{w.WindowDays}-day ({w.From:MMM d} – {w.To:MMM d, yyyy})",
+                Label = FormatWindowLabel(w),
                 Window = w,
                 Direction = ComputeDirection(w)
             }).ToList();
@@ -217,6 +217,17 @@ namespace FemVoiceStudio.Services
             return start.Year == end.Year
                 ? $"{start.ToString("MMM d", culture)} – {end.ToString("MMM d, yyyy", culture)}"
                 : $"{start.ToString("MMM d, yyyy", culture)} – {end.ToString("MMM d, yyyy", culture)}";
+        }
+
+        private static string FormatWindowLabel(TrendWindow window)
+        {
+            var culture = CultureInfo.CurrentUICulture;
+            var windowName = Tf("Report_TimeWindow_Days", window.WindowDays);
+            return Tf(
+                "Report_TimeWindow_LabelFormat",
+                windowName,
+                window.From.ToString("MMM d", culture),
+                window.To.ToString("MMM d, yyyy", culture));
         }
 
         private static string ComputeDirection(TrendWindow w)
@@ -328,7 +339,12 @@ namespace FemVoiceStudio.Services
 
             var key = $"Report_Reason_{reasonCode.Trim().ToUpperInvariant()}";
             var localized = T(key);
-            return localized == key ? reasonCode : localized;
+            if (localized != key)
+                return localized;
+
+            Rc0RuntimeLog.Write("Localization",
+                $"MissingReportReasonCode; Key={key}; RawReasonCode={reasonCode}");
+            return HumanizeReasonCode(reasonCode);
         }
 
         public static string LocalizeRecoveryRecommendation(RecoveryProgress recovery)
@@ -354,10 +370,21 @@ namespace FemVoiceStudio.Services
             {
                 "HIGH_FATIGUE" => Tf("Report_RecommendationHighFatigueFormat", exercise, concern.Magnitude),
                 "HIGH_RECOVERY_COST" => Tf("Report_RecommendationHighRecoveryCostFormat", exercise, concern.Magnitude),
+                "COMFORT_DECLINE" => Tf("Report_RecommendationComfortDeclineFormat", exercise, concern.Magnitude),
                 _ => Tf("Report_RecommendationDeprioritizeFormat",
                     exercise,
                     LocalizeReasonCode(concern.ReasonCode))
             };
+        }
+
+        private static string HumanizeReasonCode(string reasonCode)
+        {
+            var words = reasonCode
+                .Trim()
+                .Replace('_', ' ')
+                .ToLowerInvariant();
+
+            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(words);
         }
 
         private static string LocalizeInsight(LongitudinalInsight insight)
