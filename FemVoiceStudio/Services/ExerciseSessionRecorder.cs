@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FemVoiceStudio.Models;
+using FemVoiceStudio.Models.VoiceLoad;
+using FemVoiceStudio.Services.VoiceLoad;
 
 namespace FemVoiceStudio.Services
 {
@@ -121,6 +123,12 @@ namespace FemVoiceStudio.Services
         private readonly VocalHealthSupervisor _healthSupervisor;
         private readonly SessionAnalyticsStore _analyticsStore;
         private readonly HydrationAdvisor? _hydrationAdvisor;
+        // Sprint F — Predictive Voice Intelligence. Reads existing per-tick signals only;
+        // produces conservative, non-medical load/pause guidance. Reset per session.
+        private readonly LiveVoiceLoadMonitor _voiceLoadMonitor = new();
+        private int _lastVoiceLoadLogSecond = -1;
+        /// <summary>Latest Sprint F voice-load state (for an optional UI/load panel; read-only).</summary>
+        public VoiceLoadState LatestVoiceLoadState => _voiceLoadMonitor.CurrentState;
         private readonly FeedbackPipeline? _feedbackPipeline;
         private readonly VocalHealthFeedbackMapper? _vocalHealthMapper;
         private readonly HydrationFeedbackMapper? _hydrationMapper;
@@ -298,6 +306,8 @@ namespace FemVoiceStudio.Services
                 // og _accumulatedLoad mellom økter (2-min cooldown ble effektivt per-app-
                 // levetid). Reset gjør cooldown + akkumulert last per-økt.
                 _hydrationAdvisor?.Reset();
+                _voiceLoadMonitor.Reset(DateTime.Now);
+                _lastVoiceLoadLogSecond = -1;
                 _feedbackPipeline?.BeginSession(_startedAt.ToUniversalTime());
                 _recording = true;
             }
@@ -516,6 +526,67 @@ namespace FemVoiceStudio.Services
             // mapperne og FeedbackPipeline (guarden rate-limiter/prioriterer).
             // Var dormant før — helse påvirket kun lås/score i det stille (audit-funn).
             SubmitHealthFeedback(decision, hydrationAdvice, state);
+
+            // Sprint F: observe cumulative voice load from the SAME in-scope signals
+            // (read-only). Never throws into the session.
+            ObserveVoiceLoad(state, decision, hydrationAdvice);
+        }
+
+        /// <summary>
+        /// Sprint F per-tick observation: maps the in-scope signals into a VoiceLoadInputs
+        /// snapshot, advances the monitor, and logs evidence (throttled) to the runtime log.
+        /// Purely additive — never mutates any pipeline and never throws into the session.
+        /// </summary>
+        private void ObserveVoiceLoad(ExerciseLiveState state, VocalHealthDecision decision, HydrationAdvice? hydrationAdvice)
+        {
+            try
+            {
+                var inputs = new VoiceLoadInputs
+                {
+                    Timestamp = state.Timestamp == default ? DateTime.Now : state.Timestamp,
+                    SessionElapsedSeconds = state.SessionElapsedSeconds,
+                    StabilityScore = state.StabilityScore,
+                    ResonanceScore = state.PrimaryMetricScore,
+                    UsesResonanceSignal = state.UsesResonanceSignal,
+                    PitchHz = state.PitchHz,
+                    Intensity = state.Intensity,
+                    IsHoldingCorrectly = state.IsHoldingCorrectly,
+                    IsInComfortZone = state.IsInComfortZone,
+                    IsSafetyLocked = state.IsSafetyLocked,
+                    FatigueScore = decision.FatigueScore,
+                    FatigueDetected = decision.FatigueDetected,
+                    StrainScore = decision.StrainScore,
+                    StrainDetected = decision.StrainDetected,
+                    PauseRecommendedByHealth = decision.PauseRecommended,
+                    HydrationSuggestedByHealth = decision.HydrationSuggested,
+                    HydrationSuggestedByAdvisor = hydrationAdvice?.Suggested == true,
+                    HealthStateRank = (int)decision.State   // Normal=0, Caution=1, Restrict=2, Lock=3
+                };
+
+                var observation = _voiceLoadMonitor.Observe(inputs);
+
+                // Evidence (Agent 8): throttle to ~1/s, but always log when a message fires or
+                // load reaches High/Pause. Keys/enum names only — no free-text, no medical claims.
+                var second = inputs.SessionElapsedSeconds;
+                var notable = observation.Recommendation.Message is not null
+                    || observation.State.VoiceLoadBand is VoiceLoadBand.High or VoiceLoadBand.PauseRecommended;
+                if (notable || second != _lastVoiceLoadLogSecond)
+                {
+                    _lastVoiceLoadLogSecond = second;
+                    var s = observation.State;
+                    var r = observation.Recommendation;
+                    Rc0RuntimeLog.Write("VoiceLoad",
+                        $"Score={s.VoiceLoadScore}; Band={s.VoiceLoadBand}; Trend={s.TrendDirection}; " +
+                        $"Pause={r.Pause}; Hydration={r.Hydration}; ActiveVoiced={s.ActiveVoicedSeconds:F0}s; " +
+                        $"SincePause={s.TimeSinceLastPauseSeconds:F0}s; Drivers=[{string.Join(",", s.PrimaryLoadDrivers)}]; " +
+                        $"Msg={(r.Message?.Category.ToString() ?? "none")}; Suppressed={(r.SuppressionReason ?? "-")}; " +
+                        $"DataSufficient={s.IsDataSufficient}");
+                }
+            }
+            catch
+            {
+                // Sprint F is advisory only; a failure here must never disturb the session.
+            }
         }
 
         private void SubmitHealthFeedback(

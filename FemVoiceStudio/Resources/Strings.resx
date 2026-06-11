@@ -2220,6 +2220,37 @@
   <data name="VoiceHealthFeedback_HydrationWithRest" xml:space="preserve">
     <value>Pust rolig og ta noen slurker vann mens du hviler stemmen litt.</value>
   </data>
+  <!-- Sprint F — Predictive Voice Intelligence (gentle, non-medical, trend-aware). nb source. -->
+  <data name="VoiceLoad_ContinueCalmly" xml:space="preserve">
+    <value>Stemmen virker stabil. Fortsett rolig.</value>
+  </data>
+  <data name="VoiceLoad_PauseSoon" xml:space="preserve">
+    <value>Du har øvd en stund. Ta gjerne en kort pause snart.</value>
+  </data>
+  <data name="VoiceLoad_PauseNow" xml:space="preserve">
+    <value>Stemmen virker litt mindre stabil nå. Ta en kort pause før du fortsetter.</value>
+  </data>
+  <data name="VoiceLoad_LowerIntensity" xml:space="preserve">
+    <value>Stemmen virker litt mindre stabil nå. Senk intensiteten og ta en pause.</value>
+  </data>
+  <data name="VoiceLoad_HydrationGentle" xml:space="preserve">
+    <value>Drikk litt vann hvis du ikke har gjort det nylig.</value>
+  </data>
+  <data name="VoiceLoad_EndSession" xml:space="preserve">
+    <value>Det kan være lurt å avslutte økten her og la stemmen hvile.</value>
+  </data>
+  <data name="VoiceLoad_RecoveryReady" xml:space="preserve">
+    <value>Du kan fortsette rolig.</value>
+  </data>
+  <data name="VoiceLoad_RecoveryContinueGently" xml:space="preserve">
+    <value>Start forsiktig og hold intensiteten lav.</value>
+  </data>
+  <data name="VoiceLoad_RecoveryWait" xml:space="preserve">
+    <value>Vent litt lenger før du fortsetter.</value>
+  </data>
+  <data name="VoiceLoad_RecoveryEndForToday" xml:space="preserve">
+    <value>Det kan være best å avslutte for i dag.</value>
+  </data>
   <data name="ProgressionFeedback_Paused" xml:space="preserve">
     <value>Progresjonen settes på pause mens stemmen henter seg inn.</value>
   </data>
