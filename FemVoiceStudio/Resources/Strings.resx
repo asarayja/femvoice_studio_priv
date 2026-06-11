@@ -39,7 +39,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  
   <data name="Exercise_101_Title" xml:space="preserve">
     <value>Grunnleggende humming</value>
   </data>
@@ -130,7 +129,6 @@
   <data name="Exercise_115_Description" xml:space="preserve">
     <value>Varier intonasjon for naturlig, ekspressiv tale. Kvinner bruker større variasjon enn menn.</value>
   </data>
-  
   <data name="Exercise_101_Steps" xml:space="preserve">
     <value>Slapp av i skuldrene og nakken|Pust dypt inn gjennom nesen|Hum en behagelig tone|Flytt hummingen og vibrasjonen mot nesen og leppene|Hold tonen i 5-10 sekunder</value>
   </data>
@@ -176,7 +174,6 @@
   <data name="Exercise_115_Steps" xml:space="preserve">
     <value>Si 'Nei' med en helt nøytral stemme|Si 'Nei?' slik at du høres overrasket ut|Si 'Nei!' med en frustrert og bestemt tone|Si 'Nei...' slik at du høres oppgitt eller resignert ut|Gjenta samme følelsesmønster med andre ord eller setninger</value>
   </data>
-  
   <data name="Exercise_101_Rationale" xml:space="preserve">
     <value>Humming aktiverer fremre resonatorer og forbereder stemmen på høyere pitch uten spenning. Vibrasjon i lepper/nese indikerer korrekt fremre resonans.</value>
   </data>
@@ -192,7 +189,6 @@
   <data name="Exercise_105_Rationale" xml:space="preserve">
     <value>Stabil tonehøyde i målområdet er kritisk for feminisering. Konsistent fonasjon gir en naturlig stemme.</value>
   </data>
-  
   <data name="Guidance_ClinicalPurpose" xml:space="preserve">
     <value>Hensikt</value>
   </data>
@@ -205,11 +201,9 @@
   <data name="Guidance_SafetyInfo" xml:space="preserve">
     <value>Sikkerhet</value>
   </data>
-  
   <data name="Guidance_PanelTitle" xml:space="preserve">
     <value>Veiledning</value>
   </data>
-  
   <data name="LiveFeedback_Title" xml:space="preserve">
     <value>Live-tilbakemelding</value>
   </data>
@@ -237,7 +231,6 @@
   <data name="Shield_OutsideComfortZone" xml:space="preserve">
     <value>Utenfor komfortsone</value>
   </data>
-  
   <data name="Quality_Poor" xml:space="preserve">
     <value>Tidlig fase</value>
   </data>
@@ -253,7 +246,6 @@
   <data name="Quality_Excellent" xml:space="preserve">
     <value>Utmerket</value>
   </data>
-  
   <data name="Mastery_Beginner" xml:space="preserve">
     <value>Nybegynner</value>
   </data>
@@ -266,7 +258,6 @@
   <data name="Mastery_Mastered" xml:space="preserve">
     <value>Mestring</value>
   </data>
-  
   <data name="Purpose_ResonanceHumming" xml:space="preserve">
     <value>Etablere fremre resonans og redusere bakre belastning.</value>
   </data>
@@ -426,11 +417,9 @@
   <data name="Exercise_115_Rationale" xml:space="preserve">
     <value>Større intonasjonsvariasjon er karakteristisk for feminin tale. Dette hjelper med å 'passe inn' sosialt.</value>
   </data>
-  
   <data name="AppTitle" xml:space="preserve">
     <value>FemVoice Studio</value>
   </data>
-  
   <data name="Nav_Home" xml:space="preserve">
     <value>Hjem</value>
   </data>
@@ -446,7 +435,6 @@
   <data name="Nav_Settings" xml:space="preserve">
     <value>Innstillinger</value>
   </data>
-  
   <data name="Home_Welcome" xml:space="preserve">
     <value>Velkommen til FemVoice Studio</value>
   </data>
@@ -477,7 +465,6 @@
   <data name="Home_Days" xml:space="preserve">
     <value>dager</value>
   </data>
-  
   <data name="Exercise_Title" xml:space="preserve">
     <value>Øvelsesguide</value>
   </data>
@@ -619,7 +606,6 @@
   <data name="Exercise_Hz" xml:space="preserve">
     <value>Hz</value>
   </data>
-  
   <data name="Difficulty_Beginner" xml:space="preserve">
     <value>Nybegynner</value>
   </data>
@@ -629,7 +615,6 @@
   <data name="Difficulty_Advanced" xml:space="preserve">
     <value>Avansert</value>
   </data>
-  
   <data name="UI_StartSession" xml:space="preserve">
     <value>Start Økt</value>
   </data>
@@ -672,7 +657,6 @@
   <data name="Main_FrequencyHz" xml:space="preserve">
     <value>Frekvens (Hz)</value>
   </data>
-  
   <data name="Frequency_Daily" xml:space="preserve">
     <value>Daglig</value>
   </data>
@@ -685,7 +669,6 @@
   <data name="Frequency_Weekly" xml:space="preserve">
     <value>Ukentlig</value>
   </data>
-  
   <data name="Goal_Pitch" xml:space="preserve">
     <value>Pitch</value>
   </data>
@@ -701,7 +684,6 @@
   <data name="Goal_Combined" xml:space="preserve">
     <value>Kombinert</value>
   </data>
-  
   <data name="Analyzer_Title" xml:space="preserve">
     <value>Stemmeanalyse</value>
   </data>
@@ -744,7 +726,6 @@
   <data name="Analyzer_Ready" xml:space="preserve">
     <value>Klar</value>
   </data>
-  
   <data name="Statistics_Title" xml:space="preserve">
     <value>Statistikk</value>
   </data>
@@ -781,7 +762,6 @@
   <data name="Statistics_Achievements" xml:space="preserve">
     <value>Prestasjoner</value>
   </data>
-  
   <data name="Settings_Title" xml:space="preserve">
     <value>Innstillinger</value>
   </data>
@@ -839,7 +819,6 @@
   <data name="Settings_ThemeDescription" xml:space="preserve">
     <value>Velg ønsket tema for applikasjonen</value>
   </data>
-  
   <data name="Feedback_Excellent" xml:space="preserve">
     <value>Fantastisk! Du har hatt en veldig bra økt!</value>
   </data>
@@ -858,7 +837,6 @@
   <data name="Feedback_TimeReached" xml:space="preserve">
     <value>Du har nådd anbefalt tid. Fortsett gjerne eller avslutt øvelsen.</value>
   </data>
-  
   <data name="Tip_Beginner" xml:space="preserve">
     <value>🎯 Nybegynnertips: Fokuser på å holde en jevn pitch gjennom hele setningen. Start med korte setninger.</value>
   </data>
@@ -874,7 +852,6 @@
   <data name="Tip_Intonation" xml:space="preserve">
     <value>🎯 Tips: Jobb nå med å legge til mer variasjon i intonasjonen din. Varier pitch-en mellom setninger.</value>
   </data>
-  
   <data name="Achievement_FirstStreak" xml:space="preserve">
     <value>Første steg</value>
   </data>
@@ -920,7 +897,6 @@
   <data name="Achievement_WeekendWarrior" xml:space="preserve">
     <value>Helgekriger</value>
   </data>
-  
   <data name="Common_OK" xml:space="preserve">
     <value>OK</value>
   </data>
@@ -945,7 +921,6 @@
   <data name="Common_Success" xml:space="preserve">
     <value>Suksess</value>
   </data>
-  
   <data name="Exercise_1_Title" xml:space="preserve">
     <value>Hilsener</value>
   </data>
@@ -1306,7 +1281,6 @@
   <data name="Exercise_50_Category" xml:space="preserve">
     <value>Hverdagslig</value>
   </data>
-  
   <data name="Exercise_5_Title" xml:space="preserve">
     <value>Spørsmål</value>
   </data>
@@ -1355,7 +1329,6 @@
   <data name="Exercise_8_Category" xml:space="preserve">
     <value>Beskrivelse</value>
   </data>
-  
   <data name="Exercise_9_Title" xml:space="preserve">
     <value>Eventyr</value>
   </data>
@@ -1557,7 +1530,6 @@
   <data name="Settings_Close" xml:space="preserve">
     <value>Lukk</value>
   </data>
-  
   <data name="Main_PitchGraph" xml:space="preserve">
     <value>Pitch-graf</value>
   </data>
@@ -1618,7 +1590,6 @@
   <data name="Main_TrainingForFeminineVoice" xml:space="preserve">
     <value>Trening for feminin stemme</value>
   </data>
-  
   <data name="FirstTimeSetup_Title" xml:space="preserve">
     <value>Velkommen til FemVoice Studio</value>
   </data>
@@ -1667,7 +1638,6 @@
   <data name="FirstTimeSetup_ThemeDark" xml:space="preserve">
     <value>Mørk modus</value>
   </data>
-  
   <data name="SmartCoach_Title" xml:space="preserve">
     <value>Smart Coach</value>
   </data>
@@ -1728,7 +1698,6 @@
   <data name="SmartCoach_Minutes" xml:space="preserve">
     <value>min</value>
   </data>
-  
   <data name="SmartCoach_Health_PitchPress" xml:space="preserve">
     <value>Din stemme viser tegn på press. I dag: kun pusteøvelser og lett resonans-arbeid. Unngå å presse pitch. 5 minutter rolig trening.</value>
   </data>
@@ -1744,7 +1713,6 @@
   <data name="SmartCoach_HealthWarning" xml:space="preserve">
     <value>Stemmehelse-varsel</value>
   </data>
-  
   <data name="Level_Beginner" xml:space="preserve">
     <value>Nybegynner</value>
   </data>
@@ -1757,7 +1725,6 @@
   <data name="Level_Unknown" xml:space="preserve">
     <value>Ukjent</value>
   </data>
-  
   <data name="Level_Focus_Beginner" xml:space="preserve">
     <value>Resonans først - trygg pitchøkning</value>
   </data>
@@ -1767,7 +1734,6 @@
   <data name="Level_Focus_Advanced" xml:space="preserve">
     <value>Naturlig tale - intonasjon</value>
   </data>
-  
   <data name="Level_Promotion_Reason" xml:space="preserve">
     <value>{0} av {1} siste økter over {2}%</value>
   </data>
@@ -1777,7 +1743,6 @@
   <data name="Level_GoodProgress_Reason" xml:space="preserve">
     <value>God progresjon ({0}/{1} økter over terskel)</value>
   </data>
-  
   <data name="Progression_FirstSession" xml:space="preserve">
     <value>🌱 Første økt fullført! Velkommen til din stemmereise!</value>
   </data>
@@ -1799,7 +1764,6 @@
   <data name="Progression_TotalSessions" xml:space="preserve">
     <value>Totalt økter: {0}</value>
   </data>
-  
   <data name="Coach_Encourage_1" xml:space="preserve">
     <value>God innsats! Hver økt teller! 💪</value>
   </data>
@@ -1815,11 +1779,9 @@
   <data name="Coach_QualityOverQuantity" xml:space="preserve">
     <value>Husk at kvalitet er viktigere enn kvantitet. Fokusér på riktig teknikk i hver økt.</value>
   </data>
-  
   <data name="VoiceHealth_SessionTimeRemaining" xml:space="preserve">
     <value>Du har {0} minutter igjen av økten. Ta gjerne en pause.</value>
   </data>
-  
   <data name="Feedback_Pitch_BelowTarget" xml:space="preserve">
     <value>Gjennomsnittlig pitch er {0} Hz, som er under målområdet ({1}-{2} Hz).</value>
   </data>
@@ -1844,7 +1806,6 @@
   <data name="Feedback_Resonance_Back" xml:space="preserve">
     <value>Tydelig bakre resonans ({0}/{1} Hz). Dette gir en mørkere klang.</value>
   </data>
-  
   <data name="Feedback_Hint_PitchTooLow" xml:space="preserve">
     <value>Prøv å heve stemmen litt. Tenk på å snakke fra halsen, ikke brystet. Forestill deg at du prøver å nå en høy tone.</value>
   </data>
@@ -1854,21 +1815,18 @@
   <data name="Feedback_Hint_PitchInRange" xml:space="preserve">
     <value>Fortsatt å holde denne pitch-en. Konsentrer deg om å være konsistent gjennom hele setningen.</value>
   </data>
-  
   <data name="Feedback_Hint_VariationTooLow" xml:space="preserve">
     <value>Prøv å variere pitch-en mer. Bruk naturlig intonasjon - tenk på hvordan du ville snakket hvis du var veldig spent eller interessert!</value>
   </data>
   <data name="Feedback_Hint_VariationGood" xml:space="preserve">
     <value>Dette gir taleen din mer dynamikk og interesse. Fortsett å jobbe med å variere pitch-en naturlig.</value>
   </data>
-  
   <data name="Feedback_Hint_IntonationNeedsWork" xml:space="preserve">
     <value>Øv på å avslutte spørsmål med en stigende tone. Prøv å si 'hva skal du gjøre?' med nysgjerrig stemme.</value>
   </data>
   <data name="Feedback_Hint_IntonationGood" xml:space="preserve">
     <value>Dette gir taleen din mer uttrykk. Fortsett å jobbe med å gjøre intonasjonen enda tydeligere.</value>
   </data>
-  
   <data name="Feedback_Hint_ResonanceLowConfidence" xml:space="preserve">
     <value>Snakk tydelig og hold stemmen jevnere for bedre analyse.</value>
   </data>
@@ -1890,7 +1848,6 @@
   <data name="Feedback_Hint_ResonanceTooBack" xml:space="preserve">
     <value>Viktig: Fokuser på å heve F2. Tenk på å 'henge' lyden i nesetippen og smile mer!</value>
   </data>
-  
   <data name="Feedback_Message_IntonationLow" xml:space="preserve">
     <value>Stigende intonasjon er lav. Spørsmål og setninger som slutter med stigende tone er viktig.</value>
   </data>
@@ -1906,7 +1863,6 @@
   <data name="Feedback_Message_ResonanceBack" xml:space="preserve">
     <value>Resonansen har bakre tendens. Du kan oppnå en lysere klang.</value>
   </data>
-  
   <data name="Feedback_Realtime_NoVoice" xml:space="preserve">
     <value>Signalet er svakt. Prøv litt nærmere mikrofonen eller kjør mikrofonkalibrering.</value>
   </data>
@@ -1919,15 +1875,12 @@
   <data name="Feedback_Realtime_PitchInRange" xml:space="preserve">
     <value>Innenfor målsonen ({0:F0} Hz). Hold en jevn, komfortabel tone og jobb videre med resonans.</value>
   </data>
-  
   <data name="Feedback_Summary_Top" xml:space="preserve">
     <value>🌟 Total score: {0}%</value>
   </data>
   <data name="Feedback_Summary_PositiveImprovement" xml:space="preserve">
     <value>Du fikk {0} positive punkter og {1} forbedringsområder.</value>
   </data>
-  
-  
   <data name="CoachHint_Pitch_Good" xml:space="preserve">
     <value>Perfekt pitch! Hold denne tonen.</value>
   </data>
@@ -1943,7 +1896,6 @@
   <data name="CoachHint_PitchPress_Rest" xml:space="preserve">
     <value>🛑 Du presser stemmen. Ta en pause og slapp av.</value>
   </data>
-  
   <data name="CoachHint_Resonance_Optimal" xml:space="preserve">
     <value>✨ Perfekt resonans! Fremre klangposisjon.</value>
   </data>
@@ -1965,7 +1917,6 @@
   <data name="CoachHint_Resonance_Adjust" xml:space="preserve">
     <value>✨ Juster resonansen - prøv å heve F2.</value>
   </data>
-  
   <data name="CoachHint_Intonation_Natural" xml:space="preserve">
     <value>🎶 Naturlig intonasjon! God variasjon.</value>
   </data>
@@ -1981,7 +1932,6 @@
   <data name="CoachHint_Intonation_RiseForQuestion" xml:space="preserve">
     <value>🎶 Prøv å avslutte med stigende tone for spørsmål.</value>
   </data>
-  
   <data name="CoachHint_Breathing_Good" xml:space="preserve">
     <value>🌬️ God pustekontroll!</value>
   </data>
@@ -2003,7 +1953,6 @@
   <data name="CoachHint_Breathing_Relax" xml:space="preserve">
     <value>🌬️ Slapp av i halsen og pust rolig.</value>
   </data>
-  
   <data name="CoachHint_Health_Critical" xml:space="preserve">
     <value>🛑 STANS! Din stemme trenger hvile umiddelbart.</value>
   </data>
@@ -2022,11 +1971,9 @@
   <data name="CoachHint_Stability_Adjust" xml:space="preserve">
     <value>📊 Prøv å holde stemmen mer stabil.</value>
   </data>
-  
   <data name="CoachHint_Correct" xml:space="preserve">
     <value>✅ Perfekt! Fortsett slik.</value>
   </data>
-  
   <data name="HealthWarning_SessionApproachingLimit" xml:space="preserve">
     <value>⚠️ Du nærmer deg tidsgrensen for denne økten ({0} min gjenstår).</value>
   </data>
@@ -2039,7 +1986,6 @@
   <data name="HealthWarning_DefaultRest" xml:space="preserve">
     <value>🛑 Ta en pause. Drikk vann og slapp av i halsen.</value>
   </data>
-  
   <data name="ExerciseSummary_Excellent" xml:space="preserve">
     <value>⭐ Fantastisk innsats!</value>
   </data>
@@ -2073,7 +2019,6 @@
   <data name="ExerciseSummary_Declined" xml:space="preserve">
     <value>Ta denne økten roligere - kanskje du trenger en pause.</value>
   </data>
-  
   <data name="Dashboard_Score" xml:space="preserve">
     <value>Score</value>
   </data>
@@ -2122,14 +2067,12 @@
   <data name="Dashboard_Average" xml:space="preserve">
     <value>Gj.snitt</value>
   </data>
-  
   <data name="App_Title" xml:space="preserve">
     <value>FemVoice Studio</value>
   </data>
   <data name="App_Subtitle" xml:space="preserve">
     <value>Din stemmetreningspartner</value>
   </data>
-  
   <data name="Training_Start" xml:space="preserve">
     <value>Start trening</value>
   </data>
@@ -2142,7 +2085,6 @@
   <data name="Training_Resume" xml:space="preserve">
     <value>Fortsett</value>
   </data>
-  
   <data name="Metrics_Pitch" xml:space="preserve">
     <value>Pitch</value>
   </data>
@@ -2158,14 +2100,12 @@
   <data name="Metrics_Health" xml:space="preserve">
     <value>Stemmehelse</value>
   </data>
-  
   <data name="Feedback_NeedsWork" xml:space="preserve">
     <value>Fortsett å øve!</value>
   </data>
   <data name="Feedback_Strain" xml:space="preserve">
     <value>Stemmepress oppdaget - ta en pause</value>
   </data>
-  
   <data name="Coach_Focus" xml:space="preserve">
     <value>Fokuser på</value>
   </data>
@@ -2175,7 +2115,6 @@
   <data name="Coach_How" xml:space="preserve">
     <value>Hvordan øve</value>
   </data>
-  
   <data name="LiveFeedback_Active" xml:space="preserve">
     <value>Aktiv</value>
   </data>
@@ -4101,8 +4040,6 @@ Dette kan ikke angres!</value>
   <data name="Realtime_PitchAboveZoneFormat" xml:space="preserve">
     <value>Over målsonen ({0:F0} Hz). Stemmen ligger høyere/lysere enn den grønne sonen {1:F0}-{2:F0} Hz. Slipp litt ned og unngå press.</value>
   </data>
-
-  
   <data name="Dimension_Recovery" xml:space="preserve">
     <value>Restitusjon</value>
   </data>
@@ -4124,9 +4061,6 @@ Dette kan ikke angres!</value>
   <data name="Dimension_Pitch" xml:space="preserve">
     <value>Tonehøyde</value>
   </data>
-
-  
-  
   <data name="Pattern_Plateau_Description" xml:space="preserve">
     <value>Stemmen din er i en stabil fase innen {0}. Platåer er en naturlig del av utviklingen — kroppen bearbeider og befester det den har lært.</value>
   </data>
@@ -4136,9 +4070,6 @@ Dette kan ikke angres!</value>
   <data name="Pattern_Regression_Description" xml:space="preserve">
     <value>Stemmen din viser en midlertidig tilbakegang innen {0}. Dette kan skyldes tretthet, stress eller perioder med mindre trening — og er forbigående.</value>
   </data>
-
-  
-  
   <data name="Insight_Improvement_Template" xml:space="preserve">
     <value>{0} har utviklet seg positivt ({1:+0.0;-0.0} poeng). Treningsarbeidet begynner å gi resultater.</value>
   </data>
@@ -4151,9 +4082,6 @@ Dette kan ikke angres!</value>
   <data name="Insight_InsufficientData" xml:space="preserve">
     <value>Det er foreløpig ikke nok data for {0} til å vise en tydelig trend. Fortsett å trene, så bygger bildet seg opp.</value>
   </data>
-
-  
-  
   <data name="Explanation_WhyFocus_Template" xml:space="preserve">
     <value>{0} er valgt som fokusområde fordi det er her treningen din har størst potensiale for vekst akkurat nå.</value>
   </data>
@@ -4172,8 +4100,6 @@ Dette kan ikke angres!</value>
   <data name="Explanation_Confidence_Low" xml:space="preserve">
     <value>Lav sikkerhet — begrenset datagrunnlag</value>
   </data>
-
-  
   <data name="Dashboard_WeeklyTrend" xml:space="preserve">
     <value>Ukentlig trend</value>
   </data>
@@ -4198,7 +4124,6 @@ Dette kan ikke angres!</value>
   <data name="Dashboard_Axis_Date" xml:space="preserve">
     <value>Dato</value>
   </data>
-  
   <data name="FeedbackMode_Resonance" xml:space="preserve">
     <value>Visuell: resonansindikator (fremre plassering)</value>
   </data>
@@ -4217,7 +4142,6 @@ Dette kan ikke angres!</value>
   <data name="ThresholdStrategy_Intensity" xml:space="preserve">
     <value>Terskel: kortere, mer fokuserte intervaller med hvile imellom.</value>
   </data>
-  
   <data name="SessionInsight_Title" xml:space="preserve">
     <value>Session reflection</value>
   </data>
@@ -4335,7 +4259,6 @@ Dette kan ikke angres!</value>
   <data name="Recovery_Driver_Hydration_Many" xml:space="preserve">
     <value>{0} hydration nudges</value>
   </data>
-  
   <data name="Nav_ProfessionalToolsTitle" xml:space="preserve">
     <value>Profesjonelle verktøy</value>
   </data>
@@ -4354,7 +4277,6 @@ Dette kan ikke angres!</value>
   <data name="Nav_CaseReview" xml:space="preserve">
     <value>Case-gjennomgang</value>
   </data>
-  
   <data name="Clinician_Title" xml:space="preserve">
     <value>Klinisk oversikt</value>
   </data>
@@ -4379,7 +4301,6 @@ Dette kan ikke angres!</value>
   <data name="Clinician_LearningPath" xml:space="preserve">
     <value>Læringsløp</value>
   </data>
-  
   <data name="Coach_Title" xml:space="preserve">
     <value>Coach-oversikt</value>
   </data>
@@ -4407,7 +4328,6 @@ Dette kan ikke angres!</value>
   <data name="Coach_RecoveryNeeds" xml:space="preserve">
     <value>Restitusjonsbehov</value>
   </data>
-  
   <data name="Report_Title" xml:space="preserve">
     <value>Rapporter</value>
   </data>
@@ -4435,7 +4355,6 @@ Dette kan ikke angres!</value>
   <data name="Report_Timeline" xml:space="preserve">
     <value>Tidslinje</value>
   </data>
-  
   <data name="Override_Title" xml:space="preserve">
     <value>Manuell justering</value>
   </data>
@@ -4457,7 +4376,6 @@ Dette kan ikke angres!</value>
   <data name="Override_Logged" xml:space="preserve">
     <value>Justeringen er loggført</value>
   </data>
-  
   <data name="CaseReview_Title" xml:space="preserve">
     <value>Case-gjennomgang</value>
   </data>
@@ -4638,55 +4556,238 @@ Dette kan ikke angres!</value>
   <data name="Report_RecommendationDeprioritizeFormat" xml:space="preserve">
     <value>Prioriter øvelse {0} lavere: {1}</value>
   </data>
-  <data name="ReportPdf_ClinicalNotes" xml:space="preserve"><value>Kliniske notater</value></data>
-  <data name="ReportPdf_Date" xml:space="preserve"><value>Dato</value></data>
-  <data name="ReportPdf_AuthorRole" xml:space="preserve"><value>Rolle</value></data>
-  <data name="ReportPdf_Note" xml:space="preserve"><value>Notat</value></data>
-  <data name="ReportPdf_AuditTrail" xml:space="preserve"><value>Revisjonsspor</value></data>
-  <data name="ReportPdf_EntityType" xml:space="preserve"><value>Entitetstype</value></data>
-  <data name="ReportPdf_ReasonCode" xml:space="preserve"><value>Årsakskode</value></data>
-  <data name="ReportPdf_GeneratedPrefix" xml:space="preserve"><value>Generert: </value></data>
-  <data name="ReportPdf_DetectedPatterns" xml:space="preserve"><value>Oppdagede mønstre</value></data>
-  <data name="ReportPdf_BreakthroughFormat" xml:space="preserve"><value>Gjennombrudd: {0} ({1})</value></data>
-  <data name="ReportPdf_PlateauFormat" xml:space="preserve"><value>Platå: {0} ({1})</value></data>
-  <data name="ReportPdf_RegressionFormat" xml:space="preserve"><value>Tilbakegang: {0} ({1})</value></data>
-  <data name="ReportPdf_FocusAreas" xml:space="preserve"><value>Fokusområder</value></data>
-  <data name="ReportPdf_Recommendations" xml:space="preserve"><value>Anbefalinger</value></data>
-  <data name="ReportPdf_CompositeVoiceScoreFormat" xml:space="preserve"><value>Samlet stemmescore: {0:F1} / 100</value></data>
-  <data name="ReportPdf_RecoveryFormat" xml:space="preserve"><value>Restitusjon: {0} ({1:F1}/100)</value></data>
-  <data name="ReportPdf_DataSufficientFormat" xml:space="preserve"><value>Nok data: {0}</value></data>
-  <data name="ReportPdf_GoalProgress" xml:space="preserve"><value>Målfremdrift</value></data>
-  <data name="ReportPdf_GoalType" xml:space="preserve"><value>Måltype</value></data>
-  <data name="ReportPdf_Target" xml:space="preserve"><value>Mål</value></data>
-  <data name="ReportPdf_Current" xml:space="preserve"><value>Nåverdi</value></data>
-  <data name="ReportPdf_ProgressPercent" xml:space="preserve"><value>Fremdrift %</value></data>
-  <data name="ReportPdf_Achieved" xml:space="preserve"><value>Oppnådd</value></data>
-  <data name="ReportPdf_ExerciseEffectivenessRanked" xml:space="preserve"><value>Øvelseseffektivitet (rangert)</value></data>
-  <data name="ReportPdf_ExerciseId" xml:space="preserve"><value>Øvelse-ID</value></data>
-  <data name="ReportPdf_Composite" xml:space="preserve"><value>Samlet</value></data>
-  <data name="ReportPdf_RecoveryCost" xml:space="preserve"><value>Restitusjonskostnad</value></data>
-  <data name="ReportPdf_VoiceDevelopmentTimeline" xml:space="preserve"><value>Stemmeutvikling over tid</value></data>
-  <data name="ReportPdf_Period" xml:space="preserve"><value>Periode</value></data>
-  <data name="ReportPdf_Sessions" xml:space="preserve"><value>Økter</value></data>
-  <data name="ReportPdf_MeanScore" xml:space="preserve"><value>Snittscore</value></data>
-  <data name="ReportPdf_Slope" xml:space="preserve"><value>Trend</value></data>
-  <data name="ReportPdf_Direction" xml:space="preserve"><value>Retning</value></data>
-  <data name="ReportPdf_NoTimelineData" xml:space="preserve"><value>Ingen tidslinjedata er tilgjengelige for denne perioden.</value></data>
-  <data name="ReportPdf_NoSpecificLayout" xml:space="preserve"><value>Ingen spesifikk layout for denne rapporttypen.</value></data>
-  <data name="ReportPdf_PeriodLineFormat" xml:space="preserve"><value>Periode: {0} – {1}</value></data>
-  <data name="ReportPdf_OutcomeSummary" xml:space="preserve"><value>Utfallsoppsummering</value></data>
-  <data name="ReportPdf_Metric" xml:space="preserve"><value>Metrikk</value></data>
-  <data name="ReportPdf_Value" xml:space="preserve"><value>Verdi</value></data>
-  <data name="ReportPdf_CompositeVoiceScore" xml:space="preserve"><value>Samlet stemmescore</value></data>
-  <data name="ReportPdf_RecoveryStatus" xml:space="preserve"><value>Restitusjonsstatus</value></data>
-  <data name="ReportPdf_RecoveryDebt" xml:space="preserve"><value>Restitusjonsgjeld</value></data>
-  <data name="ReportPdf_OvertrainingPredicted" xml:space="preserve"><value>Overtrening forutsagt</value></data>
-  <data name="ReportPdf_GoalsTracked" xml:space="preserve"><value>Mål fulgt</value></data>
-  <data name="ReportPdf_ExercisesRanked" xml:space="preserve"><value>Øvelser rangert</value></data>
-  <data name="ReportPdf_DataSufficient" xml:space="preserve"><value>Nok data</value></data>
-  <data name="ReportPdf_RecoveryRecommendationFormat" xml:space="preserve"><value>Restitusjonsanbefaling: {0}</value></data>
-  
+  <data name="ReportPdf_ClinicalNotes" xml:space="preserve">
+    <value>Kliniske notater</value>
+  </data>
+  <data name="ReportPdf_Date" xml:space="preserve">
+    <value>Dato</value>
+  </data>
+  <data name="ReportPdf_AuthorRole" xml:space="preserve">
+    <value>Rolle</value>
+  </data>
+  <data name="ReportPdf_Note" xml:space="preserve">
+    <value>Notat</value>
+  </data>
+  <data name="ReportPdf_AuditTrail" xml:space="preserve">
+    <value>Revisjonsspor</value>
+  </data>
+  <data name="ReportPdf_EntityType" xml:space="preserve">
+    <value>Entitetstype</value>
+  </data>
+  <data name="ReportPdf_ReasonCode" xml:space="preserve">
+    <value>Årsakskode</value>
+  </data>
+  <data name="ReportPdf_GeneratedPrefix" xml:space="preserve">
+    <value>Generert: </value>
+  </data>
+  <data name="ReportPdf_DetectedPatterns" xml:space="preserve">
+    <value>Oppdagede mønstre</value>
+  </data>
+  <data name="ReportPdf_BreakthroughFormat" xml:space="preserve">
+    <value>Gjennombrudd: {0} ({1})</value>
+  </data>
+  <data name="ReportPdf_PlateauFormat" xml:space="preserve">
+    <value>Platå: {0} ({1})</value>
+  </data>
+  <data name="ReportPdf_RegressionFormat" xml:space="preserve">
+    <value>Tilbakegang: {0} ({1})</value>
+  </data>
+  <data name="ReportPdf_FocusAreas" xml:space="preserve">
+    <value>Fokusområder</value>
+  </data>
+  <data name="ReportPdf_Recommendations" xml:space="preserve">
+    <value>Anbefalinger</value>
+  </data>
+  <data name="ReportPdf_CompositeVoiceScoreFormat" xml:space="preserve">
+    <value>Samlet stemmescore: {0:F1} / 100</value>
+  </data>
+  <data name="ReportPdf_RecoveryFormat" xml:space="preserve">
+    <value>Restitusjon: {0} ({1:F1}/100)</value>
+  </data>
+  <data name="ReportPdf_DataSufficientFormat" xml:space="preserve">
+    <value>Nok data: {0}</value>
+  </data>
+  <data name="ReportPdf_GoalProgress" xml:space="preserve">
+    <value>Målfremdrift</value>
+  </data>
+  <data name="ReportPdf_GoalType" xml:space="preserve">
+    <value>Måltype</value>
+  </data>
+  <data name="ReportPdf_Target" xml:space="preserve">
+    <value>Mål</value>
+  </data>
+  <data name="ReportPdf_Current" xml:space="preserve">
+    <value>Nåverdi</value>
+  </data>
+  <data name="ReportPdf_ProgressPercent" xml:space="preserve">
+    <value>Fremdrift %</value>
+  </data>
+  <data name="ReportPdf_Achieved" xml:space="preserve">
+    <value>Oppnådd</value>
+  </data>
+  <data name="ReportPdf_ExerciseEffectivenessRanked" xml:space="preserve">
+    <value>Øvelseseffektivitet (rangert)</value>
+  </data>
+  <data name="ReportPdf_ExerciseId" xml:space="preserve">
+    <value>Øvelse-ID</value>
+  </data>
+  <data name="ReportPdf_Composite" xml:space="preserve">
+    <value>Samlet</value>
+  </data>
+  <data name="ReportPdf_RecoveryCost" xml:space="preserve">
+    <value>Restitusjonskostnad</value>
+  </data>
+  <data name="ReportPdf_VoiceDevelopmentTimeline" xml:space="preserve">
+    <value>Stemmeutvikling over tid</value>
+  </data>
+  <data name="ReportPdf_Period" xml:space="preserve">
+    <value>Periode</value>
+  </data>
+  <data name="ReportPdf_Sessions" xml:space="preserve">
+    <value>Økter</value>
+  </data>
+  <data name="ReportPdf_MeanScore" xml:space="preserve">
+    <value>Snittscore</value>
+  </data>
+  <data name="ReportPdf_Slope" xml:space="preserve">
+    <value>Trend</value>
+  </data>
+  <data name="ReportPdf_Direction" xml:space="preserve">
+    <value>Retning</value>
+  </data>
+  <data name="ReportPdf_NoTimelineData" xml:space="preserve">
+    <value>Ingen tidslinjedata er tilgjengelige for denne perioden.</value>
+  </data>
+  <data name="ReportPdf_NoSpecificLayout" xml:space="preserve">
+    <value>Ingen spesifikk layout for denne rapporttypen.</value>
+  </data>
+  <data name="ReportPdf_PeriodLineFormat" xml:space="preserve">
+    <value>Periode: {0} – {1}</value>
+  </data>
+  <data name="ReportPdf_OutcomeSummary" xml:space="preserve">
+    <value>Utfallsoppsummering</value>
+  </data>
+  <data name="ReportPdf_Metric" xml:space="preserve">
+    <value>Metrikk</value>
+  </data>
+  <data name="ReportPdf_Value" xml:space="preserve">
+    <value>Verdi</value>
+  </data>
+  <data name="ReportPdf_CompositeVoiceScore" xml:space="preserve">
+    <value>Samlet stemmescore</value>
+  </data>
+  <data name="ReportPdf_RecoveryStatus" xml:space="preserve">
+    <value>Restitusjonsstatus</value>
+  </data>
+  <data name="ReportPdf_RecoveryDebt" xml:space="preserve">
+    <value>Restitusjonsgjeld</value>
+  </data>
+  <data name="ReportPdf_OvertrainingPredicted" xml:space="preserve">
+    <value>Overtrening forutsagt</value>
+  </data>
+  <data name="ReportPdf_GoalsTracked" xml:space="preserve">
+    <value>Mål fulgt</value>
+  </data>
+  <data name="ReportPdf_ExercisesRanked" xml:space="preserve">
+    <value>Øvelser rangert</value>
+  </data>
+  <data name="ReportPdf_DataSufficient" xml:space="preserve">
+    <value>Nok data</value>
+  </data>
+  <data name="ReportPdf_RecoveryRecommendationFormat" xml:space="preserve">
+    <value>Restitusjonsanbefaling: {0}</value>
+  </data>
   <data name="Research_Export" xml:space="preserve">
     <value>Eksporter forskningsdata</value>
   </data>
-</root>
+  <data name="ReportPdf_Exercise" xml:space="preserve">
+    <value>Øvelse</value>
+  </data>
+  <data name="Report_ExerciseFallbackFormat" xml:space="preserve">
+    <value>Øvelse {0}</value>
+  </data>
+  <data name="Report_ExerciseIdFallbackFormat" xml:space="preserve">
+    <value>Øvelse-ID {0}</value>
+  </data>
+  <data name="Report_Status_HIGH_FATIGUE" xml:space="preserve">
+    <value>Høy stemmetretthet</value>
+  </data>
+  <data name="Report_Status_HIGH_RECOVERY_COST" xml:space="preserve">
+    <value>Høy restitusjonskostnad</value>
+  </data>
+  <data name="Report_Status_OVERTRAINED" xml:space="preserve">
+    <value>Overtrent</value>
+  </data>
+  <data name="Report_Status_STRAINED" xml:space="preserve">
+    <value>Belastet</value>
+  </data>
+  <data name="Report_Status_ADEQUATE" xml:space="preserve">
+    <value>Tilstrekkelig restituert</value>
+  </data>
+  <data name="Report_Status_WELLRECOVERED" xml:space="preserve">
+    <value>Godt restituert</value>
+  </data>
+  <data name="Report_Status_NEEDSREVIEW" xml:space="preserve">
+    <value>Trenger vurdering</value>
+  </data>
+  <data name="Report_Status_IMPROVING" xml:space="preserve">
+    <value>Forbedres</value>
+  </data>
+  <data name="Report_Status_STABLE" xml:space="preserve">
+    <value>Stabil</value>
+  </data>
+  <data name="Report_Status_DECLINING" xml:space="preserve">
+    <value>Synker</value>
+  </data>
+  <data name="Report_Status_PASS" xml:space="preserve">
+    <value>PASS</value>
+  </data>
+  <data name="Report_Status_FAIL" xml:space="preserve">
+    <value>FAIL</value>
+  </data>
+  <data name="Report_Status_NOT_VERIFIED" xml:space="preserve">
+    <value>Ikke verifisert</value>
+  </data>
+  <data name="Report_Status_NOT_IMPLEMENTED" xml:space="preserve">
+    <value>Ikke implementert</value>
+  </data>
+  <data name="Report_Reason_HIGH_FATIGUE" xml:space="preserve">
+    <value>Høy stemmetretthet</value>
+  </data>
+  <data name="Report_Reason_HIGH_RECOVERY_COST" xml:space="preserve">
+    <value>Høy restitusjonskostnad</value>
+  </data>
+  <data name="Report_Reason_OVERTRAINED" xml:space="preserve">
+    <value>Overtrent</value>
+  </data>
+  <data name="Report_Reason_IMPROVING" xml:space="preserve">
+    <value>Forbedres</value>
+  </data>
+  <data name="Report_Reason_STABLE" xml:space="preserve">
+    <value>Stabil</value>
+  </data>
+  <data name="Report_Reason_DECLINING" xml:space="preserve">
+    <value>Synker</value>
+  </data>
+  <data name="Report_RecoveryRecommendationRestFormat" xml:space="preserve">
+    <value>En hviledag eller en svært lett økt ser best ut nå. Treningsbelastningen øker raskere enn vanlig (forhold {0:F2}), og restitusjonen ligger etter nylig aktivitet (gjeld {1:F1}). Dette er et mildt forslag om å hvile tidligere, ikke en grense for treningen din.</value>
+  </data>
+  <data name="Report_RecommendationHighFatigueFormat" xml:space="preserve">
+    <value>Prioriter øvelse {0} lavere: øvelsen viser gjentatte stemmetretthetssignaler (~{1:F1} per økt). Et lettere alternativ kan være mer skånsomt.</value>
+  </data>
+  <data name="Report_RecommendationHighRecoveryCostFormat" xml:space="preserve">
+    <value>Prioriter øvelse {0} lavere: øvelsen er belastende nylig (restitusjonskostnad {1:F0}/100). Vurder lettere arbeid en stund.</value>
+  </data>
+  <data name="Report_InsightImprovementFormat" xml:space="preserve">
+    <value>{0} har utviklet seg positivt (+{1:F1} poeng). Treningsarbeidet begynner å gi resultater.</value>
+  </data>
+  <data name="Report_GenerationFailed" xml:space="preserve">
+    <value>Rapportgenerering feilet</value>
+  </data>
+  <data name="Report_NotVerified" xml:space="preserve">
+    <value>Ikke verifisert</value>
+  </data>
+  <data name="Report_NotImplemented" xml:space="preserve">
+    <value>Ikke implementert</value>
+  </data>
+<data name="Report_TimeWindow_Days" xml:space="preserve"><value>{0} dager</value></data><data name="Report_TimeWindow_LabelFormat" xml:space="preserve"><value>{0} ({1} – {2})</value></data><data name="Report_Term_Fatigue" xml:space="preserve"><value>Stemmetretthet</value></data><data name="Report_Term_FatigueSignals" xml:space="preserve"><value>Stemmetretthetssignaler</value></data><data name="Report_Term_VoiceFatigue" xml:space="preserve"><value>Stemmetretthet</value></data><data name="Report_Term_VoiceFatigueSignals" xml:space="preserve"><value>Stemmetretthetssignaler</value></data><data name="Report_Term_TrainingLoad" xml:space="preserve"><value>Treningsbelastning</value></data><data name="Report_Term_RecentActivity" xml:space="preserve"><value>Nylig aktivitet</value></data><data name="Report_Term_RestBehindRecentActivity" xml:space="preserve"><value>Restitusjonen ligger etter nylig aktivitet</value></data><data name="Report_Status_SIGNAL_LEVEL_COLLAPSES" xml:space="preserve"><value>Signalnivået faller bort</value></data><data name="Report_Status_EXPECTED_SILENCE" xml:space="preserve"><value>Forventet stillhet</value></data><data name="Report_Status_SILENCE_TAIL" xml:space="preserve"><value>Stillhet på slutten</value></data></root>

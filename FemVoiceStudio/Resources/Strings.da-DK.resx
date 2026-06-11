@@ -1,32 +1,32 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<root>
-  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-    <xsd:element name="root" msdata:IsDataSet="true">
-      <xsd:complexType>
-        <xsd:choice maxOccurs="unbounded">
-          <xsd:element name="data">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
-              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="resheader">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" />
-            </xsd:complexType>
-          </xsd:element>
-        </xsd:choice>
-      </xsd:complexType>
-    </xsd:element>
-  </xsd:schema>
+<?xml version='1.0' encoding='utf-8'?>
+<root xmlns:ns1="urn:schemas-microsoft-com:xml-msdata" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:schema id="root">
+    <xs:element name="root" ns1:IsDataSet="true">
+      <xs:complexType>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element name="data">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" ns1:Ordinal="1" />
+                <xs:element name="comment" type="xsd:string" minOccurs="0" ns1:Ordinal="2" />
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" ns1:Ordinal="0" />
+              <xs:attribute name="type" type="xsd:string" ns1:Ordinal="3" />
+              <xs:attribute name="mimetype" type="xsd:string" ns1:Ordinal="4" />
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="resheader">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" ns1:Ordinal="1" />
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" use="required" />
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+      </xs:complexType>
+    </xs:element>
+  </xs:schema>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
   </resheader>
@@ -42,7 +42,6 @@
   <data name="Guidance_PanelTitle" xml:space="preserve">
     <value>Vejledning</value>
   </data>
-  <!-- Live Feedback UI labels (English fallback used where untranslated) -->
   <data name="LiveFeedback_Title" xml:space="preserve">
     <value>Live Feedback</value>
   </data>
@@ -97,28 +96,6 @@
   <data name="Mastery_Mastered" xml:space="preserve">
     <value>Behersket</value>
   </data>
-  <!-- Voice Training Exercises 101-115 (Database exercises) -->
-  <!-- Voice Training Exercises 101-115 Descriptions -->
-  <!-- Exercise Steps - Voice Training -->
-  <!-- Scientific Rationale - Voice Training -->
-  <!-- App Title -->
-  <!-- Navigation -->
-  <!-- Home Page -->
-  <!-- Exercise Page -->
-  <!-- Difficulty Levels -->
-  <!-- Frequency -->
-  <!-- Goals -->
-  <!-- Analyzer Page -->
-  <!-- Statistics Page -->
-  <!-- Settings Page -->
-  <!-- Feedback Messages -->
-  <!-- Achievements -->
-  <!-- Common -->
-  <!-- Exercise Texts - Nybegynner -->
-  <!-- Exercise Texts - Middels -->
-  <!-- Exercise Texts - Avansert -->
-  <!-- Common -->
-  <!-- UI Strings -->
   <data name="Achievement_AdvancedMaster" xml:space="preserve">
     <value>Mestre</value>
   </data>
@@ -351,17 +328,17 @@
     <value>Kontrolleret nedglidning styrker musklerne til pitch-kontrol og etablerer muskelhukommelse for målområdet.</value>
   </data>
   <data name="Guidance_ClinicalPurpose" xml:space="preserve">
-  <value>Forbedr fremadrettet resonans og udvikl en lettere, mere feminin klang.</value>
-</data>
+    <value>Forbedr fremadrettet resonans og udvikl en lettere, mere feminin klang.</value>
+  </data>
   <data name="Guidance_PhysicalFocus" xml:space="preserve">
-  <value>Fokuser på vibration i læber, tænder og den forreste del af munden mens halsen holdes afslappet.</value>
-</data>
+    <value>Fokuser på vibration i læber, tænder og den forreste del af munden mens halsen holdes afslappet.</value>
+  </data>
   <data name="Guidance_CommonMistakes" xml:space="preserve">
-  <value>Undgå at presse tonelejet for højt, spænde i halsen eller bruge for meget luft.</value>
-</data>
+    <value>Undgå at presse tonelejet for højt, spænde i halsen eller bruge for meget luft.</value>
+  </data>
   <data name="Guidance_SafetyInfo" xml:space="preserve">
-  <value>Stop hvis du mærker ubehag eller spænding. Hold stemmen afslappet og hydreret.</value>
-</data>
+    <value>Stop hvis du mærker ubehag eller spænding. Hold stemmen afslappet og hydreret.</value>
+  </data>
   <data name="Exercise_102_Steps" xml:space="preserve">
     <value>Start højt og glid langsomt ned over 3 sekunder|Hold den lave tone i 2 sekunder|Gentag med forskellige startpunkter|Fokuser på jævn glidning</value>
   </data>
@@ -1583,7 +1560,6 @@
   <data name="UI_StopSession" xml:space="preserve">
     <value>Stop session</value>
   </data>
-  <!-- Health Monitoring Messages -->
   <data name="SmartCoach_Health_PitchPress" xml:space="preserve">
     <value>Din stemme viser tegn på anstrengelse. I dag: kun åndedrætsøvelser og let resonans-arbejde. Undgå at presse pitch. 5 minutters rolig træning.</value>
   </data>
@@ -1599,7 +1575,6 @@
   <data name="SmartCoach_HealthWarning" xml:space="preserve">
     <value>Stemmehelse-advarsel</value>
   </data>
-  <!-- Level Names -->
   <data name="Level_Beginner" xml:space="preserve">
     <value>Begynder</value>
   </data>
@@ -1612,7 +1587,6 @@
   <data name="Level_Unknown" xml:space="preserve">
     <value>Ukendt</value>
   </data>
-  <!-- Level Focus Descriptions -->
   <data name="Level_Focus_Beginner" xml:space="preserve">
     <value>Resonans først - sikker pitchforøgelse</value>
   </data>
@@ -1622,7 +1596,6 @@
   <data name="Level_Focus_Advanced" xml:space="preserve">
     <value>Naturlig tale - intonation</value>
   </data>
-  <!-- Level Transition Messages -->
   <data name="Level_Promotion_Reason" xml:space="preserve">
     <value>{0} af {1} seneste sessioner over {2}%</value>
   </data>
@@ -1632,7 +1605,6 @@
   <data name="Level_GoodProgress_Reason" xml:space="preserve">
     <value>God fremgang ({0}/{1} sessioner over tærskel)</value>
   </data>
-  <!-- Progression Messages -->
   <data name="Progression_FirstSession" xml:space="preserve">
     <value>🌱 Første session fuldført! Velkommen til din stemmerejse!</value>
   </data>
@@ -1654,7 +1626,6 @@
   <data name="Progression_TotalSessions" xml:space="preserve">
     <value>Samlede sessioner: {0}</value>
   </data>
-  <!-- Coach Messages -->
   <data name="Coach_Encourage_1" xml:space="preserve">
     <value>God indsats! Hver session tæller! 💪</value>
   </data>
@@ -1670,11 +1641,9 @@
   <data name="Coach_QualityOverQuantity" xml:space="preserve">
     <value>Husk at kvalitet er vigtigere end kvantitet. Fokuser på korrekt teknik i hver session.</value>
   </data>
-  <!-- Voice Health -->
   <data name="VoiceHealth_SessionTimeRemaining" xml:space="preserve">
     <value>Du har {0} minutter tilbage af sessionen. Tag gerne en pause.</value>
   </data>
-  <!-- Feedback Messages -->
   <data name="Feedback_Pitch_BelowTarget" xml:space="preserve">
     <value>Gennemsnitlig pitch er {0} Hz, hvilket er under målområdet ({1}-{2} Hz).</value>
   </data>
@@ -1699,7 +1668,6 @@
   <data name="Feedback_Resonance_Back" xml:space="preserve">
     <value>Tydelig bagudgående resonans ({0}/{1} Hz). Dette giver en mørkere klang.</value>
   </data>
-  <!-- Feedback Hints - Pitch -->
   <data name="Feedback_Hint_PitchTooLow" xml:space="preserve">
     <value>Prøv at hæve stemmen lidt. Tænk på at tale fra halsen, ikke brystet. Forestil dig at du prøver at nå en høj tone.</value>
   </data>
@@ -1709,21 +1677,18 @@
   <data name="Feedback_Hint_PitchInRange" xml:space="preserve">
     <value>Bliv ved med at holde denne pitch. Koncentrer dig om at være konsistent gennem hele sætningen.</value>
   </data>
-  <!-- Feedback Hints - Variation -->
   <data name="Feedback_Hint_VariationTooLow" xml:space="preserve">
     <value>Prøv at variere pitch-en mere. Brug naturlig intonation - tænk på hvordan du ville tale hvis du var virkelig spændt eller interesseret!</value>
   </data>
   <data name="Feedback_Hint_VariationGood" xml:space="preserve">
     <value>Dette giver din tale mere dynamik og interesse. Bliv ved med at arbejde med at variere pitch-en naturligt.</value>
   </data>
-  <!-- Feedback Hints - Intonation -->
   <data name="Feedback_Hint_IntonationNeedsWork" xml:space="preserve">
     <value>Øv dig på at afslutte spørgsmål med en stigende tone. Prøv at sige 'hvad skal du gøre?' med nysgerrig stemme.</value>
   </data>
   <data name="Feedback_Hint_IntonationGood" xml:space="preserve">
     <value>Dette giver din tale mere udtryk. Bliv ved med at arbejde med at gøre intonationen endnu tydeligere.</value>
   </data>
-  <!-- Feedback Hints - Resonance -->
   <data name="Feedback_Hint_ResonanceLowConfidence" xml:space="preserve">
     <value>Tal tydeligt og hold stemmen jævnere for bedre analyse.</value>
   </data>
@@ -1745,7 +1710,6 @@
   <data name="Feedback_Hint_ResonanceTooBack" xml:space="preserve">
     <value>Vigtigt: Fokuser på at hæve F2. Tænk på at 'hænge' lyden i næsespidsen og smile mere!</value>
   </data>
-  <!-- Feedback Messages - Additional -->
   <data name="Feedback_Message_IntonationLow" xml:space="preserve">
     <value>Stigende intonation er lav. Spørgsmål og sætninger der slutter med stigende tone er vigtige.</value>
   </data>
@@ -1761,7 +1725,6 @@
   <data name="Feedback_Message_ResonanceBack" xml:space="preserve">
     <value>Resonansen har bagudgående tendens. Du kan opnå en lysere klang.</value>
   </data>
-  <!-- Realtime Feedback -->
   <data name="Feedback_Realtime_NoVoice" xml:space="preserve">
     <value>The signal is weak. Try moving a little closer to the microphone or run microphone calibration.</value>
   </data>
@@ -1774,14 +1737,12 @@
   <data name="Feedback_Realtime_PitchInRange" xml:space="preserve">
     <value>Inden for målzonen ({0:F0} Hz). Hold en jævn, behagelig tone og fortsæt med at fokusere på resonans.</value>
   </data>
-  <!-- Summary -->
   <data name="Feedback_Summary_Top" xml:space="preserve">
     <value>🌟 Total score: {0}%</value>
   </data>
   <data name="Feedback_Summary_PositiveImprovement" xml:space="preserve">
     <value>Du fik {0} positive punkter og {1} forbedringsområder.</value>
   </data>
-  <!-- Progression Dashboard -->
   <data name="Dashboard_Score" xml:space="preserve">
     <value>Score</value>
   </data>
@@ -1830,14 +1791,12 @@
   <data name="Dashboard_Average" xml:space="preserve">
     <value>Gennemsnit</value>
   </data>
-  <!-- LanguageSubsystem Legacy Keys -->
   <data name="App_Title" xml:space="preserve">
     <value>FemVoice Studio</value>
   </data>
   <data name="App_Subtitle" xml:space="preserve">
     <value>Din stemmetræningspartner</value>
   </data>
-  <!-- Training -->
   <data name="Training_Start" xml:space="preserve">
     <value>Start træning</value>
   </data>
@@ -1850,7 +1809,6 @@
   <data name="Training_Resume" xml:space="preserve">
     <value>Fortsett</value>
   </data>
-  <!-- Metrics -->
   <data name="Metrics_Pitch" xml:space="preserve">
     <value>Tonehøjde</value>
   </data>
@@ -1866,14 +1824,12 @@
   <data name="Metrics_Health" xml:space="preserve">
     <value>Stemmesundhed</value>
   </data>
-  <!-- Feedback -->
   <data name="Feedback_NeedsWork" xml:space="preserve">
     <value>Bliv ved med at øve!</value>
   </data>
   <data name="Feedback_Strain" xml:space="preserve">
     <value>Stemmepres opdaget - tag en pause</value>
   </data>
-  <!-- Smart Coach -->
   <data name="Coach_Focus" xml:space="preserve">
     <value>Fokuser på</value>
   </data>
@@ -1883,7 +1839,6 @@
   <data name="Coach_How" xml:space="preserve">
     <value>Hvordan øve</value>
   </data>
-  <!-- Live feedback status labels -->
   <data name="LiveFeedback_Active" xml:space="preserve">
     <value>Active</value>
   </data>
@@ -3779,145 +3734,511 @@ This cannot be undone!</value>
   <data name="ThresholdStrategy_Intensity" xml:space="preserve">
     <value>Tærskel: kortere, mere fokuserede intervaller med hvile imellem.</value>
   </data>
-  <data name="Coach_Title" xml:space="preserve"><value>Coach-oversigt</value></data>
-  <data name="Coach_FocusAreas" xml:space="preserve"><value>Fokusområder</value></data>
-  <data name="Coach_Recommendations" xml:space="preserve"><value>Anbefalinger</value></data>
-  <data name="Coach_Breakthroughs" xml:space="preserve"><value>Gennembrud</value></data>
-  <data name="Coach_PlateauWarnings" xml:space="preserve"><value>Plateauvarsler</value></data>
-  <data name="Coach_RecoveryNeeds" xml:space="preserve"><value>Restitutionsbehov</value></data>
-  <data name="Coach_Exercise" xml:space="preserve"><value>Øvelse</value></data>
-  <data name="Clinician_Title" xml:space="preserve"><value>Klinisk oversigt</value></data>
-  <data name="Clinician_VoiceMetrics" xml:space="preserve"><value>Stemmemetrikker</value></data>
-  <data name="Clinician_RecoveryStatus" xml:space="preserve"><value>Restitutionsstatus</value></data>
-  <data name="Clinician_ComfortTrend" xml:space="preserve"><value>Komforttrend</value></data>
-  <data name="Clinician_ResonanceTrend" xml:space="preserve"><value>Resonanstrend</value></data>
-  <data name="Clinician_ConsistencyTrend" xml:space="preserve"><value>Konsistenstrend</value></data>
-  <data name="Clinician_ExerciseEffectiveness" xml:space="preserve"><value>Øvelseseffektivitet</value></data>
-  <data name="Clinician_LearningPath" xml:space="preserve"><value>Læringssti</value></data>
-  <data name="Clinician_RecoveryDebtLabel" xml:space="preserve"><value>Gæld: </value></data>
-  <data name="Clinician_OvertrainingPredicted" xml:space="preserve"><value>Overtræning forudsagt</value></data>
-  <data name="Clinician_GridEffectiveness" xml:space="preserve"><value>Effektivitet</value></data>
-  <data name="Clinician_GridResonanceGain" xml:space="preserve"><value>Resonansgevinst</value></data>
-  <data name="Clinician_GridComfortGain" xml:space="preserve"><value>Komfortgevinst</value></data>
-  <data name="Clinician_GridRecoveryCost" xml:space="preserve"><value>Restitutionskostnad</value></data>
-  <data name="Clinician_GridSuccess" xml:space="preserve"><value>Succes%</value></data>
-  <data name="Clinician_GridSessions" xml:space="preserve"><value>Sessioner</value></data>
-  <data name="Clinician_SafetyLabel" xml:space="preserve"><value>Sikkerhed: </value></data>
-  <data name="Clinician_FocusAreasLabel" xml:space="preserve"><value>Fokusområder:</value></data>
-  <data name="Clinician_Strengths" xml:space="preserve"><value>Styrker:</value></data>
-  <data name="Clinician_Weaknesses" xml:space="preserve"><value>Udviklingsområder:</value></data>
-  <data name="Clinician_GoalProgress" xml:space="preserve"><value>Målfremdrift</value></data>
-  <data name="Clinician_GridGoal" xml:space="preserve"><value>Mål</value></data>
-  <data name="Clinician_GridCurrentValue" xml:space="preserve"><value>Nuværende</value></data>
-  <data name="Clinician_GridTargetValue" xml:space="preserve"><value>Mål</value></data>
-  <data name="Clinician_LongitudinalInsights" xml:space="preserve"><value>Longitudinelle indsigter</value></data>
-  <data name="Report_Title" xml:space="preserve"><value>Rapporter</value></data>
-  <data name="Report_Format" xml:space="preserve"><value>Format</value></data>
-  <data name="Report_Type" xml:space="preserve"><value>Type</value></data>
-  <data name="Report_Generate" xml:space="preserve"><value>Generér</value></data>
-  <data name="Report_Export" xml:space="preserve"><value>Eksportér</value></data>
-  <data name="Report_Clinical" xml:space="preserve"><value>Klinisk rapport</value></data>
-  <data name="Report_Coach" xml:space="preserve"><value>Coach-rapport</value></data>
-  <data name="Report_Outcome" xml:space="preserve"><value>Resultatrapport</value></data>
-  <data name="Report_Timeline" xml:space="preserve"><value>Tidslinje</value></data>
-  <data name="Report_StatusServicesUnavailable" xml:space="preserve"><value>Tjenester er ikke tilgængelige - kan ikke generere rapport.</value></data>
-  <data name="Report_StatusExportedToFormat" xml:space="preserve"><value>Eksporteret til: {0}</value></data>
-  <data name="Report_StatusExportErrorFormat" xml:space="preserve"><value>Fejl ved eksport: {0}</value></data>
-  <data name="Report_FileFilterPdf" xml:space="preserve"><value>PDF-filer (*.pdf)|*.pdf</value></data>
-  <data name="Report_FileFilterCsv" xml:space="preserve"><value>CSV-filer (*.csv)|*.csv</value></data>
-  <data name="Report_FileFilterJson" xml:space="preserve"><value>JSON-filer (*.json)|*.json</value></data>
-  <data name="Report_FileFilterAll" xml:space="preserve"><value>Alle filer (*.*)|*.*</value></data>
-  <data name="Report_DialogTitle" xml:space="preserve"><value>Eksportér rapport</value></data>
-  <data name="Report_TitleClinicalProgressFormat" xml:space="preserve"><value>Klinisk fremdriftsrapport — {0}</value></data>
-  <data name="Report_TitleCoachingSummaryFormat" xml:space="preserve"><value>Coach-opsummering — {0}</value></data>
-  <data name="Report_TitleOutcomeSummaryFormat" xml:space="preserve"><value>Resultatopsummering — {0}</value></data>
-  <data name="Report_TitleVoiceTimelineFormat" xml:space="preserve"><value>Stemmeudvikling over tid — {0}</value></data>
-  <data name="Report_DirectionInsufficientData" xml:space="preserve"><value>Ikke nok data</value></data>
-  <data name="Report_DirectionImproving" xml:space="preserve"><value>Forbedres</value></data>
-  <data name="Report_DirectionDeclining" xml:space="preserve"><value>Falder</value></data>
-  <data name="Report_DirectionStable" xml:space="preserve"><value>Stabil</value></data>
-  <data name="Report_FocusBreakthroughFormat" xml:space="preserve"><value>{0} — gennembrud registreret</value></data>
-  <data name="Report_FocusPlateauFormat" xml:space="preserve"><value>{0} — plateau registreret</value></data>
-  <data name="Report_FocusRegressionFormat" xml:space="preserve"><value>{0} — tilbagegang registreret</value></data>
-  <data name="Report_FocusGoalInProgressFormat" xml:space="preserve"><value>{0} — mål i gang ({1:F0}%)</value></data>
-  <data name="Report_FocusGoalAchievedFormat" xml:space="preserve"><value>{0} — mål opnået</value></data>
-  <data name="Report_FocusRecoveryOvertraining" xml:space="preserve"><value>Restitution — overtræning forudsagt</value></data>
-  <data name="Report_FocusRecoveryStatusFormat" xml:space="preserve"><value>Restitution — {0}</value></data>
-  <data name="Report_FocusExerciseConcernFormat" xml:space="preserve"><value>Øvelse {0} — {1}</value></data>
-  <data name="Report_RecommendationDeprioritizeFormat" xml:space="preserve"><value>Nedprioritér øvelse {0}: {1}</value></data>
-  <data name="Override_Title" xml:space="preserve"><value>Manuel justering</value></data>
-  <data name="Override_Kind" xml:space="preserve"><value>Justeringstype</value></data>
-  <data name="Override_Reason" xml:space="preserve"><value>Begrundelse</value></data>
-  <data name="Override_Apply" xml:space="preserve"><value>Anvend justering</value></data>
-  <data name="Override_Clamped" xml:space="preserve"><value>Justeringen blev holdt inden for sikre rammer</value></data>
-  <data name="Override_Blocked" xml:space="preserve"><value>Justeringen blev ikke anvendt</value></data>
-  <data name="Override_Logged" xml:space="preserve"><value>Justeringen er logført</value></data>
-  <data name="CaseReview_Title" xml:space="preserve"><value>Case-gennemgang</value></data>
-  <data name="CaseReview_Type" xml:space="preserve"><value>Type</value></data>
-  <data name="CaseReview_Period" xml:space="preserve"><value>Periode</value></data>
-  <data name="CaseReview_Create" xml:space="preserve"><value>Opret gennemgang</value></data>
-  <data name="CaseReview_Complete" xml:space="preserve"><value>Fuldfør gennemgang</value></data>
-  <data name="CaseReview_Monthly" xml:space="preserve"><value>Månedlig</value></data>
-  <data name="CaseReview_Goal" xml:space="preserve"><value>Mål</value></data>
-  <data name="CaseReview_Progress" xml:space="preserve"><value>Fremdrift</value></data>
-  <data name="CaseReview_Recovery" xml:space="preserve"><value>Restitution</value></data>
-  <data name="CaseReview_SavedReviews" xml:space="preserve"><value>Gemte gennemgange</value></data>
-  <data name="CaseReview_Load" xml:space="preserve"><value>Indlæs</value></data>
-  <data name="CaseReview_StatusServicesUnavailable" xml:space="preserve"><value>Tjenester er ikke tilgængelige - kan ikke oprette gennemgang.</value></data>
-  <data name="CaseReview_StatusCreatedFormat" xml:space="preserve"><value>Gennemgang oprettet (kladde): {0}</value></data>
-  <data name="CaseReview_StatusCreateErrorFormat" xml:space="preserve"><value>Fejl ved oprettelse: {0}</value></data>
-  <data name="CaseReview_StatusNotFound" xml:space="preserve"><value>Gennemgangen blev ikke fundet.</value></data>
-  <data name="CaseReview_StatusCompleted" xml:space="preserve"><value>Gennemgang fuldført.</value></data>
-  <data name="CaseReview_StatusCompleteErrorFormat" xml:space="preserve"><value>Fejl ved fuldførelse: {0}</value></data>
-  <data name="CaseReview_StatusLoadErrorFormat" xml:space="preserve"><value>Fejl ved indlæsning af gennemgange: {0}</value></data>
-  <data name="ReportPdf_ClinicalNotes" xml:space="preserve"><value>Kliniske noter</value></data>
-  <data name="ReportPdf_Date" xml:space="preserve"><value>Dato</value></data>
-  <data name="ReportPdf_AuthorRole" xml:space="preserve"><value>Rolle</value></data>
-  <data name="ReportPdf_Note" xml:space="preserve"><value>Note</value></data>
-  <data name="ReportPdf_AuditTrail" xml:space="preserve"><value>Revisionsspor</value></data>
-  <data name="ReportPdf_EntityType" xml:space="preserve"><value>Entitetstype</value></data>
-  <data name="ReportPdf_ReasonCode" xml:space="preserve"><value>Årsagskode</value></data>
-  <data name="ReportPdf_GeneratedPrefix" xml:space="preserve"><value>Genereret: </value></data>
-  <data name="ReportPdf_DetectedPatterns" xml:space="preserve"><value>Registrerede mønstre</value></data>
-  <data name="ReportPdf_BreakthroughFormat" xml:space="preserve"><value>Gennembrud: {0} ({1})</value></data>
-  <data name="ReportPdf_PlateauFormat" xml:space="preserve"><value>Plateau: {0} ({1})</value></data>
-  <data name="ReportPdf_RegressionFormat" xml:space="preserve"><value>Tilbagegang: {0} ({1})</value></data>
-  <data name="ReportPdf_FocusAreas" xml:space="preserve"><value>Fokusområder</value></data>
-  <data name="ReportPdf_Recommendations" xml:space="preserve"><value>Anbefalinger</value></data>
-  <data name="ReportPdf_CompositeVoiceScoreFormat" xml:space="preserve"><value>Samlet stemmescore: {0:F1} / 100</value></data>
-  <data name="ReportPdf_RecoveryFormat" xml:space="preserve"><value>Restitution: {0} ({1:F1}/100)</value></data>
-  <data name="ReportPdf_DataSufficientFormat" xml:space="preserve"><value>Nok data: {0}</value></data>
-  <data name="ReportPdf_GoalProgress" xml:space="preserve"><value>Målfremdrift</value></data>
-  <data name="ReportPdf_GoalType" xml:space="preserve"><value>Måltype</value></data>
-  <data name="ReportPdf_Target" xml:space="preserve"><value>Mål</value></data>
-  <data name="ReportPdf_Current" xml:space="preserve"><value>Nuværende</value></data>
-  <data name="ReportPdf_ProgressPercent" xml:space="preserve"><value>Fremdrift %</value></data>
-  <data name="ReportPdf_Achieved" xml:space="preserve"><value>Opnået</value></data>
-  <data name="ReportPdf_ExerciseEffectivenessRanked" xml:space="preserve"><value>Øvelseseffektivitet (rangeret)</value></data>
-  <data name="ReportPdf_ExerciseId" xml:space="preserve"><value>Øvelse-ID</value></data>
-  <data name="ReportPdf_Composite" xml:space="preserve"><value>Samlet</value></data>
-  <data name="ReportPdf_RecoveryCost" xml:space="preserve"><value>Restitutionskostnad</value></data>
-  <data name="ReportPdf_VoiceDevelopmentTimeline" xml:space="preserve"><value>Stemmeudvikling over tid</value></data>
-  <data name="ReportPdf_Period" xml:space="preserve"><value>Periode</value></data>
-  <data name="ReportPdf_Sessions" xml:space="preserve"><value>Sessioner</value></data>
-  <data name="ReportPdf_MeanScore" xml:space="preserve"><value>Gennemsnitsscore</value></data>
-  <data name="ReportPdf_Slope" xml:space="preserve"><value>Trend</value></data>
-  <data name="ReportPdf_Direction" xml:space="preserve"><value>Retning</value></data>
-  <data name="ReportPdf_NoTimelineData" xml:space="preserve"><value>Ingen tidslinjedata er tilgængelige for denne periode.</value></data>
-  <data name="ReportPdf_NoSpecificLayout" xml:space="preserve"><value>Ingen specifik layout for denne rapporttype.</value></data>
-  <data name="ReportPdf_PeriodLineFormat" xml:space="preserve"><value>Periode: {0} – {1}</value></data>
-  <data name="ReportPdf_OutcomeSummary" xml:space="preserve"><value>Resultatopsummering</value></data>
-  <data name="ReportPdf_Metric" xml:space="preserve"><value>Metrik</value></data>
-  <data name="ReportPdf_Value" xml:space="preserve"><value>Værdi</value></data>
-  <data name="ReportPdf_CompositeVoiceScore" xml:space="preserve"><value>Samlet stemmescore</value></data>
-  <data name="ReportPdf_RecoveryStatus" xml:space="preserve"><value>Restitutionsstatus</value></data>
-  <data name="ReportPdf_RecoveryDebt" xml:space="preserve"><value>Restitutionsgæld</value></data>
-  <data name="ReportPdf_OvertrainingPredicted" xml:space="preserve"><value>Overtræning forudsagt</value></data>
-  <data name="ReportPdf_GoalsTracked" xml:space="preserve"><value>Mål fulgt</value></data>
-  <data name="ReportPdf_ExercisesRanked" xml:space="preserve"><value>Øvelser rangeret</value></data>
-  <data name="ReportPdf_DataSufficient" xml:space="preserve"><value>Nok data</value></data>
-  <data name="ReportPdf_RecoveryRecommendationFormat" xml:space="preserve"><value>Restitutionsanbefaling: {0}</value></data>
+  <data name="Coach_Title" xml:space="preserve">
+    <value>Coach-oversigt</value>
+  </data>
+  <data name="Coach_FocusAreas" xml:space="preserve">
+    <value>Fokusområder</value>
+  </data>
+  <data name="Coach_Recommendations" xml:space="preserve">
+    <value>Anbefalinger</value>
+  </data>
+  <data name="Coach_Breakthroughs" xml:space="preserve">
+    <value>Gennembrud</value>
+  </data>
+  <data name="Coach_PlateauWarnings" xml:space="preserve">
+    <value>Plateauvarsler</value>
+  </data>
+  <data name="Coach_RecoveryNeeds" xml:space="preserve">
+    <value>Restitutionsbehov</value>
+  </data>
+  <data name="Coach_Exercise" xml:space="preserve">
+    <value>Øvelse</value>
+  </data>
+  <data name="Clinician_Title" xml:space="preserve">
+    <value>Klinisk oversigt</value>
+  </data>
+  <data name="Clinician_VoiceMetrics" xml:space="preserve">
+    <value>Stemmemetrikker</value>
+  </data>
+  <data name="Clinician_RecoveryStatus" xml:space="preserve">
+    <value>Restitutionsstatus</value>
+  </data>
+  <data name="Clinician_ComfortTrend" xml:space="preserve">
+    <value>Komforttrend</value>
+  </data>
+  <data name="Clinician_ResonanceTrend" xml:space="preserve">
+    <value>Resonanstrend</value>
+  </data>
+  <data name="Clinician_ConsistencyTrend" xml:space="preserve">
+    <value>Konsistenstrend</value>
+  </data>
+  <data name="Clinician_ExerciseEffectiveness" xml:space="preserve">
+    <value>Øvelseseffektivitet</value>
+  </data>
+  <data name="Clinician_LearningPath" xml:space="preserve">
+    <value>Læringssti</value>
+  </data>
+  <data name="Clinician_RecoveryDebtLabel" xml:space="preserve">
+    <value>Gæld: </value>
+  </data>
+  <data name="Clinician_OvertrainingPredicted" xml:space="preserve">
+    <value>Overtræning forudsagt</value>
+  </data>
+  <data name="Clinician_GridEffectiveness" xml:space="preserve">
+    <value>Effektivitet</value>
+  </data>
+  <data name="Clinician_GridResonanceGain" xml:space="preserve">
+    <value>Resonansgevinst</value>
+  </data>
+  <data name="Clinician_GridComfortGain" xml:space="preserve">
+    <value>Komfortgevinst</value>
+  </data>
+  <data name="Clinician_GridRecoveryCost" xml:space="preserve">
+    <value>Restitutionskostnad</value>
+  </data>
+  <data name="Clinician_GridSuccess" xml:space="preserve">
+    <value>Succes%</value>
+  </data>
+  <data name="Clinician_GridSessions" xml:space="preserve">
+    <value>Sessioner</value>
+  </data>
+  <data name="Clinician_SafetyLabel" xml:space="preserve">
+    <value>Sikkerhed: </value>
+  </data>
+  <data name="Clinician_FocusAreasLabel" xml:space="preserve">
+    <value>Fokusområder:</value>
+  </data>
+  <data name="Clinician_Strengths" xml:space="preserve">
+    <value>Styrker:</value>
+  </data>
+  <data name="Clinician_Weaknesses" xml:space="preserve">
+    <value>Udviklingsområder:</value>
+  </data>
+  <data name="Clinician_GoalProgress" xml:space="preserve">
+    <value>Målfremdrift</value>
+  </data>
+  <data name="Clinician_GridGoal" xml:space="preserve">
+    <value>Mål</value>
+  </data>
+  <data name="Clinician_GridCurrentValue" xml:space="preserve">
+    <value>Nuværende</value>
+  </data>
+  <data name="Clinician_GridTargetValue" xml:space="preserve">
+    <value>Mål</value>
+  </data>
+  <data name="Clinician_LongitudinalInsights" xml:space="preserve">
+    <value>Longitudinelle indsigter</value>
+  </data>
+  <data name="Report_Title" xml:space="preserve">
+    <value>Rapporter</value>
+  </data>
+  <data name="Report_Format" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="Report_Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="Report_Generate" xml:space="preserve">
+    <value>Generér</value>
+  </data>
+  <data name="Report_Export" xml:space="preserve">
+    <value>Eksportér</value>
+  </data>
+  <data name="Report_Clinical" xml:space="preserve">
+    <value>Klinisk rapport</value>
+  </data>
+  <data name="Report_Coach" xml:space="preserve">
+    <value>Coach-rapport</value>
+  </data>
+  <data name="Report_Outcome" xml:space="preserve">
+    <value>Resultatrapport</value>
+  </data>
+  <data name="Report_Timeline" xml:space="preserve">
+    <value>Tidslinje</value>
+  </data>
+  <data name="Report_StatusServicesUnavailable" xml:space="preserve">
+    <value>Tjenester er ikke tilgængelige - kan ikke generere rapport.</value>
+  </data>
+  <data name="Report_StatusExportedToFormat" xml:space="preserve">
+    <value>Eksporteret til: {0}</value>
+  </data>
+  <data name="Report_StatusExportErrorFormat" xml:space="preserve">
+    <value>Fejl ved eksport: {0}</value>
+  </data>
+  <data name="Report_FileFilterPdf" xml:space="preserve">
+    <value>PDF-filer (*.pdf)|*.pdf</value>
+  </data>
+  <data name="Report_FileFilterCsv" xml:space="preserve">
+    <value>CSV-filer (*.csv)|*.csv</value>
+  </data>
+  <data name="Report_FileFilterJson" xml:space="preserve">
+    <value>JSON-filer (*.json)|*.json</value>
+  </data>
+  <data name="Report_FileFilterAll" xml:space="preserve">
+    <value>Alle filer (*.*)|*.*</value>
+  </data>
+  <data name="Report_DialogTitle" xml:space="preserve">
+    <value>Eksportér rapport</value>
+  </data>
+  <data name="Report_TitleClinicalProgressFormat" xml:space="preserve">
+    <value>Klinisk fremdriftsrapport — {0}</value>
+  </data>
+  <data name="Report_TitleCoachingSummaryFormat" xml:space="preserve">
+    <value>Coach-opsummering — {0}</value>
+  </data>
+  <data name="Report_TitleOutcomeSummaryFormat" xml:space="preserve">
+    <value>Resultatopsummering — {0}</value>
+  </data>
+  <data name="Report_TitleVoiceTimelineFormat" xml:space="preserve">
+    <value>Stemmeudvikling over tid — {0}</value>
+  </data>
+  <data name="Report_DirectionInsufficientData" xml:space="preserve">
+    <value>Ikke nok data</value>
+  </data>
+  <data name="Report_DirectionImproving" xml:space="preserve">
+    <value>Forbedres</value>
+  </data>
+  <data name="Report_DirectionDeclining" xml:space="preserve">
+    <value>Falder</value>
+  </data>
+  <data name="Report_DirectionStable" xml:space="preserve">
+    <value>Stabil</value>
+  </data>
+  <data name="Report_FocusBreakthroughFormat" xml:space="preserve">
+    <value>{0} — gennembrud registreret</value>
+  </data>
+  <data name="Report_FocusPlateauFormat" xml:space="preserve">
+    <value>{0} — plateau registreret</value>
+  </data>
+  <data name="Report_FocusRegressionFormat" xml:space="preserve">
+    <value>{0} — tilbagegang registreret</value>
+  </data>
+  <data name="Report_FocusGoalInProgressFormat" xml:space="preserve">
+    <value>{0} — mål i gang ({1:F0}%)</value>
+  </data>
+  <data name="Report_FocusGoalAchievedFormat" xml:space="preserve">
+    <value>{0} — mål opnået</value>
+  </data>
+  <data name="Report_FocusRecoveryOvertraining" xml:space="preserve">
+    <value>Restitution — overtræning forudsagt</value>
+  </data>
+  <data name="Report_FocusRecoveryStatusFormat" xml:space="preserve">
+    <value>Restitution — {0}</value>
+  </data>
+  <data name="Report_FocusExerciseConcernFormat" xml:space="preserve">
+    <value>Øvelse {0} — {1}</value>
+  </data>
+  <data name="Report_RecommendationDeprioritizeFormat" xml:space="preserve">
+    <value>Nedprioritér øvelse {0}: {1}</value>
+  </data>
+  <data name="Override_Title" xml:space="preserve">
+    <value>Manuel justering</value>
+  </data>
+  <data name="Override_Kind" xml:space="preserve">
+    <value>Justeringstype</value>
+  </data>
+  <data name="Override_Reason" xml:space="preserve">
+    <value>Begrundelse</value>
+  </data>
+  <data name="Override_Apply" xml:space="preserve">
+    <value>Anvend justering</value>
+  </data>
+  <data name="Override_Clamped" xml:space="preserve">
+    <value>Justeringen blev holdt inden for sikre rammer</value>
+  </data>
+  <data name="Override_Blocked" xml:space="preserve">
+    <value>Justeringen blev ikke anvendt</value>
+  </data>
+  <data name="Override_Logged" xml:space="preserve">
+    <value>Justeringen er logført</value>
+  </data>
+  <data name="CaseReview_Title" xml:space="preserve">
+    <value>Case-gennemgang</value>
+  </data>
+  <data name="CaseReview_Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="CaseReview_Period" xml:space="preserve">
+    <value>Periode</value>
+  </data>
+  <data name="CaseReview_Create" xml:space="preserve">
+    <value>Opret gennemgang</value>
+  </data>
+  <data name="CaseReview_Complete" xml:space="preserve">
+    <value>Fuldfør gennemgang</value>
+  </data>
+  <data name="CaseReview_Monthly" xml:space="preserve">
+    <value>Månedlig</value>
+  </data>
+  <data name="CaseReview_Goal" xml:space="preserve">
+    <value>Mål</value>
+  </data>
+  <data name="CaseReview_Progress" xml:space="preserve">
+    <value>Fremdrift</value>
+  </data>
+  <data name="CaseReview_Recovery" xml:space="preserve">
+    <value>Restitution</value>
+  </data>
+  <data name="CaseReview_SavedReviews" xml:space="preserve">
+    <value>Gemte gennemgange</value>
+  </data>
+  <data name="CaseReview_Load" xml:space="preserve">
+    <value>Indlæs</value>
+  </data>
+  <data name="CaseReview_StatusServicesUnavailable" xml:space="preserve">
+    <value>Tjenester er ikke tilgængelige - kan ikke oprette gennemgang.</value>
+  </data>
+  <data name="CaseReview_StatusCreatedFormat" xml:space="preserve">
+    <value>Gennemgang oprettet (kladde): {0}</value>
+  </data>
+  <data name="CaseReview_StatusCreateErrorFormat" xml:space="preserve">
+    <value>Fejl ved oprettelse: {0}</value>
+  </data>
+  <data name="CaseReview_StatusNotFound" xml:space="preserve">
+    <value>Gennemgangen blev ikke fundet.</value>
+  </data>
+  <data name="CaseReview_StatusCompleted" xml:space="preserve">
+    <value>Gennemgang fuldført.</value>
+  </data>
+  <data name="CaseReview_StatusCompleteErrorFormat" xml:space="preserve">
+    <value>Fejl ved fuldførelse: {0}</value>
+  </data>
+  <data name="CaseReview_StatusLoadErrorFormat" xml:space="preserve">
+    <value>Fejl ved indlæsning af gennemgange: {0}</value>
+  </data>
+  <data name="ReportPdf_ClinicalNotes" xml:space="preserve">
+    <value>Kliniske noter</value>
+  </data>
+  <data name="ReportPdf_Date" xml:space="preserve">
+    <value>Dato</value>
+  </data>
+  <data name="ReportPdf_AuthorRole" xml:space="preserve">
+    <value>Rolle</value>
+  </data>
+  <data name="ReportPdf_Note" xml:space="preserve">
+    <value>Note</value>
+  </data>
+  <data name="ReportPdf_AuditTrail" xml:space="preserve">
+    <value>Revisionsspor</value>
+  </data>
+  <data name="ReportPdf_EntityType" xml:space="preserve">
+    <value>Entitetstype</value>
+  </data>
+  <data name="ReportPdf_ReasonCode" xml:space="preserve">
+    <value>Årsagskode</value>
+  </data>
+  <data name="ReportPdf_GeneratedPrefix" xml:space="preserve">
+    <value>Genereret: </value>
+  </data>
+  <data name="ReportPdf_DetectedPatterns" xml:space="preserve">
+    <value>Registrerede mønstre</value>
+  </data>
+  <data name="ReportPdf_BreakthroughFormat" xml:space="preserve">
+    <value>Gennembrud: {0} ({1})</value>
+  </data>
+  <data name="ReportPdf_PlateauFormat" xml:space="preserve">
+    <value>Plateau: {0} ({1})</value>
+  </data>
+  <data name="ReportPdf_RegressionFormat" xml:space="preserve">
+    <value>Tilbagegang: {0} ({1})</value>
+  </data>
+  <data name="ReportPdf_FocusAreas" xml:space="preserve">
+    <value>Fokusområder</value>
+  </data>
+  <data name="ReportPdf_Recommendations" xml:space="preserve">
+    <value>Anbefalinger</value>
+  </data>
+  <data name="ReportPdf_CompositeVoiceScoreFormat" xml:space="preserve">
+    <value>Samlet stemmescore: {0:F1} / 100</value>
+  </data>
+  <data name="ReportPdf_RecoveryFormat" xml:space="preserve">
+    <value>Restitution: {0} ({1:F1}/100)</value>
+  </data>
+  <data name="ReportPdf_DataSufficientFormat" xml:space="preserve">
+    <value>Nok data: {0}</value>
+  </data>
+  <data name="ReportPdf_GoalProgress" xml:space="preserve">
+    <value>Målfremdrift</value>
+  </data>
+  <data name="ReportPdf_GoalType" xml:space="preserve">
+    <value>Måltype</value>
+  </data>
+  <data name="ReportPdf_Target" xml:space="preserve">
+    <value>Mål</value>
+  </data>
+  <data name="ReportPdf_Current" xml:space="preserve">
+    <value>Nuværende</value>
+  </data>
+  <data name="ReportPdf_ProgressPercent" xml:space="preserve">
+    <value>Fremdrift %</value>
+  </data>
+  <data name="ReportPdf_Achieved" xml:space="preserve">
+    <value>Opnået</value>
+  </data>
+  <data name="ReportPdf_ExerciseEffectivenessRanked" xml:space="preserve">
+    <value>Øvelseseffektivitet (rangeret)</value>
+  </data>
+  <data name="ReportPdf_ExerciseId" xml:space="preserve">
+    <value>Øvelse-ID</value>
+  </data>
+  <data name="ReportPdf_Composite" xml:space="preserve">
+    <value>Samlet</value>
+  </data>
+  <data name="ReportPdf_RecoveryCost" xml:space="preserve">
+    <value>Restitutionskostnad</value>
+  </data>
+  <data name="ReportPdf_VoiceDevelopmentTimeline" xml:space="preserve">
+    <value>Stemmeudvikling over tid</value>
+  </data>
+  <data name="ReportPdf_Period" xml:space="preserve">
+    <value>Periode</value>
+  </data>
+  <data name="ReportPdf_Sessions" xml:space="preserve">
+    <value>Sessioner</value>
+  </data>
+  <data name="ReportPdf_MeanScore" xml:space="preserve">
+    <value>Gennemsnitsscore</value>
+  </data>
+  <data name="ReportPdf_Slope" xml:space="preserve">
+    <value>Trend</value>
+  </data>
+  <data name="ReportPdf_Direction" xml:space="preserve">
+    <value>Retning</value>
+  </data>
+  <data name="ReportPdf_NoTimelineData" xml:space="preserve">
+    <value>Ingen tidslinjedata er tilgængelige for denne periode.</value>
+  </data>
+  <data name="ReportPdf_NoSpecificLayout" xml:space="preserve">
+    <value>Ingen specifik layout for denne rapporttype.</value>
+  </data>
+  <data name="ReportPdf_PeriodLineFormat" xml:space="preserve">
+    <value>Periode: {0} – {1}</value>
+  </data>
+  <data name="ReportPdf_OutcomeSummary" xml:space="preserve">
+    <value>Resultatopsummering</value>
+  </data>
+  <data name="ReportPdf_Metric" xml:space="preserve">
+    <value>Metrik</value>
+  </data>
+  <data name="ReportPdf_Value" xml:space="preserve">
+    <value>Værdi</value>
+  </data>
+  <data name="ReportPdf_CompositeVoiceScore" xml:space="preserve">
+    <value>Samlet stemmescore</value>
+  </data>
+  <data name="ReportPdf_RecoveryStatus" xml:space="preserve">
+    <value>Restitutionsstatus</value>
+  </data>
+  <data name="ReportPdf_RecoveryDebt" xml:space="preserve">
+    <value>Restitutionsgæld</value>
+  </data>
+  <data name="ReportPdf_OvertrainingPredicted" xml:space="preserve">
+    <value>Overtræning forudsagt</value>
+  </data>
+  <data name="ReportPdf_GoalsTracked" xml:space="preserve">
+    <value>Mål fulgt</value>
+  </data>
+  <data name="ReportPdf_ExercisesRanked" xml:space="preserve">
+    <value>Øvelser rangeret</value>
+  </data>
+  <data name="ReportPdf_DataSufficient" xml:space="preserve">
+    <value>Nok data</value>
+  </data>
+  <data name="ReportPdf_RecoveryRecommendationFormat" xml:space="preserve">
+    <value>Restitutionsanbefaling: {0}</value>
+  </data>
   <data name="Nav_ProfessionalToolsTitle" xml:space="preserve">
     <value>Professionelle værktøjer</value>
   </data>
-</root>
+  <data name="ReportPdf_Exercise" xml:space="preserve">
+    <value>Øvelse</value>
+  </data>
+  <data name="Report_ExerciseFallbackFormat" xml:space="preserve">
+    <value>Øvelse {0}</value>
+  </data>
+  <data name="Report_ExerciseIdFallbackFormat" xml:space="preserve">
+    <value>Øvelse-ID {0}</value>
+  </data>
+  <data name="Report_Status_HIGH_FATIGUE" xml:space="preserve">
+    <value>Høj stemmetræthed</value>
+  </data>
+  <data name="Report_Status_HIGH_RECOVERY_COST" xml:space="preserve">
+    <value>Høj restitutionskostnad</value>
+  </data>
+  <data name="Report_Status_OVERTRAINED" xml:space="preserve">
+    <value>Overtrænet</value>
+  </data>
+  <data name="Report_Status_STRAINED" xml:space="preserve">
+    <value>Belastet</value>
+  </data>
+  <data name="Report_Status_ADEQUATE" xml:space="preserve">
+    <value>Tilstrækkeligt restitueret</value>
+  </data>
+  <data name="Report_Status_WELLRECOVERED" xml:space="preserve">
+    <value>Godt restitueret</value>
+  </data>
+  <data name="Report_Status_NEEDSREVIEW" xml:space="preserve">
+    <value>Kræver vurdering</value>
+  </data>
+  <data name="Report_Status_IMPROVING" xml:space="preserve">
+    <value>Forbedres</value>
+  </data>
+  <data name="Report_Status_STABLE" xml:space="preserve">
+    <value>Stabil</value>
+  </data>
+  <data name="Report_Status_DECLINING" xml:space="preserve">
+    <value>Falder</value>
+  </data>
+  <data name="Report_Status_PASS" xml:space="preserve">
+    <value>PASS</value>
+  </data>
+  <data name="Report_Status_FAIL" xml:space="preserve">
+    <value>FAIL</value>
+  </data>
+  <data name="Report_Status_NOT_VERIFIED" xml:space="preserve">
+    <value>Ikke verificeret</value>
+  </data>
+  <data name="Report_Status_NOT_IMPLEMENTED" xml:space="preserve">
+    <value>Ikke implementeret</value>
+  </data>
+  <data name="Report_Reason_HIGH_FATIGUE" xml:space="preserve">
+    <value>Høj stemmetræthed</value>
+  </data>
+  <data name="Report_Reason_HIGH_RECOVERY_COST" xml:space="preserve">
+    <value>Høj restitutionskostnad</value>
+  </data>
+  <data name="Report_Reason_OVERTRAINED" xml:space="preserve">
+    <value>Overtrænet</value>
+  </data>
+  <data name="Report_Reason_IMPROVING" xml:space="preserve">
+    <value>Forbedres</value>
+  </data>
+  <data name="Report_Reason_STABLE" xml:space="preserve">
+    <value>Stabil</value>
+  </data>
+  <data name="Report_Reason_DECLINING" xml:space="preserve">
+    <value>Falder</value>
+  </data>
+  <data name="Report_RecoveryRecommendationRestFormat" xml:space="preserve">
+    <value>En hviledag eller en meget let session ser bedst ud lige nu. Den seneste belastning stiger hurtigere end normalt (forhold {0:F2}), og restitutionen er bagud i forhold til den seneste aktivitet (gæld {1:F1}). Det er et blidt forslag om at hvile tidligere, ikke en grænse for din træning.</value>
+  </data>
+  <data name="Report_RecommendationHighFatigueFormat" xml:space="preserve">
+    <value>Prioritér øvelse {0} lavere: øvelsen viser gentagne stemmetræthedssignaler (~{1:F1} pr. session). Et lettere alternativ kan være mere skånsomt.</value>
+  </data>
+  <data name="Report_RecommendationHighRecoveryCostFormat" xml:space="preserve">
+    <value>Prioritér øvelse {0} lavere: øvelsen har været belastende for nylig (restitutionskostnad {1:F0}/100). Overvej lettere arbejde en stund.</value>
+  </data>
+  <data name="Report_InsightImprovementFormat" xml:space="preserve">
+    <value>{0} har udviklet sig positivt (+{1:F1} point). Træningsarbejdet begynder at give resultater.</value>
+  </data>
+  <data name="Report_GenerationFailed" xml:space="preserve">
+    <value>Rapportgenerering mislykkedes</value>
+  </data>
+  <data name="Report_NotVerified" xml:space="preserve">
+    <value>Ikke verificeret</value>
+  </data>
+  <data name="Report_NotImplemented" xml:space="preserve">
+    <value>Ikke implementeret</value>
+  </data>
+<data name="Report_TimeWindow_Days" xml:space="preserve"><value>{0} dage</value></data><data name="Report_TimeWindow_LabelFormat" xml:space="preserve"><value>{0} ({1} – {2})</value></data><data name="Report_Term_Fatigue" xml:space="preserve"><value>Stemmetræthed</value></data><data name="Report_Term_FatigueSignals" xml:space="preserve"><value>Stemmetræthedssignaler</value></data><data name="Report_Term_VoiceFatigue" xml:space="preserve"><value>Stemmetræthed</value></data><data name="Report_Term_VoiceFatigueSignals" xml:space="preserve"><value>Stemmetræthedssignaler</value></data><data name="Report_Term_TrainingLoad" xml:space="preserve"><value>Træningsbelastning</value></data><data name="Report_Term_RecentActivity" xml:space="preserve"><value>Nylig aktivitet</value></data><data name="Report_Term_RestBehindRecentActivity" xml:space="preserve"><value>Restitutionen er bagud i forhold til nylig aktivitet</value></data><data name="Report_Status_SIGNAL_LEVEL_COLLAPSES" xml:space="preserve"><value>Signalniveauet falder bort</value></data><data name="Report_Status_EXPECTED_SILENCE" xml:space="preserve"><value>Forventet stilhed</value></data><data name="Report_Status_SILENCE_TAIL" xml:space="preserve"><value>Stilhed til sidst</value></data></root>

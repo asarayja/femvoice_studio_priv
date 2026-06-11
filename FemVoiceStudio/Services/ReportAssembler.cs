@@ -23,6 +23,11 @@ namespace FemVoiceStudio.Services
     /// </summary>
     public sealed class ReportAssembler
     {
+        private static string T(string key) => LocalizationService.Instance.GetString(key);
+
+        private static string Tf(string key, params object[] args) =>
+            LocalizationService.Instance.GetFormattedString(key, args);
+
         // ── Public API ────────────────────────────────────────────────────────────
 
         /// <summary>
@@ -49,7 +54,7 @@ namespace FemVoiceStudio.Services
             if (auditEvents is null) throw new ArgumentNullException(nameof(auditEvents));
 
             var period = MakePeriod(periodStart, periodEnd, now);
-            var title = $"Clinical Progress Report — {FormatPeriodLabel(periodStart, periodEnd)}";
+            var title = Tf("Report_TitleClinicalProgressFormat", FormatPeriodLabel(periodStart, periodEnd));
 
             var filteredNotes = notes
                 .Where(n => n.CreatedAt >= periodStart && n.CreatedAt <= periodEnd)
@@ -90,7 +95,7 @@ namespace FemVoiceStudio.Services
             if (outcome is null) throw new ArgumentNullException(nameof(outcome));
 
             var period = MakePeriod(periodStart, periodEnd, now);
-            var title = $"Coaching Summary — {FormatPeriodLabel(periodStart, periodEnd)}";
+            var title = Tf("Report_TitleCoachingSummaryFormat", FormatPeriodLabel(periodStart, periodEnd));
 
             var ltd = outcome.LongTermDevelopment;
 
@@ -129,7 +134,7 @@ namespace FemVoiceStudio.Services
             if (outcome is null) throw new ArgumentNullException(nameof(outcome));
 
             var period = MakePeriod(periodStart, periodEnd, now);
-            var title = $"Outcome Summary — {FormatPeriodLabel(periodStart, periodEnd)}";
+            var title = Tf("Report_TitleOutcomeSummaryFormat", FormatPeriodLabel(periodStart, periodEnd));
 
             return new OutcomeReport
             {
@@ -164,7 +169,7 @@ namespace FemVoiceStudio.Services
             if (outcome is null) throw new ArgumentNullException(nameof(outcome));
 
             var period = MakePeriod(periodStart, periodEnd, now);
-            var title = $"Voice Development Timeline — {FormatPeriodLabel(periodStart, periodEnd)}";
+            var title = Tf("Report_TitleVoiceTimelineFormat", FormatPeriodLabel(periodStart, periodEnd));
 
             var ltd = outcome.LongTermDevelopment;
 
@@ -204,20 +209,22 @@ namespace FemVoiceStudio.Services
         private static string FormatPeriodLabel(DateTime start, DateTime end)
         {
             // Same month/year → "May 2026"; different → "Apr 1 – May 31, 2026"
+            var culture = CultureInfo.CurrentUICulture;
+
             if (start.Year == end.Year && start.Month == end.Month)
-                return end.ToString("MMMM yyyy", CultureInfo.InvariantCulture);
+                return end.ToString("MMMM yyyy", culture);
 
             return start.Year == end.Year
-                ? $"{start.ToString("MMM d", CultureInfo.InvariantCulture)} – {end.ToString("MMM d, yyyy", CultureInfo.InvariantCulture)}"
-                : $"{start.ToString("MMM d, yyyy", CultureInfo.InvariantCulture)} – {end.ToString("MMM d, yyyy", CultureInfo.InvariantCulture)}";
+                ? $"{start.ToString("MMM d", culture)} – {end.ToString("MMM d, yyyy", culture)}"
+                : $"{start.ToString("MMM d, yyyy", culture)} – {end.ToString("MMM d, yyyy", culture)}";
         }
 
         private static string ComputeDirection(TrendWindow w)
         {
-            if (!w.HasEnoughData) return "Insufficient data";
-            if (w.CompositeSlope > 0.5) return "Improving";
-            if (w.CompositeSlope < -0.5) return "Declining";
-            return "Stable";
+            if (!w.HasEnoughData) return T("Report_DirectionInsufficientData");
+            if (w.CompositeSlope > 0.5) return T("Report_DirectionImproving");
+            if (w.CompositeSlope < -0.5) return T("Report_DirectionDeclining");
+            return T("Report_DirectionStable");
         }
 
         private static IReadOnlyList<string> BuildFocusAreas(OutcomeProfile outcome)
@@ -227,30 +234,32 @@ namespace FemVoiceStudio.Services
             // Breakthrough / plateau / regression from long-term development
             var ltd = outcome.LongTermDevelopment;
             if (ltd.Breakthrough is not null)
-                areas.Add($"{ltd.Breakthrough.Dimension} — breakthrough detected");
+                areas.Add(Tf("Report_FocusBreakthroughFormat", DimensionLabel(ltd.Breakthrough.Dimension)));
             if (ltd.Plateau is not null)
-                areas.Add($"{ltd.Plateau.Dimension} — plateau detected");
+                areas.Add(Tf("Report_FocusPlateauFormat", DimensionLabel(ltd.Plateau.Dimension)));
             if (ltd.Regression is not null)
-                areas.Add($"{ltd.Regression.Dimension} — regression detected");
+                areas.Add(Tf("Report_FocusRegressionFormat", DimensionLabel(ltd.Regression.Dimension)));
 
             // Goals not yet achieved
             foreach (var goal in outcome.GoalProgress.Goals)
             {
                 if (!goal.IsAchieved)
-                    areas.Add($"{goal.PrimaryFocus} — goal in progress ({goal.PercentComplete:F0}%)");
+                    areas.Add(Tf("Report_FocusGoalInProgressFormat", DimensionLabel(goal.PrimaryFocus), goal.PercentComplete));
                 else
-                    areas.Add($"{goal.PrimaryFocus} — goal achieved");
+                    areas.Add(Tf("Report_FocusGoalAchievedFormat", DimensionLabel(goal.PrimaryFocus)));
             }
 
             // Recovery concern
             if (outcome.RecoveryProgress.OvertrainingPredicted)
-                areas.Add("Recovery — overtraining predicted");
+                areas.Add(T("Report_FocusRecoveryOvertraining"));
             else if (!string.IsNullOrEmpty(outcome.RecoveryProgress.Status))
-                areas.Add($"Recovery — {outcome.RecoveryProgress.Status}");
+                areas.Add(Tf("Report_FocusRecoveryStatusFormat", LocalizeStatus(outcome.RecoveryProgress.Status)));
 
             // Exercise concerns
             foreach (var concern in outcome.ExerciseEffectiveness.Concerns)
-                areas.Add($"Exercise {concern.ExerciseId} — {concern.ReasonCode}");
+                areas.Add(Tf("Report_FocusExerciseConcernFormat",
+                    ResolveExerciseName(concern.ExerciseId),
+                    LocalizeReasonCode(concern.ReasonCode)));
 
             return areas;
         }
@@ -261,11 +270,11 @@ namespace FemVoiceStudio.Services
 
             // Recovery recommendation (highest priority)
             if (!string.IsNullOrEmpty(outcome.RecoveryProgress.RecommendationText))
-                recs.Add(outcome.RecoveryProgress.RecommendationText);
+                recs.Add(LocalizeRecoveryRecommendation(outcome.RecoveryProgress));
 
             // Exercise de-prioritisation from concerns
             foreach (var concern in outcome.ExerciseEffectiveness.Concerns)
-                recs.Add($"De-prioritise exercise {concern.ExerciseId}: {concern.Explanation}");
+                recs.Add(BuildConcernRecommendation(concern));
 
             // Longitudinal insights (top 3 by confidence)
             var topInsights = outcome.LongTermDevelopment.Insights
@@ -274,10 +283,110 @@ namespace FemVoiceStudio.Services
             foreach (var insight in topInsights)
             {
                 if (!string.IsNullOrEmpty(insight.What))
-                    recs.Add(insight.What);
+                    recs.Add(LocalizeInsight(insight));
             }
 
             return recs;
+        }
+
+        public static string ResolveExerciseName(int exerciseId)
+        {
+            var titleKey = $"Exercise_{100 + exerciseId}_Title";
+            var localized = T(titleKey);
+            if (!string.IsNullOrWhiteSpace(localized) && localized != titleKey)
+                return localized;
+
+            var fallback = Tf("Report_ExerciseFallbackFormat", exerciseId);
+            return !string.IsNullOrWhiteSpace(fallback) && fallback != "Report_ExerciseFallbackFormat"
+                ? fallback
+                : $"Exercise ID {exerciseId}";
+        }
+
+        private static string DimensionLabel(VoiceDimension dimension)
+        {
+            var key = $"Dimension_{dimension}";
+            var localized = T(key);
+            return string.IsNullOrWhiteSpace(localized) || localized == key
+                ? dimension.ToString()
+                : localized;
+        }
+
+        public static string LocalizeStatus(string status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+                return string.Empty;
+
+            var key = $"Report_Status_{status.Trim().ToUpperInvariant()}";
+            var localized = T(key);
+            return localized == key ? status : localized;
+        }
+
+        public static string LocalizeReasonCode(string reasonCode)
+        {
+            if (string.IsNullOrWhiteSpace(reasonCode))
+                return string.Empty;
+
+            var key = $"Report_Reason_{reasonCode.Trim().ToUpperInvariant()}";
+            var localized = T(key);
+            return localized == key ? reasonCode : localized;
+        }
+
+        public static string LocalizeRecoveryRecommendation(RecoveryProgress recovery)
+        {
+            if (recovery.OvertrainingPredicted
+                || recovery.RecommendationText.Contains("rest day", StringComparison.OrdinalIgnoreCase)
+                || recovery.RecommendationText.Contains("very light", StringComparison.OrdinalIgnoreCase))
+            {
+                return Tf("Report_RecoveryRecommendationRestFormat",
+                    recovery.AcuteChronicWorkloadRatio,
+                    recovery.RecoveryDebt);
+            }
+
+            return ReportTextSanitizer.Clean(recovery.RecommendationText);
+        }
+
+        private static string BuildConcernRecommendation(ExerciseEffectivenessFlag concern)
+        {
+            var exercise = ResolveExerciseName(concern.ExerciseId);
+            var reason = concern.ReasonCode.Trim().ToUpperInvariant();
+
+            return reason switch
+            {
+                "HIGH_FATIGUE" => Tf("Report_RecommendationHighFatigueFormat", exercise, concern.Magnitude),
+                "HIGH_RECOVERY_COST" => Tf("Report_RecommendationHighRecoveryCostFormat", exercise, concern.Magnitude),
+                _ => Tf("Report_RecommendationDeprioritizeFormat",
+                    exercise,
+                    LocalizeReasonCode(concern.ReasonCode))
+            };
+        }
+
+        private static string LocalizeInsight(LongitudinalInsight insight)
+        {
+            if (string.Equals(insight.ReasonCode, "IMPROVEMENT", StringComparison.OrdinalIgnoreCase)
+                && TryReadInsightDelta(insight, out var delta))
+            {
+                return Tf("Report_InsightImprovementFormat", DimensionLabel(insight.Dimension), delta);
+            }
+
+            return ReportTextSanitizer.Clean(insight.What);
+        }
+
+        private static bool TryReadInsightDelta(LongitudinalInsight insight, out double delta)
+        {
+            foreach (var item in insight.Evidence ?? Array.Empty<string>())
+            {
+                var parts = item.Split('=', 2);
+                if (parts.Length == 2
+                    && (parts[0].Equals("slope", StringComparison.OrdinalIgnoreCase)
+                        || parts[0].Equals("delta", StringComparison.OrdinalIgnoreCase))
+                    && double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out delta))
+                {
+                    return true;
+                }
+            }
+
+            delta = 0;
+            return false;
         }
     }
 }

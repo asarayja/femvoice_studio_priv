@@ -1,32 +1,32 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<root>
-  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-    <xsd:element name="root" msdata:IsDataSet="true">
-      <xsd:complexType>
-        <xsd:choice maxOccurs="unbounded">
-          <xsd:element name="data">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
-              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="resheader">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" />
-            </xsd:complexType>
-          </xsd:element>
-        </xsd:choice>
-      </xsd:complexType>
-    </xsd:element>
-  </xsd:schema>
+<?xml version='1.0' encoding='utf-8'?>
+<root xmlns:ns1="urn:schemas-microsoft-com:xml-msdata" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:schema id="root">
+    <xs:element name="root" ns1:IsDataSet="true">
+      <xs:complexType>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element name="data">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" ns1:Ordinal="1" />
+                <xs:element name="comment" type="xsd:string" minOccurs="0" ns1:Ordinal="2" />
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" ns1:Ordinal="0" />
+              <xs:attribute name="type" type="xsd:string" ns1:Ordinal="3" />
+              <xs:attribute name="mimetype" type="xsd:string" ns1:Ordinal="4" />
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="resheader">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" ns1:Ordinal="1" />
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" use="required" />
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+      </xs:complexType>
+    </xs:element>
+  </xs:schema>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
   </resheader>
@@ -42,7 +42,6 @@
   <data name="Guidance_PanelTitle" xml:space="preserve">
     <value>Anleitung</value>
   </data>
-  <!-- Live Feedback UI labels (English fallback used where untranslated) -->
   <data name="LiveFeedback_Title" xml:space="preserve">
     <value>Live Feedback</value>
   </data>
@@ -97,29 +96,6 @@
   <data name="Mastery_Mastered" xml:space="preserve">
     <value>Meisterhaft</value>
   </data>
-  <!-- Voice Training Exercises 101-115 (Database exercises) -->
-  <!-- Voice Training Exercises 101-115 Descriptions -->
-  <!-- Exercise Steps - Voice Training -->
-  <!-- Scientific Rationale - Voice Training -->
-  <!-- App Title -->
-  <!-- Navigation -->
-  <!-- Home Page -->
-  <!-- Exercise Page -->
-  <!-- Difficulty Levels -->
-  <!-- Frequency -->
-  <!-- Goals -->
-  <!-- Analyzer Page -->
-  <!-- Statistics Page -->
-  <!-- Settings Page -->
-  <!-- Feedback Messages -->
-  <!-- Achievements -->
-  <!-- Common -->
-  <!-- Exercise Texts - Nybegynner -->
-  <!-- Exercise Texts - Middels -->
-  <!-- Exercise Texts - Avansert -->
-  <!-- Common -->
-  <!-- UI Strings -->
-  <!-- First Time Setup -->
   <data name="Achievement_AdvancedMaster" xml:space="preserve">
     <value>Master</value>
   </data>
@@ -352,17 +328,17 @@
     <value>Offene Vokale (a, æ) fördern die Vorwärtsresonanz, während "eee" die Zunge anhebt und einen "Kopfstimme"-Ton erzeugt.</value>
   </data>
   <data name="Guidance_ClinicalPurpose" xml:space="preserve">
-  <value>Verbessern Sie die vordere Resonanz und entwickeln Sie einen leichteren, feminineren Stimmklang.</value>
-</data>
+    <value>Verbessern Sie die vordere Resonanz und entwickeln Sie einen leichteren, feminineren Stimmklang.</value>
+  </data>
   <data name="Guidance_PhysicalFocus" xml:space="preserve">
-  <value>Konzentrieren Sie sich auf Vibrationen in Lippen, Zähnen und im vorderen Mundraum bei entspannter Kehle.</value>
-</data>
+    <value>Konzentrieren Sie sich auf Vibrationen in Lippen, Zähnen und im vorderen Mundraum bei entspannter Kehle.</value>
+  </data>
   <data name="Guidance_CommonMistakes" xml:space="preserve">
-  <value>Vermeiden Sie es, die Tonhöhe zu erzwingen, den Hals zu verspannen oder die Luft zu drücken.</value>
-</data>
+    <value>Vermeiden Sie es, die Tonhöhe zu erzwingen, den Hals zu verspannen oder die Luft zu drücken.</value>
+  </data>
   <data name="Guidance_SafetyInfo" xml:space="preserve">
-  <value>Beenden Sie die Übung bei Anspannung oder Unwohlsein. Halten Sie die Stimme entspannt und gut befeuchtet.</value>
-</data>
+    <value>Beenden Sie die Übung bei Anspannung oder Unwohlsein. Halten Sie die Stimme entspannt und gut befeuchtet.</value>
+  </data>
   <data name="Purpose_ResonanceHumming" xml:space="preserve">
     <value>Establish forward resonance and reduce posterior effort.</value>
   </data>
@@ -1602,7 +1578,6 @@
   <data name="UI_StopSession" xml:space="preserve">
     <value>Sitzung beenden</value>
   </data>
-  <!-- Health Monitoring Messages -->
   <data name="SmartCoach_Health_PitchPress" xml:space="preserve">
     <value>Ihre Stimme zeigt Anzeichen von Belastung. Heute: nur Atemübungen und leichte Resonanzarbeit. Vermeiden Sie es, die Tonhöhe zu pressen. 5 Minuten ruhiges Training.</value>
   </data>
@@ -1618,7 +1593,6 @@
   <data name="SmartCoach_HealthWarning" xml:space="preserve">
     <value>Stimmgesundheits-Warnung</value>
   </data>
-  <!-- Level Names -->
   <data name="Level_Beginner" xml:space="preserve">
     <value>Anfänger</value>
   </data>
@@ -1631,7 +1605,6 @@
   <data name="Level_Unknown" xml:space="preserve">
     <value>Unbekannt</value>
   </data>
-  <!-- Level Focus Descriptions -->
   <data name="Level_Focus_Beginner" xml:space="preserve">
     <value>Resonanz zuerst - sichere Tonhöhenerhöhung</value>
   </data>
@@ -1641,7 +1614,6 @@
   <data name="Level_Focus_Advanced" xml:space="preserve">
     <value>Natürliche Sprache - Intonation</value>
   </data>
-  <!-- Level Transition Messages -->
   <data name="Level_Promotion_Reason" xml:space="preserve">
     <value>{0} von {1} letzten Sitzungen über {2}%</value>
   </data>
@@ -1651,7 +1623,6 @@
   <data name="Level_GoodProgress_Reason" xml:space="preserve">
     <value>Guter Fortschritt ({0}/{1} Sitzungen über Schwellenwert)</value>
   </data>
-  <!-- Progression Messages -->
   <data name="Progression_FirstSession" xml:space="preserve">
     <value>🌱 Erste Sitzung abgeschlossen! Willkommen zu Ihrer Stimmreise!</value>
   </data>
@@ -1673,7 +1644,6 @@
   <data name="Progression_TotalSessions" xml:space="preserve">
     <value>Gesamte Sitzungen: {0}</value>
   </data>
-  <!-- Coach Messages -->
   <data name="Coach_Encourage_1" xml:space="preserve">
     <value>Großartige Leistung! Jede Sitzung zählt! 💪</value>
   </data>
@@ -1689,11 +1659,9 @@
   <data name="Coach_QualityOverQuantity" xml:space="preserve">
     <value>Denken Sie daran, dass Qualität wichtiger ist als Quantität. Konzentrieren Sie sich auf die richtige Technik in jeder Sitzung.</value>
   </data>
-  <!-- Voice Health -->
   <data name="VoiceHealth_SessionTimeRemaining" xml:space="preserve">
     <value>Sie haben noch {0} Minuten in der Sitzung. Machen Sie gerne eine Pause.</value>
   </data>
-  <!-- Feedback Messages -->
   <data name="Feedback_Pitch_BelowTarget" xml:space="preserve">
     <value>Die durchschnittliche Tonhöhe beträgt {0} Hz, was unter dem Zielbereich liegt ({1}-{2} Hz).</value>
   </data>
@@ -1718,7 +1686,6 @@
   <data name="Feedback_Resonance_Back" xml:space="preserve">
     <value>Deutliche hintere Resonanz ({0}/{1} Hz). Dies gibt einen dunkleren Klang.</value>
   </data>
-  <!-- Feedback Hints - Pitch -->
   <data name="Feedback_Hint_PitchTooLow" xml:space="preserve">
     <value>Versuchen Sie, Ihre Stimme etwas zu erhöhen. Denken Sie daran, vom Hals zu sprechen, nicht von der Brust. Stellen Sie sich vor, Sie versuchen, einen hohen Ton zu erreichen.</value>
   </data>
@@ -1728,21 +1695,18 @@
   <data name="Feedback_Hint_PitchInRange" xml:space="preserve">
     <value>Behalten Sie diese Tonhöhe bei. Konzentrieren Sie sich darauf, während des gesamten Satzes konsequent zu sein.</value>
   </data>
-  <!-- Feedback Hints - Variation -->
   <data name="Feedback_Hint_VariationTooLow" xml:space="preserve">
     <value>Versuchen Sie, die Tonhöhe mehr zu variieren. Verwenden Sie natürliche Intonation - denken Sie daran, wie Sie sprechen würden, wenn Sie wirklich aufgeregt oder interessiert wären!</value>
   </data>
   <data name="Feedback_Hint_VariationGood" xml:space="preserve">
     <value>Dies verleiht Ihrer Sprache mehr Dynamik und Interesse. Arbeiten Sie weiter daran, die Tonhöhe natürlich zu variieren.</value>
   </data>
-  <!-- Feedback Hints - Intonation -->
   <data name="Feedback_Hint_IntonationNeedsWork" xml:space="preserve">
     <value>Üben Sie das Beenden von Fragen mit steigendem Ton. Versuchen Sie, 'was wirst du tun?' mit neugieriger Stimme zu sagen.</value>
   </data>
   <data name="Feedback_Hint_IntonationGood" xml:space="preserve">
     <value>Dies verleiht Ihrer Sprache mehr Ausdruck. Arbeiten Sie weiter daran, die Intonation noch klarer zu machen.</value>
   </data>
-  <!-- Feedback Hints - Resonance -->
   <data name="Feedback_Hint_ResonanceLowConfidence" xml:space="preserve">
     <value>Sprechen Sie deutlich und halten Sie Ihre Stimme gleichmäßiger für eine bessere Analyse.</value>
   </data>
@@ -1764,7 +1728,6 @@
   <data name="Feedback_Hint_ResonanceTooBack" xml:space="preserve">
     <value>Wichtig: Konzentrieren Sie sich auf die Erhöhung von F2. Denken Sie daran, den Klang an der Nasenspitze zu 'hängen' und mehr zu lächeln!</value>
   </data>
-  <!-- Feedback Messages - Additional -->
   <data name="Feedback_Message_IntonationLow" xml:space="preserve">
     <value>Steigende Intonation ist niedrig. Fragen und Sätze, die mit steigendem Ton enden, sind wichtig.</value>
   </data>
@@ -1780,7 +1743,6 @@
   <data name="Feedback_Message_ResonanceBack" xml:space="preserve">
     <value>Die Resonanz hat eine Tendenz nach hinten. Sie können einen helleren Klang erreichen.</value>
   </data>
-  <!-- Realtime Feedback -->
   <data name="Feedback_Realtime_NoVoice" xml:space="preserve">
     <value>The signal is weak. Try moving a little closer to the microphone or run microphone calibration.</value>
   </data>
@@ -1793,14 +1755,12 @@
   <data name="Feedback_Realtime_PitchInRange" xml:space="preserve">
     <value>Within target zone ({0:F0} Hz). Keep an even, comfortable tone and continue focusing on resonance.</value>
   </data>
-  <!-- Summary -->
   <data name="Feedback_Summary_Top" xml:space="preserve">
     <value>🌟 Gesamtpunktzahl: {0}%</value>
   </data>
   <data name="Feedback_Summary_PositiveImprovement" xml:space="preserve">
     <value>Sie haben {0} positive Punkte und {1} Verbesserungsbereiche.</value>
   </data>
-  <!-- Progression Dashboard -->
   <data name="Dashboard_Score" xml:space="preserve">
     <value>Punktzahl</value>
   </data>
@@ -1849,14 +1809,12 @@
   <data name="Dashboard_Average" xml:space="preserve">
     <value>Durchschnitt</value>
   </data>
-  <!-- LanguageSubsystem Legacy Keys -->
   <data name="App_Title" xml:space="preserve">
     <value>FemVoice Studio</value>
   </data>
   <data name="App_Subtitle" xml:space="preserve">
     <value>Dein Stimmtraining-Begleiter</value>
   </data>
-  <!-- Training -->
   <data name="Training_Start" xml:space="preserve">
     <value>Training starten</value>
   </data>
@@ -1869,7 +1827,6 @@
   <data name="Training_Resume" xml:space="preserve">
     <value>Fortsetzen</value>
   </data>
-  <!-- Metrics -->
   <data name="Metrics_Pitch" xml:space="preserve">
     <value>Tonhöhe</value>
   </data>
@@ -1885,14 +1842,12 @@
   <data name="Metrics_Health" xml:space="preserve">
     <value>Stimmgesundheit</value>
   </data>
-  <!-- Feedback -->
   <data name="Feedback_NeedsWork" xml:space="preserve">
     <value>Weiter üben!</value>
   </data>
   <data name="Feedback_Strain" xml:space="preserve">
     <value>Stimmbelastung erkannt - mach eine Pause</value>
   </data>
-  <!-- Smart Coach -->
   <data name="Coach_Focus" xml:space="preserve">
     <value>Konzentriere dich auf</value>
   </data>
@@ -1902,7 +1857,6 @@
   <data name="Coach_How" xml:space="preserve">
     <value>Wie üben</value>
   </data>
-  <!-- Live feedback status labels -->
   <data name="LiveFeedback_Active" xml:space="preserve">
     <value>Active</value>
   </data>
@@ -3801,4 +3755,94 @@ This cannot be undone!</value>
   <data name="Nav_ProfessionalToolsTitle" xml:space="preserve">
     <value>Professionelle Werkzeuge</value>
   </data>
-</root>
+  <data name="ReportPdf_Exercise" xml:space="preserve">
+    <value>Übung</value>
+  </data>
+  <data name="Report_ExerciseFallbackFormat" xml:space="preserve">
+    <value>Übung {0}</value>
+  </data>
+  <data name="Report_ExerciseIdFallbackFormat" xml:space="preserve">
+    <value>Übungs-ID {0}</value>
+  </data>
+  <data name="Report_Status_HIGH_FATIGUE" xml:space="preserve">
+    <value>Hohe Stimmermüdung</value>
+  </data>
+  <data name="Report_Status_HIGH_RECOVERY_COST" xml:space="preserve">
+    <value>Hohe Erholungskosten</value>
+  </data>
+  <data name="Report_Status_OVERTRAINED" xml:space="preserve">
+    <value>Übertrainiert</value>
+  </data>
+  <data name="Report_Status_STRAINED" xml:space="preserve">
+    <value>Belastet</value>
+  </data>
+  <data name="Report_Status_ADEQUATE" xml:space="preserve">
+    <value>Ausreichend erholt</value>
+  </data>
+  <data name="Report_Status_WELLRECOVERED" xml:space="preserve">
+    <value>Gut erholt</value>
+  </data>
+  <data name="Report_Status_NEEDSREVIEW" xml:space="preserve">
+    <value>Prüfung erforderlich</value>
+  </data>
+  <data name="Report_Status_IMPROVING" xml:space="preserve">
+    <value>Verbessert sich</value>
+  </data>
+  <data name="Report_Status_STABLE" xml:space="preserve">
+    <value>Stabil</value>
+  </data>
+  <data name="Report_Status_DECLINING" xml:space="preserve">
+    <value>Rückläufig</value>
+  </data>
+  <data name="Report_Status_PASS" xml:space="preserve">
+    <value>PASS</value>
+  </data>
+  <data name="Report_Status_FAIL" xml:space="preserve">
+    <value>FAIL</value>
+  </data>
+  <data name="Report_Status_NOT_VERIFIED" xml:space="preserve">
+    <value>Nicht verifiziert</value>
+  </data>
+  <data name="Report_Status_NOT_IMPLEMENTED" xml:space="preserve">
+    <value>Nicht implementiert</value>
+  </data>
+  <data name="Report_Reason_HIGH_FATIGUE" xml:space="preserve">
+    <value>Hohe Stimmermüdung</value>
+  </data>
+  <data name="Report_Reason_HIGH_RECOVERY_COST" xml:space="preserve">
+    <value>Hohe Erholungskosten</value>
+  </data>
+  <data name="Report_Reason_OVERTRAINED" xml:space="preserve">
+    <value>Übertrainiert</value>
+  </data>
+  <data name="Report_Reason_IMPROVING" xml:space="preserve">
+    <value>Verbessert sich</value>
+  </data>
+  <data name="Report_Reason_STABLE" xml:space="preserve">
+    <value>Stabil</value>
+  </data>
+  <data name="Report_Reason_DECLINING" xml:space="preserve">
+    <value>Rückläufig</value>
+  </data>
+  <data name="Report_RecoveryRecommendationRestFormat" xml:space="preserve">
+    <value>Ein Ruhetag oder eine sehr leichte Einheit wirkt im Moment am sinnvollsten. Die aktuelle Belastung steigt schneller als üblich (Verhältnis {0:F2}), und die Erholung hinkt der letzten Aktivität hinterher (Schuld {1:F1}). Das ist ein sanfter Vorschlag, früher zu ruhen, keine Grenze für dein Training.</value>
+  </data>
+  <data name="Report_RecommendationHighFatigueFormat" xml:space="preserve">
+    <value>Übung {0} niedriger priorisieren: Die Übung zeigt wiederholte Stimmermüdungssignale (~{1:F1} pro Einheit). Eine leichtere Alternative kann schonender sein.</value>
+  </data>
+  <data name="Report_RecommendationHighRecoveryCostFormat" xml:space="preserve">
+    <value>Übung {0} niedriger priorisieren: Die Übung war zuletzt belastend (Erholungskosten {1:F0}/100). Erwäge vorerst leichtere Arbeit.</value>
+  </data>
+  <data name="Report_InsightImprovementFormat" xml:space="preserve">
+    <value>{0} hat sich positiv entwickelt (+{1:F1} Punkte). Die Trainingsarbeit zeigt erste Ergebnisse.</value>
+  </data>
+  <data name="Report_GenerationFailed" xml:space="preserve">
+    <value>Berichtserstellung fehlgeschlagen</value>
+  </data>
+  <data name="Report_NotVerified" xml:space="preserve">
+    <value>Nicht verifiziert</value>
+  </data>
+  <data name="Report_NotImplemented" xml:space="preserve">
+    <value>Nicht implementiert</value>
+  </data>
+<data name="Report_TitleClinicalProgressFormat" xml:space="preserve"><value>Klinischer Fortschrittsbericht — {0}</value></data><data name="Report_TitleCoachingSummaryFormat" xml:space="preserve"><value>Coaching-Zusammenfassung — {0}</value></data><data name="Report_TitleOutcomeSummaryFormat" xml:space="preserve"><value>Ergebniszusammenfassung — {0}</value></data><data name="Report_TitleVoiceTimelineFormat" xml:space="preserve"><value>Stimmentwicklung im Zeitverlauf — {0}</value></data><data name="Report_DirectionImproving" xml:space="preserve"><value>Verbessert sich</value></data><data name="Report_DirectionStable" xml:space="preserve"><value>Stabil</value></data><data name="Report_DirectionDeclining" xml:space="preserve"><value>Rückläufig</value></data><data name="Report_TimeWindow_Days" xml:space="preserve"><value>{0} Tage</value></data><data name="Report_TimeWindow_LabelFormat" xml:space="preserve"><value>{0} ({1} – {2})</value></data><data name="Report_Term_Fatigue" xml:space="preserve"><value>Stimmermüdung</value></data><data name="Report_Term_FatigueSignals" xml:space="preserve"><value>Stimmermüdungssignale</value></data><data name="Report_Term_VoiceFatigue" xml:space="preserve"><value>Stimmermüdung</value></data><data name="Report_Term_VoiceFatigueSignals" xml:space="preserve"><value>Stimmermüdungssignale</value></data><data name="Report_Term_TrainingLoad" xml:space="preserve"><value>Trainingsbelastung</value></data><data name="Report_Term_RecentActivity" xml:space="preserve"><value>Aktuelle Aktivität</value></data><data name="Report_Term_RestBehindRecentActivity" xml:space="preserve"><value>Die Erholung hinkt der aktuellen Aktivität hinterher</value></data><data name="Report_Status_SIGNAL_LEVEL_COLLAPSES" xml:space="preserve"><value>Signalpegel bricht ein</value></data><data name="Report_Status_EXPECTED_SILENCE" xml:space="preserve"><value>Erwartete Stille</value></data><data name="Report_Status_SILENCE_TAIL" xml:space="preserve"><value>Stille am Ende</value></data></root>

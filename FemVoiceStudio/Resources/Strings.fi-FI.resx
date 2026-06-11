@@ -1,32 +1,32 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<root>
-  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-    <xsd:element name="root" msdata:IsDataSet="true">
-      <xsd:complexType>
-        <xsd:choice maxOccurs="unbounded">
-          <xsd:element name="data">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
-              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="resheader">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" />
-            </xsd:complexType>
-          </xsd:element>
-        </xsd:choice>
-      </xsd:complexType>
-    </xsd:element>
-  </xsd:schema>
+<?xml version='1.0' encoding='utf-8'?>
+<root xmlns:ns1="urn:schemas-microsoft-com:xml-msdata" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:schema id="root">
+    <xs:element name="root" ns1:IsDataSet="true">
+      <xs:complexType>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element name="data">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" ns1:Ordinal="1" />
+                <xs:element name="comment" type="xsd:string" minOccurs="0" ns1:Ordinal="2" />
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" ns1:Ordinal="0" />
+              <xs:attribute name="type" type="xsd:string" ns1:Ordinal="3" />
+              <xs:attribute name="mimetype" type="xsd:string" ns1:Ordinal="4" />
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="resheader">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" ns1:Ordinal="1" />
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" use="required" />
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+      </xs:complexType>
+    </xs:element>
+  </xs:schema>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
   </resheader>
@@ -42,7 +42,6 @@
   <data name="Guidance_PanelTitle" xml:space="preserve">
     <value>Ohjeet</value>
   </data>
-  <!-- Live Feedback UI labels (English fallback used where untranslated) -->
   <data name="LiveFeedback_Title" xml:space="preserve">
     <value>Live Feedback</value>
   </data>
@@ -97,28 +96,6 @@
   <data name="Mastery_Mastered" xml:space="preserve">
     <value>Hallittu</value>
   </data>
-  <!-- Voice Training Exercises 101-115 (Database exercises) -->
-  <!-- Voice Training Exercises 101-115 Descriptions -->
-  <!-- Exercise Steps - Voice Training -->
-  <!-- Scientific Rationale - Voice Training -->
-  <!-- App Title -->
-  <!-- Navigation -->
-  <!-- Home Page -->
-  <!-- Exercise Page -->
-  <!-- Difficulty Levels -->
-  <!-- Frequency -->
-  <!-- Goals -->
-  <!-- Analyzer Page -->
-  <!-- Statistics Page -->
-  <!-- Settings Page -->
-  <!-- Feedback Messages -->
-  <!-- Achievements -->
-  <!-- Common -->
-  <!-- Exercise Texts - Nybegynner -->
-  <!-- Exercise Texts - Middels -->
-  <!-- Exercise Texts - Avansert -->
-  <!-- Common -->
-  <!-- UI Strings -->
   <data name="Achievement_AdvancedMaster" xml:space="preserve">
     <value>Hallita</value>
   </data>
@@ -351,17 +328,17 @@
     <value>Hallittu alasliuku vahvistaa sÃƒÂ¤velkorkeuden hallintaa ja luo lihasmuistin kohdealueelle.</value>
   </data>
   <data name="Guidance_ClinicalPurpose" xml:space="preserve">
-  <value>Paranna eturesonanssia ja kehitÃƒÂ¤ kevyempi, feminiinisempi ÃƒÂ¤ÃƒÂ¤nen sÃƒÂ¤vy.</value>
-</data>
+    <value>Paranna eturesonanssia ja kehitÃƒÂ¤ kevyempi, feminiinisempi ÃƒÂ¤ÃƒÂ¤nen sÃƒÂ¤vy.</value>
+  </data>
   <data name="Guidance_PhysicalFocus" xml:space="preserve">
-  <value>Keskity vÃƒÂ¤rinÃƒÂ¤ÃƒÂ¤n huulissa, hampaissa ja suun etuosassa pitÃƒÂ¤en kurkun rentona.</value>
-</data>
+    <value>Keskity vÃƒÂ¤rinÃƒÂ¤ÃƒÂ¤n huulissa, hampaissa ja suun etuosassa pitÃƒÂ¤en kurkun rentona.</value>
+  </data>
   <data name="Guidance_CommonMistakes" xml:space="preserve">
-  <value>VÃƒÂ¤ltÃƒÂ¤ ÃƒÂ¤ÃƒÂ¤nen pakottamista korkealle, kurkun jÃƒÂ¤nnittÃƒÂ¤mistÃƒÂ¤ tai ilman tyÃƒÂ¶ntÃƒÂ¤mistÃƒÂ¤.</value>
-</data>
+    <value>VÃƒÂ¤ltÃƒÂ¤ ÃƒÂ¤ÃƒÂ¤nen pakottamista korkealle, kurkun jÃƒÂ¤nnittÃƒÂ¤mistÃƒÂ¤ tai ilman tyÃƒÂ¶ntÃƒÂ¤mistÃƒÂ¤.</value>
+  </data>
   <data name="Guidance_SafetyInfo" xml:space="preserve">
-  <value>Lopeta, jos tunnet epÃƒÂ¤mukavuutta tai jÃƒÂ¤nnitystÃƒÂ¤. PidÃƒÂ¤ ÃƒÂ¤ÃƒÂ¤ni rentona ja hyvin kosteutettuna.</value>
-</data>
+    <value>Lopeta, jos tunnet epÃƒÂ¤mukavuutta tai jÃƒÂ¤nnitystÃƒÂ¤. PidÃƒÂ¤ ÃƒÂ¤ÃƒÂ¤ni rentona ja hyvin kosteutettuna.</value>
+  </data>
   <data name="Exercise_102_Steps" xml:space="preserve">
     <value>Aloita korkealta ja liu'uta hitaasti alas 3 sekunnissa|PidÃƒÂ¤ matalaa sÃƒÂ¤veltÃƒÂ¤ 2 sekuntia|Toista eri lÃƒÂ¤htÃƒÂ¶kohdista|Keskity tasapainoiseen liukuun</value>
   </data>
@@ -1583,7 +1560,6 @@
   <data name="UI_StopSession" xml:space="preserve">
     <value>Lopeta istunto</value>
   </data>
-  <!-- Health Monitoring Messages -->
   <data name="SmartCoach_Health_PitchPress" xml:space="preserve">
     <value>Ãƒâ€žÃƒÂ¤nesi osoittaa rasituksen merkkejÃƒÂ¤. TÃƒÂ¤nÃƒÂ¤ÃƒÂ¤n: vain hengitysharjoituksia ja kevyttÃƒÂ¤ resonanssityÃƒÂ¶tÃƒÂ¤. VÃƒÂ¤ltÃƒÂ¤ painostamista. 5 minuuttia rauhallista harjoittelua.</value>
   </data>
@@ -1599,7 +1575,6 @@
   <data name="SmartCoach_HealthWarning" xml:space="preserve">
     <value>Ãƒâ€žÃƒÂ¤niterveys-varoitus</value>
   </data>
-  <!-- Level Names -->
   <data name="Level_Beginner" xml:space="preserve">
     <value>Aloittelija</value>
   </data>
@@ -1612,7 +1587,6 @@
   <data name="Level_Unknown" xml:space="preserve">
     <value>Tuntematon</value>
   </data>
-  <!-- Level Focus Descriptions -->
   <data name="Level_Focus_Beginner" xml:space="preserve">
     <value>Resonanssi ensin - turvallinen korotuksen nosto</value>
   </data>
@@ -1622,7 +1596,6 @@
   <data name="Level_Focus_Advanced" xml:space="preserve">
     <value>Luonnollinen puhe - intonaatio</value>
   </data>
-  <!-- Level Transition Messages -->
   <data name="Level_Promotion_Reason" xml:space="preserve">
     <value>{0}/{1} viimeisintÃƒÂ¤ yli {2}%</value>
   </data>
@@ -1632,7 +1605,6 @@
   <data name="Level_GoodProgress_Reason" xml:space="preserve">
     <value>HyvÃƒÂ¤ edistyminen ({0}/{1} yli kynnyksen)</value>
   </data>
-  <!-- Progression Messages -->
   <data name="Progression_FirstSession" xml:space="preserve">
     <value>Ã°Å¸Å’Â± EnsimmÃƒÂ¤inen suoritus! Tervetuloa ÃƒÂ¤ÃƒÂ¤nimatkallesi!</value>
   </data>
@@ -1654,7 +1626,6 @@
   <data name="Progression_TotalSessions" xml:space="preserve">
     <value>YhteensÃƒÂ¤: {0}</value>
   </data>
-  <!-- Coach Messages -->
   <data name="Coach_Encourage_1" xml:space="preserve">
     <value>HyvÃƒÂ¤ tyÃƒÂ¶! Jokainen harjoituskerta laskee! Ã°Å¸â€™Âª</value>
   </data>
@@ -1670,11 +1641,9 @@
   <data name="Coach_QualityOverQuantity" xml:space="preserve">
     <value>Muista, ettÃƒÂ¤ laatu on tÃƒÂ¤rkeÃƒÂ¤mpÃƒÂ¤ÃƒÂ¤ kuin mÃƒÂ¤ÃƒÂ¤rÃƒÂ¤. Keskity oikeaan tekniikkaan jokaisessa harjoituksessa.</value>
   </data>
-  <!-- Voice Health -->
   <data name="VoiceHealth_SessionTimeRemaining" xml:space="preserve">
     <value>Sinulla on {0} minuuttia jÃƒÂ¤ljellÃƒÂ¤. Voit pitÃƒÂ¤ÃƒÂ¤ tauon.</value>
   </data>
-  <!-- Feedback Messages -->
   <data name="Feedback_Pitch_BelowTarget" xml:space="preserve">
     <value>KeskimÃƒÂ¤ÃƒÂ¤rÃƒÂ¤inen on {0} Hz, mikÃƒÂ¤ on alle tavoitealueen ({1}-{2} Hz).</value>
   </data>
@@ -1699,7 +1668,6 @@
   <data name="Feedback_Resonance_Back" xml:space="preserve">
     <value>SelvÃƒÂ¤sti taka-resonanssi ({0}/{1} Hz). TÃƒÂ¤mÃƒÂ¤ antaa tummemman soinnin.</value>
   </data>
-  <!-- Feedback Hints - Pitch -->
   <data name="Feedback_Hint_PitchTooLow" xml:space="preserve">
     <value>YritÃƒÂ¤ nostaa ÃƒÂ¤ÃƒÂ¤ntÃƒÂ¤si hieman. Ajattele puhuvasi kurkusta, ei rinnasta. Kuvittele yrittÃƒÂ¤vÃƒÂ¤si tavoittaa korkea sÃƒÂ¤vel.</value>
   </data>
@@ -1709,21 +1677,18 @@
   <data name="Feedback_Hint_PitchInRange" xml:space="preserve">
     <value>PidÃƒÂ¤ kiinni tÃƒÂ¤stÃƒÂ¤ sÃƒÂ¤velkorkeudesta. Keskity olemaan johdonmukainen koko lauseen ajan.</value>
   </data>
-  <!-- Feedback Hints - Variation -->
   <data name="Feedback_Hint_VariationTooLow" xml:space="preserve">
     <value>YritÃƒÂ¤ vaihdella sÃƒÂ¤velkorkeutta enemmÃƒÂ¤n. KÃƒÂ¤ytÃƒÂ¤ luonnollista intonaatiota - ajattele miten puhuisit jos olisit todella innoissasi tai kiinnostunut!</value>
   </data>
   <data name="Feedback_Hint_VariationGood" xml:space="preserve">
     <value>TÃƒÂ¤mÃƒÂ¤ antaa puheellesi enemmÃƒÂ¤n dynamiikkaa ja kiinnostavuutta. Jatka tyÃƒÂ¶skentelyÃƒÂ¤ vaihtelevan sÃƒÂ¤velkorkeuden parissa luonnollisesti.</value>
   </data>
-  <!-- Feedback Hints - Intonation -->
   <data name="Feedback_Hint_IntonationNeedsWork" xml:space="preserve">
     <value>Harjoittele kysymysten pÃƒÂ¤ÃƒÂ¤ttÃƒÂ¤mistÃƒÂ¤ nousevaan sÃƒÂ¤vyyn. YritÃƒÂ¤ sanoa 'mitÃƒÂ¤ aiot tehdÃƒÂ¤?' uteliaalla ÃƒÂ¤ÃƒÂ¤nellÃƒÂ¤.</value>
   </data>
   <data name="Feedback_Hint_IntonationGood" xml:space="preserve">
     <value>TÃƒÂ¤mÃƒÂ¤ antaa puheellesi enemmÃƒÂ¤n ilmaisua. Jatka tyÃƒÂ¶skentelyÃƒÂ¤ selkeÃƒÂ¤mmÃƒÂ¤n intonaation parissa.</value>
   </data>
-  <!-- Feedback Hints - Resonance -->
   <data name="Feedback_Hint_ResonanceLowConfidence" xml:space="preserve">
     <value>Puhu selkeÃƒÂ¤sti ja pidÃƒÂ¤ ÃƒÂ¤ÃƒÂ¤nesi tasaisempana parempaa analyysiÃƒÂ¤ varten.</value>
   </data>
@@ -1745,7 +1710,6 @@
   <data name="Feedback_Hint_ResonanceTooBack" xml:space="preserve">
     <value>TÃƒÂ¤rkeÃƒÂ¤ÃƒÂ¤: Keskity F2:n nostamiseen. Ajattele 'ripustavasi' ÃƒÂ¤ÃƒÂ¤nen nenÃƒÂ¤n kÃƒÂ¤rkeen ja hymyile enemmÃƒÂ¤n!</value>
   </data>
-  <!-- Feedback Messages - Additional -->
   <data name="Feedback_Message_IntonationLow" xml:space="preserve">
     <value>Nouseva intonaatio on matala. Kysymykset ja lauseet jotka pÃƒÂ¤ÃƒÂ¤ttyvÃƒÂ¤t nousevaan sÃƒÂ¤vyyn ovat tÃƒÂ¤rkeitÃƒÂ¤.</value>
   </data>
@@ -1761,7 +1725,6 @@
   <data name="Feedback_Message_ResonanceBack" xml:space="preserve">
     <value>Resonanssilla on taipumus taaksepÃƒÂ¤in. Voit saavuttaa kirkkaamman soinnin.</value>
   </data>
-  <!-- Realtime Feedback -->
   <data name="Feedback_Realtime_NoVoice" xml:space="preserve">
     <value>The signal is weak. Try moving a little closer to the microphone or run microphone calibration.</value>
   </data>
@@ -1774,14 +1737,12 @@
   <data name="Feedback_Realtime_PitchInRange" xml:space="preserve">
     <value>Within target zone ({0:F0} Hz). Keep an even, comfortable tone and continue focusing on resonance.</value>
   </data>
-  <!-- Summary -->
   <data name="Feedback_Summary_Top" xml:space="preserve">
     <value>Ã°Å¸Å’Å¸ Kokonaispisteet: {0}%</value>
   </data>
   <data name="Feedback_Summary_PositiveImprovement" xml:space="preserve">
     <value>Sait {0} positiivista pistettÃƒÂ¤ ja {1} parannusaluetta.</value>
   </data>
-  <!-- Progression Dashboard -->
   <data name="Dashboard_Score" xml:space="preserve">
     <value>Pisteet</value>
   </data>
@@ -1830,14 +1791,12 @@
   <data name="Dashboard_Average" xml:space="preserve">
     <value>Keskiarvo</value>
   </data>
-  <!-- LanguageSubsystem Legacy Keys -->
   <data name="App_Title" xml:space="preserve">
     <value>FemVoice Studio</value>
   </data>
   <data name="App_Subtitle" xml:space="preserve">
     <value>Ãƒâ€žÃƒÂ¤niharjoittelusi kumppani</value>
   </data>
-  <!-- Training -->
   <data name="Training_Start" xml:space="preserve">
     <value>Aloita harjoitus</value>
   </data>
@@ -1850,7 +1809,6 @@
   <data name="Training_Resume" xml:space="preserve">
     <value>Jatka</value>
   </data>
-  <!-- Metrics -->
   <data name="Metrics_Pitch" xml:space="preserve">
     <value>Ãƒâ€žÃƒÂ¤nenkorkeus</value>
   </data>
@@ -1866,14 +1824,12 @@
   <data name="Metrics_Health" xml:space="preserve">
     <value>Ãƒâ€žÃƒÂ¤niterveys</value>
   </data>
-  <!-- Feedback -->
   <data name="Feedback_NeedsWork" xml:space="preserve">
     <value>Jatka harjoittelua!</value>
   </data>
   <data name="Feedback_Strain" xml:space="preserve">
     <value>Ãƒâ€žÃƒÂ¤nen rasitus havaittu - pidÃƒÂ¤ tauko</value>
   </data>
-  <!-- Smart Coach -->
   <data name="Coach_Focus" xml:space="preserve">
     <value>Kesksity</value>
   </data>
@@ -1883,7 +1839,6 @@
   <data name="Coach_How" xml:space="preserve">
     <value>Miten harjoitella</value>
   </data>
-  <!-- Live feedback status labels -->
   <data name="LiveFeedback_Active" xml:space="preserve">
     <value>Active</value>
   </data>
@@ -3782,4 +3737,94 @@ This cannot be undone!</value>
   <data name="Nav_ProfessionalToolsTitle" xml:space="preserve">
     <value>Ammatilliset työkalut</value>
   </data>
-</root>
+  <data name="ReportPdf_Exercise" xml:space="preserve">
+    <value>Harjoitus</value>
+  </data>
+  <data name="Report_ExerciseFallbackFormat" xml:space="preserve">
+    <value>Harjoitus {0}</value>
+  </data>
+  <data name="Report_ExerciseIdFallbackFormat" xml:space="preserve">
+    <value>Harjoitus-ID {0}</value>
+  </data>
+  <data name="Report_Status_HIGH_FATIGUE" xml:space="preserve">
+    <value>Korkea äänen väsyminen</value>
+  </data>
+  <data name="Report_Status_HIGH_RECOVERY_COST" xml:space="preserve">
+    <value>Korkea palautumiskustannus</value>
+  </data>
+  <data name="Report_Status_OVERTRAINED" xml:space="preserve">
+    <value>Ylikuormittunut</value>
+  </data>
+  <data name="Report_Status_STRAINED" xml:space="preserve">
+    <value>Rasittunut</value>
+  </data>
+  <data name="Report_Status_ADEQUATE" xml:space="preserve">
+    <value>Riittävästi palautunut</value>
+  </data>
+  <data name="Report_Status_WELLRECOVERED" xml:space="preserve">
+    <value>Hyvin palautunut</value>
+  </data>
+  <data name="Report_Status_NEEDSREVIEW" xml:space="preserve">
+    <value>Vaatii arvioinnin</value>
+  </data>
+  <data name="Report_Status_IMPROVING" xml:space="preserve">
+    <value>Paranee</value>
+  </data>
+  <data name="Report_Status_STABLE" xml:space="preserve">
+    <value>Vakaa</value>
+  </data>
+  <data name="Report_Status_DECLINING" xml:space="preserve">
+    <value>Heikkenee</value>
+  </data>
+  <data name="Report_Status_PASS" xml:space="preserve">
+    <value>PASS</value>
+  </data>
+  <data name="Report_Status_FAIL" xml:space="preserve">
+    <value>FAIL</value>
+  </data>
+  <data name="Report_Status_NOT_VERIFIED" xml:space="preserve">
+    <value>Ei varmistettu</value>
+  </data>
+  <data name="Report_Status_NOT_IMPLEMENTED" xml:space="preserve">
+    <value>Ei toteutettu</value>
+  </data>
+  <data name="Report_Reason_HIGH_FATIGUE" xml:space="preserve">
+    <value>Korkea äänen väsyminen</value>
+  </data>
+  <data name="Report_Reason_HIGH_RECOVERY_COST" xml:space="preserve">
+    <value>Korkea palautumiskustannus</value>
+  </data>
+  <data name="Report_Reason_OVERTRAINED" xml:space="preserve">
+    <value>Ylikuormittunut</value>
+  </data>
+  <data name="Report_Reason_IMPROVING" xml:space="preserve">
+    <value>Paranee</value>
+  </data>
+  <data name="Report_Reason_STABLE" xml:space="preserve">
+    <value>Vakaa</value>
+  </data>
+  <data name="Report_Reason_DECLINING" xml:space="preserve">
+    <value>Heikkenee</value>
+  </data>
+  <data name="Report_RecoveryRecommendationRestFormat" xml:space="preserve">
+    <value>Lepopäivä tai hyvin kevyt harjoitus näyttää nyt parhaalta. Viimeaikainen kuormitus kasvaa tavallista nopeammin (suhde {0:F2}), ja palautuminen on jäljessä viimeaikaisesta aktiivisuudesta (velka {1:F1}). Tämä on lempeä ehdotus levätä aiemmin, ei raja harjoittelullesi.</value>
+  </data>
+  <data name="Report_RecommendationHighFatigueFormat" xml:space="preserve">
+    <value>Aseta harjoitus {0} alemmalle prioriteetille: harjoitus näyttää toistuvia äänen väsymissignaaleja (~{1:F1} per harjoituskerta). Kevyempi vaihtoehto voi olla lempeämpi.</value>
+  </data>
+  <data name="Report_RecommendationHighRecoveryCostFormat" xml:space="preserve">
+    <value>Aseta harjoitus {0} alemmalle prioriteetille: harjoitus on viime aikoina kuormittava (palautumiskustannus {1:F0}/100). Harkitse kevyempää työskentelyä hetken aikaa.</value>
+  </data>
+  <data name="Report_InsightImprovementFormat" xml:space="preserve">
+    <value>{0} on kehittynyt myönteisesti (+{1:F1} pistettä). Harjoittelu alkaa näkyä tuloksissa.</value>
+  </data>
+  <data name="Report_GenerationFailed" xml:space="preserve">
+    <value>Raportin luonti epäonnistui</value>
+  </data>
+  <data name="Report_NotVerified" xml:space="preserve">
+    <value>Ei varmistettu</value>
+  </data>
+  <data name="Report_NotImplemented" xml:space="preserve">
+    <value>Ei toteutettu</value>
+  </data>
+<data name="Report_TitleClinicalProgressFormat" xml:space="preserve"><value>Kliininen edistymisraportti — {0}</value></data><data name="Report_TitleCoachingSummaryFormat" xml:space="preserve"><value>Valmennusyhteenveto — {0}</value></data><data name="Report_TitleOutcomeSummaryFormat" xml:space="preserve"><value>Tulosyhteenveto — {0}</value></data><data name="Report_TitleVoiceTimelineFormat" xml:space="preserve"><value>Äänen kehitys ajan myötä — {0}</value></data><data name="Report_DirectionImproving" xml:space="preserve"><value>Paranee</value></data><data name="Report_DirectionStable" xml:space="preserve"><value>Vakaa</value></data><data name="Report_DirectionDeclining" xml:space="preserve"><value>Heikkenee</value></data><data name="Report_TimeWindow_Days" xml:space="preserve"><value>{0} päivää</value></data><data name="Report_TimeWindow_LabelFormat" xml:space="preserve"><value>{0} ({1} – {2})</value></data><data name="Report_Term_Fatigue" xml:space="preserve"><value>Äänen väsyminen</value></data><data name="Report_Term_FatigueSignals" xml:space="preserve"><value>Äänen väsymissignaalit</value></data><data name="Report_Term_VoiceFatigue" xml:space="preserve"><value>Äänen väsyminen</value></data><data name="Report_Term_VoiceFatigueSignals" xml:space="preserve"><value>Äänen väsymissignaalit</value></data><data name="Report_Term_TrainingLoad" xml:space="preserve"><value>Harjoituskuormitus</value></data><data name="Report_Term_RecentActivity" xml:space="preserve"><value>Viimeaikainen aktiivisuus</value></data><data name="Report_Term_RestBehindRecentActivity" xml:space="preserve"><value>Palautuminen on jäljessä viimeaikaisesta aktiivisuudesta</value></data><data name="Report_Status_SIGNAL_LEVEL_COLLAPSES" xml:space="preserve"><value>Signaalitaso romahtaa</value></data><data name="Report_Status_EXPECTED_SILENCE" xml:space="preserve"><value>Odotettu hiljaisuus</value></data><data name="Report_Status_SILENCE_TAIL" xml:space="preserve"><value>Hiljaisuus lopussa</value></data></root>

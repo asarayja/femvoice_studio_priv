@@ -1,32 +1,32 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<root>
-  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-    <xsd:element name="root" msdata:IsDataSet="true">
-      <xsd:complexType>
-        <xsd:choice maxOccurs="unbounded">
-          <xsd:element name="data">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
-              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="resheader">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" />
-            </xsd:complexType>
-          </xsd:element>
-        </xsd:choice>
-      </xsd:complexType>
-    </xsd:element>
-  </xsd:schema>
+<?xml version='1.0' encoding='utf-8'?>
+<root xmlns:ns1="urn:schemas-microsoft-com:xml-msdata" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:schema id="root">
+    <xs:element name="root" ns1:IsDataSet="true">
+      <xs:complexType>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element name="data">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" ns1:Ordinal="1" />
+                <xs:element name="comment" type="xsd:string" minOccurs="0" ns1:Ordinal="2" />
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" ns1:Ordinal="0" />
+              <xs:attribute name="type" type="xsd:string" ns1:Ordinal="3" />
+              <xs:attribute name="mimetype" type="xsd:string" ns1:Ordinal="4" />
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="resheader">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" ns1:Ordinal="1" />
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" use="required" />
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+      </xs:complexType>
+    </xs:element>
+  </xs:schema>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
   </resheader>
@@ -39,7 +39,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <!-- Live Feedback UI labels (English fallback used where untranslated) -->
   <data name="LiveFeedback_Title" xml:space="preserve">
     <value>Live Feedback</value>
   </data>
@@ -94,29 +93,6 @@
   <data name="Mastery_Mastered" xml:space="preserve">
     <value>Behärskad</value>
   </data>
-  <!-- Voice Training Exercises 101-115 (Database exercises) -->
-  <!-- Voice Training Exercises 101-115 Descriptions -->
-  <!-- Exercise Steps - Voice Training -->
-  <!-- Scientific Rationale - Voice Training -->
-  <!-- App Title -->
-  <!-- Navigation -->
-  <!-- Home Page -->
-  <!-- Exercise Page -->
-  <!-- Difficulty Levels -->
-  <!-- Frequency -->
-  <!-- Goals -->
-  <!-- Analyzer Page -->
-  <!-- Statistics Page -->
-  <!-- Settings Page -->
-  <!-- Feedback Messages -->
-  <!-- Achievements -->
-  <!-- Common -->
-  <!-- Exercise Texts - Nybegynner -->
-  <!-- Exercise Texts - Middels -->
-  <!-- Exercise Texts - Avansert -->
-  <!-- Common -->
-  <!-- UI Strings -->
-  <!-- First Time Setup -->
   <data name="Achievement_AdvancedMaster" xml:space="preserve">
     <value>Bemästra</value>
   </data>
@@ -349,20 +325,20 @@
     <value>Kontrollerad nedglidning stärker musklerna för tonhöjdskontroll och etablerar muskelminne för målområdet.</value>
   </data>
   <data name="Guidance_PanelTitle" xml:space="preserve">
-  <value>Vägledning</value>
-</data>
+    <value>Vägledning</value>
+  </data>
   <data name="Guidance_ClinicalPurpose" xml:space="preserve">
-  <value>Förbättra främre resonans och utveckla en lättare, mer feminin röstklang.</value>
-</data>
+    <value>Förbättra främre resonans och utveckla en lättare, mer feminin röstklang.</value>
+  </data>
   <data name="Guidance_PhysicalFocus" xml:space="preserve">
-  <value>Fokusera på vibrationer i läppar, tänder och den främre delen av munnen med avslappnad hals.</value>
-</data>
+    <value>Fokusera på vibrationer i läppar, tänder och den främre delen av munnen med avslappnad hals.</value>
+  </data>
   <data name="Guidance_CommonMistakes" xml:space="preserve">
-  <value>Undvik att pressa tonhöjden, spänna halsen eller trycka luften.</value>
-</data>
+    <value>Undvik att pressa tonhöjden, spänna halsen eller trycka luften.</value>
+  </data>
   <data name="Guidance_SafetyInfo" xml:space="preserve">
-  <value>Sluta om du känner obehag eller spänning. Håll rösten avslappnad och återfuktad.</value>
-</data>
+    <value>Sluta om du känner obehag eller spänning. Håll rösten avslappnad och återfuktad.</value>
+  </data>
   <data name="Exercise_102_Steps" xml:space="preserve">
     <value>Börja högt och glid långsamt ner under 3 sekunder|Håll den låga tonen i 2 sekunder|Upprepa med olika startpunkter|Fokusera på jämn glidning</value>
   </data>
@@ -1584,7 +1560,6 @@
   <data name="UI_StopSession" xml:space="preserve">
     <value>Stoppa session</value>
   </data>
-  <!-- Health Monitoring Messages -->
   <data name="SmartCoach_Health_PitchPress" xml:space="preserve">
     <value>Din röst visar tecken på ansträngning. Idag: endast andningsövningar och lätt resonansarbete. Undvik att pressa pitch. 5 minuters lugn träning.</value>
   </data>
@@ -1600,7 +1575,6 @@
   <data name="SmartCoach_HealthWarning" xml:space="preserve">
     <value>RösthälsOvarning</value>
   </data>
-  <!-- Level Names -->
   <data name="Level_Beginner" xml:space="preserve">
     <value>Nybörjare</value>
   </data>
@@ -1613,7 +1587,6 @@
   <data name="Level_Unknown" xml:space="preserve">
     <value>Okänd</value>
   </data>
-  <!-- Level Focus Descriptions -->
   <data name="Level_Focus_Beginner" xml:space="preserve">
     <value>Resonans först - säker pitchökning</value>
   </data>
@@ -1623,7 +1596,6 @@
   <data name="Level_Focus_Advanced" xml:space="preserve">
     <value>Naturligt tal - intonation</value>
   </data>
-  <!-- Level Transition Messages -->
   <data name="Level_Promotion_Reason" xml:space="preserve">
     <value>{0} av {1} senaste pass över {2}%</value>
   </data>
@@ -1633,7 +1605,6 @@
   <data name="Level_GoodProgress_Reason" xml:space="preserve">
     <value>Bra framsteg ({0}/{1} pass över tröskel)</value>
   </data>
-  <!-- Progression Messages -->
   <data name="Progression_FirstSession" xml:space="preserve">
     <value>🌱 Första passet klart! Välkommen till din röstresa!</value>
   </data>
@@ -1655,7 +1626,6 @@
   <data name="Progression_TotalSessions" xml:space="preserve">
     <value>Totalt pass: {0}</value>
   </data>
-  <!-- Coach Messages -->
   <data name="Coach_Encourage_1" xml:space="preserve">
     <value>Bra insats! Varje pass räknas! 💪</value>
   </data>
@@ -1671,11 +1641,9 @@
   <data name="Coach_QualityOverQuantity" xml:space="preserve">
     <value>Kom ihåg att kvalitet är viktigare än kvantitet. Fokusera på rätt teknik i varje pass.</value>
   </data>
-  <!-- Voice Health -->
   <data name="VoiceHealth_SessionTimeRemaining" xml:space="preserve">
     <value>Du har {0} minuter kvar av passet. Ta gärna en paus.</value>
   </data>
-  <!-- Feedback Messages -->
   <data name="Feedback_Pitch_BelowTarget" xml:space="preserve">
     <value>Genomsnittlig pitch är {0} Hz, vilket är under målområdet ({1}-{2} Hz).</value>
   </data>
@@ -1700,7 +1668,6 @@
   <data name="Feedback_Resonance_Back" xml:space="preserve">
     <value>Tydlig bakre resonans ({0}/{1} Hz). Detta ger en mörkare klang.</value>
   </data>
-  <!-- Feedback Hints - Pitch -->
   <data name="Feedback_Hint_PitchTooLow" xml:space="preserve">
     <value>Försök att höja rösten lite. Tänk på att prata från halsen, inte bröstet. Föreställ dig att du försöker nå en hög ton.</value>
   </data>
@@ -1710,21 +1677,18 @@
   <data name="Feedback_Hint_PitchInRange" xml:space="preserve">
     <value>Fortfarande att hålla denna pitch. Koncentrera dig på att vara konsekvent genom hela meningen.</value>
   </data>
-  <!-- Feedback Hints - Variation -->
   <data name="Feedback_Hint_VariationTooLow" xml:space="preserve">
     <value>Försök att variera pitch-en mer. Använd naturlig intonation - tänk på hur du skulle prata om du var väldigt exalterad eller intresserad!</value>
   </data>
   <data name="Feedback_Hint_VariationGood" xml:space="preserve">
     <value>Detta ger ditt tal mer dynamik och intresse. Fortsätt att arbeta med att variera pitch-en naturligt.</value>
   </data>
-  <!-- Feedback Hints - Intonation -->
   <data name="Feedback_Hint_IntonationNeedsWork" xml:space="preserve">
     <value>Öva på att avsluta frågor med stigande ton. Försök att säga 'vad ska du göra?' med nyfiken röst.</value>
   </data>
   <data name="Feedback_Hint_IntonationGood" xml:space="preserve">
     <value>Detta ger ditt tal mer uttryck. Fortsätt att arbeta med att göra intonationen ännu tydligare.</value>
   </data>
-  <!-- Feedback Hints - Resonance -->
   <data name="Feedback_Hint_ResonanceLowConfidence" xml:space="preserve">
     <value>Prata tydligt och håll rösten jämnare för bättre analys.</value>
   </data>
@@ -1746,7 +1710,6 @@
   <data name="Feedback_Hint_ResonanceTooBack" xml:space="preserve">
     <value>Viktigt: Fokusera på att höja F2. Tänk på att 'hänga' ljudet i nässpetsen och le mer!</value>
   </data>
-  <!-- Feedback Messages - Additional -->
   <data name="Feedback_Message_IntonationLow" xml:space="preserve">
     <value>Stigande intonation är låg. Frågor och meningar som slutar med stigande ton är viktiga.</value>
   </data>
@@ -1762,7 +1725,6 @@
   <data name="Feedback_Message_ResonanceBack" xml:space="preserve">
     <value>Resonansen har bakre tendens. Du kan uppnå en ljusare klang.</value>
   </data>
-  <!-- Realtime Feedback -->
   <data name="Feedback_Realtime_NoVoice" xml:space="preserve">
     <value>The signal is weak. Try moving a little closer to the microphone or run microphone calibration.</value>
   </data>
@@ -1775,14 +1737,12 @@
   <data name="Feedback_Realtime_PitchInRange" xml:space="preserve">
     <value>Inom målzonen ({0:F0} Hz). Håll en jämn, bekväm ton och fortsätt fokusera på resonans.</value>
   </data>
-  <!-- Summary -->
   <data name="Feedback_Summary_Top" xml:space="preserve">
     <value>🌟 Total poäng: {0}%</value>
   </data>
   <data name="Feedback_Summary_PositiveImprovement" xml:space="preserve">
     <value>Du fick {0} positiva punkter och {1} förbättringsområden.</value>
   </data>
-  <!-- Progression Dashboard -->
   <data name="Dashboard_Score" xml:space="preserve">
     <value>Poäng</value>
   </data>
@@ -1831,14 +1791,12 @@
   <data name="Dashboard_Average" xml:space="preserve">
     <value>Genomsnitt</value>
   </data>
-  <!-- LanguageSubsystem Legacy Keys -->
   <data name="App_Title" xml:space="preserve">
     <value>FemVoice Studio</value>
   </data>
   <data name="App_Subtitle" xml:space="preserve">
     <value>Din röstträningspartner</value>
   </data>
-  <!-- Training -->
   <data name="Training_Start" xml:space="preserve">
     <value>Starta träning</value>
   </data>
@@ -1851,7 +1809,6 @@
   <data name="Training_Resume" xml:space="preserve">
     <value>Fortsätt</value>
   </data>
-  <!-- Metrics -->
   <data name="Metrics_Pitch" xml:space="preserve">
     <value>Tonhöjd</value>
   </data>
@@ -1867,14 +1824,12 @@
   <data name="Metrics_Health" xml:space="preserve">
     <value>Rösthälsa</value>
   </data>
-  <!-- Feedback -->
   <data name="Feedback_NeedsWork" xml:space="preserve">
     <value>Fortfar att öva!</value>
   </data>
   <data name="Feedback_Strain" xml:space="preserve">
     <value>Röstpress upptäckt - ta en paus</value>
   </data>
-  <!-- Smart Coach -->
   <data name="Coach_Focus" xml:space="preserve">
     <value>Focusera på</value>
   </data>
@@ -1884,7 +1839,6 @@
   <data name="Coach_How" xml:space="preserve">
     <value>Hur öva</value>
   </data>
-  <!-- Live feedback status labels -->
   <data name="LiveFeedback_Active" xml:space="preserve">
     <value>Active</value>
   </data>
@@ -3783,4 +3737,94 @@ This cannot be undone!</value>
   <data name="Nav_ProfessionalToolsTitle" xml:space="preserve">
     <value>Professionella verktyg</value>
   </data>
-</root>
+  <data name="ReportPdf_Exercise" xml:space="preserve">
+    <value>Övning</value>
+  </data>
+  <data name="Report_ExerciseFallbackFormat" xml:space="preserve">
+    <value>Övning {0}</value>
+  </data>
+  <data name="Report_ExerciseIdFallbackFormat" xml:space="preserve">
+    <value>Övnings-ID {0}</value>
+  </data>
+  <data name="Report_Status_HIGH_FATIGUE" xml:space="preserve">
+    <value>Hög rösttrötthet</value>
+  </data>
+  <data name="Report_Status_HIGH_RECOVERY_COST" xml:space="preserve">
+    <value>Hög återhämtningskostnad</value>
+  </data>
+  <data name="Report_Status_OVERTRAINED" xml:space="preserve">
+    <value>Övertränad</value>
+  </data>
+  <data name="Report_Status_STRAINED" xml:space="preserve">
+    <value>Belastad</value>
+  </data>
+  <data name="Report_Status_ADEQUATE" xml:space="preserve">
+    <value>Tillräckligt återhämtad</value>
+  </data>
+  <data name="Report_Status_WELLRECOVERED" xml:space="preserve">
+    <value>Väl återhämtad</value>
+  </data>
+  <data name="Report_Status_NEEDSREVIEW" xml:space="preserve">
+    <value>Behöver granskas</value>
+  </data>
+  <data name="Report_Status_IMPROVING" xml:space="preserve">
+    <value>Förbättras</value>
+  </data>
+  <data name="Report_Status_STABLE" xml:space="preserve">
+    <value>Stabil</value>
+  </data>
+  <data name="Report_Status_DECLINING" xml:space="preserve">
+    <value>Sjunker</value>
+  </data>
+  <data name="Report_Status_PASS" xml:space="preserve">
+    <value>PASS</value>
+  </data>
+  <data name="Report_Status_FAIL" xml:space="preserve">
+    <value>FAIL</value>
+  </data>
+  <data name="Report_Status_NOT_VERIFIED" xml:space="preserve">
+    <value>Inte verifierad</value>
+  </data>
+  <data name="Report_Status_NOT_IMPLEMENTED" xml:space="preserve">
+    <value>Inte implementerad</value>
+  </data>
+  <data name="Report_Reason_HIGH_FATIGUE" xml:space="preserve">
+    <value>Hög rösttrötthet</value>
+  </data>
+  <data name="Report_Reason_HIGH_RECOVERY_COST" xml:space="preserve">
+    <value>Hög återhämtningskostnad</value>
+  </data>
+  <data name="Report_Reason_OVERTRAINED" xml:space="preserve">
+    <value>Övertränad</value>
+  </data>
+  <data name="Report_Reason_IMPROVING" xml:space="preserve">
+    <value>Förbättras</value>
+  </data>
+  <data name="Report_Reason_STABLE" xml:space="preserve">
+    <value>Stabil</value>
+  </data>
+  <data name="Report_Reason_DECLINING" xml:space="preserve">
+    <value>Sjunker</value>
+  </data>
+  <data name="Report_RecoveryRecommendationRestFormat" xml:space="preserve">
+    <value>En vilodag eller ett mycket lätt pass ser bäst ut just nu. Den senaste belastningen ökar snabbare än vanligt (kvot {0:F2}), och återhämtningen ligger efter den senaste aktiviteten (skuld {1:F1}). Detta är ett varsamt förslag att vila tidigare, inte en gräns för din träning.</value>
+  </data>
+  <data name="Report_RecommendationHighFatigueFormat" xml:space="preserve">
+    <value>Prioritera övning {0} lägre: övningen visar upprepade rösttrötthetssignaler (~{1:F1} per pass). Ett lättare alternativ kan vara skonsammare.</value>
+  </data>
+  <data name="Report_RecommendationHighRecoveryCostFormat" xml:space="preserve">
+    <value>Prioritera övning {0} lägre: övningen har varit belastande nyligen (återhämtningskostnad {1:F0}/100). Överväg lättare arbete en stund.</value>
+  </data>
+  <data name="Report_InsightImprovementFormat" xml:space="preserve">
+    <value>{0} har utvecklats positivt (+{1:F1} poäng). Träningsarbetet börjar ge resultat.</value>
+  </data>
+  <data name="Report_GenerationFailed" xml:space="preserve">
+    <value>Rapportgenerering misslyckades</value>
+  </data>
+  <data name="Report_NotVerified" xml:space="preserve">
+    <value>Inte verifierad</value>
+  </data>
+  <data name="Report_NotImplemented" xml:space="preserve">
+    <value>Inte implementerad</value>
+  </data>
+<data name="Report_TitleClinicalProgressFormat" xml:space="preserve"><value>Klinisk framstegsrapport — {0}</value></data><data name="Report_TitleCoachingSummaryFormat" xml:space="preserve"><value>Coachsammanfattning — {0}</value></data><data name="Report_TitleOutcomeSummaryFormat" xml:space="preserve"><value>Resultatsammanfattning — {0}</value></data><data name="Report_TitleVoiceTimelineFormat" xml:space="preserve"><value>Röstutveckling över tid — {0}</value></data><data name="Report_DirectionImproving" xml:space="preserve"><value>Förbättras</value></data><data name="Report_DirectionStable" xml:space="preserve"><value>Stabil</value></data><data name="Report_DirectionDeclining" xml:space="preserve"><value>Sjunker</value></data><data name="Report_TimeWindow_Days" xml:space="preserve"><value>{0} dagar</value></data><data name="Report_TimeWindow_LabelFormat" xml:space="preserve"><value>{0} ({1} – {2})</value></data><data name="Report_Term_Fatigue" xml:space="preserve"><value>Rösttrötthet</value></data><data name="Report_Term_FatigueSignals" xml:space="preserve"><value>Rösttrötthetssignaler</value></data><data name="Report_Term_VoiceFatigue" xml:space="preserve"><value>Rösttrötthet</value></data><data name="Report_Term_VoiceFatigueSignals" xml:space="preserve"><value>Rösttrötthetssignaler</value></data><data name="Report_Term_TrainingLoad" xml:space="preserve"><value>Träningsbelastning</value></data><data name="Report_Term_RecentActivity" xml:space="preserve"><value>Senaste aktivitet</value></data><data name="Report_Term_RestBehindRecentActivity" xml:space="preserve"><value>Återhämtningen ligger efter den senaste aktiviteten</value></data><data name="Report_Status_SIGNAL_LEVEL_COLLAPSES" xml:space="preserve"><value>Signalnivån faller bort</value></data><data name="Report_Status_EXPECTED_SILENCE" xml:space="preserve"><value>Förväntad tystnad</value></data><data name="Report_Status_SILENCE_TAIL" xml:space="preserve"><value>Tystnad i slutet</value></data></root>

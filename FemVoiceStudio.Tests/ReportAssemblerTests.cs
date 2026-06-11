@@ -14,6 +14,7 @@ namespace FemVoiceStudio.Tests
     /// supporting collections, then verify each Build* method returns a populated DTO with
     /// the correct period, title, and key metrics — without touching any I/O.
     /// </summary>
+    [Collection("Localization")]
     public class ReportAssemblerTests
     {
         // ── Shared fixtures ───────────────────────────────────────────────────────
@@ -226,6 +227,11 @@ namespace FemVoiceStudio.Tests
             };
 
         private readonly ReportAssembler _assembler = new();
+
+        public ReportAssemblerTests()
+        {
+            LocalizationService.Instance.SetLanguage("en");
+        }
 
         // ── BuildClinicalReport ───────────────────────────────────────────────────
 

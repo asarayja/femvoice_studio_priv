@@ -131,6 +131,26 @@ namespace FemVoiceStudio.Services
             }
         }
 
+        public static string NormalizeVerificationStatus(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return "NOT_VERIFIED";
+
+            var normalized = input.Trim();
+
+            return string.Equals(normalized, "PASS", StringComparison.OrdinalIgnoreCase)
+                ? "PASS"
+                : string.Equals(normalized, "FAIL", StringComparison.OrdinalIgnoreCase)
+                    ? "FAIL"
+                    : string.Equals(normalized, "NOT_VERIFIED", StringComparison.OrdinalIgnoreCase)
+                        ? "NOT_VERIFIED"
+                        : string.Equals(normalized, "NOT_IMPLEMENTED", StringComparison.OrdinalIgnoreCase)
+                            ? "NOT_IMPLEMENTED"
+                            : string.Equals(normalized, "NOT_APPLICABLE", StringComparison.OrdinalIgnoreCase)
+                                ? "NOT_VERIFIED"
+                                : "NOT_VERIFIED";
+        }
+
         private static string ResolveResult(SessionEvidence evidence, AudioCaptureDiagnosticsSnapshot audio)
         {
             if (audio.DataAvailableCount <= 0 || evidence.PitchDetectorCalledCount <= 0)

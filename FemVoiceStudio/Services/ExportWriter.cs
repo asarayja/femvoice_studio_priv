@@ -336,6 +336,7 @@ namespace FemVoiceStudio.Services
         /// </summary>
         public static string EscapeCsvCell(string value)
         {
+            value = ReportTextSanitizer.Clean(value);
             if (value.IndexOfAny(new[] { ',', '"', '\r', '\n' }) < 0)
                 return value;
 
@@ -345,9 +346,9 @@ namespace FemVoiceStudio.Services
 
         // ── PDF document builders ─────────────────────────────────────────────────
 
-        private static string T(string key) => LocalizationService.Instance.GetString(key);
+        private static string T(string key) => ReportTextSanitizer.Clean(LocalizationService.Instance.GetString(key));
         private static string Tf(string key, params object[] args) =>
-            LocalizationService.Instance.GetFormattedString(key, args);
+            ReportTextSanitizer.Clean(LocalizationService.Instance.GetFormattedString(key, args));
 
         private static IDocument BuildClinicalPdf(ClinicalReport r) =>
             Document.Create(container =>
@@ -460,7 +461,7 @@ namespace FemVoiceStudio.Services
                         {
                             col.Item().PaddingTop(0.5f, Unit.Centimetre).Text(T("ReportPdf_FocusAreas")).FontSize(13).Bold();
                             foreach (var fa in r.FocusAreas)
-                                col.Item().Text($"• {fa}");
+                                col.Item().Text("• " + ReportTextSanitizer.Clean(fa));
                         }
 
                         // Recommendations
@@ -468,7 +469,7 @@ namespace FemVoiceStudio.Services
                         {
                             col.Item().PaddingTop(0.5f, Unit.Centimetre).Text(T("ReportPdf_Recommendations")).FontSize(13).Bold();
                             foreach (var rec in r.Recommendations)
-                                col.Item().Text($"• {rec}");
+                                col.Item().Text("• " + ReportTextSanitizer.Clean(rec));
                         }
                     });
 
@@ -498,7 +499,7 @@ namespace FemVoiceStudio.Services
                     page.Content().PaddingTop(1, Unit.Centimetre).Column(col =>
                     {
                         col.Item().Text(Tf("ReportPdf_CompositeVoiceScoreFormat", r.CompositeVoiceScore)).FontSize(12);
-                        col.Item().Text(Tf("ReportPdf_RecoveryFormat", r.RecoveryStatus, r.RecoveryScore));
+                        col.Item().Text(Tf("ReportPdf_RecoveryFormat", ReportAssembler.LocalizeStatus(r.RecoveryStatus), r.RecoveryScore));
                         col.Item().Text(Tf("ReportPdf_DataSufficientFormat", r.HasEnoughData ? T("Common_Yes") : T("Common_No")));
 
                         // Goals table
@@ -535,16 +536,16 @@ namespace FemVoiceStudio.Services
                             {
                                 table.ColumnsDefinition(columns =>
                                 {
-                                    columns.ConstantColumn(60);
+                                    columns.RelativeColumn(3);
                                     columns.RelativeColumn(2);
                                     columns.RelativeColumn(2);
                                     columns.RelativeColumn(2);
                                     columns.RelativeColumn(2);
                                 });
-                                AddTableHeader(table, T("ReportPdf_ExerciseId"), T("ReportPdf_Composite"), T("Dimension_Resonance"), T("Dimension_Comfort"), T("ReportPdf_RecoveryCost"));
+                                AddTableHeader(table, T("ReportPdf_Exercise"), T("ReportPdf_Composite"), T("Dimension_Resonance"), T("Dimension_Comfort"), T("ReportPdf_RecoveryCost"));
                                 foreach (var ex in r.TopExercises)
                                 {
-                                    table.Cell().Text(ex.ExerciseId.ToString());
+                                    table.Cell().Text(ReportAssembler.ResolveExerciseName(ex.ExerciseId));
                                     table.Cell().Text(ex.CompositeEffectiveness.ToString("F1"));
                                     table.Cell().Text(ex.ResonanceGain.ToString("F2"));
                                     table.Cell().Text(ex.ComfortGain.ToString("F2"));
@@ -601,7 +602,7 @@ namespace FemVoiceStudio.Services
                                     table.Cell().Text(entry.Window.SessionCount.ToString());
                                     table.Cell().Text(entry.Window.CompositeMean.ToString("F1"));
                                     table.Cell().Text(entry.Window.CompositeSlope.ToString("F3"));
-                                    table.Cell().Text(entry.Direction);
+                                    table.Cell().Text(ReportTextSanitizer.Clean(entry.Direction));
                                 }
                             });
                         }
@@ -650,7 +651,7 @@ namespace FemVoiceStudio.Services
                 AddMetricRow(table, T("ReportPdf_CompositeVoiceScore"),
                     $"{outcome.LongTermDevelopment.CompositeVoiceScore:F1} / 100");
                 AddMetricRow(table, T("ReportPdf_RecoveryStatus"),
-                    $"{outcome.RecoveryProgress.Status} ({outcome.RecoveryProgress.CurrentScore0to100:F1}/100)");
+                    $"{ReportAssembler.LocalizeStatus(outcome.RecoveryProgress.Status)} ({outcome.RecoveryProgress.CurrentScore0to100:F1}/100)");
                 AddMetricRow(table, T("ReportPdf_RecoveryDebt"),
                     outcome.RecoveryProgress.RecoveryDebt.ToString("F1"));
                 AddMetricRow(table, T("ReportPdf_OvertrainingPredicted"),
@@ -666,7 +667,7 @@ namespace FemVoiceStudio.Services
             if (!string.IsNullOrEmpty(outcome.RecoveryProgress.RecommendationText))
             {
                 col.Item().PaddingTop(0.3f, Unit.Centimetre)
-                    .Text(Tf("ReportPdf_RecoveryRecommendationFormat", outcome.RecoveryProgress.RecommendationText))
+                    .Text(Tf("ReportPdf_RecoveryRecommendationFormat", ReportAssembler.LocalizeRecoveryRecommendation(outcome.RecoveryProgress)))
                     .Italic();
             }
         }
@@ -685,8 +686,8 @@ namespace FemVoiceStudio.Services
 
         private static void AddMetricRow(TableDescriptor table, string metric, string value)
         {
-            table.Cell().Text(metric);
-            table.Cell().Text(value);
+            table.Cell().Text(ReportTextSanitizer.Clean(metric));
+            table.Cell().Text(ReportTextSanitizer.Clean(value));
         }
     }
 }
