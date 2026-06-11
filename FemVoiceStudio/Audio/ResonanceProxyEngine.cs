@@ -39,6 +39,12 @@ namespace FemVoiceStudio.Audio
         private long _resonanceRejectedCount;
         private string _lastRejectionReason = "";
 
+        // Context properties set by the caller for richer RC-0 diagnostics
+        public string? CurrentExerciseId { get; set; }
+        public bool LastKnownPitchIsVoiced { get; set; }
+        public double LastKnownPitchHz { get; set; }
+        public double LastKnownFallbackResonance { get; set; }
+
         public long ResonanceCalledCount => _resonanceCalledCount;
         public long ResonanceAcceptedCount => _resonanceAcceptedCount;
         public long ResonanceRejectedCount => _resonanceRejectedCount;
@@ -70,6 +76,8 @@ namespace FemVoiceStudio.Audio
         private readonly Complex[] _fftBuffer;
         private readonly float[] _windowBuffer;
         private readonly float[] _inputBuffer;
+        // Raw unfiltered samples buffer for RMS gating (pre-emphasis)
+        private readonly float[] _rawBuffer;
         private int _bufferPosition;
         private readonly ResonanceMode _mode;
         private readonly int _smoothingWindowSize;
@@ -149,6 +157,7 @@ namespace FemVoiceStudio.Audio
             _fftBuffer = new Complex[_fftSize];
             _windowBuffer = new float[_fftSize];
             _inputBuffer = new float[_fftSize];
+            _rawBuffer = new float[_fftSize];
             _formantHistory = new Queue<FormantSnapshot>(_smoothingWindowSize + 1);
             GenerateWindowFunction();
             _syncContext = SynchronizationContext.Current;
@@ -159,6 +168,8 @@ namespace FemVoiceStudio.Audio
             if (_isDisposed || samples == null || samples.Length == 0) return;
             foreach (float sample in samples)
             {
+                // Store raw sample for RMS-gating on raw/full-band signal
+                _rawBuffer[_bufferPosition] = sample;
                 double emphasized = sample - PreEmphasisCoeff * _lastSample;
                 _lastSample = sample;
                 _inputBuffer[_bufferPosition] = (float)emphasized;
@@ -168,7 +179,10 @@ namespace FemVoiceStudio.Audio
                     ProcessFrame();
                     _bufferPosition = _fftSize - _hopSize;
                     if (_bufferPosition > 0 && _bufferPosition < _fftSize)
+                    {
                         Array.Copy(_inputBuffer, _hopSize, _inputBuffer, 0, _bufferPosition);
+                        Array.Copy(_rawBuffer, _hopSize, _rawBuffer, 0, _bufferPosition);
+                    }
                 }
             }
         }
@@ -205,12 +219,39 @@ namespace FemVoiceStudio.Audio
             {
                 _frameCount++;
                 Interlocked.Increment(ref _resonanceCalledCount);
-                double rms = CalculateRms(_inputBuffer, _fftSize);
-                if (rms < RmsThreshold)
+                // Compute both raw (pre-emphasis) RMS for gating and pre-emphasis RMS for spectral analysis diagnostics
+                double rawRms = CalculateRms(_rawBuffer, _fftSize);
+                double preEmphRms = CalculateRms(_inputBuffer, _fftSize);
+
+                // Gate on raw RMS so windowing/pre-emphasis do not cause spurious rejections
+                if (rawRms < RmsThreshold)
                 {
                     Interlocked.Increment(ref _resonanceRejectedCount);
-                    _lastRejectionReason = "BELOW_RMS_THRESHOLD";
-                    try { DebugSettingsService.Instance.LogAnalyzerData("Resonance", rms, _lastRejectionReason); } catch { }
+                    _lastRejectionReason = "BELOW_RAW_RMS_THRESHOLD";
+                    try
+                    {
+                        // Per-frame RC-0 diagnostics
+                        var min = float.PositiveInfinity;
+                        var max = float.NegativeInfinity;
+                        double sum = 0, sumSq = 0;
+                        for (int i = 0; i < _fftSize; i++)
+                        {
+                            var v = _rawBuffer[i];
+                            if (v < min) min = v;
+                            if (v > max) max = v;
+                            sum += v;
+                            sumSq += (double)v * v;
+                        }
+                        var mean = sum / _fftSize;
+                        var variance = (sumSq / _fftSize) - (mean * mean);
+                        Services.Rc0RuntimeLog.Write("Resonance",
+                            string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                                "ResonanceRejected: Reason=BELOW_RAW_RMS_THRESHOLD; ExerciseId={0}; RawRms={1:F6}; PreEmphRms={2:F6}; Threshold={3:F6}; UnitScale=float[-1..1]; SampleMin={4:F6}; SampleMax={5:F6}; SampleMean={6:F6}; SampleVariance={7:F6}; IsVoiced={8}; PitchHz={9:F2}; PitchAccepted={10}; FallbackResonance={11:F6}; EngineResonance={12:F6}",
+                                CurrentExerciseId ?? "(unknown)", rawRms, preEmphRms, RmsThreshold, min, max, mean, variance,
+                                LastKnownPitchIsVoiced, LastKnownPitchHz, LastKnownPitchIsVoiced, LastKnownFallbackResonance, 0.0 /* engine score placeholder */));
+                    }
+                    catch { }
+                    try { DebugSettingsService.Instance.LogAnalyzerData("Resonance", rawRms, _lastRejectionReason); } catch { }
                     return;
                 }
                 for (int i = 0; i < _fftSize; i++) { _fftBuffer[i].X = _inputBuffer[i] * _windowBuffer[i]; _fftBuffer[i].Y = 0; }
@@ -218,7 +259,10 @@ namespace FemVoiceStudio.Audio
                 float[] magnitudes = new float[_fftSize / 2];
                 double totalEnergy = 0;
                 for (int i = 0; i < magnitudes.Length; i++) { magnitudes[i] = (float)Math.Sqrt(_fftBuffer[i].X * _fftBuffer[i].X + _fftBuffer[i].Y * _fftBuffer[i].Y); totalEnergy += magnitudes[i] * magnitudes[i]; }
-                if (totalEnergy < 0.0001f)
+                // LOW_ENERGY: only reject when both spectral totalEnergy is tiny AND the
+                // raw (pre-emphasis) RMS is below threshold. This avoids rejecting
+                // voiced frames where windowing/pre-emphasis redistributed energy.
+                if (totalEnergy < 0.0001f && rawRms < RmsThreshold * 0.5)
                 {
                     Interlocked.Increment(ref _resonanceRejectedCount);
                     _lastRejectionReason = "LOW_ENERGY";
@@ -228,11 +272,32 @@ namespace FemVoiceStudio.Audio
                 double centroid = CalculateSpectralCentroid(magnitudes, totalEnergy);
                 var formants = ExtractFormants(magnitudes);
                 formants.SpectralCentroid = centroid;
-                formants.RmsValue = rms;
+                formants.RmsValue = preEmphRms;
                 formants.Confidence = CalculateFormantConfidence(magnitudes, formants);
                 formants.Timestamp = _frameCount;
                 if (!formants.IsValid)
                 {
+                    // Conservative fallback: if the frame is voiced and there is a caller-provided
+                    // fallback resonance (e.g., from pitch-derived estimate), and the raw RMS is
+                    // above the gating threshold, accept the frame with a low confidence snapshot
+                    // rather than rejecting every voiced/pitch-accepted frame. This preserves
+                    // downstream behavior while avoiding silent LOSS of resonance samples.
+                    if (rawRms >= RmsThreshold && LastKnownFallbackResonance > 0 && LastKnownPitchIsVoiced)
+                    {
+                        formants.Confidence = Math.Max(formants.Confidence, 0.2);
+                        formants.RmsValue = preEmphRms;
+                        formants.Timestamp = _frameCount;
+                        double stabilityFallback = CalculateStability(formants);
+                        formants.Stability = stabilityFallback;
+                        ApplySmoothing(formants);
+                        double resonanceScoreFallback = CalculateResonanceScore(formants, stabilityFallback);
+                        Interlocked.Increment(ref _resonanceAcceptedCount);
+                        _lastRejectionReason = string.Empty;
+                        try { DebugSettingsService.Instance.LogAnalyzerData("Resonance", resonanceScoreFallback, "ACCEPTED_FALLBACK"); } catch { }
+                        RaiseEvents(resonanceScoreFallback, formants);
+                        return;
+                    }
+
                     Interlocked.Increment(ref _resonanceRejectedCount);
                     _lastRejectionReason = "NO_FORMANTS_OR_LOW_CONFIDENCE";
                     try { DebugSettingsService.Instance.LogAnalyzerData("Resonance", formants.Confidence, _lastRejectionReason); } catch { }

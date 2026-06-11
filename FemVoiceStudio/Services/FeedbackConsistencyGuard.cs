@@ -155,15 +155,20 @@ namespace FemVoiceStudio.Services
                     return SuppressLocked(candidate, clinicalBlock);
 
                 var now = _clock();
-                var eligibilityBlock = GetEligibilitySuppressionReason(candidate, context, now);
-                if (eligibilityBlock != null)
-                    return SuppressLocked(candidate, eligibilityBlock);
 
+                // Enforce per-reason rate limit early so that rate-limit suppression is
+                // reported before duplicate/conflict message suppression. This preserves
+                // the expected precedence in existing tests (Rate limit should be the
+                // primary reason for repeated identical reason codes).
                 if (_lastApprovedByReason.TryGetValue(candidate.ReasonCode, out var lastForReason)
                     && now - lastForReason < _minimumInterval)
                 {
                     return SuppressLocked(candidate, "Rate limit for repeated feedback reason.");
                 }
+
+                var eligibilityBlock = GetEligibilitySuppressionReason(candidate, context, now);
+                if (eligibilityBlock != null)
+                    return SuppressLocked(candidate, eligibilityBlock);
 
                 if (_activeWarning != null
                     && candidate.Priority < _activeWarning.Priority
@@ -196,7 +201,11 @@ namespace FemVoiceStudio.Services
                 _lastApprovedByReason[candidate.ReasonCode] = now;
                 if (!string.IsNullOrWhiteSpace(candidate.ConflictKey))
                     _lastApprovedByConflict[candidate.ConflictKey] = now;
-                _lastApprovedByMessage[candidate.Message] = now;
+                // Store last-approved message using a composite key to avoid
+                // cross-channel or cross-reason collisions.
+                var setChannel = candidate.Channel ?? string.Empty;
+                var setMessageKey = $"{setChannel}|{candidate.ReasonCode}|{candidate.Message}";
+                _lastApprovedByMessage[setMessageKey] = now;
                 IncrementSessionBudget(candidate);
                 _suppressionCounts.Remove(GetSuppressionKey(candidate));
 
@@ -273,7 +282,12 @@ namespace FemVoiceStudio.Services
                 return "Duplicate conflict key is still cooling down.";
             }
 
-            if (_lastApprovedByMessage.TryGetValue(candidate.Message, out var lastMessage)
+            // Duplicate message suppression should be scoped to channel and reason
+            // so that distinct channels or distinct reason codes do not starve each
+            // other when the textual message happens to be identical.
+            var channel = candidate.Channel ?? string.Empty;
+            var messageKey = $"{channel}|{candidate.ReasonCode}|{candidate.Message}";
+            if (_lastApprovedByMessage.TryGetValue(messageKey, out var lastMessage)
                 && IsLowPriority(candidate)
                 && now - lastMessage < LowPriorityRepeatCooldown)
             {

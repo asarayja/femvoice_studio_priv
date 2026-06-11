@@ -661,21 +661,18 @@ namespace FemVoiceStudio.Views
                         // Best-effort: attempt to read back the saved session from the DB and mark status.
                         try
                         {
-                            if (_database != null && sessionId > 0)
+                            if (_exerciseService != null && sessionId > 0)
                             {
-                                var from = rc0StartTime.AddMinutes(-1);
-                                var to = DateTime.Now.AddMinutes(1);
-                                var sessions = _database.GetTrainingSessions(from, to);
-                                var found = sessions?.Find(s => s.Id == sessionId) ??
-                                            sessions?.Find(s => s.ExerciseTextId == exercise.ExerciseId && Math.Abs((s.StartTime - rc0StartTime).TotalSeconds) < 10);
-                                if (found != null)
+                                var saved = _exerciseService.GetSessionById(sessionId);
+                                if (saved != null)
                                 {
                                     evidence = evidence with { PersistenceReadBack = true, PersistenceReadBackStatus = "PASS" };
                                 }
                                 else
                                 {
-                                    evidence = evidence with { PersistenceReadBackStatus = "FAIL" };
+                                    evidence = evidence with { PersistenceReadBackStatus = "FAIL", PersistenceReadBackError = $"ExerciseSession with SessionId={sessionId} not found in ExerciseSessions." };
                                 }
+
                                 // If resonance engine ran but accepted no samples, classify as input-too-low-for-resonance
                                 if (evidence.ResonanceEngineCalledCount > 0 && evidence.ResonanceAcceptedCount == 0)
                                 {
@@ -696,13 +693,12 @@ namespace FemVoiceStudio.Views
                         }
                         catch (Exception ex)
                         {
-                            evidence = evidence with { PersistenceReadBackStatus = "FAIL" };
-                            // record the error for RC0_ERRORS_ONLY
+                            evidence = evidence with { PersistenceReadBackStatus = "FAIL", PersistenceReadBackError = ex.ToString() };
                             var prev = evidence.Errors ?? Array.Empty<string>();
                             var merged = new string[prev.Length + 1];
                             Array.Copy(prev, merged, prev.Length);
                             merged[merged.Length - 1] = ex.ToString();
-                            evidence = evidence with { Errors = merged, PersistenceReadBackError = ex.ToString() };
+                            evidence = evidence with { Errors = merged };
                         }
                         var folder = Rc0EvidenceExporter.Export(
                             evidence, rc0AudioSnapshot ?? new AudioCaptureDiagnosticsSnapshot());
@@ -1359,8 +1355,6 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
 
         private void OnExerciseAudioDataAvailable(object? sender, float[] samples)
         {
-            _exerciseResonanceEngine?.ProcessSamples(samples);
-
             if (_viewModel == null || _exercisePitchDetector == null)
                 return;
 
@@ -1381,6 +1375,16 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
                     / Math.Max(0.001, _exerciseAudioCapture.CalibrationProfile.SpeechRms - _exerciseAudioCapture.CalibrationProfile.NoiseFloorRms), 0, 1)
                 : Math.Clamp(rms / 0.05, 0, 1);
             var resonance = Math.Max(_latestExerciseResonanceScore, fallbackResonance * 0.45);
+            // Forward pitch/resonance context to resonance engine for RC-0 diagnostics
+            if (_exerciseResonanceEngine != null)
+            {
+                _exerciseResonanceEngine.CurrentExerciseId = _currentSessionId > 0 ? _currentSessionId.ToString() : (_currentExercise?.ExerciseId.ToString() ?? "(unknown)");
+                _exerciseResonanceEngine.LastKnownPitchIsVoiced = pitch.IsVoiced;
+                _exerciseResonanceEngine.LastKnownPitchHz = pitch.Pitch;
+                _exerciseResonanceEngine.LastKnownFallbackResonance = fallbackResonance;
+            }
+            // Now feed the same samples to the resonance engine
+            _exerciseResonanceEngine?.ProcessSamples(samples);
             var stability = pitch.IsVoiced
                 ? Math.Clamp(pitch.Confidence, 0, 1)
                 : Math.Clamp(resonance, 0, 1);

@@ -722,6 +722,39 @@ namespace FemVoiceStudio.Data
             
             return Convert.ToInt32(command.ExecuteScalar());
         }
+
+        /// <summary>
+        /// Hent en lagret Ã¸kt per SessionId (brukt for RC-0 readback-verifisering).
+        /// </summary>
+        public Models.ExerciseSession? GetSessionById(int sessionId)
+        {
+            using var connection = OpenConnection();
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+                SELECT SessionId, ExerciseId, UserId, StartTime, EndTime, DurationSeconds, Completed, Score, Notes
+                FROM ExerciseSessions
+                WHERE SessionId = @SessionId";
+            command.Parameters.AddWithValue("@SessionId", sessionId);
+
+            using var reader = command.ExecuteReader();
+            if (reader.Read())
+            {
+                var session = new Models.ExerciseSession
+                {
+                    SessionId = reader.GetInt32(0),
+                    ExerciseId = reader.GetInt32(1),
+                    UserId = reader.IsDBNull(2) ? 1 : reader.GetInt32(2),
+                    StartTime = DateTime.TryParse(reader.IsDBNull(3) ? "" : reader.GetString(3), out var st) ? st : DateTime.MinValue,
+                    EndTime = ReadDateOrNull(reader, 4),
+                    DurationSeconds = reader.IsDBNull(5) ? 0 : reader.GetInt32(5),
+                    Completed = !reader.IsDBNull(6) && reader.GetInt32(6) == 1,
+                    Score = reader.IsDBNull(7) ? 0.0 : reader.GetDouble(7),
+                    Notes = reader.IsDBNull(8) ? string.Empty : reader.GetString(8)
+                };
+                return session;
+            }
+            return null;
+        }
         
         #region Private Helpers
         
