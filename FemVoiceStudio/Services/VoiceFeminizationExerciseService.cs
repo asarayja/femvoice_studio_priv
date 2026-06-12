@@ -56,8 +56,8 @@ namespace FemVoiceStudio.Services
             return Frequency switch
             {
                 FrequencyType.Daglig => "Daglig",
-                FrequencyType.TreGangerUkentlig => "3Ã—/uke",
-                FrequencyType.ToGangerUkentlig => "2Ã—/uke",
+                FrequencyType.TreGangerUkentlig => "3x/uke",
+                FrequencyType.ToGangerUkentlig => "2x/uke",
                 FrequencyType.Ukentlig => "Ukentlig",
                 _ => "Daglig"
             };
@@ -65,29 +65,29 @@ namespace FemVoiceStudio.Services
     }
     
     /// <summary>
-    /// Service for evidensbaserte stemmetreningsÃ¸velser for transfeminine personer.
-    /// Inneholder reviderte og nye Ã¸velser basert pÃ¥ dokumenterte voice feminization-teknikker.
+    /// Service for evidensbaserte stemmetreningsøvelser for transfeminine personer.
+    /// Inneholder reviderte og nye øvelser basert på dokumenterte voice feminization-teknikker.
     /// </summary>
     public class VoiceFeminizationExerciseService
     {
         /// <summary>
-        /// Hent alle evidensbaserte Ã¸velser med full metadata
+        /// Hent alle evidensbaserte øvelser med full metadata
         /// </summary>
         public List<EnhancedExercise> GetAllEnhancedExercises()
         {
             return new List<EnhancedExercise>
             {
-                // Ã˜VELSE 1: Grunnleggende Humming - Fremre resonans + pitch-bevissthet
+                // ØVELSE 1: Grunnleggende Humming - Fremre resonans + pitch-bevissthet
                 new EnhancedExercise
                 {
                     Id = 1,
                     Name = "Grunnleggende humming",
-                    Description = "LÃ¦r Ã¥ kjenne pÃ¥ vibrasjonen i stemmen og flytt den fremover i munnen. Humming aktiverer fremre resonatorer.",
+                    Description = "Lær å kjenne på vibrasjonen i stemmen og flytt den fremover i munnen. Humming aktiverer fremre resonatorer.",
                     Steps = new List<string> {
                         "Slapp av i skuldrene og nakken",
                         "Pust dypt inn gjennom nesen",
                         "Hum en behagelig tone",
-                        "Flytt hummotsetningen mot nesen og leppene",
+                        "Flytt hummingen mot nesen og leppene",
                         "Hold tonen i 5-10 sekunder"
                     },
                     DurationMinutes = 5,
@@ -97,24 +97,24 @@ namespace FemVoiceStudio.Services
                     Icon = "\uE9D9",
                     Goal = GoalCategory.Resonance,
                     GoalIcon = "\uE9D9",
-                    ScientificRationale = "Humming aktiverer fremre resonatorer og forbereder stemmen pÃ¥ hÃ¸yere pitch uten spenning. Vibrasjon i lepper/nese indikerer korrekt fremre resonans.",
+                    ScientificRationale = "Humming aktiverer fremre resonatorer og forbereder stemmen på lysere pitch uten spenning. Vibrasjon i lepper/nese indikerer fremre resonans.",
                     TargetPitchMin = 140,
                     TargetPitchMax = 180,
                     Metrics = new List<MetricType> { MetricType.Pitch, MetricType.Resonance }
                 },
 
-                // Ã˜VELSE 2: Vokallyder - Fremre resonans
+                // ØVELSE 2: Vokallyder - Fremre resonans
                 new EnhancedExercise
                 {
                     Id = 2,
                     Name = "Vokallyder - Fremre resonans",
-                    Description = "Utforsk ulike vokallyder med fokus pÃ¥ fremre munnresonans. Ã…pne vokaler fremmer fremre resonans.",
+                    Description = "Utforsk ulike vokallyder med fokus på fremre munnresonans. Åpne vokaler fremmer fremre resonans.",
                     Steps = new List<string> {
-                        "Si 'ahhh' - Ã¥pne munnen bred",
+                        "Si 'ahhh' - åpne munnen bred",
                         "Si 'eee' - trekk munnvikene bakover",
                         "Si 'ooo' - runde lepper",
                         "Kombiner: 'ah-ee-oo'",
-                        "Gjenta mÃ¸nsteret 5 ganger"
+                        "Gjenta mønsteret 5 ganger"
                     },
                     DurationMinutes = 7,
                     Frequency = FrequencyType.Daglig,
@@ -123,24 +123,24 @@ namespace FemVoiceStudio.Services
                     Icon = "\uE720",
                     Goal = GoalCategory.Resonance,
                     GoalIcon = "\uE9D9",
-                    ScientificRationale = "Ã…pnere vokaler (a, Ã¦) fremmer fremre resonans, mens 'eee' hever tungryggen og skaper 'head voice'-klang.",
+                    ScientificRationale = "Åpnere vokaler (a, æ) fremmer fremre resonans, mens 'eee' hever tungryggen og skaper lysere klang.",
                     TargetPitchMin = 150,
                     TargetPitchMax = 190,
                     Metrics = new List<MetricType> { MetricType.Pitch, MetricType.Resonance, MetricType.Intensity }
                 },
 
-                // Ã˜VELSE 3: Stigende Toner - Pitch Glide Up
+                // ØVELSE 3: Stigende Toner - Pitch Glide Up
                 new EnhancedExercise
                 {
                     Id = 3,
                     Name = "Stigende toner (Glide Up)",
-                    Description = "Tren pÃ¥ Ã¥ bevege deg jevnt fra lavere til hÃ¸yere pitch. Gliding gir mer naturlig progresjon.",
+                    Description = "Tren på å bevege deg jevnt fra lavere til lysere pitch. Gliding gir mer naturlig progresjon.",
                     Steps = new List<string> {
-                        "Start pÃ¥ en behagelig tone",
+                        "Start på en behagelig tone",
                         "Glid sakte opp over 3 sekunder",
                         "Hold topptonen i 2 sekunder",
                         "Glid sakte ned igjen",
-                        "FÃ¸lg med pÃ¥ pitch-displayet"
+                        "Følg med på pitch-displayet"
                     },
                     DurationMinutes = 8,
                     Frequency = FrequencyType.Daglig,
@@ -149,24 +149,24 @@ namespace FemVoiceStudio.Services
                     Icon = "\uE8E1",
                     Goal = GoalCategory.Pitch,
                     GoalIcon = "\uE8D6",
-                    ScientificRationale = "Gliding fremfor Ã¥ 'spre' stemmen gir jevnere pitch-overgang og mindre spenning. Kontrollert stigning er nÃ¸kkelen til feminin pitch.",
+                    ScientificRationale = "Gliding gir jevnere pitch-overgang og mindre spenning enn å presse stemmen til en ny tone. Kontrollert stigning støtter fleksibel pitch-kontroll.",
                     TargetPitchMin = 140,
                     TargetPitchMax = 200,
                     Metrics = new List<MetricType> { MetricType.Pitch, MetricType.Smoothness }
                 },
 
-                // Ã˜VELSE 4: Synkende Toner - Pitch Glide Down
+                // ØVELSE 4: Synkende Toner - Pitch Glide Down
                 new EnhancedExercise
                 {
                     Id = 4,
                     Name = "Synkende toner (Glide Down)",
-                    Description = "Tren pÃ¥ kontrollert nedgliding i pitch for Ã¥ styrke musklene og lÃ¦re mÃ¥l-pitch-omrÃ¥det.",
+                    Description = "Tren på kontrollert nedgliding i pitch for å bygge kontroll og lære målområdet.",
                     Steps = new List<string> {
-                        "Start hÃ¸yt og komfortabelt",
+                        "Start lyst og komfortabelt",
                         "Glid sakte ned over 3 sekunder",
                         "Hold den lave tonen i 2 sekunder",
                         "Gjenta med ulike startpunkter",
-                        "Fokuser pÃ¥ jevn glide"
+                        "Fokuser på jevn glide"
                     },
                     DurationMinutes = 6,
                     Frequency = FrequencyType.TreGangerUkentlig,
@@ -175,20 +175,20 @@ namespace FemVoiceStudio.Services
                     Icon = "\uE8E1",
                     Goal = GoalCategory.Pitch,
                     GoalIcon = "\uE8D6",
-                    ScientificRationale = "Kontrollert nedgliding styrker musklene for pitch-kontroll og etablerer muskelminne for mÃ¥l-omrÃ¥det.",
+                    ScientificRationale = "Kontrollert nedgliding støtter pitch-kontroll og etablerer muskelminne for målområdet.",
                     TargetPitchMin = 160,
                     TargetPitchMax = 220,
                     Metrics = new List<MetricType> { MetricType.Pitch, MetricType.Smoothness, MetricType.Consistency }
                 },
 
-                // Ã˜VELSE 5: Konsistens-Trening
+                // ØVELSE 5: Konsistens-Trening
                 new EnhancedExercise
                 {
                     Id = 5,
                     Name = "Konsistens-trening",
-                    Description = "FokusÃ©r pÃ¥ Ã¥ holde samme tone stabil over tid. Stabil pitch er grunnleggende for naturlig feminin stemme.",
+                    Description = "Fokuser på å holde samme tone stabil over tid. Stabil pitch støtter en mer kontrollert stemme.",
                     Steps = new List<string> {
-                        "Finn din target-tone",
+                        "Finn din måltone",
                         "Hold tonen i 5 sekunder",
                         "Sjekk pitch-grafen for stabilitet",
                         "Ta en pust",
@@ -201,23 +201,23 @@ namespace FemVoiceStudio.Services
                     Icon = "\uEA86",
                     Goal = GoalCategory.Pitch,
                     GoalIcon = "\uE8D6",
-                    ScientificRationale = "Stabil pitch i mÃ¥l-omrÃ¥det er kritisk for feminisering. Konsistent fonasjon gir naturlig stemme.",
+                    ScientificRationale = "Stabil pitch i målområdet støtter feminisering sammen med resonans, komfort og intonasjon. Konsistent fonasjon gir mer forutsigbar stemmekontroll.",
                     TargetPitchMin = 165,
                     TargetPitchMax = 180,
                     Metrics = new List<MetricType> { MetricType.Pitch, MetricType.Consistency }
                 },
 
-                // Ã˜VELSE 6: S-Lyder
+                // ØVELSE 6: S-Lyder
                 new EnhancedExercise
                 {
                     Id = 6,
                     Name = "S-lyder (Ustemt hold)",
-                    Description = "Tren pÃ¥ Ã¥ opprettholde pitch gjennom ustemte lyder for bedre kontroll.",
+                    Description = "Tren på å opprettholde kontroll gjennom ustemte lyder.",
                     Steps = new List<string> {
                         "Si 'ssssssss' - lang S-lyd",
-                        "FÃ¸lg med pÃ¥ pitch-grafen",
-                        "PrÃ¸v Ã¥ holde lyden stabil",
-                        "Ã˜k gradvis til 10 sekunder",
+                        "Følg med på pitch-grafen",
+                        "Prøv å holde lyden stabil",
+                        "Øk gradvis til 10 sekunder",
                         "Gjenta 3 ganger"
                     },
                     DurationMinutes = 6,
@@ -227,23 +227,23 @@ namespace FemVoiceStudio.Services
                     Icon = "\uE81C",
                     Goal = GoalCategory.Pitch,
                     GoalIcon = "\uE8D6",
-                    ScientificRationale = "Ustemte lyder isolerer fonasjonskontroll uten stemmebÃ¥ndsvibrasjoner. Utmerket for stabil pitch uten stemmebelastning.",
+                    ScientificRationale = "Ustemte lyder isolerer luftstrøm og kontroll uten stemmebåndsvibrasjoner. Det kan støtte stabilitet med lav stemmebelastning.",
                     TargetPitchMin = 160,
                     TargetPitchMax = 200,
                     Metrics = new List<MetricType> { MetricType.Pitch, MetricType.Consistency }
                 },
 
-                // Ã˜VELSE 7: SpÃ¸rsmÃ¥ls-Intonasjon
+                // ØVELSE 7: Spørsmåls-Intonasjon
                 new EnhancedExercise
                 {
                     Id = 7,
-                    Name = "SpÃ¸rsmÃ¥lsmelodi",
-                    Description = "LÃ¦r naturlig stigende intonasjon. I norsk stiger pitch 2-4 semitoner pÃ¥ slutten av spÃ¸rsmÃ¥l.",
+                    Name = "Spørsmålsmelodi",
+                    Description = "Lær naturlig stigende intonasjon. I norsk kan pitch stige noen semitoner på slutten av spørsmål.",
                     Steps = new List<string> {
                         "Si 'Hva heter du?'",
-                        "Legg merke til stigningen pÃ¥ slutten",
-                        "Ã˜v pÃ¥ 5 ulike spÃ¸rsmÃ¥l",
-                        "PrÃ¸v jevn stigning",
+                        "Legg merke til stigningen på slutten",
+                        "Øv på 5 ulike spørsmål",
+                        "Prøv jevn stigning",
                         "Varier styrken"
                     },
                     DurationMinutes = 7,
@@ -253,23 +253,23 @@ namespace FemVoiceStudio.Services
                     Icon = "\uE945",
                     Goal = GoalCategory.Intonation,
                     GoalIcon = "\uE8E1",
-                    ScientificRationale = "SpÃ¸rsmÃ¥l i norsk stiger 2-4 semitoner. Riktig intonasjon er nÃ¸kkelen - feil intonasjon kan avslÃ¸re stemmen.",
+                    ScientificRationale = "Spørsmål i norsk har ofte stigende intonasjon. Variert intonasjon kan gjøre stemmen mer naturlig og uttrykksfull.",
                     TargetPitchMin = 165,
                     TargetPitchMax = 220,
                     Metrics = new List<MetricType> { MetricType.Intonation, MetricType.Pitch }
                 },
 
-                // Ã˜VELSE 8: Utsagns-Intonasjon
+                // ØVELSE 8: Utsagns-Intonasjon
                 new EnhancedExercise
                 {
                     Id = 8,
                     Name = "Utsagnsmelodi",
-                    Description = "Tren pÃ¥ Ã¥ avslutte setninger med synkende tone. Kritisk for Ã¥ unngÃ¥ 'spÃ¸rsmÃ¥lslyd'.",
+                    Description = "Tren på å avslutte setninger med kontrollert, naturlig fallende tone.",
                     Steps = new List<string> {
                         "Si 'Jeg heter Marie.'",
-                        "Legg merke til fallet pÃ¥ slutten",
-                        "Ã˜v pÃ¥ 5 ulike utsagn",
-                        "PrÃ¸v naturlig fall",
+                        "Legg merke til fallet på slutten",
+                        "Øv på 5 ulike utsagn",
+                        "Prøv naturlig fall",
                         "Varier start-pitch"
                     },
                     DurationMinutes = 7,
@@ -279,21 +279,21 @@ namespace FemVoiceStudio.Services
                     Icon = "\uE787",
                     Goal = GoalCategory.Intonation,
                     GoalIcon = "\uE8E1",
-                    ScientificRationale = "Utsagn avsluttes med fallende tone. Ã… avslutte med stigende tone kan fÃ¥ deg til Ã¥ virke usikker.",
+                    ScientificRationale = "Utsagn avsluttes ofte med fallende tone. Å kunne variere avslutningen gir mer fleksibel og naturlig intonasjon.",
                     TargetPitchMin = 155,
                     TargetPitchMax = 210,
                     Metrics = new List<MetricType> { MetricType.Intonation, MetricType.Pitch }
                 },
 
-                // Ã˜VELSE 9: Fraselesing
+                // ØVELSE 9: Fraselesing
                 new EnhancedExercise
                 {
                     Id = 9,
                     Name = "Fraselesing",
-                    Description = "Kombiner alle ferdigheter i sammenhengende talesprÃ¥k med pitch i mÃ¥l-omrÃ¥det.",
+                    Description = "Kombiner alle ferdigheter i sammenhengende talespråk med pitch i målområdet.",
                     Steps = new List<string> {
                         "Velg en tekst",
-                        "Les med fokus pÃ¥ pitch innen mÃ¥lomrÃ¥det",
+                        "Les med fokus på pitch innen målområdet",
                         "Stopp ved vanskelige ord",
                         "Les hele teksten",
                         "Spill av og vurder"
@@ -305,24 +305,24 @@ namespace FemVoiceStudio.Services
                     Icon = "\uE8D6",
                     Goal = GoalCategory.Combined,
                     GoalIcon = "\uE7BC",
-                    ScientificRationale = "Kontinuerlig tale i mÃ¥l-pitch-omrÃ¥det er slutten for feminisering. OverfÃ¸ring til spontant sprÃ¥k er viktigst.",
+                    ScientificRationale = "Kontinuerlig tale i målområdet er ett steg i stemmefeminisering. Overføring til spontant språk er viktig for hverdagsbruk.",
                     TargetPitchMin = 165,
                     TargetPitchMax = 220,
                     Metrics = new List<MetricType> { MetricType.Pitch, MetricType.Intonation, MetricType.Consistency }
                 },
 
-                // Ã˜VELSE 10: Samtale-Simulasjon
+                // ØVELSE 10: Samtale-Simulasjon
                 new EnhancedExercise
                 {
                     Id = 10,
                     Name = "Samtale-simulasjon",
-                    Description = "Simuler vanlige samtalesituasjoner. OverfÃ¸ring fra Ã¸velse til spontant sprÃ¥k er nÃ¸kkelen.",
+                    Description = "Simuler vanlige samtalesituasjoner. Overføring fra øvelse til spontant språk er viktig.",
                     Steps = new List<string> {
-                        "Tenk pÃ¥ vanlige spÃ¸rsmÃ¥l",
+                        "Tenk på vanlige spørsmål",
                         "Svar med naturlig intonasjon",
-                        "Varier mellom spÃ¸rsmÃ¥l/utsagn",
-                        "FÃ¸lg med pÃ¥ pitch",
-                        "PrÃ¸v 5 ulike scenarier"
+                        "Varier mellom spørsmål/utsagn",
+                        "Følg med på pitch",
+                        "Prøv 5 ulike scenarier"
                     },
                     DurationMinutes = 10,
                     Frequency = FrequencyType.ToGangerUkentlig,
@@ -331,23 +331,23 @@ namespace FemVoiceStudio.Services
                     Icon = "\uE720",
                     Goal = GoalCategory.Combined,
                     GoalIcon = "\uE7BC",
-                    ScientificRationale = "Ã… opprettholde feminin pitch i spontant sprÃ¥k er mÃ¥let. Den viktigste overfÃ¸ringsÃ¸velsen.",
+                    ScientificRationale = "Å bruke målområdet i spontant språk er en nyttig overføringsøvelse, sammen med resonans, komfort og stabilitet.",
                     TargetPitchMin = 165,
                     TargetPitchMax = 230,
                     Metrics = new List<MetricType> { MetricType.Pitch, MetricType.Intonation, MetricType.Resonance }
                 },
 
-                // Ã˜VELSE 11: Resonans-Skift - Fremre plassering (NY)
+                // ØVELSE 11: Resonans-Skift - Fremre plassering (NY)
                 new EnhancedExercise
                 {
                     Id = 11,
                     Name = "Resonans-skift: Fremre plassering",
-                    Description = "Tren pÃ¥ Ã¥ flytte resonansen fra bakre til fremre plassering. Kritisk for feminin klang.",
+                    Description = "Tren på å flytte resonansen fra bakre til fremre plassering. Dette kan støtte lysere og mer fremoverrettet klang.",
                     Steps = new List<string> {
                         "Hum 'mmm' - kjenn lepper/nese vibrere",
-                        "OverfÃ¸r til 'nnn'",
+                        "Overfør til 'nnn'",
                         "Deretter 'yyy' (norsk 'j')",
-                        "PrÃ¸v 'ene'-stavelser",
+                        "Prøv 'ene'-stavelser",
                         "Gjenta med korte ord"
                     },
                     DurationMinutes = 7,
@@ -357,23 +357,23 @@ namespace FemVoiceStudio.Services
                     Icon = "\uE9D9",
                     Goal = GoalCategory.Resonance,
                     GoalIcon = "\uE9D9",
-                    ScientificRationale = "Fremre resonans skaper 'head voice' og forsterker hÃ¸yere overtoner. MÃ¥les ved hÃ¸yere formant-frekvenser (spesielt F2).",
+                    ScientificRationale = "Fremre resonans kan forsterke lysere overtoner. Den kan følges indirekte gjennom formant-frekvenser, særlig F2.",
                     TargetPitchMin = 150,
                     TargetPitchMax = 200,
                     Metrics = new List<MetricType> { MetricType.Resonance, MetricType.Intensity }
                 },
 
-                // Ã˜VELSE 12: Starter-Pitch Memorisering (NY)
+                // ØVELSE 12: Starter-Pitch Memorisering (NY)
                 new EnhancedExercise
                 {
                     Id = 12,
                     Name = "Starter-pitch memorisering",
-                    Description = "Automatiser start-pitch i mÃ¥lomrÃ¥det. De fleste starter for lavt - dette er kritisk Ã¥ rette opp.",
+                    Description = "Øv på å finne en komfortabel start-pitch i målområdet uten å presse stemmen.",
                     Steps = new List<string> {
-                        "Syng en referansetone som fÃ¸les komfortabel",
-                        "Start tale pÃ¥ denne tonen",
+                        "Syng en referansetone som føles komfortabel",
+                        "Start tale på denne tonen",
                         "Sjekk start-pitch med appen",
-                        "Juster opp hvis nÃ¸dvendig",
+                        "Juster forsiktig hvis nødvendig",
                         "Gjenta til automatisk"
                     },
                     DurationMinutes = 8,
@@ -383,22 +383,22 @@ namespace FemVoiceStudio.Services
                     Icon = "\uE916",
                     Goal = GoalCategory.Pitch,
                     GoalIcon = "\uE8D6",
-                    ScientificRationale = "Muskelminne for start-pitch er kritisk. De fleste starter for lavt og 'raser' videre - automatiser riktig start-pitch.",
+                    ScientificRationale = "Muskelminne for en komfortabel start-pitch kan gjøre tale mer stabil. Målet er en lett og trygg start, ikke maksimal høyde.",
                     TargetPitchMin = 165,
                     TargetPitchMax = 180,
                     Metrics = new List<MetricType> { MetricType.Pitch, MetricType.Consistency }
                 },
 
-                // Ã˜VELSE 13: Pitch Slide i Fraser (NY)
+                // ØVELSE 13: Pitch Slide i Fraser (NY)
                 new EnhancedExercise
                 {
                     Id = 13,
                     Name = "Pitch slide i fraser",
-                    Description = "Bruk glide-teknikk naturlig i setninger istedet for Ã¥ 'spre' stemmen.",
+                    Description = "Bruk glide-teknikk naturlig i setninger i stedet for å presse stemmen til ny pitch.",
                     Steps = new List<string> {
                         "'Hallo' med stigende glide",
                         "'Hei' med fallende glide",
-                        "'Ja?' som spÃ¸rsmÃ¥l",
+                        "'Ja?' som spørsmål",
                         "Korte fraser med glide",
                         "Varier stigende/synkende"
                     },
@@ -409,22 +409,22 @@ namespace FemVoiceStudio.Services
                     Icon = "\uE8E1",
                     Goal = GoalCategory.Pitch,
                     GoalIcon = "\uE8D6",
-                    ScientificRationale = "Glides mellom ord gir naturligere progresjon og mindre spenning enn Ã¥ 'spre' stemmen til ny pitch.",
+                    ScientificRationale = "Glides mellom ord kan gi naturligere progresjon og mindre spenning enn å presse stemmen til ny pitch.",
                     TargetPitchMin = 150,
                     TargetPitchMax = 220,
                     Metrics = new List<MetricType> { MetricType.Pitch, MetricType.Intonation, MetricType.Smoothness }
                 },
 
-                // Ã˜VELSE 14: Straw Phonation (NY)
+                // ØVELSE 14: Straw Phonation (NY)
                 new EnhancedExercise
                 {
                     Id = 14,
                     Name = "Straw phonation (Halmsfonasjon)",
-                    Description = "Reduser stemmeslitasje og styrk airflow-kontroll med halm-teknikk. Tvinger frem semi-okkludert vokaltrakt.",
+                    Description = "Øv på lett luftstrøm og komfortabel fonasjon med sugerør-teknikk. Dette støtter semi-okkludert vokaltrakt uten press.",
                     Steps = new List<string> {
-                        "Ta en sugerÃ¸r",
-                        "BlÃ¥s lett gjennom",
-                        "Syng 'ooo' gjennom strÃ¥et",
+                        "Ta et sugerør",
+                        "Blås lett gjennom",
+                        "Syng 'ooo' gjennom strået",
                         "Hold i 5 sekunder",
                         "Gjenta med ulike toner"
                     },
@@ -435,20 +435,20 @@ namespace FemVoiceStudio.Services
                     Icon = "\uE81C",
                     Goal = GoalCategory.Breathing,
                     GoalIcon = "\uE81C",
-                    ScientificRationale = "Semi-occluded vocal tract (SOVT) reduserer belastning pÃ¥ stemmebÃ¥ndene og forbedrer airflow-kontroll.",
+                    ScientificRationale = "Semi-occluded vocal tract (SOVT) kan redusere belastning på stemmebåndene og støtte luftstrømkontroll.",
                     TargetPitchMin = 140,
                     TargetPitchMax = 180,
                     Metrics = new List<MetricType> { MetricType.Intensity, MetricType.Consistency }
                 },
 
-                // Ã˜VELSE 15: Intonasjons-Variasjon (NY)
+                // ØVELSE 15: Intonasjons-Variasjon (NY)
                 new EnhancedExercise
                 {
                     Id = 15,
                     Name = "Intonasjons-variasjon",
-                    Description = "Varier intonasjon for naturlig, ekspressiv tale. Kvinner bruker stÃ¸rre variasjon enn menn.",
+                    Description = "Varier intonasjon for naturlig, ekspressiv tale. Utforsk variasjon uten å presse stemmen.",
                     Steps = new List<string> {
-                        "'Nei' - nÃ¸ytralt",
+                        "'Nei' - nøytralt",
                         "'Nei?' - overrasket",
                         "'Nei!' - frustrert",
                         "'Nei...' - resignert",
@@ -461,7 +461,7 @@ namespace FemVoiceStudio.Services
                     Icon = "\uE7BC",
                     Goal = GoalCategory.Intonation,
                     GoalIcon = "\uE8E1",
-                    ScientificRationale = "StÃ¸rre intonasjonsvariasjon er karakteristisk for feminin tale. Dette hjelper med Ã¥ 'passe inn' sosialt.",
+                    ScientificRationale = "Større intonasjonsvariasjon kan bidra til en mer uttrykksfull stemme. Målet er fleksibilitet og komfort.",
                     TargetPitchMin = 150,
                     TargetPitchMax = 250,
                     Metrics = new List<MetricType> { MetricType.Intonation, MetricType.PitchVariability }
@@ -506,11 +506,11 @@ namespace FemVoiceStudio.Services
             plan.Wednesday = all.FindAll(e => e.Frequency == FrequencyType.Daglig || e.Frequency == FrequencyType.TreGangerUkentlig);
             plan.Friday = all.FindAll(e => e.Frequency == FrequencyType.Daglig || e.Frequency == FrequencyType.TreGangerUkentlig);
             
-            // Tirsdag, lÃ¸rdag - 2x/uke Ã¸velser
+            // Tirsdag, lørdag - 2x/uke øvelser
             plan.Tuesday = all.FindAll(e => e.Frequency == FrequencyType.ToGangerUkentlig);
             plan.Saturday = all.FindAll(e => e.Frequency == FrequencyType.ToGangerUkentlig);
             
-            // Daglige Ã¸velser hver dag
+            // Daglige øvelser hver dag
             plan.Daily = all.FindAll(e => e.Frequency == FrequencyType.Daglig);
             
             return plan;
