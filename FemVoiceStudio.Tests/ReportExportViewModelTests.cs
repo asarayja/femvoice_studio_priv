@@ -24,6 +24,7 @@ namespace FemVoiceStudio.Tests
     ///
     /// CaseReviewViewModel — Create saves a review; Complete transitions Draft->Completed.
     /// </summary>
+    [Collection("ReportVerification")]
     public class ReportExportViewModelTests
     {
         // ── Fixed timestamps ──────────────────────────────────────────────────────
