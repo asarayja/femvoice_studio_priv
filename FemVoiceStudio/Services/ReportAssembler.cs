@@ -221,13 +221,10 @@ namespace FemVoiceStudio.Services
 
         private static string FormatWindowLabel(TrendWindow window)
         {
-            var culture = CultureInfo.CurrentUICulture;
-            var windowName = Tf("Report_TimeWindow_Days", window.WindowDays);
-            return Tf(
-                "Report_TimeWindow_LabelFormat",
-                windowName,
-                window.From.ToString("MMM d", culture),
-                window.To.ToString("MMM d, yyyy", culture));
+            var localized = Tf("Report_TimeWindow_LastDays", window.WindowDays);
+            return string.IsNullOrWhiteSpace(localized) || localized == "Report_TimeWindow_LastDays"
+                ? Tf("Report_TimeWindow_Days", window.WindowDays)
+                : localized;
         }
 
         private static string ComputeDirection(TrendWindow w)

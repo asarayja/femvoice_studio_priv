@@ -30,6 +30,7 @@ namespace FemVoiceStudio.Tests
         [Theory]
         [InlineData("PASS", "PASS")]
         [InlineData("FAIL", "FAIL")]
+        [InlineData("NOT_GENERATED", "NOT_GENERATED")]
         [InlineData("NOT_VERIFIED", "NOT_VERIFIED")]
         [InlineData("NOT_IMPLEMENTED", "NOT_IMPLEMENTED")]
         [InlineData("NOT_APPLICABLE", "NOT_VERIFIED")]

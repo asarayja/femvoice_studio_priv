@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <root xmlns:ns1="urn:schemas-microsoft-com:xml-msdata" xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:schema id="root">
     <xs:element name="root" ns1:IsDataSet="true">
@@ -4241,4 +4241,58 @@ This cannot be undone!</value>
   <data name="Report_NotImplemented" xml:space="preserve">
     <value>Ikke implementeret</value>
   </data>
-<data name="Report_TimeWindow_Days" xml:space="preserve"><value>{0} dage</value></data><data name="Report_TimeWindow_LabelFormat" xml:space="preserve"><value>{0} ({1} – {2})</value></data><data name="Report_Term_Fatigue" xml:space="preserve"><value>Stemmetræthed</value></data><data name="Report_Term_FatigueSignals" xml:space="preserve"><value>Stemmetræthedssignaler</value></data><data name="Report_Term_VoiceFatigue" xml:space="preserve"><value>Stemmetræthed</value></data><data name="Report_Term_VoiceFatigueSignals" xml:space="preserve"><value>Stemmetræthedssignaler</value></data><data name="Report_Term_TrainingLoad" xml:space="preserve"><value>Træningsbelastning</value></data><data name="Report_Term_RecentActivity" xml:space="preserve"><value>Nylig aktivitet</value></data><data name="Report_Term_RestBehindRecentActivity" xml:space="preserve"><value>Restitutionen er bagud i forhold til nylig aktivitet</value></data><data name="Report_Status_SIGNAL_LEVEL_COLLAPSES" xml:space="preserve"><value>Signalniveauet falder bort</value></data><data name="Report_Status_EXPECTED_SILENCE" xml:space="preserve"><value>Forventet stilhed</value></data><data name="Report_Status_SILENCE_TAIL" xml:space="preserve"><value>Stilhed til sidst</value></data><data name="Report_Reason_COMFORT_DECLINE" xml:space="preserve"><value>Reduceret komfort</value></data><data name="Report_Status_COMFORT_DECLINE" xml:space="preserve"><value>Reduceret komfort</value></data><data name="Report_RecommendationComfortDeclineFormat" xml:space="preserve"><value>Prioritér øvelse {0} lavere: komforten er faldet for nylig ({1:F1} pr. session). Overvej lettere arbejde mens stemmen restituerer.</value></data><data name="ReportPdf_RecoveryCostShort" xml:space="preserve"><value>Rest.kostn.</value></data></root>
+  <data name="Report_TimeWindow_Days" xml:space="preserve">
+    <value>{0} dage</value>
+  </data>
+  <data name="Report_TimeWindow_LabelFormat" xml:space="preserve">
+    <value>{0} ({1} – {2})</value>
+  </data>
+  <data name="Report_Term_Fatigue" xml:space="preserve">
+    <value>Stemmetræthed</value>
+  </data>
+  <data name="Report_Term_FatigueSignals" xml:space="preserve">
+    <value>Stemmetræthedssignaler</value>
+  </data>
+  <data name="Report_Term_VoiceFatigue" xml:space="preserve">
+    <value>Stemmetræthed</value>
+  </data>
+  <data name="Report_Term_VoiceFatigueSignals" xml:space="preserve">
+    <value>Stemmetræthedssignaler</value>
+  </data>
+  <data name="Report_Term_TrainingLoad" xml:space="preserve">
+    <value>Træningsbelastning</value>
+  </data>
+  <data name="Report_Term_RecentActivity" xml:space="preserve">
+    <value>Nylig aktivitet</value>
+  </data>
+  <data name="Report_Term_RestBehindRecentActivity" xml:space="preserve">
+    <value>Restitutionen er bagud i forhold til nylig aktivitet</value>
+  </data>
+  <data name="Report_Status_SIGNAL_LEVEL_COLLAPSES" xml:space="preserve">
+    <value>Signalniveauet falder bort</value>
+  </data>
+  <data name="Report_Status_EXPECTED_SILENCE" xml:space="preserve">
+    <value>Forventet stilhed</value>
+  </data>
+  <data name="Report_Status_SILENCE_TAIL" xml:space="preserve">
+    <value>Stilhed til sidst</value>
+  </data>
+  <data name="Report_Reason_COMFORT_DECLINE" xml:space="preserve">
+    <value>Reduceret komfort</value>
+  </data>
+  <data name="Report_Status_COMFORT_DECLINE" xml:space="preserve">
+    <value>Reduceret komfort</value>
+  </data>
+  <data name="Report_RecommendationComfortDeclineFormat" xml:space="preserve">
+    <value>Prioritér øvelse {0} lavere: komforten er faldet for nylig ({1:F1} pr. session). Overvej lettere arbejde mens stemmen restituerer.</value>
+  </data>
+  <data name="ReportPdf_RecoveryCostShort" xml:space="preserve">
+    <value>Rest.kostn.</value>
+  </data>
+  <data name="Report_Status_NOT_GENERATED" xml:space="preserve">
+    <value>Ikke genereret</value>
+  </data>
+  <data name="Report_TimeWindow_LastDays" xml:space="preserve">
+    <value>Seneste {0} dage</value>
+  </data>
+</root>

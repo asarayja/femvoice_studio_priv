@@ -44,13 +44,16 @@ namespace FemVoiceStudio.Services
             public bool AnalyticsWritten { get; init; }
             public bool PersistenceSaved { get; init; }
             public bool PersistenceReadBack { get; init; }
-            // Tri-state statuses for verification steps. Use "PASS", "FAIL", "NOT_VERIFIED" or "NOT_APPLICABLE".
+            // Tri-state statuses for verification steps. Use "PASS", "FAIL", "NOT_GENERATED", "NOT_VERIFIED" or "NOT_APPLICABLE".
             public string PersistenceReadBackStatus { get; init; } = "NOT_VERIFIED";
-            public string ClinicalReportStatus { get; init; } = "NOT_VERIFIED";
-            public string CoachReportStatus { get; init; } = "NOT_VERIFIED";
-            public string OutcomeReportStatus { get; init; } = "NOT_VERIFIED";
-            public string TimelineReportStatus { get; init; } = "NOT_VERIFIED";
+            public string ClinicalReportStatus { get; init; } = "NOT_GENERATED";
+            public string CoachReportStatus { get; init; } = "NOT_GENERATED";
+            public string OutcomeReportStatus { get; init; } = "NOT_GENERATED";
+            public string TimelineReportStatus { get; init; } = "NOT_GENERATED";
             public string[] ReportVerificationErrors { get; init; } = Array.Empty<string>();
+            public string[] GeneratedReportPaths { get; init; } = Array.Empty<string>();
+            public int VerifiedReportCount { get; init; }
+            public DateTime? ReportVerificationTimestamp { get; init; }
             public string? PersistenceReadBackError { get; init; }
             public bool ClinicalReportGenerated { get; init; }
             public bool CoachReportGenerated { get; init; }
@@ -178,17 +181,20 @@ namespace FemVoiceStudio.Services
 
             var normalized = input.Trim();
 
-            return string.Equals(normalized, "PASS", StringComparison.OrdinalIgnoreCase)
-                ? "PASS"
-                : string.Equals(normalized, "FAIL", StringComparison.OrdinalIgnoreCase)
-                    ? "FAIL"
-                    : string.Equals(normalized, "NOT_VERIFIED", StringComparison.OrdinalIgnoreCase)
-                        ? "NOT_VERIFIED"
-                        : string.Equals(normalized, "NOT_IMPLEMENTED", StringComparison.OrdinalIgnoreCase)
-                            ? "NOT_IMPLEMENTED"
-                            : string.Equals(normalized, "NOT_APPLICABLE", StringComparison.OrdinalIgnoreCase)
-                                ? "NOT_VERIFIED"
-                                : "NOT_VERIFIED";
+            if (string.Equals(normalized, "PASS", StringComparison.OrdinalIgnoreCase))
+                return "PASS";
+            if (string.Equals(normalized, "FAIL", StringComparison.OrdinalIgnoreCase))
+                return "FAIL";
+            if (string.Equals(normalized, "NOT_GENERATED", StringComparison.OrdinalIgnoreCase))
+                return "NOT_GENERATED";
+            if (string.Equals(normalized, "NOT_VERIFIED", StringComparison.OrdinalIgnoreCase))
+                return "NOT_VERIFIED";
+            if (string.Equals(normalized, "NOT_IMPLEMENTED", StringComparison.OrdinalIgnoreCase))
+                return "NOT_IMPLEMENTED";
+            if (string.Equals(normalized, "NOT_APPLICABLE", StringComparison.OrdinalIgnoreCase))
+                return "NOT_VERIFIED";
+
+            return "NOT_VERIFIED";
         }
 
         public static AudioFailureClassification ResolveSessionFailureClassification(SessionEvidence evidence, AudioCaptureDiagnosticsSnapshot audio)
@@ -472,7 +478,10 @@ namespace FemVoiceStudio.Services
                     CoachReportStatus = coachReportStatus,
                     OutcomeReportStatus = outcomeReportStatus,
                     TimelineReportStatus = timelineReportStatus,
-                    ReportVerificationErrors = evidence.ReportVerificationErrors
+                    ReportVerificationErrors = evidence.ReportVerificationErrors,
+                    GeneratedReportPaths = evidence.GeneratedReportPaths,
+                    VerifiedReportCount = evidence.VerifiedReportCount,
+                    ReportVerificationTimestamp = evidence.ReportVerificationTimestamp
                 },
                 PersistenceReadBackError = evidence.PersistenceReadBackError,
                 DeviceName = audio.DeviceName,

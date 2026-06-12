@@ -537,10 +537,10 @@ namespace FemVoiceStudio.Services
                                 table.ColumnsDefinition(columns =>
                                 {
                                     columns.RelativeColumn(3);
-                                    columns.RelativeColumn(1.5f);
+                                    columns.RelativeColumn(1.4f);
                                     columns.RelativeColumn(1.6f);
                                     columns.RelativeColumn(1.6f);
-                                    columns.RelativeColumn(2.8f);
+                                    columns.RelativeColumn(3.2f);
                                 });
                                 AddTableHeader(table, T("ReportPdf_Exercise"), T("ReportPdf_Composite"), T("Dimension_Resonance"), T("Dimension_Comfort"), T("ReportPdf_RecoveryCostShort"));
                                 foreach (var ex in r.TopExercises)

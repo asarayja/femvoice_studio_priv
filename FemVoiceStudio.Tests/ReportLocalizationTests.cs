@@ -160,12 +160,33 @@ namespace FemVoiceStudio.Tests
             var report = new ReportAssembler().BuildTimelineReport(MakeOutcomeWithWindows(), T0, T1, Now);
             var labels = string.Join("\n", report.TimelineEntries.Select(e => e.Label));
 
-            Assert.Contains("7 dager", labels);
-            Assert.Contains("30 dager", labels);
-            Assert.Contains("90 dager", labels);
-            Assert.Contains("180 dager", labels);
+            Assert.Contains("Siste 7 dager", labels);
+            Assert.Contains("Siste 30 dager", labels);
+            Assert.Contains("Siste 90 dager", labels);
+            Assert.Contains("Siste 180 dager", labels);
+            Assert.DoesNotContain("7-day", labels, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("30-day", labels, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("90-day", labels, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("180-day", labels, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("-day", labels, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain(" days", labels, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void EnglishTimelineReport_UsesLastDaysLabels()
+        {
+            LocalizationService.Instance.SetLanguage("en");
+            var report = new ReportAssembler().BuildTimelineReport(MakeOutcomeWithWindows(), T0, T1, Now);
+            var labels = string.Join("\n", report.TimelineEntries.Select(e => e.Label));
+
+            Assert.Contains("Last 7 days", labels);
+            Assert.Contains("Last 30 days", labels);
+            Assert.Contains("Last 90 days", labels);
+            Assert.Contains("Last 180 days", labels);
+            Assert.DoesNotContain("7-day", labels, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("30-day", labels, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("90-day", labels, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("180-day", labels, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]
@@ -200,11 +221,11 @@ namespace FemVoiceStudio.Tests
         [Fact]
         public void ExportWriter_UsesCompactHeadersAndWiderRecoveryCostColumn()
         {
-            var sourcePath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..",
+            var sourcePath = Path.Combine(FindRepositoryRoot(),
                 "FemVoiceStudio", "Services", "ExportWriter.cs");
             var source = File.ReadAllText(sourcePath);
 
-            Assert.Contains("columns.RelativeColumn(2.8f)", source);
+            Assert.Contains("columns.RelativeColumn(3.2f)", source);
             Assert.Contains(".FontSize(8)", source);
             Assert.Contains("ReportPdf_RecoveryCostShort", source);
         }
@@ -307,7 +328,7 @@ namespace FemVoiceStudio.Tests
 
         private static Dictionary<string, string> LoadResx(string file)
         {
-            var path = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..",
+            var path = Path.Combine(FindRepositoryRoot(),
                 "FemVoiceStudio", "Resources", file);
             return XDocument.Load(path)
                 .Root!
@@ -316,6 +337,20 @@ namespace FemVoiceStudio.Tests
                 .ToDictionary(
                     e => e.Attribute("name")!.Value,
                     e => e.Element("value")?.Value ?? string.Empty);
+        }
+
+        private static string FindRepositoryRoot()
+        {
+            var directory = new DirectoryInfo(AppContext.BaseDirectory);
+            while (directory is not null)
+            {
+                if (File.Exists(Path.Combine(directory.FullName, "FemVoiceStudio.slnx")))
+                    return directory.FullName;
+
+                directory = directory.Parent;
+            }
+
+            throw new DirectoryNotFoundException("Could not locate FemVoiceStudio.slnx from test output directory.");
         }
     }
 }

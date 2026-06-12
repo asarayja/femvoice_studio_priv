@@ -148,6 +148,7 @@ namespace FemVoiceStudio.Tests
         [Fact]
         public async Task Generate_Success_SetsStatusMessageWithPath()
         {
+            ReportVerificationTracker.Reset();
             var vm = NewReportExportViewModel(reportTypeIndex: 2, formatIndex: 2);
             var tmpPath = Path.GetTempFileName();
             try
@@ -170,6 +171,7 @@ namespace FemVoiceStudio.Tests
         [Fact]
         public async Task Generate_IsGenerating_FalseAfterCompletion()
         {
+            ReportVerificationTracker.Reset();
             var vm = NewReportExportViewModel(reportTypeIndex: 0, formatIndex: 2);
             var tmpPath = Path.GetTempFileName();
             try
@@ -178,6 +180,43 @@ namespace FemVoiceStudio.Tests
                 Assert.False(vm.IsGenerating);
                 await vm.GenerateCommand.ExecuteAsync(null);
                 Assert.False(vm.IsGenerating);
+            }
+            finally
+            {
+                if (File.Exists(tmpPath)) File.Delete(tmpPath);
+            }
+        }
+
+        [Theory]
+        [InlineData(0, "Clinical")]
+        [InlineData(1, "Coach")]
+        [InlineData(2, "Outcome")]
+        [InlineData(3, "Timeline")]
+        public async Task Generate_VerifiesReportAndSetsPassStatus(int reportTypeIndex, string reportType)
+        {
+            ReportVerificationTracker.Reset();
+            var vm = NewReportExportViewModel(reportTypeIndex, formatIndex: 2);
+            var tmpPath = Path.GetTempFileName();
+            try
+            {
+                vm.FileSavePathOverride = tmpPath;
+
+                await vm.GenerateCommand.ExecuteAsync(null);
+                var snapshot = ReportVerificationTracker.Snapshot();
+
+                var status = reportType switch
+                {
+                    "Clinical" => snapshot.ClinicalReportStatus,
+                    "Coach" => snapshot.CoachReportStatus,
+                    "Outcome" => snapshot.OutcomeReportStatus,
+                    "Timeline" => snapshot.TimelineReportStatus,
+                    _ => ""
+                };
+
+                Assert.Equal("PASS", status);
+                Assert.Equal(1, snapshot.VerifiedReportCount);
+                Assert.Contains(tmpPath, snapshot.GeneratedReportPaths);
+                Assert.NotNull(snapshot.ReportVerificationTimestamp);
             }
             finally
             {
@@ -349,6 +388,7 @@ namespace FemVoiceStudio.Tests
             var tmpPath = Path.GetTempFileName();
             try
             {
+                ReportVerificationTracker.Reset();
                 vm.FileSavePathOverride = tmpPath;
                 await vm.GenerateCommand.ExecuteAsync(null);
 

@@ -1,4 +1,7 @@
 using System;
+using System.IO;
+using System.Reflection;
+using System.Text.Json;
 using FemVoiceStudio.Audio;
 using FemVoiceStudio.Services;
 using Xunit;
@@ -89,6 +92,51 @@ namespace FemVoiceStudio.Tests
 
             Assert.Equal(AudioFailureClassification.SIGNAL_LEVEL_COLLAPSES,
                 Rc0EvidenceExporter.ResolveSessionFailureClassification(evidence, audio));
+        }
+
+        [Fact]
+        public void Export_IncludesReportVerificationMetadata()
+        {
+            var timestamp = new DateTime(2026, 6, 12, 10, 0, 0, DateTimeKind.Utc);
+            var evidence = ValidSessionEvidence() with
+            {
+                ClinicalReportStatus = "PASS",
+                CoachReportStatus = "NOT_GENERATED",
+                OutcomeReportStatus = "FAIL",
+                TimelineReportStatus = "PASS",
+                ReportVerificationErrors = new[] { "Outcome: PDF output did not contain a valid PDF header." },
+                GeneratedReportPaths = new[] { "C:\\Reports\\clinical.pdf", "C:\\Reports\\timeline.json" },
+                VerifiedReportCount = 2,
+                ReportVerificationTimestamp = timestamp
+            };
+
+            var folder = Path.Combine(Path.GetTempPath(), "FemVoiceStudio.Tests", "Rc0Evidence", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(folder);
+            try
+            {
+                typeof(Rc0EvidenceExporter)
+                    .GetMethod("WriteJson", BindingFlags.NonPublic | BindingFlags.Static)!
+                    .Invoke(null, new object[] { folder, evidence, ValidAudioSnapshot(), "PASS" });
+
+                var jsonPath = Path.Combine(folder, DiagnosticsNaming.EvidenceJson);
+                using var doc = JsonDocument.Parse(File.ReadAllText(jsonPath));
+                var verification = doc.RootElement.GetProperty("ReportVerification");
+
+                Assert.True(doc.RootElement.GetProperty("ReportsGenerated").GetProperty("Clinical").GetBoolean());
+                Assert.False(doc.RootElement.GetProperty("ReportsGenerated").GetProperty("Coach").GetBoolean());
+                Assert.Equal("PASS", verification.GetProperty("ClinicalReportStatus").GetString());
+                Assert.Equal("NOT_GENERATED", verification.GetProperty("CoachReportStatus").GetString());
+                Assert.Equal("FAIL", verification.GetProperty("OutcomeReportStatus").GetString());
+                Assert.Equal(2, verification.GetProperty("VerifiedReportCount").GetInt32());
+                Assert.Equal(timestamp, verification.GetProperty("ReportVerificationTimestamp").GetDateTime());
+                Assert.Equal(2, verification.GetProperty("GeneratedReportPaths").GetArrayLength());
+                Assert.NotEmpty(verification.GetProperty("ReportVerificationErrors").EnumerateArray());
+            }
+            finally
+            {
+                if (Directory.Exists(folder))
+                    Directory.Delete(folder, recursive: true);
+            }
         }
 
         private static Rc0EvidenceExporter.SessionEvidence ValidSessionEvidence() => new()

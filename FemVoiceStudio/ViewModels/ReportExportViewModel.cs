@@ -200,11 +200,18 @@ namespace FemVoiceStudio.ViewModels
                     return;
                 }
 
-                // 5) Write.
-                await using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
-                _exportWriter.Write(report, format, stream);
+                // 5) Write, then verify the generated file before marking PASS.
+                await using (var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    _exportWriter.Write(report, format, stream);
+                    await stream.FlushAsync().ConfigureAwait(false);
+                }
 
-                ReportVerificationTracker.MarkSucceeded(ReportTypeName(SelectedReportTypeIndex));
+                ReportVerificationTracker.VerifyAndMarkSucceeded(
+                    ReportTypeName(SelectedReportTypeIndex),
+                    report,
+                    format,
+                    filePath);
                 Rc0RuntimeLog.Write("ReportGeneration",
                     $"ReportGenerated; Type={ReportTypeName(SelectedReportTypeIndex)}; Format={format}; Path=\"{filePath}\"");
                 await AppendReportAuditAsync("REPORT_GENERATED", format.ToString()).ConfigureAwait(false);
