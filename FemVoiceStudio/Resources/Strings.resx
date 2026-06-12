@@ -1587,6 +1587,21 @@
   <data name="SafeFailure_SettingsRecovery" xml:space="preserve">
     <value>Innstillingene kunne ikke leses, men appen kan fortsette med trygge standardvalg.</value>
   </data>
+  <data name="Privacy_Title" xml:space="preserve">
+    <value>Personvern og lokale data</value>
+  </data>
+  <data name="Privacy_LocalStorage" xml:space="preserve">
+    <value>FemVoice lagrer data lokalt på denne PC-en: innstillinger og database i Documents\FemVoiceStudio, diagnostikk i LocalAppData\FemVoiceStudio\Diagnostics.</value>
+  </data>
+  <data name="Privacy_DiagnosticsConsent" xml:space="preserve">
+    <value>Diagnostikk eksporteres bare når du selv aktiverer eller oppretter en diagnostikk-/supportpakke. Det lastes ikke opp automatisk.</value>
+  </data>
+  <data name="Privacy_ResearchWarning" xml:space="preserve">
+    <value>Forskningsdata anonymiseres som standard. Bruker-id, mikrofonnavn, klokkeslett og fritekst fjernes før eksport.</value>
+  </data>
+  <data name="Privacy_ProfessionalNotesWarning" xml:space="preserve">
+    <value>Profesjonelle notater kan inneholde sensitiv fritekst. De tas ikke med i forskning eller supportpakker som standard.</value>
+  </data>
   <data name="Settings_Close" xml:space="preserve">
     <value>Lukk</value>
   </data>

@@ -1731,6 +1731,21 @@
   <data name="SafeFailure_SettingsRecovery" xml:space="preserve">
     <value>Settings could not be read, but the app can continue with safe defaults.</value>
   </data>
+  <data name="Privacy_Title" xml:space="preserve">
+    <value>Privacy and local data</value>
+  </data>
+  <data name="Privacy_LocalStorage" xml:space="preserve">
+    <value>FemVoice stores data locally on this PC: settings and database in Documents\FemVoiceStudio, diagnostics in LocalAppData\FemVoiceStudio\Diagnostics.</value>
+  </data>
+  <data name="Privacy_DiagnosticsConsent" xml:space="preserve">
+    <value>Diagnostics are exported only when you enable or create a diagnostics/support package. Nothing is uploaded automatically.</value>
+  </data>
+  <data name="Privacy_ResearchWarning" xml:space="preserve">
+    <value>Research data is anonymized by default. User id, microphone name, time of day, and free text are removed before export.</value>
+  </data>
+  <data name="Privacy_ProfessionalNotesWarning" xml:space="preserve">
+    <value>Professional notes may contain sensitive free text. They are not included in research or support packages by default.</value>
+  </data>
   <data name="Settings_Close" xml:space="preserve">
     <value>Close</value>
   </data>

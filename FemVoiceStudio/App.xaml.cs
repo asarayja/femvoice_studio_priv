@@ -293,6 +293,7 @@ public partial class App : Application
             patternDetector: sp.GetRequiredService<VoicePatternDetector>()));
         services.AddSingleton<IExerciseProfileFactory, ExerciseProfileFactory>();
         services.AddSingleton(_ => LocalBackupService.CreateDefault());
+        services.AddSingleton(_ => SupportPackageService.CreateDefault());
 
         // ── Sprint E (Professional / Research Edition): persistens + motorer ───────
         // Profesjonell/forsknings-edisjon. Rene lese-/montasje-tjenester og fem SQLite-
