@@ -7,6 +7,7 @@ using System.Windows;
 using FemVoiceStudio.Audio;
 using FemVoiceStudio.Converters;
 using FemVoiceStudio.Data;
+using FemVoiceStudio.Services;
 
 namespace FemVoiceStudio.Views
 {
@@ -70,7 +71,8 @@ namespace FemVoiceStudio.Views
             }
             catch (Exception ex)
             {
-                ResultText.Text = string.Format(Loc.Get("MicCalibration_FailedFormat"), ex.Message);
+                Rc0RuntimeLog.Write("MicrophoneCalibration", $"StartCalibration FAILED; {ex.GetType().Name}: {ex.Message}");
+                ResultText.Text = SafeFailureMessages.For(SafeFailureKind.MicrophoneUnavailable);
                 StopCapture();
             }
             finally
@@ -124,7 +126,8 @@ namespace FemVoiceStudio.Views
             }
             catch (Exception ex)
             {
-                ResultText.Text = string.Format(Loc.Get("MicCalibration_FailedFormat"), ex.Message);
+                Rc0RuntimeLog.Write("MicrophoneCalibration", $"NextCalibrationStep FAILED; {ex.GetType().Name}: {ex.Message}");
+                ResultText.Text = SafeFailureMessages.For(SafeFailureKind.MicrophoneUnavailable);
             }
             finally
             {

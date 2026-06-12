@@ -156,7 +156,8 @@ namespace FemVoiceStudio.ViewModels
             }
             catch (Exception ex)
             {
-                StatusMessage = LocalizationService.Instance.GetFormattedString("CaseReview_StatusCreateErrorFormat", ex.Message);
+                Rc0RuntimeLog.Write("CaseReview", $"Create FAILED; {ex.GetType().Name}: {ex.Message}");
+                StatusMessage = SafeFailureMessages.For(SafeFailureKind.PersistenceReadback);
             }
             finally
             {
@@ -197,7 +198,8 @@ namespace FemVoiceStudio.ViewModels
             }
             catch (Exception ex)
             {
-                StatusMessage = LocalizationService.Instance.GetFormattedString("CaseReview_StatusCompleteErrorFormat", ex.Message);
+                Rc0RuntimeLog.Write("CaseReview", $"Complete FAILED; {ex.GetType().Name}: {ex.Message}");
+                StatusMessage = SafeFailureMessages.For(SafeFailureKind.PersistenceReadback);
             }
         }
 
@@ -221,7 +223,8 @@ namespace FemVoiceStudio.ViewModels
             }
             catch (Exception ex)
             {
-                StatusMessage = LocalizationService.Instance.GetFormattedString("CaseReview_StatusLoadErrorFormat", ex.Message);
+                Rc0RuntimeLog.Write("CaseReview", $"Load FAILED; {ex.GetType().Name}: {ex.Message}");
+                StatusMessage = SafeFailureMessages.For(SafeFailureKind.EmptyAnalytics);
             }
         }
 

@@ -1,4 +1,5 @@
 using System.Windows;
+using FemVoiceStudio.Services;
 using FemVoiceStudio.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -22,8 +23,9 @@ namespace FemVoiceStudio.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Feil ved lasting av Smart Coach vindu: {ex.Message}\n\nDetaljer: {ex.StackTrace}", 
-                    "Feil", MessageBoxButton.OK, MessageBoxImage.Error);
+                Rc0RuntimeLog.Write("SmartCoach", $"DetailWindowLoad FAILED; {ex.GetType().Name}: {ex.Message}");
+                MessageBox.Show(SafeFailureMessages.For(SafeFailureKind.General), 
+                    LocalizationService.Instance.GetString("UI_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                 Close();
             }
         }

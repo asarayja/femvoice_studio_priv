@@ -1563,6 +1563,30 @@
   <data name="Settings_RestoreErrorTitle" xml:space="preserve">
     <value>Gjenoppretting ikke fullført</value>
   </data>
+  <data name="SafeFailure_General" xml:space="preserve">
+    <value>Noe gikk galt, men dataene dine ser ut til å være trygge.</value>
+  </data>
+  <data name="SafeFailure_MicrophoneUnavailable" xml:space="preserve">
+    <value>Mikrofonen er ikke tilgjengelig akkurat nå.</value>
+  </data>
+  <data name="SafeFailure_ReportExport" xml:space="preserve">
+    <value>Rapporten kunne ikke eksporteres. Prøv igjen senere.</value>
+  </data>
+  <data name="SafeFailure_DiagnosticsExport" xml:space="preserve">
+    <value>Diagnostikken kunne ikke eksporteres akkurat nå.</value>
+  </data>
+  <data name="SafeFailure_EmptyAnalytics" xml:space="preserve">
+    <value>Ingen øktdata er tilgjengelig ennå.</value>
+  </data>
+  <data name="SafeFailure_PersistenceReadback" xml:space="preserve">
+    <value>Noe gikk galt, men dataene dine ser ut til å være trygge.</value>
+  </data>
+  <data name="SafeFailure_BackupRestore" xml:space="preserve">
+    <value>Noe gikk galt med gjenoppretting, men eksisterende data ser ut til å være trygge.</value>
+  </data>
+  <data name="SafeFailure_SettingsRecovery" xml:space="preserve">
+    <value>Innstillingene kunne ikke leses, men appen kan fortsette med trygge standardvalg.</value>
+  </data>
   <data name="Settings_Close" xml:space="preserve">
     <value>Lukk</value>
   </data>

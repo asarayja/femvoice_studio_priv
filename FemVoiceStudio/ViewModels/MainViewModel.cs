@@ -470,7 +470,7 @@ namespace FemVoiceStudio.ViewModels
                 // Tidligere det stille no-mic-hullet: feilen oppsto FØR første
                 // capture-logglinje, så et manglende lydoppsett var usynlig i loggen.
                 Rc0RuntimeLog.Write("FrontPagePitchMonitor", $"InitializeAudio FAILED; {ex.GetType().Name}: {ex.Message}");
-                ErrorMessage = string.Format(Loc.Get("Audio_MicrophoneStartFailedFormat"), ex.Message);
+                ErrorMessage = SafeFailureMessages.For(SafeFailureKind.MicrophoneUnavailable);
                 IsMicrophoneReady = false;
                 StatusText = Loc.UI_MicNotReady;
             }
@@ -545,7 +545,7 @@ namespace FemVoiceStudio.ViewModels
             catch (Exception ex)
             {
                 Rc0RuntimeLog.Write("FrontPagePitchMonitor", $"StartRecording FAILED; {ex.GetType().Name}: {ex.Message}");
-                ErrorMessage = string.Format(Loc.Get("Recording_StartFailedFormat"), ex.Message);
+                ErrorMessage = SafeFailureMessages.For(SafeFailureKind.MicrophoneUnavailable);
             }
         }
         
@@ -793,7 +793,7 @@ namespace FemVoiceStudio.ViewModels
             {
                 // Log full exception (including stack) to RC0 runtime log for post-mortem
                 try { Rc0RuntimeLog.Write("FrontPagePitchMonitor", ex.ToString()); } catch { }
-                ErrorMessage = string.Format(Loc.Get("Recording_StopFailedFormat"), ex.Message);
+                ErrorMessage = SafeFailureMessages.For(SafeFailureKind.PersistenceReadback);
             }
         }
         

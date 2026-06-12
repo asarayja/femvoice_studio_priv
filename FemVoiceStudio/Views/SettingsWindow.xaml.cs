@@ -124,8 +124,9 @@ public partial class SettingsWindow : Window
             }
             catch (System.Exception ex)
             {
+                Rc0RuntimeLog.Write("Settings", $"ResetDatabase FAILED; {ex.GetType().Name}: {ex.Message}");
                 MessageBox.Show(
-                    _localization.GetFormattedString("Settings_ResetDatabaseErrorMessage", ex.Message),
+                    SafeFailureMessages.For(SafeFailureKind.PersistenceReadback),
                     _localization.GetString("Settings_ResetDatabaseErrorTitle"),
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -211,7 +212,7 @@ public partial class SettingsWindow : Window
         }
 
         MessageBox.Show(
-            result.SafeUserMessage,
+            SafeFailureMessages.For(SafeFailureKind.BackupRestore),
             _localization.GetString("Settings_RestoreErrorTitle"),
             MessageBoxButton.OK,
             MessageBoxImage.Error);

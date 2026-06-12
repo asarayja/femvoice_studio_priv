@@ -219,11 +219,11 @@ namespace FemVoiceStudio.ViewModels
             }
             catch (Exception ex)
             {
-                ReportVerificationTracker.MarkFailed(ReportTypeName(SelectedReportTypeIndex), ex.Message);
+                ReportVerificationTracker.MarkFailed(ReportTypeName(SelectedReportTypeIndex), SafeFailureMessages.TechnicalReason(ex));
                 Rc0RuntimeLog.Write("ReportGeneration",
                     $"ReportGeneration FAILED; Type={ReportTypeName(SelectedReportTypeIndex)}; {ex.GetType().Name}: {ex.Message}");
                 await AppendReportAuditAsync("REPORT_GENERATION_FAILED", ex.GetType().Name).ConfigureAwait(false);
-                StatusMessage = LocalizationService.Instance.GetFormattedString("Report_StatusExportErrorFormat", ex.Message);
+                StatusMessage = SafeFailureMessages.For(SafeFailureKind.ReportExport);
             }
             finally
             {

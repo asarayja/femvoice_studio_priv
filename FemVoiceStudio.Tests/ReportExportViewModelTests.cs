@@ -224,6 +224,32 @@ namespace FemVoiceStudio.Tests
             }
         }
 
+        [Fact]
+        public async Task Generate_WhenExportPathIsInvalid_ShowsSafeMessage_AndDoesNotLeakRawException()
+        {
+            ReportVerificationTracker.Reset();
+            var vm = NewReportExportViewModel(reportTypeIndex: 2, formatIndex: 2);
+            var folderPath = Path.Combine(Path.GetTempPath(), "FemVoiceReportExportInvalid_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(folderPath);
+            try
+            {
+                vm.FileSavePathOverride = folderPath;
+
+                await vm.GenerateCommand.ExecuteAsync(null);
+
+                Assert.Equal(SafeFailureMessages.For(SafeFailureKind.ReportExport), vm.StatusMessage);
+                Assert.False(SafeFailureMessages.LooksLikeRawExceptionText(vm.StatusMessage));
+                var snapshot = ReportVerificationTracker.Snapshot();
+                Assert.Equal("FAIL", snapshot.OutcomeReportStatus);
+                Assert.DoesNotContain(snapshot.ReportVerificationErrors, SafeFailureMessages.LooksLikeRawExceptionText);
+            }
+            finally
+            {
+                if (Directory.Exists(folderPath))
+                    Directory.Delete(folderPath, recursive: true);
+            }
+        }
+
         // ── CaseReviewViewModel tests ─────────────────────────────────────────────
 
         /// <summary>

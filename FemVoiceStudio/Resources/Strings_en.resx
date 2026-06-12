@@ -1707,6 +1707,30 @@
   <data name="Settings_RestoreErrorTitle" xml:space="preserve">
     <value>Restore not completed</value>
   </data>
+  <data name="SafeFailure_General" xml:space="preserve">
+    <value>Something went wrong, but your data appears to be safe.</value>
+  </data>
+  <data name="SafeFailure_MicrophoneUnavailable" xml:space="preserve">
+    <value>The microphone is not available right now.</value>
+  </data>
+  <data name="SafeFailure_ReportExport" xml:space="preserve">
+    <value>The report could not be exported. Try again later.</value>
+  </data>
+  <data name="SafeFailure_DiagnosticsExport" xml:space="preserve">
+    <value>Diagnostics could not be exported right now.</value>
+  </data>
+  <data name="SafeFailure_EmptyAnalytics" xml:space="preserve">
+    <value>No session data is available yet.</value>
+  </data>
+  <data name="SafeFailure_PersistenceReadback" xml:space="preserve">
+    <value>Something went wrong, but your data appears to be safe.</value>
+  </data>
+  <data name="SafeFailure_BackupRestore" xml:space="preserve">
+    <value>Something went wrong during restore, but your existing data appears to be safe.</value>
+  </data>
+  <data name="SafeFailure_SettingsRecovery" xml:space="preserve">
+    <value>Settings could not be read, but the app can continue with safe defaults.</value>
+  </data>
   <data name="Settings_Close" xml:space="preserve">
     <value>Close</value>
   </data>

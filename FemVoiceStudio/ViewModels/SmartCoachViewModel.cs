@@ -436,7 +436,7 @@ namespace FemVoiceStudio.ViewModels
             {
                 Application.Current?.Dispatcher.Invoke(() =>
                 {
-                    StatusSummary = LocalizationService.Instance.GetFormattedString("SmartCoach_LoadFailedFormat", ex.Message);
+                    StatusSummary = SafeFailureMessages.For(SafeFailureKind.EmptyAnalytics);
                     HasData = false;
                     System.Diagnostics.Debug.WriteLine(
                         $"[FemVoice][SmartCoachViewModel] LoadDataAsync failed: {ex}");

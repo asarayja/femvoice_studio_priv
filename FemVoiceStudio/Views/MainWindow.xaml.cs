@@ -591,7 +591,8 @@ namespace FemVoiceStudio.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show(string.Format(Loc.Get("Error_OpenWindowFormat"), Loc.Get("Main_SmartCoach"), ex.Message, Environment.NewLine, ex.StackTrace),
+                Rc0RuntimeLog.Write("Navigation", $"OpenSmartCoach FAILED; {ex.GetType().Name}: {ex.Message}");
+                MessageBox.Show(SafeFailureMessages.For(SafeFailureKind.General),
                     Loc.Get("UI_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -606,7 +607,8 @@ namespace FemVoiceStudio.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show(string.Format(Loc.Get("Error_OpenWindowFormat"), Loc.Get("Main_Resonance"), ex.Message, Environment.NewLine, ex.StackTrace),
+                Rc0RuntimeLog.Write("Navigation", $"OpenResonance FAILED; {ex.GetType().Name}: {ex.Message}");
+                MessageBox.Show(SafeFailureMessages.For(SafeFailureKind.General),
                     Loc.Get("UI_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -621,7 +623,8 @@ namespace FemVoiceStudio.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show(string.Format(Loc.Get("Error_OpenWindowFormat"), Loc.Get("Main_Progression"), ex.Message, Environment.NewLine, ex.StackTrace),
+                Rc0RuntimeLog.Write("Navigation", $"OpenProgression FAILED; {ex.GetType().Name}: {ex.Message}");
+                MessageBox.Show(SafeFailureMessages.For(SafeFailureKind.General),
                     Loc.Get("UI_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -636,7 +639,8 @@ namespace FemVoiceStudio.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show(string.Format(Loc.Get("Error_OpenWindowFormat"), Loc.Get("Main_Analysis"), ex.Message, Environment.NewLine, ex.StackTrace),
+                Rc0RuntimeLog.Write("Navigation", $"OpenAnalysis FAILED; {ex.GetType().Name}: {ex.Message}");
+                MessageBox.Show(SafeFailureMessages.For(SafeFailureKind.General),
                     Loc.Get("UI_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -664,7 +668,8 @@ namespace FemVoiceStudio.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show(string.Format(Loc.Get("Error_OpenWindowFormat"), Loc.Get("Nav_ClinicianDashboard"), ex.Message, Environment.NewLine, ex.StackTrace),
+                Rc0RuntimeLog.Write("Navigation", $"OpenClinicianDashboard FAILED; {ex.GetType().Name}: {ex.Message}");
+                MessageBox.Show(SafeFailureMessages.For(SafeFailureKind.General),
                     Loc.Get("UI_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -677,7 +682,8 @@ namespace FemVoiceStudio.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show(string.Format(Loc.Get("Error_OpenWindowFormat"), Loc.Get("Nav_CoachDashboard"), ex.Message, Environment.NewLine, ex.StackTrace),
+                Rc0RuntimeLog.Write("Navigation", $"OpenCoachDashboard FAILED; {ex.GetType().Name}: {ex.Message}");
+                MessageBox.Show(SafeFailureMessages.For(SafeFailureKind.General),
                     Loc.Get("UI_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -690,7 +696,8 @@ namespace FemVoiceStudio.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show(string.Format(Loc.Get("Error_OpenWindowFormat"), Loc.Get("Nav_Reports"), ex.Message, Environment.NewLine, ex.StackTrace),
+                Rc0RuntimeLog.Write("Navigation", $"OpenReportExport FAILED; {ex.GetType().Name}: {ex.Message}");
+                MessageBox.Show(SafeFailureMessages.For(SafeFailureKind.General),
                     Loc.Get("UI_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -703,7 +710,8 @@ namespace FemVoiceStudio.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show(string.Format(Loc.Get("Error_OpenWindowFormat"), Loc.Get("Nav_ManualOverride"), ex.Message, Environment.NewLine, ex.StackTrace),
+                Rc0RuntimeLog.Write("Navigation", $"OpenManualOverride FAILED; {ex.GetType().Name}: {ex.Message}");
+                MessageBox.Show(SafeFailureMessages.For(SafeFailureKind.General),
                     Loc.Get("UI_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -716,7 +724,8 @@ namespace FemVoiceStudio.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show(string.Format(Loc.Get("Error_OpenWindowFormat"), Loc.Get("Nav_CaseReview"), ex.Message, Environment.NewLine, ex.StackTrace),
+                Rc0RuntimeLog.Write("Navigation", $"OpenCaseReview FAILED; {ex.GetType().Name}: {ex.Message}");
+                MessageBox.Show(SafeFailureMessages.For(SafeFailureKind.General),
                     Loc.Get("UI_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

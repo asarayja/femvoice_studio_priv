@@ -164,7 +164,8 @@ namespace FemVoiceStudio.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Feil ved initialisering: {ex.Message}", "Feil",
+                Rc0RuntimeLog.Write("ExerciseWindow", $"InitializeServices FAILED; {ex.GetType().Name}: {ex.Message}");
+                MessageBox.Show(SafeFailureMessages.For(SafeFailureKind.General), Loc.Get("UI_Error"),
                                 MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -994,7 +995,8 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Feil ved lasting av øvelser: {ex.Message}", "Feil",
+                Rc0RuntimeLog.Write("ExerciseWindow", $"LoadExercises FAILED; {ex.GetType().Name}: {ex.Message}");
+                MessageBox.Show(SafeFailureMessages.For(SafeFailureKind.EmptyAnalytics), Loc.Get("UI_Error"),
                                 MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -1329,7 +1331,7 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
             catch (Exception ex)
             {
                 Rc0RuntimeLog.Write("ExerciseLifecycle", $"StartExerciseAudio FAILED; {ex.GetType().Name}: {ex.Message}");
-                FeedbackText.Text = string.Format(Loc.Get("Audio_MicrophoneStartFailedFormat"), ex.Message);
+                FeedbackText.Text = SafeFailureMessages.For(SafeFailureKind.MicrophoneUnavailable);
                 StopExerciseAudio();
                 return false;
             }

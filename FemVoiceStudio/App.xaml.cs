@@ -70,7 +70,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             Rc0RuntimeLog.Write("AppStartup", $"OnStartup FAILED; {ex}");
-            MessageBox.Show($"Feil ved oppstart: {ex.Message}\n\nDetaljer:\n{ex.StackTrace}",
+            MessageBox.Show(SafeFailureMessages.For(SafeFailureKind.General),
                 "Feil", MessageBoxButton.OK, MessageBoxImage.Error);
 
             try
@@ -409,9 +409,7 @@ public partial class App : Application
         try
         {
             var grid = new Grid();
-            var logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "logo.png");
-            if (!File.Exists(logoPath))
-                logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logo.png");
+            var logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logo.png");
 
             var image = new Image
             {

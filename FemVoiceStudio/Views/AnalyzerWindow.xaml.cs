@@ -118,7 +118,8 @@ namespace FemVoiceStudio.Views
             {
                 _renderTimer.Stop();
                 _resonanceEngine.Stop();
-                MessageBox.Show(string.Format(Loc.Get("Audio_MicrophoneStartFailedFormat"), ex.Message), Loc.Get("UI_Error"),
+                Rc0RuntimeLog.Write("Analyzer", $"Start FAILED; {ex.GetType().Name}: {ex.Message}");
+                MessageBox.Show(SafeFailureMessages.For(SafeFailureKind.MicrophoneUnavailable), Loc.Get("UI_Error"),
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -648,7 +649,8 @@ namespace FemVoiceStudio.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show(string.Format(Loc.Get("Recording_StartFailedFormat"), ex.Message), Loc.Get("UI_Error"),
+                Rc0RuntimeLog.Write("Analyzer", $"StartRecording FAILED; {ex.GetType().Name}: {ex.Message}");
+                MessageBox.Show(SafeFailureMessages.For(SafeFailureKind.MicrophoneUnavailable), Loc.Get("UI_Error"),
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

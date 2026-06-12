@@ -1461,6 +1461,30 @@
   <data name="Settings_RestoreErrorTitle" xml:space="preserve">
     <value>Gendannelse ikke fuldført</value>
   </data>
+  <data name="SafeFailure_General" xml:space="preserve">
+    <value>Noget gik galt, men dine data ser ud til at være sikre.</value>
+  </data>
+  <data name="SafeFailure_MicrophoneUnavailable" xml:space="preserve">
+    <value>Mikrofonen er ikke tilgængelig lige nu.</value>
+  </data>
+  <data name="SafeFailure_ReportExport" xml:space="preserve">
+    <value>Rapporten kunne ikke eksporteres. Prøv igen senere.</value>
+  </data>
+  <data name="SafeFailure_DiagnosticsExport" xml:space="preserve">
+    <value>Diagnostikken kunne ikke eksporteres lige nu.</value>
+  </data>
+  <data name="SafeFailure_EmptyAnalytics" xml:space="preserve">
+    <value>Ingen sessionsdata er tilgængelige endnu.</value>
+  </data>
+  <data name="SafeFailure_PersistenceReadback" xml:space="preserve">
+    <value>Noget gik galt, men dine data ser ud til at være sikre.</value>
+  </data>
+  <data name="SafeFailure_BackupRestore" xml:space="preserve">
+    <value>Noget gik galt under gendannelse, men dine eksisterende data ser ud til at være sikre.</value>
+  </data>
+  <data name="SafeFailure_SettingsRecovery" xml:space="preserve">
+    <value>Indstillingerne kunne ikke læses, men appen kan fortsætte med sikre standardvalg.</value>
+  </data>
   <data name="Settings_English" xml:space="preserve">
     <value>engelsk</value>
   </data>
