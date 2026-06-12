@@ -1671,6 +1671,42 @@
   <data name="Settings_DatabaseDesc" xml:space="preserve">
     <value>Here you can clear all data and start over.</value>
   </data>
+  <data name="Settings_CreateBackup" xml:space="preserve">
+    <value>Create backup</value>
+  </data>
+  <data name="Settings_RestoreBackup" xml:space="preserve">
+    <value>Restore backup</value>
+  </data>
+  <data name="Settings_BackupSuccessMessage" xml:space="preserve">
+    <value>Backup created: {0}</value>
+  </data>
+  <data name="Settings_BackupSuccessTitle" xml:space="preserve">
+    <value>Backup created</value>
+  </data>
+  <data name="Settings_BackupErrorTitle" xml:space="preserve">
+    <value>Backup not completed</value>
+  </data>
+  <data name="Settings_RestoreDialogTitle" xml:space="preserve">
+    <value>Select backup</value>
+  </data>
+  <data name="Settings_RestoreDialogFilter" xml:space="preserve">
+    <value>FemVoice backup (*.zip)|*.zip</value>
+  </data>
+  <data name="Settings_RestoreConfirmMessage" xml:space="preserve">
+    <value>Restoring will replace existing local data. Do you want to continue?</value>
+  </data>
+  <data name="Settings_RestoreConfirmTitle" xml:space="preserve">
+    <value>Confirm restore</value>
+  </data>
+  <data name="Settings_RestoreSuccessMessage" xml:space="preserve">
+    <value>Backup restored. Restart the app before continuing.</value>
+  </data>
+  <data name="Settings_RestoreSuccessTitle" xml:space="preserve">
+    <value>Restore complete</value>
+  </data>
+  <data name="Settings_RestoreErrorTitle" xml:space="preserve">
+    <value>Restore not completed</value>
+  </data>
   <data name="Settings_Close" xml:space="preserve">
     <value>Close</value>
   </data>

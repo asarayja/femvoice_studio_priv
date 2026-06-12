@@ -1527,6 +1527,42 @@
   <data name="Settings_DatabaseDesc" xml:space="preserve">
     <value>Tømmer alle lagrede data</value>
   </data>
+  <data name="Settings_CreateBackup" xml:space="preserve">
+    <value>Opprett sikkerhetskopi</value>
+  </data>
+  <data name="Settings_RestoreBackup" xml:space="preserve">
+    <value>Gjenopprett sikkerhetskopi</value>
+  </data>
+  <data name="Settings_BackupSuccessMessage" xml:space="preserve">
+    <value>Sikkerhetskopien er opprettet: {0}</value>
+  </data>
+  <data name="Settings_BackupSuccessTitle" xml:space="preserve">
+    <value>Sikkerhetskopi opprettet</value>
+  </data>
+  <data name="Settings_BackupErrorTitle" xml:space="preserve">
+    <value>Sikkerhetskopi ikke fullført</value>
+  </data>
+  <data name="Settings_RestoreDialogTitle" xml:space="preserve">
+    <value>Velg sikkerhetskopi</value>
+  </data>
+  <data name="Settings_RestoreDialogFilter" xml:space="preserve">
+    <value>FemVoice-sikkerhetskopi (*.zip)|*.zip</value>
+  </data>
+  <data name="Settings_RestoreConfirmMessage" xml:space="preserve">
+    <value>Gjenoppretting vil erstatte eksisterende lokale data. Vil du fortsette?</value>
+  </data>
+  <data name="Settings_RestoreConfirmTitle" xml:space="preserve">
+    <value>Bekreft gjenoppretting</value>
+  </data>
+  <data name="Settings_RestoreSuccessMessage" xml:space="preserve">
+    <value>Sikkerhetskopien er gjenopprettet. Start appen på nytt før du fortsetter.</value>
+  </data>
+  <data name="Settings_RestoreSuccessTitle" xml:space="preserve">
+    <value>Gjenoppretting fullført</value>
+  </data>
+  <data name="Settings_RestoreErrorTitle" xml:space="preserve">
+    <value>Gjenoppretting ikke fullført</value>
+  </data>
   <data name="Settings_Close" xml:space="preserve">
     <value>Lukk</value>
   </data>

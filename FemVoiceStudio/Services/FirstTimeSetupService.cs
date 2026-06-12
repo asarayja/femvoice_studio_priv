@@ -65,8 +65,9 @@ namespace FemVoiceStudio.Services
             {
                 if (File.Exists(SettingsFilePath))
                 {
-                    var json = File.ReadAllText(SettingsFilePath);
-                    var settings = JsonSerializer.Deserialize<AppSettings>(json, AppSettingsJson.Options);
+                    var settings = SettingsMigrationService
+                        .LoadOrRecover(SettingsFilePath, "FirstTimeSetupService.CheckFirstTimeStatus")
+                        .Settings;
 
                     // Check if first-time setup was completed
                     if (settings != null)
@@ -101,8 +102,9 @@ namespace FemVoiceStudio.Services
                 
                 if (File.Exists(SettingsFilePath))
                 {
-                    var json = File.ReadAllText(SettingsFilePath);
-                    settings = JsonSerializer.Deserialize<AppSettings>(json, AppSettingsJson.Options) ?? new AppSettings();
+                    settings = SettingsMigrationService
+                        .LoadOrRecover(SettingsFilePath, "FirstTimeSetupService.MarkSetupCompleted")
+                        .Settings;
                 }
                 else
                 {
@@ -111,15 +113,7 @@ namespace FemVoiceStudio.Services
 
                 settings.FirstTimeSetupCompleted = true;
 
-                var updatedJson = JsonSerializer.Serialize(settings, AppSettingsJson.Options);
-
-                var directory = Path.GetDirectoryName(SettingsFilePath);
-                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-                {
-                    Directory.CreateDirectory(directory);
-                }
-
-                File.WriteAllText(SettingsFilePath, updatedJson);
+                SettingsMigrationService.Save(SettingsFilePath, settings, "FirstTimeSetupService.MarkSetupCompleted");
                 _isFirstTime = false;
                 _settings = settings;
             }
@@ -139,13 +133,12 @@ namespace FemVoiceStudio.Services
             {
                 if (File.Exists(SettingsFilePath))
                 {
-                    var json = File.ReadAllText(SettingsFilePath);
-                    var settings = JsonSerializer.Deserialize<AppSettings>(json, AppSettingsJson.Options) ?? new AppSettings();
+                    var settings = SettingsMigrationService
+                        .LoadOrRecover(SettingsFilePath, "FirstTimeSetupService.ResetFirstTimeStatus")
+                        .Settings;
                     settings.FirstTimeSetupCompleted = false;
 
-                    var updatedJson = JsonSerializer.Serialize(settings, AppSettingsJson.Options);
-
-                    File.WriteAllText(SettingsFilePath, updatedJson);
+                    SettingsMigrationService.Save(SettingsFilePath, settings, "FirstTimeSetupService.ResetFirstTimeStatus");
                     _settings = settings;
                 }
                 _isFirstTime = true;
@@ -165,8 +158,9 @@ namespace FemVoiceStudio.Services
             {
                 if (File.Exists(SettingsFilePath))
                 {
-                    var json = File.ReadAllText(SettingsFilePath);
-                    _settings = JsonSerializer.Deserialize<AppSettings>(json, AppSettingsJson.Options) ?? new AppSettings();
+                    _settings = SettingsMigrationService
+                        .LoadOrRecover(SettingsFilePath, "FirstTimeSetupService.LoadSettings")
+                        .Settings;
                 }
             }
             catch (Exception ex)
@@ -189,9 +183,7 @@ namespace FemVoiceStudio.Services
                     Directory.CreateDirectory(directory);
                 }
                 
-                var json = JsonSerializer.Serialize(settings, AppSettingsJson.Options);
-
-                File.WriteAllText(SettingsFilePath, json);
+                SettingsMigrationService.Save(SettingsFilePath, settings, "FirstTimeSetupService.SaveSettings");
                 _settings = settings;
             }
             catch (Exception ex)

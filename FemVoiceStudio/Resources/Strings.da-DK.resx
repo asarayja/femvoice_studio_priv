@@ -1425,6 +1425,42 @@
   <data name="Settings_DatabaseDesc" xml:space="preserve">
     <value>Her kan du rydde alle data og starte forfra.</value>
   </data>
+  <data name="Settings_CreateBackup" xml:space="preserve">
+    <value>Opret sikkerhedskopi</value>
+  </data>
+  <data name="Settings_RestoreBackup" xml:space="preserve">
+    <value>Gendan sikkerhedskopi</value>
+  </data>
+  <data name="Settings_BackupSuccessMessage" xml:space="preserve">
+    <value>Sikkerhedskopien er oprettet: {0}</value>
+  </data>
+  <data name="Settings_BackupSuccessTitle" xml:space="preserve">
+    <value>Sikkerhedskopi oprettet</value>
+  </data>
+  <data name="Settings_BackupErrorTitle" xml:space="preserve">
+    <value>Sikkerhedskopi ikke fuldført</value>
+  </data>
+  <data name="Settings_RestoreDialogTitle" xml:space="preserve">
+    <value>Vælg sikkerhedskopi</value>
+  </data>
+  <data name="Settings_RestoreDialogFilter" xml:space="preserve">
+    <value>FemVoice-sikkerhedskopi (*.zip)|*.zip</value>
+  </data>
+  <data name="Settings_RestoreConfirmMessage" xml:space="preserve">
+    <value>Gendannelse erstatter eksisterende lokale data. Vil du fortsætte?</value>
+  </data>
+  <data name="Settings_RestoreConfirmTitle" xml:space="preserve">
+    <value>Bekræft gendannelse</value>
+  </data>
+  <data name="Settings_RestoreSuccessMessage" xml:space="preserve">
+    <value>Sikkerhedskopien er gendannet. Genstart appen, før du fortsætter.</value>
+  </data>
+  <data name="Settings_RestoreSuccessTitle" xml:space="preserve">
+    <value>Gendannelse fuldført</value>
+  </data>
+  <data name="Settings_RestoreErrorTitle" xml:space="preserve">
+    <value>Gendannelse ikke fuldført</value>
+  </data>
   <data name="Settings_English" xml:space="preserve">
     <value>engelsk</value>
   </data>

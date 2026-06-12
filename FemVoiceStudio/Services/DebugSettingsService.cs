@@ -77,8 +77,9 @@ namespace FemVoiceStudio.Services
             {
                 if (File.Exists(_settingsPath))
                 {
-                    var json = File.ReadAllText(_settingsPath);
-                    var settings = JsonSerializer.Deserialize<AppSettings>(json, AppSettingsJson.Options);
+                    var settings = SettingsMigrationService
+                        .LoadOrRecover(_settingsPath, "DebugSettingsService.LoadSettings")
+                        .Settings;
 
                     if (settings?.Debug == null)
                     {
@@ -124,9 +125,7 @@ namespace FemVoiceStudio.Services
                 existingSettings.Debug.EnableAnalyzerDebug = EnableAnalyzerDebug;
                 existingSettings.Debug.EnableRc0Diagnostics = EnableRc0Diagnostics;
 
-                var json = JsonSerializer.Serialize(existingSettings, AppSettingsJson.Options);
-
-                File.WriteAllText(_settingsPath, json);
+                SettingsMigrationService.Save(_settingsPath, existingSettings, "DebugSettingsService.SaveSettings");
             }
             catch (Exception ex)
             {
@@ -144,9 +143,9 @@ namespace FemVoiceStudio.Services
             {
                 if (File.Exists(_settingsPath))
                 {
-                    var json = File.ReadAllText(_settingsPath);
-                    var settings = JsonSerializer.Deserialize<AppSettings>(json, AppSettingsJson.Options);
-                    return settings ?? new AppSettings();
+                    return SettingsMigrationService
+                        .LoadOrRecover(_settingsPath, "DebugSettingsService.LoadExistingSettings")
+                        .Settings;
                 }
             }
             catch (Exception ex)
@@ -167,8 +166,9 @@ namespace FemVoiceStudio.Services
             {
                 if (File.Exists(_settingsPath))
                 {
-                    var json = File.ReadAllText(_settingsPath);
-                    var settings = JsonSerializer.Deserialize<AppSettings>(json, AppSettingsJson.Options);
+                    var settings = SettingsMigrationService
+                        .LoadOrRecover(_settingsPath, "DebugSettingsService.EnsureDebugSection")
+                        .Settings;
 
                     if (settings?.Debug == null)
                     {
@@ -178,8 +178,7 @@ namespace FemVoiceStudio.Services
 
                         settings.Debug = new DebugSettings();
 
-                        var updatedJson = JsonSerializer.Serialize(settings, AppSettingsJson.Options);
-                        File.WriteAllText(_settingsPath, updatedJson);
+                        SettingsMigrationService.Save(_settingsPath, settings, "DebugSettingsService.EnsureDebugSection");
                     }
                     else
                     {

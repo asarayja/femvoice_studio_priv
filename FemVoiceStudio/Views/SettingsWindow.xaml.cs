@@ -3,6 +3,8 @@ using FemVoiceStudio.Data;
 using FemVoiceStudio.Models;
 using FemVoiceStudio.Services;
 using System.Windows.Controls;
+using System.IO;
+using Microsoft.Win32;
 
 namespace FemVoiceStudio.Views;
 
@@ -11,6 +13,7 @@ public partial class SettingsWindow : Window
     private readonly DatabaseService _database;
     private readonly ILocalizationService _localization;
     private readonly IVoiceGoalProfileProvider _voiceGoalProfiles;
+    private readonly LocalBackupService _localBackupService;
     private bool _languageChanged = false;
     private bool _themeChanged = false;
     
@@ -22,6 +25,8 @@ public partial class SettingsWindow : Window
                     ?? new DatabaseService();
         _localization = LocalizationService.Instance;
         _voiceGoalProfiles = ResolveVoiceGoalProfileProvider();
+        _localBackupService = App.Services?.GetService(typeof(LocalBackupService)) as LocalBackupService
+                              ?? LocalBackupService.CreateDefault();
         LoadSettings();
     }
     
@@ -135,6 +140,81 @@ public partial class SettingsWindow : Window
             Owner = this
         };
         window.ShowDialog();
+    }
+
+    private void OnCreateBackup(object sender, RoutedEventArgs e)
+    {
+        var backupFolder = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            "FemVoiceStudio",
+            "Backups");
+
+        var result = _localBackupService.CreateBackup(backupFolder);
+        if (result.Success && !string.IsNullOrWhiteSpace(result.BackupPath))
+        {
+            MessageBox.Show(
+                _localization.GetFormattedString("Settings_BackupSuccessMessage", result.BackupPath),
+                _localization.GetString("Settings_BackupSuccessTitle"),
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        MessageBox.Show(
+            result.SafeUserMessage,
+            _localization.GetString("Settings_BackupErrorTitle"),
+            MessageBoxButton.OK,
+            MessageBoxImage.Error);
+    }
+
+    private void OnRestoreBackup(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = _localization.GetString("Settings_RestoreDialogTitle"),
+            Filter = _localization.GetString("Settings_RestoreDialogFilter"),
+            CheckFileExists = true,
+            Multiselect = false
+        };
+
+        if (dialog.ShowDialog(this) != true)
+            return;
+
+        var initial = _localBackupService.RestoreBackup(dialog.FileName, confirmOverwrite: false);
+        if (initial.RequiresOverwriteConfirmation)
+        {
+            var confirmation = MessageBox.Show(
+                _localization.GetString("Settings_RestoreConfirmMessage"),
+                _localization.GetString("Settings_RestoreConfirmTitle"),
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (confirmation != MessageBoxResult.Yes)
+                return;
+        }
+
+        DatabaseService.CloseAllConnections();
+        var result = initial.RequiresOverwriteConfirmation
+            ? _localBackupService.RestoreBackup(dialog.FileName, confirmOverwrite: true)
+            : initial;
+
+        if (result.Success)
+        {
+            MessageBox.Show(
+                _localization.GetString("Settings_RestoreSuccessMessage"),
+                _localization.GetString("Settings_RestoreSuccessTitle"),
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            DialogResult = true;
+            Close();
+            return;
+        }
+
+        MessageBox.Show(
+            result.SafeUserMessage,
+            _localization.GetString("Settings_RestoreErrorTitle"),
+            MessageBoxButton.OK,
+            MessageBoxImage.Error);
     }
 
     private void LoadVoiceGoalProfile()

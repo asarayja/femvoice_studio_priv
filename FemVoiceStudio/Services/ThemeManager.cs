@@ -22,6 +22,9 @@ namespace FemVoiceStudio.Services
     /// </summary>
     public class AppSettings
     {
+        public const int CurrentSettingsVersion = 2;
+
+        public int SettingsVersion { get; set; } = CurrentSettingsVersion;
         public string Language { get; set; } = "nb";
         public AppTheme Theme { get; set; } = AppTheme.System;
         public bool HearOwnVoice { get; set; } = false;
@@ -304,23 +307,8 @@ namespace FemVoiceStudio.Services
         /// </summary>
         public AppSettings LoadSettings()
         {
-            try
-            {
-                if (File.Exists(SettingsFilePath))
-                {
-                    var json = File.ReadAllText(SettingsFilePath);
-                    var settings = JsonSerializer.Deserialize<AppSettings>(json, AppSettingsJson.Options);
-                    _settings = settings ?? new AppSettings();
-                    return _settings;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error loading settings: {ex.Message}");
-                Rc0WriteFailureSink.Report("ThemeManager.LoadSettings", SettingsFilePath, ex);
-            }
-            
-            _settings = new AppSettings();
+            var result = SettingsMigrationService.LoadOrRecover(SettingsFilePath, "ThemeManager.LoadSettings");
+            _settings = result.Settings;
             return _settings;
         }
 
@@ -355,9 +343,7 @@ namespace FemVoiceStudio.Services
                 settings.Theme = _currentThemeMode;
                 settings.HearOwnVoice = GetHearOwnVoiceSetting();
 
-                var json = JsonSerializer.Serialize(settings, AppSettingsJson.Options);
-
-                File.WriteAllText(SettingsFilePath, json);
+                SettingsMigrationService.Save(SettingsFilePath, settings, "ThemeManager.SaveSettings");
                 _settings = settings;
             }
             catch (Exception ex)
