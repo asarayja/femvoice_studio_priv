@@ -85,7 +85,8 @@ namespace FemVoiceStudio.Services
 
             try
             {
-                var document = JsonSerializer.Deserialize<TokenDocument>(File.ReadAllText(path));
+                var document = JsonSerializer.Deserialize<TokenDocument>(
+                    File.ReadAllText(path, System.Text.Encoding.UTF8));
                 return document?.ParticipantToken;
             }
             catch
@@ -100,7 +101,7 @@ namespace FemVoiceStudio.Services
             Directory.CreateDirectory(_directory);
             var document = new TokenDocument { ParticipantToken = token, CreatedAt = DateTime.UtcNow };
             var json = JsonSerializer.Serialize(document, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(GetPath(), json);
+            File.WriteAllText(GetPath(), json, System.Text.Encoding.UTF8);
         }
 
         private string GetPath() => Path.Combine(_directory, FileName);

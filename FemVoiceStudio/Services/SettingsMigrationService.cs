@@ -44,7 +44,7 @@ namespace FemVoiceStudio.Services
                     }
                     else
                     {
-                        var json = File.ReadAllText(settingsPath);
+                        var json = File.ReadAllText(settingsPath, System.Text.Encoding.UTF8);
                         settingsVersionBefore = ReadSettingsVersion(json);
                         settings = JsonSerializer.Deserialize<AppSettings>(json, AppSettingsJson.Options)
                             ?? new AppSettings();
@@ -122,7 +122,7 @@ namespace FemVoiceStudio.Services
                 NormalizeDefaults(settings);
                 settings.SettingsVersion = AppSettings.CurrentSettingsVersion;
                 var json = JsonSerializer.Serialize(settings, AppSettingsJson.Options);
-                File.WriteAllText(settingsPath, json);
+                File.WriteAllText(settingsPath, json, System.Text.Encoding.UTF8);
             }
             catch (Exception ex)
             {
@@ -208,7 +208,8 @@ namespace FemVoiceStudio.Services
                 };
                 File.WriteAllText(
                     Path.Combine(DiagnosticsNaming.PrimaryRoot, StatusFileName),
-                    JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }));
+                    JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }),
+                    System.Text.Encoding.UTF8);
             }
             catch (Exception ex)
             {

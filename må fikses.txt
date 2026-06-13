@@ -1,0 +1,30 @@
+ClinicalReportStatus=NOT_VERIFIED
+CoachReportStatus=NOT_VERIFIED
+OutcomeReportStatus=NOT_VERIFIED
+TimelineReportStatus=NOT_VERIFIED
+
+1. Timeline har fortsatt:
+   180-day
+   90-day
+   30-day
+   7-day
+
+
+Ja — det du har notert er i praksis RC-closeout-listen, ikke Sprint F.
+
+RC-delen som fortsatt må lukkes er:
+
+1. Siste øvelse(r) må bekreftes PASS
+2. Rapportstatus i evidence må bli PASS når rapportene faktisk genereres
+3. PDF-rapportene har fortsatt små layout/tekstting:
+   - 180-day / 90-day / 30-day / 7-day
+   - Restitusjonskostn/ad linjesplitt
+4. Eventuelle nye logs må vise ingen errors
+
+De første nye øvelsene ser allerede PASS ut, så dette er mer verifisering og polish enn stor bugfix. En release candidate bør normalt bare få feilretting/verifisering før endelig release, ikke nye feature-endringer.
+
+Så rekkefølgen bør være:
+
+RC closeout først
+Sprint E etterpå
+Sprint F etter Sprint E

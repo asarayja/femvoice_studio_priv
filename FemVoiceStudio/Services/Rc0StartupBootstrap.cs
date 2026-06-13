@@ -85,7 +85,7 @@ namespace FemVoiceStudio.Services
             sb.AppendLine($"EvidenceRoot={root}");
             sb.AppendLine($"DocumentsFolder={Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}");
             sb.AppendLine($"LocalAppDataFolder={Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}");
-            File.WriteAllText(Path.Combine(root, DiagnosticsNaming.StartupSentinel), sb.ToString());
+            File.WriteAllText(Path.Combine(root, DiagnosticsNaming.StartupSentinel), sb.ToString(), Encoding.UTF8);
             WriteRc0Alias(root, DiagnosticsNaming.StartupSentinel, DiagnosticsNaming.Rc0StartupSentinel);
         }
 
@@ -94,7 +94,8 @@ namespace FemVoiceStudio.Services
             var destination = Path.Combine(root, DiagnosticsNaming.RuntimeLog);
             if (!Rc0RuntimeLog.TryCopyTo(destination))
                 File.WriteAllText(destination,
-                    $"Startup snapshot. The live runtime log for this process is \"{Rc0RuntimeLog.CurrentLogPath}\".");
+                    $"Startup snapshot. The live runtime log for this process is \"{Rc0RuntimeLog.CurrentLogPath}\".",
+                    Encoding.UTF8);
             WriteRc0Alias(root, DiagnosticsNaming.RuntimeLog, DiagnosticsNaming.Rc0RuntimeLog);
         }
 
@@ -103,7 +104,7 @@ namespace FemVoiceStudio.Services
             var content = Rc0WriteFailureSink.FirstWriteError is { } firstWriteError
                 ? $"Diagnostics write failure detected during startup: {firstWriteError}{Environment.NewLine}"
                 : "No errors captured at startup.";
-            File.WriteAllText(Path.Combine(root, DiagnosticsNaming.ErrorsOnly), content);
+            File.WriteAllText(Path.Combine(root, DiagnosticsNaming.ErrorsOnly), content, Encoding.UTF8);
             WriteRc0Alias(root, DiagnosticsNaming.ErrorsOnly, DiagnosticsNaming.Rc0ErrorsOnly);
         }
 
@@ -126,7 +127,8 @@ namespace FemVoiceStudio.Services
             };
             File.WriteAllText(
                 Path.Combine(root, DiagnosticsNaming.EvidenceJson),
-                JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }));
+                JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }),
+                Encoding.UTF8);
             WriteRc0Alias(root, DiagnosticsNaming.EvidenceJson, DiagnosticsNaming.Rc0EvidenceJson);
         }
 
@@ -143,7 +145,7 @@ namespace FemVoiceStudio.Services
             sb.AppendLine();
             sb.AppendLine($"- Runtime log: {Rc0RuntimeLog.CurrentLogPath}");
             sb.AppendLine($"- Evidence root: {root}");
-            File.WriteAllText(Path.Combine(root, DiagnosticsNaming.AudioPipelineDiagnosticReport), sb.ToString());
+            File.WriteAllText(Path.Combine(root, DiagnosticsNaming.AudioPipelineDiagnosticReport), sb.ToString(), Encoding.UTF8);
             WriteRc0Alias(root, DiagnosticsNaming.AudioPipelineDiagnosticReport, DiagnosticsNaming.Rc0AudioPipelineDiagnosticReport);
         }
 

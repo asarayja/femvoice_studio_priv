@@ -38,6 +38,7 @@ namespace FemVoiceStudio.Views
         // ── Eksisterende felter (uendret) ────────────────────────────────────────
         private ExerciseDataService?    _exerciseService;
         private ExerciseTextService?    _exerciseTextService;
+        private ExerciseGuideTextLocalizer? _exerciseGuideTextLocalizer;
         private TrainingFrequencyService? _trainingService;
         private ObservableCollection<Exercise> _exercises = new();
         private Exercise? _currentExercise;
@@ -155,6 +156,7 @@ namespace FemVoiceStudio.Views
                 _exerciseService     = App.Services?.GetService(typeof(ExerciseDataService)) as ExerciseDataService
                                        ?? new ExerciseDataService(connectionString);
                 _exerciseTextService = new ExerciseTextService();
+                _exerciseGuideTextLocalizer = new ExerciseGuideTextLocalizer(_exerciseTextService);
                 _trainingService     = new TrainingFrequencyService(_exerciseService);
 
                 _exerciseService.InitializeExercises();
@@ -946,7 +948,7 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
         }
 
         // ────────────────────────────────────────────────────────────────────────
-        // Load / filter exercises (uendret)
+        // Load / filter exercises
         // ────────────────────────────────────────────────────────────────────────
 
         private void LoadExercises()
@@ -959,34 +961,7 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
 
                 foreach (var ex in exercises)
                 {
-                    var localizationKey    = ex.SortOrder + 100;
-                    var localizedName      = _exerciseTextService?.GetLocalizedTitle(localizationKey);
-                    if (!string.IsNullOrEmpty(localizedName)) ex.Name = localizedName;
-
-                    var localizedDesc      = _exerciseTextService?.GetLocalizedDescription(localizationKey);
-                    if (!string.IsNullOrEmpty(localizedDesc)) ex.Description = localizedDesc;
-
-                    var locService         = LocalizationService.Instance;
-                    ex.DisplayDifficulty   = ex.DifficultyLevel switch
-                    {
-                        DifficultyLevel.Nybegynner => locService["Difficulty_Beginner"],
-                        DifficultyLevel.Middels    => locService["Difficulty_Intermediate"],
-                        DifficultyLevel.Avansert   => locService["Difficulty_Advanced"],
-                        _                          => locService["Difficulty_Beginner"]
-                    };
-                    ex.FrequencyText = ex.FrequencyText switch
-                    {
-                        "Daglig"   => locService["Frequency_Daily"],
-                        "3×/uke"   => locService["Frequency_3xWeek"],
-                        "2×/uke"   => locService["Frequency_2xWeek"],
-                        "Ukentlig" => locService["Frequency_Weekly"],
-                        _          => ex.FrequencyText
-                    };
-
-                    var localizedSteps = _exerciseTextService?.GetLocalizedStepsList(localizationKey);
-                    ex.DisplaySteps    = (localizedSteps != null && localizedSteps.Count > 0)
-                                        ? localizedSteps : ex.GetStepsList();
-
+                    _exerciseGuideTextLocalizer?.Apply(ex);
                     _exercises.Add(ex);
                 }
 
@@ -1043,7 +1018,10 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
 
             _exercises.Clear();
             foreach (var ex in filtered.Where(ex => ex != null))
+            {
+                _exerciseGuideTextLocalizer?.Apply(ex);
                 _exercises.Add(ex);
+            }
             ExerciseList.ItemsSource = _exercises;
         }
 

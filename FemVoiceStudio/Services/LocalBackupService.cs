@@ -220,7 +220,7 @@ namespace FemVoiceStudio.Services
                 if (string.IsNullOrWhiteSpace(settingsPath) || !File.Exists(settingsPath))
                     return AppSettings.CurrentSettingsVersion;
 
-                using var doc = JsonDocument.Parse(File.ReadAllText(settingsPath));
+                using var doc = JsonDocument.Parse(File.ReadAllText(settingsPath, System.Text.Encoding.UTF8));
                 if (doc.RootElement.TryGetProperty(nameof(AppSettings.SettingsVersion), out var version)
                     && version.ValueKind == JsonValueKind.Number
                     && version.TryGetInt32(out var value))

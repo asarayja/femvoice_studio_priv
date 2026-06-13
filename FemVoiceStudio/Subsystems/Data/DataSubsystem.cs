@@ -177,7 +177,7 @@ namespace FemVoiceStudio.Subsystems.Data
                     };
 
                     var json = JsonSerializer.Serialize(exportData, options);
-                    File.WriteAllText(filePath, json);
+                    File.WriteAllText(filePath, json, System.Text.Encoding.UTF8);
                 }
                 else if (format.ToLower() == "csv")
                 {
@@ -191,7 +191,7 @@ namespace FemVoiceStudio.Subsystems.Data
                         lines.Add($"{session.Id},{session.StartTime},{session.EndTime},{session.AveragePitch},{session.MinPitch},{session.MaxPitch},{session.PitchVariation},{session.IntonationScore},{session.OverallScore},{session.ResonanceScore}");
                     }
 
-                    File.WriteAllLines(filePath, lines);
+                    File.WriteAllLines(filePath, lines, System.Text.Encoding.UTF8);
                 }
             }, ct);
         }
@@ -207,7 +207,7 @@ namespace FemVoiceStudio.Subsystems.Data
 
                 if (format.ToLower() == "json")
                 {
-                    var json = File.ReadAllText(filePath);
+                    var json = File.ReadAllText(filePath, System.Text.Encoding.UTF8);
                     var importData = JsonSerializer.Deserialize<JsonElement>(json);
 
                     if (importData.TryGetProperty("Sessions", out var sessionsElement))

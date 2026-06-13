@@ -7,7 +7,7 @@ using FemVoiceStudio.Models;
 namespace FemVoiceStudio.Data
 {
     /// <summary>
-    /// Service for database-operasjoner knyttet til Ã¸velser og treningsÃ¸kter
+    /// Service for database-operasjoner knyttet til øvelser og treningsøkter
     /// </summary>
     public class ExerciseDataService
     {
@@ -38,7 +38,7 @@ namespace FemVoiceStudio.Data
                 ? dt : (DateTime?)null;
         
         /// <summary>
-        /// Hent alle tilgjengelige Ã¸velser
+        /// Hent alle tilgjengelige øvelser
         /// </summary>
         public List<Exercise> GetAllExercises()
         {
@@ -67,7 +67,7 @@ namespace FemVoiceStudio.Data
         }
         
         /// <summary>
-        /// Hent en spesifikk Ã¸velse etter ID
+        /// Hent en spesifikk øvelse etter ID
         /// </summary>
         public Exercise? GetExerciseById(int exerciseId)
         {
@@ -94,7 +94,7 @@ namespace FemVoiceStudio.Data
         }
         
         /// <summary>
-        /// Hent Ã¸velser etter vanskelighetsnivÃ¥
+        /// Hent øvelser etter vanskelighetsnivå
         /// </summary>
         public List<Exercise> GetExercisesByDifficulty(DifficultyLevel difficulty)
         {
@@ -124,7 +124,7 @@ namespace FemVoiceStudio.Data
         }
         
         /// <summary>
-        /// Hent Ã¸velser etter kategori
+        /// Hent øvelser etter kategori
         /// </summary>
         public List<Exercise> GetExercisesByCategory(string category)
         {
@@ -154,7 +154,7 @@ namespace FemVoiceStudio.Data
         }
         
         /// <summary>
-        /// Start en ny Ã¸velsesÃ¸kt
+        /// Start en ny øvelsesøkt
         /// </summary>
         public int StartSession(int exerciseId)
         {
@@ -172,13 +172,13 @@ namespace FemVoiceStudio.Data
         }
         
         /// <summary>
-        /// FullfÃ¸r en Ã¸velsesÃ¸kt
+        /// Fullfør en øvelsesøkt
         /// </summary>
         public void CompleteSession(int sessionId, int durationSeconds, double score, string notes = "")
         {
             using var connection = OpenConnection();
             
-            // Oppdater Ã¸kten
+            // Oppdater økten
             var command = connection.CreateCommand();
             command.CommandText = @"
                 UPDATE ExerciseSessions 
@@ -198,7 +198,7 @@ namespace FemVoiceStudio.Data
         }
         
         /// <summary>
-        /// Avbryt en Ã¸velsesÃ¸kt (ikke fullfÃ¸rt)
+        /// Avbryt en øvelsesøkt (ikke fullført)
         /// </summary>
         public void CancelSession(int sessionId)
         {
@@ -215,7 +215,7 @@ namespace FemVoiceStudio.Data
         }
         
         /// <summary>
-        /// Hent progresjon for en spesifikk Ã¸velse
+        /// Hent progresjon for en spesifikk øvelse
         /// </summary>
         public ExerciseProgress? GetExerciseProgress(int exerciseId)
         {
@@ -247,7 +247,7 @@ namespace FemVoiceStudio.Data
         }
         
         /// <summary>
-        /// Hent alle Ã¸velser med progresjon
+        /// Hent alle øvelser med progresjon
         /// </summary>
         public List<ExerciseProgress> GetAllExerciseProgress()
         {
@@ -280,7 +280,7 @@ namespace FemVoiceStudio.Data
         }
         
         /// <summary>
-        /// Sjekk om en Ã¸velse er fullfÃ¸rt i dag
+        /// Sjekk om en øvelse er fullført i dag
         /// </summary>
         public bool IsExerciseCompletedToday(int exerciseId)
         {
@@ -301,7 +301,7 @@ namespace FemVoiceStudio.Data
         }
         
         /// <summary>
-        /// Initialiserer standard Ã¸velser i databasen
+        /// Initialiserer standard øvelser i databasen
         /// </summary>
         public void InitializeExercises()
         {
@@ -313,7 +313,7 @@ namespace FemVoiceStudio.Data
             // Engangs-nullstilling av tidsbaserte scores (klinisk score-migrering)
             EnsureClinicalScoreMigration(connection);
 
-            // Slett eksisterende Ã¸velser og legg til alle pÃ¥ nytt inside a transaction
+            // Slett eksisterende øvelser og legg til alle på nytt inside a transaction
             using var tran = connection.BeginTransaction();
             try
             {
@@ -322,13 +322,13 @@ namespace FemVoiceStudio.Data
                 deleteCmd.CommandText = "DELETE FROM Exercises";
                 deleteCmd.ExecuteNonQuery();
             
-            // Definer standard Ã¸velser med utvidet metadata for voice feminization
+            // Definer standard øvelser med utvidet metadata for voice feminization
             var exercises = new[] {
-                // Ã˜VELSE 1: Grunnleggende humming - Fremre resonans + pitch-bevissthet
+                // ØVELSE 1: Grunnleggende humming - Fremre resonans + pitch-bevissthet
                 new { 
                     Name = "Grunnleggende humming", 
-                    Description = "LÃ¦r Ã¥ kjenne pÃ¥ vibrasjonen i stemmen og flytt den fremover i munnen. Humming aktiverer fremre resonatorer.",
-                    Steps = new[] { "Slapp av i skuldrene og nakken", "Pust dypt inn gjennom nesen", "Hum en behagelig tone", "Flytt hummotsetningen mot nesen og leppene", "Hold tonen i 5-10 sekunder" },
+                    Description = "Lær å kjenne på vibrasjonen i stemmen og flytt den fremover i munnen. Humming aktiverer fremre resonatorer.",
+                    Steps = new[] { "Slapp av i skuldrene og nakken", "Pust dypt inn gjennom nesen", "Hum en behagelig tone", "Flytt hummingen mot nesen og leppene", "Hold tonen i 5-10 sekunder" },
                     Duration = 5, Frequency = 1, Difficulty = 1, 
                     Metrics = new[] { "pitch", "resonance" },
                     Category = "Oppvarming",
@@ -342,11 +342,11 @@ namespace FemVoiceStudio.Data
                     TargetPitchMax = 180.0,
                     ProfileType = Models.ExerciseProfileType.ResonanceHumming,
                 },
-                // Ã˜VELSE 2: Vokallyder - Fremre resonans
+                // ØVELSE 2: Vokallyder - Fremre resonans
                 new { 
                     Name = "Vokallyder - Fremre resonans", 
-                    Description = "Utforsk ulike vokallyder med fokus pÃ¥ fremre munnresonans. Ã…pne vokaler fremmer fremre resonans.",
-                    Steps = new[] { "Si 'ahhh' - Ã¥pne munnen bred", "Si 'eee' - trekk munnvikene bakover", "Si 'ooo' - runde lepper", "Kombiner: 'ah-ee-oo'", "Gjenta mÃ¸nsteret 5 ganger" },
+                    Description = "Utforsk ulike vokallyder med fokus på fremre munnresonans. Åpne vokaler fremmer fremre resonans.",
+                    Steps = new[] { "Si 'ahhh' - åpne munnen bred", "Si 'eee' - trekk munnvikene bakover", "Si 'ooo' - runde lepper", "Kombiner: 'ah-ee-oo'", "Gjenta mønsteret 5 ganger" },
                     Duration = 7, Frequency = 1, Difficulty = 1,
                     Metrics = new[] { "pitch", "resonance", "intensity" },
                     Category = "Oppvarming",
@@ -360,11 +360,11 @@ namespace FemVoiceStudio.Data
                     TargetPitchMax = 190.0,
                     ProfileType = Models.ExerciseProfileType.ResonanceVowels,
                 },
-                // Ã˜VELSE 3: Stigende Toner - Pitch Glide Up
+                // ØVELSE 3: Stigende Toner - Pitch Glide Up
                 new { 
                     Name = "Stigende toner (Glide Up)", 
-                    Description = "Tren pÃ¥ Ã¥ bevege deg jevnt fra lavere til hÃ¸yere pitch. Gliding gir mer naturlig progresjon.",
-                    Steps = new[] { "Start pÃ¥ en behagelig tone", "Glid sakte opp over 3 sekunder", "Hold topptonen i 2 sekunder", "Glid sakte ned igjen", "FÃ¸lg med pÃ¥ pitch-displayet" },
+                    Description = "Tren på å bevege deg jevnt fra lavere til høyere pitch. Gliding gir mer naturlig progresjon.",
+                    Steps = new[] { "Start på en behagelig tone", "Glid sakte opp over 3 sekunder", "Hold topptonen i 2 sekunder", "Glid sakte ned igjen", "Følg med på pitch-displayet" },
                     Duration = 8, Frequency = 1, Difficulty = 1,
                     Metrics = new[] { "pitch", "smoothness" },
                     Category = "Pitch-kontroll",
@@ -378,11 +378,11 @@ namespace FemVoiceStudio.Data
                     TargetPitchMax = 200.0,
                     ProfileType = Models.ExerciseProfileType.CoordinatedGlideUp,
                 },
-                // Ã˜VELSE 4: Synkende Toner - Pitch Glide Down
+                // ØVELSE 4: Synkende Toner - Pitch Glide Down
                 new { 
                     Name = "Synkende toner (Glide Down)", 
-                    Description = "Tren pÃ¥ kontrollert nedgliding i pitch for Ã¥ styrke musklene og lÃ¦re mÃ¥l-pitch-omrÃ¥det.",
-                    Steps = new[] { "Start hÃ¸yt og komfortabelt", "Glid sakte ned over 3 sekunder", "Hold den lave tonen i 2 sekunder", "Gjenta med ulike startpunkter", "Fokuser pÃ¥ jevn glide" },
+                    Description = "Tren på kontrollert nedgliding i pitch for å styrke musklene og lære mål-pitch-området.",
+                    Steps = new[] { "Start høyt og komfortabelt", "Glid sakte ned over 3 sekunder", "Hold den lave tonen i 2 sekunder", "Gjenta med ulike startpunkter", "Fokuser på jevn glide" },
                     Duration = 6, Frequency = 2, Difficulty = 1,
                     Metrics = new[] { "pitch", "smoothness", "consistency" },
                     Category = "Pitch-kontroll",
@@ -391,15 +391,15 @@ namespace FemVoiceStudio.Data
                     Goal = 0, // Pitch
                     GoalIcon = "\uE8D6",
                     ScientificRationale = "",
-                    FrequencyText = "3Ã—/uke",
+                    FrequencyText = "3×/uke",
                     TargetPitchMin = 160.0,
                     TargetPitchMax = 220.0,
                     ProfileType = Models.ExerciseProfileType.CoordinatedGlideUp,
                 },
-                // Ã˜VELSE 5: Konsistens-Trening
+                // ØVELSE 5: Konsistens-Trening
                 new { 
                     Name = "Konsistens-trening", 
-                    Description = "FokusÃ©r pÃ¥ Ã¥ holde samme tone stabil over tid. Stabil pitch er grunnleggende for naturlig feminin stemme.",
+                    Description = "Fokusér på å holde samme tone stabil over tid. Stabil pitch er grunnleggende for naturlig feminin stemme.",
                     Steps = new[] { "Finn din target-tone", "Hold tonen i 5 sekunder", "Sjekk pitch-grafen for stabilitet", "Ta en pust", "Gjenta 5 ganger" },
                     Duration = 8, Frequency = 1, Difficulty = 1,
                     Metrics = new[] { "pitch", "consistency" },
@@ -414,11 +414,11 @@ namespace FemVoiceStudio.Data
                     TargetPitchMax = 180.0,
                     ProfileType = Models.ExerciseProfileType.StabilityTraining,
                 },
-                // Ã˜VELSE 6: S-Lyder
+                // ØVELSE 6: S-Lyder
                 new { 
                     Name = "S-lyder (Ustemt hold)", 
-                    Description = "Tren pÃ¥ Ã¥ opprettholde pitch gjennom ustemte lyder for bedre kontroll.",
-                    Steps = new[] { "Si 'ssssssss' - lang S-lyd", "FÃ¸lg med pÃ¥ pitch-grafen", "PrÃ¸v Ã¥ holde lyden stabil", "Ã˜k gradvis til 10 sekunder", "Gjenta 3 ganger" },
+                    Description = "Tren på å opprettholde pitch gjennom ustemte lyder for bedre kontroll.",
+                    Steps = new[] { "Si 'ssssssss' - lang S-lyd", "Følg med på pitch-grafen", "Prøv å holde lyden stabil", "Øk gradvis til 10 sekunder", "Gjenta 3 ganger" },
                     Duration = 6, Frequency = 2, Difficulty = 2,
                     Metrics = new[] { "pitch", "consistency" },
                     Category = "Stabilitet",
@@ -427,16 +427,16 @@ namespace FemVoiceStudio.Data
                     Goal = 0, // Pitch
                     GoalIcon = "\uE8D6",
                     ScientificRationale = "",
-                    FrequencyText = "3Ã—/uke",
+                    FrequencyText = "3×/uke",
                     TargetPitchMin = 160.0,
                     TargetPitchMax = 200.0,
                     ProfileType = Models.ExerciseProfileType.StabilityTraining,
                 },
-                // Ã˜VELSE 7: SpÃ¸rsmÃ¥ls-Intonasjon
+                // ØVELSE 7: Spørsmåls-Intonasjon
                 new { 
-                    Name = "SpÃ¸rsmÃ¥lsmelodi", 
-                    Description = "LÃ¦r naturlig stigende intonasjon. I norsk stiger pitch 2-4 semitoner pÃ¥ slutten av spÃ¸rsmÃ¥l.",
-                    Steps = new[] { "Si 'Hva heter du?'", "Legg merke til stigningen pÃ¥ slutten", "Ã˜v pÃ¥ 5 ulike spÃ¸rsmÃ¥l", "PrÃ¸v jevn stigning", "Varier styrken" },
+                    Name = "Spørsmålsmelodi",
+                    Description = "Lær naturlig stigende intonasjon. I norsk stiger pitch 2-4 semitoner på slutten av spørsmål.",
+                    Steps = new[] { "Si 'Hva heter du?'", "Legg merke til stigningen på slutten", "Øv på 5 ulike spørsmål", "Prøv jevn stigning", "Varier styrken" },
                     Duration = 7, Frequency = 2, Difficulty = 2,
                     Metrics = new[] { "intonation", "pitch" },
                     Category = "Intonasjon",
@@ -445,7 +445,7 @@ namespace FemVoiceStudio.Data
                     Goal = 2, // Intonation
                     GoalIcon = "\uE8E1",
                     ScientificRationale = "",
-                    FrequencyText = "3Ã—/uke",
+                    FrequencyText = "3×/uke",
                     TargetPitchMin = 165.0,
                     TargetPitchMax = 220.0,
                     // KLINISK RE-MAP: spørsmåls-intonasjon er kontinuerlig pitch-slope-sporing,
@@ -453,11 +453,11 @@ namespace FemVoiceStudio.Data
                     // scorer ikke resonans (som CoordinatedGlideUp feilaktig gjorde).
                     ProfileType = Models.ExerciseProfileType.IntonationExercise,
                 },
-                // Ã˜VELSE 8: Utsagns-Intonasjon
+                // ØVELSE 8: Utsagns-Intonasjon
                 new { 
                     Name = "Utsagnsmelodi", 
-                    Description = "Tren pÃ¥ Ã¥ avslutte setninger med synkende tone. Kritisk for Ã¥ unngÃ¥ 'spÃ¸rsmÃ¥lslyd'.",
-                    Steps = new[] { "Si 'Jeg heter Marie.'", "Legg merke til fallet pÃ¥ slutten", "Ã˜v pÃ¥ 5 ulike utsagn", "PrÃ¸v naturlig fall", "Varier start-pitch" },
+                    Description = "Tren på å avslutte setninger med synkende tone. Kritisk for å unngå 'spørsmålslyd'.",
+                    Steps = new[] { "Si 'Jeg heter Marie.'", "Legg merke til fallet på slutten", "Øv på 5 ulike utsagn", "Prøv naturlig fall", "Varier start-pitch" },
                     Duration = 7, Frequency = 2, Difficulty = 2,
                     Metrics = new[] { "intonation", "pitch" },
                     Category = "Intonasjon",
@@ -466,7 +466,7 @@ namespace FemVoiceStudio.Data
                     Goal = 2, // Intonation
                     GoalIcon = "\uE8E1",
                     ScientificRationale = "",
-                    FrequencyText = "3Ã—/uke",
+                    FrequencyText = "3×/uke",
                     TargetPitchMin = 155.0,
                     TargetPitchMax = 210.0,
                     // KLINISK RE-MAP: utsagns-intonasjon (fallende melodi) er kontinuerlig
@@ -474,11 +474,11 @@ namespace FemVoiceStudio.Data
                     // intonasjons-guidance og scorer ikke resonans.
                     ProfileType = Models.ExerciseProfileType.IntonationExercise,
                 },
-                // Ã˜VELSE 9: Fraselesing
+                // ØVELSE 9: Fraselesing
                 new { 
                     Name = "Fraselesing", 
-                    Description = "Kombiner alle ferdigheter i sammenhengende talesprÃ¥k med pitch i mÃ¥l-omrÃ¥det.",
-                    Steps = new[] { "Velg en tekst", "Les med fokus pÃ¥ pitch innen mÃ¥lomrÃ¥det", "Stopp ved vanskelige ord", "Les hele teksten", "Spill av og vurder" },
+                    Description = "Kombiner alle ferdigheter i sammenhengende talespråk med pitch i mål-området.",
+                    Steps = new[] { "Velg en tekst", "Les med fokus på pitch innen målområdet", "Stopp ved vanskelige ord", "Les hele teksten", "Spill av og vurder" },
                     Duration = 10, Frequency = 2, Difficulty = 2,
                     Metrics = new[] { "pitch", "intonation", "consistency" },
                     Category = "Praksis",
@@ -487,16 +487,16 @@ namespace FemVoiceStudio.Data
                     Goal = 4, // Combined
                     GoalIcon = "\uE7BC",
                     ScientificRationale = "",
-                    FrequencyText = "3Ã—/uke",
+                    FrequencyText = "3×/uke",
                     TargetPitchMin = 165.0,
                     TargetPitchMax = 220.0,
                     ProfileType = Models.ExerciseProfileType.ResonanceVowels,
                 },
-                // Ã˜VELSE 10: Samtale-Simulasjon
+                // ØVELSE 10: Samtale-Simulasjon
                 new { 
                     Name = "Samtale-simulasjon", 
-                    Description = "Simuler vanlige samtalesituasjoner. OverfÃ¸ring fra Ã¸velse til spontant sprÃ¥k er nÃ¸kkelen.",
-                    Steps = new[] { "Tenk pÃ¥ vanlige spÃ¸rsmÃ¥l", "Svar med naturlig intonasjon", "Varier mellom spÃ¸rsmÃ¥l/utsagn", "FÃ¸lg med pÃ¥ pitch", "PrÃ¸v 5 ulike scenarier" },
+                    Description = "Simuler vanlige samtalesituasjoner. Overføring fra øvelse til spontant språk er nøkkelen.",
+                    Steps = new[] { "Tenk på vanlige spørsmål", "Svar med naturlig intonasjon", "Varier mellom spørsmål/utsagn", "Følg med på pitch", "Prøv 5 ulike scenarier" },
                     Duration = 10, Frequency = 3, Difficulty = 3,
                     Metrics = new[] { "pitch", "intonation", "resonance" },
                     Category = "Avansert",
@@ -505,17 +505,17 @@ namespace FemVoiceStudio.Data
                     Goal = 4, // Combined
                     GoalIcon = "\uE7BC",
                     ScientificRationale = "",
-                    FrequencyText = "2Ã—/uke",
+                    FrequencyText = "2×/uke",
                     TargetPitchMin = 165.0,
                     TargetPitchMax = 230.0,
                     ProfileType = Models.ExerciseProfileType.ResonanceVowels,
                 },
-                // NYE Ã˜VELSER 11-15
-                // Ã˜VELSE 11: Resonans-Skift
+                // NYE ØVELSER 11-15
+                // ØVELSE 11: Resonans-Skift
                 new { 
                     Name = "Resonans-skift: Fremre plassering", 
-                    Description = "Tren pÃ¥ Ã¥ flytte resonansen fra bakre til fremre plassering. Kritisk for feminin klang.",
-                    Steps = new[] { "Hum 'mmm' - kjenn lepper/nese vibrere", "OverfÃ¸r til 'nnn'", "Deretter 'yyy' (norsk 'j')", "PrÃ¸v 'ene'-stavelser", "Gjenta med korte ord" },
+                    Description = "Tren på å flytte resonansen fra bakre til fremre plassering. Kritisk for feminin klang.",
+                    Steps = new[] { "Hum 'mmm' - kjenn lepper/nese vibrere", "Overfør til 'nnn'", "Deretter 'yyy' (norsk 'j')", "Prøv 'ene'-stavelser", "Gjenta med korte ord" },
                     Duration = 7, Frequency = 1, Difficulty = 1,
                     Metrics = new[] { "resonance", "intensity" },
                     Category = "Resonans",
@@ -529,11 +529,11 @@ namespace FemVoiceStudio.Data
                     TargetPitchMax = 200.0,
                     ProfileType = Models.ExerciseProfileType.ResonanceHumming,
                 },
-                // Ã˜VELSE 12: Starter-Pitch Memorisering
+                // ØVELSE 12: Starter-Pitch Memorisering
                 new { 
                     Name = "Starter-pitch memorisering", 
-                    Description = "Automatiser start-pitch i mÃ¥lomrÃ¥det. De fleste starter for lavt - dette er kritisk Ã¥ rette opp.",
-                    Steps = new[] { "Syng en referansetone som fÃ¸les komfortabel", "Start tale pÃ¥ denne tonen", "Sjekk start-pitch med appen", "Juster opp hvis nÃ¸dvendig", "Gjenta til automatisk" },
+                    Description = "Automatiser start-pitch i målområdet. De fleste starter for lavt - dette er kritisk å rette opp.",
+                    Steps = new[] { "Syng en referansetone som føles komfortabel", "Start tale på denne tonen", "Sjekk start-pitch med appen", "Juster opp hvis nødvendig", "Gjenta til automatisk" },
                     Duration = 8, Frequency = 1, Difficulty = 1,
                     Metrics = new[] { "pitch", "consistency" },
                     Category = "Pitch-kontroll",
@@ -550,11 +550,11 @@ namespace FemVoiceStudio.Data
                     // komfortsone-strategi) gir korrekt pitch-mål-guidance.
                     ProfileType = Models.ExerciseProfileType.PitchExercise,
                 },
-                // Ã˜VELSE 13: Pitch Slide i Fraser
+                // ØVELSE 13: Pitch Slide i Fraser
                 new { 
                     Name = "Pitch slide i fraser", 
-                    Description = "Bruk glide-teknikk naturlig i setninger istedet for Ã¥ 'spre' stemmen.",
-                    Steps = new[] { "'Hallo' med stigende glide", "'Hei' med fallende glide", "'Ja?' som spÃ¸rsmÃ¥l", "Korte fraser med glide", "Varier stigende/synkende" },
+                    Description = "Bruk glide-teknikk naturlig i setninger istedet for å 'spre' stemmen.",
+                    Steps = new[] { "'Hallo' med stigende glide", "'Hei' med fallende glide", "'Ja?' som spørsmål", "Korte fraser med glide", "Varier stigende/synkende" },
                     Duration = 8, Frequency = 2, Difficulty = 2,
                     Metrics = new[] { "pitch", "intonation", "smoothness" },
                     Category = "Pitch-kontroll",
@@ -563,7 +563,7 @@ namespace FemVoiceStudio.Data
                     Goal = 0, // Pitch
                     GoalIcon = "\uE8D6",
                     ScientificRationale = "",
-                    FrequencyText = "3Ã—/uke",
+                    FrequencyText = "3×/uke",
                     TargetPitchMin = 150.0,
                     TargetPitchMax = 220.0,
                     // BEHOLDT BEVISST som CoordinatedGlideUp: dette er en kontinuerlig glide-i-
@@ -572,11 +572,11 @@ namespace FemVoiceStudio.Data
                     // glide-profilen (RequiredHoldSeconds=0, kontinuerlig) er klinisk riktig her.
                     ProfileType = Models.ExerciseProfileType.CoordinatedGlideUp,
                 },
-                // Ã˜VELSE 14: Straw Phonation
+                // ØVELSE 14: Straw Phonation
                 new { 
                     Name = "Straw phonation (Halmsfonasjon)", 
                     Description = "Reduser stemmeslitasje og styrk airflow-kontroll med halm-teknikk. Tvinger frem semi-okkludert vokaltrakt.",
-                    Steps = new[] { "Ta en sugerÃ¸r", "BlÃ¥s lett gjennom", "Syng 'ooo' gjennom strÃ¥et", "Hold i 5 sekunder", "Gjenta med ulike toner" },
+                    Steps = new[] { "Ta et sugerør", "Blås lett gjennom", "Syng 'ooo' gjennom strået", "Hold i 5 sekunder", "Gjenta med ulike toner" },
                     Duration = 5, Frequency = 3, Difficulty = 2,
                     Metrics = new[] { "intensity", "consistency" },
                     Category = "Pust",
@@ -585,7 +585,7 @@ namespace FemVoiceStudio.Data
                     Goal = 3, // Breathing
                     GoalIcon = "\uE81C",
                     ScientificRationale = "",
-                    FrequencyText = "2Ã—/uke",
+                    FrequencyText = "2×/uke",
                     TargetPitchMin = 140.0,
                     TargetPitchMax = 180.0,
                     // KLINISK MUST-FIX: straw phonation er SOVT/airflow, ikke endurance-hold.
@@ -593,11 +593,11 @@ namespace FemVoiceStudio.Data
                     // SOVT/airflow-sikkerhet (UsesIntensity + straw-spesifikke guidance-nøkler).
                     ProfileType = Models.ExerciseProfileType.StrawPhonation,
                 },
-                // Ã˜VELSE 15: Intonasjons-Variasjon
+                // ØVELSE 15: Intonasjons-Variasjon
                 new { 
                     Name = "Intonasjons-variasjon", 
-                    Description = "Varier intonasjon for naturlig, ekspressiv tale. Kvinner bruker stÃ¸rre variasjon enn menn.",
-                    Steps = new[] { "'Nei' - nÃ¸ytralt", "'Nei?' - overrasket", "'Nei!' - frustrert", "'Nei...' - resignert", "Gjenta med ulike setninger" },
+                    Description = "Varier intonasjon for naturlig, ekspressiv tale. Kvinner bruker større variasjon enn menn.",
+                    Steps = new[] { "'Nei' - nøytralt", "'Nei?' - overrasket", "'Nei!' - frustrert", "'Nei...' - resignert", "Gjenta med ulike setninger" },
                     Duration = 10, Frequency = 3, Difficulty = 3,
                     Metrics = new[] { "intonation", "pitchVariability" },
                     Category = "Avansert",
@@ -606,7 +606,7 @@ namespace FemVoiceStudio.Data
                     Goal = 2, // Intonation
                     GoalIcon = "\uE8E1",
                     ScientificRationale = "",
-                    FrequencyText = "2Ã—/uke",
+                    FrequencyText = "2×/uke",
                     TargetPitchMin = 150.0,
                     TargetPitchMax = 250.0,
                     ProfileType = Models.ExerciseProfileType.CoordinatedGlideUp,
@@ -650,7 +650,7 @@ namespace FemVoiceStudio.Data
         }
 
         /// <summary>
-        /// Hent Ã¸velser som bÃ¸r gjÃ¸res i dag basert pÃ¥ frekvens
+        /// Hent øvelser som bør gjøres i dag basert på frekvens
         /// </summary>
         public List<Exercise> GetTodaysRecommendedExercises()
         {
@@ -673,7 +673,7 @@ namespace FemVoiceStudio.Data
                     (e.FrequencyType = 1) OR  -- Daglig
                     (e.FrequencyType = 2 AND @DayOfWeek IN (0, 2, 4)) OR  -- 3x/uke (man, ons, fre)
                     (e.FrequencyType = 3 AND @DayOfWeek IN (1, 4)) OR  -- 2x/uke (tir, fre)
-                    (e.FrequencyType = 4 AND @DayOfWeek = 6)  -- Ukentlig (sÃ¸n)
+                    (e.FrequencyType = 4 AND @DayOfWeek = 6)  -- Ukentlig (søn)
                 )
                 ORDER BY e.FrequencyType, e.SortOrder";
             command.Parameters.AddWithValue("@DayOfWeek", dayOfWeek);
@@ -688,7 +688,7 @@ namespace FemVoiceStudio.Data
         }
         
         /// <summary>
-        /// Hent antall fullfÃ¸rte Ã¸kter i dag
+        /// Hent antall fullførte økter i dag
         /// </summary>
         public int GetCompletedSessionsToday()
         {
@@ -724,7 +724,7 @@ namespace FemVoiceStudio.Data
         }
 
         /// <summary>
-        /// Hent en lagret Ã¸kt per SessionId (brukt for RC-0 readback-verifisering).
+        /// Hent en lagret økt per SessionId (brukt for RC-0 readback-verifisering).
         /// </summary>
         public Models.ExerciseSession? GetSessionById(int sessionId)
         {
@@ -922,7 +922,7 @@ namespace FemVoiceStudio.Data
                     ("FrequencyText", "TEXT DEFAULT 'Daglig'"),
                     ("TargetPitchMin", "REAL DEFAULT 140.0"),
                     ("TargetPitchMax", "REAL DEFAULT 220.0"),
-                    // DEFAULT 0 = ResonanceHumming â€” safe baseline for pre-existing rows
+                    // DEFAULT 0 = ResonanceHumming - safe baseline for pre-existing rows
                     ("ProfileType", "INTEGER NOT NULL DEFAULT 0")
                 };
                 

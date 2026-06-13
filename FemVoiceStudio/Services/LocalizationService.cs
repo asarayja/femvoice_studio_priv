@@ -162,7 +162,7 @@ public class LocalizationService : ILocalizationService
             var settingsPath = GetSettingsPath();
             if (File.Exists(settingsPath))
             {
-                var language = File.ReadAllText(settingsPath).Trim();
+                var language = File.ReadAllText(settingsPath, System.Text.Encoding.UTF8).Trim();
                 if (!string.IsNullOrEmpty(language))
                 {
                     SetLanguage(language);
@@ -189,7 +189,7 @@ public class LocalizationService : ILocalizationService
             {
                 Directory.CreateDirectory(directory);
             }
-            File.WriteAllText(settingsPath, languageCode);
+            File.WriteAllText(settingsPath, languageCode, System.Text.Encoding.UTF8);
         }
         catch (Exception ex)
         {

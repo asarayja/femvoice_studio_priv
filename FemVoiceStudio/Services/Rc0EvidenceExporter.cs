@@ -282,7 +282,7 @@ namespace FemVoiceStudio.Services
             sb.AppendLine($"- Device: {audio.DeviceName}");
             sb.AppendLine($"- Failure classification: {ResolveSessionFailureClassification(evidence, audio)}");
             sb.AppendLine($"- Raw capture classification: {audio.FailureClassification}");
-            File.WriteAllText(Path.Combine(folder, DiagnosticsNaming.SessionSummary), sb.ToString());
+            File.WriteAllText(Path.Combine(folder, DiagnosticsNaming.SessionSummary), sb.ToString(), Encoding.UTF8);
         }
 
         private static void WriteRuntimeLog(string folder)
@@ -294,7 +294,8 @@ namespace FemVoiceStudio.Services
                     return;
 
                 File.WriteAllText(destination,
-                    $"No runtime diagnostics log existed at \"{Rc0RuntimeLog.CurrentLogPath}\" for this export.");
+                    $"No runtime diagnostics log existed at \"{Rc0RuntimeLog.CurrentLogPath}\" for this export.",
+                    Encoding.UTF8);
             }
             catch (Exception ex)
             {
@@ -303,7 +304,8 @@ namespace FemVoiceStudio.Services
                 try
                 {
                     File.WriteAllText(destination,
-                        $"Failed to copy runtime log from \"{Rc0RuntimeLog.CurrentLogPath}\": {ex.GetType().Name}: {ex.Message}");
+                        $"Failed to copy runtime log from \"{Rc0RuntimeLog.CurrentLogPath}\": {ex.GetType().Name}: {ex.Message}",
+                        Encoding.UTF8);
                 }
                 catch { }
             }
@@ -349,7 +351,7 @@ namespace FemVoiceStudio.Services
             sb.AppendLine($"- FailureClassification: {ResolveSessionFailureClassification(evidence, audio)}");
             sb.AppendLine($"- ScoreSource: {evidence.ScoreSource}");
             sb.AppendLine($"- RawCaptureFailureClassification: {audio.FailureClassification}");
-            File.WriteAllText(Path.Combine(folder, DiagnosticsNaming.VerificationReport), sb.ToString());
+            File.WriteAllText(Path.Combine(folder, DiagnosticsNaming.VerificationReport), sb.ToString(), Encoding.UTF8);
         }
 
         private static void WriteDiagnosticReport(string folder, SessionEvidence evidence, AudioCaptureDiagnosticsSnapshot audio, string result)
@@ -425,7 +427,7 @@ namespace FemVoiceStudio.Services
             sb.AppendLine();
             sb.AppendLine("## Recommended RC-0 Fix");
             sb.AppendLine("Use this evidence to classify whether the issue is capture, signal level, silence gate, pitch rejection, graph update, or score fallback before changing clinical scoring.");
-            File.WriteAllText(Path.Combine(folder, DiagnosticsNaming.AudioPipelineDiagnosticReport), sb.ToString());
+            File.WriteAllText(Path.Combine(folder, DiagnosticsNaming.AudioPipelineDiagnosticReport), sb.ToString(), Encoding.UTF8);
         }
 
         private static void WriteJson(string folder, SessionEvidence evidence, AudioCaptureDiagnosticsSnapshot audio, string result)
@@ -507,7 +509,8 @@ namespace FemVoiceStudio.Services
 
             File.WriteAllText(
                 Path.Combine(folder, DiagnosticsNaming.EvidenceJson),
-                JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }));
+                JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }),
+                Encoding.UTF8);
         }
 
         private static void WriteErrorsOnly(string folder, SessionEvidence evidence, AudioCaptureDiagnosticsSnapshot audio)
@@ -526,7 +529,10 @@ namespace FemVoiceStudio.Services
                 sb.AppendLine($"RC0 write failure detected this process: {firstWriteError}");
 
             TryAppendRuntimeErrorLines(sb);
-            File.WriteAllText(Path.Combine(folder, DiagnosticsNaming.ErrorsOnly), sb.Length == 0 ? "No errors captured." : sb.ToString());
+            File.WriteAllText(
+                Path.Combine(folder, DiagnosticsNaming.ErrorsOnly),
+                sb.Length == 0 ? "No errors captured." : sb.ToString(),
+                Encoding.UTF8);
         }
 
         private static void TryAppendRuntimeErrorLines(StringBuilder sb)
@@ -536,7 +542,7 @@ namespace FemVoiceStudio.Services
                 if (!File.Exists(Rc0RuntimeLog.CurrentLogPath))
                     return;
 
-                foreach (var line in File.ReadLines(Rc0RuntimeLog.CurrentLogPath))
+                foreach (var line in File.ReadLines(Rc0RuntimeLog.CurrentLogPath, Encoding.UTF8))
                 {
                     if (line.Contains("FAILED", StringComparison.OrdinalIgnoreCase)
                         || line.Contains("ERROR", StringComparison.OrdinalIgnoreCase)
@@ -566,7 +572,8 @@ namespace FemVoiceStudio.Services
                 "- [ ] Pitch graph updates\n" +
                 "- [ ] Resonance graph updates\n" +
                 "- [ ] Reports open\n" +
-                "- [ ] Reports contain session data\n");
+                "- [ ] Reports contain session data\n",
+                Encoding.UTF8);
         }
 
         private static void AppendCheck(StringBuilder sb, string name, bool passed, string detail)

@@ -166,7 +166,7 @@ namespace FemVoiceStudio.Services
 
         private static bool HasReadableCsv(string path)
         {
-            var text = File.ReadAllText(path);
+            var text = File.ReadAllText(path, System.Text.Encoding.UTF8);
             return !string.IsNullOrWhiteSpace(text)
                 && text.Contains(',', StringComparison.Ordinal)
                 && text.Contains(Environment.NewLine, StringComparison.Ordinal);
@@ -249,7 +249,8 @@ namespace FemVoiceStudio.Services
                 };
                 File.WriteAllText(
                     Path.Combine(DiagnosticsNaming.PrimaryRoot, "REPORT_VERIFICATION_STATUS.json"),
-                    JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }));
+                    JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }),
+                    System.Text.Encoding.UTF8);
             }
             catch (Exception ex)
             {

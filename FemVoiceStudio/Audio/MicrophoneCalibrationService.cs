@@ -77,7 +77,7 @@ namespace FemVoiceStudio.Audio
             try
             {
                 return JsonSerializer.Deserialize<MicrophoneCalibrationProfile>(
-                    File.ReadAllText(path));
+                    File.ReadAllText(path, System.Text.Encoding.UTF8));
             }
             catch
             {
@@ -89,7 +89,7 @@ namespace FemVoiceStudio.Audio
         {
             Directory.CreateDirectory(_profileDirectory);
             var json = JsonSerializer.Serialize(profile, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(GetProfilePath(profile.DeviceName), json);
+            File.WriteAllText(GetProfilePath(profile.DeviceName), json, System.Text.Encoding.UTF8);
         }
 
         public void Save(string deviceName, float[] backgroundSamples, float[] comfortableVoiceSamples)

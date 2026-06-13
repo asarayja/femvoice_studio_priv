@@ -25,7 +25,8 @@ namespace FemVoiceStudio.Services
 
             try
             {
-                return JsonSerializer.Deserialize<VoiceGoalProfile>(File.ReadAllText(path));
+                return JsonSerializer.Deserialize<VoiceGoalProfile>(
+                    File.ReadAllText(path, System.Text.Encoding.UTF8));
             }
             catch
             {
@@ -41,7 +42,7 @@ namespace FemVoiceStudio.Services
                 profile.CreatedAt = profile.UpdatedAt;
 
             var json = JsonSerializer.Serialize(profile, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(GetPath(profile.UserId), json);
+            File.WriteAllText(GetPath(profile.UserId), json, System.Text.Encoding.UTF8);
         }
 
         private string GetPath(int userId) => Path.Combine(_directory, $"user-{userId}.json");
