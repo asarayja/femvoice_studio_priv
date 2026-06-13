@@ -191,7 +191,7 @@
                                         HorizontalAlignment="Right"
                                         Background="{Binding Score, Converter={StaticResource ScoreToColor}}">
                                     <TextBlock Text="{Binding ScoreDisplay}" FontSize="13" FontWeight="Bold" 
-                                               Foreground="White"/>
+                                               Foreground="{DynamicResource TextOnAccentBrush}"/>
                                 </Border>
                             </Grid>
                         </DataTemplate>

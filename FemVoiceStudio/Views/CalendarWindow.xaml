@@ -113,7 +113,7 @@
             <TextBlock Text="{loc:Loc Calendar_NoSessions}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center"/>
             <Rectangle Width="20" Height="12" Fill="{DynamicResource BackgroundTertiaryBrush}" Margin="8,0,20,0" RadiusX="2" RadiusY="2"/>
             <TextBlock Text="{loc:Loc Calendar_1Session}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center"/>
-            <Rectangle Width="20" Height="12" Fill="#A5D6A7" Margin="8,0,20,0" RadiusX="2" RadiusY="2"/>
+            <Rectangle Width="20" Height="12" Fill="{DynamicResource SuccessHoverBrush}" Margin="8,0,20,0" RadiusX="2" RadiusY="2"/>
             <TextBlock Text="{loc:Loc Calendar_2PlusSessions}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center"/>
             <Rectangle Width="20" Height="12" Fill="{DynamicResource SuccessBrush}" Margin="8,0,0,0" RadiusX="2" RadiusY="2"/>
         </StackPanel>

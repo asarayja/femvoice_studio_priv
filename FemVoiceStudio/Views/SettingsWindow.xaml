@@ -193,8 +193,8 @@
         <Button Grid.Row="2" Content="{loc:Loc Settings_Close}" Click="OnClose" 
                 HorizontalAlignment="Right"
                 Padding="20,10"
-                Background="#F44336"
-                Foreground="White"
+                Background="{DynamicResource ErrorBrush}"
+                Foreground="{DynamicResource TextOnAccentBrush}"
                 BorderThickness="0"
                 Cursor="Hand"
                 FontWeight="SemiBold"
@@ -204,7 +204,7 @@
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="Button">
-                                <Border Background="#F44336" 
+                                <Border Background="{TemplateBinding Background}" 
                                         CornerRadius="4" 
                                         Padding="{TemplateBinding Padding}">
                                     <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -214,7 +214,7 @@
                     </Setter>
                     <Style.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="#EF5350"/>
+                            <Setter Property="Background" Value="{DynamicResource ErrorHoverBrush}"/>
                         </Trigger>
                     </Style.Triggers>
                 </Style>

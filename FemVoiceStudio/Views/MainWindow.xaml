@@ -90,88 +90,88 @@
         
         <!-- Beginner Button - Green -->
         <Style x:Key="BeginnerButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
-            <Setter Property="Background" Value="#4CAF50"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource SuccessBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#66BB6A"/>
+                    <Setter Property="Background" Value="{DynamicResource SuccessHoverBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
         
         <!-- Intermediate Button - Orange -->
         <Style x:Key="IntermediateButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
-            <Setter Property="Background" Value="#FF9800"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource WarningBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#FFB74D"/>
+                    <Setter Property="Background" Value="{DynamicResource WarningHoverBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
         
         <!-- Advanced Button - Red -->
         <Style x:Key="AdvancedButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
-            <Setter Property="Background" Value="#F44336"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource ErrorBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#EF5350"/>
+                    <Setter Property="Background" Value="{DynamicResource ErrorHoverBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
         
         <!-- Calendar Button - Blue -->
         <Style x:Key="CalendarButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
-            <Setter Property="Background" Value="#2196F3"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource InfoBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#42A5F5"/>
+                    <Setter Property="Background" Value="{DynamicResource InfoHoverBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
         
         <!-- Statistics Button - Purple -->
         <Style x:Key="StatisticsButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
-            <Setter Property="Background" Value="#9C27B0"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource DashboardStatisticsBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#BA68C8"/>
+                    <Setter Property="Background" Value="{DynamicResource DashboardStatisticsHoverBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
         
         <!-- Exercise Guide Button - Teal -->
         <Style x:Key="ExerciseGuideButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
-            <Setter Property="Background" Value="#009688"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource DashboardGuideBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#4DB6AC"/>
+                    <Setter Property="Background" Value="{DynamicResource DashboardGuideHoverBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
         
         <!-- Analyzer Button - Indigo -->
         <Style x:Key="AnalyzerButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
-            <Setter Property="Background" Value="#3F51B5"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource DashboardAnalyzerBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#7986CB"/>
+                    <Setter Property="Background" Value="{DynamicResource DashboardAnalyzerHoverBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
         
         <!-- Settings Button - Gray -->
         <Style x:Key="SettingsButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
-            <Setter Property="Background" Value="#607D8B"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource DashboardSettingsBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#90A4AE"/>
+                    <Setter Property="Background" Value="{DynamicResource DashboardSettingsHoverBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>

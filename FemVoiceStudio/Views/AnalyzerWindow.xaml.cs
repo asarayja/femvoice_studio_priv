@@ -41,13 +41,6 @@ namespace FemVoiceStudio.Views
         private double _latestResonanceScore;
         private double _latestMainFrequency;
         
-        private readonly SolidColorBrush _targetBrush = new(Colors.Yellow);
-        private readonly SolidColorBrush _mainFreqBrush = new(Colors.White);
-        private readonly SolidColorBrush _forwardZoneBrush = new(Color.FromArgb(40, 71, 209, 168));
-        private readonly SolidColorBrush _f1Brush = new(Color.FromRgb(99, 179, 237));
-        private readonly SolidColorBrush _f2Brush = new(Color.FromRgb(72, 187, 120));
-        private readonly SolidColorBrush _f3Brush = new(Color.FromRgb(246, 173, 85));
-        
         public AnalyzerWindow()
         {
             InitializeComponent();
@@ -167,7 +160,7 @@ namespace FemVoiceStudio.Views
             for (int y = 0; y < SpectrogramHeight; y++)
             {
                 double freq = maxFreq - (y * (maxFreq - minFreq) / SpectrogramHeight);
-                SolidColorBrush brush = GetSpectrogramBackgroundColor(freq);
+                Brush brush = GetSpectrogramBackgroundColor(freq);
                 
                 var line = new Line
                 {
@@ -182,29 +175,36 @@ namespace FemVoiceStudio.Views
             }
         }
         
-        private SolidColorBrush GetFrequencyColor(double frequency)
+        private Brush GetFrequencyColor(double frequency)
         {
             if (frequency < 85)
-                return new SolidColorBrush(Color.FromRgb(128, 64, 64));
+                return ResourceBrush("AnalyzerRangeVeryLowBrush", Brushes.Firebrick);
             else if (frequency <= 155)
-                return new SolidColorBrush(Color.FromRgb(64, 64, 255));
+                return ResourceBrush("AnalyzerRangeLowBrush", Brushes.RoyalBlue);
             else if (frequency < 165)
-                return new SolidColorBrush(Color.FromRgb(64, 128, 64));
+                return ResourceBrush("AnalyzerRangeMiddleBrush", Brushes.SeaGreen);
             else if (frequency <= 320)
-                return new SolidColorBrush(Color.FromRgb(255, 64, 64));
+                return ResourceBrush("AnalyzerRangeUpperBrush", Brushes.IndianRed);
             else
-                return new SolidColorBrush(Color.FromRgb(255, 128, 128));
+                return ResourceBrush("AnalyzerRangeVeryHighBrush", Brushes.LightCoral);
         }
 
-        private SolidColorBrush GetSpectrogramBackgroundColor(double frequency)
+        private Brush GetSpectrogramBackgroundColor(double frequency)
         {
             if (frequency >= 1800 && frequency <= 3200)
-                return new SolidColorBrush(Color.FromRgb(9, 28, 31));
+                return ResourceBrush("AnalyzerSpectrogramForwardBrush", Brushes.DarkSlateGray);
 
             if (frequency > 3200)
-                return new SolidColorBrush(Color.FromRgb(26, 18, 18));
+                return ResourceBrush("AnalyzerSpectrogramHighBrush", Brushes.Maroon);
 
-            return new SolidColorBrush(Color.FromRgb(8, 12, 22));
+            return ResourceBrush("AnalyzerSpectrogramLowBrush", Brushes.Black);
+        }
+
+        private Brush ResourceBrush(string key, Brush fallback)
+        {
+            return TryFindResource(key) as Brush
+                   ?? Application.Current?.TryFindResource(key) as Brush
+                   ?? fallback;
         }
         
         private void InitializeNoteButtons()
@@ -241,7 +241,7 @@ namespace FemVoiceStudio.Views
                         Height = 30,
                         Margin = new Thickness(2),
                         Background = GetFrequencyColor(frequency),
-                        Foreground = Brushes.White,
+                        Foreground = ResourceBrush("TextOnAccentBrush", Brushes.White),
                         Tag = frequency,
                         ToolTip = $"{frequency:F1} Hz"
                     };
@@ -292,7 +292,7 @@ namespace FemVoiceStudio.Views
                 X2 = SpectrogramWidth,
                 Y1 = y,
                 Y2 = y,
-                Stroke = _targetBrush,
+                Stroke = ResourceBrush("AnalyzerTargetLineBrush", Brushes.Yellow),
                 StrokeThickness = 2,
                 Tag = "target",
                 StrokeDashArray = new DoubleCollection { 4, 2 }
@@ -447,7 +447,7 @@ namespace FemVoiceStudio.Views
                     X2 = SpectrogramWidth,
                     Y1 = mainY,
                     Y2 = mainY,
-                    Stroke = _mainFreqBrush,
+                    Stroke = ResourceBrush("AnalyzerMainFrequencyBrush", Brushes.White),
                     StrokeThickness = 2,
                     Tag = "mainfreq"
                 };
@@ -479,7 +479,7 @@ namespace FemVoiceStudio.Views
             {
                 Width = SpectrogramWidth,
                 Height = Math.Max(1, zoneHeight),
-                Fill = _forwardZoneBrush,
+                Fill = ResourceBrush("AnalyzerForwardZoneBrush", Brushes.MediumAquamarine),
                 Tag = "resonance-overlay"
             };
             Canvas.SetLeft(zone, 0);
@@ -490,10 +490,10 @@ namespace FemVoiceStudio.Views
             {
                 var brush = marker.Name switch
                 {
-                    "F1" => _f1Brush,
-                    "F2" => _f2Brush,
-                    "F3" => _f3Brush,
-                    _ => Brushes.White
+                    "F1" => ResourceBrush("AnalyzerF1Brush", Brushes.SkyBlue),
+                    "F2" => ResourceBrush("AnalyzerF2Brush", Brushes.MediumSeaGreen),
+                    "F3" => ResourceBrush("AnalyzerF3Brush", Brushes.SandyBrown),
+                    _ => ResourceBrush("TextOnAccentBrush", Brushes.White)
                 };
 
                 var line = new Line
@@ -513,7 +513,7 @@ namespace FemVoiceStudio.Views
                 {
                     Text = $"{marker.Name} {marker.FrequencyHz:F0} Hz",
                     Foreground = brush,
-                    Background = Brushes.Black,
+                    Background = ResourceBrush("AnalyzerSpectrogramLabelBackgroundBrush", Brushes.Black),
                     FontSize = 11,
                     FontWeight = FontWeights.SemiBold,
                     Tag = "resonance-overlay"
@@ -645,7 +645,7 @@ namespace FemVoiceStudio.Views
                 }
                 
                 RecordButton.Content = Loc.Get("Analyzer_StopRecording");
-                RecordButton.Background = Brushes.Red;
+                RecordButton.Background = ResourceBrush("ErrorBrush", Brushes.Red);
             }
             catch (Exception ex)
             {
@@ -668,7 +668,7 @@ namespace FemVoiceStudio.Views
             AnalyzerDebugPanel.Visibility = Visibility.Collapsed;
             
             RecordButton.Content = Loc.Get("Analyzer_StartRecording");
-            RecordButton.Background = new SolidColorBrush(Color.FromRgb(0, 120, 212));
+            RecordButton.Background = ResourceBrush("AccentPrimaryBrush", Brushes.DodgerBlue);
             
             if (_recordedFrequencies.Count > 0)
             {

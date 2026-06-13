@@ -137,7 +137,7 @@
                              HealthWarningBrush (ErrorBrush→WarningBrush ved
                              StressSensitiveMode) i stedet for den hardkodede alarmfargen.
                              HealthWarningText er uberørt — helsevarselet formidles alltid. -->
-                        <Border Background="#33FF5555"
+                        <Border Background="{DynamicResource HealthWarningBackgroundBrush}"
                                 CornerRadius="6"
                                 Padding="12,10"
                                 Margin="0,12,0,0"
@@ -146,7 +146,7 @@
                                 <TextBlock Text="⚠️" FontSize="16" Margin="0,0,10,0"/>
                                 <TextBlock Text="{Binding HealthWarningText}"
                                            FontSize="13"
-                                           Foreground="{Binding HealthWarningBrush, TargetNullValue=#FFFF8888, FallbackValue=#FFFF8888}"
+                                           Foreground="{Binding HealthWarningBrush, TargetNullValue={StaticResource HealthWarningTextBrush}, FallbackValue={StaticResource HealthWarningTextBrush}}"
                                            TextWrapping="Wrap"
                                            MaxWidth="500"/>
                             </StackPanel>

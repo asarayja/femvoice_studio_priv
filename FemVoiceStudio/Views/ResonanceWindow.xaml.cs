@@ -189,15 +189,15 @@ namespace FemVoiceStudio.Views
             
             if (resonanceScore.TotalScore >= 70)
             {
-                ResonanceScoreText.Foreground = successBrush ?? System.Windows.Media.Brushes.Green;
+                ResonanceScoreText.Foreground = successBrush ?? SystemColors.ControlTextBrush;
             }
             else if (resonanceScore.TotalScore >= 50)
             {
-                ResonanceScoreText.Foreground = warningBrush ?? System.Windows.Media.Brushes.Orange;
+                ResonanceScoreText.Foreground = warningBrush ?? SystemColors.ControlTextBrush;
             }
             else
             {
-                ResonanceScoreText.Foreground = dangerBrush ?? System.Windows.Media.Brushes.Red;
+                ResonanceScoreText.Foreground = dangerBrush ?? SystemColors.ControlTextBrush;
             }
         }
         

@@ -7,6 +7,14 @@ using FemVoiceStudio.Models;
 
 namespace FemVoiceStudio.Converters
 {
+    internal static class ThemeBrushResolver
+    {
+        public static Brush Get(string key, Brush fallback)
+        {
+            return Application.Current?.TryFindResource(key) as Brush ?? fallback;
+        }
+    }
+
     /// <summary>Konverterer bool til Visibility</summary>
     public class BoolToVisibilityConverter : IValueConverter
     {
@@ -41,13 +49,13 @@ namespace FemVoiceStudio.Converters
             if (value is double pitch && pitch > 0)
             {
                 if (pitch >= MinPitch && pitch <= MaxPitch)
-                    return new SolidColorBrush(Color.FromRgb(0, 180, 0));
+                    return ThemeBrushResolver.Get("SuccessBrush", SystemColors.ControlTextBrush);
                 else if (pitch < MinPitch)
-                    return new SolidColorBrush(Color.FromRgb(255, 140, 0));
+                    return ThemeBrushResolver.Get("WarningBrush", SystemColors.ControlTextBrush);
                 else
-                    return new SolidColorBrush(Color.FromRgb(255, 80, 80));
+                    return ThemeBrushResolver.Get("ErrorBrush", SystemColors.ControlTextBrush);
             }
-            return new SolidColorBrush(Colors.Gray);
+            return ThemeBrushResolver.Get("TextDisabledBrush", SystemColors.GrayTextBrush);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -63,13 +71,13 @@ namespace FemVoiceStudio.Converters
             {
                 return level switch
                 {
-                    Models.DifficultyLevel.Nybegynner => new SolidColorBrush(Color.FromRgb(76, 175, 80)),
-                    Models.DifficultyLevel.Middels    => new SolidColorBrush(Color.FromRgb(255, 193, 7)),
-                    Models.DifficultyLevel.Avansert   => new SolidColorBrush(Color.FromRgb(244, 67, 54)),
-                    _                                 => new SolidColorBrush(Colors.Gray)
+                    Models.DifficultyLevel.Nybegynner => ThemeBrushResolver.Get("SuccessBrush", SystemColors.ControlTextBrush),
+                    Models.DifficultyLevel.Middels    => ThemeBrushResolver.Get("WarningBrush", SystemColors.ControlTextBrush),
+                    Models.DifficultyLevel.Avansert   => ThemeBrushResolver.Get("ErrorBrush", SystemColors.ControlTextBrush),
+                    _                                 => ThemeBrushResolver.Get("TextDisabledBrush", SystemColors.GrayTextBrush)
                 };
             }
-            return new SolidColorBrush(Colors.Gray);
+            return ThemeBrushResolver.Get("TextDisabledBrush", SystemColors.GrayTextBrush);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -83,12 +91,12 @@ namespace FemVoiceStudio.Converters
         {
             if (value is double score)
             {
-                if (score >= 80) return new SolidColorBrush(Color.FromRgb(76, 175, 80));
-                if (score >= 60) return new SolidColorBrush(Color.FromRgb(255, 193, 7));
-                if (score >= 40) return new SolidColorBrush(Color.FromRgb(255, 152, 0));
-                return new SolidColorBrush(Color.FromRgb(244, 67, 54));
+                if (score >= 80) return ThemeBrushResolver.Get("SuccessBrush", SystemColors.ControlTextBrush);
+                if (score >= 60) return ThemeBrushResolver.Get("WarningBrush", SystemColors.ControlTextBrush);
+                if (score >= 40) return ThemeBrushResolver.Get("WarningHoverBrush", SystemColors.ControlTextBrush);
+                return ThemeBrushResolver.Get("ErrorBrush", SystemColors.ControlTextBrush);
             }
-            return new SolidColorBrush(Colors.Gray);
+            return ThemeBrushResolver.Get("TextDisabledBrush", SystemColors.GrayTextBrush);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -125,8 +133,8 @@ namespace FemVoiceStudio.Converters
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is bool b && b)
-                return new SolidColorBrush(Color.FromRgb(255, 80, 80));
-            return new SolidColorBrush(Color.FromRgb(76, 175, 80));
+                return ThemeBrushResolver.Get("ErrorBrush", SystemColors.ControlTextBrush);
+            return ThemeBrushResolver.Get("SuccessBrush", SystemColors.ControlTextBrush);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -190,13 +198,13 @@ namespace FemVoiceStudio.Converters
             {
                 return level switch
                 {
-                    Services.TrainingLevel.Beginner     => new SolidColorBrush(Color.FromRgb(76, 175, 80)),
-                    Services.TrainingLevel.Intermediate => new SolidColorBrush(Color.FromRgb(255, 193, 7)),
-                    Services.TrainingLevel.Advanced     => new SolidColorBrush(Color.FromRgb(33, 150, 243)),
-                    _                                   => new SolidColorBrush(Colors.Gray)
+                    Services.TrainingLevel.Beginner     => ThemeBrushResolver.Get("SuccessBrush", SystemColors.ControlTextBrush),
+                    Services.TrainingLevel.Intermediate => ThemeBrushResolver.Get("WarningBrush", SystemColors.ControlTextBrush),
+                    Services.TrainingLevel.Advanced     => ThemeBrushResolver.Get("InfoBrush", SystemColors.ControlTextBrush),
+                    _                                   => ThemeBrushResolver.Get("TextDisabledBrush", SystemColors.GrayTextBrush)
                 };
             }
-            return new SolidColorBrush(Colors.Gray);
+            return ThemeBrushResolver.Get("TextDisabledBrush", SystemColors.GrayTextBrush);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -279,9 +287,9 @@ namespace FemVoiceStudio.Converters
             if (value is not MessageSeverity severity) return Brushes.Transparent;
             return severity switch
             {
-                MessageSeverity.Warning    => new SolidColorBrush(Color.FromArgb(40, 255, 68,  68)),
-                MessageSeverity.Suggestion => new SolidColorBrush(Color.FromArgb(40, 255, 165,  0)),
-                _                          => new SolidColorBrush(Color.FromArgb(40, 100, 149, 237))
+                MessageSeverity.Warning    => ThemeBrushResolver.Get("HealthWarningBackgroundBrush", Brushes.Transparent),
+                MessageSeverity.Suggestion => ThemeBrushResolver.Get("AccentLightBrush", Brushes.Transparent),
+                _                          => ThemeBrushResolver.Get("BackgroundTertiaryBrush", Brushes.Transparent)
             };
         }
 

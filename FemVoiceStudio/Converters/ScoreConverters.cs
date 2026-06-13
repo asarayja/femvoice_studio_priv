@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Windows;
 using System.Windows.Data;
 
 namespace FemVoiceStudio.Converters
@@ -43,15 +44,15 @@ namespace FemVoiceStudio.Converters
             {
                 return stability switch
                 {
-                    Models.StabilityState.VeryStable => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(76, 175, 80)),   // Green
-                    Models.StabilityState.Stable => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(139, 195, 74)),   // Light Green
-                    Models.StabilityState.Developing => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 193, 7)), // Yellow
-                    Models.StabilityState.Unstable => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 152, 0)),   // Orange
-                    _ => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(158, 158, 158))                              // Gray - NoVoice
+                    Models.StabilityState.VeryStable => ThemeBrushResolver.Get("SuccessBrush", SystemColors.ControlTextBrush),
+                    Models.StabilityState.Stable => ThemeBrushResolver.Get("SuccessHoverBrush", SystemColors.ControlTextBrush),
+                    Models.StabilityState.Developing => ThemeBrushResolver.Get("WarningBrush", SystemColors.ControlTextBrush),
+                    Models.StabilityState.Unstable => ThemeBrushResolver.Get("ErrorBrush", SystemColors.ControlTextBrush),
+                    _ => ThemeBrushResolver.Get("TextDisabledBrush", SystemColors.GrayTextBrush)
                 };
             }
             
-            return new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Gray);
+            return ThemeBrushResolver.Get("TextDisabledBrush", SystemColors.GrayTextBrush);
         }
         
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -71,15 +72,15 @@ namespace FemVoiceStudio.Converters
             {
                 return health switch
                 {
-                    Models.HealthState.Safe => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(76, 175, 80)),    // Green
-                    Models.HealthState.Monitor => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 193, 7)), // Yellow
-                    Models.HealthState.Warning => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 152, 0)),  // Orange
-                    Models.HealthState.Danger => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(244, 67, 54)),   // Red
-                    _ => new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(158, 158, 158))                         // Gray - NoVoice
+                    Models.HealthState.Safe => ThemeBrushResolver.Get("SuccessBrush", SystemColors.ControlTextBrush),
+                    Models.HealthState.Monitor => ThemeBrushResolver.Get("WarningBrush", SystemColors.ControlTextBrush),
+                    Models.HealthState.Warning => ThemeBrushResolver.Get("WarningHoverBrush", SystemColors.ControlTextBrush),
+                    Models.HealthState.Danger => ThemeBrushResolver.Get("ErrorBrush", SystemColors.ControlTextBrush),
+                    _ => ThemeBrushResolver.Get("TextDisabledBrush", SystemColors.GrayTextBrush)
                 };
             }
             
-            return new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Gray);
+            return ThemeBrushResolver.Get("TextDisabledBrush", SystemColors.GrayTextBrush);
         }
         
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

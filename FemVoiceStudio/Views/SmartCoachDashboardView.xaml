@@ -98,7 +98,7 @@
                          i stedet for den hardkodede alarmfargen. HealthWarningText er
                          uberørt — helsevarselet formidles alltid. TargetNullValue gir en
                          trygg fallback når Application-ressurser mangler (design/test). -->
-                    <Border Background="#33FF5555"
+                    <Border Background="{DynamicResource HealthWarningBackgroundBrush}"
                             CornerRadius="6"
                             Padding="10,8"
                             Margin="0,10,0,0"
@@ -107,7 +107,7 @@
                             <TextBlock Text="⚠️" FontSize="14" Margin="0,0,8,0"/>
                             <TextBlock Text="{Binding HealthWarningText}"
                                        FontSize="12"
-                                       Foreground="{Binding HealthWarningBrush, TargetNullValue=#FFFF8888, FallbackValue=#FFFF8888}"
+                                       Foreground="{Binding HealthWarningBrush, TargetNullValue={StaticResource HealthWarningTextBrush}, FallbackValue={StaticResource HealthWarningTextBrush}}"
                                        TextWrapping="Wrap"
                                        MaxWidth="280"/>
                         </StackPanel>
@@ -130,7 +130,7 @@
                 <StackPanel Grid.Column="0" HorizontalAlignment="Center"
                             Visibility="{Binding ShowSecondaryBadges, Converter={StaticResource BoolToVisibility}}">
                     <Border Background="{DynamicResource WarningBrush}" CornerRadius="20" Width="40" Height="40" HorizontalAlignment="Center" Margin="0,0,0,6">
-                        <TextBlock Text="&#xE7BC;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Text="&#xE7BC;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="{DynamicResource TextOnAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <TextBlock Text="{Binding CurrentStreak}"
                                FontSize="20"
@@ -148,7 +148,7 @@
                 <StackPanel Grid.Column="1" HorizontalAlignment="Center"
                             Visibility="{Binding ShowSecondaryBadges, Converter={StaticResource BoolToVisibility}}">
                     <Border Background="{DynamicResource InfoBrush}" CornerRadius="20" Width="40" Height="40" HorizontalAlignment="Center" Margin="0,0,0,6">
-                        <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="{DynamicResource TextOnAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <TextBlock Text="{Binding SessionsThisWeek}"
                                FontSize="20"
@@ -164,7 +164,7 @@
                 <!-- Health Score (beholdes alltid — helse-info) -->
                 <StackPanel Grid.Column="2" HorizontalAlignment="Center">
                     <Border Background="{DynamicResource SuccessBrush}" CornerRadius="20" Width="40" Height="40" HorizontalAlignment="Center" Margin="0,0,0,6">
-                        <TextBlock Text="&#xE8E1;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Text="&#xE8E1;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="{DynamicResource TextOnAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <TextBlock Text="{Binding HealthScore, StringFormat={}{0:F0}%}" 
                                FontSize="20" 

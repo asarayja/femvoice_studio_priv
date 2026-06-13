@@ -29,7 +29,7 @@
             </Grid.ColumnDefinitions>
             
             <!-- Spectrogram -->
-            <Border Grid.Column="0" Background="Black" CornerRadius="8" Margin="0,0,16,0">
+            <Border Grid.Column="0" Background="{DynamicResource AnalyzerSpectrogramLowBrush}" CornerRadius="8" Margin="0,0,16,0">
                 <Canvas x:Name="SpectrogramCanvas" Width="800" Height="400"/>
             </Border>
             
@@ -82,9 +82,9 @@
                         HorizontalAlignment="Stretch"/>
                 
                 <!-- Debug Info -->
-                <Border x:Name="AnalyzerDebugPanel" Background="#333333" CornerRadius="4" Padding="8,4" Margin="0,0,0,16"
+                <Border x:Name="AnalyzerDebugPanel" Background="{DynamicResource AnalyzerDebugPanelBrush}" CornerRadius="4" Padding="8,4" Margin="0,0,0,16"
                         Visibility="Collapsed">
-                    <TextBlock x:Name="AnalyzerDebugText" FontSize="11" FontFamily="Consolas" Foreground="#00FF00" TextWrapping="Wrap"/>
+                    <TextBlock x:Name="AnalyzerDebugText" FontSize="11" FontFamily="Consolas" Foreground="{DynamicResource AnalyzerDebugTextBrush}" TextWrapping="Wrap"/>
                 </Border>
             </StackPanel>
         </Grid>
@@ -208,8 +208,8 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="60"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="{loc:Loc Analyzer_RangeVeryLow}" Foreground="#802020"/>
-                    <Border x:Name="InfraMascBar" Grid.Column="1" Height="16" Background="#802020" HorizontalAlignment="Left" Width="0"/>
+                    <TextBlock Text="{loc:Loc Analyzer_RangeVeryLow}" Foreground="{DynamicResource AnalyzerRangeVeryLowBrush}"/>
+                    <Border x:Name="InfraMascBar" Grid.Column="1" Height="16" Background="{DynamicResource AnalyzerRangeVeryLowBrush}" HorizontalAlignment="Left" Width="0"/>
                     <TextBlock x:Name="InfraMascText" Grid.Column="2" HorizontalAlignment="Right" Foreground="{DynamicResource TextPrimaryBrush}"/>
                 </Grid>
                 
@@ -219,8 +219,8 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="60"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="{loc:Loc Analyzer_RangeLow}" Foreground="#4040FF"/>
-                    <Border x:Name="MascBar" Grid.Column="1" Height="16" Background="#4040FF" HorizontalAlignment="Left" Width="0"/>
+                    <TextBlock Text="{loc:Loc Analyzer_RangeLow}" Foreground="{DynamicResource AnalyzerRangeLowBrush}"/>
+                    <Border x:Name="MascBar" Grid.Column="1" Height="16" Background="{DynamicResource AnalyzerRangeLowBrush}" HorizontalAlignment="Left" Width="0"/>
                     <TextBlock x:Name="MascText" Grid.Column="2" HorizontalAlignment="Right" Foreground="{DynamicResource TextPrimaryBrush}"/>
                 </Grid>
                 
@@ -230,8 +230,8 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="60"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="{loc:Loc Analyzer_RangeMiddle}" Foreground="#408040"/>
-                    <Border x:Name="EnbyBar" Grid.Column="1" Height="16" Background="#408040" HorizontalAlignment="Left" Width="0"/>
+                    <TextBlock Text="{loc:Loc Analyzer_RangeMiddle}" Foreground="{DynamicResource AnalyzerRangeMiddleBrush}"/>
+                    <Border x:Name="EnbyBar" Grid.Column="1" Height="16" Background="{DynamicResource AnalyzerRangeMiddleBrush}" HorizontalAlignment="Left" Width="0"/>
                     <TextBlock x:Name="EnbyText" Grid.Column="2" HorizontalAlignment="Right" Foreground="{DynamicResource TextPrimaryBrush}"/>
                 </Grid>
                 
@@ -241,8 +241,8 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="60"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="{loc:Loc Analyzer_RangeUpper}" Foreground="#FF4040"/>
-                    <Border x:Name="FemBar" Grid.Column="1" Height="16" Background="#FF4040" HorizontalAlignment="Left" Width="0"/>
+                    <TextBlock Text="{loc:Loc Analyzer_RangeUpper}" Foreground="{DynamicResource AnalyzerRangeUpperBrush}"/>
+                    <Border x:Name="FemBar" Grid.Column="1" Height="16" Background="{DynamicResource AnalyzerRangeUpperBrush}" HorizontalAlignment="Left" Width="0"/>
                     <TextBlock x:Name="FemText" Grid.Column="2" HorizontalAlignment="Right" Foreground="{DynamicResource TextPrimaryBrush}"/>
                 </Grid>
                 
@@ -252,8 +252,8 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="60"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="{loc:Loc Analyzer_RangeVeryHigh}" Foreground="#FF8080"/>
-                    <Border x:Name="UltraFemBar" Grid.Column="1" Height="16" Background="#FF8080" HorizontalAlignment="Left" Width="0"/>
+                    <TextBlock Text="{loc:Loc Analyzer_RangeVeryHigh}" Foreground="{DynamicResource AnalyzerRangeVeryHighBrush}"/>
+                    <Border x:Name="UltraFemBar" Grid.Column="1" Height="16" Background="{DynamicResource AnalyzerRangeVeryHighBrush}" HorizontalAlignment="Left" Width="0"/>
                     <TextBlock x:Name="UltraFemText" Grid.Column="2" HorizontalAlignment="Right" Foreground="{DynamicResource TextPrimaryBrush}"/>
                 </Grid>
             </StackPanel>

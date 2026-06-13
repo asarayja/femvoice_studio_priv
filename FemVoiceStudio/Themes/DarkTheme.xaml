@@ -52,6 +52,12 @@
     <Color x:Key="WarningColor">#FFB74D</Color>
     <Color x:Key="ErrorColor">#EF5350</Color>
     <Color x:Key="InfoColor">#42A5F5</Color>
+    <Color x:Key="SuccessHoverColor">#66BB6A</Color>
+    <Color x:Key="WarningHoverColor">#FFD180</Color>
+    <Color x:Key="ErrorHoverColor">#FF8A80</Color>
+    <Color x:Key="InfoHoverColor">#64B5F6</Color>
+    <Color x:Key="HealthWarningBackgroundColor">#33FF5555</Color>
+    <Color x:Key="HealthWarningTextColor">#FF8888</Color>
     <!-- Quality-specific colors (subtle progression for dark theme) -->
     <Color x:Key="QualityColor_Poor">#4A2A2A</Color>
     <Color x:Key="QualityColor_Fair">#5A3E2B</Color>
@@ -64,6 +70,38 @@
     <Color x:Key="ChartGridColor">#3D4259</Color>
     <Color x:Key="ChartTargetAreaColor">#4CAF50</Color>
     <Color x:Key="ChartPitchColor">#FF7043</Color>
+    <Color x:Key="ChartResonanceColor">#FF6B9D</Color>
+    <Color x:Key="ChartIntonationColor">#81C784</Color>
+    <Color x:Key="ChartVoiceHealthColor">#FFD54F</Color>
+    
+    <!-- Dashboard/navigation semantic colors -->
+    <Color x:Key="DashboardStatisticsColor">#9C27B0</Color>
+    <Color x:Key="DashboardStatisticsHoverColor">#BA68C8</Color>
+    <Color x:Key="DashboardGuideColor">#009688</Color>
+    <Color x:Key="DashboardGuideHoverColor">#4DB6AC</Color>
+    <Color x:Key="DashboardAnalyzerColor">#3F51B5</Color>
+    <Color x:Key="DashboardAnalyzerHoverColor">#7986CB</Color>
+    <Color x:Key="DashboardSettingsColor">#607D8B</Color>
+    <Color x:Key="DashboardSettingsHoverColor">#90A4AE</Color>
+    
+    <!-- Analyzer/spectrogram colors -->
+    <Color x:Key="AnalyzerSpectrogramLowColor">#080C16</Color>
+    <Color x:Key="AnalyzerSpectrogramForwardColor">#091C1F</Color>
+    <Color x:Key="AnalyzerSpectrogramHighColor">#1A1212</Color>
+    <Color x:Key="AnalyzerDebugPanelColor">#333333</Color>
+    <Color x:Key="AnalyzerDebugTextColor">#00FF00</Color>
+    <Color x:Key="AnalyzerRangeVeryLowColor">#802020</Color>
+    <Color x:Key="AnalyzerRangeLowColor">#8080FF</Color>
+    <Color x:Key="AnalyzerRangeMiddleColor">#66AA66</Color>
+    <Color x:Key="AnalyzerRangeUpperColor">#FF7070</Color>
+    <Color x:Key="AnalyzerRangeVeryHighColor">#FFAAAA</Color>
+    <Color x:Key="AnalyzerTargetLineColor">#FFD54F</Color>
+    <Color x:Key="AnalyzerMainFrequencyColor">#FFFFFF</Color>
+    <Color x:Key="AnalyzerForwardZoneColor">#2847D1A8</Color>
+    <Color x:Key="AnalyzerF1Color">#63B3ED</Color>
+    <Color x:Key="AnalyzerF2Color">#48BB78</Color>
+    <Color x:Key="AnalyzerF3Color">#F6AD55</Color>
+    <Color x:Key="AnalyzerSpectrogramLabelBackgroundColor">#CC000000</Color>
     
     <!-- ============================================================================
          SOLID COLOR BRUSHES
@@ -104,6 +142,12 @@
     <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}"/>
     <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}"/>
     <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}"/>
+    <SolidColorBrush x:Key="SuccessHoverBrush" Color="{StaticResource SuccessHoverColor}"/>
+    <SolidColorBrush x:Key="WarningHoverBrush" Color="{StaticResource WarningHoverColor}"/>
+    <SolidColorBrush x:Key="ErrorHoverBrush" Color="{StaticResource ErrorHoverColor}"/>
+    <SolidColorBrush x:Key="InfoHoverBrush" Color="{StaticResource InfoHoverColor}"/>
+    <SolidColorBrush x:Key="HealthWarningBackgroundBrush" Color="{StaticResource HealthWarningBackgroundColor}"/>
+    <SolidColorBrush x:Key="HealthWarningTextBrush" Color="{StaticResource HealthWarningTextColor}"/>
 
     <SolidColorBrush x:Key="QualityBrush_Poor" Color="{StaticResource QualityColor_Poor}"/>
     <SolidColorBrush x:Key="QualityBrush_Fair" Color="{StaticResource QualityColor_Fair}"/>
@@ -120,6 +164,34 @@
     <SolidColorBrush x:Key="ChartGridBrush" Color="{StaticResource ChartGridColor}"/>
     <SolidColorBrush x:Key="ChartTargetAreaBrush" Color="{StaticResource ChartTargetAreaColor}"/>
     <SolidColorBrush x:Key="ChartPitchBrush" Color="{StaticResource ChartPitchColor}"/>
+    <SolidColorBrush x:Key="ChartResonanceBrush" Color="{StaticResource ChartResonanceColor}"/>
+    <SolidColorBrush x:Key="ChartIntonationBrush" Color="{StaticResource ChartIntonationColor}"/>
+    <SolidColorBrush x:Key="ChartVoiceHealthBrush" Color="{StaticResource ChartVoiceHealthColor}"/>
+    <SolidColorBrush x:Key="DashboardStatisticsBrush" Color="{StaticResource DashboardStatisticsColor}"/>
+    <SolidColorBrush x:Key="DashboardStatisticsHoverBrush" Color="{StaticResource DashboardStatisticsHoverColor}"/>
+    <SolidColorBrush x:Key="DashboardGuideBrush" Color="{StaticResource DashboardGuideColor}"/>
+    <SolidColorBrush x:Key="DashboardGuideHoverBrush" Color="{StaticResource DashboardGuideHoverColor}"/>
+    <SolidColorBrush x:Key="DashboardAnalyzerBrush" Color="{StaticResource DashboardAnalyzerColor}"/>
+    <SolidColorBrush x:Key="DashboardAnalyzerHoverBrush" Color="{StaticResource DashboardAnalyzerHoverColor}"/>
+    <SolidColorBrush x:Key="DashboardSettingsBrush" Color="{StaticResource DashboardSettingsColor}"/>
+    <SolidColorBrush x:Key="DashboardSettingsHoverBrush" Color="{StaticResource DashboardSettingsHoverColor}"/>
+    <SolidColorBrush x:Key="AnalyzerSpectrogramLowBrush" Color="{StaticResource AnalyzerSpectrogramLowColor}"/>
+    <SolidColorBrush x:Key="AnalyzerSpectrogramForwardBrush" Color="{StaticResource AnalyzerSpectrogramForwardColor}"/>
+    <SolidColorBrush x:Key="AnalyzerSpectrogramHighBrush" Color="{StaticResource AnalyzerSpectrogramHighColor}"/>
+    <SolidColorBrush x:Key="AnalyzerDebugPanelBrush" Color="{StaticResource AnalyzerDebugPanelColor}"/>
+    <SolidColorBrush x:Key="AnalyzerDebugTextBrush" Color="{StaticResource AnalyzerDebugTextColor}"/>
+    <SolidColorBrush x:Key="AnalyzerRangeVeryLowBrush" Color="{StaticResource AnalyzerRangeVeryLowColor}"/>
+    <SolidColorBrush x:Key="AnalyzerRangeLowBrush" Color="{StaticResource AnalyzerRangeLowColor}"/>
+    <SolidColorBrush x:Key="AnalyzerRangeMiddleBrush" Color="{StaticResource AnalyzerRangeMiddleColor}"/>
+    <SolidColorBrush x:Key="AnalyzerRangeUpperBrush" Color="{StaticResource AnalyzerRangeUpperColor}"/>
+    <SolidColorBrush x:Key="AnalyzerRangeVeryHighBrush" Color="{StaticResource AnalyzerRangeVeryHighColor}"/>
+    <SolidColorBrush x:Key="AnalyzerTargetLineBrush" Color="{StaticResource AnalyzerTargetLineColor}"/>
+    <SolidColorBrush x:Key="AnalyzerMainFrequencyBrush" Color="{StaticResource AnalyzerMainFrequencyColor}"/>
+    <SolidColorBrush x:Key="AnalyzerForwardZoneBrush" Color="{StaticResource AnalyzerForwardZoneColor}"/>
+    <SolidColorBrush x:Key="AnalyzerF1Brush" Color="{StaticResource AnalyzerF1Color}"/>
+    <SolidColorBrush x:Key="AnalyzerF2Brush" Color="{StaticResource AnalyzerF2Color}"/>
+    <SolidColorBrush x:Key="AnalyzerF3Brush" Color="{StaticResource AnalyzerF3Color}"/>
+    <SolidColorBrush x:Key="AnalyzerSpectrogramLabelBackgroundBrush" Color="{StaticResource AnalyzerSpectrogramLabelBackgroundColor}"/>
     
     <!-- Title Bar - Dark immersive title bar for Windows 10/11 -->
     <SolidColorBrush x:Key="TitleBarBackgroundBrush" Color="{StaticResource BackgroundPrimaryColor}"/>

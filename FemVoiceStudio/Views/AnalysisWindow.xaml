@@ -126,12 +126,12 @@
                             
                             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
                                 <TextBlock Text="{loc:Loc Analysis_ResonanceAnalysis}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                                <Border x:Name="ForwardIndicator" Background="#4CAF50" CornerRadius="4" Padding="8,2" Margin="12,0,0,0" Visibility="Collapsed">
-                                    <TextBlock Text="{loc:Loc Analysis_Forward}" FontSize="11" Foreground="White"/>
+                                <Border x:Name="ForwardIndicator" Background="{DynamicResource SuccessBrush}" CornerRadius="4" Padding="8,2" Margin="12,0,0,0" Visibility="Collapsed">
+                                    <TextBlock Text="{loc:Loc Analysis_Forward}" FontSize="11" Foreground="{DynamicResource TextOnAccentBrush}"/>
                                 </Border>
                             </StackPanel>
                             
-                            <oxy:PlotView Grid.Row="1" x:Name="ResonancePlotView" Background="White"/>
+                            <oxy:PlotView Grid.Row="1" x:Name="ResonancePlotView" Background="{DynamicResource ChartBackgroundBrush}"/>
                         </Grid>
                     </Border>
                     
@@ -145,7 +145,7 @@
                             
                             <TextBlock Grid.Row="0" Text="{loc:Loc Analysis_PitchAnalysis}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
                             
-                            <oxy:PlotView Grid.Row="1" x:Name="PitchPlotView" Background="White"/>
+                            <oxy:PlotView Grid.Row="1" x:Name="PitchPlotView" Background="{DynamicResource ChartBackgroundBrush}"/>
                         </Grid>
                     </Border>
                 </Grid>
@@ -167,12 +167,12 @@
                             
                             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
                                 <TextBlock Text="{loc:Loc Analysis_IntonationAnalysis}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                                <Border x:Name="MonotonyIndicator" Background="#FF9800" CornerRadius="4" Padding="8,2" Margin="12,0,0,0" Visibility="Collapsed">
-                                    <TextBlock Text="{loc:Loc Analysis_Monotone}" FontSize="11" Foreground="White"/>
+                                <Border x:Name="MonotonyIndicator" Background="{DynamicResource WarningBrush}" CornerRadius="4" Padding="8,2" Margin="12,0,0,0" Visibility="Collapsed">
+                                    <TextBlock Text="{loc:Loc Analysis_Monotone}" FontSize="11" Foreground="{DynamicResource TextOnAccentBrush}"/>
                                 </Border>
                             </StackPanel>
                             
-                            <oxy:PlotView Grid.Row="1" x:Name="IntonationPlotView" Background="White"/>
+                            <oxy:PlotView Grid.Row="1" x:Name="IntonationPlotView" Background="{DynamicResource ChartBackgroundBrush}"/>
                         </Grid>
                     </Border>
                     
@@ -186,7 +186,7 @@
                             
                             <TextBlock Grid.Row="0" Text="{loc:Loc Analysis_HealthAnalysis}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
                             
-                            <oxy:PlotView Grid.Row="1" x:Name="HealthPlotView" Background="White"/>
+                            <oxy:PlotView Grid.Row="1" x:Name="HealthPlotView" Background="{DynamicResource ChartBackgroundBrush}"/>
                         </Grid>
                     </Border>
                 </Grid>
@@ -206,7 +206,7 @@
                                 <RowDefinition Height="200"/>
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Text="{loc:Loc Dimension_Comfort}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                            <oxy:PlotView Grid.Row="1" x:Name="ComfortPlotView" Background="White"/>
+                            <oxy:PlotView Grid.Row="1" x:Name="ComfortPlotView" Background="{DynamicResource ChartBackgroundBrush}"/>
                         </Grid>
                     </Border>
 
@@ -218,7 +218,7 @@
                                 <RowDefinition Height="200"/>
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Text="{loc:Loc Dimension_Recovery}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                            <oxy:PlotView Grid.Row="1" x:Name="RecoveryPlotView" Background="White"/>
+                            <oxy:PlotView Grid.Row="1" x:Name="RecoveryPlotView" Background="{DynamicResource ChartBackgroundBrush}"/>
                         </Grid>
                     </Border>
                 </Grid>
@@ -239,7 +239,7 @@
                                 <RowDefinition Height="200"/>
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Text="{loc:Loc Dimension_Consistency}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                            <oxy:PlotView Grid.Row="1" x:Name="ConsistencyPlotView" Background="White"/>
+                            <oxy:PlotView Grid.Row="1" x:Name="ConsistencyPlotView" Background="{DynamicResource ChartBackgroundBrush}"/>
                         </Grid>
                     </Border>
 
@@ -251,7 +251,7 @@
                                 <RowDefinition Height="200"/>
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Text="{loc:Loc Dimension_VocalWeight}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                            <oxy:PlotView Grid.Row="1" x:Name="VocalWeightPlotView" Background="White"/>
+                            <oxy:PlotView Grid.Row="1" x:Name="VocalWeightPlotView" Background="{DynamicResource ChartBackgroundBrush}"/>
                         </Grid>
                     </Border>
 
@@ -263,7 +263,7 @@
                                 <RowDefinition Height="200"/>
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Text="{loc:Loc Dashboard_VoiceDevelopment}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                            <oxy:PlotView Grid.Row="1" x:Name="VoiceDevelopmentPlotView" Background="White"/>
+                            <oxy:PlotView Grid.Row="1" x:Name="VoiceDevelopmentPlotView" Background="{DynamicResource ChartBackgroundBrush}"/>
                         </Grid>
                     </Border>
                 </Grid>
@@ -292,7 +292,7 @@
                                     <RowDefinition Height="200"/>
                                 </Grid.RowDefinitions>
                                 <TextBlock Grid.Row="0" Text="{loc:Loc Dashboard_WeeklyTrend}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                                <oxy:PlotView Grid.Row="1" x:Name="WeeklyTrendPlotView" Background="White"/>
+                                <oxy:PlotView Grid.Row="1" x:Name="WeeklyTrendPlotView" Background="{DynamicResource ChartBackgroundBrush}"/>
                             </Grid>
                         </Border>
 
@@ -304,7 +304,7 @@
                                     <RowDefinition Height="200"/>
                                 </Grid.RowDefinitions>
                                 <TextBlock Grid.Row="0" Text="{loc:Loc Dashboard_MonthlyTrend}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                                <oxy:PlotView Grid.Row="1" x:Name="MonthlyTrendPlotView" Background="White"/>
+                                <oxy:PlotView Grid.Row="1" x:Name="MonthlyTrendPlotView" Background="{DynamicResource ChartBackgroundBrush}"/>
                             </Grid>
                         </Border>
 
@@ -316,7 +316,7 @@
                                     <RowDefinition Height="200"/>
                                 </Grid.RowDefinitions>
                                 <TextBlock Grid.Row="0" Text="{loc:Loc Dashboard_VoiceDevelopment}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                                <oxy:PlotView Grid.Row="1" x:Name="VoiceDevelopmentLongPlotView" Background="White"/>
+                                <oxy:PlotView Grid.Row="1" x:Name="VoiceDevelopmentLongPlotView" Background="{DynamicResource ChartBackgroundBrush}"/>
                             </Grid>
                         </Border>
                     </Grid>
@@ -337,7 +337,7 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <TextBlock Grid.Row="0" Text="{loc:Loc Dashboard_Breakthroughs}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                                <oxy:PlotView Grid.Row="1" x:Name="BreakthroughsPlotView" Background="White"/>
+                                <oxy:PlotView Grid.Row="1" x:Name="BreakthroughsPlotView" Background="{DynamicResource ChartBackgroundBrush}"/>
                                 <!-- Pattern descriptions: Plateau/Breakthrough/Regression — localised, calming copy. -->
                                 <!-- Hidden when no events are detected (collection is empty). -->
                                 <ItemsControl Grid.Row="2"
@@ -373,7 +373,7 @@
                                     <RowDefinition Height="200"/>
                                 </Grid.RowDefinitions>
                                 <TextBlock Grid.Row="0" Text="{loc:Loc Dashboard_RecoveryPatterns}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                                <oxy:PlotView Grid.Row="1" x:Name="RecoveryPatternsPlotView" Background="White"/>
+                                <oxy:PlotView Grid.Row="1" x:Name="RecoveryPatternsPlotView" Background="{DynamicResource ChartBackgroundBrush}"/>
                             </Grid>
                         </Border>
                     </Grid>
@@ -403,7 +403,7 @@
                                 </Grid>
                                 <Grid Height="8" Margin="0,4,0,0">
                                     <Border Background="{DynamicResource BackgroundTertiaryBrush}" CornerRadius="4"/>
-                                    <Border x:Name="ResonanceBar" Background="#FF6B9D" CornerRadius="4" HorizontalAlignment="Left" Width="0"/>
+                                    <Border x:Name="ResonanceBar" Background="{DynamicResource ChartResonanceBrush}" CornerRadius="4" HorizontalAlignment="Left" Width="0"/>
                                 </Grid>
                             </StackPanel>
                             
@@ -419,7 +419,7 @@
                                 </Grid>
                                 <Grid Height="8" Margin="0,4,0,0">
                                     <Border Background="{DynamicResource BackgroundTertiaryBrush}" CornerRadius="4"/>
-                                    <Border x:Name="PitchBar" Background="#4FC3F7" CornerRadius="4" HorizontalAlignment="Left" Width="0"/>
+                                    <Border x:Name="PitchBar" Background="{DynamicResource ChartPitchBrush}" CornerRadius="4" HorizontalAlignment="Left" Width="0"/>
                                 </Grid>
                             </StackPanel>
                             
@@ -435,7 +435,7 @@
                                 </Grid>
                                 <Grid Height="8" Margin="0,4,0,0">
                                     <Border Background="{DynamicResource BackgroundTertiaryBrush}" CornerRadius="4"/>
-                                    <Border x:Name="IntonationBar" Background="#81C784" CornerRadius="4" HorizontalAlignment="Left" Width="0"/>
+                                    <Border x:Name="IntonationBar" Background="{DynamicResource ChartIntonationBrush}" CornerRadius="4" HorizontalAlignment="Left" Width="0"/>
                                 </Grid>
                             </StackPanel>
                             
@@ -451,7 +451,7 @@
                                 </Grid>
                                 <Grid Height="8" Margin="0,4,0,0">
                                     <Border Background="{DynamicResource BackgroundTertiaryBrush}" CornerRadius="4"/>
-                                    <Border x:Name="VoiceHealthBar" Background="#FFD54F" CornerRadius="4" HorizontalAlignment="Left" Width="0"/>
+                                    <Border x:Name="VoiceHealthBar" Background="{DynamicResource ChartVoiceHealthBrush}" CornerRadius="4" HorizontalAlignment="Left" Width="0"/>
                                 </Grid>
                             </StackPanel>
                         </StackPanel>
