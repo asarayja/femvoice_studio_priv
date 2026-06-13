@@ -36,7 +36,10 @@ namespace FemVoiceStudio.Tests
             // Assert — nothing to recover from ⇒ 100 / WellRecovered.
             Assert.Equal(100.0, result.Score, 6);
             Assert.Equal(RecoveryStatus.WellRecovered, result.Status);
-            Assert.Contains("well rested", result.Explanation);
+            Assert.True(
+                result.Explanation.Contains("well rested", StringComparison.OrdinalIgnoreCase)
+                || result.Explanation.Contains("godt uthvilt", StringComparison.OrdinalIgnoreCase),
+                result.Explanation);
         }
 
         // ──────────────────────────────────────────────────────────────────────
@@ -131,7 +134,10 @@ namespace FemVoiceStudio.Tests
             var result = Scorer.Score(input);
 
             Assert.Equal(90.0, result.Score, 5);
-            Assert.Contains("training density", result.Explanation);
+            Assert.True(
+                result.Explanation.Contains("training density", StringComparison.OrdinalIgnoreCase)
+                || result.Explanation.Contains("treningsmengde", StringComparison.OrdinalIgnoreCase),
+                result.Explanation);
         }
 
         [Fact]
@@ -162,7 +168,8 @@ namespace FemVoiceStudio.Tests
             var result = Scorer.Score(input);
 
             Assert.Equal(100.0, result.Score, 6);
-            Assert.DoesNotContain("training density", result.Explanation);
+            Assert.DoesNotContain("training density", result.Explanation, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("treningsmengde", result.Explanation, StringComparison.OrdinalIgnoreCase);
         }
 
         // ──────────────────────────────────────────────────────────────────────
@@ -180,8 +187,14 @@ namespace FemVoiceStudio.Tests
             var result = Scorer.Score(input);
 
             Assert.Equal(82.0, result.Score, 6);
-            Assert.Contains("safety lock", result.Explanation);
-            Assert.Contains("dominant", result.Explanation);
+            Assert.True(
+                result.Explanation.Contains("safety lock", StringComparison.OrdinalIgnoreCase)
+                || result.Explanation.Contains("safety-pause", StringComparison.OrdinalIgnoreCase),
+                result.Explanation);
+            Assert.True(
+                result.Explanation.Contains("dominant", StringComparison.OrdinalIgnoreCase)
+                || result.Explanation.Contains("dominerende", StringComparison.OrdinalIgnoreCase),
+                result.Explanation);
         }
 
         [Fact]
@@ -333,9 +346,17 @@ namespace FemVoiceStudio.Tests
             var result = Scorer.Score(input);
 
             Assert.False(string.IsNullOrWhiteSpace(result.Explanation));
-            Assert.Contains("strain", result.Explanation);
-            Assert.Contains("pause", result.Explanation);
-            Assert.Contains("hydration", result.Explanation);
+            Assert.True(
+                result.Explanation.Contains("strain", StringComparison.OrdinalIgnoreCase)
+                || result.Explanation.Contains("belastning", StringComparison.OrdinalIgnoreCase),
+                result.Explanation);
+            Assert.True(
+                result.Explanation.Contains("pause", StringComparison.OrdinalIgnoreCase),
+                result.Explanation);
+            Assert.True(
+                result.Explanation.Contains("hydration", StringComparison.OrdinalIgnoreCase)
+                || result.Explanation.Contains("hydrering", StringComparison.OrdinalIgnoreCase),
+                result.Explanation);
         }
 
         // ──────────────────────────────────────────────────────────────────────

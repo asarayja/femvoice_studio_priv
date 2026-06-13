@@ -121,6 +121,100 @@ namespace FemVoiceStudio.Tests
             Assert.False(insight.IsFirstSession);
         }
 
+        [Fact]
+        public void Build_NorwegianSessionReflection_UsesLocalizedCopyAndRecoveryDrivers()
+        {
+            LocalizationService.Instance.SetLanguage("nb");
+            try
+            {
+                var builder = new SessionInsightBuilder(LocalizationService.Instance);
+                var scorer = new RecoveryScorer(LocalizationService.Instance);
+                var current = Scores(intonation: 90, consistency: 54, pitch: 53, recovery: 0);
+                var prior = new[] { TrendPoint(DateTime.Now.AddDays(-1), intonation: 50, consistency: 50, pitch: 50, recovery: 50) };
+                var recovery = scorer.Score(new RecoveryScoreInput
+                {
+                    RecentSafetyLocks = 5,
+                    RecentStrainEpisodes = 1,
+                    RecentPauseRecommendations = 2,
+                    RecentFatigueIndicators = 3,
+                    PriorFatigueIndicators = 1,
+                    SessionsLast7Days = 8,
+                    HoursSinceLastSession = 1,
+                    HydrationSuggestionsRecent = 2
+                });
+
+                var insight = builder.Build(current, prior, Outcome(), recovery);
+                var reflectionText = string.Join("\n",
+                    new[] { LocalizationService.Instance["SessionInsight_Title"], insight.Summary }
+                        .Concat(insight.Improvements.Select(i => i.Explanation))
+                        .Append(insight.RecoveryNeeds.Explanation));
+
+                Assert.Equal("Øktrefleksjon", LocalizationService.Instance["SessionInsight_Title"]);
+                Assert.Contains("Stemmen din kan ha godt av litt hvile", insight.Summary);
+                Assert.Contains("Fint jobbet", insight.Summary);
+                Assert.Contains("intonasjon økte med 40", insight.Summary);
+                Assert.Contains("Neste gang kan du forsiktig utforske restitusjon", insight.Summary);
+                Assert.Contains("Intonasjon +40 siden forrige økt", reflectionText);
+                Assert.Contains("Konsistens +4 siden forrige økt", reflectionText);
+                Assert.Contains("Pitch +3 siden forrige økt", reflectionText);
+                Assert.Contains("Restitusjon 0 (overtrent).", reflectionText);
+                Assert.Contains("Senket av:", reflectionText);
+                Assert.Contains("belastningsepisode", reflectionText);
+                Assert.Contains("pauseanbefalinger", reflectionText);
+                Assert.Contains("tretthetsindikatorer", reflectionText);
+                Assert.Contains("stigende tretthetstrend", reflectionText);
+                Assert.Contains("høy treningsmengde med lite hvile", reflectionText);
+                Assert.Contains("hydreringspåminnelser", reflectionText);
+                Assert.Contains("ø", reflectionText);
+                Assert.Contains("å", reflectionText);
+                Assert.DoesNotContain("Session reflection", reflectionText, StringComparison.OrdinalIgnoreCase);
+                Assert.DoesNotContain("Your voice could use", reflectionText, StringComparison.OrdinalIgnoreCase);
+                Assert.DoesNotContain("Nice work", reflectionText, StringComparison.OrdinalIgnoreCase);
+                Assert.DoesNotContain("since last session", reflectionText, StringComparison.OrdinalIgnoreCase);
+                Assert.DoesNotContain("Next, you might", reflectionText, StringComparison.OrdinalIgnoreCase);
+                Assert.DoesNotContain("Lowered by", reflectionText, StringComparison.OrdinalIgnoreCase);
+                Assert.DoesNotContain("Ã", reflectionText, StringComparison.Ordinal);
+                Assert.DoesNotContain("�", reflectionText, StringComparison.Ordinal);
+            }
+            finally
+            {
+                LocalizationService.Instance.SetLanguage("en");
+            }
+        }
+
+        [Fact]
+        public void Build_EnglishSessionReflection_UsesEnglishCopy()
+        {
+            LocalizationService.Instance.SetLanguage("en");
+            var builder = new SessionInsightBuilder(LocalizationService.Instance);
+            var scorer = new RecoveryScorer(LocalizationService.Instance);
+            var current = Scores(intonation: 90, recovery: 0);
+            var prior = new[] { TrendPoint(DateTime.Now.AddDays(-1), intonation: 50, recovery: 50) };
+            var recovery = scorer.Score(new RecoveryScoreInput
+            {
+                RecentSafetyLocks = 5,
+                RecentStrainEpisodes = 1,
+                RecentPauseRecommendations = 1,
+                RecentFatigueIndicators = 1,
+                PriorFatigueIndicators = 0,
+                SessionsLast7Days = 8,
+                HoursSinceLastSession = 1,
+                HydrationSuggestionsRecent = 1
+            });
+
+            var insight = builder.Build(current, prior, Outcome(), recovery);
+            var reflectionText = string.Join("\n",
+                new[] { LocalizationService.Instance["SessionInsight_Title"], insight.Summary }
+                    .Concat(insight.Improvements.Select(i => i.Explanation))
+                    .Append(insight.RecoveryNeeds.Explanation));
+
+            Assert.Equal("Session reflection", LocalizationService.Instance["SessionInsight_Title"]);
+            Assert.Contains("Your voice could use some rest", reflectionText);
+            Assert.Contains("Nice work", reflectionText);
+            Assert.Contains("Intonation +40 since last session", reflectionText);
+            Assert.Contains("Lowered by:", reflectionText);
+        }
+
         // ──────────────────────────────────────────────────────────────────────
         // 2. A dimension that fell is NOT reported as an improvement.
         // ──────────────────────────────────────────────────────────────────────

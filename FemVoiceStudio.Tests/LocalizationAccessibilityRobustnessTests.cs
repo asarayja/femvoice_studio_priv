@@ -179,6 +179,31 @@ namespace FemVoiceStudio.Tests
         }
 
         [Fact]
+        public void NorwegianSessionReflectionResources_PreserveNorwegianCharacters()
+        {
+            var neutral = LoadResxValues(Path.Combine(ResourceDirectory(), "Strings.resx"))
+                .ToDictionary(item => item.Key, item => item.Value, StringComparer.Ordinal);
+            var text = string.Join("\n", new[]
+            {
+                neutral["SessionInsight_Title"],
+                neutral["SessionInsight_Summary_RecoveryLead"],
+                neutral["SessionInsight_Summary_Improvement"],
+                neutral["SessionInsight_Summary_NextFocus"],
+                neutral["SessionInsight_Improvement"],
+                neutral["Recovery_Explanation_LoweredBy"],
+                neutral["Recovery_Driver_FatigueTrend"],
+                neutral["Recovery_Driver_Hydration_Many"]
+            });
+
+            Assert.Contains('ø', text);
+            Assert.Contains('å', text);
+            Assert.DoesNotContain("Ã¦", text, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("Ã¸", text, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("Ã¥", text, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain('�', text);
+        }
+
+        [Fact]
         public void OutcomePdfRecoveryCostLabel_UsesShortReadableNorwegianText()
         {
             LocalizationService.Instance.SetLanguage("nb");

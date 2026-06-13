@@ -132,11 +132,15 @@ namespace FemVoiceStudio.Tests
 
             // Legacy 0-input: branch dormant ⇒ perfect 100 / WellRecovered, no density note.
             Assert.Equal(100.0, legacy.Score, 6);
-            Assert.DoesNotContain("training density", legacy.Explanation);
+            Assert.DoesNotContain("training density", legacy.Explanation, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("treningsmengde", legacy.Explanation, StringComparison.OrdinalIgnoreCase);
 
             // Full input: overtraining branch fires (−10) ⇒ 90 and an explicit density note.
             Assert.Equal(90.0, full.Score, 5);
-            Assert.Contains("training density", full.Explanation);
+            Assert.True(
+                full.Explanation.Contains("training density", StringComparison.OrdinalIgnoreCase)
+                || full.Explanation.Contains("treningsmengde", StringComparison.OrdinalIgnoreCase),
+                full.Explanation);
             Assert.True(full.Score < legacy.Score);
         }
 

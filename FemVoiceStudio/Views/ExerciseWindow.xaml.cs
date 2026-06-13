@@ -1215,7 +1215,7 @@ TimerDisplay.Text = $"{secs / 60:00}:{secs % 60:00}";
             // ressurser (test), så panelet aldri viser en rå nøkkelstreng.
             var localizedTitle = Loc.Get("SessionInsight_Title");
             if (string.IsNullOrWhiteSpace(localizedTitle) || localizedTitle == "SessionInsight_Title")
-                localizedTitle = "Session reflection";
+                localizedTitle = "Øktrefleksjon";
 
             var title = new TextBlock
             {
