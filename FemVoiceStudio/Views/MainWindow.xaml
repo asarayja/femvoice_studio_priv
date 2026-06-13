@@ -453,9 +453,9 @@
                     <Border Style="{StaticResource Card}" Margin="0,0,0,12">
                         <StackPanel>
                             <TextBlock Text="{loc:Loc Main_CurrentLevel}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                            <TextBlock Text="{Binding DifficultyText}" FontSize="24" FontWeight="Bold" 
-                                       Foreground="{Binding CurrentDifficulty, Converter={StaticResource DifficultyToColor}}"/>
-                            <ProgressBar Value="{Binding ProgressionStatus.ProgressPercentage, FallbackValue=0, Mode=OneWay}" 
+                            <TextBlock Text="{Binding FrontPageCurrentLevelText}" FontSize="24" FontWeight="Bold" 
+                                       Foreground="{Binding FrontPageCurrentLevel, Converter={StaticResource DifficultyToColor}}"/>
+                            <ProgressBar Value="{Binding FrontPageProgressPercentage, FallbackValue=0, Mode=OneWay}" 
                                          Maximum="100" Height="12" Margin="0,8,0,0"
                                          Background="{DynamicResource BackgroundTertiaryBrush}" 
                                          Foreground="{DynamicResource AccentPrimaryBrush}"
@@ -475,12 +475,15 @@
                                 </ProgressBar.Template>
                             </ProgressBar>
                             <TextBlock FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,4,0,0">
-                                <Run Text="{Binding ProgressionStatus.SessionsAtCurrentLevel, FallbackValue=0}"/>
-                                <Run Text="/"/>
-                                <Run Text="{Binding ProgressionStatus.SessionsRequiredForPromotion, FallbackValue=5}"/>
+                                <Run Text="{Binding FrontPageProgressCounterText, FallbackValue=0/5}"/>
                                 <Run Text=" "/>
                                 <Run Text="{loc:Loc Main_SessionsToNextLevel}"/>
                             </TextBlock>
+                            <TextBlock Text="{Binding FrontPageProgressStateText}"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,6,0,0"/>
                         </StackPanel>
                     </Border>
                     

@@ -26,6 +26,8 @@ public sealed class ThemeResourceCoverageTests
         "ErrorHoverBrush",
         "InfoBrush",
         "InfoHoverBrush",
+        "ButtonHoverOverlayBrush",
+        "ButtonPressedOverlayBrush",
         "HealthWarningBackgroundBrush",
         "HealthWarningTextBrush",
         "ChartBackgroundBrush",
@@ -82,6 +84,76 @@ public sealed class ThemeResourceCoverageTests
                 Assert.Contains($"x:Key=\"{key}\"", xaml);
             }
         }
+    }
+
+    [Fact]
+    public void ComboBoxAndListBoxThemeTemplates_CoverReadableInteractiveStates()
+    {
+        var root = FindRepositoryRoot();
+        var themeFiles = new[]
+        {
+            Path.Combine(root, "FemVoiceStudio", "Themes", "LightTheme.xaml"),
+            Path.Combine(root, "FemVoiceStudio", "Themes", "DarkTheme.xaml")
+        };
+
+        foreach (var themeFile in themeFiles)
+        {
+            var xaml = File.ReadAllText(themeFile);
+
+            Assert.Contains("x:Key=\"StandardComboBoxStyle\"", xaml);
+            Assert.Contains("x:Key=\"StandardComboBoxItemStyle\"", xaml);
+            Assert.Contains("x:Key=\"StandardListBoxItemStyle\"", xaml);
+
+            Assert.Contains("ControlTemplate TargetType=\"ToggleButton\"", xaml);
+            Assert.Contains("ControlTemplate TargetType=\"ComboBoxItem\"", xaml);
+            Assert.Contains("ControlTemplate TargetType=\"ListBoxItem\"", xaml);
+
+            Assert.Contains("IsMouseOver", xaml);
+            Assert.Contains("IsSelected", xaml);
+            Assert.Contains("IsHighlighted", xaml);
+            Assert.Contains("IsKeyboardFocusWithin", xaml);
+            Assert.Contains("IsEnabled", xaml);
+
+            Assert.Contains("BackgroundHoverBrush", xaml);
+            Assert.Contains("AccentPrimaryBrush", xaml);
+            Assert.Contains("AccentSecondaryBrush", xaml);
+            Assert.Contains("TextPrimaryBrush", xaml);
+            Assert.Contains("TextOnAccentBrush", xaml);
+            Assert.Contains("TextDisabledBrush", xaml);
+
+            Assert.DoesNotContain("SystemColors.HighlightBrushKey", xaml);
+            Assert.DoesNotContain("SystemColors.HighlightTextBrushKey", xaml);
+            Assert.DoesNotContain("SystemColors.InactiveSelectionHighlightBrushKey", xaml);
+            Assert.DoesNotContain("SystemColors.InactiveSelectionHighlightTextBrushKey", xaml);
+            Assert.DoesNotContain("Default ToggleButton hover", xaml, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    [Fact]
+    public void SettingsAndManualOverrideButtons_DoNotOverrideThemeColorsLocally()
+    {
+        var root = FindRepositoryRoot();
+        var files = new[]
+        {
+            Path.Combine(root, "FemVoiceStudio", "Views", "SettingsWindow.xaml"),
+            Path.Combine(root, "FemVoiceStudio", "Views", "ManualOverrideWindow.xaml")
+        };
+
+        var localButtonColor = new Regex(
+            @"<Button\b[^>]*(?:Background|Foreground|BorderBrush)\s*=",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        var violations = files
+            .SelectMany(path => File.ReadLines(path).Select((line, index) => new { path, line, index }))
+            .Where(item => localButtonColor.IsMatch(item.line))
+            .Select(item => $"{Path.GetRelativePath(root, item.path)}:{item.index + 1}: {item.line.Trim()}")
+            .ToArray();
+
+        Assert.True(
+            violations.Length == 0,
+            "Settings/Manual Override buttons must use shared theme styles, not local colors:" +
+            Environment.NewLine +
+            string.Join(Environment.NewLine, violations));
     }
 
     [Fact]

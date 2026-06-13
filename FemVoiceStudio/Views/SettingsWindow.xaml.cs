@@ -14,6 +14,7 @@ public partial class SettingsWindow : Window
     private readonly ILocalizationService _localization;
     private readonly IVoiceGoalProfileProvider _voiceGoalProfiles;
     private readonly LocalBackupService _localBackupService;
+    private MicrophoneCalibrationWindow? _microphoneCalibrationWindow;
     private bool _languageChanged = false;
     private bool _themeChanged = false;
     
@@ -119,7 +120,6 @@ public partial class SettingsWindow : Window
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
                 
-                DialogResult = true;
                 Close();
             }
             catch (System.Exception ex)
@@ -136,11 +136,19 @@ public partial class SettingsWindow : Window
 
     private void OnOpenMicrophoneCalibration(object sender, RoutedEventArgs e)
     {
-        var window = new MicrophoneCalibrationWindow
+        if (_microphoneCalibrationWindow is { IsVisible: true })
+        {
+            RestoreAndFocus(_microphoneCalibrationWindow);
+            return;
+        }
+
+        _microphoneCalibrationWindow = new MicrophoneCalibrationWindow
         {
             Owner = this
         };
-        window.ShowDialog();
+        _microphoneCalibrationWindow.Closed += (_, _) => _microphoneCalibrationWindow = null;
+        _microphoneCalibrationWindow.Show();
+        RestoreAndFocus(_microphoneCalibrationWindow);
     }
 
     private void OnCreateBackup(object sender, RoutedEventArgs e)
@@ -206,7 +214,6 @@ public partial class SettingsWindow : Window
                 _localization.GetString("Settings_RestoreSuccessTitle"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
-            DialogResult = true;
             Close();
             return;
         }
@@ -344,5 +351,14 @@ public partial class SettingsWindow : Window
         }
         
         Close();
+    }
+
+    private static void RestoreAndFocus(Window window)
+    {
+        if (window.WindowState == WindowState.Minimized)
+            window.WindowState = WindowState.Normal;
+
+        window.Activate();
+        window.Focus();
     }
 }

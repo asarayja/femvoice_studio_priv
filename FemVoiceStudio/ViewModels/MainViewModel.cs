@@ -163,6 +163,24 @@ namespace FemVoiceStudio.ViewModels
         
         [ObservableProperty]
         private ProgressionStatus? _progressionStatus;
+
+        [ObservableProperty]
+        private DifficultyLevel _frontPageCurrentLevel = DifficultyLevel.Nybegynner;
+
+        [ObservableProperty]
+        private string _frontPageCurrentLevelText = "";
+
+        [ObservableProperty]
+        private double _frontPageProgressPercentage;
+
+        [ObservableProperty]
+        private string _frontPageProgressCounterText = "";
+
+        [ObservableProperty]
+        private string _frontPageProgressStateText = "";
+
+        [ObservableProperty]
+        private bool _frontPageProgressHasInsufficientData = true;
         
         [ObservableProperty]
         private bool _hearOwnVoice = true;
@@ -401,6 +419,9 @@ namespace FemVoiceStudio.ViewModels
                 {
                     CurrentExerciseText = _exerciseTextService.GetLocalizedContent(CurrentExercise.Id);
                 }
+
+                DifficultyText = GetDifficultyText(CurrentDifficulty);
+                ApplyFrontPageProgressionStatus(ProgressionStatus);
             }
         }
         
@@ -439,8 +460,49 @@ namespace FemVoiceStudio.ViewModels
             _audioAnalyzer.HearOwnVoice = HearOwnVoice;
             
             ProgressionStatus = _progressionService.GetProgressionStatus();
-            CurrentStreak = ProgressionStatus?.CurrentStreak ?? 0;
-            TotalSessions = ProgressionStatus?.TotalSessions ?? 0;
+            ApplyFrontPageProgressionStatus(ProgressionStatus);
+        }
+
+        private void RefreshFrontPageProgressionStatus()
+        {
+            ProgressionStatus = _progressionService.GetProgressionStatus();
+            ApplyFrontPageProgressionStatus(ProgressionStatus);
+        }
+
+        private void ApplyFrontPageProgressionStatus(ProgressionStatus? status)
+        {
+            var snapshot = BuildFrontPageProgressSnapshot(status);
+            FrontPageCurrentLevel = snapshot.CurrentLevel;
+            FrontPageCurrentLevelText = snapshot.CurrentLevelText;
+            FrontPageProgressPercentage = snapshot.ProgressPercentage;
+            FrontPageProgressCounterText = snapshot.CounterText;
+            FrontPageProgressStateText = snapshot.StateText;
+            FrontPageProgressHasInsufficientData = snapshot.HasInsufficientData;
+            CurrentStreak = status?.CurrentStreak ?? 0;
+            TotalSessions = status?.TotalSessions ?? 0;
+        }
+
+        internal static FrontPageProgressSnapshot BuildFrontPageProgressSnapshot(ProgressionStatus? status)
+        {
+            var level = status?.CurrentLevel ?? DifficultyLevel.Nybegynner;
+            var required = Math.Max(1, status?.SessionsRequiredForPromotion ?? 5);
+            var sessions = Math.Max(0, Math.Min(status?.SessionsAtCurrentLevel ?? 0, required));
+            var totalSessions = status?.TotalSessions ?? 0;
+            var percent = sessions * 100.0 / required;
+            var hasInsufficientData = totalSessions <= 0;
+            var levelText = GetDifficultyText(level);
+            var progressTitle = Loc.Get("Main_YourProgress");
+            var stateText = hasInsufficientData
+                ? LocalizationService.Instance.GetFormattedString("Insight_InsufficientData", progressTitle)
+                : LocalizationService.Instance.GetFormattedString("Progression_SessionsToNext", sessions, required);
+
+            return new FrontPageProgressSnapshot(
+                level,
+                levelText,
+                percent,
+                $"{sessions}/{required}",
+                stateText,
+                hasInsufficientData);
         }
         
         private static string GetDifficultyText(DifficultyLevel level)
@@ -682,10 +744,14 @@ namespace FemVoiceStudio.ViewModels
                 // for å vise jubel mens helse-gaten er aktiv.
                 StatusText = string.Format(Loc.Get("Difficulty_SessionCompleteFormat"), OverallScore);
 
-                if (progressionResult.ShouldShowCelebration)
+                if (progressionResult.NewDifficulty != progressionResult.CurrentDifficulty)
                 {
                     CurrentDifficulty = progressionResult.NewDifficulty;
                     DifficultyText = GetDifficultyText(CurrentDifficulty);
+                }
+
+                if (progressionResult.ShouldShowCelebration)
+                {
                     RouteMainScreenFeedback(new MainScreenFeedbackIntent(
                         MainScreenFeedbackKind.ProgressionCelebration,
                         string.Format(Loc.Get("Difficulty_PromotedFormat"), DifficultyText)));
@@ -721,9 +787,7 @@ namespace FemVoiceStudio.ViewModels
                     IsPraise: sessionSummaryIsPraise));
 
                 // Last progresjonsstatus
-                ProgressionStatus = _progressionService.GetProgressionStatus();
-                CurrentStreak = ProgressionStatus?.CurrentStreak ?? 0;
-                TotalSessions = ProgressionStatus?.TotalSessions ?? 0;
+                RefreshFrontPageProgressionStatus();
 
                 // Last neste øvelse
                 LoadNextExercise();
@@ -1521,4 +1585,12 @@ namespace FemVoiceStudio.ViewModels
         public StabilityState Stability { get; set; }
         public HealthState Health { get; set; }
     }
+
+    internal sealed record FrontPageProgressSnapshot(
+        DifficultyLevel CurrentLevel,
+        string CurrentLevelText,
+        double ProgressPercentage,
+        string CounterText,
+        string StateText,
+        bool HasInsufficientData);
 }

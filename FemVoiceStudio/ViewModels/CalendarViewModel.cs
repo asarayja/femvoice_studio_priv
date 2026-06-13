@@ -16,6 +16,7 @@ namespace FemVoiceStudio.ViewModels
     public partial class CalendarViewModel : ObservableObject
     {
         private readonly DatabaseService _database;
+        private DayDetailsWindow? _dayDetailsWindow;
         
         [ObservableProperty]
         private DateTime _currentMonth;
@@ -252,17 +253,27 @@ namespace FemVoiceStudio.ViewModels
             // Hent detaljerte økt-data for denne dagen
             var sessions = _database.GetDetailedSessionsForDay(day.Date);
             
+            if (_dayDetailsWindow is { IsVisible: true })
+            {
+                RestoreAndFocus(_dayDetailsWindow);
+                return;
+            }
+
             // Opprett og vis vinduet
             var viewModel = new DayDetailsViewModel(day.Date, sessions);
-            var window = new DayDetailsWindow
+            _dayDetailsWindow = new DayDetailsWindow
             {
                 DataContext = viewModel,
                 Owner = Application.Current.MainWindow
             };
-            
-            window.ShowDialog();
-            
-            SelectedDay = null;
+            _dayDetailsWindow.Closed += (_, _) =>
+            {
+                _dayDetailsWindow = null;
+                SelectedDay = null;
+            };
+
+            _dayDetailsWindow.Show();
+            RestoreAndFocus(_dayDetailsWindow);
         }
         
         /// <summary>
@@ -274,6 +285,15 @@ namespace FemVoiceStudio.ViewModels
             {
                 ShowDayDetailsCommand.Execute(day);
             }
+        }
+
+        private static void RestoreAndFocus(Window window)
+        {
+            if (window.WindowState == WindowState.Minimized)
+                window.WindowState = WindowState.Normal;
+
+            window.Activate();
+            window.Focus();
         }
     }
 }

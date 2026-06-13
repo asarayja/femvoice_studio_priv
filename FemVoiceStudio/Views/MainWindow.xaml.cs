@@ -31,6 +31,21 @@ namespace FemVoiceStudio.Views
         private DateTime _chartSessionStartTime;
         private DateTime _lastChartRenderAt = DateTime.MinValue;
         private int _lastRenderedPitchSequence;
+        private CalendarWindow? _calendarWindow;
+        private StatisticsWindow? _statisticsWindow;
+        private ExerciseWindow? _exerciseWindow;
+        private AnalyzerWindow? _analyzerWindow;
+        private SmartCoachDetailWindow? _smartCoachWindow;
+        private ResonanceWindow? _resonanceWindow;
+        private ProgressionWindow? _progressionWindow;
+        private AnalysisWindow? _analysisWindow;
+        private SettingsWindow? _settingsWindow;
+        private ClinicianDashboardWindow? _clinicianDashboardWindow;
+        private CoachDashboardWindow? _coachDashboardWindow;
+        private ReportExportWindow? _reportExportWindow;
+        private ManualOverrideWindow? _manualOverrideWindow;
+        private CaseReviewWindow? _caseReviewWindow;
+        private bool _isClosing;
 
         // RC-0 graf-evidens: teller hvorfor forsidegrafen ev. slutter å tegne.
         // Ren observasjon — endrer aldri hva som rendres.
@@ -549,45 +564,100 @@ namespace FemVoiceStudio.Views
         
         private void OnWindowClosing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
+            _isClosing = true;
+            CloseModelessChildWindows();
             _chartUpdateTimer.Stop();
             _viewModel.Dispose();
+        }
+
+        private T ShowOrActivateModelessWindow<T>(
+            T? current,
+            Action<T?> setCurrent,
+            Func<T> createWindow,
+            Action? onClosed = null) where T : Window
+        {
+            if (current is { IsVisible: true })
+            {
+                RestoreAndFocus(current);
+                return current;
+            }
+
+            var window = createWindow();
+            window.Owner = this;
+            setCurrent(window);
+            window.Closed += (_, _) =>
+            {
+                setCurrent(null);
+                if (!_isClosing)
+                    onClosed?.Invoke();
+            };
+
+            window.Show();
+            RestoreAndFocus(window);
+            return window;
+        }
+
+        private static void RestoreAndFocus(Window window)
+        {
+            if (window.WindowState == WindowState.Minimized)
+                window.WindowState = WindowState.Normal;
+
+            window.Activate();
+            window.Focus();
+        }
+
+        private void CloseModelessChildWindows()
+        {
+            var windows = new Window?[]
+            {
+                _calendarWindow,
+                _statisticsWindow,
+                _exerciseWindow,
+                _analyzerWindow,
+                _smartCoachWindow,
+                _resonanceWindow,
+                _progressionWindow,
+                _analysisWindow,
+                _settingsWindow,
+                _clinicianDashboardWindow,
+                _coachDashboardWindow,
+                _reportExportWindow,
+                _manualOverrideWindow,
+                _caseReviewWindow
+            };
+
+            foreach (var window in windows)
+            {
+                if (window is not null && window.IsLoaded)
+                    window.Close();
+            }
         }
         
         private void OnOpenCalendar(object sender, RoutedEventArgs e)
         {
-            var calendarWindow = new CalendarWindow();
-            calendarWindow.Owner = this;
-            calendarWindow.ShowDialog();
+            ShowOrActivateModelessWindow(_calendarWindow, window => _calendarWindow = window, () => new CalendarWindow());
         }
         
         private void OnOpenStatistics(object sender, RoutedEventArgs e)
         {
-            var statsWindow = new StatisticsWindow();
-            statsWindow.Owner = this;
-            statsWindow.ShowDialog();
+            ShowOrActivateModelessWindow(_statisticsWindow, window => _statisticsWindow = window, () => new StatisticsWindow());
         }
         
         private void OnOpenExerciseGuide(object sender, RoutedEventArgs e)
         {
-            var exerciseWindow = new ExerciseWindow();
-            exerciseWindow.Owner = this;
-            exerciseWindow.ShowDialog();
+            ShowOrActivateModelessWindow(_exerciseWindow, window => _exerciseWindow = window, () => new ExerciseWindow());
         }
         
         private void OnOpenAnalyzer(object sender, RoutedEventArgs e)
         {
-            var analyzerWindow = new AnalyzerWindow();
-            analyzerWindow.Owner = this;
-            analyzerWindow.ShowDialog();
+            ShowOrActivateModelessWindow(_analyzerWindow, window => _analyzerWindow = window, () => new AnalyzerWindow());
         }
         
         private void OnOpenSmartCoach(object sender, RoutedEventArgs e)
         {
             try
             {
-                var smartCoachWindow = new SmartCoachDetailWindow();
-                smartCoachWindow.Owner = this;
-                smartCoachWindow.Show(); // Non-modal - allows using other windows
+                ShowOrActivateModelessWindow(_smartCoachWindow, window => _smartCoachWindow = window, () => new SmartCoachDetailWindow());
             }
             catch (Exception ex)
             {
@@ -601,9 +671,7 @@ namespace FemVoiceStudio.Views
         {
             try
             {
-                var resonanceWindow = new ResonanceWindow();
-                resonanceWindow.Owner = this;
-                resonanceWindow.ShowDialog();
+                ShowOrActivateModelessWindow(_resonanceWindow, window => _resonanceWindow = window, () => new ResonanceWindow());
             }
             catch (Exception ex)
             {
@@ -617,9 +685,7 @@ namespace FemVoiceStudio.Views
         {
             try
             {
-                var progressionWindow = new ProgressionWindow();
-                progressionWindow.Owner = this;
-                progressionWindow.ShowDialog();
+                ShowOrActivateModelessWindow(_progressionWindow, window => _progressionWindow = window, () => new ProgressionWindow());
             }
             catch (Exception ex)
             {
@@ -633,9 +699,7 @@ namespace FemVoiceStudio.Views
         {
             try
             {
-                var analysisWindow = new AnalysisWindow();
-                analysisWindow.Owner = this;
-                analysisWindow.ShowDialog();
+                ShowOrActivateModelessWindow(_analysisWindow, window => _analysisWindow = window, () => new AnalysisWindow());
             }
             catch (Exception ex)
             {
@@ -647,24 +711,18 @@ namespace FemVoiceStudio.Views
         
         private void OnOpenSettings(object sender, RoutedEventArgs e)
         {
-            var settingsWindow = new SettingsWindow();
-            settingsWindow.Owner = this;
-            settingsWindow.ShowDialog();
-
-            // Last inn progresjon på nytt etter reset
-            _viewModel.LoadUserSettings();
-
-            // Re-les brukerprofilen (stilmål + komfortsone) og re-applier forsidens
-            // pitch-målsone. Settings kan ha endret PreferredVoiceStyle/komfortsone —
-            // uten denne så MainViewModel aldri endringene før restart.
-            _viewModel.ReloadUserVoiceProfile();
+            ShowOrActivateModelessWindow(
+                _settingsWindow,
+                window => _settingsWindow = window,
+                () => new SettingsWindow(),
+                RefreshSettingsDependentState);
         }
         
         private void OnOpenClinicianDashboard(object sender, RoutedEventArgs e)
         {
             try
             {
-                new ClinicianDashboardWindow().Show();
+                ShowOrActivateModelessWindow(_clinicianDashboardWindow, window => _clinicianDashboardWindow = window, () => new ClinicianDashboardWindow());
             }
             catch (Exception ex)
             {
@@ -678,7 +736,7 @@ namespace FemVoiceStudio.Views
         {
             try
             {
-                new CoachDashboardWindow().Show();
+                ShowOrActivateModelessWindow(_coachDashboardWindow, window => _coachDashboardWindow = window, () => new CoachDashboardWindow());
             }
             catch (Exception ex)
             {
@@ -692,7 +750,7 @@ namespace FemVoiceStudio.Views
         {
             try
             {
-                new ReportExportWindow().Show();
+                ShowOrActivateModelessWindow(_reportExportWindow, window => _reportExportWindow = window, () => new ReportExportWindow());
             }
             catch (Exception ex)
             {
@@ -706,7 +764,7 @@ namespace FemVoiceStudio.Views
         {
             try
             {
-                new ManualOverrideWindow().Show();
+                ShowOrActivateModelessWindow(_manualOverrideWindow, window => _manualOverrideWindow = window, () => new ManualOverrideWindow());
             }
             catch (Exception ex)
             {
@@ -720,7 +778,7 @@ namespace FemVoiceStudio.Views
         {
             try
             {
-                new CaseReviewWindow().Show();
+                ShowOrActivateModelessWindow(_caseReviewWindow, window => _caseReviewWindow = window, () => new CaseReviewWindow());
             }
             catch (Exception ex)
             {
@@ -728,6 +786,18 @@ namespace FemVoiceStudio.Views
                 MessageBox.Show(SafeFailureMessages.For(SafeFailureKind.General),
                     Loc.Get("UI_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void RefreshSettingsDependentState()
+        {
+            // Last inn progresjon på nytt etter reset.
+            _viewModel.LoadUserSettings();
+
+            // Re-les brukerprofilen (stilmål + komfortsone) og re-applier forsidens
+            // pitch-målsone. Settings kan ha endret PreferredVoiceStyle/komfortsone —
+            // uten dette ser MainViewModel ikke endringene før restart.
+            _viewModel.ReloadUserVoiceProfile();
+            UpdatePitchTargetZone();
         }
 
         public void RefreshUI()
