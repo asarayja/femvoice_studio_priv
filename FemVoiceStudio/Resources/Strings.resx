@@ -391,7 +391,7 @@
     <value>Ustemte lyder isolerer fonasjonskontroll uten stemmebåndsvibrasjoner. Utmerket for stabil pitch uten stemmebelastning.</value>
   </data>
   <data name="Exercise_107_Rationale" xml:space="preserve">
-    <value>Spørsmål i norsk stiger 2-4 semitoner. Riktig intonasjon er nøkkelen - feil intonasjon kan avsløre stemmen.</value>
+    <value>Spørsmål i norsk bruker ofte stigende intonasjon. Variert intonasjon kan gjøre stemmen mer naturlig og uttrykksfull.</value>
   </data>
   <data name="Exercise_108_Rationale" xml:space="preserve">
     <value>Utsagn avsluttes med fallende tone. Å avslutte med stigende tone kan få deg til å virke usikker.</value>
@@ -4252,22 +4252,22 @@ Dette kan ikke angres!</value>
     <value>Session reflection</value>
   </data>
   <data name="DimensionLabel_Comfort" xml:space="preserve">
-    <value>Comfort</value>
+    <value>Komfort</value>
   </data>
   <data name="DimensionLabel_Recovery" xml:space="preserve">
-    <value>Recovery</value>
+    <value>Restitusjon</value>
   </data>
   <data name="DimensionLabel_Resonance" xml:space="preserve">
-    <value>Resonance</value>
+    <value>Resonans</value>
   </data>
   <data name="DimensionLabel_Consistency" xml:space="preserve">
-    <value>Consistency</value>
+    <value>Konsistens</value>
   </data>
   <data name="DimensionLabel_Intonation" xml:space="preserve">
-    <value>Intonation</value>
+    <value>Intonasjon</value>
   </data>
   <data name="DimensionLabel_VocalWeight" xml:space="preserve">
-    <value>Vocal weight</value>
+    <value>Stemmevekt</value>
   </data>
   <data name="DimensionLabel_Pitch" xml:space="preserve">
     <value>Pitch</value>
@@ -4949,5 +4949,77 @@ Dette kan ikke angres!</value>
   </data>
   <data name="Report_TimeWindow_LastDays" xml:space="preserve">
     <value>Siste {0} dager</value>
+  </data>
+  <data name="Analyzer_Average" xml:space="preserve">
+    <value>Average</value>
+  </data>
+  <data name="Analyzer_BasicStats" xml:space="preserve">
+    <value>Basic statistics</value>
+  </data>
+  <data name="Analyzer_Duration" xml:space="preserve">
+    <value>Duration</value>
+  </data>
+  <data name="Analyzer_GenderDistribution" xml:space="preserve">
+    <value>Gender distribution</value>
+  </data>
+  <data name="Analyzer_MainFrequency" xml:space="preserve">
+    <value>Main frequency</value>
+  </data>
+  <data name="Analyzer_Maximum" xml:space="preserve">
+    <value>Maximum</value>
+  </data>
+  <data name="Analyzer_Minimum" xml:space="preserve">
+    <value>Minimum</value>
+  </data>
+  <data name="Analyzer_Quantiles" xml:space="preserve">
+    <value>Quantiles</value>
+  </data>
+  <data name="Analyzer_SelectTargetFrequency" xml:space="preserve">
+    <value>Select target frequency with notes</value>
+  </data>
+  <data name="Analyzer_TargetFrequency" xml:space="preserve">
+    <value>Target frequency</value>
+  </data>
+  <data name="Calendar_1Session" xml:space="preserve">
+    <value>1 session</value>
+  </data>
+  <data name="Calendar_2PlusSessions" xml:space="preserve">
+    <value>2+ sessions</value>
+  </data>
+  <data name="Calendar_Fri" xml:space="preserve">
+    <value>Fri</value>
+  </data>
+  <data name="Calendar_Mon" xml:space="preserve">
+    <value>Mon</value>
+  </data>
+  <data name="Calendar_NoSessions" xml:space="preserve">
+    <value>No sessions</value>
+  </data>
+  <data name="Calendar_Sat" xml:space="preserve">
+    <value>Sat</value>
+  </data>
+  <data name="Calendar_Sun" xml:space="preserve">
+    <value>Sun</value>
+  </data>
+  <data name="Calendar_Thu" xml:space="preserve">
+    <value>Thu</value>
+  </data>
+  <data name="Calendar_Title" xml:space="preserve">
+    <value>Training Calendar</value>
+  </data>
+  <data name="Calendar_Tue" xml:space="preserve">
+    <value>Tue</value>
+  </data>
+  <data name="Calendar_Wed" xml:space="preserve">
+    <value>Wed</value>
+  </data>
+  <data name="Settings_AudioSettings" xml:space="preserve">
+    <value>Audio settings</value>
+  </data>
+  <data name="Settings_Database" xml:space="preserve">
+    <value>Database</value>
+  </data>
+  <data name="Settings_SelectLanguage" xml:space="preserve">
+    <value>Select language for the app.</value>
   </data>
 </root>

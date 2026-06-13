@@ -4370,4 +4370,655 @@ This cannot be undone!</value>
   <data name="Report_TimeWindow_LastDays" xml:space="preserve">
     <value>Seneste {0} dage</value>
   </data>
+  <data name="AdaptiveVolume_Baseline" xml:space="preserve">
+    <value>Et passe antall øvelser for en jevn økt.</value>
+  </data>
+  <data name="AdaptiveVolume_IncreasedConsistency" xml:space="preserve">
+    <value>Fin og jevn fremgang — du kan gjerne legge til litt mer denne økten hvis du har lyst.</value>
+  </data>
+  <data name="AdaptiveVolume_ReducedForRecovery" xml:space="preserve">
+    <value>Vi holder økten kort i dag så stemmen får hvile. Litt færre øvelser nå støtter restitusjonen.</value>
+  </data>
+  <data name="CoachHint_Breathing_DeepBreath" xml:space="preserve">
+    <value>🌬️ Ta en dyp pust! Du er i ferd med å gå tom for luft.</value>
+  </data>
+  <data name="CoachHint_Breathing_Good" xml:space="preserve">
+    <value>🌬️ God pustekontroll!</value>
+  </data>
+  <data name="CoachHint_Breathing_Relax" xml:space="preserve">
+    <value>🌬️ Slapp av i halsen og pust rolig.</value>
+  </data>
+  <data name="CoachHint_Breathing_Smoother" xml:space="preserve">
+    <value>🌬️ Prøv å ha jevnere luftstrøm.</value>
+  </data>
+  <data name="CoachHint_Correct" xml:space="preserve">
+    <value>✅ Perfekt! Fortsett slik.</value>
+  </data>
+  <data name="CoachHint_Health_Critical" xml:space="preserve">
+    <value>🛑 STANS! Din stemme trenger hvile umiddelbart.</value>
+  </data>
+  <data name="CoachHint_Health_Hoarseness" xml:space="preserve">
+    <value>⚠️ Hørbar heshet. Ta en pause og drikk vann.</value>
+  </data>
+  <data name="CoachHint_Health_JitterWarning" xml:space="preserve">
+    <value>⚠️ Ustabil tone detektert. Slapp av og prøv igjen.</value>
+  </data>
+  <data name="CoachHint_Health_ShimmerWarning" xml:space="preserve">
+    <value>⚠️ Variasjon i amplitude. Pust dypt og slapp av.</value>
+  </data>
+  <data name="CoachHint_Health_TakeItEasy" xml:space="preserve">
+    <value>⚠️ Ta det rolig - unngå å presse stemmen.</value>
+  </data>
+  <data name="CoachHint_Intonation_AddVariation" xml:space="preserve">
+    <value>🎶 Prøv å variere pitch-en mer. Tenk på naturlig tale!</value>
+  </data>
+  <data name="CoachHint_Intonation_Natural" xml:space="preserve">
+    <value>🎶 Naturlig intonasjon! God variasjon.</value>
+  </data>
+  <data name="CoachHint_Intonation_ReduceExaggeration" xml:space="preserve">
+    <value>🎶 Reduser litt - prøv mer naturlig variasjon.</value>
+  </data>
+  <data name="CoachHint_Intonation_RiseForQuestion" xml:space="preserve">
+    <value>🎶 Prøv å avslutte med stigende tone for spørsmål.</value>
+  </data>
+  <data name="CoachHint_Intonation_Rising" xml:space="preserve">
+    <value>🎶 God stigende intonasjon for spørsmål!</value>
+  </data>
+  <data name="CoachHint_Pitch_Good" xml:space="preserve">
+    <value>Perfekt pitch! Hold denne tonen.</value>
+  </data>
+  <data name="CoachHint_Pitch_Stabilize" xml:space="preserve">
+    <value>Fokusér på å holde en stabil tone.</value>
+  </data>
+  <data name="CoachHint_Pitch_TooHigh" xml:space="preserve">
+    <value>Senk stemmen litt. Slapp av i skuldrene.</value>
+  </data>
+  <data name="CoachHint_Pitch_TooLow" xml:space="preserve">
+    <value>Prøv å heve stemmen litt. Tenk på å snakke fra halsen.</value>
+  </data>
+  <data name="CoachHint_PitchPress_Rest" xml:space="preserve">
+    <value>🛑 Du presser stemmen. Ta en pause og slapp av.</value>
+  </data>
+  <data name="CoachHint_Resonance_Adjust" xml:space="preserve">
+    <value>✨ Juster resonansen - prøv å heve F2.</value>
+  </data>
+  <data name="CoachHint_Resonance_AlmostThere" xml:space="preserve">
+    <value>✨ Nesten der! Fortsett å flytte lyden fremover.</value>
+  </data>
+  <data name="CoachHint_Resonance_Good" xml:space="preserve">
+    <value>✨ God resonans! Fortsett å jobbe med fremre klang.</value>
+  </data>
+  <data name="CoachHint_Resonance_KeepGoing" xml:space="preserve">
+    <value>✨ God progresjon! Fortsett med forward resonance.</value>
+  </data>
+  <data name="CoachHint_Resonance_MoveForward" xml:space="preserve">
+    <value>✨ Flytt lyden fremover i munnen. Tenk på å 'henge' lyden i nesetippen!</value>
+  </data>
+  <data name="CoachHint_Resonance_MoveForward_Beginner" xml:space="preserve">
+    <value>✨ F2 er lav - prøv å smile når du snakker og tenk at lyden kommer fra nesetippen!</value>
+  </data>
+  <data name="CoachHint_Resonance_Optimal" xml:space="preserve">
+    <value>✨ Perfekt resonans! Fremre klangposisjon.</value>
+  </data>
+  <data name="CoachHint_Stability_Adjust" xml:space="preserve">
+    <value>📊 Prøv å holde stemmen mer stabil.</value>
+  </data>
+  <data name="Common_Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Dashboard_Axis_Date" xml:space="preserve">
+    <value>Dato</value>
+  </data>
+  <data name="Dashboard_Axis_Score" xml:space="preserve">
+    <value>Score (0–100)</value>
+  </data>
+  <data name="Dashboard_Axis_Sessions" xml:space="preserve">
+    <value>Økter</value>
+  </data>
+  <data name="Dashboard_Breakthroughs" xml:space="preserve">
+    <value>Gjennombrudd</value>
+  </data>
+  <data name="Dashboard_MonthlyTrend" xml:space="preserve">
+    <value>Månedlig trend</value>
+  </data>
+  <data name="Dashboard_RecoveryPatterns" xml:space="preserve">
+    <value>Restitusjonstrender</value>
+  </data>
+  <data name="Dashboard_VoiceDevelopment" xml:space="preserve">
+    <value>Stemmeutvikling</value>
+  </data>
+  <data name="Dashboard_WeeklyTrend" xml:space="preserve">
+    <value>Ukentlig trend</value>
+  </data>
+  <data name="Dimension_Comfort" xml:space="preserve">
+    <value>Comfort</value>
+  </data>
+  <data name="Dimension_Consistency" xml:space="preserve">
+    <value>Consistency</value>
+  </data>
+  <data name="Dimension_Intonation" xml:space="preserve">
+    <value>Intonation</value>
+  </data>
+  <data name="Dimension_Pitch" xml:space="preserve">
+    <value>Pitch</value>
+  </data>
+  <data name="Dimension_Recovery" xml:space="preserve">
+    <value>Recovery</value>
+  </data>
+  <data name="Dimension_Resonance" xml:space="preserve">
+    <value>Resonance</value>
+  </data>
+  <data name="Dimension_VocalWeight" xml:space="preserve">
+    <value>Vocal weight</value>
+  </data>
+  <data name="Exercise_Description" xml:space="preserve">
+    <value>Beskrivelse av øvelsen</value>
+  </data>
+  <data name="ExerciseSummary_Declined" xml:space="preserve">
+    <value>Ta denne økten roligere - kanskje du trenger en pause.</value>
+  </data>
+  <data name="ExerciseSummary_Excellent" xml:space="preserve">
+    <value>⭐ Fantastisk innsats!</value>
+  </data>
+  <data name="ExerciseSummary_Good" xml:space="preserve">
+    <value>👍 God jobb!</value>
+  </data>
+  <data name="ExerciseSummary_Improved" xml:space="preserve">
+    <value>Du har forbedret deg siden forrige økt!</value>
+  </data>
+  <data name="ExerciseSummary_KeepTrying" xml:space="preserve">
+    <value>💪 Fortsett å øve - du er på rett vei!</value>
+  </data>
+  <data name="ExerciseSummary_NeedsWork" xml:space="preserve">
+    <value>💪 Bra innsats, men det er rom for forbedring.</value>
+  </data>
+  <data name="ExerciseSummary_PitchAdvice" xml:space="preserve">
+    <value>Jobb med å heve pitch gradvis og unngå å presse stemmen.</value>
+  </data>
+  <data name="ExerciseSummary_ResonanceAdvice" xml:space="preserve">
+    <value>Fokusér på å flytte lyden fremover i munnen for bedre resonans.</value>
+  </data>
+  <data name="ExerciseSummary_StabilityAdvice" xml:space="preserve">
+    <value>Fokusér på å holde en stabil og avslappet tone.</value>
+  </data>
+  <data name="Explanation_Confidence_High" xml:space="preserve">
+    <value>Høy sikkerhet</value>
+  </data>
+  <data name="Explanation_Confidence_Low" xml:space="preserve">
+    <value>Lav sikkerhet — begrenset datagrunnlag</value>
+  </data>
+  <data name="Explanation_Confidence_Medium" xml:space="preserve">
+    <value>Middels sikkerhet</value>
+  </data>
+  <data name="Explanation_ExpectedOutcome_Template" xml:space="preserve">
+    <value>Med jevn trening kan du forvente at {0} gradvis beveger seg i ønsket retning over de kommende ukene.</value>
+  </data>
+  <data name="Explanation_WhatItImproves_Template" xml:space="preserve">
+    <value>Å jobbe med {0} styrker helhetsinntrykket av stemmen og gjør den mer naturlig og behagelig.</value>
+  </data>
+  <data name="Explanation_WhyFocus_Template" xml:space="preserve">
+    <value>{0} er valgt som fokusområde fordi det er her treningen din har størst potensiale for vekst akkurat nå.</value>
+  </data>
+  <data name="FeedbackMode_Glide" xml:space="preserve">
+    <value>Auditory + visual: pitch tracking</value>
+  </data>
+  <data name="FeedbackMode_Intonation" xml:space="preserve">
+    <value>Auditory: intonation sound with visual support</value>
+  </data>
+  <data name="FeedbackMode_Pitch" xml:space="preserve">
+    <value>Auditory + visual: comfort-zone indicator</value>
+  </data>
+  <data name="FeedbackMode_ResonanceHumming" xml:space="preserve">
+    <value>Visual: resonance indicator</value>
+  </data>
+  <data name="FeedbackMode_ResonanceVowels" xml:space="preserve">
+    <value>Visual: resonance and stability indicators</value>
+  </data>
+  <data name="FeedbackMode_Stability" xml:space="preserve">
+    <value>Visual: stability curve and hold indicator</value>
+  </data>
+  <data name="FeedbackMode_Straw" xml:space="preserve">
+    <value>Visual + tactile: airflow indicator</value>
+  </data>
+  <data name="FirstSetup_FrequencyDesc" xml:space="preserve">
+    <value>Hvor ofte ønsker du å trene? Velg et tempo som kjennes overkommelig for deg.</value>
+  </data>
+  <data name="FirstSetup_FrequencyLabel" xml:space="preserve">
+    <value>Treningsdager per uke</value>
+  </data>
+  <data name="FirstSetup_StyleGoalDesc" xml:space="preserve">
+    <value>Hvilken klang ønsker du å utforske? Du kan endre dette når som helst senere.</value>
+  </data>
+  <data name="FirstSetup_StyleGoalLabel" xml:space="preserve">
+    <value>Velg målstil</value>
+  </data>
+  <data name="Focus_Airflow" xml:space="preserve">
+    <value>Optimize subglottal pressure and steady phonation through the straw.</value>
+  </data>
+  <data name="Focus_GlideCoordination" xml:space="preserve">
+    <value>Coordinate pitch increase with forward resonance and steady airflow.</value>
+  </data>
+  <data name="Focus_ResonanceForward" xml:space="preserve">
+    <value>Sensitize and maintain forward resonance in the oral cavity.</value>
+  </data>
+  <data name="Focus_Stability" xml:space="preserve">
+    <value>Maintain steady pitch and consistent breath support over time.</value>
+  </data>
+  <data name="Focus_VowelResonance" xml:space="preserve">
+    <value>Maintain forward resonance during vowel production.</value>
+  </data>
+  <data name="HealthWarning_DefaultRest" xml:space="preserve">
+    <value>🛑 Ta en pause. Drikk vann og slapp av i halsen.</value>
+  </data>
+  <data name="HealthWarning_LockoutActive" xml:space="preserve">
+    <value>🛑 Stemmehvile pålagt. Du kan fortsette om {0} minutter.</value>
+  </data>
+  <data name="HealthWarning_RestRemaining" xml:space="preserve">
+    <value>🛑 Ta en pause. {0} sekunder gjenstår.</value>
+  </data>
+  <data name="HealthWarning_SessionApproachingLimit" xml:space="preserve">
+    <value>⚠️ Du nærmer deg tidsgrensen for denne økten ({0} min gjenstår).</value>
+  </data>
+  <data name="IndicatorPackage_GlideUp" xml:space="preserve">
+    <value>Pitch - Resonance - Stability</value>
+  </data>
+  <data name="IndicatorPackage_Intonation" xml:space="preserve">
+    <value>Intonation - Pitch</value>
+  </data>
+  <data name="IndicatorPackage_Pitch" xml:space="preserve">
+    <value>Pitch - Stability</value>
+  </data>
+  <data name="IndicatorPackage_ResonanceHumming" xml:space="preserve">
+    <value>Resonance - Stability</value>
+  </data>
+  <data name="IndicatorPackage_ResonanceVowels" xml:space="preserve">
+    <value>Resonance - Stability</value>
+  </data>
+  <data name="IndicatorPackage_Stability" xml:space="preserve">
+    <value>Stability - Resonance</value>
+  </data>
+  <data name="IndicatorPackage_StrawPhonation" xml:space="preserve">
+    <value>Airflow - Stability</value>
+  </data>
+  <data name="Insight_Decline_Template" xml:space="preserve">
+    <value>{0} har vist en nedgang på {1:0.0} poeng i denne perioden. Det kan være lurt å gi stemmen ekstra hvile og se om kurven snur seg.</value>
+  </data>
+  <data name="Insight_Improvement_Template" xml:space="preserve">
+    <value>{0} har utviklet seg positivt ({1:+0.0;-0.0} poeng). Treningsarbeidet begynner å gi resultater.</value>
+  </data>
+  <data name="Insight_InsufficientData" xml:space="preserve">
+    <value>Det er foreløpig ikke nok data for {0} til å vise en tydelig trend. Fortsett å trene, så bygger bildet seg opp.</value>
+  </data>
+  <data name="Insight_Stable_Template" xml:space="preserve">
+    <value>{0} holder seg stabilt. Å bevare det du har bygget opp er verdifullt i seg selv.</value>
+  </data>
+  <data name="Main_ComfortZone" xml:space="preserve">
+    <value>Komfortsone</value>
+  </data>
+  <data name="Main_Progression" xml:space="preserve">
+    <value>Progression</value>
+  </data>
+  <data name="Main_Resonance" xml:space="preserve">
+    <value>Resonance</value>
+  </data>
+  <data name="MicCalibration_CompatibilityHeader" xml:space="preserve">
+    <value>Microphone advice:</value>
+  </data>
+  <data name="MicCalibration_Complete" xml:space="preserve">
+    <value>Calibration is complete.</value>
+  </data>
+  <data name="MicCalibration_FlagClipping" xml:space="preserve">
+    <value>- Clipping risk: lower Windows input volume or microphone gain.</value>
+  </data>
+  <data name="MicCalibration_FlagHighNoise" xml:space="preserve">
+    <value>- High background noise: reduce room noise or use light noise reduction if your mic software provides it.</value>
+  </data>
+  <data name="MicCalibration_FlagLowOutput" xml:space="preserve">
+    <value>- Low-output microphone: the app uses more sensitive thresholds, but moving the mic closer can help.</value>
+  </data>
+  <data name="MicCalibration_FlagNoiseGate" xml:space="preserve">
+    <value>- Possible noise gate: disable aggressive gating in Logitech/Realtek/Nahimic/Windows if quiet voice is cut off.</value>
+  </data>
+  <data name="MicCalibration_FlagProcessing" xml:space="preserve">
+    <value>- Possible AGC/compressor: for precise measurement, keep automatic gain, compressor and voice effects off or gentle.</value>
+  </data>
+  <data name="MicCalibration_LiveLevelFormat" xml:space="preserve">
+    <value>Live level: RMS {0:F4} ({1:F1} dBFS), peak {2:F1} dBFS</value>
+  </data>
+  <data name="MicCalibration_ManualReady" xml:space="preserve">
+    <value>Ready. Press "Measure quiet room" when you are silent and the room is calm.</value>
+  </data>
+  <data name="MicCalibration_Next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="MicCalibration_NoiseLabel" xml:space="preserve">
+    <value>Noise</value>
+  </data>
+  <data name="MicCalibration_QualityFormat" xml:space="preserve">
+    <value>Noise RMS {0:F4}, voice RMS {1:F4}, SNR {2:F1} dB, peak {3:F1} dBFS.</value>
+  </data>
+  <data name="MicCalibration_RecordSilence" xml:space="preserve">
+    <value>Measure quiet room</value>
+  </data>
+  <data name="MicCalibration_RecordVoice" xml:space="preserve">
+    <value>Measure voice</value>
+  </data>
+  <data name="MicCalibration_Restart" xml:space="preserve">
+    <value>Start over</value>
+  </data>
+  <data name="MicCalibration_SilenceCaptured" xml:space="preserve">
+    <value>Quiet room has been measured. Press "Measure voice" when you are ready to use comfortable voice or gentle humming.</value>
+  </data>
+  <data name="MicCalibration_SilenceRecording" xml:space="preserve">
+    <value>Measuring background noise. Stay quiet.</value>
+  </data>
+  <data name="MicCalibration_TooCloseToNoise" xml:space="preserve">
+    <value>Voice/humming was too close to the background noise. Reduce room noise, move the microphone closer, or raise Windows input level slightly.</value>
+  </data>
+  <data name="MicCalibration_TooLoud" xml:space="preserve">
+    <value>The microphone level was too high and may clip. Lower Windows input volume or microphone gain and try again.</value>
+  </data>
+  <data name="MicCalibration_VoiceRecording" xml:space="preserve">
+    <value>Measuring comfortable voice or humming. Keep the level calm and steady.</value>
+  </data>
+  <data name="Mistakes_CoordinatedGlideUp" xml:space="preserve">
+    <value>Fast, jerky glides or compensatory throat tension.</value>
+  </data>
+  <data name="Mistakes_IntonationExercise" xml:space="preserve">
+    <value>Monotone delivery or excessive upward question-like endings.</value>
+  </data>
+  <data name="Mistakes_PitchExercise" xml:space="preserve">
+    <value>Overcompensation, hard glottal attack, or broken quality.</value>
+  </data>
+  <data name="Mistakes_ResonanceHumming" xml:space="preserve">
+    <value>Tensing the jaw or throat; pushing the sound.</value>
+  </data>
+  <data name="Mistakes_ResonanceVowels" xml:space="preserve">
+    <value>Jaw closure, throat tension, or regression to posterior resonance.</value>
+  </data>
+  <data name="Mistakes_StabilityTraining" xml:space="preserve">
+    <value>Fatigue, reduced support, or small pitch irregularities.</value>
+  </data>
+  <data name="Mistakes_StrawPhonation" xml:space="preserve">
+    <value>Over-breathing or jaw tension; breathe gently and evenly.</value>
+  </data>
+  <data name="Nav_CaseReview" xml:space="preserve">
+    <value>Case review</value>
+  </data>
+  <data name="Nav_ClinicianDashboard" xml:space="preserve">
+    <value>Clinical overview</value>
+  </data>
+  <data name="Nav_CoachDashboard" xml:space="preserve">
+    <value>Coach overview</value>
+  </data>
+  <data name="Nav_ManualOverride" xml:space="preserve">
+    <value>Manual adjustment</value>
+  </data>
+  <data name="Nav_Reports" xml:space="preserve">
+    <value>Reports</value>
+  </data>
+  <data name="Pattern_Breakthrough_Description" xml:space="preserve">
+    <value>Det er tydelig fremgang innen {0}. Stemmen din responderer godt på treningen i denne perioden.</value>
+  </data>
+  <data name="Pattern_Plateau_Description" xml:space="preserve">
+    <value>Stemmen din er i en stabil fase innen {0}. Platåer er en naturlig del av utviklingen — kroppen bearbeider og befester det den har lært.</value>
+  </data>
+  <data name="Pattern_Regression_Description" xml:space="preserve">
+    <value>Stemmen din viser en midlertidig tilbakegang innen {0}. Dette kan skyldes tretthet, stress eller perioder med mindre trening — og er forbigående.</value>
+  </data>
+  <data name="Progression_ComplexityAdvanced" xml:space="preserve">
+    <value>Talekompleksiteten din har nådd et nytt nivå — se Smart Coach for detaljer</value>
+  </data>
+  <data name="Progression_SafetyLockEngagedStatus" xml:space="preserve">
+    <value>Progresjon satt på pause av sikkerhetshensyn — stemmen din trenger hvile</value>
+  </data>
+  <data name="Progression_SafetyLockReleasedStatus" xml:space="preserve">
+    <value>Sikkerhetspausen er over — progresjonen er aktiv igjen</value>
+  </data>
+  <data name="Purpose_CoordinatedGlideUp" xml:space="preserve">
+    <value>Develop flexible upward pitch movement without loss of resonance or added tension.</value>
+  </data>
+  <data name="Purpose_IntonationExercise" xml:space="preserve">
+    <value>Train natural phrase melody and intonation.</value>
+  </data>
+  <data name="Purpose_PitchExercise" xml:space="preserve">
+    <value>Train precise pitch control within the comfort zone.</value>
+  </data>
+  <data name="Purpose_ResonanceHumming" xml:space="preserve">
+    <value>Establish forward resonance and reduce posterior effort.</value>
+  </data>
+  <data name="Purpose_ResonanceVowels" xml:space="preserve">
+    <value>Transfer resonance control from humming to open vowels.</value>
+  </data>
+  <data name="Purpose_StabilityTraining" xml:space="preserve">
+    <value>Build neuromuscular control and endurance for stable phonation.</value>
+  </data>
+  <data name="Purpose_StrawPhonation" xml:space="preserve">
+    <value>Reduce vocal loading and strengthen airflow control.</value>
+  </data>
+  <data name="Research_Export" xml:space="preserve">
+    <value>Export research data</value>
+  </data>
+  <data name="Safety_CoordinatedGlideUp" xml:space="preserve">
+    <value>Avoid if painful; reduce range when uncomfortable.</value>
+  </data>
+  <data name="Safety_IntonationExercise" xml:space="preserve">
+    <value>Stop if the voice becomes fatigued; rest between sets.</value>
+  </data>
+  <data name="Safety_PitchExercise" xml:space="preserve">
+    <value>Stop if soreness or prolonged hoarseness occurs.</value>
+  </data>
+  <data name="Safety_ResonanceHumming" xml:space="preserve">
+    <value>Stop if pain or persistent hoarseness occurs; consult a clinician if concerned.</value>
+  </data>
+  <data name="Safety_ResonanceVowels" xml:space="preserve">
+    <value>Pause if uncomfortable; return to simpler humming if needed.</value>
+  </data>
+  <data name="Safety_StabilityTraining" xml:space="preserve">
+    <value>Start with short sets and progress gradually; stop if fatigued or in pain.</value>
+  </data>
+  <data name="Safety_StrawPhonation" xml:space="preserve">
+    <value>Stop if dizzy or uncomfortable; ensure safe breathing technique.</value>
+  </data>
+  <data name="Settings_Accessibility_Desc" xml:space="preserve">
+    <value>Tilpass tempo og synsinntrykk slik at trening kjennes trygt og overkommelig.</value>
+  </data>
+  <data name="Settings_Accessibility_Frequency2" xml:space="preserve">
+    <value>2 dager</value>
+  </data>
+  <data name="Settings_Accessibility_Frequency3" xml:space="preserve">
+    <value>3 dager (anbefalt)</value>
+  </data>
+  <data name="Settings_Accessibility_Frequency4" xml:space="preserve">
+    <value>4 dager</value>
+  </data>
+  <data name="Settings_Accessibility_Frequency5" xml:space="preserve">
+    <value>5 eller flere dager</value>
+  </data>
+  <data name="Settings_Accessibility_ReducedVisual" xml:space="preserve">
+    <value>Redusert visuell tilbakemelding</value>
+  </data>
+  <data name="Settings_Accessibility_ReducedVisualDesc" xml:space="preserve">
+    <value>Roligere skjermbilde med færre animasjoner og mindre bevegelse.</value>
+  </data>
+  <data name="Settings_Accessibility_StressSensitive" xml:space="preserve">
+    <value>Rolig modus</value>
+  </data>
+  <data name="Settings_Accessibility_StressSensitiveDesc" xml:space="preserve">
+    <value>Roligere farger og dempede varsler i stedet for rød alarm. Fint hvis det fort blir overveldende.</value>
+  </data>
+  <data name="Settings_Accessibility_Title" xml:space="preserve">
+    <value>Tilgjengelighet</value>
+  </data>
+  <data name="Settings_Accessibility_TrainingFrequency" xml:space="preserve">
+    <value>Treningsdager per uke</value>
+  </data>
+  <data name="SmartCoach_AlreadyCompleted" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="SmartCoach_BaselineConfidence" xml:space="preserve">
+    <value>Baseline confidence</value>
+  </data>
+  <data name="SmartCoach_BuildingBaseline" xml:space="preserve">
+    <value>Building your baseline...</value>
+  </data>
+  <data name="SmartCoach_Days" xml:space="preserve">
+    <value>days</value>
+  </data>
+  <data name="SmartCoach_DayStreak" xml:space="preserve">
+    <value>Day streak</value>
+  </data>
+  <data name="SmartCoach_Focus_Comfort" xml:space="preserve">
+    <value>Fokus i dag: Komfort. La stemmen få hvile i et avslappet, behagelig leie. Utforsk en lett og myk klang i ditt eget tempo, og legg merke til hvordan det kjennes godt ut i hals og kjeve. Ingen mål om å nå noe bestemt – bare la lyden komme rolig.</value>
+  </data>
+  <data name="SmartCoach_Focus_Consistency" xml:space="preserve">
+    <value>Fokus i dag: Jevnhet. La oss utforske en rolig, stabil klang du kan hvile i fra tone til tone. Hold en behagelig lyd litt om gangen, og legg merke til når den kjennes trygg og forutsigbar. Stabilitet kommer av gjentakelse i ditt eget tempo.</value>
+  </data>
+  <data name="SmartCoach_Focus_Recovery" xml:space="preserve">
+    <value>Fokus i dag: Restitusjon. Stemmen din har gjort godt arbeid, og nå kan den få hvile. Hold økten kort og lett, med myke, avslappede lyder. Drikk litt vann og la dette være en rolig, omsorgsfull dag for stemmen.</value>
+  </data>
+  <data name="SmartCoach_Focus_Resonance" xml:space="preserve">
+    <value>Fokus i dag: Resonans. Kjenn etter hvor vibrasjonene sitter – prøv å la dem flytte rolig fremover i munnen. Utforsk en lysere, mer fremre klang uten å anstrenge deg, og merk hva som føles naturlig.</value>
+  </data>
+  <data name="SmartCoach_Health" xml:space="preserve">
+    <value>health</value>
+  </data>
+  <data name="SmartCoach_Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="SmartCoach_MarkComplete" xml:space="preserve">
+    <value>Mark Complete</value>
+  </data>
+  <data name="SmartCoach_Mastery_Mastered" xml:space="preserve">
+    <value>For en flott utvikling – du har gjort denne øvelsen virkelig til din egen. Stemmen din kjenner dette godt nå, og du kan trygt utforske nye uttrykk når du føler deg klar. Vær stolt av hvor langt du har kommet.</value>
+  </data>
+  <data name="SmartCoach_Mastery_Stable" xml:space="preserve">
+    <value>Du har funnet en trygg, jevn klang i denne øvelsen – det er virkelig fint arbeid. Nå som dette sitter godt, kan du la deg utforske litt videre i ditt eget tempo når du har lyst. Det er helt opp til deg.</value>
+  </data>
+  <data name="SmartCoach_Mastery_Title" xml:space="preserve">
+    <value>Du mestrer dette!</value>
+  </data>
+  <data name="SmartCoach_Messages" xml:space="preserve">
+    <value>Messages</value>
+  </data>
+  <data name="SmartCoach_Minutes" xml:space="preserve">
+    <value>min</value>
+  </data>
+  <data name="SmartCoach_NoData" xml:space="preserve">
+    <value>No data yet</value>
+  </data>
+  <data name="SmartCoach_NoNewMessages" xml:space="preserve">
+    <value>No new messages</value>
+  </data>
+  <data name="SmartCoach_ProgressToGoal" xml:space="preserve">
+    <value>Progress to goal</value>
+  </data>
+  <data name="SmartCoach_Recommended" xml:space="preserve">
+    <value>recommended</value>
+  </data>
+  <data name="SmartCoach_RecommendedExerciseFormat" xml:space="preserve">
+    <value>Foreslått øvelse: #{0}</value>
+  </data>
+  <data name="SmartCoach_Sessions" xml:space="preserve">
+    <value>sessions</value>
+  </data>
+  <data name="SmartCoach_SessionsThisWeek" xml:space="preserve">
+    <value>Sessions this week</value>
+  </data>
+  <data name="SmartCoach_Style_Recovery_Androgynous" xml:space="preserve">
+    <value>Fokus i dag: Restitusjon. La den balanserte klangen du jobber mot få hvile i dag. Hold økten kort og myk, drikk litt vann, og la dette være en rolig, omsorgsfull dag for stemmen din.</value>
+  </data>
+  <data name="SmartCoach_Style_Recovery_DarkFeminine" xml:space="preserve">
+    <value>Fokus i dag: Restitusjon. La den varme, fyldige klangen du jobber mot få hvile i dag. Hold økten kort og myk, drikk litt vann, og la dette være en rolig, omsorgsfull dag for stemmen din.</value>
+  </data>
+  <data name="SmartCoach_Style_Recovery_Feminine" xml:space="preserve">
+    <value>Fokus i dag: Restitusjon. La den lette, lyse klangen du jobber mot få hvile i dag. Hold økten kort og myk, drikk litt vann, og la dette være en rolig, omsorgsfull dag for stemmen din.</value>
+  </data>
+  <data name="SmartCoach_Style_Recovery_Situational" xml:space="preserve">
+    <value>Fokus i dag: Restitusjon. La stemmen hvile uansett hvilken klang du veksler mellom. Hold økten kort og myk, drikk litt vann, og la dette være en rolig, omsorgsfull dag for stemmen din.</value>
+  </data>
+  <data name="SmartCoach_Style_Resonance_Androgynous" xml:space="preserve">
+    <value>Fokus i dag: Resonans i en balansert, androgyn retning. Hold klangen et sted midt imellom – verken spesielt fremre eller fyldig. Utforsk en jevn, behagelig resonans i ditt eget tempo, og la den lande der den kjennes mest deg.</value>
+  </data>
+  <data name="SmartCoach_Style_Resonance_DarkFeminine" xml:space="preserve">
+    <value>Fokus i dag: Resonans i en varm, dyp feminin retning. Her er målet en rund, fyldig klang – la gjerne resonansen hvile lenger bak og nede, uten å trekke den oppover. Utforsk en myk, mørkere varme i ditt eget tempo, og merk når den kjennes god.</value>
+  </data>
+  <data name="SmartCoach_Style_Resonance_Feminine" xml:space="preserve">
+    <value>Fokus i dag: Resonans i din feminine retning. Kjenn etter vibrasjonene og la dem gjerne flytte rolig fremover i munnen. Utforsk en lettere, lysere klang i ditt eget tempo, og merk hva som føles naturlig og behagelig.</value>
+  </data>
+  <data name="SmartCoach_Style_Resonance_Situational" xml:space="preserve">
+    <value>Fokus i dag: Fleksibel resonans. Du veksler mellom ulike sammenhenger, så øv på å finne klangen som passer situasjonen. Utforsk både en lettere og en fyldigere resonans i ditt eget tempo, og legg merke til hvilken som kjennes riktig når.</value>
+  </data>
+  <data name="SmartCoach_SuggestedVolumeFormat" xml:space="preserve">
+    <value>Forslag: {0} øvelser × {1} sett</value>
+  </data>
+  <data name="SmartCoach_Title" xml:space="preserve">
+    <value>Smart Coach</value>
+  </data>
+  <data name="SmartCoach_TodaysFocus" xml:space="preserve">
+    <value>Today's focus</value>
+  </data>
+  <data name="SmartCoach_TotalTimeThisWeek" xml:space="preserve">
+    <value>Total time this week</value>
+  </data>
+  <data name="SmartCoach_VoiceHealth" xml:space="preserve">
+    <value>Voice health</value>
+  </data>
+  <data name="SmartCoach_WeeklyHistory" xml:space="preserve">
+    <value>Weekly history</value>
+  </data>
+  <data name="ThresholdStrategy_Adaptive" xml:space="preserve">
+    <value>Threshold: adaptive, adjusted by performance.</value>
+  </data>
+  <data name="Tip_Advanced" xml:space="preserve">
+    <value>🎯 Avansert tips: Jobb med følelsesuttrykk. Prøv å formidle mer med stemmen - glede, undring, nysgjerrighet!</value>
+  </data>
+  <data name="Tip_Beginner" xml:space="preserve">
+    <value>🎯 Nybegynnertips: Fokuser på å holde en jevn pitch gjennom hele setningen. Start med korte setninger.</value>
+  </data>
+  <data name="Tip_Consistency" xml:space="preserve">
+    <value>🎯 Tips: Fokusere på konsistens. Prøv å holde samme pitch-nivå gjennom hele økten.</value>
+  </data>
+  <data name="Tip_Intermediate" xml:space="preserve">
+    <value>🎯 Tips: Prøv å heve pitch-en litt mer. Tenk på å snakke med en lettere stemme.</value>
+  </data>
+  <data name="Tip_Intonation" xml:space="preserve">
+    <value>🎯 Tips: Jobb nå med å legge til mer variasjon i intonasjonen din. Varier pitch-en mellom setninger.</value>
+  </data>
+  <data name="VoiceHealthFeedback_HydrationSustained" xml:space="preserve">
+    <value>Stemmen har jobbet en stund. Ta deg en vannpause før du fortsetter.</value>
+  </data>
+  <data name="VoiceHealthFeedback_HydrationWithRest" xml:space="preserve">
+    <value>Pust rolig og ta noen slurker vann mens du hviler stemmen litt.</value>
+  </data>
+  <data name="VoiceLoad_ContinueCalmly" xml:space="preserve">
+    <value>Stemmen virker stabil. Fortsett rolig.</value>
+  </data>
+  <data name="VoiceLoad_EndSession" xml:space="preserve">
+    <value>Det kan være lurt å avslutte økten her og la stemmen hvile.</value>
+  </data>
+  <data name="VoiceLoad_HydrationGentle" xml:space="preserve">
+    <value>Drikk litt vann hvis du ikke har gjort det nylig.</value>
+  </data>
+  <data name="VoiceLoad_LowerIntensity" xml:space="preserve">
+    <value>Stemmen virker litt mindre stabil nå. Senk intensiteten og ta en pause.</value>
+  </data>
+  <data name="VoiceLoad_PauseNow" xml:space="preserve">
+    <value>Stemmen virker litt mindre stabil nå. Ta en kort pause før du fortsetter.</value>
+  </data>
+  <data name="VoiceLoad_PauseSoon" xml:space="preserve">
+    <value>Du har øvd en stund. Ta gjerne en kort pause snart.</value>
+  </data>
+  <data name="VoiceLoad_RecoveryContinueGently" xml:space="preserve">
+    <value>Start forsiktig og hold intensiteten lav.</value>
+  </data>
+  <data name="VoiceLoad_RecoveryEndForToday" xml:space="preserve">
+    <value>Det kan være best å avslutte for i dag.</value>
+  </data>
+  <data name="VoiceLoad_RecoveryReady" xml:space="preserve">
+    <value>Du kan fortsette rolig.</value>
+  </data>
+  <data name="VoiceLoad_RecoveryWait" xml:space="preserve">
+    <value>Vent litt lenger før du fortsetter.</value>
+  </data>
 </root>

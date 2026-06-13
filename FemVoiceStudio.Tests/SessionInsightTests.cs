@@ -116,7 +116,7 @@ namespace FemVoiceStudio.Tests
             Assert.Equal(6.0, resonance!.Delta, 6);
             Assert.Equal(60.0, resonance.CurrentScore, 6);
             Assert.Equal(54.0, resonance.PreviousScore, 6);
-            Assert.Contains("Resonance", resonance.Explanation, StringComparison.Ordinal);
+            Assert.Contains("Reson", resonance.Explanation, StringComparison.OrdinalIgnoreCase);
             Assert.Contains("+6", resonance.Explanation, StringComparison.Ordinal);
             Assert.False(insight.IsFirstSession);
         }
@@ -436,7 +436,8 @@ namespace FemVoiceStudio.Tests
 
             Assert.Contains("Composite:", breakdown, StringComparison.Ordinal);
             Assert.Contains("focus: Pitch", breakdown, StringComparison.Ordinal);
-            Assert.Contains("Improvement: Resonance", breakdown, StringComparison.Ordinal);
+            Assert.Contains("Improvement:", breakdown, StringComparison.Ordinal);
+            Assert.Contains("Reson", breakdown, StringComparison.OrdinalIgnoreCase);
             Assert.Contains("Risk: STRAIN_DETECTED", breakdown, StringComparison.Ordinal);
             Assert.Contains("Recovery: 70/100", breakdown, StringComparison.Ordinal);
         }

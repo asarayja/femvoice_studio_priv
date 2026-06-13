@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <root xmlns:ns1="urn:schemas-microsoft-com:xml-msdata" xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:schema id="root">
     <xs:element name="root" ns1:IsDataSet="true">
@@ -247,7 +247,7 @@
     <value>Mar</value>
   </data>
   <data name="Calendar_Wed" xml:space="preserve">
-    <value>MercoledÃƒÂ¬</value>
+    <value>Wed</value>
   </data>
   <data name="Common_Cancel" xml:space="preserve">
     <value>Cancellare</value>
@@ -271,7 +271,7 @@
     <value>Successo</value>
   </data>
   <data name="Common_Yes" xml:space="preserve">
-    <value>SÃƒÅ’</value>
+    <value>Yes</value>
   </data>
   <data name="Difficulty_Advanced" xml:space="preserve">
     <value>Avanzato</value>
@@ -298,7 +298,7 @@
     <value>Chiamata</value>
   </data>
   <data name="Exercise_10_Content" xml:space="preserve">
-    <value>Ciaoiya! No, lo sono. Oh, ciao! SÃƒÂ¬, verrÃƒÂ² sicuramente! A che ora ÃƒÂ¨ adatto? CosÃƒÂ¬ presto? Ok, ci vediamo allora! Prendilo! Arrivederci. Buona serata! Abbracciami!</value>
+    <value>Halloiya! No, I am. Oh, hi! Yes, I will definitely come! What time is suitable? So early? Okay, see you then! Have it! See you later. Have a nice evening! Hug me!</value>
   </data>
   <data name="Exercise_10_Description" xml:space="preserve">
     <value>Conversazione telefonica informale con flusso naturale</value>
@@ -310,10 +310,10 @@
     <value>Impara a sentire la vibrazione nella tua voce e a spostarla in avanti nella bocca. Il ronzio attiva i risonatori anteriori.</value>
   </data>
   <data name="Exercise_101_Rationale" xml:space="preserve">
-    <value>Il ronzio attiva i risonatori anteriori e prepara la voce per un tono piÃƒÂ¹ alto senza tensione. La vibrazione nelle labbra/naso indica la corretta risonanza in avanti.</value>
+    <value>Through controlled downward glides the muscles for pitch control are strengthened and muscle memory for the target range is established.</value>
   </data>
   <data name="Exercise_101_Steps" xml:space="preserve">
-    <value>Inizia su una tonalitÃƒÂ  confortevole|Scivola lentamente verso l'alto in 3 secondi|Mantieni la nota alta per 2 secondi|Scivola lentamente verso il basso|Segui il display del pitch</value>
+    <value>Relax your shoulders and neck|Breathe deeply through your nose|Hum a comfortable tone|Move the humming and vibration toward your lips and nose|Hold the tone for 5-10 seconds</value>
   </data>
   <data name="Exercise_101_Title" xml:space="preserve">
     <value>Ronzio di base</value>
@@ -328,13 +328,13 @@
     <value>Guida</value>
   </data>
   <data name="Guidance_ClinicalPurpose" xml:space="preserve">
-    <value>Migliorare la risonanza frontale e sviluppare un timbro vocale piÃƒÂ¹ leggero e femminile.</value>
+    <value>Purpose</value>
   </data>
   <data name="Guidance_PhysicalFocus" xml:space="preserve">
     <value>Concentrati sulle vibrazioni in labbra, denti e parte anteriore della bocca mantenendo la gola rilassata.</value>
   </data>
   <data name="Guidance_CommonMistakes" xml:space="preserve">
-    <value>Evita di forzare lÃ¢â‚¬â„¢altezza, tendere la gola o spingere lÃ¢â‚¬â„¢aria.</value>
+    <value>Common mistakes</value>
   </data>
   <data name="Guidance_SafetyInfo" xml:space="preserve">
     <value>Interrompi se senti tensione o disagio. Mantieni la voce rilassata e ben idratata.</value>
@@ -346,10 +346,10 @@
     <value>Suoni vocalici - Risonanza diretta</value>
   </data>
   <data name="Exercise_103_Description" xml:space="preserve">
-    <value>Esercitati a muoverti dolcemente dal tono piÃƒÂ¹ basso a quello piÃƒÂ¹ alto. Lo scivolamento fornisce una progressione piÃƒÂ¹ naturale.</value>
+    <value>Practice moving smoothly from lower to higher pitch. Gliding provides more natural progression.</value>
   </data>
   <data name="Exercise_103_Rationale" xml:space="preserve">
-    <value>Un pitch stabile nell'intervallo target ÃƒÂ¨ fondamentale per la femminilizzazione. Una fonazione coerente produce una voce naturale.</value>
+    <value>Gliding rather than 'spreading' the voice gives smoother pitch transitions and less tension. Controlled rise is the key to feminine pitch.</value>
   </data>
   <data name="Exercise_103_Steps" xml:space="preserve">
     <value>Start på en behagelig tone|Gli sakte oppover i 3 sekunder|Hold den høyeste tonen i 2 sekunder|Gli sakte nedover igjen|Følg med på pitch-skjermen</value>
@@ -370,7 +370,7 @@
     <value>Toni cadenti (Glide Down)</value>
   </data>
   <data name="Exercise_105_Description" xml:space="preserve">
-    <value>Concentrati sul mantenere lo stesso tono costantemente nel tempo. L'intonazione stabile ÃƒÂ¨ fondamentale per una voce femminile naturale.</value>
+    <value>Focus on holding the same tone steadily over time. Stable pitch is fundamental for a natural feminine voice.</value>
   </data>
   <data name="Exercise_105_Rationale" xml:space="preserve">
     <value>Stable pitch in the target range is critical for feminization. Consistent phonation gives a natural voice.</value>
@@ -397,7 +397,7 @@
     <value>Impara l'intonazione ascendente naturale. In norvegese, il tono aumenta di 2-4 semitoni alla fine delle domande.</value>
   </data>
   <data name="Exercise_107_Rationale" xml:space="preserve">
-    <value>Le domande in norvegese salgono di 2-4 semitoni. L'intonazione corretta ÃƒÂ¨ la chiave: un'intonazione sbagliata puÃƒÂ² rivelare la voce.</value>
+    <value>Questions in Norwegian often use rising intonation. Varied intonation can make the voice sound more natural and expressive.</value>
   </data>
   <data name="Exercise_107_Steps" xml:space="preserve">
     <value>Di' 'Come ti chiami?'|Nota la salita alla fine|Esercitati con 5 domande diverse|Cerca di mantenere una salita uniforme nell'intonazione|Varia l'intensità vocale mentre parli</value>
@@ -406,25 +406,25 @@
     <value>Melodia delle domande</value>
   </data>
   <data name="Exercise_108_Description" xml:space="preserve">
-    <value>Esercitati a terminare le frasi con un tono cadente. ÃƒË† fondamentale evitare il "suono della domanda".</value>
+    <value>Practice ending sentences with a falling tone. Critical to avoid 'question sound'.</value>
   </data>
   <data name="Exercise_108_Rationale" xml:space="preserve">
-    <value>Le dichiarazioni terminano con un tono cadente. Terminare con un tono ascendente puÃƒÂ² farti sembrare incerto.</value>
+    <value>Statements end with falling tone. Ending with rising tone can make you seem uncertain.</value>
   </data>
   <data name="Exercise_108_Steps" xml:space="preserve">
-    <value>Di' 'Mi chiamo Marie.'|Nota come la tonalitÃƒÂ  cade alla fine|Esercitati con 5 affermazioni diverse|Cerca di ottenere una caduta naturale della voce|Varia la tonalitÃƒÂ  con cui inizi</value>
+    <value>Say 'My name is Marie.'|Notice how the tone falls at the end|Practice 5 different statements|Try to produce a natural fall in your voice|Vary the pitch you start on</value>
   </data>
   <data name="Exercise_108_Title" xml:space="preserve">
     <value>Melodia di dichiarazione</value>
   </data>
   <data name="Exercise_109_Description" xml:space="preserve">
-    <value>Combina tutte le abilitÃƒÂ  nel parlato continuo con il tono nell'intervallo target.</value>
+    <value>Combine all skills in continuous speech with pitch in the target range.</value>
   </data>
   <data name="Exercise_109_Rationale" xml:space="preserve">
-    <value>Il discorso continuo nell'intervallo di tonalitÃƒÂ  target ÃƒÂ¨ l'obiettivo della femminilizzazione. Il trasferimento al discorso spontaneo ÃƒÂ¨ molto importante.</value>
+    <value>Continuous speech in target pitch range is the goal of feminization. Transfer to spontaneous speech is most important.</value>
   </data>
   <data name="Exercise_109_Steps" xml:space="preserve">
-    <value>Scegli un testo|Leggi con attenzione alla tonalitÃƒÂ  nell'intervallo target|Fermati sulle parole difficili|Leggi l'intero testo|Riproduci e valuta il risultato</value>
+    <value>Choose a text|Read with focus on pitch in the target range|Stop at difficult words|Read the whole text|Play back and evaluate the result</value>
   </data>
   <data name="Exercise_109_Title" xml:space="preserve">
     <value>Lettura di frasi</value>
@@ -433,7 +433,7 @@
     <value>Emozioni</value>
   </data>
   <data name="Exercise_11_Content" xml:space="preserve">
-    <value>Oh, cosÃƒÂ¬ bello! Veramente? No, non posso crederci! Che peccato! Evviva, finalmente! Oh no, che tristezza! Wow, ÃƒÂ¨ stato fantastico! Assolutamente fantastico! Molto ben fatto!</value>
+    <value>Oh, so nice! Really? No, I can't believe that! What a shame! Yippee, finally! Oh no, so sad! Wow, that was amazing! Absolutely fantastic! Very well done!</value>
   </data>
   <data name="Exercise_11_Description" xml:space="preserve">
     <value>Dichiarazioni con forti emozioni e grande variazione di tono</value>
@@ -442,13 +442,13 @@
     <value>Espressione emotiva</value>
   </data>
   <data name="Exercise_110_Description" xml:space="preserve">
-    <value>Simula situazioni di conversazione comuni. Il passaggio dallÃ¢â‚¬â„¢esercizio al discorso spontaneo ÃƒÂ¨ fondamentale.</value>
+    <value>Simulate common conversation situations. Transfer from exercise to spontaneous speech is key.</value>
   </data>
   <data name="Exercise_110_Rationale" xml:space="preserve">
-    <value>LÃ¢â‚¬â„¢obiettivo ÃƒÂ¨ mantenere il tono femminile nel discorso spontaneo. L'esercizio di trasferimento piÃƒÂ¹ importante.</value>
+    <value>Maintaining feminine pitch in spontaneous speech is the goal. The most important transfer exercise.</value>
   </data>
   <data name="Exercise_110_Steps" xml:space="preserve">
-    <value>Pensa a domande comuni|Rispondi con una melodia vocale naturale|Varia tra fare domande e dare risposte|Osserva la tonalitÃƒÂ  sullo schermo|Prova 5 situazioni diverse</value>
+    <value>Think of common questions|Answer with a natural speech melody|Vary between asking questions and giving answers|Watch the pitch on the screen|Try 5 different situations</value>
   </data>
   <data name="Exercise_110_Title" xml:space="preserve">
     <value>Simulazione di conversazione</value>
@@ -457,7 +457,7 @@
     <value>Esercitati a spostare la risonanza dal posizionamento indietro a quello in avanti. Fondamentale per il timbro femminile.</value>
   </data>
   <data name="Exercise_111_Rationale" xml:space="preserve">
-    <value>La risonanza diretta crea la "voce di testa" e rinforza gli armonici piÃƒÂ¹ alti. Misurato da frequenze formanti piÃƒÂ¹ alte (in particolare F2).</value>
+    <value>Forward resonance can reinforce lighter overtones. It can be followed indirectly through formant frequencies, especially F2.</value>
   </data>
   <data name="Exercise_111_Steps" xml:space="preserve">
     <value>Hum 'mmm' - senti che labbra e naso vibrano|Sposta il suono su un lungo 'nnn'|Poi passa a un lungo suono 'j' (come un lungo 'iiijjj')|Prova sillabe semplici (come ma, ne, jo)|Ripeti il modello con parole corte e semplici</value>
@@ -466,13 +466,13 @@
     <value>Spostamento della risonanza: posizionamento in avanti</value>
   </data>
   <data name="Exercise_112_Description" xml:space="preserve">
-    <value>Automatizza il tono iniziale nell'intervallo target. La maggior parte delle persone inizia troppo in basso: ÃƒÂ¨ fondamentale correggerlo.</value>
+    <value>Practice finding a comfortable starting pitch in the target range without pushing the voice.</value>
   </data>
   <data name="Exercise_112_Rationale" xml:space="preserve">
-    <value>La memoria muscolare per il tono iniziale ÃƒÂ¨ fondamentale. La maggior parte delle persone inizia troppo in basso e "si schianta" ulteriormente: automatizza il tono iniziale corretto.</value>
+    <value>Muscle memory for a comfortable starting pitch can make speech more stable. The goal is an easy, safe start, not maximum height.</value>
   </data>
   <data name="Exercise_112_Steps" xml:space="preserve">
-    <value>Canta una tonalitÃƒÂ  di riferimento confortevole|Inizia a parlare su questa tonalitÃƒÂ |Controlla la tonalitÃƒÂ  iniziale con l'app|Regola verso l'alto se necessario|Ripeti fino a quando diventa automatico</value>
+    <value>Sing a comfortable reference tone|Start speaking on this tone|Check your starting pitch with the app|Adjust upward if needed|Repeat until it becomes automatic</value>
   </data>
   <data name="Exercise_112_Title" xml:space="preserve">
     <value>Inizio della memorizzazione dell'intonazione</value>
@@ -481,10 +481,10 @@
     <value>Usa la tecnica dello scorrimento in modo naturale nelle frasi invece di "allargare" la voce.</value>
   </data>
   <data name="Exercise_113_Rationale" xml:space="preserve">
-    <value>Gli spostamenti tra le parole danno una progressione piÃƒÂ¹ fluida e meno tensione rispetto all'"allargamento" della voce a una nuova altezza.</value>
+    <value>Glides between words give smoother progression and less tension than 'spreading' the voice to new pitch.</value>
   </data>
   <data name="Exercise_113_Steps" xml:space="preserve">
-    <value>Di' 'Ciao' mentre la voce scivola verso l'alto|Di' 'Ciao' mentre la voce scivola verso il basso|Di' 'SÃƒÂ¬?' come una domanda dove la tonalitÃƒÂ  sale|Prova frasi brevi con un glissato nella tonalitÃƒÂ |Varia tra intonazione ascendente e discendente</value>
+    <value>Say 'Hello' while your voice glides upward|Say 'Hi' while your voice glides downward|Say 'Yes?' as a question where the tone rises|Try short sentences with gliding pitch|Vary between rising and falling intonation</value>
   </data>
   <data name="Exercise_113_Title" xml:space="preserve">
     <value>Presenta la presentazione in frasi</value>
@@ -496,16 +496,16 @@
     <value>Il tratto vocale semi-occluso (SOVT) riduce lo sforzo sulle corde vocali e migliora il controllo del flusso d'aria.</value>
   </data>
   <data name="Exercise_114_Steps" xml:space="preserve">
-    <value>Prendi una cannuccia|Soffia delicatamente attraverso di essa|Canta un suono 'ooo' attraverso la cannuccia|Mantieni la tonalitÃƒÂ  per 5 secondi|Ripeti con diverse altezze</value>
+    <value>Take a straw|Blow gently through it|Sing an 'ooo' sound through the straw|Hold the tone for 5 seconds|Repeat with different pitches</value>
   </data>
   <data name="Exercise_114_Title" xml:space="preserve">
     <value>Fonazione con paglia</value>
   </data>
   <data name="Exercise_115_Description" xml:space="preserve">
-    <value>Varia l'intonazione per un discorso naturale ed espressivo. Le donne usano piÃƒÂ¹ variazioni rispetto agli uomini.</value>
+    <value>Vary intonation for natural, expressive speech. Women use more variation than men.</value>
   </data>
   <data name="Exercise_115_Rationale" xml:space="preserve">
-    <value>Una maggiore variazione di intonazione ÃƒÂ¨ caratteristica del linguaggio femminile. Questo aiuta ad "adattarsi" socialmente.</value>
+    <value>Greater intonation variation is characteristic of feminine speech. This helps with 'fitting in' socially.</value>
   </data>
   <data name="Exercise_115_Steps" xml:space="preserve">
     <value>Di' 'No' con voce completamente neutra|Di' 'No?' in modo da sembrare sorpreso|Di' 'No!' con tono frustrato e deciso|Di' 'No...' in modo da sembrare sconfortato o rassegnato|Ripeti lo stesso schema emotivo con altre parole o frasi</value>
@@ -517,7 +517,7 @@
     <value>Argomentazione</value>
   </data>
   <data name="Exercise_12_Content" xml:space="preserve">
-    <value>Penso che dovremmo pensare diversamente. Sei d'accordo? PerchÃƒÂ© altrimenti sarÃƒÂ  sbagliato. Dobbiamo agire adesso! Discutiamone di piÃƒÂ¹. Devi capire il mio punto di vista. Pensaci.</value>
+    <value>I think we should think differently. Do you agree? Because if not, then it will be wrong. We must act now! Let's discuss this more. You must understand my point of view. Think about it.</value>
   </data>
   <data name="Exercise_12_Description" xml:space="preserve">
     <value>Discorso persuasivo con intonazione persuasiva</value>
@@ -529,7 +529,7 @@
     <value>Narrazione</value>
   </data>
   <data name="Exercise_13_Content" xml:space="preserve">
-    <value>Quando ero piccola vivevo al mare. Ogni mattina mi svegliavo con le onde. Era cosÃƒÂ¬ tranquillo. A volte mi manca ancora. I ricordi mi riportano a quel periodo. LÃƒÂ¬ ho imparato a nuotare. LÃƒÂ¬ ho conosciuto i miei migliori amici. ÃƒË† stato un momento speciale della mia vita.</value>
+    <value>When I was little, I lived by the sea. Every morning I woke up to the waves. It was so peaceful. I still miss it sometimes. The memories take me back to that time. There I learned to swim. There I met my best friends. It was a special time in my life.</value>
   </data>
   <data name="Exercise_13_Description" xml:space="preserve">
     <value>Storia personale con intonazione riflessiva</value>
@@ -541,7 +541,7 @@
     <value>Narrazione</value>
   </data>
   <data name="Exercise_14_Content" xml:space="preserve">
-    <value>C'erano una volta due sorelle, Gerda e Rosa, che vivevano in una piccola casa vicino al bosco. Un giorno d'inverno, il loro fratello Kay scomparve. Era stato preso dalla regina delle nevi. "Devo trovarlo", disse Gerda. Poi uscÃƒÂ¬ nel mondo freddo. Lungo la strada incontrÃƒÂ² una volpe, una principessa e un ladro. Tutti hanno cercato di aiutarla. Alla fine arrivÃƒÂ² al castello della regina delle nevi. LÃƒÂ¬ trovÃƒÂ² Kay. Si baciarono e tutto divenne di nuovo caldo. Le loro lacrime scesero e tornarono a casa insieme. E vissero felici e contenti.</value>
+    <value>Once upon a time there were two sisters, Gerda and Rosa, who lived in a small house by the forest. One winter day, their brother, Kay, disappeared. He had been taken by the Snow Queen. 'I must find him,' said Gerda. Then she went out into the cold world. Along the way, she met a fox, a princess and a thief. Everyone tried to help her. Finally she arrived at the Snow Queen's castle. There she found Kay. They kissed, and everything became warm again. Their tears flowed down, and they traveled home together. And they lived happily ever after.</value>
   </data>
   <data name="Exercise_14_Description" xml:space="preserve">
     <value>Avventura classica con un corso d'azione emozionante</value>
@@ -553,7 +553,7 @@
     <value>Descrizione</value>
   </data>
   <data name="Exercise_15_Content" xml:space="preserve">
-    <value>Mi sono svegliato presto oggi. Erano le sette e mezza. Il sole filtrava attraverso la tenda. Ho fatto la doccia e ho fatto colazione. Poi ho preso l'autobus per andare al lavoro. In ufficio ho incontrato i miei colleghi. Avevamo un incontro alle nove. Dopo pranzo ho lavorato alla relazione. C'era molto da fare. Alle quattro tornai a casa. Lungo la strada ho fatto la spesa. Ora sono stanco, ma felice. Domani sarÃƒÂ  un nuovo giorno.</value>
+    <value>I woke up early today. It was half past seven. The sun shone in through the curtain. I showered and ate breakfast. Then I took the bus to work. In the office I met my colleagues. We had a meeting at nine o'clock. After lunch I worked on the report. There was a lot to do. At four o'clock I went home. On the way I shopped for food. Now I'm tired, but happy. Tomorrow will be a new day.</value>
   </data>
   <data name="Exercise_15_Description" xml:space="preserve">
     <value>Narrazione quotidiana strutturata con un flusso calmo</value>
@@ -565,7 +565,7 @@
     <value>Narrazione</value>
   </data>
   <data name="Exercise_16_Content" xml:space="preserve">
-    <value>Ho lo stesso amico dai tempi delle elementari. Ci siamo incontrati per la prima volta al club ricreativo. Il suo nome era Anna. Siamo diventati subito migliori amici. Insieme abbiamo imparato ad andare in bicicletta. Insieme siamo andati in vacanza con le nostre famiglie. Quando siamo cresciuti, si ÃƒÂ¨ trasferita in un'altra cittÃƒÂ . Rimaniamo comunque in contatto. Chiamiamo tutti i fine settimana. A volte ci visitiamo. La vera amicizia dura per sempre. ÃƒË† una delle cose piÃƒÂ¹ belle del mondo.</value>
+    <value>I've had the same friend since primary school. We first met at the leisure club. Her name was Anna. We immediately became best friends. Together we learned to ride a bike. Together we went on holiday with our families. When we got older, she moved to another city. Nevertheless, we keep in touch. We call every weekend. Sometimes we visit each other. True friendship lasts forever. It is one of the finest things in the world.</value>
   </data>
   <data name="Exercise_16_Description" xml:space="preserve">
     <value>Storia emozionante di amicizia</value>
@@ -577,7 +577,7 @@
     <value>Futuro</value>
   </data>
   <data name="Exercise_17_Content" xml:space="preserve">
-    <value>La mia vacanza da sogno ÃƒÂ¨ andare in Italia. Voglio visitare Roma, Firenze e Venezia. A Roma voglio vedere il Colosseo. Deve essere fantastico! A Firenze voglio mangiare la vera pizza italiana. E a Venezia voglio remare in gondola. Voglio vivere in un piccolo appartamento vicino alla spiaggia. Ogni mattina mi sveglierÃƒÂ² con il suono delle onde. La sera voglio sedermi in un ristorante e guardare il sole tramontare. L'appetito sarÃƒÂ  fantastico! Adoro il cibo italiano. Pasta, pizza, gelato! Hmm! Questo sarÃƒÂ  il mio sogno un giorno.</value>
+    <value>My dream vacation is to go to Italy. I want to visit Rome, Florence and Venice. In Rome, I want to see the Colosseum. It must be amazing! In Florence, I want to eat real Italian pizza. And in Venice I want to row in a gondola. I want to live in a small apartment by the beach. Every morning I will wake up to the sound of waves. In the evenings I want to sit in a restaurant and watch the sun go down. The appetite will be great! I love Italian food. Pasta, pizza, gelato! Hmmm! This will be my dream one day.</value>
   </data>
   <data name="Exercise_17_Description" xml:space="preserve">
     <value>Racconto onirico entusiasta con immagini vivide</value>
@@ -589,7 +589,7 @@
     <value>Descrizione</value>
   </data>
   <data name="Exercise_18_Content" xml:space="preserve">
-    <value>Nel fine settimana abbiamo cenato in famiglia. La nonna aveva preparato le polpette. ÃƒË† stato cosÃƒÂ¬ bello! Lo zio Per veniva da Bergen. Mia zia Kari veniva dalla Svezia. C'era anche mio cugino Erik. Ci siamo seduti attorno al grande tavolo. Tutti parlavano e ridevano. La nonna raccontava storie dei vecchi tempi. Mia madre ha mostrato nuove foto. Mio padre discuteva di calcio con lo zio Per. Dopo cena abbiamo giocato a carte. I bambini correvano per casa. ÃƒË† stata una serata accogliente. Questi momenti sono preziosi. La famiglia significa tutto per me.</value>
+    <value>At the weekend we had a family dinner. Grandma had made meatballs. It was so good! Uncle Per came from Bergen. My aunt, Kari, came from Sweden. My cousin, Erik, was also there. We sat around the big table. Everyone was talking and laughing. Grandma told stories from the old days. My mother showed off new pictures. My father discussed football with Uncle Per. After dinner we played cards. The children ran around the house. It was a cozy evening. Such moments are precious. Family means everything to me.</value>
   </data>
   <data name="Exercise_18_Description" xml:space="preserve">
     <value>Scenario familiare vivace e dai molteplici stati d'animo</value>
@@ -601,7 +601,7 @@
     <value>Ogni giorno</value>
   </data>
   <data name="Exercise_19_Content" xml:space="preserve">
-    <value>Oggi sono andato al centro commerciale. Avevo bisogno di vestiti nuovi. Per prima cosa sono entrato in un negozio chiamato Modehuset. LÃƒÂ¬ ho trovato un bel vestito. Era blu con fiori bianchi. Il prezzo era NOK 499. L'ho provato. Si adatta perfettamente! Poi sono andato al negozio di scarpe. LÃƒÂ¬ ho comprato un paio di stivali neri. Erano in vendita! Risparmio duecento corone. All'uscita mi sono fermato al bar. Ho bevuto una tazza di caffÃƒÂ¨ e ho mangiato un pasticcino. ÃƒË† stata una bella giornata.</value>
+    <value>Today I went to the mall. I needed new clothes. First I went into a shop called Modehuset. There I found a nice dress. It was blue with white flowers. The price was NOK 499. I tried it on. It fit perfectly! Then I went to the shoe store. There I bought a pair of black boots. They were on sale! I saved two hundred kroner. On the way out I stopped at the cafe. I drank a cup of coffee and ate a pastry. It was a nice day.</value>
   </data>
   <data name="Exercise_19_Description" xml:space="preserve">
     <value>Shopping story con dettagli e capricci spontanei</value>
@@ -625,10 +625,10 @@
     <value>Narrazione</value>
   </data>
   <data name="Exercise_20_Content" xml:space="preserve">
-    <value>Alcuni giorni sono molto speciali. Ieri ÃƒÂ¨ successa una cosa incredibile. Mi sono svegliato con il telefono che squillava. Era un numero sconosciuto. "Ehi, hai vinto il primo premio!" disse la voce. Pensavo fosse uno scherzo. Ma era vero! Avevo vinto un viaggio a Parigi! Non potevo crederci. Il mio cuore batteva forte. Ero cosÃƒÂ¬ emozionato! Ora parto tra due settimane. Non vedo l'ora! Parigi ÃƒÂ¨ il mio sogno. Ooh!</value>
+    <value>Some days are very special. Yesterday something incredible happened. I woke up to the phone ringing. It was an unknown number. 'Hey, you've won first prize!' said the voice. I thought it was a joke. But it was true! I had won a trip to Paris! I couldn't believe it. My heart was beating fast. I was so excited! Now I'm leaving in two weeks. I'm so looking forward to it! Paris is my dream. Ooo!</value>
   </data>
   <data name="Exercise_20_Description" xml:space="preserve">
-    <value>Sorpresa emozionante ad alta intensitÃƒÂ  emotiva</value>
+    <value>Exciting surprise with high emotional intensity</value>
   </data>
   <data name="Exercise_20_Title" xml:space="preserve">
     <value>Una giornata insolita</value>
@@ -637,7 +637,7 @@
     <value>Narrazione</value>
   </data>
   <data name="Exercise_21_Content" xml:space="preserve">
-    <value>Ricordo la prima volta che ho provato a cucinare. ÃƒË† stato quando avevo dodici anni. Volevo preparare dei pancake per la famiglia. La ricetta diceva due uova, tre dl di latte e un po' di sale. Ho mescolato tutto insieme. Poi la mamma ÃƒÂ¨ entrata in cucina. "Sembra che stia diventando un po' pesante", ha detto. Aveva ragione. I pancake erano come la gomma. Avevano un sapore terribile! Ma adesso ne ridono tutti. ÃƒË† stata una bella lezione. Da allora sono migliorato molto in cucina.</value>
+    <value>I remember the first time I tried to cook. It was when I was twelve years old. I wanted to make pancakes for the family. The recipe said two eggs, three dl milk and a little salt. I mixed everything together. Then mom came into the kitchen. 'It seems to be getting a bit thick,' she said. She was right. The pancakes were like rubber. They tasted awful! But everyone laughs about it now. It was a good lesson. Since then, I've gotten much better in the kitchen.</value>
   </data>
   <data name="Exercise_21_Description" xml:space="preserve">
     <value>Divertente flashback dal tono riflessivo</value>
@@ -649,7 +649,7 @@
     <value>Descrizione</value>
   </data>
   <data name="Exercise_22_Content" xml:space="preserve">
-    <value>Nel tempo libero mi piace dipingere quadri. ÃƒË† cosÃƒÂ¬ rilassante. Utilizzo pittura acrilica e tela. Ogni fine settimana mi riservo del tempo per dipingere. E' il mio modo di rilassarmi. A volte dipingo paesaggi. Altre volte dipingo ritratti. I colori mi ispirano. Blu, giallo, rosso, verde. Le combinazioni sono infinite. L'arte mi dÃƒÂ  gioia. Ho anche venduto alcune foto! ÃƒË† stato un grande onore. Creare qualcosa di bello ÃƒÂ¨ significativo per me.</value>
+    <value>In my spare time I like to paint pictures. It's so relaxing. I use acrylic paint and canvas. Every weekend I set aside time to paint. It's my way of relaxing. Sometimes I paint landscapes. Other times I paint portraits. The colors inspire me. Blue, yellow, red, green. The combinations are endless. Art gives me joy. I even sold some photos! It was a great honor. Creating something beautiful is meaningful to me.</value>
   </data>
   <data name="Exercise_22_Description" xml:space="preserve">
     <value>Descrizione appassionata dell'hobby con intonazione calma</value>
@@ -661,7 +661,7 @@
     <value>Narrazione</value>
   </data>
   <data name="Exercise_23_Content" xml:space="preserve">
-    <value>Quando ero bambino, ogni estate andavamo in baita. Si trovava vicino a un lago nel Telemark. La casa era piccola e rossa. Aveva solo due stanze. Ma ci ÃƒÂ¨ piaciuto moltissimo! Ogni mattina mi svegliavo con il canto degli uccelli. Fuori dalla finestra c'erano foreste e montagne. Facevamo il bagno nell'acqua fredda ogni giorno. Mio padre mi ha insegnato a pescare. La mamma ha preparato un fuoco e delle cialde. La sera ci sedevamo sulla veranda e guardavamo le stelle. ÃƒË† stato magico. Mi mancano quei giorni. I miei figli possono sperimentare la stessa cosa adesso. Le tradizioni restano vive.</value>
+    <value>When I was a child, we used to go to the cabin every summer. It was located by a lake in Telemark. The house was small and red. It had only two rooms. But we loved it! Every morning I woke up to birdsong. Outside the window was forest and mountains. We bathed in the cold water every day. Father taught me to fish. Mother made a fire and waffles. In the evenings we sat on the veranda and watched the stars. It was magical. I miss those days. My children get to experience the same now. Traditions stay alive.</value>
   </data>
   <data name="Exercise_23_Description" xml:space="preserve">
     <value>Ricordo d'infanzia nostalgico dal tono caldo</value>
@@ -673,7 +673,7 @@
     <value>Descrizione</value>
   </data>
   <data name="Exercise_24_Content" xml:space="preserve">
-    <value>Ieri sera siamo andati in un ristorante. C'era un ristorante spagnolo in centro. Si chiamava La Bodega. Avevamo prenotato un tavolo in anticipo. Quando siamo arrivati, era pieno di gente. Il cameriere ci ha mostrato il tavolo. Il menu era denso ed entusiasmante. Ho ordinato la paella. ÃƒË† stato bellissimo! Mio marito aveva una bistecca. I bambini hanno condiviso una pizza. Per dessert abbiamo mangiato churros al cioccolato. Era divino! Il conto ÃƒÂ¨ stato un po' caro, ma ne ÃƒÂ¨ valsa la pena. Abbiamo passato una bella serata insieme. Questi momenti sono preziosi.</value>
+    <value>Last night we went out to a restaurant. There was a Spanish restaurant in the center. It was called La Bodega. We had booked a table in advance. When we arrived, it was full of people. The waiter showed us to the table. The menu was thick and exciting. I ordered paella. It was lovely! My husband had steak. The children shared a pizza. For dessert we had churros with chocolate. It was heavenly! The bill was a bit expensive, but it was worth it. We had a nice evening together. Such moments are precious.</value>
   </data>
   <data name="Exercise_24_Description" xml:space="preserve">
     <value>Descrizione sensoriale del cibo con un elemento sociale</value>
@@ -697,10 +697,10 @@
     <value>Ogni giorno</value>
   </data>
   <data name="Exercise_26_Content" xml:space="preserve">
-    <value>Faccio colazione. Beve il caffÃƒÂ¨. Andiamo a lavorare. I bambini giocano fuori. Il gatto dorme sul letto.</value>
+    <value>I eat breakfast. She drinks coffee. We go to work. The children play outside. The cat is sleeping on the bed.</value>
   </data>
   <data name="Exercise_26_Description" xml:space="preserve">
-    <value>Frasi semplici sulle attivitÃƒÂ  quotidiane</value>
+    <value>Simple sentences about daily activities</value>
   </data>
   <data name="Exercise_26_Title" xml:space="preserve">
     <value>Azioni</value>
@@ -709,7 +709,7 @@
     <value>Descrizione</value>
   </data>
   <data name="Exercise_27_Content" xml:space="preserve">
-    <value>Vivo a Oslo. Lavora all'ospedale. Stiamo andando al negozio. I bambini sono a scuola. ÃƒË† a casa.</value>
+    <value>I live in Oslo. She works at the hospital. We're going to the store. The children are at school. He is at home.</value>
   </data>
   <data name="Exercise_27_Description" xml:space="preserve">
     <value>Frasi semplici sui luoghi</value>
@@ -721,7 +721,7 @@
     <value>Di base</value>
   </data>
   <data name="Exercise_28_Content" xml:space="preserve">
-    <value>Questa ÃƒÂ¨ mia madre. ÃƒË† mio fratello. Siamo sorelle. I miei genitori vivono a Bergen. Ho due fratelli.</value>
+    <value>This is my mother. He is my brother. We are sisters. My parents live in Bergen. I have two siblings.</value>
   </data>
   <data name="Exercise_28_Description" xml:space="preserve">
     <value>Frasi semplici sulla famiglia</value>
@@ -733,7 +733,7 @@
     <value>Ogni giorno</value>
   </data>
   <data name="Exercise_29_Content" xml:space="preserve">
-    <value>Mi piacciono le mele. Beve il tÃƒÂ¨. Ceniamo alle sei. Il pane ÃƒÂ¨ fresco. Il latte ÃƒÂ¨ freddo.</value>
+    <value>I like apples. She drinks tea. We have dinner at six o'clock. The bread is fresh. The milk is cold.</value>
   </data>
   <data name="Exercise_29_Description" xml:space="preserve">
     <value>Frasi semplici su cibi e bevande</value>
@@ -745,7 +745,7 @@
     <value>Ogni giorno</value>
   </data>
   <data name="Exercise_3_Content" xml:space="preserve">
-    <value>Oggi ÃƒÂ¨ lunedÃƒÂ¬. Vado a lavorare. Fuori c'ÃƒÂ¨ il sole. Il tempo ÃƒÂ¨ bello Mi alleno tre volte a settimana.</value>
+    <value>Today is Monday. I'm going to work. It's sunny outside. The weather is nice. I train three times a week.</value>
   </data>
   <data name="Exercise_3_Description" xml:space="preserve">
     <value>Semplici affermazioni sulla vita di tutti i giorni</value>
@@ -757,7 +757,7 @@
     <value>Di base</value>
   </data>
   <data name="Exercise_30_Content" xml:space="preserve">
-    <value>Oggi ÃƒÂ¨ lunedÃƒÂ¬. Ieri era domenica. Domani ÃƒÂ¨ martedÃƒÂ¬. Adesso ÃƒÂ¨ sera. Tra poco ÃƒÂ¨ il fine settimana.</value>
+    <value>Today is Monday. Yesterday was Sunday. Tomorrow is Tuesday. Now it is evening. Soon it's the weekend.</value>
   </data>
   <data name="Exercise_30_Description" xml:space="preserve">
     <value>Frasi semplici sul tempo</value>
@@ -769,7 +769,7 @@
     <value>Di base</value>
   </data>
   <data name="Exercise_31_Content" xml:space="preserve">
-    <value>Il cane ÃƒÂ¨ grande. Il gatto ÃƒÂ¨ piccolo. L'uccello vola. I pesci nuotano. Il coniglio salta.</value>
+    <value>The dog is big. The cat is small. The bird flies. The fish swim. The rabbit jumps.</value>
   </data>
   <data name="Exercise_31_Description" xml:space="preserve">
     <value>Frasi semplici sugli animali</value>
@@ -781,7 +781,7 @@
     <value>Di base</value>
   </data>
   <data name="Exercise_32_Content" xml:space="preserve">
-    <value>La mela ÃƒÂ¨ rossa. La banana ÃƒÂ¨ gialla. L'erba ÃƒÂ¨ verde. Il cielo ÃƒÂ¨ blu. La neve ÃƒÂ¨ bianca.</value>
+    <value>The apple is red. The banana is yellow. The grass is green. The sky is blue. The snow is white.</value>
   </data>
   <data name="Exercise_32_Description" xml:space="preserve">
     <value>Frasi semplici sui colori</value>
@@ -805,7 +805,7 @@
     <value>Descrizione</value>
   </data>
   <data name="Exercise_34_Content" xml:space="preserve">
-    <value>La casa ÃƒÂ¨ grande. Il libro ÃƒÂ¨ piccolo. L'auto ÃƒÂ¨ nuova. Il tavolo ÃƒÂ¨ vecchio. L'albero ÃƒÂ¨ alto.</value>
+    <value>The house is big. The book is small. The car is new. The table is old. The tree is tall.</value>
   </data>
   <data name="Exercise_34_Description" xml:space="preserve">
     <value>Frasi semplici sulle taglie</value>
@@ -829,7 +829,7 @@
     <value>Ogni giorno</value>
   </data>
   <data name="Exercise_36_Content" xml:space="preserve">
-    <value>Indosso un vestito. Indossa un maglione. Le scarpe sono nere. I pantaloni sono blu. Il cappello ÃƒÂ¨ rosso.</value>
+    <value>I'm wearing a dress. He wears a sweater. The shoes are black. The trousers are blue. The hat is red.</value>
   </data>
   <data name="Exercise_36_Description" xml:space="preserve">
     <value>Frasi semplici sui vestiti</value>
@@ -853,7 +853,7 @@
     <value>Di base</value>
   </data>
   <data name="Exercise_38_Content" xml:space="preserve">
-    <value>LunedÃƒÂ¬ ÃƒÂ¨ il primo giorno. MartedÃƒÂ¬ ÃƒÂ¨ il secondo giorno. MercoledÃƒÂ¬ ÃƒÂ¨ il terzo giorno. GiovedÃƒÂ¬ ÃƒÂ¨ il quarto giorno. VenerdÃƒÂ¬ ÃƒÂ¨ il quinto giorno.</value>
+    <value>Monday is the first day. Tuesday is the second day. Wednesday is the third day. Thursday is the fourth day. Friday is the fifth day.</value>
   </data>
   <data name="Exercise_38_Description" xml:space="preserve">
     <value>Impara i giorni della settimana</value>
@@ -865,7 +865,7 @@
     <value>Di base</value>
   </data>
   <data name="Exercise_39_Content" xml:space="preserve">
-    <value>Gennaio ÃƒÂ¨ il primo mese. Luglio ÃƒÂ¨ il mese estivo. Dicembre ÃƒÂ¨ l'ultimo mese. Aprile ÃƒÂ¨ il mese della primavera. Ottobre ÃƒÂ¨ il mese autunnale.</value>
+    <value>January is the first month. July is summer month. December is the last month. April is the month of spring. October is autumn month.</value>
   </data>
   <data name="Exercise_39_Description" xml:space="preserve">
     <value>Impara i mesi</value>
@@ -877,7 +877,7 @@
     <value>Emozioni</value>
   </data>
   <data name="Exercise_4_Content" xml:space="preserve">
-    <value>Sono felice. Sono stanco. Sono nervoso. Lei ÃƒÂ¨ molto gentile. ÃƒË† pigro.</value>
+    <value>I am happy. I'm tired. I'm nervous. She is very kind. He is lazy.</value>
   </data>
   <data name="Exercise_4_Description" xml:space="preserve">
     <value>Dichiarazioni sui sentimenti con particolare attenzione al controllo del tono</value>
@@ -889,7 +889,7 @@
     <value>Di base</value>
   </data>
   <data name="Exercise_40_Content" xml:space="preserve">
-    <value>Ho due mani. Ha due piedi. La testa ÃƒÂ¨ in alto. Gli occhi sono sul viso. Il cuore ÃƒÂ¨ nel petto.</value>
+    <value>I have two hands. She has two feet. Head is on top. The eyes are on the face. The heart is in the chest.</value>
   </data>
   <data name="Exercise_40_Description" xml:space="preserve">
     <value>Frasi semplici sul corpo</value>
@@ -901,7 +901,7 @@
     <value>Descrizione</value>
   </data>
   <data name="Exercise_41_Content" xml:space="preserve">
-    <value>La camera da letto ÃƒÂ¨ finita. La cucina ÃƒÂ¨ lÃƒÂ¬. Il soggiorno ÃƒÂ¨ ampio. Il bagno ÃƒÂ¨ piccolo. Il giardino ÃƒÂ¨ sul retro.</value>
+    <value>The bedroom is over. The kitchen is there. The living room is large. The bathroom is small. The garden is at the back.</value>
   </data>
   <data name="Exercise_41_Description" xml:space="preserve">
     <value>Frasi semplici sulle stanze della casa</value>
@@ -913,7 +913,7 @@
     <value>Ogni giorno</value>
   </data>
   <data name="Exercise_42_Content" xml:space="preserve">
-    <value>L'autobus sta arrivando. L'auto sta guidando. Il treno ÃƒÂ¨ veloce. La bici ÃƒÂ¨ sana. L'aereo ÃƒÂ¨ alto.</value>
+    <value>The bus is coming. The car is driving. The train is fast. The bike is healthy. The plane is high.</value>
   </data>
   <data name="Exercise_42_Description" xml:space="preserve">
     <value>Frasi semplici sui trasporti</value>
@@ -925,7 +925,7 @@
     <value>Ogni giorno</value>
   </data>
   <data name="Exercise_43_Content" xml:space="preserve">
-    <value>Il libro ÃƒÂ¨ sul tavolo. La penna ÃƒÂ¨ nella borsa. L'insegnante parla. Gli studenti imparano. La scuola ÃƒÂ¨ grande.</value>
+    <value>The book is on the table. The pen is in the bag. The teacher speaks. The students learn. The school is big.</value>
   </data>
   <data name="Exercise_43_Description" xml:space="preserve">
     <value>Frasi semplici sulla scuola</value>
@@ -937,7 +937,7 @@
     <value>Ogni giorno</value>
   </data>
   <data name="Exercise_44_Content" xml:space="preserve">
-    <value>Il calcio ÃƒÂ¨ divertente. Il nuoto ÃƒÂ¨ salutare. Correre ÃƒÂ¨ difficile. Ballare ÃƒÂ¨ bello. Il tennis ÃƒÂ¨ emozionante.</value>
+    <value>Football is fun. Swimming is healthy. Running is hard. Dancing is cool. Tennis is exciting.</value>
   </data>
   <data name="Exercise_44_Description" xml:space="preserve">
     <value>Frasi semplici sullo sport</value>
@@ -949,7 +949,7 @@
     <value>Di base</value>
   </data>
   <data name="Exercise_45_Content" xml:space="preserve">
-    <value>La primavera ÃƒÂ¨ verde. L'estate ÃƒÂ¨ calda. L'autunno ÃƒÂ¨ dorato. L'inverno ÃƒÂ¨ bianco. Le stagioni cambiano.</value>
+    <value>Spring is green. Summer is hot. Autumn is golden. Winter is white. The seasons change.</value>
   </data>
   <data name="Exercise_45_Description" xml:space="preserve">
     <value>Frasi semplici sulle stagioni</value>
@@ -961,7 +961,7 @@
     <value>Emozioni</value>
   </data>
   <data name="Exercise_46_Content" xml:space="preserve">
-    <value>Mi sento felice. Si sente triste. Ci sentiamo stanchi. Si sentono felici. ÃƒË† bello.</value>
+    <value>I feel happy. She feels sad. We feel tired. They feel happy. It feels good.</value>
   </data>
   <data name="Exercise_46_Description" xml:space="preserve">
     <value>Frasi semplici sui sentimenti</value>
@@ -997,7 +997,7 @@
     <value>Ogni giorno</value>
   </data>
   <data name="Exercise_49_Content" xml:space="preserve">
-    <value>Cucino. Il cuoco ÃƒÂ¨ caldo. L'acqua ÃƒÂ¨ calda. Il pane ÃƒÂ¨ fritto. Il cibo ÃƒÂ¨ pronto.</value>
+    <value>I cook. The cook is hot. The water is warm. The bread is fried. The food is ready.</value>
   </data>
   <data name="Exercise_49_Description" xml:space="preserve">
     <value>Frasi semplici sulla cucina</value>
@@ -1021,7 +1021,7 @@
     <value>Ogni giorno</value>
   </data>
   <data name="Exercise_50_Content" xml:space="preserve">
-    <value>Il negozio ÃƒÂ¨ aperto. La merce ÃƒÂ¨ fresca. Il prezzo ÃƒÂ¨ basso La cassa ÃƒÂ¨ lÃƒÂ¬. Pago in contanti.</value>
+    <value>The shop is open. The goods are fresh. The price is low. The checkout is there. I pay in cash.</value>
   </data>
   <data name="Exercise_50_Description" xml:space="preserve">
     <value>Frasi semplici sul negozio</value>
@@ -1033,7 +1033,7 @@
     <value>Ogni giorno</value>
   </data>
   <data name="Exercise_6_Content" xml:space="preserve">
-    <value>ComprerÃƒÂ² latte, pane e mele. Quanto costa? ÃƒË† costoso. Hai questo in magazzino? Ne prendo due pezzi.</value>
+    <value>I will buy milk, bread and apples. How much does it cost? It is expensive. Do you have this in stock? I'll take two pieces.</value>
   </data>
   <data name="Exercise_6_Description" xml:space="preserve">
     <value>Dialogo commerciale con intonazione diversa</value>
@@ -1045,7 +1045,7 @@
     <value>Futuro</value>
   </data>
   <data name="Exercise_7_Content" xml:space="preserve">
-    <value>Questo fine settimana andrÃƒÂ² a trovare i miei amici. Magari andiamo al cinema? Vieni anche tu? Dopo possiamo mangiare la pizza insieme.</value>
+    <value>This weekend I will visit my friends. Maybe we go to the cinema? Are you coming too? We can eat pizza together afterwards.</value>
   </data>
   <data name="Exercise_7_Description" xml:space="preserve">
     <value>Progetti e futuro con intonazione naturale</value>
@@ -1057,7 +1057,7 @@
     <value>Descrizione</value>
   </data>
   <data name="Exercise_8_Content" xml:space="preserve">
-    <value>La casa ÃƒÂ¨ grande e bella. Il giardino ha molti fiori. ÃƒË† un posto bellissimo. Il sole splende attraverso la finestra. I bambini giocano nell'erba.</value>
+    <value>The house is big and nice. The garden has many flowers. It is a beautiful place. The sun shines through the window. The children play in the grass.</value>
   </data>
   <data name="Exercise_8_Description" xml:space="preserve">
     <value>Descrivere luoghi e cose con intonazione espressiva</value>
@@ -1069,7 +1069,7 @@
     <value>Narrazione</value>
   </data>
   <data name="Exercise_9_Content" xml:space="preserve">
-    <value>C'era una volta una bambina chiamata Sorella. CamminÃƒÂ² da sola attraverso la foresta. "Dove stai andando?" chiese il lupo. Ã‚Â«Alla nonnaÃ‚Â», rispose. "Allora ti mangerÃƒÂ²", disse il lupo. 'Oh no!' gridÃƒÂ². Ma per fortuna sono arrivati Ã¢â‚¬â€¹Ã¢â‚¬â€¹i cacciatori e lÃ¢â‚¬â„¢hanno salvata. E cosÃƒÂ¬ visse felice e contenta.</value>
+    <value>Once upon a time there was a little girl called Sister. She walked through the forest alone. 'Where are you going?' asked the wolf. 'To grandma,' she replied. 'Then I will eat you,' said the wolf. 'Oh no!' she shouted. But luckily the hunters came and saved her. And so she lived happily ever after.</value>
   </data>
   <data name="Exercise_9_Description" xml:space="preserve">
     <value>Narrazione con diverse voci e intonazioni dei personaggi</value>
@@ -1153,10 +1153,10 @@
     <value>Pratica</value>
   </data>
   <data name="Exercise_ProgressFormat" xml:space="preserve">
-    <value>{0} sessioni Ã¢â‚¬Â¢ {1}</value>
+    <value>{0} sessions - {1}</value>
   </data>
   <data name="Exercise_ProgressZero" xml:space="preserve">
-    <value>0 sessioni Ã¢â‚¬Â¢ Media: 0%</value>
+    <value>0 sessions - Avg: 0%</value>
   </data>
   <data name="Exercise_RecommendedTime" xml:space="preserve">
     <value>Tempo consigliato: {0} minuti</value>
@@ -1183,7 +1183,7 @@
     <value>Passo dopo passo</value>
   </data>
   <data name="Exercise_StepsProgress" xml:space="preserve">
-    <value>{0} sessioni Ã¢â‚¬Â¢ Media: {1}%</value>
+    <value>{0} sessions - Avg: {1}%</value>
   </data>
   <data name="Exercise_StepsTitle" xml:space="preserve">
     <value>Passo dopo passo</value>
@@ -1213,25 +1213,25 @@
     <value>0 sessioni</value>
   </data>
   <data name="Feedback_Completed" xml:space="preserve">
-    <value>L'esercizio ÃƒÂ¨ completo. Ogni sessione conta!</value>
+    <value>The exercise is complete. Every session counts!</value>
   </data>
   <data name="Feedback_Excellent" xml:space="preserve">
     <value>Fantastico! Hai avuto un'ottima sessione!</value>
   </data>
   <data name="Feedback_ExerciseStarted" xml:space="preserve">
-    <value>L'esercizio ÃƒÂ¨ in corso. Segui i passaggi e concentrati sulla tecnica!</value>
+    <value>The exercise is underway. Follow the steps and focus on the technique!</value>
   </data>
   <data name="Feedback_Good" xml:space="preserve">
     <value>Buon lavoro! Sei sulla strada giusta!</value>
   </data>
   <data name="Feedback_Nice" xml:space="preserve">
-    <value>Buono sforzo! Continua cosÃƒÂ¬ per migliorare ancora!</value>
+    <value>Good effort! Keep it up so you get even better!</value>
   </data>
   <data name="Feedback_TimeReached" xml:space="preserve">
     <value>Hai raggiunto l'orario consigliato. Sentiti libero di continuare o terminare l'esercizio.</value>
   </data>
   <data name="FirstTimeSetup_Continue" xml:space="preserve">
-    <value>Continua Ã¢â€ â€™</value>
+    <value>Continue -&gt;</value>
   </data>
   <data name="FirstTimeSetup_LangCroatian" xml:space="preserve">
     <value>Hrvatski</value>
@@ -1258,16 +1258,16 @@
     <value>Saltare</value>
   </data>
   <data name="FirstTimeSetup_ThemeDark" xml:space="preserve">
-    <value>ModalitÃƒÂ  oscura</value>
+    <value>Dark mode</value>
   </data>
   <data name="FirstTimeSetup_ThemeDesc" xml:space="preserve">
-    <value>Scegli se l'app deve utilizzare la modalitÃƒÂ  chiara o scura.</value>
+    <value>Choose whether the app should use light or dark mode.</value>
   </data>
   <data name="FirstTimeSetup_ThemeLabel" xml:space="preserve">
     <value>Scegli il tema</value>
   </data>
   <data name="FirstTimeSetup_ThemeLight" xml:space="preserve">
-    <value>ModalitÃƒÂ  luce</value>
+    <value>Light mode</value>
   </data>
   <data name="FirstTimeSetup_ThemeSystem" xml:space="preserve">
     <value>Predefinito del sistema</value>
@@ -1279,7 +1279,7 @@
     <value>Configuriamo l'app per te.</value>
   </data>
   <data name="Frequency_2xWeek" xml:space="preserve">
-    <value>2Ãƒâ€”/settimana</value>
+    <value>2x/week</value>
   </data>
   <data name="Frequency_3xWeek" xml:space="preserve">
     <value>3 volte/settimana</value>
@@ -1315,13 +1315,13 @@
     <value>minuti</value>
   </data>
   <data name="Home_NoActivity" xml:space="preserve">
-    <value>Nessuna attivitÃƒÂ  ancora</value>
+    <value>No activity yet</value>
   </data>
   <data name="Home_QuickExercises" xml:space="preserve">
     <value>Esercizi veloci</value>
   </data>
   <data name="Home_RecentActivity" xml:space="preserve">
-    <value>AttivitÃƒÂ  recente</value>
+    <value>Recent activity</value>
   </data>
   <data name="Home_Sessions" xml:space="preserve">
     <value>sessioni</value>
@@ -1447,7 +1447,7 @@
     <value>norvegese</value>
   </data>
   <data name="Settings_PitchRange" xml:space="preserve">
-    <value>Intervallo di tonalitÃƒÂ </value>
+    <value>Pitch range</value>
   </data>
   <data name="Settings_ResetConfirm" xml:space="preserve">
     <value>Sei sicuro? Questo cancella tutta la progressione.</value>
@@ -1564,7 +1564,7 @@
     <value>La tua voce mostra segni di sforzo. Oggi: solo esercizi respiratori leggeri e lavoro di risonanza. Evita di forzare il pitch. 5 minuti di allenamento tranquillo.</value>
   </data>
   <data name="SmartCoach_Health_Noise" xml:space="preserve">
-    <value>Rilevate irregolaritÃƒÂ  nella voce. Oggi: focus su rilassamento e idratazione. Evita esercizi faticosi.</value>
+    <value>Irregularities detected in your voice. Today: focus on relaxation and hydration. Avoid strenuous exercises.</value>
   </data>
   <data name="SmartCoach_Health_Fatigue" xml:space="preserve">
     <value>Rilevati segni di affaticamento. Oggi: sessioni brevi con focus sulla respirazione. Non superare i 5 minuti.</value>
@@ -1606,16 +1606,16 @@
     <value>Buoni progressi ({0}/{1} sessioni sopra la soglia)</value>
   </data>
   <data name="Progression_FirstSession" xml:space="preserve">
-    <value>Ã°Å¸Å’Â± Prima sessione completata! Benvenuto nel tuo viaggio vocale!</value>
+    <value>First session completed! Welcome to your voice journey!</value>
   </data>
   <data name="Progression_TenSessions" xml:space="preserve">
-    <value>Ã¢Â­Â 10 sessioni! Sei ben avviato nell'allenamento!</value>
+    <value>10 sessions! You are well on your way with training!</value>
   </data>
   <data name="Progression_FiftySessions" xml:space="preserve">
-    <value>Ã°Å¸Ââ€  50 sessioni! Sei veramente determinato a migliorare la tua voce!</value>
+    <value>50 sessions! You are truly committed to improving your voice!</value>
   </data>
   <data name="Progression_ExcellentScore" xml:space="preserve">
-    <value>Ã°Å¸Å’Å¸ Punteggio del 90%! Una sessione fantastica!</value>
+    <value>Score of 90%! An excellent session!</value>
   </data>
   <data name="Progression_LevelUp" xml:space="preserve">
     <value>Hai completato {0} sessioni con punteggio sopra {1}%!</value>
@@ -1627,76 +1627,76 @@
     <value>Sessioni totali: {0}</value>
   </data>
   <data name="Coach_Encourage_1" xml:space="preserve">
-    <value>Ottimo sforzo! Ogni sessione conta! Ã°Å¸â€™Âª</value>
+    <value>Great effort! Every session counts!</value>
   </data>
   <data name="Coach_Encourage_2" xml:space="preserve">
-    <value>Ogni sessione ÃƒÂ¨ un passo avanti! Ã°Å¸Å’Å¸</value>
+    <value>Each session is a step forward!</value>
   </data>
   <data name="Coach_WeeklyAverage" xml:space="preserve">
     <value>Questa settimana hai avuto un punteggio medio di {0}%. Stai davvero impegnandoti nel training vocale!</value>
   </data>
   <data name="Coach_SessionsThisWeek" xml:space="preserve">
-    <value>Hai avuto {0} sessioni questa settimana. La costanza ÃƒÂ¨ la chiave del successo!</value>
+    <value>You have had {0} sessions this week. Consistency is the key to success!</value>
   </data>
   <data name="Coach_QualityOverQuantity" xml:space="preserve">
-    <value>Ricorda che la qualitÃƒÂ  ÃƒÂ¨ piÃƒÂ¹ importante della quantitÃƒÂ . Concentrati sulla tecnica corretta in ogni sessione.</value>
+    <value>Remember that quality is more important than quantity. Focus on proper technique in each session.</value>
   </data>
   <data name="VoiceHealth_SessionTimeRemaining" xml:space="preserve">
     <value>Hai {0} minuti rimanenti nella sessione. Sentiti libero di fare una pausa.</value>
   </data>
   <data name="Feedback_Pitch_BelowTarget" xml:space="preserve">
-    <value>Il pitch medio ÃƒÂ¨ {0} Hz, sotto l'intervallo target ({1}-{2} Hz).</value>
+    <value>Average pitch is {0} Hz, which is below the target range ({1}-{2} Hz).</value>
   </data>
   <data name="Feedback_Pitch_AboveTarget" xml:space="preserve">
-    <value>Il pitch medio ÃƒÂ¨ {0} Hz, sopra l'intervallo target ({1}-{2} Hz).</value>
+    <value>Average pitch is {0} Hz, which is above the target range ({1}-{2} Hz).</value>
   </data>
   <data name="Feedback_Pitch_WithinTarget" xml:space="preserve">
-    <value>Bene! Il pitch medio ÃƒÂ¨ {0} Hz, nell'intervallo target.</value>
+    <value>Great! Average pitch is {0} Hz, within the target range.</value>
   </data>
   <data name="Feedback_PitchVariation_Low" xml:space="preserve">
-    <value>La variazione di pitch ÃƒÂ¨ bassa ({0} Hz). L'obiettivo ÃƒÂ¨ almeno {1} Hz.</value>
+    <value>Pitch variation is low ({0} Hz). The goal is at least {1} Hz.</value>
   </data>
   <data name="Feedback_PitchVariation_Good" xml:space="preserve">
     <value>Buona variazione di pitch! Hai {0} Hz di variazione.</value>
   </data>
   <data name="Feedback_Resonance_Optimal" xml:space="preserve">
-    <value>Eccellente! La risonanza ÃƒÂ¨ ottimalmente femminile ({0}/{1} Hz)</value>
+    <value>Excellent! Resonance is optimally feminine ({0}/{1} Hz)</value>
   </data>
   <data name="Feedback_Resonance_Good" xml:space="preserve">
     <value>Buona risonanza! I formanti ({0}/{1} Hz) sono nell'area femminile.</value>
   </data>
   <data name="Feedback_Resonance_Back" xml:space="preserve">
-    <value>Chiara risonanza posteriore ({0}/{1} Hz). Questo dÃƒÂ  un tono piÃƒÂ¹ scuro.</value>
+    <value>Clear back resonance ({0}/{1} Hz). This gives a darker tone.</value>
   </data>
   <data name="Feedback_Hint_PitchTooLow" xml:space="preserve">
     <value>Prova ad alzare un po' la voce. Pensa a parlare dalla gola, non dal petto. Immagina di cercare di raggiungere una nota alta.</value>
   </data>
   <data name="Feedback_Hint_PitchTooHigh" xml:space="preserve">
-    <value>Abbassa un po' la voce. Rilassa le spalle e respira profondamente. Prova a parlare in modo piÃƒÂ¹ rilassato.</value>
+    <value>Lower your voice a bit. Relax your shoulders and breathe deeply. Try to speak more relaxed.</value>
   </data>
   <data name="Feedback_Hint_PitchInRange" xml:space="preserve">
     <value>Continua a mantenere questo pitch. Concentrati sull'essere costante durante l'intera frase.</value>
   </data>
   <data name="Feedback_Hint_VariationTooLow" xml:space="preserve">
-    <value>Prova a variare di piÃƒÂ¹ il pitch. Usa l'intonazione naturale - pensa a come parleresti se fossi davvero eccitato o interessato!</value>
+    <value>Try varying your pitch more. Use natural intonation - think about how you would speak if you were really excited or interested!</value>
   </data>
   <data name="Feedback_Hint_VariationGood" xml:space="preserve">
-    <value>Questo dÃƒÂ  al tuo discorso piÃƒÂ¹ dinamica e interesse. Continua a lavorare per variare il pitch naturalmente.</value>
+    <value>This gives your speech more dynamics and interest. Continue working on varying your pitch naturally.</value>
   </data>
   <data name="Feedback_Hint_IntonationNeedsWork" xml:space="preserve">
     <value>Pratica a terminare le domande con un tono ascendente. Prova a dire 'cosa farai?' con voce curiosa.</value>
   </data>
   <data name="Feedback_Hint_IntonationGood" xml:space="preserve">
-    <value>Questo dÃƒÂ  al tuo discorso piÃƒÂ¹ espressione. Continua a lavorare per rendere l'intonazione ancora piÃƒÂ¹ chiara.</value>
+    <value>This gives your speech more expression. Continue working on making your intonation even clearer.</value>
   </data>
   <data name="Feedback_Hint_ResonanceLowConfidence" xml:space="preserve">
-    <value>Parla chiaramente e tieni la voce piÃƒÂ¹ stabile per una migliore analisi.</value>
+    <value>Speak clearly and keep your voice steadier for better analysis.</value>
   </data>
   <data name="Feedback_Hint_ResonanceOptimal" xml:space="preserve">
     <value>Continua a usare questa posizione di risonanza anteriore. Sei sulla strada giusta!</value>
   </data>
   <data name="Feedback_Hint_ResonanceForward" xml:space="preserve">
-    <value>Continua a lavorare per mantenere questa posizione. Prova ad alzare F2 un po' di piÃƒÂ¹.</value>
+    <value>Continue working on maintaining this position. Try raising F2 a little more.</value>
   </data>
   <data name="Feedback_Hint_ResonanceNeutralPotential" xml:space="preserve">
     <value>Concentrati sul muovere il suono in avanti nella bocca. Pensa a 'sorridere' quando parli.</value>
@@ -1708,22 +1708,22 @@
     <value>Sposta il suono in avanti - pensa che il suono debba provenire dalla punta del naso!</value>
   </data>
   <data name="Feedback_Hint_ResonanceTooBack" xml:space="preserve">
-    <value>Importante: Concentrati sull'alzare F2. Pensa a 'appendere' il suono alla punta del naso e sorridi di piÃƒÂ¹!</value>
+    <value>Important: Focus on raising F2. Think about 'hanging' the sound in the tip of your nose and smile more!</value>
   </data>
   <data name="Feedback_Message_IntonationLow" xml:space="preserve">
-    <value>L'intonazione ascendente ÃƒÂ¨ bassa. Le domande e le frasi che terminano con un tono ascendente sono importanti.</value>
+    <value>Rising intonation is low. Questions and sentences ending with a rising tone are important.</value>
   </data>
   <data name="Feedback_Message_IntonationGood" xml:space="preserve">
     <value>Buona intonazione! Usi naturalmente toni ascendenti e discendenti.</value>
   </data>
   <data name="Feedback_Message_ResonanceNeutralPotential" xml:space="preserve">
-    <value>Risonanza neutra con potenziale. Puoi ottenere un tono piÃƒÂ¹ femminile.</value>
+    <value>Neutral resonance with potential. You can achieve a more feminine tone.</value>
   </data>
   <data name="Feedback_Message_ResonanceNeutral" xml:space="preserve">
-    <value>La risonanza ÃƒÂ¨ neutra. Continua a lavorare sulla posizione di risonanza anteriore.</value>
+    <value>The resonance is neutral. Continue working on forward resonance position.</value>
   </data>
   <data name="Feedback_Message_ResonanceBack" xml:space="preserve">
-    <value>La risonanza ha tendenza posteriore. Puoi ottenere un tono piÃƒÂ¹ chiaro.</value>
+    <value>Resonance has back tendency. You can achieve a brighter tone.</value>
   </data>
   <data name="Feedback_Realtime_NoVoice" xml:space="preserve">
     <value>The signal is weak. Try moving a little closer to the microphone or run microphone calibration.</value>
@@ -1738,7 +1738,7 @@
     <value>Within target zone ({0:F0} Hz). Keep an even, comfortable tone and continue focusing on resonance.</value>
   </data>
   <data name="Feedback_Summary_Top" xml:space="preserve">
-    <value>Ã°Å¸Å’Å¸ Punteggio totale: {0}%</value>
+    <value>Total score: {0}%</value>
   </data>
   <data name="Feedback_Summary_PositiveImprovement" xml:space="preserve">
     <value>Hai ottenuto {0} punti positivi e {1} aree di miglioramento.</value>
@@ -1768,10 +1768,10 @@
     <value>Inizia Esercizio</value>
   </data>
   <data name="Dashboard_QuickestImprovement" xml:space="preserve">
-    <value>Miglioramento PiÃƒÂ¹ Veloce!</value>
+    <value>Quickest Improvement!</value>
   </data>
   <data name="Dashboard_ImprovedBy" xml:space="preserve">
-    <value>ÃƒÂ¨ aumentato di</value>
+    <value>has increased by</value>
   </data>
   <data name="Dashboard_PointsThisWeek" xml:space="preserve">
     <value>punti questa settimana</value>
@@ -1834,7 +1834,7 @@
     <value>Concentrati su</value>
   </data>
   <data name="Coach_Why" xml:space="preserve">
-    <value>PerchÃƒÂ©</value>
+    <value>Why</value>
   </data>
   <data name="Coach_How" xml:space="preserve">
     <value>Come esercitarsi</value>
@@ -2305,7 +2305,7 @@
     <value>Skip</value>
   </data>
   <data name="FirstSetup_Continue" xml:space="preserve">
-    <value>Continue Ã¢â€ â€™</value>
+    <value>Continue -&gt;</value>
   </data>
   <data name="Exercise_NameFallback" xml:space="preserve">
     <value>Exercise name</value>
@@ -2323,43 +2323,43 @@
     <value>Error loading exercises: {0}</value>
   </data>
   <data name="CoachFormatter_PitchGoodFormat" xml:space="preserve">
-    <value>Ã¢Å“â€¦ Good pitch ({0:F0} Hz)</value>
+    <value>Good pitch ({0:F0} Hz)</value>
   </data>
   <data name="CoachFormatter_PitchLowBeginnerFormat" xml:space="preserve">
-    <value>Ã°Å¸Å½Âµ Your pitch is {0:F0} Hz. Try a little higher toward {1:F0} Hz with light forward placement and no pushing.</value>
+    <value>Your pitch is {0:F0} Hz. Try a little higher toward {1:F0} Hz with light forward placement and no pushing.</value>
   </data>
   <data name="CoachFormatter_PitchLowFormat" xml:space="preserve">
-    <value>Ã°Å¸Å½Âµ Pitch: {0:F0} Hz Ã¢â€ â€™ target: {1:F0} Hz. Try a light forward adjustment.</value>
+    <value>Pitch: {0:F0} Hz -&gt; target: {1:F0} Hz. Try a light forward adjustment.</value>
   </data>
   <data name="CoachFormatter_PitchHighFormat" xml:space="preserve">
-    <value>Ã°Å¸Å½Âµ Pitch: {0:F0} Hz Ã¢â€ â€™ target: {1:F0} Hz. Lower slightly to avoid pressure.</value>
+    <value>Pitch: {0:F0} Hz -&gt; target: {1:F0} Hz. Lower slightly to avoid pressure.</value>
   </data>
   <data name="CoachFormatter_ResonanceOptimalFormat" xml:space="preserve">
-    <value>Ã¢Å“Â¨ Good resonance (F2: {0:F0} Hz)</value>
+    <value>Good resonance (F2: {0:F0} Hz)</value>
   </data>
   <data name="CoachFormatter_ResonanceLowBeginnerFormat" xml:space="preserve">
-    <value>Ã¢Å“Â¨ F2 is {0:F0} Hz. Try moving the sound forward in the mouth with low effort.</value>
+    <value>F2 is {0:F0} Hz. Try moving the sound forward in the mouth with low effort.</value>
   </data>
   <data name="CoachFormatter_ResonanceLowFormat" xml:space="preserve">
-    <value>Ã¢Å“Â¨ F2 at {0:F0} Hz. Move the tongue gently forward and keep the throat relaxed.</value>
+    <value>F2 at {0:F0} Hz. Move the tongue gently forward and keep the throat relaxed.</value>
   </data>
   <data name="CoachFormatter_ResonanceAlmostFormat" xml:space="preserve">
-    <value>Ã¢Å“Â¨ F2: {0:F0} Hz. Almost there. Keep the forward resonance light.</value>
+    <value>F2: {0:F0} Hz. Almost there. Keep the forward resonance light.</value>
   </data>
   <data name="CoachFormatter_ResonanceGoodFormat" xml:space="preserve">
-    <value>Ã¢Å“Â¨ F2: {0:F0} Hz. Good resonance.</value>
+    <value>F2: {0:F0} Hz. Good resonance.</value>
   </data>
   <data name="CoachFormatter_SummaryScoreFormat" xml:space="preserve">
     <value>{0} Score: {1:F0}%</value>
   </data>
   <data name="CoachFormatter_SummaryResonanceFormat" xml:space="preserve">
-    <value>  Ã¢â‚¬Â¢ Resonance: {0:F0}%</value>
+    <value>  - Resonance: {0:F0}%</value>
   </data>
   <data name="CoachFormatter_SummaryPitchFormat" xml:space="preserve">
-    <value>  Ã¢â‚¬Â¢ Pitch: {0:F0}%</value>
+    <value>  - Pitch: {0:F0}%</value>
   </data>
   <data name="CoachFormatter_SummaryStabilityFormat" xml:space="preserve">
-    <value>  Ã¢â‚¬Â¢ Stability: {0:F0}%</value>
+    <value>  - Stability: {0:F0}%</value>
   </data>
   <data name="CoachFormatter_SummaryStrainFormat" xml:space="preserve">
     <value>  {0} Load: {1}</value>
@@ -2371,25 +2371,25 @@
     <value>{0} {1} (your F2: {2:F0} Hz)</value>
   </data>
   <data name="CoachFormatter_Streak1" xml:space="preserve">
-    <value>Ã°Å¸Å’Å¸ First step taken. Keep going.</value>
+    <value>First step taken. Keep going.</value>
   </data>
   <data name="CoachFormatter_Streak3" xml:space="preserve">
-    <value>Ã°Å¸â€Â¥ 3-day streak. Very good.</value>
+    <value>3-day streak. Very good.</value>
   </data>
   <data name="CoachFormatter_Streak7" xml:space="preserve">
-    <value>Ã°Å¸Ââ€  One week. You are on your way.</value>
+    <value>One week. You are on your way.</value>
   </data>
   <data name="CoachFormatter_Streak14" xml:space="preserve">
-    <value>Ã°Å¸â€™Âª Two weeks. Strong, steady work.</value>
+    <value>Two weeks. Strong, steady work.</value>
   </data>
   <data name="CoachFormatter_Streak30" xml:space="preserve">
-    <value>Ã°Å¸â€˜â€˜ One month. Solid work.</value>
+    <value>One month. Solid work.</value>
   </data>
   <data name="CoachFormatter_StreakGenericFormat" xml:space="preserve">
-    <value>Ã¢Â­Â {0} days in a row. Good work.</value>
+    <value>{0} days in a row. Good work.</value>
   </data>
   <data name="CoachFormatter_RestInstructionFormat" xml:space="preserve">
-    <value>Ã°Å¸â€ºâ€˜ Your voice needs rest. Take a calm breath, drink water, and relax your throat. We continue in {0} seconds.</value>
+    <value>Your voice needs rest. Take a calm breath, drink water, and relax your throat. We continue in {0} seconds.</value>
   </data>
   <data name="AdaptiveComfort_ResonanceBelowPitch" xml:space="preserve">
     <value>Resonance is lower than pitch. Focus on light forward resonance.</value>
@@ -2545,22 +2545,22 @@
     <value>Maintenance</value>
   </data>
   <data name="Direction_SummaryResonanceForward" xml:space="preserve">
-    <value>Resonance: Ã¢â€ â€˜ Move forward</value>
+    <value>Resonance: move forward</value>
   </data>
   <data name="Direction_SummaryResonanceGood" xml:space="preserve">
-    <value>Resonance: Ã¢Å“â€œ Good</value>
+    <value>Resonance: good</value>
   </data>
   <data name="Direction_SummaryPitchIncrease" xml:space="preserve">
-    <value>Pitch: Ã¢â€ â€˜ Increase carefully</value>
+    <value>Pitch: increase carefully</value>
   </data>
   <data name="Direction_SummaryPitchDecrease" xml:space="preserve">
-    <value>Pitch: Ã¢â€ â€œ Lower</value>
+    <value>Pitch: lower</value>
   </data>
   <data name="Direction_SummaryPitchStable" xml:space="preserve">
-    <value>Pitch: Ã¢Å“â€œ Stable</value>
+    <value>Pitch: stable</value>
   </data>
   <data name="Direction_SummaryIntonationVariation" xml:space="preserve">
-    <value>Intonation: Ã¢â€ â€˜ More variation</value>
+    <value>Intonation: more variation</value>
   </data>
   <data name="CoachGenerator_ResonanceHowDefault" xml:space="preserve">
     <value>Humming with focus on bridge-of-nose sensation</value>
@@ -2668,31 +2668,31 @@
     <value>Quality is more important than quantity.</value>
   </data>
   <data name="CoachGenerator_EncouragementHigh1" xml:space="preserve">
-    <value>Fantastic work. You are on the right path. Ã°Å¸Å’Å¸</value>
+    <value>Fantastic work. You are on the right path.</value>
   </data>
   <data name="CoachGenerator_EncouragementHigh2" xml:space="preserve">
-    <value>Impressive progress. Keep going. Ã°Å¸Å¡â‚¬</value>
+    <value>Impressive progress. Keep going.</value>
   </data>
   <data name="CoachGenerator_EncouragementHigh3" xml:space="preserve">
-    <value>Your voice keeps improving. Ã°Å¸â€™Â«</value>
+    <value>Your voice keeps improving.</value>
   </data>
   <data name="CoachGenerator_EncouragementMedium2" xml:space="preserve">
-    <value>You are working hard - it shows. Ã°Å¸Å½Â¯</value>
+    <value>You are working hard - it shows.</value>
   </data>
   <data name="CoachGenerator_EncouragementMedium3" xml:space="preserve">
-    <value>Progress takes time - you are on your way. Ã°Å¸Å’Â±</value>
+    <value>Progress takes time - you are on your way.</value>
   </data>
   <data name="CoachGenerator_EncouragementLow2" xml:space="preserve">
-    <value>Patience is key - you can do this. Ã°Å¸â€™Âª</value>
+    <value>Patience is key - you can do this.</value>
   </data>
   <data name="CoachGenerator_EncouragementLow3" xml:space="preserve">
-    <value>You are practicing - that is what counts. Ã°Å¸ÂÆ’</value>
+    <value>You are practicing - that is what counts.</value>
   </data>
   <data name="CoachGenerator_ShortSafety" xml:space="preserve">
-    <value>Ã°Å¸â€ºÂ¡Ã¯Â¸Â Take it easy today</value>
+    <value>Take it easy today.</value>
   </data>
   <data name="CoachGenerator_ShortAllGood" xml:space="preserve">
-    <value>Ã¢Å“Â¨ Everything looks good.</value>
+    <value>Everything looks good.</value>
   </data>
   <data name="CoachGenerator_ComplexityProgression" xml:space="preserve">
     <value>Complexity progression</value>
@@ -2704,7 +2704,7 @@
     <value>Your resonance ({0:F0}) and pitch stability ({1:F0}) are sufficient for progression.</value>
   </data>
   <data name="CoachGenerator_ComplexityExcellent" xml:space="preserve">
-    <value>Excellent work. Ã°Å¸Å½â€°</value>
+    <value>Excellent work.</value>
   </data>
   <data name="CoachGenerator_ComplexityLevel" xml:space="preserve">
     <value>Complexity level</value>
@@ -2713,7 +2713,7 @@
     <value>Focus on resonance practice this week.</value>
   </data>
   <data name="CoachGenerator_ComplexityResonanceWhyFormat" xml:space="preserve">
-    <value>Resonance must be stable before we increase complexity. Your resonance: {0:F0} (required: Ã¢â€°Â¥60).</value>
+    <value>Resonance must be stable before we increase complexity. Your resonance: {0:F0} (required: &gt;=60).</value>
   </data>
   <data name="CoachGenerator_ComplexityHealthHow" xml:space="preserve">
     <value>Focus on voice health this week.</value>
@@ -2743,13 +2743,13 @@
     <value>Try this exercise today.</value>
   </data>
   <data name="TrainingFrequency_GoalMet" xml:space="preserve">
-    <value>You reached today's goal. Ã°Å¸Å½â€° Fantastic work.</value>
+    <value>You reached today's goal. Fantastic work.</value>
   </data>
   <data name="TrainingFrequency_RemainingMinutesFormat" xml:space="preserve">
-    <value>You have {0} minutes remaining. Keep going to reach the goal. Ã°Å¸â€™Âª</value>
+    <value>You have {0} minutes remaining. Keep going to reach the goal.</value>
   </data>
   <data name="TrainingFrequency_AlmostDoneFormat" xml:space="preserve">
-    <value>Only {0} minutes remaining. You can do it. Ã°Å¸Å’Å¸</value>
+    <value>Only {0} minutes remaining. You can do it.</value>
   </data>
   <data name="TrainingFrequency_StartExercise" xml:space="preserve">
     <value>Start an exercise to get going.</value>
@@ -2854,40 +2854,40 @@
     <value>Isolated sounds</value>
   </data>
   <data name="AnalysisSummary_PitchInComfort" xml:space="preserve">
-    <value>Ã¢Å“â€¦ Pitch is within the comfort zone.</value>
+    <value>Pitch is within the comfort zone.</value>
   </data>
   <data name="AnalysisSummary_PitchCanRise" xml:space="preserve">
-    <value>Ã¢Â¬â€¡Ã¯Â¸Â Pitch can rise slightly for better comfort.</value>
+    <value>Pitch can rise slightly for better comfort.</value>
   </data>
   <data name="AnalysisSummary_PitchHigh" xml:space="preserve">
-    <value>Ã¢Â¬â€ Ã¯Â¸Â Pitch is high - be careful not to push.</value>
+    <value>Pitch is high - be careful not to push.</value>
   </data>
   <data name="AnalysisSummary_ResonanceGood" xml:space="preserve">
-    <value>Ã¢Å“â€¦ Good resonance development!</value>
+    <value>Good resonance development!</value>
   </data>
   <data name="AnalysisSummary_ResonanceProgress" xml:space="preserve">
-    <value>Ã°Å¸â€œË† Resonance is showing progress.</value>
+    <value>Resonance is showing progress.</value>
   </data>
   <data name="AnalysisSummary_ResonanceFocus" xml:space="preserve">
-    <value>Ã°Å¸â€™Â¡ Focus on resonance for best results.</value>
+    <value>Focus on resonance for best results.</value>
   </data>
   <data name="AnalysisSummary_StabilityGood" xml:space="preserve">
-    <value>Ã¢Å“â€¦ Good pitch stability!</value>
+    <value>Good pitch stability!</value>
   </data>
   <data name="AnalysisSummary_StabilityOk" xml:space="preserve">
-    <value>Ã°Å¸â€œÅ  Pitch stability is OK.</value>
+    <value>Pitch stability is OK.</value>
   </data>
   <data name="AnalysisSummary_StabilityImprove" xml:space="preserve">
-    <value>Ã°Å¸Å½Â¯ Try to hold a more even tone.</value>
+    <value>Try to hold a more even tone.</value>
   </data>
   <data name="AnalysisSummary_LoadLow" xml:space="preserve">
-    <value>Ã¢Å“â€¦ The voice shows low load.</value>
+    <value>The voice shows low load.</value>
   </data>
   <data name="AnalysisSummary_LoadWatch" xml:space="preserve">
-    <value>Ã¢Å¡Â Ã¯Â¸Â Watch for voice load.</value>
+    <value>Watch for voice load.</value>
   </data>
   <data name="AnalysisSummary_LoadRest" xml:space="preserve">
-    <value>Ã°Å¸Å¡Â¨ Take breaks if you feel discomfort!</value>
+    <value>Take breaks if you feel discomfort!</value>
   </data>
   <data name="AnalysisChart_ResonanceTitle" xml:space="preserve">
     <value>F2 (Hz) - Resonance</value>
@@ -3061,13 +3061,13 @@
     <value>Your progress:</value>
   </data>
   <data name="Progression_AveragePitchLine" xml:space="preserve">
-    <value>Ã¢â‚¬Â¢ Average pitch: {0:F0} Hz</value>
+    <value>- Average pitch: {0:F0} Hz</value>
   </data>
   <data name="Progression_CurrentStreakLine" xml:space="preserve">
-    <value>Ã¢â‚¬Â¢ Current streak: {0} days</value>
+    <value>- Current streak: {0} days</value>
   </data>
   <data name="Progression_ConsistencyLine" xml:space="preserve">
-    <value>Ã¢â‚¬Â¢ Consistency: {0:F0}%</value>
+    <value>- Consistency: {0:F0}%</value>
   </data>
   <data name="Complexity_CurrentLevelLine" xml:space="preserve">
     <value>Current level: {0}</value>
@@ -3827,4 +3827,1198 @@ This cannot be undone!</value>
   <data name="Report_NotImplemented" xml:space="preserve">
     <value>Non implementato</value>
   </data>
-<data name="Report_TitleClinicalProgressFormat" xml:space="preserve"><value>Rapporto di progresso clinico — {0}</value></data><data name="Report_TitleCoachingSummaryFormat" xml:space="preserve"><value>Riepilogo coaching — {0}</value></data><data name="Report_TitleOutcomeSummaryFormat" xml:space="preserve"><value>Riepilogo risultati — {0}</value></data><data name="Report_TitleVoiceTimelineFormat" xml:space="preserve"><value>Sviluppo della voce nel tempo — {0}</value></data><data name="Report_DirectionImproving" xml:space="preserve"><value>In miglioramento</value></data><data name="Report_DirectionStable" xml:space="preserve"><value>Stabile</value></data><data name="Report_DirectionDeclining" xml:space="preserve"><value>In calo</value></data><data name="Report_TimeWindow_Days" xml:space="preserve"><value>{0} giorni</value></data><data name="Report_TimeWindow_LabelFormat" xml:space="preserve"><value>{0} ({1} – {2})</value></data><data name="Report_Term_Fatigue" xml:space="preserve"><value>Affaticamento vocale</value></data><data name="Report_Term_FatigueSignals" xml:space="preserve"><value>Segnali di affaticamento vocale</value></data><data name="Report_Term_VoiceFatigue" xml:space="preserve"><value>Affaticamento vocale</value></data><data name="Report_Term_VoiceFatigueSignals" xml:space="preserve"><value>Segnali di affaticamento vocale</value></data><data name="Report_Term_TrainingLoad" xml:space="preserve"><value>Carico di allenamento</value></data><data name="Report_Term_RecentActivity" xml:space="preserve"><value>Attività recente</value></data><data name="Report_Term_RestBehindRecentActivity" xml:space="preserve"><value>Il recupero è in ritardo rispetto all’attività recente</value></data><data name="Report_Status_SIGNAL_LEVEL_COLLAPSES" xml:space="preserve"><value>Il livello del segnale crolla</value></data><data name="Report_Status_EXPECTED_SILENCE" xml:space="preserve"><value>Silenzio previsto</value></data><data name="Report_Status_SILENCE_TAIL" xml:space="preserve"><value>Silenzio finale</value></data><data name="Report_Reason_COMFORT_DECLINE" xml:space="preserve"><value>Comfort in calo</value></data><data name="Report_Status_COMFORT_DECLINE" xml:space="preserve"><value>Comfort in calo</value></data><data name="Report_RecommendationComfortDeclineFormat" xml:space="preserve"><value>Dai minore priorità all’esercizio {0}: il comfort è diminuito di recente ({1:F1} per sessione). Considera un lavoro più leggero mentre la voce recupera.</value></data><data name="ReportPdf_RecoveryCostShort" xml:space="preserve"><value>Costo recup.</value></data></root>
+  <data name="Report_TitleClinicalProgressFormat" xml:space="preserve">
+    <value>Rapporto di progresso clinico — {0}</value>
+  </data>
+  <data name="Report_TitleCoachingSummaryFormat" xml:space="preserve">
+    <value>Riepilogo coaching — {0}</value>
+  </data>
+  <data name="Report_TitleOutcomeSummaryFormat" xml:space="preserve">
+    <value>Riepilogo risultati — {0}</value>
+  </data>
+  <data name="Report_TitleVoiceTimelineFormat" xml:space="preserve">
+    <value>Sviluppo della voce nel tempo — {0}</value>
+  </data>
+  <data name="Report_DirectionImproving" xml:space="preserve">
+    <value>In miglioramento</value>
+  </data>
+  <data name="Report_DirectionStable" xml:space="preserve">
+    <value>Stabile</value>
+  </data>
+  <data name="Report_DirectionDeclining" xml:space="preserve">
+    <value>In calo</value>
+  </data>
+  <data name="Report_TimeWindow_Days" xml:space="preserve">
+    <value>{0} giorni</value>
+  </data>
+  <data name="Report_TimeWindow_LabelFormat" xml:space="preserve">
+    <value>{0} ({1} – {2})</value>
+  </data>
+  <data name="Report_Term_Fatigue" xml:space="preserve">
+    <value>Affaticamento vocale</value>
+  </data>
+  <data name="Report_Term_FatigueSignals" xml:space="preserve">
+    <value>Segnali di affaticamento vocale</value>
+  </data>
+  <data name="Report_Term_VoiceFatigue" xml:space="preserve">
+    <value>Affaticamento vocale</value>
+  </data>
+  <data name="Report_Term_VoiceFatigueSignals" xml:space="preserve">
+    <value>Segnali di affaticamento vocale</value>
+  </data>
+  <data name="Report_Term_TrainingLoad" xml:space="preserve">
+    <value>Carico di allenamento</value>
+  </data>
+  <data name="Report_Term_RecentActivity" xml:space="preserve">
+    <value>Attività recente</value>
+  </data>
+  <data name="Report_Term_RestBehindRecentActivity" xml:space="preserve">
+    <value>Il recupero è in ritardo rispetto all’attività recente</value>
+  </data>
+  <data name="Report_Status_SIGNAL_LEVEL_COLLAPSES" xml:space="preserve">
+    <value>Il livello del segnale crolla</value>
+  </data>
+  <data name="Report_Status_EXPECTED_SILENCE" xml:space="preserve">
+    <value>Silenzio previsto</value>
+  </data>
+  <data name="Report_Status_SILENCE_TAIL" xml:space="preserve">
+    <value>Silenzio finale</value>
+  </data>
+  <data name="Report_Reason_COMFORT_DECLINE" xml:space="preserve">
+    <value>Comfort in calo</value>
+  </data>
+  <data name="Report_Status_COMFORT_DECLINE" xml:space="preserve">
+    <value>Comfort in calo</value>
+  </data>
+  <data name="Report_RecommendationComfortDeclineFormat" xml:space="preserve">
+    <value>Dai minore priorità all’esercizio {0}: il comfort è diminuito di recente ({1:F1} per sessione). Considera un lavoro più leggero mentre la voce recupera.</value>
+  </data>
+  <data name="ReportPdf_RecoveryCostShort" xml:space="preserve">
+    <value>Costo recup.</value>
+  </data>
+  <data name="AdaptiveVolume_Baseline" xml:space="preserve">
+    <value>Et passe antall øvelser for en jevn økt.</value>
+  </data>
+  <data name="AdaptiveVolume_IncreasedConsistency" xml:space="preserve">
+    <value>Fin og jevn fremgang — du kan gjerne legge til litt mer denne økten hvis du har lyst.</value>
+  </data>
+  <data name="AdaptiveVolume_ReducedForRecovery" xml:space="preserve">
+    <value>Vi holder økten kort i dag så stemmen får hvile. Litt færre øvelser nå støtter restitusjonen.</value>
+  </data>
+  <data name="CaseReview_Complete" xml:space="preserve">
+    <value>Complete review</value>
+  </data>
+  <data name="CaseReview_Create" xml:space="preserve">
+    <value>Create review</value>
+  </data>
+  <data name="CaseReview_Goal" xml:space="preserve">
+    <value>Goal</value>
+  </data>
+  <data name="CaseReview_Load" xml:space="preserve">
+    <value>Load</value>
+  </data>
+  <data name="CaseReview_Monthly" xml:space="preserve">
+    <value>Monthly</value>
+  </data>
+  <data name="CaseReview_Period" xml:space="preserve">
+    <value>Period</value>
+  </data>
+  <data name="CaseReview_Progress" xml:space="preserve">
+    <value>Progress</value>
+  </data>
+  <data name="CaseReview_Recovery" xml:space="preserve">
+    <value>Recovery</value>
+  </data>
+  <data name="CaseReview_SavedReviews" xml:space="preserve">
+    <value>Saved reviews</value>
+  </data>
+  <data name="CaseReview_StatusCompleted" xml:space="preserve">
+    <value>Review completed.</value>
+  </data>
+  <data name="CaseReview_StatusCompleteErrorFormat" xml:space="preserve">
+    <value>Error completing review: {0}</value>
+  </data>
+  <data name="CaseReview_StatusCreatedFormat" xml:space="preserve">
+    <value>Review created (draft): {0}</value>
+  </data>
+  <data name="CaseReview_StatusCreateErrorFormat" xml:space="preserve">
+    <value>Error creating review: {0}</value>
+  </data>
+  <data name="CaseReview_StatusLoadErrorFormat" xml:space="preserve">
+    <value>Error loading reviews: {0}</value>
+  </data>
+  <data name="CaseReview_StatusNotFound" xml:space="preserve">
+    <value>Review not found.</value>
+  </data>
+  <data name="CaseReview_StatusServicesUnavailable" xml:space="preserve">
+    <value>Services unavailable - cannot create review.</value>
+  </data>
+  <data name="CaseReview_Title" xml:space="preserve">
+    <value>Case review</value>
+  </data>
+  <data name="CaseReview_Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="Clinician_ComfortTrend" xml:space="preserve">
+    <value>Comfort trend</value>
+  </data>
+  <data name="Clinician_ConsistencyTrend" xml:space="preserve">
+    <value>Consistency trend</value>
+  </data>
+  <data name="Clinician_ExerciseEffectiveness" xml:space="preserve">
+    <value>Exercise effectiveness</value>
+  </data>
+  <data name="Clinician_FocusAreasLabel" xml:space="preserve">
+    <value>Focus areas:</value>
+  </data>
+  <data name="Clinician_GoalProgress" xml:space="preserve">
+    <value>Goal progress</value>
+  </data>
+  <data name="Clinician_GridComfortGain" xml:space="preserve">
+    <value>Comfort gain</value>
+  </data>
+  <data name="Clinician_GridCurrentValue" xml:space="preserve">
+    <value>Current</value>
+  </data>
+  <data name="Clinician_GridEffectiveness" xml:space="preserve">
+    <value>Effectiveness</value>
+  </data>
+  <data name="Clinician_GridGoal" xml:space="preserve">
+    <value>Goal</value>
+  </data>
+  <data name="Clinician_GridRecoveryCost" xml:space="preserve">
+    <value>Recovery cost</value>
+  </data>
+  <data name="Clinician_GridResonanceGain" xml:space="preserve">
+    <value>Resonance gain</value>
+  </data>
+  <data name="Clinician_GridSessions" xml:space="preserve">
+    <value>Sessions</value>
+  </data>
+  <data name="Clinician_GridSuccess" xml:space="preserve">
+    <value>Success%</value>
+  </data>
+  <data name="Clinician_GridTargetValue" xml:space="preserve">
+    <value>Target</value>
+  </data>
+  <data name="Clinician_LearningPath" xml:space="preserve">
+    <value>Learning path</value>
+  </data>
+  <data name="Clinician_LongitudinalInsights" xml:space="preserve">
+    <value>Longitudinal insights</value>
+  </data>
+  <data name="Clinician_OvertrainingPredicted" xml:space="preserve">
+    <value>Overtraining predicted</value>
+  </data>
+  <data name="Clinician_RecoveryDebtLabel" xml:space="preserve">
+    <value>Debt: </value>
+  </data>
+  <data name="Clinician_RecoveryStatus" xml:space="preserve">
+    <value>Recovery status</value>
+  </data>
+  <data name="Clinician_ResonanceTrend" xml:space="preserve">
+    <value>Resonance trend</value>
+  </data>
+  <data name="Clinician_SafetyLabel" xml:space="preserve">
+    <value>Safety: </value>
+  </data>
+  <data name="Clinician_Strengths" xml:space="preserve">
+    <value>Strengths:</value>
+  </data>
+  <data name="Clinician_Title" xml:space="preserve">
+    <value>Clinical overview</value>
+  </data>
+  <data name="Clinician_VoiceMetrics" xml:space="preserve">
+    <value>Voice metrics</value>
+  </data>
+  <data name="Clinician_Weaknesses" xml:space="preserve">
+    <value>Growth areas:</value>
+  </data>
+  <data name="Coach_Breakthroughs" xml:space="preserve">
+    <value>Breakthroughs</value>
+  </data>
+  <data name="Coach_Exercise" xml:space="preserve">
+    <value>Exercise</value>
+  </data>
+  <data name="Coach_FocusAreas" xml:space="preserve">
+    <value>Focus areas</value>
+  </data>
+  <data name="Coach_PlateauWarnings" xml:space="preserve">
+    <value>Plateau notices</value>
+  </data>
+  <data name="Coach_Recommendations" xml:space="preserve">
+    <value>Recommendations</value>
+  </data>
+  <data name="Coach_RecoveryNeeds" xml:space="preserve">
+    <value>Recovery needs</value>
+  </data>
+  <data name="Coach_Title" xml:space="preserve">
+    <value>Coach overview</value>
+  </data>
+  <data name="CoachHint_Breathing_DeepBreath" xml:space="preserve">
+    <value>🌬️ Ta en dyp pust! Du er i ferd med å gå tom for luft.</value>
+  </data>
+  <data name="CoachHint_Breathing_Good" xml:space="preserve">
+    <value>🌬️ God pustekontroll!</value>
+  </data>
+  <data name="CoachHint_Breathing_Relax" xml:space="preserve">
+    <value>🌬️ Slapp av i halsen og pust rolig.</value>
+  </data>
+  <data name="CoachHint_Breathing_Smoother" xml:space="preserve">
+    <value>🌬️ Prøv å ha jevnere luftstrøm.</value>
+  </data>
+  <data name="CoachHint_Correct" xml:space="preserve">
+    <value>✅ Perfekt! Fortsett slik.</value>
+  </data>
+  <data name="CoachHint_Health_Critical" xml:space="preserve">
+    <value>🛑 STANS! Din stemme trenger hvile umiddelbart.</value>
+  </data>
+  <data name="CoachHint_Health_Hoarseness" xml:space="preserve">
+    <value>⚠️ Hørbar heshet. Ta en pause og drikk vann.</value>
+  </data>
+  <data name="CoachHint_Health_JitterWarning" xml:space="preserve">
+    <value>⚠️ Ustabil tone detektert. Slapp av og prøv igjen.</value>
+  </data>
+  <data name="CoachHint_Health_ShimmerWarning" xml:space="preserve">
+    <value>⚠️ Variasjon i amplitude. Pust dypt og slapp av.</value>
+  </data>
+  <data name="CoachHint_Health_TakeItEasy" xml:space="preserve">
+    <value>⚠️ Ta det rolig - unngå å presse stemmen.</value>
+  </data>
+  <data name="CoachHint_Intonation_AddVariation" xml:space="preserve">
+    <value>🎶 Prøv å variere pitch-en mer. Tenk på naturlig tale!</value>
+  </data>
+  <data name="CoachHint_Intonation_Natural" xml:space="preserve">
+    <value>🎶 Naturlig intonasjon! God variasjon.</value>
+  </data>
+  <data name="CoachHint_Intonation_ReduceExaggeration" xml:space="preserve">
+    <value>🎶 Reduser litt - prøv mer naturlig variasjon.</value>
+  </data>
+  <data name="CoachHint_Intonation_RiseForQuestion" xml:space="preserve">
+    <value>🎶 Prøv å avslutte med stigende tone for spørsmål.</value>
+  </data>
+  <data name="CoachHint_Intonation_Rising" xml:space="preserve">
+    <value>🎶 God stigende intonasjon for spørsmål!</value>
+  </data>
+  <data name="CoachHint_Pitch_Good" xml:space="preserve">
+    <value>Perfekt pitch! Hold denne tonen.</value>
+  </data>
+  <data name="CoachHint_Pitch_Stabilize" xml:space="preserve">
+    <value>Fokusér på å holde en stabil tone.</value>
+  </data>
+  <data name="CoachHint_Pitch_TooHigh" xml:space="preserve">
+    <value>Senk stemmen litt. Slapp av i skuldrene.</value>
+  </data>
+  <data name="CoachHint_Pitch_TooLow" xml:space="preserve">
+    <value>Prøv å heve stemmen litt. Tenk på å snakke fra halsen.</value>
+  </data>
+  <data name="CoachHint_PitchPress_Rest" xml:space="preserve">
+    <value>🛑 Du presser stemmen. Ta en pause og slapp av.</value>
+  </data>
+  <data name="CoachHint_Resonance_Adjust" xml:space="preserve">
+    <value>✨ Juster resonansen - prøv å heve F2.</value>
+  </data>
+  <data name="CoachHint_Resonance_AlmostThere" xml:space="preserve">
+    <value>✨ Nesten der! Fortsett å flytte lyden fremover.</value>
+  </data>
+  <data name="CoachHint_Resonance_Good" xml:space="preserve">
+    <value>✨ God resonans! Fortsett å jobbe med fremre klang.</value>
+  </data>
+  <data name="CoachHint_Resonance_KeepGoing" xml:space="preserve">
+    <value>✨ God progresjon! Fortsett med forward resonance.</value>
+  </data>
+  <data name="CoachHint_Resonance_MoveForward" xml:space="preserve">
+    <value>✨ Flytt lyden fremover i munnen. Tenk på å 'henge' lyden i nesetippen!</value>
+  </data>
+  <data name="CoachHint_Resonance_MoveForward_Beginner" xml:space="preserve">
+    <value>✨ F2 er lav - prøv å smile når du snakker og tenk at lyden kommer fra nesetippen!</value>
+  </data>
+  <data name="CoachHint_Resonance_Optimal" xml:space="preserve">
+    <value>✨ Perfekt resonans! Fremre klangposisjon.</value>
+  </data>
+  <data name="CoachHint_Stability_Adjust" xml:space="preserve">
+    <value>📊 Prøv å holde stemmen mer stabil.</value>
+  </data>
+  <data name="Common_Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Dashboard_Axis_Date" xml:space="preserve">
+    <value>Dato</value>
+  </data>
+  <data name="Dashboard_Axis_Score" xml:space="preserve">
+    <value>Score (0–100)</value>
+  </data>
+  <data name="Dashboard_Axis_Sessions" xml:space="preserve">
+    <value>Økter</value>
+  </data>
+  <data name="Dashboard_Breakthroughs" xml:space="preserve">
+    <value>Gjennombrudd</value>
+  </data>
+  <data name="Dashboard_MonthlyTrend" xml:space="preserve">
+    <value>Månedlig trend</value>
+  </data>
+  <data name="Dashboard_RecoveryPatterns" xml:space="preserve">
+    <value>Restitusjonstrender</value>
+  </data>
+  <data name="Dashboard_VoiceDevelopment" xml:space="preserve">
+    <value>Stemmeutvikling</value>
+  </data>
+  <data name="Dashboard_WeeklyTrend" xml:space="preserve">
+    <value>Ukentlig trend</value>
+  </data>
+  <data name="Dimension_Comfort" xml:space="preserve">
+    <value>Comfort</value>
+  </data>
+  <data name="Dimension_Consistency" xml:space="preserve">
+    <value>Consistency</value>
+  </data>
+  <data name="Dimension_Intonation" xml:space="preserve">
+    <value>Intonation</value>
+  </data>
+  <data name="Dimension_Pitch" xml:space="preserve">
+    <value>Pitch</value>
+  </data>
+  <data name="Dimension_Recovery" xml:space="preserve">
+    <value>Recovery</value>
+  </data>
+  <data name="Dimension_Resonance" xml:space="preserve">
+    <value>Resonance</value>
+  </data>
+  <data name="Dimension_VocalWeight" xml:space="preserve">
+    <value>Vocal weight</value>
+  </data>
+  <data name="Exercise_Description" xml:space="preserve">
+    <value>Beskrivelse av øvelsen</value>
+  </data>
+  <data name="ExerciseSummary_Declined" xml:space="preserve">
+    <value>Ta denne økten roligere - kanskje du trenger en pause.</value>
+  </data>
+  <data name="ExerciseSummary_Excellent" xml:space="preserve">
+    <value>⭐ Fantastisk innsats!</value>
+  </data>
+  <data name="ExerciseSummary_Good" xml:space="preserve">
+    <value>👍 God jobb!</value>
+  </data>
+  <data name="ExerciseSummary_Improved" xml:space="preserve">
+    <value>Du har forbedret deg siden forrige økt!</value>
+  </data>
+  <data name="ExerciseSummary_KeepTrying" xml:space="preserve">
+    <value>💪 Fortsett å øve - du er på rett vei!</value>
+  </data>
+  <data name="ExerciseSummary_NeedsWork" xml:space="preserve">
+    <value>💪 Bra innsats, men det er rom for forbedring.</value>
+  </data>
+  <data name="ExerciseSummary_PitchAdvice" xml:space="preserve">
+    <value>Jobb med å heve pitch gradvis og unngå å presse stemmen.</value>
+  </data>
+  <data name="ExerciseSummary_ResonanceAdvice" xml:space="preserve">
+    <value>Fokusér på å flytte lyden fremover i munnen for bedre resonans.</value>
+  </data>
+  <data name="ExerciseSummary_StabilityAdvice" xml:space="preserve">
+    <value>Fokusér på å holde en stabil og avslappet tone.</value>
+  </data>
+  <data name="Explanation_Confidence_High" xml:space="preserve">
+    <value>Høy sikkerhet</value>
+  </data>
+  <data name="Explanation_Confidence_Low" xml:space="preserve">
+    <value>Lav sikkerhet — begrenset datagrunnlag</value>
+  </data>
+  <data name="Explanation_Confidence_Medium" xml:space="preserve">
+    <value>Middels sikkerhet</value>
+  </data>
+  <data name="Explanation_ExpectedOutcome_Template" xml:space="preserve">
+    <value>Med jevn trening kan du forvente at {0} gradvis beveger seg i ønsket retning over de kommende ukene.</value>
+  </data>
+  <data name="Explanation_WhatItImproves_Template" xml:space="preserve">
+    <value>Å jobbe med {0} styrker helhetsinntrykket av stemmen og gjør den mer naturlig og behagelig.</value>
+  </data>
+  <data name="Explanation_WhyFocus_Template" xml:space="preserve">
+    <value>{0} er valgt som fokusområde fordi det er her treningen din har størst potensiale for vekst akkurat nå.</value>
+  </data>
+  <data name="FeedbackMode_Glide" xml:space="preserve">
+    <value>Auditory + visual: pitch tracking</value>
+  </data>
+  <data name="FeedbackMode_Intonation" xml:space="preserve">
+    <value>Auditory: intonation sound with visual support</value>
+  </data>
+  <data name="FeedbackMode_Pitch" xml:space="preserve">
+    <value>Auditory + visual: comfort-zone indicator</value>
+  </data>
+  <data name="FeedbackMode_ResonanceHumming" xml:space="preserve">
+    <value>Visual: resonance indicator</value>
+  </data>
+  <data name="FeedbackMode_ResonanceVowels" xml:space="preserve">
+    <value>Visual: resonance and stability indicators</value>
+  </data>
+  <data name="FeedbackMode_Stability" xml:space="preserve">
+    <value>Visual: stability curve and hold indicator</value>
+  </data>
+  <data name="FeedbackMode_Straw" xml:space="preserve">
+    <value>Visual + tactile: airflow indicator</value>
+  </data>
+  <data name="FirstSetup_FrequencyDesc" xml:space="preserve">
+    <value>Hvor ofte ønsker du å trene? Velg et tempo som kjennes overkommelig for deg.</value>
+  </data>
+  <data name="FirstSetup_FrequencyLabel" xml:space="preserve">
+    <value>Treningsdager per uke</value>
+  </data>
+  <data name="FirstSetup_StyleGoalDesc" xml:space="preserve">
+    <value>Hvilken klang ønsker du å utforske? Du kan endre dette når som helst senere.</value>
+  </data>
+  <data name="FirstSetup_StyleGoalLabel" xml:space="preserve">
+    <value>Velg målstil</value>
+  </data>
+  <data name="Focus_Airflow" xml:space="preserve">
+    <value>Optimize subglottal pressure and steady phonation through the straw.</value>
+  </data>
+  <data name="Focus_GlideCoordination" xml:space="preserve">
+    <value>Coordinate pitch increase with forward resonance and steady airflow.</value>
+  </data>
+  <data name="Focus_ResonanceForward" xml:space="preserve">
+    <value>Sensitize and maintain forward resonance in the oral cavity.</value>
+  </data>
+  <data name="Focus_Stability" xml:space="preserve">
+    <value>Maintain steady pitch and consistent breath support over time.</value>
+  </data>
+  <data name="Focus_VowelResonance" xml:space="preserve">
+    <value>Maintain forward resonance during vowel production.</value>
+  </data>
+  <data name="HealthWarning_DefaultRest" xml:space="preserve">
+    <value>🛑 Ta en pause. Drikk vann og slapp av i halsen.</value>
+  </data>
+  <data name="HealthWarning_LockoutActive" xml:space="preserve">
+    <value>🛑 Stemmehvile pålagt. Du kan fortsette om {0} minutter.</value>
+  </data>
+  <data name="HealthWarning_RestRemaining" xml:space="preserve">
+    <value>🛑 Ta en pause. {0} sekunder gjenstår.</value>
+  </data>
+  <data name="HealthWarning_SessionApproachingLimit" xml:space="preserve">
+    <value>⚠️ Du nærmer deg tidsgrensen for denne økten ({0} min gjenstår).</value>
+  </data>
+  <data name="IndicatorPackage_GlideUp" xml:space="preserve">
+    <value>Pitch - Resonance - Stability</value>
+  </data>
+  <data name="IndicatorPackage_Intonation" xml:space="preserve">
+    <value>Intonation - Pitch</value>
+  </data>
+  <data name="IndicatorPackage_Pitch" xml:space="preserve">
+    <value>Pitch - Stability</value>
+  </data>
+  <data name="IndicatorPackage_ResonanceHumming" xml:space="preserve">
+    <value>Resonance - Stability</value>
+  </data>
+  <data name="IndicatorPackage_ResonanceVowels" xml:space="preserve">
+    <value>Resonance - Stability</value>
+  </data>
+  <data name="IndicatorPackage_Stability" xml:space="preserve">
+    <value>Stability - Resonance</value>
+  </data>
+  <data name="IndicatorPackage_StrawPhonation" xml:space="preserve">
+    <value>Airflow - Stability</value>
+  </data>
+  <data name="Insight_Decline_Template" xml:space="preserve">
+    <value>{0} har vist en nedgang på {1:0.0} poeng i denne perioden. Det kan være lurt å gi stemmen ekstra hvile og se om kurven snur seg.</value>
+  </data>
+  <data name="Insight_Improvement_Template" xml:space="preserve">
+    <value>{0} har utviklet seg positivt ({1:+0.0;-0.0} poeng). Treningsarbeidet begynner å gi resultater.</value>
+  </data>
+  <data name="Insight_InsufficientData" xml:space="preserve">
+    <value>Det er foreløpig ikke nok data for {0} til å vise en tydelig trend. Fortsett å trene, så bygger bildet seg opp.</value>
+  </data>
+  <data name="Insight_Stable_Template" xml:space="preserve">
+    <value>{0} holder seg stabilt. Å bevare det du har bygget opp er verdifullt i seg selv.</value>
+  </data>
+  <data name="Main_ComfortZone" xml:space="preserve">
+    <value>Komfortsone</value>
+  </data>
+  <data name="Main_Progression" xml:space="preserve">
+    <value>Progression</value>
+  </data>
+  <data name="Main_Resonance" xml:space="preserve">
+    <value>Resonance</value>
+  </data>
+  <data name="MicCalibration_CompatibilityHeader" xml:space="preserve">
+    <value>Microphone advice:</value>
+  </data>
+  <data name="MicCalibration_Complete" xml:space="preserve">
+    <value>Calibration is complete.</value>
+  </data>
+  <data name="MicCalibration_FlagClipping" xml:space="preserve">
+    <value>- Clipping risk: lower Windows input volume or microphone gain.</value>
+  </data>
+  <data name="MicCalibration_FlagHighNoise" xml:space="preserve">
+    <value>- High background noise: reduce room noise or use light noise reduction if your mic software provides it.</value>
+  </data>
+  <data name="MicCalibration_FlagLowOutput" xml:space="preserve">
+    <value>- Low-output microphone: the app uses more sensitive thresholds, but moving the mic closer can help.</value>
+  </data>
+  <data name="MicCalibration_FlagNoiseGate" xml:space="preserve">
+    <value>- Possible noise gate: disable aggressive gating in Logitech/Realtek/Nahimic/Windows if quiet voice is cut off.</value>
+  </data>
+  <data name="MicCalibration_FlagProcessing" xml:space="preserve">
+    <value>- Possible AGC/compressor: for precise measurement, keep automatic gain, compressor and voice effects off or gentle.</value>
+  </data>
+  <data name="MicCalibration_LiveLevelFormat" xml:space="preserve">
+    <value>Live level: RMS {0:F4} ({1:F1} dBFS), peak {2:F1} dBFS</value>
+  </data>
+  <data name="MicCalibration_ManualReady" xml:space="preserve">
+    <value>Ready. Press "Measure quiet room" when you are silent and the room is calm.</value>
+  </data>
+  <data name="MicCalibration_Next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="MicCalibration_NoiseLabel" xml:space="preserve">
+    <value>Noise</value>
+  </data>
+  <data name="MicCalibration_QualityFormat" xml:space="preserve">
+    <value>Noise RMS {0:F4}, voice RMS {1:F4}, SNR {2:F1} dB, peak {3:F1} dBFS.</value>
+  </data>
+  <data name="MicCalibration_RecordSilence" xml:space="preserve">
+    <value>Measure quiet room</value>
+  </data>
+  <data name="MicCalibration_RecordVoice" xml:space="preserve">
+    <value>Measure voice</value>
+  </data>
+  <data name="MicCalibration_Restart" xml:space="preserve">
+    <value>Start over</value>
+  </data>
+  <data name="MicCalibration_SilenceCaptured" xml:space="preserve">
+    <value>Quiet room has been measured. Press "Measure voice" when you are ready to use comfortable voice or gentle humming.</value>
+  </data>
+  <data name="MicCalibration_SilenceRecording" xml:space="preserve">
+    <value>Measuring background noise. Stay quiet.</value>
+  </data>
+  <data name="MicCalibration_TooCloseToNoise" xml:space="preserve">
+    <value>Voice/humming was too close to the background noise. Reduce room noise, move the microphone closer, or raise Windows input level slightly.</value>
+  </data>
+  <data name="MicCalibration_TooLoud" xml:space="preserve">
+    <value>The microphone level was too high and may clip. Lower Windows input volume or microphone gain and try again.</value>
+  </data>
+  <data name="MicCalibration_VoiceRecording" xml:space="preserve">
+    <value>Measuring comfortable voice or humming. Keep the level calm and steady.</value>
+  </data>
+  <data name="Mistakes_CoordinatedGlideUp" xml:space="preserve">
+    <value>Fast, jerky glides or compensatory throat tension.</value>
+  </data>
+  <data name="Mistakes_IntonationExercise" xml:space="preserve">
+    <value>Monotone delivery or excessive upward question-like endings.</value>
+  </data>
+  <data name="Mistakes_PitchExercise" xml:space="preserve">
+    <value>Overcompensation, hard glottal attack, or broken quality.</value>
+  </data>
+  <data name="Mistakes_ResonanceHumming" xml:space="preserve">
+    <value>Tensing the jaw or throat; pushing the sound.</value>
+  </data>
+  <data name="Mistakes_ResonanceVowels" xml:space="preserve">
+    <value>Jaw closure, throat tension, or regression to posterior resonance.</value>
+  </data>
+  <data name="Mistakes_StabilityTraining" xml:space="preserve">
+    <value>Fatigue, reduced support, or small pitch irregularities.</value>
+  </data>
+  <data name="Mistakes_StrawPhonation" xml:space="preserve">
+    <value>Over-breathing or jaw tension; breathe gently and evenly.</value>
+  </data>
+  <data name="Nav_CaseReview" xml:space="preserve">
+    <value>Case review</value>
+  </data>
+  <data name="Nav_ClinicianDashboard" xml:space="preserve">
+    <value>Clinical overview</value>
+  </data>
+  <data name="Nav_CoachDashboard" xml:space="preserve">
+    <value>Coach overview</value>
+  </data>
+  <data name="Nav_ManualOverride" xml:space="preserve">
+    <value>Manual adjustment</value>
+  </data>
+  <data name="Nav_Reports" xml:space="preserve">
+    <value>Reports</value>
+  </data>
+  <data name="Override_Apply" xml:space="preserve">
+    <value>Apply adjustment</value>
+  </data>
+  <data name="Override_Blocked" xml:space="preserve">
+    <value>The adjustment was not applied</value>
+  </data>
+  <data name="Override_Clamped" xml:space="preserve">
+    <value>The adjustment was kept within safe limits</value>
+  </data>
+  <data name="Override_Kind" xml:space="preserve">
+    <value>Adjustment type</value>
+  </data>
+  <data name="Override_Logged" xml:space="preserve">
+    <value>The adjustment has been recorded</value>
+  </data>
+  <data name="Override_Reason" xml:space="preserve">
+    <value>Reason</value>
+  </data>
+  <data name="Override_Title" xml:space="preserve">
+    <value>Manual adjustment</value>
+  </data>
+  <data name="Pattern_Breakthrough_Description" xml:space="preserve">
+    <value>Det er tydelig fremgang innen {0}. Stemmen din responderer godt på treningen i denne perioden.</value>
+  </data>
+  <data name="Pattern_Plateau_Description" xml:space="preserve">
+    <value>Stemmen din er i en stabil fase innen {0}. Platåer er en naturlig del av utviklingen — kroppen bearbeider og befester det den har lært.</value>
+  </data>
+  <data name="Pattern_Regression_Description" xml:space="preserve">
+    <value>Stemmen din viser en midlertidig tilbakegang innen {0}. Dette kan skyldes tretthet, stress eller perioder med mindre trening — og er forbigående.</value>
+  </data>
+  <data name="Privacy_DiagnosticsConsent" xml:space="preserve">
+    <value>Diagnostics are exported only when you enable or create a diagnostics/support package. Nothing is uploaded automatically.</value>
+  </data>
+  <data name="Privacy_LocalStorage" xml:space="preserve">
+    <value>FemVoice stores data locally on this PC: settings and database in Documents\FemVoiceStudio, diagnostics in LocalAppData\FemVoiceStudio\Diagnostics.</value>
+  </data>
+  <data name="Privacy_ProfessionalNotesWarning" xml:space="preserve">
+    <value>Professional notes may contain sensitive free text. They are not included in research or support packages by default.</value>
+  </data>
+  <data name="Privacy_ResearchWarning" xml:space="preserve">
+    <value>Research data is anonymized by default. User id, microphone name, time of day, and free text are removed before export.</value>
+  </data>
+  <data name="Privacy_Title" xml:space="preserve">
+    <value>Privacy and local data</value>
+  </data>
+  <data name="Progression_ComplexityAdvanced" xml:space="preserve">
+    <value>Talekompleksiteten din har nådd et nytt nivå — se Smart Coach for detaljer</value>
+  </data>
+  <data name="Progression_SafetyLockEngagedStatus" xml:space="preserve">
+    <value>Progresjon satt på pause av sikkerhetshensyn — stemmen din trenger hvile</value>
+  </data>
+  <data name="Progression_SafetyLockReleasedStatus" xml:space="preserve">
+    <value>Sikkerhetspausen er over — progresjonen er aktiv igjen</value>
+  </data>
+  <data name="Purpose_CoordinatedGlideUp" xml:space="preserve">
+    <value>Develop flexible upward pitch movement without loss of resonance or added tension.</value>
+  </data>
+  <data name="Purpose_IntonationExercise" xml:space="preserve">
+    <value>Train natural phrase melody and intonation.</value>
+  </data>
+  <data name="Purpose_PitchExercise" xml:space="preserve">
+    <value>Train precise pitch control within the comfort zone.</value>
+  </data>
+  <data name="Purpose_ResonanceHumming" xml:space="preserve">
+    <value>Establish forward resonance and reduce posterior effort.</value>
+  </data>
+  <data name="Purpose_ResonanceVowels" xml:space="preserve">
+    <value>Transfer resonance control from humming to open vowels.</value>
+  </data>
+  <data name="Purpose_StabilityTraining" xml:space="preserve">
+    <value>Build neuromuscular control and endurance for stable phonation.</value>
+  </data>
+  <data name="Purpose_StrawPhonation" xml:space="preserve">
+    <value>Reduce vocal loading and strengthen airflow control.</value>
+  </data>
+  <data name="Report_Clinical" xml:space="preserve">
+    <value>Clinical report</value>
+  </data>
+  <data name="Report_Coach" xml:space="preserve">
+    <value>Coach report</value>
+  </data>
+  <data name="Report_DialogTitle" xml:space="preserve">
+    <value>Export report</value>
+  </data>
+  <data name="Report_DirectionInsufficientData" xml:space="preserve">
+    <value>Insufficient data</value>
+  </data>
+  <data name="Report_Export" xml:space="preserve">
+    <value>Export</value>
+  </data>
+  <data name="Report_FileFilterAll" xml:space="preserve">
+    <value>All files (*.*)|*.*</value>
+  </data>
+  <data name="Report_FileFilterCsv" xml:space="preserve">
+    <value>CSV files (*.csv)|*.csv</value>
+  </data>
+  <data name="Report_FileFilterJson" xml:space="preserve">
+    <value>JSON files (*.json)|*.json</value>
+  </data>
+  <data name="Report_FileFilterPdf" xml:space="preserve">
+    <value>PDF files (*.pdf)|*.pdf</value>
+  </data>
+  <data name="Report_FocusBreakthroughFormat" xml:space="preserve">
+    <value>{0} — breakthrough detected</value>
+  </data>
+  <data name="Report_FocusExerciseConcernFormat" xml:space="preserve">
+    <value>Exercise {0} — {1}</value>
+  </data>
+  <data name="Report_FocusGoalAchievedFormat" xml:space="preserve">
+    <value>{0} — goal achieved</value>
+  </data>
+  <data name="Report_FocusGoalInProgressFormat" xml:space="preserve">
+    <value>{0} — goal in progress ({1:F0}%)</value>
+  </data>
+  <data name="Report_FocusPlateauFormat" xml:space="preserve">
+    <value>{0} — plateau detected</value>
+  </data>
+  <data name="Report_FocusRecoveryOvertraining" xml:space="preserve">
+    <value>Recovery — overtraining predicted</value>
+  </data>
+  <data name="Report_FocusRecoveryStatusFormat" xml:space="preserve">
+    <value>Recovery — {0}</value>
+  </data>
+  <data name="Report_FocusRegressionFormat" xml:space="preserve">
+    <value>{0} — regression detected</value>
+  </data>
+  <data name="Report_Format" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="Report_Generate" xml:space="preserve">
+    <value>Generate</value>
+  </data>
+  <data name="Report_Outcome" xml:space="preserve">
+    <value>Outcome report</value>
+  </data>
+  <data name="Report_RecommendationDeprioritizeFormat" xml:space="preserve">
+    <value>De-prioritise exercise {0}: {1}</value>
+  </data>
+  <data name="Report_Status_NOT_GENERATED" xml:space="preserve">
+    <value>Not generated</value>
+  </data>
+  <data name="Report_StatusExportedToFormat" xml:space="preserve">
+    <value>Exported to: {0}</value>
+  </data>
+  <data name="Report_StatusExportErrorFormat" xml:space="preserve">
+    <value>Export error: {0}</value>
+  </data>
+  <data name="Report_StatusServicesUnavailable" xml:space="preserve">
+    <value>Services unavailable - cannot generate report.</value>
+  </data>
+  <data name="Report_Timeline" xml:space="preserve">
+    <value>Timeline</value>
+  </data>
+  <data name="Report_TimeWindow_LastDays" xml:space="preserve">
+    <value>Last {0} days</value>
+  </data>
+  <data name="Report_Title" xml:space="preserve">
+    <value>Reports</value>
+  </data>
+  <data name="Report_Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="ReportPdf_Achieved" xml:space="preserve">
+    <value>Achieved</value>
+  </data>
+  <data name="ReportPdf_AuditTrail" xml:space="preserve">
+    <value>Audit Trail</value>
+  </data>
+  <data name="ReportPdf_AuthorRole" xml:space="preserve">
+    <value>Author Role</value>
+  </data>
+  <data name="ReportPdf_BreakthroughFormat" xml:space="preserve">
+    <value>Breakthrough: {0} ({1})</value>
+  </data>
+  <data name="ReportPdf_ClinicalNotes" xml:space="preserve">
+    <value>Clinical Notes</value>
+  </data>
+  <data name="ReportPdf_Composite" xml:space="preserve">
+    <value>Composite</value>
+  </data>
+  <data name="ReportPdf_CompositeVoiceScore" xml:space="preserve">
+    <value>Composite Voice Score</value>
+  </data>
+  <data name="ReportPdf_CompositeVoiceScoreFormat" xml:space="preserve">
+    <value>Composite Voice Score: {0:F1} / 100</value>
+  </data>
+  <data name="ReportPdf_Current" xml:space="preserve">
+    <value>Current</value>
+  </data>
+  <data name="ReportPdf_DataSufficient" xml:space="preserve">
+    <value>Data Sufficient</value>
+  </data>
+  <data name="ReportPdf_DataSufficientFormat" xml:space="preserve">
+    <value>Data sufficient: {0}</value>
+  </data>
+  <data name="ReportPdf_Date" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="ReportPdf_DetectedPatterns" xml:space="preserve">
+    <value>Detected Patterns</value>
+  </data>
+  <data name="ReportPdf_Direction" xml:space="preserve">
+    <value>Direction</value>
+  </data>
+  <data name="ReportPdf_EntityType" xml:space="preserve">
+    <value>Entity Type</value>
+  </data>
+  <data name="ReportPdf_ExerciseEffectivenessRanked" xml:space="preserve">
+    <value>Exercise Effectiveness (ranked)</value>
+  </data>
+  <data name="ReportPdf_ExerciseId" xml:space="preserve">
+    <value>Ex ID</value>
+  </data>
+  <data name="ReportPdf_ExercisesRanked" xml:space="preserve">
+    <value>Exercises Ranked</value>
+  </data>
+  <data name="ReportPdf_FocusAreas" xml:space="preserve">
+    <value>Focus Areas</value>
+  </data>
+  <data name="ReportPdf_GeneratedPrefix" xml:space="preserve">
+    <value>Generated: </value>
+  </data>
+  <data name="ReportPdf_GoalProgress" xml:space="preserve">
+    <value>Goal Progress</value>
+  </data>
+  <data name="ReportPdf_GoalsTracked" xml:space="preserve">
+    <value>Goals Tracked</value>
+  </data>
+  <data name="ReportPdf_GoalType" xml:space="preserve">
+    <value>Goal Type</value>
+  </data>
+  <data name="ReportPdf_MeanScore" xml:space="preserve">
+    <value>Mean Score</value>
+  </data>
+  <data name="ReportPdf_Metric" xml:space="preserve">
+    <value>Metric</value>
+  </data>
+  <data name="ReportPdf_NoSpecificLayout" xml:space="preserve">
+    <value>No specific layout for this report type.</value>
+  </data>
+  <data name="ReportPdf_Note" xml:space="preserve">
+    <value>Note</value>
+  </data>
+  <data name="ReportPdf_NoTimelineData" xml:space="preserve">
+    <value>No timeline data available for this period.</value>
+  </data>
+  <data name="ReportPdf_OutcomeSummary" xml:space="preserve">
+    <value>Outcome Summary</value>
+  </data>
+  <data name="ReportPdf_OvertrainingPredicted" xml:space="preserve">
+    <value>Overtraining Predicted</value>
+  </data>
+  <data name="ReportPdf_Period" xml:space="preserve">
+    <value>Period</value>
+  </data>
+  <data name="ReportPdf_PeriodLineFormat" xml:space="preserve">
+    <value>Period: {0} – {1}</value>
+  </data>
+  <data name="ReportPdf_PlateauFormat" xml:space="preserve">
+    <value>Plateau: {0} ({1})</value>
+  </data>
+  <data name="ReportPdf_ProgressPercent" xml:space="preserve">
+    <value>Progress %</value>
+  </data>
+  <data name="ReportPdf_ReasonCode" xml:space="preserve">
+    <value>Reason Code</value>
+  </data>
+  <data name="ReportPdf_Recommendations" xml:space="preserve">
+    <value>Recommendations</value>
+  </data>
+  <data name="ReportPdf_RecoveryCost" xml:space="preserve">
+    <value>Recovery Cost</value>
+  </data>
+  <data name="ReportPdf_RecoveryDebt" xml:space="preserve">
+    <value>Recovery Debt</value>
+  </data>
+  <data name="ReportPdf_RecoveryFormat" xml:space="preserve">
+    <value>Recovery: {0} ({1:F1}/100)</value>
+  </data>
+  <data name="ReportPdf_RecoveryRecommendationFormat" xml:space="preserve">
+    <value>Recovery recommendation: {0}</value>
+  </data>
+  <data name="ReportPdf_RecoveryStatus" xml:space="preserve">
+    <value>Recovery Status</value>
+  </data>
+  <data name="ReportPdf_RegressionFormat" xml:space="preserve">
+    <value>Regression: {0} ({1})</value>
+  </data>
+  <data name="ReportPdf_Sessions" xml:space="preserve">
+    <value>Sessions</value>
+  </data>
+  <data name="ReportPdf_Slope" xml:space="preserve">
+    <value>Slope</value>
+  </data>
+  <data name="ReportPdf_Target" xml:space="preserve">
+    <value>Target</value>
+  </data>
+  <data name="ReportPdf_Value" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="ReportPdf_VoiceDevelopmentTimeline" xml:space="preserve">
+    <value>Voice Development Timeline</value>
+  </data>
+  <data name="Research_Export" xml:space="preserve">
+    <value>Export research data</value>
+  </data>
+  <data name="SafeFailure_BackupRestore" xml:space="preserve">
+    <value>Something went wrong during restore, but your existing data appears to be safe.</value>
+  </data>
+  <data name="SafeFailure_DiagnosticsExport" xml:space="preserve">
+    <value>Diagnostics could not be exported right now.</value>
+  </data>
+  <data name="SafeFailure_EmptyAnalytics" xml:space="preserve">
+    <value>No session data is available yet.</value>
+  </data>
+  <data name="SafeFailure_General" xml:space="preserve">
+    <value>Something went wrong, but your data appears to be safe.</value>
+  </data>
+  <data name="SafeFailure_MicrophoneUnavailable" xml:space="preserve">
+    <value>The microphone is not available right now.</value>
+  </data>
+  <data name="SafeFailure_PersistenceReadback" xml:space="preserve">
+    <value>Something went wrong, but your data appears to be safe.</value>
+  </data>
+  <data name="SafeFailure_ReportExport" xml:space="preserve">
+    <value>The report could not be exported. Try again later.</value>
+  </data>
+  <data name="SafeFailure_SettingsRecovery" xml:space="preserve">
+    <value>Settings could not be read, but the app can continue with safe defaults.</value>
+  </data>
+  <data name="Safety_CoordinatedGlideUp" xml:space="preserve">
+    <value>Avoid if painful; reduce range when uncomfortable.</value>
+  </data>
+  <data name="Safety_IntonationExercise" xml:space="preserve">
+    <value>Stop if the voice becomes fatigued; rest between sets.</value>
+  </data>
+  <data name="Safety_PitchExercise" xml:space="preserve">
+    <value>Stop if soreness or prolonged hoarseness occurs.</value>
+  </data>
+  <data name="Safety_ResonanceHumming" xml:space="preserve">
+    <value>Stop if pain or persistent hoarseness occurs; consult a clinician if concerned.</value>
+  </data>
+  <data name="Safety_ResonanceVowels" xml:space="preserve">
+    <value>Pause if uncomfortable; return to simpler humming if needed.</value>
+  </data>
+  <data name="Safety_StabilityTraining" xml:space="preserve">
+    <value>Start with short sets and progress gradually; stop if fatigued or in pain.</value>
+  </data>
+  <data name="Safety_StrawPhonation" xml:space="preserve">
+    <value>Stop if dizzy or uncomfortable; ensure safe breathing technique.</value>
+  </data>
+  <data name="Settings_Accessibility_Desc" xml:space="preserve">
+    <value>Tilpass tempo og synsinntrykk slik at trening kjennes trygt og overkommelig.</value>
+  </data>
+  <data name="Settings_Accessibility_Frequency2" xml:space="preserve">
+    <value>2 dager</value>
+  </data>
+  <data name="Settings_Accessibility_Frequency3" xml:space="preserve">
+    <value>3 dager (anbefalt)</value>
+  </data>
+  <data name="Settings_Accessibility_Frequency4" xml:space="preserve">
+    <value>4 dager</value>
+  </data>
+  <data name="Settings_Accessibility_Frequency5" xml:space="preserve">
+    <value>5 eller flere dager</value>
+  </data>
+  <data name="Settings_Accessibility_ReducedVisual" xml:space="preserve">
+    <value>Redusert visuell tilbakemelding</value>
+  </data>
+  <data name="Settings_Accessibility_ReducedVisualDesc" xml:space="preserve">
+    <value>Roligere skjermbilde med færre animasjoner og mindre bevegelse.</value>
+  </data>
+  <data name="Settings_Accessibility_StressSensitive" xml:space="preserve">
+    <value>Rolig modus</value>
+  </data>
+  <data name="Settings_Accessibility_StressSensitiveDesc" xml:space="preserve">
+    <value>Roligere farger og dempede varsler i stedet for rød alarm. Fint hvis det fort blir overveldende.</value>
+  </data>
+  <data name="Settings_Accessibility_Title" xml:space="preserve">
+    <value>Tilgjengelighet</value>
+  </data>
+  <data name="Settings_Accessibility_TrainingFrequency" xml:space="preserve">
+    <value>Treningsdager per uke</value>
+  </data>
+  <data name="Settings_BackupErrorTitle" xml:space="preserve">
+    <value>Backup not completed</value>
+  </data>
+  <data name="Settings_BackupSuccessMessage" xml:space="preserve">
+    <value>Backup created: {0}</value>
+  </data>
+  <data name="Settings_BackupSuccessTitle" xml:space="preserve">
+    <value>Backup created</value>
+  </data>
+  <data name="Settings_CreateBackup" xml:space="preserve">
+    <value>Create backup</value>
+  </data>
+  <data name="Settings_RestoreBackup" xml:space="preserve">
+    <value>Restore backup</value>
+  </data>
+  <data name="Settings_RestoreConfirmMessage" xml:space="preserve">
+    <value>Restoring will replace existing local data. Do you want to continue?</value>
+  </data>
+  <data name="Settings_RestoreConfirmTitle" xml:space="preserve">
+    <value>Confirm restore</value>
+  </data>
+  <data name="Settings_RestoreDialogFilter" xml:space="preserve">
+    <value>FemVoice backup (*.zip)|*.zip</value>
+  </data>
+  <data name="Settings_RestoreDialogTitle" xml:space="preserve">
+    <value>Select backup</value>
+  </data>
+  <data name="Settings_RestoreErrorTitle" xml:space="preserve">
+    <value>Restore not completed</value>
+  </data>
+  <data name="Settings_RestoreSuccessMessage" xml:space="preserve">
+    <value>Backup restored. Restart the app before continuing.</value>
+  </data>
+  <data name="Settings_RestoreSuccessTitle" xml:space="preserve">
+    <value>Restore complete</value>
+  </data>
+  <data name="SmartCoach_AlreadyCompleted" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="SmartCoach_BaselineConfidence" xml:space="preserve">
+    <value>Baseline confidence</value>
+  </data>
+  <data name="SmartCoach_BuildingBaseline" xml:space="preserve">
+    <value>Building your baseline...</value>
+  </data>
+  <data name="SmartCoach_Days" xml:space="preserve">
+    <value>days</value>
+  </data>
+  <data name="SmartCoach_DayStreak" xml:space="preserve">
+    <value>Day streak</value>
+  </data>
+  <data name="SmartCoach_Focus_Comfort" xml:space="preserve">
+    <value>Fokus i dag: Komfort. La stemmen få hvile i et avslappet, behagelig leie. Utforsk en lett og myk klang i ditt eget tempo, og legg merke til hvordan det kjennes godt ut i hals og kjeve. Ingen mål om å nå noe bestemt – bare la lyden komme rolig.</value>
+  </data>
+  <data name="SmartCoach_Focus_Consistency" xml:space="preserve">
+    <value>Fokus i dag: Jevnhet. La oss utforske en rolig, stabil klang du kan hvile i fra tone til tone. Hold en behagelig lyd litt om gangen, og legg merke til når den kjennes trygg og forutsigbar. Stabilitet kommer av gjentakelse i ditt eget tempo.</value>
+  </data>
+  <data name="SmartCoach_Focus_Recovery" xml:space="preserve">
+    <value>Fokus i dag: Restitusjon. Stemmen din har gjort godt arbeid, og nå kan den få hvile. Hold økten kort og lett, med myke, avslappede lyder. Drikk litt vann og la dette være en rolig, omsorgsfull dag for stemmen.</value>
+  </data>
+  <data name="SmartCoach_Focus_Resonance" xml:space="preserve">
+    <value>Fokus i dag: Resonans. Kjenn etter hvor vibrasjonene sitter – prøv å la dem flytte rolig fremover i munnen. Utforsk en lysere, mer fremre klang uten å anstrenge deg, og merk hva som føles naturlig.</value>
+  </data>
+  <data name="SmartCoach_Health" xml:space="preserve">
+    <value>health</value>
+  </data>
+  <data name="SmartCoach_Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="SmartCoach_MarkComplete" xml:space="preserve">
+    <value>Mark Complete</value>
+  </data>
+  <data name="SmartCoach_Mastery_Mastered" xml:space="preserve">
+    <value>For en flott utvikling – du har gjort denne øvelsen virkelig til din egen. Stemmen din kjenner dette godt nå, og du kan trygt utforske nye uttrykk når du føler deg klar. Vær stolt av hvor langt du har kommet.</value>
+  </data>
+  <data name="SmartCoach_Mastery_Stable" xml:space="preserve">
+    <value>Du har funnet en trygg, jevn klang i denne øvelsen – det er virkelig fint arbeid. Nå som dette sitter godt, kan du la deg utforske litt videre i ditt eget tempo når du har lyst. Det er helt opp til deg.</value>
+  </data>
+  <data name="SmartCoach_Mastery_Title" xml:space="preserve">
+    <value>Du mestrer dette!</value>
+  </data>
+  <data name="SmartCoach_Messages" xml:space="preserve">
+    <value>Messages</value>
+  </data>
+  <data name="SmartCoach_Minutes" xml:space="preserve">
+    <value>min</value>
+  </data>
+  <data name="SmartCoach_NoData" xml:space="preserve">
+    <value>No data yet</value>
+  </data>
+  <data name="SmartCoach_NoNewMessages" xml:space="preserve">
+    <value>No new messages</value>
+  </data>
+  <data name="SmartCoach_ProgressToGoal" xml:space="preserve">
+    <value>Progress to goal</value>
+  </data>
+  <data name="SmartCoach_Recommended" xml:space="preserve">
+    <value>recommended</value>
+  </data>
+  <data name="SmartCoach_RecommendedExerciseFormat" xml:space="preserve">
+    <value>Foreslått øvelse: #{0}</value>
+  </data>
+  <data name="SmartCoach_Sessions" xml:space="preserve">
+    <value>sessions</value>
+  </data>
+  <data name="SmartCoach_SessionsThisWeek" xml:space="preserve">
+    <value>Sessions this week</value>
+  </data>
+  <data name="SmartCoach_Style_Recovery_Androgynous" xml:space="preserve">
+    <value>Fokus i dag: Restitusjon. La den balanserte klangen du jobber mot få hvile i dag. Hold økten kort og myk, drikk litt vann, og la dette være en rolig, omsorgsfull dag for stemmen din.</value>
+  </data>
+  <data name="SmartCoach_Style_Recovery_DarkFeminine" xml:space="preserve">
+    <value>Fokus i dag: Restitusjon. La den varme, fyldige klangen du jobber mot få hvile i dag. Hold økten kort og myk, drikk litt vann, og la dette være en rolig, omsorgsfull dag for stemmen din.</value>
+  </data>
+  <data name="SmartCoach_Style_Recovery_Feminine" xml:space="preserve">
+    <value>Fokus i dag: Restitusjon. La den lette, lyse klangen du jobber mot få hvile i dag. Hold økten kort og myk, drikk litt vann, og la dette være en rolig, omsorgsfull dag for stemmen din.</value>
+  </data>
+  <data name="SmartCoach_Style_Recovery_Situational" xml:space="preserve">
+    <value>Fokus i dag: Restitusjon. La stemmen hvile uansett hvilken klang du veksler mellom. Hold økten kort og myk, drikk litt vann, og la dette være en rolig, omsorgsfull dag for stemmen din.</value>
+  </data>
+  <data name="SmartCoach_Style_Resonance_Androgynous" xml:space="preserve">
+    <value>Fokus i dag: Resonans i en balansert, androgyn retning. Hold klangen et sted midt imellom – verken spesielt fremre eller fyldig. Utforsk en jevn, behagelig resonans i ditt eget tempo, og la den lande der den kjennes mest deg.</value>
+  </data>
+  <data name="SmartCoach_Style_Resonance_DarkFeminine" xml:space="preserve">
+    <value>Fokus i dag: Resonans i en varm, dyp feminin retning. Her er målet en rund, fyldig klang – la gjerne resonansen hvile lenger bak og nede, uten å trekke den oppover. Utforsk en myk, mørkere varme i ditt eget tempo, og merk når den kjennes god.</value>
+  </data>
+  <data name="SmartCoach_Style_Resonance_Feminine" xml:space="preserve">
+    <value>Fokus i dag: Resonans i din feminine retning. Kjenn etter vibrasjonene og la dem gjerne flytte rolig fremover i munnen. Utforsk en lettere, lysere klang i ditt eget tempo, og merk hva som føles naturlig og behagelig.</value>
+  </data>
+  <data name="SmartCoach_Style_Resonance_Situational" xml:space="preserve">
+    <value>Fokus i dag: Fleksibel resonans. Du veksler mellom ulike sammenhenger, så øv på å finne klangen som passer situasjonen. Utforsk både en lettere og en fyldigere resonans i ditt eget tempo, og legg merke til hvilken som kjennes riktig når.</value>
+  </data>
+  <data name="SmartCoach_SuggestedVolumeFormat" xml:space="preserve">
+    <value>Forslag: {0} øvelser × {1} sett</value>
+  </data>
+  <data name="SmartCoach_Title" xml:space="preserve">
+    <value>Smart Coach</value>
+  </data>
+  <data name="SmartCoach_TodaysFocus" xml:space="preserve">
+    <value>Today's focus</value>
+  </data>
+  <data name="SmartCoach_TotalTimeThisWeek" xml:space="preserve">
+    <value>Total time this week</value>
+  </data>
+  <data name="SmartCoach_VoiceHealth" xml:space="preserve">
+    <value>Voice health</value>
+  </data>
+  <data name="SmartCoach_WeeklyHistory" xml:space="preserve">
+    <value>Weekly history</value>
+  </data>
+  <data name="ThresholdStrategy_Adaptive" xml:space="preserve">
+    <value>Threshold: adaptive, adjusted by performance.</value>
+  </data>
+  <data name="Tip_Advanced" xml:space="preserve">
+    <value>🎯 Avansert tips: Jobb med følelsesuttrykk. Prøv å formidle mer med stemmen - glede, undring, nysgjerrighet!</value>
+  </data>
+  <data name="Tip_Beginner" xml:space="preserve">
+    <value>🎯 Nybegynnertips: Fokuser på å holde en jevn pitch gjennom hele setningen. Start med korte setninger.</value>
+  </data>
+  <data name="Tip_Consistency" xml:space="preserve">
+    <value>🎯 Tips: Fokusere på konsistens. Prøv å holde samme pitch-nivå gjennom hele økten.</value>
+  </data>
+  <data name="Tip_Intermediate" xml:space="preserve">
+    <value>🎯 Tips: Prøv å heve pitch-en litt mer. Tenk på å snakke med en lettere stemme.</value>
+  </data>
+  <data name="Tip_Intonation" xml:space="preserve">
+    <value>🎯 Tips: Jobb nå med å legge til mer variasjon i intonasjonen din. Varier pitch-en mellom setninger.</value>
+  </data>
+  <data name="VoiceHealthFeedback_HydrationSustained" xml:space="preserve">
+    <value>Stemmen har jobbet en stund. Ta deg en vannpause før du fortsetter.</value>
+  </data>
+  <data name="VoiceHealthFeedback_HydrationWithRest" xml:space="preserve">
+    <value>Pust rolig og ta noen slurker vann mens du hviler stemmen litt.</value>
+  </data>
+  <data name="VoiceLoad_ContinueCalmly" xml:space="preserve">
+    <value>Stemmen virker stabil. Fortsett rolig.</value>
+  </data>
+  <data name="VoiceLoad_EndSession" xml:space="preserve">
+    <value>Det kan være lurt å avslutte økten her og la stemmen hvile.</value>
+  </data>
+  <data name="VoiceLoad_HydrationGentle" xml:space="preserve">
+    <value>Drikk litt vann hvis du ikke har gjort det nylig.</value>
+  </data>
+  <data name="VoiceLoad_LowerIntensity" xml:space="preserve">
+    <value>Stemmen virker litt mindre stabil nå. Senk intensiteten og ta en pause.</value>
+  </data>
+  <data name="VoiceLoad_PauseNow" xml:space="preserve">
+    <value>Stemmen virker litt mindre stabil nå. Ta en kort pause før du fortsetter.</value>
+  </data>
+  <data name="VoiceLoad_PauseSoon" xml:space="preserve">
+    <value>Du har øvd en stund. Ta gjerne en kort pause snart.</value>
+  </data>
+  <data name="VoiceLoad_RecoveryContinueGently" xml:space="preserve">
+    <value>Start forsiktig og hold intensiteten lav.</value>
+  </data>
+  <data name="VoiceLoad_RecoveryEndForToday" xml:space="preserve">
+    <value>Det kan være best å avslutte for i dag.</value>
+  </data>
+  <data name="VoiceLoad_RecoveryReady" xml:space="preserve">
+    <value>Du kan fortsette rolig.</value>
+  </data>
+  <data name="VoiceLoad_RecoveryWait" xml:space="preserve">
+    <value>Vent litt lenger før du fortsetter.</value>
+  </data>
+</root>
