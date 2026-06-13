@@ -398,6 +398,10 @@
                             <Setter TargetName="SelectorBorder" Property="Background" Value="{StaticResource BackgroundHoverBrush}"/>
                             <Setter TargetName="SelectorBorder" Property="BorderBrush" Value="{StaticResource BorderFocusBrush}"/>
                         </Trigger>
+                        <!-- Keyboard focus shows the focus border even without mouse/open. -->
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="SelectorBorder" Property="BorderBrush" Value="{StaticResource BorderFocusBrush}"/>
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -415,17 +419,47 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBoxItem">
+                    <!-- ContentPresenter follows the templated Foreground so every state's
+                         readable foreground propagates to the item text. -->
                     <Border x:Name="Bd" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
-                        <ContentPresenter/>
+                        <ContentPresenter TextElement.Foreground="{TemplateBinding Foreground}"/>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <!-- Hover: dark hover surface + light text (never a light surface that hides text). -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Bd" Property="Background" Value="{StaticResource BackgroundHoverBrush}"/>
                             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
                         </Trigger>
+                        <!-- Keyboard navigation highlight (arrow keys set IsHighlighted, not IsMouseOver). -->
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource BackgroundHoverBrush}"/>
+                            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                        </Trigger>
+                        <!-- Selected. -->
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentPrimaryBrush}"/>
                             <Setter Property="Foreground" Value="{StaticResource TextOnAccentBrush}"/>
+                        </Trigger>
+                        <!-- Selected + hovered/keyboard-highlighted: distinct accent, still readable. -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="True"/>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentSecondaryBrush}"/>
+                            <Setter Property="Foreground" Value="{StaticResource TextOnAccentBrush}"/>
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="True"/>
+                                <Condition Property="IsHighlighted" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentSecondaryBrush}"/>
+                            <Setter Property="Foreground" Value="{StaticResource TextOnAccentBrush}"/>
+                        </MultiTrigger>
+                        <!-- Disabled item: dimmed but present. -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{StaticResource TextDisabledBrush}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

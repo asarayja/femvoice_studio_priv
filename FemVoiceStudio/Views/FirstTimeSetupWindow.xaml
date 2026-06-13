@@ -13,23 +13,11 @@
         Background="{DynamicResource BackgroundPrimaryBrush}">
     
     <Window.Resources>
-        <!-- ComboBox Style -->
-        <Style TargetType="ComboBox">
-            <Setter Property="Background" Value="{DynamicResource BackgroundPrimaryBrush}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderPrimaryBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="FontSize" Value="14"/>
-        </Style>
-        
-        <!-- ComboBoxItem Style -->
-        <Style TargetType="ComboBoxItem">
-            <Setter Property="Background" Value="{DynamicResource BackgroundPrimaryBrush}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-            <Setter Property="Padding" Value="10,8"/>
-        </Style>
-        
+        <!-- ComboBox/ComboBoxItem intentionally NOT styled here: local implicit styles with no
+             template/triggers shadowed the themed StandardComboBox(Item)Style and fell back to
+             WPF's default system highlight (the unreadable light hover in dark mode). Removing
+             them lets the global themed styles (DynamicResource-resolved per theme) apply. -->
+
         <!-- RadioButton Style -->
         <Style TargetType="RadioButton">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
