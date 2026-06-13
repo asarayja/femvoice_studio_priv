@@ -71,12 +71,8 @@
                     <TextBlock Text="{loc:Loc Settings_HearOwnVoiceDesc}" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,12"/>
                     <Button Content="{loc:Loc MicCalibration_Open}"
                             Click="OnOpenMicrophoneCalibration"
-                            HorizontalAlignment="Left"
-                            Padding="16,9"
-                            Background="{DynamicResource AccentPrimaryBrush}"
-                            Foreground="{DynamicResource TextOnAccentBrush}"
-                            BorderThickness="0"
-                            Cursor="Hand"/>
+                            Style="{DynamicResource PrimaryButtonStyle}"
+                            HorizontalAlignment="Left"/>
                 </StackPanel>
             </Border>
 
@@ -108,42 +104,18 @@
                 <StackPanel>
                     <TextBlock Text="{loc:Loc Settings_Database}" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="{DynamicResource TextPrimaryBrush}"/>
                     <TextBlock Text="{loc:Loc Settings_DatabaseDesc}" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,12"/>
-                    <Button Content="{loc:Loc UI_ClearDatabase}" 
+                    <Button Content="{loc:Loc UI_ClearDatabase}"
                             Click="OnResetDatabase"
-                            Background="{DynamicResource ErrorBrush}"
-                            Foreground="{DynamicResource TextOnAccentBrush}"
-                            Padding="16,10"
-                            FontSize="14"
-                            BorderThickness="0"
-                            Cursor="Hand">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}" 
-                                        CornerRadius="6" 
-                                        Padding="{TemplateBinding Padding}">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
+                            Style="{DynamicResource DangerButtonStyle}"
+                            HorizontalAlignment="Left"/>
                     <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                         <Button Content="{loc:Loc Settings_CreateBackup}"
                                 Click="OnCreateBackup"
-                                Background="{DynamicResource AccentPrimaryBrush}"
-                                Foreground="{DynamicResource TextOnAccentBrush}"
-                                Padding="16,10"
-                                FontSize="14"
-                                BorderThickness="0"
-                                Cursor="Hand"
+                                Style="{DynamicResource PrimaryButtonStyle}"
                                 Margin="0,0,8,0"/>
                         <Button Content="{loc:Loc Settings_RestoreBackup}"
                                 Click="OnRestoreBackup"
-                                Background="{DynamicResource BackgroundSecondaryBrush}"
-                                Foreground="{DynamicResource TextPrimaryBrush}"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                Padding="16,10"
-                                FontSize="14"
-                                Cursor="Hand"/>
+                                Style="{DynamicResource SecondaryButtonStyle}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -190,36 +162,11 @@
         </StackPanel>
         
         <!-- Close button -->
-        <Button Grid.Row="2" Content="{loc:Loc Settings_Close}" Click="OnClose" 
+        <Button Grid.Row="2" Content="{loc:Loc Settings_Close}" Click="OnClose"
+                Style="{DynamicResource DangerButtonStyle}"
                 HorizontalAlignment="Right"
-                Padding="20,10"
-                Background="{DynamicResource ErrorBrush}"
-                Foreground="{DynamicResource TextOnAccentBrush}"
-                BorderThickness="0"
-                Cursor="Hand"
                 FontWeight="SemiBold"
-                Margin="0,10,0,0">
-            <Button.Style>
-                <Style TargetType="Button">
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}" 
-                                        CornerRadius="4" 
-                                        Padding="{TemplateBinding Padding}">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                    <Style.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource ErrorHoverBrush}"/>
-                        </Trigger>
-                    </Style.Triggers>
-                </Style>
-            </Button.Style>
-        </Button>
+                Margin="0,10,0,0"/>
         </Grid>
     </ScrollViewer>
 </Window>

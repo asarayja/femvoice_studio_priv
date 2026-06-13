@@ -111,7 +111,8 @@
 
                     <Button Content="{loc:Loc Override_Apply}"
                             Command="{Binding ApplyCommand}"
-                            Margin="0,16,0,0" Padding="16,8"
+                            Style="{DynamicResource PrimaryButtonStyle}"
+                            Margin="0,16,0,0"
                             HorizontalAlignment="Left"/>
                 </StackPanel>
             </Border>

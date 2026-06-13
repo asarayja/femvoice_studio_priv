@@ -196,6 +196,12 @@
     ============================================================================ -->
 
     <!-- Primary Button Style -->
+    <!-- Subtle hover/pressed overlays for the global implicit Button style. Drawn UNDER the
+         content so they tint any button surface without obscuring text. Light theme darkens on
+         interaction (the mirror of the dark theme's lightening overlay). -->
+    <SolidColorBrush x:Key="ButtonHoverOverlayBrush" Color="#14000000"/>
+    <SolidColorBrush x:Key="ButtonPressedOverlayBrush" Color="#29000000"/>
+
     <Style x:Key="PrimaryButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource AccentPrimaryBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource TextOnAccentBrush}"/>
@@ -282,13 +288,61 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="{StaticResource ErrorBrush}"/>
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource ErrorHoverBrush}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="{StaticResource ErrorBrush}"/>
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource ErrorHoverBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="border" Property="Background" Value="{StaticResource BackgroundTertiaryBrush}"/>
+                            <Setter Property="Foreground" Value="{StaticResource TextDisabledBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Global implicit Button: themed flat button readable in hover/pressed/focus/disabled.
+         Honors inline Background/Foreground/BorderBrush/Padding so existing buttons keep their
+         look; a subtle overlay UNDER the content gives hover/pressed feedback without obscuring
+         text. Buttons with an explicit keyed Style are unaffected (explicit wins). -->
+    <Style TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6" SnapsToDevicePixels="True">
+                        <Grid>
+                            <Border x:Name="overlay" CornerRadius="6" Background="Transparent"/>
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"/>
+                            <Border x:Name="focusBorder" CornerRadius="6" BorderThickness="2" BorderBrush="Transparent"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="overlay" Property="Background" Value="{StaticResource ButtonHoverOverlayBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="overlay" Property="Background" Value="{StaticResource ButtonPressedOverlayBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="focusBorder" Property="BorderBrush" Value="{StaticResource BorderFocusBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="border" Property="Opacity" Value="0.5"/>
+                            <Setter Property="Foreground" Value="{StaticResource TextDisabledBrush}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
