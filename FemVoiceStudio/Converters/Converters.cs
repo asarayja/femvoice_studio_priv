@@ -216,18 +216,12 @@ namespace FemVoiceStudio.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string direction)
-            {
-                return direction switch
-                {
-                    "⬆" => "⬆",
-                    "⬇" => "⬇",
-                    "➡" => "➡",
-                    "✅" => "✅",
-                    _   => "➡"
-                };
-            }
-            return "➡";
+            var s = value as string ?? string.Empty;
+                if (s.Contains('\u2B06')) return "\uE74A";   // up arrow
+                if (s.Contains('\u2B07')) return "\uE74B";   // down arrow
+                if (s.Contains('\u2705')) return "\uE73E";   // check mark
+                if (s.Contains('\u27A1')) return "\uE72A";   // forward (steady)
+                return "\uE72A";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

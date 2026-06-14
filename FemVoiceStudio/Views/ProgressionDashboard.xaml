@@ -51,9 +51,14 @@
                             CornerRadius="40"
                             Background="{Binding CurrentLevel, Converter={StaticResource LevelToColor}}"
                             Margin="0,0,16,0">
-                        <TextBlock Text="{Binding LevelEmoji}" 
-                                   FontSize="36" 
-                                   HorizontalAlignment="Center" 
+                        <!-- Themed Segoe MDL2 glyph (not the level colour emoji, which was the
+                             same colour as the circle and ignored Foreground). The circle colour
+                             still conveys the level; this icon is always visible on it. -->
+                        <TextBlock Text="&#xE735;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="32"
+                                   Foreground="{DynamicResource TextOnAccentBrush}"
+                                   HorizontalAlignment="Center"
                                    VerticalAlignment="Center"/>
                     </Border>
                     
@@ -155,8 +160,10 @@
                                    Foreground="{DynamicResource TextSecondaryBrush}"/>
                         
                         <TextBlock Grid.Column="3" 
-                                   Text="{Binding ResonanceDirection, Converter={StaticResource DirectionToArrow}}" 
-                                   FontSize="18" 
+                                   Text="{Binding ResonanceDirection, Converter={StaticResource DirectionToArrow}}"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="16"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"/>
                     </Grid>
@@ -189,8 +196,10 @@
                                    Foreground="{DynamicResource TextSecondaryBrush}"/>
                         
                         <TextBlock Grid.Column="3" 
-                                   Text="{Binding PitchDirection, Converter={StaticResource DirectionToArrow}}" 
-                                   FontSize="18" 
+                                   Text="{Binding PitchDirection, Converter={StaticResource DirectionToArrow}}"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="16"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"/>
                     </Grid>
@@ -223,8 +232,10 @@
                                    Foreground="{DynamicResource TextSecondaryBrush}"/>
                         
                         <TextBlock Grid.Column="3" 
-                                   Text="{Binding IntonationDirection, Converter={StaticResource DirectionToArrow}}" 
-                                   FontSize="18" 
+                                   Text="{Binding IntonationDirection, Converter={StaticResource DirectionToArrow}}"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="16"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"/>
                     </Grid>
@@ -258,7 +269,9 @@
                         
                         <TextBlock Grid.Column="3"
                                    Text="{Binding VoiceHealthDirection, Converter={StaticResource DirectionToArrow}}"
-                                   FontSize="18"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="16"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"/>
                     </Grid>
@@ -394,9 +407,13 @@
                             Background="{DynamicResource AccentPrimaryBrush}"
                             VerticalAlignment="Top"
                             Margin="16,0,0,0">
-                        <TextBlock Text="{Binding FocusAreaIcon}" 
-                                   FontSize="28" 
-                                   HorizontalAlignment="Center" 
+                        <!-- Shield glyph (matches the exercise guide's focus/shield icon),
+                             themed on-accent so it reads on the accent circle in both themes. -->
+                        <TextBlock Text="&#xEA18;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="26"
+                                   Foreground="{DynamicResource TextOnAccentBrush}"
+                                   HorizontalAlignment="Center"
                                    VerticalAlignment="Center"/>
                     </Border>
                 </Grid>
@@ -414,9 +431,12 @@
                             CornerRadius="24" 
                             Background="{DynamicResource SuccessBrush}"
                             Margin="0,0,16,0">
-                        <TextBlock Text="📈" 
-                                   FontSize="22" 
-                                   HorizontalAlignment="Center" 
+                        <!-- Up/trending glyph, themed on-accent for the green success circle. -->
+                        <TextBlock Text="&#xE74A;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="22"
+                                   Foreground="{DynamicResource TextOnAccentBrush}"
+                                   HorizontalAlignment="Center"
                                    VerticalAlignment="Center"/>
                     </Border>
                     
