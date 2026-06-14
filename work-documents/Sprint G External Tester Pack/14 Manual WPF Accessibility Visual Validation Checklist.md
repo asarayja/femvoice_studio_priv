@@ -114,6 +114,52 @@ Valider:
 - [ ] Professional notes inkluderes ikke uten eksplisitt valg.
 - [ ] Bruker kan finne export path.
 
+## 10. Theme & Control States (Sprint G hardening)
+
+Test i BÅDE dark og light mode. Per-feature detaljlister finnes i
+`dokumentasjon/SPRINT_G_COMBOBOX_DARKMODE_CHECKLIST.md`,
+`dokumentasjon/SPRINT_G_PROGRESSION_ICONS_CHECKLIST.md`,
+`dokumentasjon/SPRINT_G_VOICEANALYSIS_NOTEBUTTONS_CHECKLIST.md`,
+`FemVoiceStudio/Docs/ComboBoxButtonThemeVisualChecklist.md` og
+`FemVoiceStudio/Docs/AnalysisChartThemeManualChecklist.md`.
+
+- [ ] ComboBox/dropdown: normal/hover/selected/selected+hover/keyboard-highlight/disabled — tekst lesbar, ingen lys cyan/blå hover-flate som skjuler tekst.
+- [ ] Knapper: normal/hover/pressed/focus/disabled — tekst lesbar, ingen lys system-overlay i dark mode.
+- [ ] Settings- og Manuelle justeringer-knapper er tema-satt (ikke umalte default-knapper).
+- [ ] Progresjon: grønt «Nybegynner»-merke viser ikon (ikke tomt), trend-piler er ikke svart-på-mørkt, fokus-/forbedrings-ikon synlige.
+- [ ] Voice Analysis note-velger: alle note-knapper lesbare, valgt målnote tydelig (accent), ingen rosa/rød-på-hvit lavkontrast.
+- [ ] Chart/graf: dark-mode bakgrunn korrekt, akse-/legend-tekst lesbar.
+- [ ] Ikonfarger følger tema; ingen svart-på-mørkt eller hvit-på-lyst; betydning bæres ikke av farge alene.
+- [ ] Disabled states er tydelig deaktivert, men ikke «ødelagte».
+
+## 11. Per-Page Layout (liten vindusstørrelse + skalering)
+
+Test 100/125/150% og minste vindusstørrelse der resize tillates:
+
+- [ ] Forside / hovedmeny
+- [ ] Innstillinger (Settings)
+- [ ] Progresjon
+- [ ] Voice Analysis (Analyzer)
+- [ ] Dybdeanalyse (Analysis)
+- [ ] Resonansanalyse (Resonance)
+- [ ] Øvelsesguide-sider
+- [ ] Rapport-forhåndsvisning (hvis aktuelt)
+- [ ] Ingen klippet tekst/knapp; scroll vises ved behov; æ/ø/å og lange de/fi/fr-strenger wrapper.
+
+## 12. Resonance Contrast Demo (valgfri, ikke-scoret)
+
+Åpnes fra Resonansanalyse via «Resonanskontrast»-knappen.
+
+- [ ] Demoen er tydelig VALGFRI (egen knapp, ikke i påkrevd øvelsessekvens).
+- [ ] Demoen er IKKE scoret (vis-tekst: «Ingen score gis for denne demoen»).
+- [ ] Demoen påvirker IKKE progresjon (vis-tekst: «…ikke nødvendig for å fullføre programmet»).
+- [ ] Demoen påvirker ikke rapporter eller SmartCoach.
+- [ ] Sikkerhetstekst er synlig: «Hold det rolig. Stopp hvis du kjenner ubehag. Ikke press halsen.»
+- [ ] Tittel/undertittel/3 steg/notiser er lokalisert og lesbare i dark + light mode.
+- [ ] «big dog / small dog» vises KUN som kort forklarende notis, ikke som hovedtittel.
+- [ ] Ingen skam/blame, ingen «riktig/feil stemme», ingen pass/fail-formulering.
+- [ ] Start/Stopp gjør ingenting destruktivt (ingen opptak/score) — kun kosmetisk fremheving av stegene.
+
 ## Static XAML Review Findings
 
 Dette er funn fra statisk review. De er ikke klassifisert som runtime blockers uten manuell bekreftelse.
@@ -148,6 +194,9 @@ Fyll ut etter Windows-test:
 - Report UI: PASS / FAIL / NOT TESTED
 - Backup/restore safety: PASS / FAIL / NOT TESTED
 - Support package privacy: PASS / FAIL / NOT TESTED
+- Theme & control states (Sprint G): PASS / FAIL / NOT TESTED
+- Per-page layout (scaling/small window): PASS / FAIL / NOT TESTED
+- Resonance Contrast demo (optional/non-scored/safe): PASS / FAIL / NOT TESTED
 - Blocking issues:
 - Non-blocking issues:
 - Screenshots/support package attached:
