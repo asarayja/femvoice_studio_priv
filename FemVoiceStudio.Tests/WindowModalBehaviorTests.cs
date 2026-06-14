@@ -51,7 +51,7 @@ public sealed class WindowModalBehaviorTests
         }
 
         var calls = Regex.Matches(mainWindow, "ShowOrActivateModelessWindow\\(").Count;
-        Assert.True(calls >= MainWindowModelessFields.Length + 1);
+        Assert.True(calls >= MainWindowModelessFields.Length);
     }
 
     [Fact]

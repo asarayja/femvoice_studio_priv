@@ -42,6 +42,54 @@ namespace FemVoiceStudio.Views
             // VocalWeight/Composite) and refresh the new charts. Fire-and-forget: the VM
             // swallows load failures and renders empty ("ikke nok data") on no data.
             _ = LoadVoiceIntelligenceTrendAsync();
+
+            ThemeManager.Instance.ThemeChanged += OnThemeChanged;
+            Closed += (_, _) => ThemeManager.Instance.ThemeChanged -= OnThemeChanged;
+        }
+
+        private void OnThemeChanged(object? sender, EventArgs e)
+        {
+            ApplyChartTheme();
+            InvalidateAllPlots();
+        }
+
+        private void ApplyChartTheme()
+        {
+            AnalysisChartTheme.ApplyAll(new[]
+            {
+                ResonancePlotView.Model,
+                PitchPlotView.Model,
+                IntonationPlotView.Model,
+                HealthPlotView.Model,
+                _viewModel.ComfortPlotModel,
+                _viewModel.RecoveryPlotModel,
+                _viewModel.ConsistencyPlotModel,
+                _viewModel.VocalWeightPlotModel,
+                _viewModel.VoiceDevelopmentPlotModel,
+                _viewModel.WeeklyTrendPlotModel,
+                _viewModel.MonthlyTrendPlotModel,
+                _viewModel.VoiceDevelopmentLongPlotModel,
+                _viewModel.BreakthroughsPlotModel,
+                _viewModel.RecoveryPatternsPlotModel
+            });
+        }
+
+        private void InvalidateAllPlots()
+        {
+            ResonancePlotView.InvalidatePlot(true);
+            PitchPlotView.InvalidatePlot(true);
+            IntonationPlotView.InvalidatePlot(true);
+            HealthPlotView.InvalidatePlot(true);
+            ComfortPlotView.InvalidatePlot(true);
+            RecoveryPlotView.InvalidatePlot(true);
+            ConsistencyPlotView.InvalidatePlot(true);
+            VocalWeightPlotView.InvalidatePlot(true);
+            VoiceDevelopmentPlotView.InvalidatePlot(true);
+            WeeklyTrendPlotView.InvalidatePlot(true);
+            MonthlyTrendPlotView.InvalidatePlot(true);
+            VoiceDevelopmentLongPlotView.InvalidatePlot(true);
+            BreakthroughsPlotView.InvalidatePlot(true);
+            RecoveryPatternsPlotView.InvalidatePlot(true);
         }
 
         private void InitializeVoiceIntelligenceCharts()
@@ -134,10 +182,7 @@ namespace FemVoiceStudio.Views
             var model = new PlotModel
             {
                 Title = LocalizationService.Instance["AnalysisChart_ResonanceTitle"],
-                TitleFontSize = 12,
-                TitleColor = OxyColor.FromRgb(64, 64, 64),
-                Background = OxyColors.White,
-                PlotAreaBorderColor = OxyColor.FromRgb(200, 200, 200)
+                TitleFontSize = 12
             };
             
             model.Axes.Add(new LinearAxis
@@ -145,7 +190,6 @@ namespace FemVoiceStudio.Views
                 Position = AxisPosition.Bottom,
                 Title = LocalizationService.Instance["AnalysisChart_SessionAxis"],
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(240, 240, 240),
                 FontSize = 10
             });
             
@@ -156,12 +200,11 @@ namespace FemVoiceStudio.Views
                 Minimum = 1000,
                 Maximum = 2500,
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(230, 230, 230),
                 FontSize = 10,
                 TitleFontSize = 11
             });
             
-            ResonancePlotView.Model = model;
+            ResonancePlotView.Model = AnalysisChartTheme.Apply(model);
         }
         
         private void InitializePitchChart()
@@ -169,10 +212,7 @@ namespace FemVoiceStudio.Views
             var model = new PlotModel
             {
                 Title = LocalizationService.Instance["AnalysisChart_PitchTitle"],
-                TitleFontSize = 12,
-                TitleColor = OxyColor.FromRgb(64, 64, 64),
-                Background = OxyColors.White,
-                PlotAreaBorderColor = OxyColor.FromRgb(200, 200, 200)
+                TitleFontSize = 12
             };
             
             model.Axes.Add(new LinearAxis
@@ -180,7 +220,6 @@ namespace FemVoiceStudio.Views
                 Position = AxisPosition.Bottom,
                 Title = LocalizationService.Instance["AnalysisChart_SessionAxis"],
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(240, 240, 240),
                 FontSize = 10
             });
             
@@ -191,7 +230,6 @@ namespace FemVoiceStudio.Views
                 Minimum = 100,
                 Maximum = 350,
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(230, 230, 230),
                 FontSize = 10,
                 TitleFontSize = 11
             });
@@ -209,7 +247,7 @@ namespace FemVoiceStudio.Views
             }
             model.Series.Add(comfortZone);
             
-            PitchPlotView.Model = model;
+            PitchPlotView.Model = AnalysisChartTheme.Apply(model);
         }
         
         private void InitializeIntonationChart()
@@ -217,10 +255,7 @@ namespace FemVoiceStudio.Views
             var model = new PlotModel
             {
                 Title = LocalizationService.Instance["AnalysisChart_IntonationTitle"],
-                TitleFontSize = 12,
-                TitleColor = OxyColor.FromRgb(64, 64, 64),
-                Background = OxyColors.White,
-                PlotAreaBorderColor = OxyColor.FromRgb(200, 200, 200)
+                TitleFontSize = 12
             };
             
             model.Axes.Add(new LinearAxis
@@ -228,7 +263,6 @@ namespace FemVoiceStudio.Views
                 Position = AxisPosition.Bottom,
                 Title = LocalizationService.Instance["AnalysisChart_SessionAxis"],
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(240, 240, 240),
                 FontSize = 10
             });
             
@@ -239,12 +273,11 @@ namespace FemVoiceStudio.Views
                 Minimum = 0,
                 Maximum = 150,
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(230, 230, 230),
                 FontSize = 10,
                 TitleFontSize = 11
             });
             
-            IntonationPlotView.Model = model;
+            IntonationPlotView.Model = AnalysisChartTheme.Apply(model);
         }
         
         private void InitializeHealthChart()
@@ -252,10 +285,7 @@ namespace FemVoiceStudio.Views
             var model = new PlotModel
             {
                 Title = LocalizationService.Instance["AnalysisChart_HealthTitle"],
-                TitleFontSize = 12,
-                TitleColor = OxyColor.FromRgb(64, 64, 64),
-                Background = OxyColors.White,
-                PlotAreaBorderColor = OxyColor.FromRgb(200, 200, 200)
+                TitleFontSize = 12
             };
             
             model.Axes.Add(new LinearAxis
@@ -263,7 +293,6 @@ namespace FemVoiceStudio.Views
                 Position = AxisPosition.Bottom,
                 Title = LocalizationService.Instance["AnalysisChart_SessionAxis"],
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(240, 240, 240),
                 FontSize = 10
             });
             
@@ -274,12 +303,11 @@ namespace FemVoiceStudio.Views
                 Minimum = 0,
                 Maximum = 100,
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(230, 230, 230),
                 FontSize = 10,
                 TitleFontSize = 11
             });
             
-            HealthPlotView.Model = model;
+            HealthPlotView.Model = AnalysisChartTheme.Apply(model);
         }
         
         private void UpdateCharts()

@@ -61,7 +61,16 @@
     
     <!-- Chart Colors -->
     <Color x:Key="ChartBackgroundColor">#FFFFFF</Color>
+    <Color x:Key="ChartSurfaceBackgroundColor">#FFFFFF</Color>
+    <Color x:Key="ChartPlotAreaBackgroundColor">#FFFFFF</Color>
+    <Color x:Key="ChartAxisTextColor">#666666</Color>
+    <Color x:Key="ChartAxisLineColor">#CCCCCC</Color>
     <Color x:Key="ChartGridColor">#E8E8E8</Color>
+    <Color x:Key="ChartMinorGridLineColor">#F2F2F2</Color>
+    <Color x:Key="ChartLegendTextColor">#666666</Color>
+    <Color x:Key="ChartTitleTextColor">#1A1D28</Color>
+    <Color x:Key="ChartMarkerStrokeColor">#FFFFFF</Color>
+    <Color x:Key="ChartEmptyStateTextColor">#666666</Color>
     <Color x:Key="ChartTargetAreaColor">#4CAF50</Color>
     <Color x:Key="ChartPitchColor">#FF5722</Color>
     <Color x:Key="ChartResonanceColor">#E0528A</Color>
@@ -155,7 +164,17 @@
     
     <!-- Chart Brushes -->
     <SolidColorBrush x:Key="ChartBackgroundBrush" Color="{StaticResource ChartBackgroundColor}"/>
+    <SolidColorBrush x:Key="ChartSurfaceBackgroundBrush" Color="{StaticResource ChartSurfaceBackgroundColor}"/>
+    <SolidColorBrush x:Key="ChartPlotAreaBackgroundBrush" Color="{StaticResource ChartPlotAreaBackgroundColor}"/>
+    <SolidColorBrush x:Key="ChartAxisTextBrush" Color="{StaticResource ChartAxisTextColor}"/>
+    <SolidColorBrush x:Key="ChartAxisLineBrush" Color="{StaticResource ChartAxisLineColor}"/>
     <SolidColorBrush x:Key="ChartGridBrush" Color="{StaticResource ChartGridColor}"/>
+    <SolidColorBrush x:Key="ChartGridLineBrush" Color="{StaticResource ChartGridColor}"/>
+    <SolidColorBrush x:Key="ChartMinorGridLineBrush" Color="{StaticResource ChartMinorGridLineColor}"/>
+    <SolidColorBrush x:Key="ChartLegendTextBrush" Color="{StaticResource ChartLegendTextColor}"/>
+    <SolidColorBrush x:Key="ChartTitleTextBrush" Color="{StaticResource ChartTitleTextColor}"/>
+    <SolidColorBrush x:Key="ChartMarkerStrokeBrush" Color="{StaticResource ChartMarkerStrokeColor}"/>
+    <SolidColorBrush x:Key="ChartEmptyStateTextBrush" Color="{StaticResource ChartEmptyStateTextColor}"/>
     <SolidColorBrush x:Key="ChartTargetAreaBrush" Color="{StaticResource ChartTargetAreaColor}"/>
     <SolidColorBrush x:Key="ChartPitchBrush" Color="{StaticResource ChartPitchColor}"/>
     <SolidColorBrush x:Key="ChartResonanceBrush" Color="{StaticResource ChartResonanceColor}"/>

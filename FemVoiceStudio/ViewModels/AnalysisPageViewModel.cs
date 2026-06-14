@@ -529,10 +529,7 @@ namespace FemVoiceStudio.ViewModels
             var model = new PlotModel
             {
                 Title = LocalizationService.Instance["AnalysisChart_ResonanceTitle"],
-                TitleFontSize = 12,
-                TitleColor = OxyColor.FromRgb(64, 64, 64),
-                Background = OxyColors.White,
-                PlotAreaBorderColor = OxyColor.FromRgb(200, 200, 200)
+                TitleFontSize = 12
             };
             
             model.Axes.Add(new LinearAxis
@@ -540,7 +537,6 @@ namespace FemVoiceStudio.ViewModels
                 Position = AxisPosition.Bottom,
                 Title = LocalizationService.Instance["AnalysisChart_SessionAxis"],
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(240, 240, 240),
                 FontSize = 10
             });
             
@@ -551,12 +547,11 @@ namespace FemVoiceStudio.ViewModels
                 Minimum = 1000,
                 Maximum = 2500,
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(230, 230, 230),
                 FontSize = 10,
                 TitleFontSize = 11
             });
             
-            return model;
+            return AnalysisChartTheme.Apply(model);
         }
         
         /// <summary>
@@ -567,10 +562,7 @@ namespace FemVoiceStudio.ViewModels
             var model = new PlotModel
             {
                 Title = LocalizationService.Instance["AnalysisChart_PitchTitle"],
-                TitleFontSize = 12,
-                TitleColor = OxyColor.FromRgb(64, 64, 64),
-                Background = OxyColors.White,
-                PlotAreaBorderColor = OxyColor.FromRgb(200, 200, 200)
+                TitleFontSize = 12
             };
             
             model.Axes.Add(new LinearAxis
@@ -578,7 +570,6 @@ namespace FemVoiceStudio.ViewModels
                 Position = AxisPosition.Bottom,
                 Title = LocalizationService.Instance["AnalysisChart_SessionAxis"],
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(240, 240, 240),
                 FontSize = 10
             });
             
@@ -589,7 +580,6 @@ namespace FemVoiceStudio.ViewModels
                 Minimum = 100,
                 Maximum = 350,
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(230, 230, 230),
                 FontSize = 10,
                 TitleFontSize = 11
             });
@@ -607,7 +597,7 @@ namespace FemVoiceStudio.ViewModels
             }
             model.Series.Add(comfortZone);
             
-            return model;
+            return AnalysisChartTheme.Apply(model);
         }
         
         /// <summary>
@@ -618,10 +608,7 @@ namespace FemVoiceStudio.ViewModels
             var model = new PlotModel
             {
                 Title = LocalizationService.Instance["AnalysisChart_IntonationTitle"],
-                TitleFontSize = 12,
-                TitleColor = OxyColor.FromRgb(64, 64, 64),
-                Background = OxyColors.White,
-                PlotAreaBorderColor = OxyColor.FromRgb(200, 200, 200)
+                TitleFontSize = 12
             };
             
             model.Axes.Add(new LinearAxis
@@ -629,7 +616,6 @@ namespace FemVoiceStudio.ViewModels
                 Position = AxisPosition.Bottom,
                 Title = LocalizationService.Instance["AnalysisChart_SessionAxis"],
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(240, 240, 240),
                 FontSize = 10
             });
             
@@ -640,12 +626,11 @@ namespace FemVoiceStudio.ViewModels
                 Minimum = 0,
                 Maximum = 150,
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(230, 230, 230),
                 FontSize = 10,
                 TitleFontSize = 11
             });
             
-            return model;
+            return AnalysisChartTheme.Apply(model);
         }
         
         /// <summary>
@@ -656,10 +641,7 @@ namespace FemVoiceStudio.ViewModels
             var model = new PlotModel
             {
                 Title = LocalizationService.Instance["AnalysisChart_HealthTitle"],
-                TitleFontSize = 12,
-                TitleColor = OxyColor.FromRgb(64, 64, 64),
-                Background = OxyColors.White,
-                PlotAreaBorderColor = OxyColor.FromRgb(200, 200, 200)
+                TitleFontSize = 12
             };
             
             model.Axes.Add(new LinearAxis
@@ -667,7 +649,6 @@ namespace FemVoiceStudio.ViewModels
                 Position = AxisPosition.Bottom,
                 Title = LocalizationService.Instance["AnalysisChart_SessionAxis"],
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(240, 240, 240),
                 FontSize = 10
             });
             
@@ -678,12 +659,11 @@ namespace FemVoiceStudio.ViewModels
                 Minimum = 0,
                 Maximum = 100,
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(230, 230, 230),
                 FontSize = 10,
                 TitleFontSize = 11
             });
             
-            return model;
+            return AnalysisChartTheme.Apply(model);
         }
         
         /// <summary>
@@ -697,10 +677,7 @@ namespace FemVoiceStudio.ViewModels
             var model = new PlotModel
             {
                 Title = title,
-                TitleFontSize = 12,
-                TitleColor = OxyColor.FromRgb(64, 64, 64),
-                Background = OxyColors.White,
-                PlotAreaBorderColor = OxyColor.FromRgb(200, 200, 200)
+                TitleFontSize = 12
             };
 
             model.Axes.Add(new LinearAxis
@@ -708,7 +685,6 @@ namespace FemVoiceStudio.ViewModels
                 Position = AxisPosition.Bottom,
                 Title = LocalizationService.Instance["AnalysisChart_SessionAxis"],
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(240, 240, 240),
                 FontSize = 10
             });
 
@@ -719,12 +695,11 @@ namespace FemVoiceStudio.ViewModels
                 Minimum = 0,
                 Maximum = 100,
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(230, 230, 230),
                 FontSize = 10,
                 TitleFontSize = 11
             });
 
-            return model;
+            return AnalysisChartTheme.Apply(model);
         }
 
         /// <summary>
@@ -916,7 +891,7 @@ namespace FemVoiceStudio.ViewModels
                     {
                         Title = label,
                         FillColor = color,
-                        StrokeColor = OxyColors.White,
+                        StrokeColor = AnalysisChartTheme.Current.MarkerStrokeColor,
                         StrokeThickness = 1,
                         BarWidth = 0.6
                     };
@@ -930,7 +905,7 @@ namespace FemVoiceStudio.ViewModels
                 BreakthroughsPlotModel.Series.Add(new LineSeries
                 {
                     Title = LocalizationService.Instance["Dashboard_Breakthroughs"],
-                    Color = OxyColor.FromRgb(200, 200, 200),
+                    Color = AnalysisChartTheme.Current.EmptyStateTextColor,
                     StrokeThickness = 1
                 });
             }
