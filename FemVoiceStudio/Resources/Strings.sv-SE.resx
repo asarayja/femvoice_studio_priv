@@ -5021,4 +5021,43 @@ This cannot be undone!</value>
   <data name="VoiceLoad_RecoveryWait" xml:space="preserve">
     <value>Vent litt lenger før du fortsetter.</value>
   </data>
+  <data name="ResonanceContrast_Title" xml:space="preserve">
+    <value>Resonanskontrast</value>
+  </data>
+  <data name="ResonanceContrast_Subtitle" xml:space="preserve">
+    <value>Känn skillnaden mellan större och mindre resonans</value>
+  </data>
+  <data name="ResonanceContrast_Description" xml:space="preserve">
+    <value>Prova en kort och lugn demo för att känna skillnaden mellan mörkare/större och ljusare/mindre resonans.</value>
+  </data>
+  <data name="ResonanceContrast_StepLarge" xml:space="preserve">
+    <value>Prova en bekväm större/mörkare resonans.</value>
+  </data>
+  <data name="ResonanceContrast_StepSmall" xml:space="preserve">
+    <value>Prova en bekväm mindre/ljusare resonans.</value>
+  </data>
+  <data name="ResonanceContrast_NoticeDifference" xml:space="preserve">
+    <value>Lägg märke till skillnaden utan att pressa rösten.</value>
+  </data>
+  <data name="ResonanceContrast_Safety" xml:space="preserve">
+    <value>Ta det lugnt. Sluta om du känner obehag. Pressa inte halsen.</value>
+  </data>
+  <data name="ResonanceContrast_StartButton" xml:space="preserve">
+    <value>Starta demo</value>
+  </data>
+  <data name="ResonanceContrast_StopButton" xml:space="preserve">
+    <value>Stoppa</value>
+  </data>
+  <data name="ResonanceContrast_OptionalNote" xml:space="preserve">
+    <value>Detta är en valfri demo och påverkar inte poäng eller progression.</value>
+  </data>
+  <data name="ResonanceContrast_BigDogSmallDogNote" xml:space="preserve">
+    <value>Vissa rösttränare kallar detta “big dog / small dog”. FemVoice använder neutralt språk: resonanskontrast.</value>
+  </data>
+  <data name="ResonanceContrast_NoScoreNote" xml:space="preserve">
+    <value>Ingen poäng ges för denna demo.</value>
+  </data>
+  <data name="ResonanceContrast_NotRequiredNote" xml:space="preserve">
+    <value>Denna demo krävs inte för att slutföra programmet.</value>
+  </data>
 </root>

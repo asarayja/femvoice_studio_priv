@@ -5021,4 +5021,43 @@ This cannot be undone!</value>
   <data name="VoiceLoad_RecoveryWait" xml:space="preserve">
     <value>Vent litt lenger før du fortsetter.</value>
   </data>
+  <data name="ResonanceContrast_Title" xml:space="preserve">
+    <value>Contraste de ressonância</value>
+  </data>
+  <data name="ResonanceContrast_Subtitle" xml:space="preserve">
+    <value>Sinta a diferença entre uma ressonância maior e menor</value>
+  </data>
+  <data name="ResonanceContrast_Description" xml:space="preserve">
+    <value>Experimente uma demonstração curta e tranquila para notar a diferença entre uma ressonância mais escura/maior e mais clara/menor.</value>
+  </data>
+  <data name="ResonanceContrast_StepLarge" xml:space="preserve">
+    <value>Experimente uma ressonância maior/mais escura, de forma confortável.</value>
+  </data>
+  <data name="ResonanceContrast_StepSmall" xml:space="preserve">
+    <value>Experimente uma ressonância menor/mais clara, de forma confortável.</value>
+  </data>
+  <data name="ResonanceContrast_NoticeDifference" xml:space="preserve">
+    <value>Perceba a diferença sem forçar a voz.</value>
+  </data>
+  <data name="ResonanceContrast_Safety" xml:space="preserve">
+    <value>Mantenha a calma. Pare se sentir desconforto. Não force a garganta.</value>
+  </data>
+  <data name="ResonanceContrast_StartButton" xml:space="preserve">
+    <value>Iniciar demonstração</value>
+  </data>
+  <data name="ResonanceContrast_StopButton" xml:space="preserve">
+    <value>Parar</value>
+  </data>
+  <data name="ResonanceContrast_OptionalNote" xml:space="preserve">
+    <value>Esta é uma demonstração opcional e não afeta a pontuação nem a progressão.</value>
+  </data>
+  <data name="ResonanceContrast_BigDogSmallDogNote" xml:space="preserve">
+    <value>Alguns coaches vocais chamam isso de “big dog / small dog”. O FemVoice usa linguagem neutra: contraste de ressonância.</value>
+  </data>
+  <data name="ResonanceContrast_NoScoreNote" xml:space="preserve">
+    <value>Esta demonstração não recebe pontuação.</value>
+  </data>
+  <data name="ResonanceContrast_NotRequiredNote" xml:space="preserve">
+    <value>Esta demonstração não é necessária para concluir o programa.</value>
+  </data>
 </root>

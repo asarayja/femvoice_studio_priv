@@ -127,6 +127,12 @@
             <Button x:Name="ResetButton" Content="{loc:Loc UI_Reset}"
                     Click="ResetButton_Click"
                     Style="{DynamicResource SecondaryButtonStyle}"
+                    Padding="24,12" Margin="0,0,16,0"/>
+
+            <!-- Optional, non-scored resonance-awareness demo (opens a content-only window). -->
+            <Button x:Name="ResonanceContrastButton" Content="{loc:Loc ResonanceContrast_Title}"
+                    Click="OnOpenResonanceContrastDemo"
+                    Style="{DynamicResource SecondaryButtonStyle}"
                     Padding="24,12"/>
         </StackPanel>
     </Grid>

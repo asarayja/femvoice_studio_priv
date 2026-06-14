@@ -314,6 +314,21 @@ namespace FemVoiceStudio.Views
                     MessageBoxButton.OK, MessageBoxImage.Warning)));
         }
 
+        // Opens the optional, non-scored Resonance Contrast awareness demo. Content only —
+        // no audio/scoring/progression; never blocks if the window fails to open.
+        private void OnOpenResonanceContrastDemo(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var demo = new ResonanceContrastDemoWindow { Owner = this };
+                demo.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ResonanceContrastDemo] open failed: {ex.Message}");
+            }
+        }
+
         private void ResetButton_Click(object sender, RoutedEventArgs e)
         {
             // Clear history and charts

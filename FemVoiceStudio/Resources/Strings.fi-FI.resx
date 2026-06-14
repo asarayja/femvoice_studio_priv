@@ -5021,4 +5021,43 @@ This cannot be undone!</value>
   <data name="VoiceLoad_RecoveryWait" xml:space="preserve">
     <value>Vent litt lenger før du fortsetter.</value>
   </data>
+  <data name="ResonanceContrast_Title" xml:space="preserve">
+    <value>Resonanssikontrasti</value>
+  </data>
+  <data name="ResonanceContrast_Subtitle" xml:space="preserve">
+    <value>Tunne ero suuremman ja pienemmän resonanssin välillä</value>
+  </data>
+  <data name="ResonanceContrast_Description" xml:space="preserve">
+    <value>Kokeile lyhyttä, rauhallista demoa, jotta huomaat eron tummemman/suuremman ja kirkkaamman/pienemmän resonanssin välillä.</value>
+  </data>
+  <data name="ResonanceContrast_StepLarge" xml:space="preserve">
+    <value>Kokeile mukavaa suurempaa/tummempaa resonanssia.</value>
+  </data>
+  <data name="ResonanceContrast_StepSmall" xml:space="preserve">
+    <value>Kokeile mukavaa pienempää/kirkkaampaa resonanssia.</value>
+  </data>
+  <data name="ResonanceContrast_NoticeDifference" xml:space="preserve">
+    <value>Huomaa ero pakottamatta ääntä.</value>
+  </data>
+  <data name="ResonanceContrast_Safety" xml:space="preserve">
+    <value>Pidä se rauhallisena. Lopeta, jos tunnet epämukavuutta. Älä purista kurkkua.</value>
+  </data>
+  <data name="ResonanceContrast_StartButton" xml:space="preserve">
+    <value>Aloita demo</value>
+  </data>
+  <data name="ResonanceContrast_StopButton" xml:space="preserve">
+    <value>Pysäytä</value>
+  </data>
+  <data name="ResonanceContrast_OptionalNote" xml:space="preserve">
+    <value>Tämä on valinnainen demo, eikä se vaikuta pisteisiin tai edistymiseen.</value>
+  </data>
+  <data name="ResonanceContrast_BigDogSmallDogNote" xml:space="preserve">
+    <value>Jotkut äänivalmentajat kutsuvat tätä nimellä ”big dog / small dog”. FemVoice käyttää neutraalia kieltä: resonanssikontrasti.</value>
+  </data>
+  <data name="ResonanceContrast_NoScoreNote" xml:space="preserve">
+    <value>Tästä demosta ei anneta pisteitä.</value>
+  </data>
+  <data name="ResonanceContrast_NotRequiredNote" xml:space="preserve">
+    <value>Tämä demo ei ole pakollinen ohjelman suorittamiseksi.</value>
+  </data>
 </root>

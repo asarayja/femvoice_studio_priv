@@ -5021,4 +5021,43 @@ This cannot be undone!</value>
   <data name="VoiceLoad_RecoveryWait" xml:space="preserve">
     <value>Vent litt lenger før du fortsetter.</value>
   </data>
+  <data name="ResonanceContrast_Title" xml:space="preserve">
+    <value>Contrasto di risonanza</value>
+  </data>
+  <data name="ResonanceContrast_Subtitle" xml:space="preserve">
+    <value>Senti la differenza tra una risonanza più grande e più piccola</value>
+  </data>
+  <data name="ResonanceContrast_Description" xml:space="preserve">
+    <value>Prova una breve demo tranquilla per notare la differenza tra una risonanza più scura/grande e più chiara/piccola.</value>
+  </data>
+  <data name="ResonanceContrast_StepLarge" xml:space="preserve">
+    <value>Prova una risonanza più grande/scura, in modo confortevole.</value>
+  </data>
+  <data name="ResonanceContrast_StepSmall" xml:space="preserve">
+    <value>Prova una risonanza più piccola/chiara, in modo confortevole.</value>
+  </data>
+  <data name="ResonanceContrast_NoticeDifference" xml:space="preserve">
+    <value>Nota la differenza senza forzare la voce.</value>
+  </data>
+  <data name="ResonanceContrast_Safety" xml:space="preserve">
+    <value>Mantieni la calma. Fermati se senti fastidio. Non forzare la gola.</value>
+  </data>
+  <data name="ResonanceContrast_StartButton" xml:space="preserve">
+    <value>Avvia demo</value>
+  </data>
+  <data name="ResonanceContrast_StopButton" xml:space="preserve">
+    <value>Ferma</value>
+  </data>
+  <data name="ResonanceContrast_OptionalNote" xml:space="preserve">
+    <value>Questa è una demo facoltativa e non influisce su punteggio o progressione.</value>
+  </data>
+  <data name="ResonanceContrast_BigDogSmallDogNote" xml:space="preserve">
+    <value>Alcuni coach vocali lo chiamano “big dog / small dog”. FemVoice usa un linguaggio neutro: contrasto di risonanza.</value>
+  </data>
+  <data name="ResonanceContrast_NoScoreNote" xml:space="preserve">
+    <value>Questa demo non assegna punteggi.</value>
+  </data>
+  <data name="ResonanceContrast_NotRequiredNote" xml:space="preserve">
+    <value>Questa demo non è necessaria per completare il programma.</value>
+  </data>
 </root>

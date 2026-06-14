@@ -5021,4 +5021,43 @@ This cannot be undone!</value>
   <data name="VoiceLoad_RecoveryWait" xml:space="preserve">
     <value>Vent litt lenger før du fortsetter.</value>
   </data>
+  <data name="ResonanceContrast_Title" xml:space="preserve">
+    <value>Kontrast rezonancije</value>
+  </data>
+  <data name="ResonanceContrast_Subtitle" xml:space="preserve">
+    <value>Osjetite razliku između veće i manje rezonancije</value>
+  </data>
+  <data name="ResonanceContrast_Description" xml:space="preserve">
+    <value>Isprobajte kratku, mirnu demonstraciju kako biste primijetili razliku između tamnije/veće i svjetlije/manje rezonancije.</value>
+  </data>
+  <data name="ResonanceContrast_StepLarge" xml:space="preserve">
+    <value>Isprobajte ugodnu veću/tamniju rezonanciju.</value>
+  </data>
+  <data name="ResonanceContrast_StepSmall" xml:space="preserve">
+    <value>Isprobajte ugodnu manju/svjetliju rezonanciju.</value>
+  </data>
+  <data name="ResonanceContrast_NoticeDifference" xml:space="preserve">
+    <value>Primijetite razliku bez naprezanja glasa.</value>
+  </data>
+  <data name="ResonanceContrast_Safety" xml:space="preserve">
+    <value>Ostanite opušteni. Prestanite ako osjetite nelagodu. Ne naprežite grlo.</value>
+  </data>
+  <data name="ResonanceContrast_StartButton" xml:space="preserve">
+    <value>Pokreni demo</value>
+  </data>
+  <data name="ResonanceContrast_StopButton" xml:space="preserve">
+    <value>Zaustavi</value>
+  </data>
+  <data name="ResonanceContrast_OptionalNote" xml:space="preserve">
+    <value>Ovo je neobavezna demonstracija i ne utječe na rezultat ni napredak.</value>
+  </data>
+  <data name="ResonanceContrast_BigDogSmallDogNote" xml:space="preserve">
+    <value>Neki glasovni treneri to nazivaju “big dog / small dog”. FemVoice koristi neutralan jezik: kontrast rezonancije.</value>
+  </data>
+  <data name="ResonanceContrast_NoScoreNote" xml:space="preserve">
+    <value>Za ovu demonstraciju ne dodjeljuje se rezultat.</value>
+  </data>
+  <data name="ResonanceContrast_NotRequiredNote" xml:space="preserve">
+    <value>Ova demonstracija nije obavezna za završetak programa.</value>
+  </data>
 </root>
