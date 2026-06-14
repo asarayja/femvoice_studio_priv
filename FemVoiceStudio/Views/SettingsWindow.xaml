@@ -45,6 +45,15 @@
                         <ComboBoxItem Content="Português" Tag="pt-BR"/>
                         <ComboBoxItem Content="Italiano" Tag="it-IT"/>
                         <ComboBoxItem Content="Hrvatski" Tag="hr-HR"/>
+                        <ComboBoxItem Content="Nederlands" Tag="nl-NL"/>
+                        <ComboBoxItem Content="Polski" Tag="pl-PL"/>
+                        <ComboBoxItem Content="Türkçe" Tag="tr-TR"/>
+                        <ComboBoxItem Content="Українська" Tag="uk-UA"/>
+                        <ComboBoxItem Content="Română" Tag="ro-RO"/>
+                        <ComboBoxItem Content="Čeština" Tag="cs-CZ"/>
+                        <ComboBoxItem Content="Magyar" Tag="hu-HU"/>
+                        <ComboBoxItem Content="Ελληνικά" Tag="el-GR"/>
+                        <ComboBoxItem Content="العربية" Tag="ar"/>
                     </ComboBox>
                 </StackPanel>
             </Border>
