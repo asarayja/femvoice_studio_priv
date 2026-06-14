@@ -1,14 +1,22 @@
 # FemVoice Funksjonsoversikt
 
-Status: 2026-06-09
+Status: 2026-06-14
 
 Formål: praktisk oversikt over hvilke hovedfunksjoner FemVoice Studio har nå, hva de gjør, og hvor de bor i koden. Dette er en produkt- og arkitekturoversikt basert på aktiv WPF-kode, DI-wiring og tester. Det er ikke en klinisk validering eller cleanup-plan.
 
 ## Kort status
 
-FemVoice Studio er en lokal WPF/.NET-app for stemmetrening med sanntids lydanalyse, øvelsesguide, progressiv trening, SmartCoach, helse-/recovery-gating, rapportering og profesjonelle verktøy. Appen bruker NAudio til mikrofon/lyd, OxyPlot til pitch-graf, SQLite til lokal persistens, RESX til lokalisering og QuestPDF til PDF-eksport.
+FemVoice Studio er en lokal WPF/.NET-app for stemmetrening med sanntids lydanalyse, øvelsesguide, progressiv trening, SmartCoach, helse-/recovery-gating, rapportering og profesjonelle verktøy. Appen bruker NAudio til mikrofon/lyd, OxyPlot til grafer, SQLite til lokal persistens, RESX til lokalisering og QuestPDF til PDF-eksport.
 
 Aktiv oppstart og DI ligger primært i `FemVoiceStudio/App.xaml.cs`. `Subsystems/*` og `Infra/DependencyInjection.cs` finnes fortsatt, men ser ut som eldre/parallelle arkitekturlag som må merge-audites før cleanup.
+
+Sprint G Addendum-status per 2026-06-14:
+
+- Theme-hardening er utvidet for ComboBox/dropdown, knapper og OxyPlot-baserte UI-grafer.
+- `Analyse`/`Dybdeanalyse` og `Resonansanalyse` har delt chart-theme pipeline og realistiske zoom/pan-bounds for UI-grafer.
+- `Settings`-vinduet og flere sekundærvinduer er auditert for layout og modal/modeless oppførsel.
+- Forsidekort for progresjon/nivå er koblet til faktisk dataflyt eller forklarer datatilstand der nok data mangler.
+- Forbrukerrettet engelsk dokumentasjon ligger nå i `README_CONSUMER.md` og `USER_GUIDE.md`.
 
 ## Hovedapp og navigasjon
 
@@ -110,13 +118,26 @@ Aktiv oppstart og DI ligger primært i `FemVoiceStudio/App.xaml.cs`. `Subsystems
 | Tema | Støtter lys, mørk og systemstyrt visning. | `Themes/LightTheme.xaml`, `Themes/DarkTheme.xaml`, `ThemeManager.cs` |
 | Språk/RESX | Bruker språkfiler for norsk, engelsk og flere andre språk. | `Resources/Strings*.resx`, `LocalizationService.cs`, `LocConverter.cs` |
 
+## UI, tema og release-hardening
+
+| Funksjon | Hva den gjør | Viktige filer |
+| -------- | ------------ | ------------- |
+| Global mørk/lys theme | Delt ResourceDictionary-oppsett for tekst, flater, knapper, ComboBox/dropdown og appens hovedflater. | `Themes/DarkTheme.xaml`, `Themes/LightTheme.xaml`, `Services/ThemeManager.cs`, `App.xaml` |
+| ComboBox/dropdown-lesbarhet | Globale ComboBox-, ComboBoxItem- og ListBoxItem-stater er herdet for normal, hover, valgt, valgt+hover, keyboard highlight, fokus og disabled i dark/light mode. | `Themes/DarkTheme.xaml`, `Themes/LightTheme.xaml`, `FemVoiceStudio.Tests/ThemeResourceCoverageTests.cs`, `FemVoiceStudio/Docs/ComboBoxButtonThemeVisualChecklist.md` |
+| Knappe-stater | Delte button-varianter har lesbare normal/hover/pressed/focus/disabled-stater, inkludert Settings og Manuelle justeringer. | `Themes/DarkTheme.xaml`, `Themes/LightTheme.xaml`, `Views/SettingsWindow.xaml`, `Views/ManualOverrideWindow.xaml` |
+| Settings layout | Innstillingsvinduet er gjort større og mer responsivt slik at backup/restore/database-kontroller og lange norske labels ikke klippes. | `Views/SettingsWindow.xaml`, `FemVoiceStudio.Tests/WindowModalBehaviorTests.cs` |
+| Modeless hjelpevinduer | Ikke-kritiske hjelpe-/guide-/analysevinduer åpnes modeless med fokus på eksisterende instans der det er relevant; destruktive bekreftelser forblir modal. | `Views/MainWindow.xaml.cs`, `FemVoiceStudio/Docs/WindowModalBehaviorChecklist.md`, `FemVoiceStudio.Tests/WindowModalBehaviorTests.cs` |
+| Chart theme | UI-grafer mapper WPF-theme brushes til OxyPlot-farger for bakgrunn, plot area, akser, grid, legend og tomtilstand. PDF/rapportgrafer holdes adskilt. | `Services/AnalysisChartTheme.cs`, `Themes/DarkTheme.xaml`, `Themes/LightTheme.xaml`, `FemVoiceStudio.Tests/AnalysisChartThemeTests.cs` |
+| Chart zoom/pan-bounds | Analyse/Dybdeanalyse- og Resonansanalyse-grafer har realistiske `AbsoluteMinimum`, `AbsoluteMaximum`, `MinimumRange` og `MaximumRange` slik at zoom/pan ikke havner langt utenfor datadomenet. | `Services/AnalysisChartTheme.cs`, `ViewModels/AnalysisPageViewModel.cs`, `Views/AnalysisWindow.xaml.cs`, `Views/ResonanceChartViewModel.cs` |
+| Manuell visuell sjekkliste | Release-sjekklister dekker dark/light theme, chart zoom/pan/reset, knapper, ComboBox og vindusoppførsel. | `FemVoiceStudio/Docs/AnalysisChartThemeManualChecklist.md`, `FemVoiceStudio/Docs/ComboBoxButtonThemeVisualChecklist.md`, `FemVoiceStudio/Docs/WindowModalBehaviorChecklist.md` |
+
 ## Analysevinduer
 
 | Funksjon | Hva den gjør | Viktige filer |
 | -------- | ------------ | ------------- |
 | Analyzer | Viser detaljert audio-/spectrogramanalyse, resonansstatus, clinical score og debugpanel ved behov. | `Views/AnalyzerWindow.xaml`, `Views/AnalyzerWindow.xaml.cs`, `Services/SpectrogramResonanceMapper.cs` |
-| Resonance window | Eget vindu for resonansanalyse med start, stopp, reset og chart view model. | `Views/ResonanceWindow.xaml`, `Views/ResonanceWindow.xaml.cs`, `Views/ResonanceChartViewModel.cs` |
-| Analysis window | Viser analyse-side/rapportering knyttet til stemmedata og dimensjoner. | `Views/AnalysisWindow.xaml`, `ViewModels/AnalysisPageViewModel.cs` |
+| Resonance window | Eget vindu for resonansanalyse med start, stopp, reset, F1/F2-posisjon, formant-tidslinje, dark/light chart theme og bounded zoom/pan. | `Views/ResonanceWindow.xaml`, `Views/ResonanceWindow.xaml.cs`, `Views/ResonanceChartViewModel.cs`, `Services/AnalysisChartTheme.cs` |
+| Analysis window | Viser analyse-side/rapportering knyttet til stemmedata og dimensjoner, inkludert Dybdeanalyse-grafer med delt chart-theme og bounded zoom/pan. | `Views/AnalysisWindow.xaml`, `Views/AnalysisWindow.xaml.cs`, `ViewModels/AnalysisPageViewModel.cs`, `Services/AnalysisChartTheme.cs` |
 | LiveFeedbackView | UserControl for live feedback med egen VM. Finnes i repoet, men aktiv navigasjon/wiring bør verifiseres før den behandles som hovedflate. | `Views/LiveFeedbackView.xaml`, `Views/LiveFeedbackViewModel.cs` |
 
 ## Profesjonelle verktøy og rapportering

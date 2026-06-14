@@ -7,9 +7,10 @@
         xmlns:loc="clr-namespace:FemVoiceStudio.Converters"
         mc:Ignorable="d"
         Title="{loc:Loc Report_Title}"
-        Height="380" Width="480"
+        Height="460" Width="540"
+        MinHeight="430" MinWidth="520"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
         Background="{DynamicResource BackgroundSecondaryBrush}">
 
     <Window.Resources>

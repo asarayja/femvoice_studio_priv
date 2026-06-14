@@ -97,6 +97,19 @@ public sealed class WindowModalBehaviorTests
         }
     }
 
+    [Fact]
+    public void ReportExportWindow_UsesUsableResizableLayout()
+    {
+        var xaml = ReadSource("FemVoiceStudio", "Views", "ReportExportWindow.xaml");
+
+        Assert.Contains("Width=\"540\"", xaml);
+        Assert.Contains("Height=\"460\"", xaml);
+        Assert.Contains("MinWidth=\"520\"", xaml);
+        Assert.Contains("MinHeight=\"430\"", xaml);
+        Assert.Contains("ResizeMode=\"CanResize\"", xaml);
+        Assert.DoesNotContain("ResizeMode=\"NoResize\"", xaml);
+    }
+
     private static string ReadSource(params string[] segments)
         => File.ReadAllText(Path.Combine(new[] { FindRepositoryRoot() }.Concat(segments).ToArray()));
 
