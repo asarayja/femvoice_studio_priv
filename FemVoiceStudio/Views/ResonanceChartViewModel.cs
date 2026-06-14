@@ -184,11 +184,7 @@ namespace FemVoiceStudio.Views
             var model = new PlotModel
             {
                 Title = LocalizationService.Instance["ResonanceWindow_F1F2Position"],
-                TitleFontSize = 14,
-                TitleColor = OxyColor.FromRgb(64, 64, 64),
-                PlotAreaBorderColor = OxyColor.FromRgb(200, 200, 200),
-                Background = OxyColors.White,
-                PlotAreaBackground = OxyColors.White
+                TitleFontSize = 14
             };
             
             // X-axis (F2 - higher = more forward)
@@ -199,9 +195,7 @@ namespace FemVoiceStudio.Views
                 Minimum = 800,
                 Maximum = 3000,
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(230, 230, 230),
                 MinorGridlineStyle = LineStyle.Dot,
-                MinorGridlineColor = OxyColor.FromRgb(250, 250, 250),
                 FontSize = 10,
                 TitleFontSize = 12,
                 MajorStep = 500
@@ -215,13 +209,12 @@ namespace FemVoiceStudio.Views
                 Minimum = 200,
                 Maximum = 700,
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(230, 230, 230),
                 FontSize = 10,
                 TitleFontSize = 12,
                 MajorStep = 100
             });
             
-            return model;
+            return AnalysisChartTheme.Apply(AnalysisChartTheme.ApplyF1F2PlacementBounds(model));
         }
         
         private PlotModel CreateFormantTimelineModel()
@@ -229,11 +222,7 @@ namespace FemVoiceStudio.Views
             var model = new PlotModel
             {
                 Title = LocalizationService.Instance["ResonanceWindow_FormantTimeline"],
-                TitleFontSize = 14,
-                TitleColor = OxyColor.FromRgb(64, 64, 64),
-                PlotAreaBorderColor = OxyColor.FromRgb(200, 200, 200),
-                Background = OxyColors.White,
-                PlotAreaBackground = OxyColors.White
+                TitleFontSize = 14
             };
             
             // X-axis (time)
@@ -243,7 +232,6 @@ namespace FemVoiceStudio.Views
                 Title = LocalizationService.Instance["Chart_TimeAxis"],
                 StringFormat = "HH:mm:ss",
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(240, 240, 240),
                 FontSize = 10,
                 TitleFontSize = 12
             });
@@ -256,7 +244,6 @@ namespace FemVoiceStudio.Views
                 Minimum = 0,
                 Maximum = 3500,
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(230, 230, 230),
                 FontSize = 10,
                 TitleFontSize = 12,
                 MajorStep = 500
@@ -271,14 +258,12 @@ namespace FemVoiceStudio.Views
                 Minimum = 0,
                 Maximum = 100,
                 MajorGridlineStyle = LineStyle.Solid,
-                MajorGridlineColor = OxyColor.FromRgb(240, 230, 240),
                 FontSize = 10,
                 TitleFontSize = 12,
-                MajorStep = 20,
-                AxislineColor = OxyColor.FromRgb(200, 100, 200)
+                MajorStep = 20
             });
             
-            return model;
+            return AnalysisChartTheme.Apply(AnalysisChartTheme.ApplyFormantTimelineBounds(model));
         }
         
         private void AddTargetAreaToTimeline()
@@ -315,13 +300,13 @@ namespace FemVoiceStudio.Views
         private void InitializeTargetArea()
         {
             // Add target area corner points
-            _targetAreaSeries.Points.Add(new ScatterPoint(TargetF1Min, TargetF2Min));
-            _targetAreaSeries.Points.Add(new ScatterPoint(TargetF1Min, TargetF2Max));
-            _targetAreaSeries.Points.Add(new ScatterPoint(TargetF1Max, TargetF2Max));
-            _targetAreaSeries.Points.Add(new ScatterPoint(TargetF1Max, TargetF2Min));
+            _targetAreaSeries.Points.Add(new ScatterPoint(TargetF2Min, TargetF1Min));
+            _targetAreaSeries.Points.Add(new ScatterPoint(TargetF2Max, TargetF1Min));
+            _targetAreaSeries.Points.Add(new ScatterPoint(TargetF2Max, TargetF1Max));
+            _targetAreaSeries.Points.Add(new ScatterPoint(TargetF2Min, TargetF1Max));
             
             // Add optimal point
-            _targetAreaSeries.Points.Add(new ScatterPoint(TargetF1Optimal, TargetF2Optimal));
+            _targetAreaSeries.Points.Add(new ScatterPoint(TargetF2Optimal, TargetF1Optimal));
         }
         
         private string GetCategoryDescription()
@@ -349,7 +334,7 @@ namespace FemVoiceStudio.Views
             // Add to scatter history
             if (f1 > 0 && f2 > 0)
             {
-                _formantSeries.Points.Add(new ScatterPoint(f1, f2, 1.0));
+                _formantSeries.Points.Add(new ScatterPoint(f2, f1, 1.0));
                 
                 // Limit history
                 while (_formantSeries.Points.Count > MaxTimelinePoints)
@@ -368,7 +353,7 @@ namespace FemVoiceStudio.Views
             _currentPositionSeries.Points.Clear();
             if (f1 > 0 && f2 > 0)
             {
-                _currentPositionSeries.Points.Add(new ScatterPoint(f1, f2, 2.0));
+                _currentPositionSeries.Points.Add(new ScatterPoint(f2, f1, 2.0));
             }
             
             // Add to timeline
@@ -385,6 +370,9 @@ namespace FemVoiceStudio.Views
                 _f3Series.Points.RemoveAt(0);
                 _resonanceScoreSeries.Points.RemoveAt(0);
             }
+
+            AnalysisChartTheme.ApplyF1F2PlacementBounds(_f1F2ScatterModel);
+            AnalysisChartTheme.ApplyFormantTimelineBounds(_formantTimelineModel, _f1Series.Points);
             
             // Invalidate plots
             _f1F2ScatterModel.InvalidatePlot(true);
@@ -415,6 +403,9 @@ namespace FemVoiceStudio.Views
             CurrentF2 = 0;
             CurrentF3 = 0;
             CurrentResonanceScore = 0;
+
+            AnalysisChartTheme.ApplyF1F2PlacementBounds(_f1F2ScatterModel);
+            AnalysisChartTheme.ApplyFormantTimelineBounds(_formantTimelineModel);
             
             _f1F2ScatterModel.InvalidatePlot(true);
             _formantTimelineModel.InvalidatePlot(true);
@@ -449,10 +440,11 @@ namespace FemVoiceStudio.Views
             
             // Update target area points
             _targetAreaSeries.Points.Clear();
-            _targetAreaSeries.Points.Add(new ScatterPoint(f1Min, f2Min));
-            _targetAreaSeries.Points.Add(new ScatterPoint(f1Min, f2Max));
-            _targetAreaSeries.Points.Add(new ScatterPoint(f1Max, f2Max));
-            _targetAreaSeries.Points.Add(new ScatterPoint(f1Max, f2Min));
+            _targetAreaSeries.Points.Add(new ScatterPoint(f2Min, f1Min));
+            _targetAreaSeries.Points.Add(new ScatterPoint(f2Max, f1Min));
+            _targetAreaSeries.Points.Add(new ScatterPoint(f2Max, f1Max));
+            _targetAreaSeries.Points.Add(new ScatterPoint(f2Min, f1Max));
+            AnalysisChartTheme.ApplyF1F2PlacementBounds(_f1F2ScatterModel);
             
             _f1F2ScatterModel.InvalidatePlot(true);
         }

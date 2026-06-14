@@ -551,7 +551,7 @@ namespace FemVoiceStudio.ViewModels
                 TitleFontSize = 11
             });
             
-            return AnalysisChartTheme.Apply(model);
+            return AnalysisChartTheme.Apply(AnalysisChartTheme.ApplyAnalysisResonanceBounds(model, 0));
         }
         
         /// <summary>
@@ -597,7 +597,7 @@ namespace FemVoiceStudio.ViewModels
             }
             model.Series.Add(comfortZone);
             
-            return AnalysisChartTheme.Apply(model);
+            return AnalysisChartTheme.Apply(AnalysisChartTheme.ApplyAnalysisPitchBounds(model, 30));
         }
         
         /// <summary>
@@ -630,7 +630,7 @@ namespace FemVoiceStudio.ViewModels
                 TitleFontSize = 11
             });
             
-            return AnalysisChartTheme.Apply(model);
+            return AnalysisChartTheme.Apply(AnalysisChartTheme.ApplyAnalysisIntonationBounds(model, 0));
         }
         
         /// <summary>
@@ -663,7 +663,7 @@ namespace FemVoiceStudio.ViewModels
                 TitleFontSize = 11
             });
             
-            return AnalysisChartTheme.Apply(model);
+            return AnalysisChartTheme.Apply(AnalysisChartTheme.ApplyScoreChartBounds(model, 0));
         }
         
         /// <summary>
@@ -699,7 +699,7 @@ namespace FemVoiceStudio.ViewModels
                 TitleFontSize = 11
             });
 
-            return AnalysisChartTheme.Apply(model);
+            return AnalysisChartTheme.Apply(AnalysisChartTheme.ApplyScoreChartBounds(model, 0));
         }
 
         /// <summary>
@@ -731,6 +731,7 @@ namespace FemVoiceStudio.ViewModels
             }
 
             model.Series.Add(series);
+            AnalysisChartTheme.ApplyScoreChartBounds(model, VoiceIntelligenceTrend.Count);
             model.InvalidatePlot(false);
         }
 
@@ -794,6 +795,7 @@ namespace FemVoiceStudio.ViewModels
             }
 
             model.Series.Add(series);
+            AnalysisChartTheme.ApplyScoreChartBounds(model, windows.Count);
             model.InvalidatePlot(false);
         }
 
@@ -856,6 +858,7 @@ namespace FemVoiceStudio.ViewModels
             }
 
             VoiceDevelopmentLongPlotModel.Series.Add(series);
+            AnalysisChartTheme.ApplyScoreChartBounds(VoiceDevelopmentLongPlotModel, allWindows.Count);
             VoiceDevelopmentLongPlotModel.InvalidatePlot(false);
         }
 
@@ -910,6 +913,7 @@ namespace FemVoiceStudio.ViewModels
                 });
             }
 
+            AnalysisChartTheme.ApplyScoreChartBounds(BreakthroughsPlotModel, events.Count);
             BreakthroughsPlotModel.InvalidatePlot(false);
 
             // Compose localised pattern descriptions (Pattern_*_Description + Dimension_*).
@@ -978,6 +982,7 @@ namespace FemVoiceStudio.ViewModels
             }
 
             RecoveryPatternsPlotModel.Series.Add(series);
+            AnalysisChartTheme.ApplyScoreChartBounds(RecoveryPatternsPlotModel, allWindows.Count);
             RecoveryPatternsPlotModel.InvalidatePlot(false);
         }
 
@@ -1062,6 +1067,7 @@ namespace FemVoiceStudio.ViewModels
             
             ResonancePlotModel.Series.Add(series);
             ResonancePlotModel.Series.Add(thresholdLine);
+            AnalysisChartTheme.ApplyAnalysisResonanceBounds(ResonancePlotModel, ResonanceTrend.Count);
             
             // Partial update for performance
             ResonancePlotModel.InvalidatePlot(false);
@@ -1113,8 +1119,15 @@ namespace FemVoiceStudio.ViewModels
             if (yAxis != null && PitchHistory.Count > 0)
             {
                 var pitches = PitchHistory.Select(p => p.Pitch).ToList();
-                yAxis.Minimum = Math.Max(80, pitches.Min() - 30);
-                yAxis.Maximum = Math.Min(400, pitches.Max() + 30);
+                AnalysisChartTheme.ApplyAnalysisPitchBounds(
+                    PitchPlotModel,
+                    PitchHistory.Count,
+                    Math.Max(80, pitches.Min() - 30),
+                    Math.Min(400, pitches.Max() + 30));
+            }
+            else
+            {
+                AnalysisChartTheme.ApplyAnalysisPitchBounds(PitchPlotModel, PitchHistory.Count);
             }
             
             PitchPlotModel.InvalidatePlot(false);
@@ -1158,6 +1171,7 @@ namespace FemVoiceStudio.ViewModels
             IntonationPlotModel.Series.Add(idealRange);
             
             IntonationPlotModel.Series.Add(series);
+            AnalysisChartTheme.ApplyAnalysisIntonationBounds(IntonationPlotModel, ScoreHistory.Count);
             IntonationPlotModel.InvalidatePlot(false);
         }
         
@@ -1209,6 +1223,7 @@ namespace FemVoiceStudio.ViewModels
             HealthPlotModel.Series.Add(strainSeries);
             HealthPlotModel.Series.Add(fatigueSeries);
             HealthPlotModel.Series.Add(safeLine);
+            AnalysisChartTheme.ApplyScoreChartBounds(HealthPlotModel, HealthTrend.Count);
             
             HealthPlotModel.InvalidatePlot(false);
         }

@@ -48,6 +48,7 @@ namespace FemVoiceStudio.Views
             InitializeComponent();
             InitializeServices();
             InitializeCharts();
+            ThemeManager.Instance.ThemeChanged += OnThemeChanged;
         }
         
         #endregion
@@ -91,6 +92,21 @@ namespace FemVoiceStudio.Views
             {
                 TimelinePlotView.Model = _chartViewModel.FormantTimelineModel;
             }
+        }
+
+        private void OnThemeChanged(object? sender, EventArgs e)
+        {
+            if (_chartViewModel == null)
+                return;
+
+            AnalysisChartTheme.ApplyAll(new[]
+            {
+                _chartViewModel.F1F2ScatterModel,
+                _chartViewModel.FormantTimelineModel
+            });
+
+            F1F2PlotView.InvalidatePlot(true);
+            TimelinePlotView.InvalidatePlot(true);
         }
         
         #endregion
@@ -391,6 +407,8 @@ namespace FemVoiceStudio.Views
         
         protected override void OnClosed(EventArgs e)
         {
+            ThemeManager.Instance.ThemeChanged -= OnThemeChanged;
+
             // Stop recording
             if (_isRecording)
             {
