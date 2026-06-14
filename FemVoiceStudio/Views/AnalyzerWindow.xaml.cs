@@ -175,19 +175,8 @@ namespace FemVoiceStudio.Views
             }
         }
         
-        private Brush GetFrequencyColor(double frequency)
-        {
-            if (frequency < 85)
-                return ResourceBrush("AnalyzerRangeVeryLowBrush", Brushes.Firebrick);
-            else if (frequency <= 155)
-                return ResourceBrush("AnalyzerRangeLowBrush", Brushes.RoyalBlue);
-            else if (frequency < 165)
-                return ResourceBrush("AnalyzerRangeMiddleBrush", Brushes.SeaGreen);
-            else if (frequency <= 320)
-                return ResourceBrush("AnalyzerRangeUpperBrush", Brushes.IndianRed);
-            else
-                return ResourceBrush("AnalyzerRangeVeryHighBrush", Brushes.LightCoral);
-        }
+        // (GetFrequencyColor removed: note buttons no longer use per-frequency red/pink/coral
+        //  backgrounds; the shared themed NoteRadioButtonStyle drives all note-button visuals.)
 
         private Brush GetSpectrogramBackgroundColor(double frequency)
         {
@@ -205,6 +194,12 @@ namespace FemVoiceStudio.Views
             return TryFindResource(key) as Brush
                    ?? Application.Current?.TryFindResource(key) as Brush
                    ?? fallback;
+        }
+
+        private Style? ResourceStyle(string key)
+        {
+            return TryFindResource(key) as Style
+                   ?? Application.Current?.TryFindResource(key) as Style;
         }
         
         private void InitializeNoteButtons()
@@ -226,26 +221,35 @@ namespace FemVoiceStudio.Views
                     Text = string.Format(Loc.Get("Analyzer_OctaveFormat"), octave),
                     VerticalAlignment = VerticalAlignment.Center,
                     Margin = new Thickness(0, 0, 8, 0),
-                    FontWeight = FontWeights.Bold
+                    FontWeight = FontWeights.Bold,
+                    // Theme the label so it stays readable in dark mode (was unset = black).
+                    Foreground = ResourceBrush("TextPrimaryBrush", SystemColors.ControlTextBrush)
                 };
                 octavePanel.Children.Add(octaveLabel);
-                
+
+                var noteStyle = ResourceStyle("NoteRadioButtonStyle");
                 for (int noteIndex = 0; noteIndex < noteNames.Length; noteIndex++)
                 {
                     double frequency = NoteToFrequency(noteIndex - 9, octave);
-                    
-                    var button = new Button
+
+                    // Themed pill RadioButton: GroupName gives single-selection across all
+                    // octaves; IsChecked marks the current target note. No per-note colours —
+                    // the shared NoteRadioButtonStyle drives every state from theme brushes.
+                    var button = new RadioButton
                     {
                         Content = noteNames[noteIndex],
+                        GroupName = "TargetNote",
                         Width = 40,
                         Height = 30,
                         Margin = new Thickness(2),
-                        Background = GetFrequencyColor(frequency),
-                        Foreground = ResourceBrush("TextOnAccentBrush", Brushes.White),
                         Tag = frequency,
                         ToolTip = $"{frequency:F1} Hz"
                     };
-                    button.Click += NoteButton_Click;
+                    if (noteStyle != null)
+                        button.Style = noteStyle;
+                    if (Math.Abs(frequency - _targetFrequency) < 0.5)
+                        button.IsChecked = true;
+                    button.Checked += NoteButton_Checked;
                     octavePanel.Children.Add(button);
                 }
                 
@@ -262,9 +266,11 @@ namespace FemVoiceStudio.Views
             return a4 * Math.Pow(2, (noteIndex + octave - 4) / 12.0);
         }
         
-        private void NoteButton_Click(object sender, RoutedEventArgs e)
+        private void NoteButton_Checked(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.Tag is double frequency)
+            // Selection behavior is unchanged: choosing a note sets the target frequency.
+            // (RadioButton GroupName unchecks the previously selected note automatically.)
+            if (sender is RadioButton button && button.Tag is double frequency)
             {
                 _targetFrequency = frequency;
                 TargetFrequencyText.Text = $"{frequency:F0} Hz";
