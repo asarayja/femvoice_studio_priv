@@ -30,6 +30,7 @@ internal static class Program
         if (args.Contains("--theme-loc-smoke")) return ThemeLocSmoke();
         if (args.Contains("--settings-smoke")) return SettingsSmoke().GetAwaiter().GetResult();
         if (args.Contains("--runtime-lifecycle-smoke")) return RuntimeLifecycleSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--analysis-scaffold-smoke")) return AnalysisScaffoldSmoke().GetAwaiter().GetResult();
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
@@ -442,7 +443,7 @@ internal static class Program
                           $"no-orphan-frames={noOrphanFrames} fresh-instance={distinctInstance} " +
                           $"second-running={secondRunning} no-orphan={firstStillStopped}");
 
-        bool ok = landsOnDashboard && shell.NavItems.Count == 9 && implemented == 3 && deferred == 6
+        bool ok = landsOnDashboard && shell.NavItems.Count == 9 && implemented == 4 && deferred == 5
                   && onGuide && backToDash && onDeferred && deferredInert
                   && runtimeRunning && firstDisposedOnNav && noOrphanFrames
                   && distinctInstance && secondRunning && firstStillStopped;
@@ -643,6 +644,57 @@ internal static class Program
                   && reStartedActive && reStreamFlowing && noOrphanAfterStop
                   && navRan && navDisposed && navNoOrphan;
         Console.WriteLine(ok ? "[lifecycle] Runtime lifecycle smoke OK" : "[lifecycle] Runtime lifecycle smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Headless verification of the Analysis/Resonance scaffold slice (no display): the Analysis nav item is
+    // an IMPLEMENTED destination; navigating switches CurrentPage to an AnalysisViewModel that is purely inert
+    // (not IDisposable, no IRelayCommand) and exposes SYNTHETIC in-memory chart series + summary placeholders;
+    // and navigating to Analysis from a running runtime disposes the runtime safely (no orphaned capture).
+    private static async Task<int> AnalysisScaffoldSmoke()
+    {
+        var svc = new VoiceFeminizationExerciseService();
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+
+        // Analysis nav item exists and is implemented.
+        var analysisNav = shell.NavItems.FirstOrDefault(n => n.Label == "Analyse");
+        bool navExists = analysisNav is not null && analysisNav.IsImplemented;
+
+        // Navigating to Analysis switches CurrentPage to AnalysisViewModel (no side effects).
+        analysisNav?.Command.Execute(null);
+        bool onAnalysis = shell.CurrentPage is AnalysisViewModel;
+        var analysis = shell.CurrentPage as AnalysisViewModel;
+
+        // Inert: not IDisposable, exposes no IRelayCommand; synthetic chart series + summary present.
+        bool notDisposable = analysis is not null && !typeof(System.IDisposable).IsAssignableFrom(typeof(AnalysisViewModel));
+        bool noCommands = analysis is not null && analysis.GetType().GetProperties()
+            .All(p => !typeof(global::CommunityToolkit.Mvvm.Input.IRelayCommand).IsAssignableFrom(p.PropertyType));
+        int seriesCount = analysis?.Series.Count ?? 0;
+        bool seriesOk = seriesCount >= 3 && analysis!.Series.All(s => s.Bars.Count > 0 && !string.IsNullOrWhiteSpace(s.Title));
+        bool summaryOk = (analysis?.SummaryMetrics.Count ?? 0) > 0 && analysis!.AllActionsDeferred;
+        Console.WriteLine($"[analysis] nav-implemented={navExists} onAnalysis={onAnalysis} series={seriesCount} summary={analysis?.SummaryMetrics.Count}");
+        Console.WriteLine($"[analysis] inert: notDisposable={notDisposable} noCommands={noCommands} seriesOk={seriesOk} summaryOk={summaryOk}");
+
+        // Navigating to Analysis from a RUNNING runtime disposes the runtime safely (no orphaned capture).
+        shell.ShowGuideCommand.Execute(null);
+        var guide = shell.CurrentPage as ExerciseGuideViewModel;
+        guide!.OpenExerciseCommand.Execute(guide.Exercises[0]);
+        (shell.CurrentPage as ExerciseDetailViewModel)!.StartCommand.Execute(null);
+        var runtime = shell.CurrentPage as ExerciseRuntimeViewModel;
+        runtime?.BeginCommand.Execute(null);   // explicit start (runtime no longer auto-starts)
+        await Task.Delay(50);
+        bool runtimeRan = runtime?.IsRunning == true;
+        analysisNav!.Command.Execute(null);   // nav to Analysis via the rail while running
+        bool runtimeDisposed = runtime is not null && !runtime.IsRunning && shell.CurrentPage is AnalysisViewModel;
+        int framesAfter = runtime?.RuntimePitchSamples.Count ?? -1;
+        await Task.Delay(150);
+        bool noOrphanFrames = runtime is not null && runtime.RuntimePitchSamples.Count == framesAfter;
+        Console.WriteLine($"[analysis] Runtime->Analysis: ran={runtimeRan} disposed={runtimeDisposed} no-orphan-frames={noOrphanFrames}");
+
+        bool ok = navExists && onAnalysis && notDisposable && noCommands && seriesOk && summaryOk
+                  && runtimeRan && runtimeDisposed && noOrphanFrames;
+        Console.WriteLine(ok ? "[analysis] Analysis scaffold smoke OK" : "[analysis] Analysis scaffold smoke FAIL");
         return ok ? 0 : 1;
     }
 }
