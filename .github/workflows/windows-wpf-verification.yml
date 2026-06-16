@@ -38,9 +38,15 @@ jobs:
       # docs/LINUX_PORTABLE_GATE_RESULTS.md; they are not caused by the migration. The full result is
       # captured in the trx artifact and the step log for honest review. continue-on-error keeps the
       # BUILD gate as the pass/fail signal without masking any individual test failure.
-      - name: Test (full suite — results recorded, failures not hidden)
+      # Run each test project to a DISTINCT trx so the Windows-only suite and the portable suite are
+      # both recorded (a single shared LogFileName collides and loses one). Nothing filtered/hidden.
+      - name: Test — Windows-only (FemVoiceStudio.Tests, net10.0-windows)
         continue-on-error: true
-        run: dotnet test FemVoiceStudio.slnx -c Debug --no-build --logger "trx;LogFileName=windows-tests.trx" --results-directory ${{ github.workspace }}/test-results
+        run: dotnet test FemVoiceStudio.Tests/FemVoiceStudio.Tests.csproj -c Debug --no-build --logger "trx;LogFileName=windows-only.trx" --results-directory ${{ github.workspace }}/test-results
+
+      - name: Test — portable (FemVoice.Tests.Portable, net10.0)
+        continue-on-error: true
+        run: dotnet test FemVoice.Tests.Portable/FemVoice.Tests.Portable.csproj -c Debug --no-build --logger "trx;LogFileName=portable.trx" --results-directory ${{ github.workspace }}/test-results
 
       - name: Upload test results (trx)
         if: always()
