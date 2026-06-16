@@ -10,7 +10,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         AvaloniaXamlLoader.Load(this);
-        // Resolve the shared-service-backed dashboard VM from the composition root.
-        DataContext = Program.Services.GetRequiredService<MainDashboardViewModel>();
+        // Shell hosts the dashboard + exercise guide/detail via ContentControl + DataTemplates.
+        DataContext = Program.Services.GetRequiredService<ShellViewModel>();
     }
 }

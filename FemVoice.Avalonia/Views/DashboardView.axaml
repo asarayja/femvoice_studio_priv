@@ -1,0 +1,95 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="FemVoice.Avalonia.Views.DashboardView">
+  <ScrollViewer>
+    <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,*,Auto" ColumnDefinitions="*,*">
+
+      <!-- Header -->
+      <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Spacing="2" Margin="0,0,0,12">
+        <TextBlock Text="FemVoice Studio — Hoveddashboard (Avalonia)" FontSize="22" FontWeight="Bold"/>
+        <TextBlock Foreground="#888" TextWrapping="Wrap"
+                   Text="Parity-slice. Pitch/stabilitet/helse drives av delte tjenester (FemVoice.Core) fra syntetisk lyd på Linux. Full feedback-pipeline, SmartCoach, rapporter og temaparitet kommer senere — se docs/AVALONIA_MAIN_DASHBOARD_PLACEHOLDERS.md."/>
+      </StackPanel>
+
+      <!-- Session controls -->
+      <Border Grid.Row="1" Grid.Column="0" BorderBrush="#444" BorderThickness="1" CornerRadius="6" Padding="14" Margin="0,0,8,12">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Økt" FontWeight="SemiBold"/>
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="Start" Command="{Binding StartCommand}" IsEnabled="{Binding !IsRecording}" Width="90"/>
+            <Button Content="Stopp" Command="{Binding StopCommand}" IsEnabled="{Binding IsRecording}" Width="90"/>
+            <TextBlock VerticalAlignment="Center" Text="{Binding IsRecording, StringFormat='Tar opp: {0}'}"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock VerticalAlignment="Center" Text="Vanskelighetsgrad:"/>
+            <ComboBox ItemsSource="{Binding DifficultyOptions}" SelectedItem="{Binding SelectedDifficulty}" MinWidth="150"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock VerticalAlignment="Center" Text="Syntetisk lyd (Linux):"/>
+            <ComboBox ItemsSource="{Binding SyntheticAudioModes}" SelectedItem="{Binding SyntheticAudioMode}" MinWidth="150"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Live metrics -->
+      <Border Grid.Row="1" Grid.Column="1" BorderBrush="#444" BorderThickness="1" CornerRadius="6" Padding="14" Margin="8,0,0,12">
+        <StackPanel Spacing="6">
+          <TextBlock Text="Sanntid" FontWeight="SemiBold"/>
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <TextBlock Text="{Binding CurrentPitch, StringFormat='{}{0:F1}'}" FontSize="34" FontWeight="Bold"/>
+            <TextBlock Text="Hz" VerticalAlignment="Bottom" Margin="0,0,0,6" Foreground="#888"/>
+          </StackPanel>
+          <TextBlock Text="{Binding CurrentSignalStatus, StringFormat='Signal: {0}'}"/>
+          <TextBlock Text="{Binding PitchStability, StringFormat='Stabilitet: {0}'}"/>
+          <TextBlock Text="{Binding HealthStatusDisplay, StringFormat='Helse: {0}'}"/>
+          <TextBlock Text="{Binding ComfortZoneLow, StringFormat='Komfortsone: {0:F0}–'}"/>
+          <TextBlock Text="{Binding ComfortZoneHigh, StringFormat='… {0:F0} Hz'}" Margin="0,-6,0,0"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Feedback -->
+      <Border Grid.Row="2" Grid.ColumnSpan="2" BorderBrush="#5a3" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+        <StackPanel Spacing="2">
+          <TextBlock Text="Tilbakemelding" FontWeight="SemiBold" Foreground="#7b5"/>
+          <TextBlock Text="{Binding CurrentFeedbackMessage}" TextWrapping="Wrap" FontSize="15"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Pitch trace (converter-free placeholder; OxyPlot.Avalonia port deferred — see AVALONIA_CHART_PORT_NOTES.md) -->
+      <Border Grid.Row="3" Grid.ColumnSpan="2" BorderBrush="#444" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12" MinHeight="260">
+        <Grid RowDefinitions="Auto,*">
+          <TextBlock Grid.Row="0" Text="Pitch-trace (Hz, nyeste til høyre)" FontWeight="SemiBold"/>
+          <Panel Grid.Row="1">
+            <TextBlock Text="Pitch-trace vises her under opptak"
+                       HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="#666"/>
+            <ItemsControl ItemsSource="{Binding PitchSamples}" VerticalAlignment="Bottom">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom"/>
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Rectangle Width="3" Margin="1,0" Fill="#4FC3F7" VerticalAlignment="Bottom" Height="{Binding}"/>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </Panel>
+        </Grid>
+      </Border>
+
+      <!-- Professional tools placeholders (navigation moved to the shell top bar) -->
+      <Border Grid.Row="4" Grid.ColumnSpan="2" BorderBrush="#444" BorderThickness="1" CornerRadius="6" Padding="12">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Profesjonelle verktøy (placeholder — senere slices)" FontWeight="SemiBold" Foreground="#888"/>
+          <WrapPanel>
+            <Button Content="Kliniker" IsEnabled="False" Margin="0,0,8,0"/>
+            <Button Content="Coach" IsEnabled="False" Margin="0,0,8,0"/>
+            <Button Content="Rapporteksport" IsEnabled="False" Margin="0,0,8,0"/>
+          </WrapPanel>
+        </StackPanel>
+      </Border>
+
+    </Grid>
+  </ScrollViewer>
+</UserControl>
