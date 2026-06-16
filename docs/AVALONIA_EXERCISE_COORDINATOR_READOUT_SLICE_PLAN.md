@@ -2,7 +2,21 @@
 
 Date: 2026-06-16 · Branch: `avalonia-exercise-coordinator-readout-slice` (off `main` @ `51565d9`, incl. PR #1–#6).
 
-> **Status: PLANNING ONLY — no coordinator-readout code in this prompt.** This branch currently equals `main` + this plan doc.
+> **Status: IMPLEMENTED (Linux-verified, headless).** This was the prep plan; the readout is built as
+> recommended in §15 — the **parameterless** `ExerciseIntelligenceCoordinator` is wired read-only into
+> `ExerciseRuntimeViewModel` (synthetic-derived `UpdateMetrics`, `GetHoldProgress` + `ExerciseLiveState`
+> surfaced in a "Koordinator-readout" panel, display-only safety-lock, compared vs the derived hold), plus
+> `--exercise-coordinator-smoke`. See `AVALONIA_EXERCISE_COORDINATOR_READOUT_SLICE_REPORT.md` /
+> `_GATE_RESULTS.md` / `_PLACEHOLDERS.md`.
+>
+> **Implementation note (differs from the plan's optimistic expectation):** §10 expected `GetHoldProgress()`
+> to *increase* with in-target pitch. In practice, for resonance-target exercises (e.g. #1 ResonanceHumming,
+> resonance target **0.50–0.85**) the coordinator evaluates the **resonance** signal, which we feed as a **neutral placeholder**
+> (60). So the coordinator's hold reads 0 % while the pitch-band **derived** hold accumulates — exactly the
+> "show both and document the difference" case (§9 / Part 3). The smoke therefore asserts the coordinator is
+> *active*, a live-state is *received*, the readout/ safety labels are *display-only*, and stop *clears* state
+> — it does **not** require coordinator hold > 0 (which would depend on a fabricated in-range resonance value
+> we deliberately do not produce).
 
 ## 1. Current merged baseline
 `main` (`51565d9`): portable core, Audio.Abstractions/Windows, Avalonia shell + dashboard, Exercise Guide + Detail, Exercise Runtime scaffold, Runtime **target-profile integration** (read-only `ExerciseTargetProfile`/`IndicatorPackage` panel, Id→ProfileType map 15/15, `RequiredHoldSeconds` as display-only hold target). 5 smokes green; no vulnerable packages; Avalonia refs only Core + Abstractions.
