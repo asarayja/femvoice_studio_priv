@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FemVoiceStudio.Audio;                 // PitchDetectionService
@@ -22,6 +23,12 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     private const int SampleRate = 44100;
     private const double DefaultHoldTargetSeconds = 5.0;
     private readonly double _holdTargetSeconds;
+
+    // ── Converter-free runtime chart (DISPLAY-ONLY; no OxyPlot, no converters) ───────
+    private const double ChartHeightPx = 200;   // fixed chart surface height; px == "distance from bottom"
+    private const int MaxTracePoints = 120;      // recent-pitch window (capped like the dashboard trace)
+    private double _chartMin;                    // fixed axis range for the session (from the target band)
+    private double _chartMax;
 
     // ── VM-local coordinator readout (DISPLAY-ONLY) ──────────────────────────────────
     // The parameterless ExerciseIntelligenceCoordinator is wired READ-ONLY as a readout source only:
@@ -75,6 +82,13 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         if (_coordinatorEnabled)
             _coordinator.ExerciseUpdated += OnCoordinatorState;
 
+        // Fixed chart axis range for the session (pure, portable PitchChartAxisRangeCalculator over the
+        // target band). Keeping it stable means the target band stays put and the trace scrolls under it.
+        var axis = PitchChartAxisRangeCalculator.Calculate(Array.Empty<double>(), TargetPitchMin, TargetPitchMax);
+        _chartMin = axis.Minimum;
+        _chartMax = axis.Maximum;
+        _runtimeChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, TargetPitchMin, TargetPitchMax);
+
         // Dedicated synthetic source aimed at the middle of the target band so the scaffold visibly
         // sits "in target" by default. (Windows would inject the real IAudioCaptureService via DI.)
         double mid = (TargetPitchMin > 0 && TargetPitchMax > 0)
@@ -118,6 +132,47 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     [ObservableProperty] private ExerciseCoordinatorReadoutDisplay _coordinatorReadout =
         ExerciseCoordinatorReadoutDisplay.Inactive();
 
+    // ── Runtime chart + live feedback (DISPLAY-ONLY) ────────────────────────────────
+    /// <summary>Recent pitch trace as px-from-bottom heights (converter-free; appended on the UI thread).</summary>
+    public ObservableCollection<double> RuntimePitchSamples { get; } = new();
+
+    /// <summary>Scalar chart state (axis range, target band, current-pitch marker) in chart px space.</summary>
+    [ObservableProperty] private RuntimeChartDisplay _runtimeChart =
+        RuntimeChartDisplay.Empty(ChartHeightPx, 60, 110, 0, 0);
+
+    /// <summary>Local, display-only live feedback text (NOT FeedbackConsistencyGuard / SmartCoach).</summary>
+    [ObservableProperty] private string _liveFeedbackMessage = "Gjør deg klar …";
+    /// <summary>Short, display-only severity label for the feedback (text only — no clinical meaning).</summary>
+    [ObservableProperty] private string _liveFeedbackSeverity = "Nøytral";
+
+    /// <summary>Derived (in-VM, pitch-band) hold for the visual bar — same value as HoldProgressPercent.</summary>
+    public double DerivedHoldVisualPercent => HoldProgressPercent;
+    /// <summary>Coordinator's display-only hold for the visual bar (0 when inactive).</summary>
+    public double CoordinatorHoldVisualPercent => CoordinatorReadout.CoordinatorHoldProgressPercent;
+    /// <summary>Display-only comparison of coordinator vs derived hold.</summary>
+    public string HoldComparisonText => CoordinatorReadout.IsCoordinatorActive
+        ? CoordinatorReadout.HoldDifferenceDisplay
+        : "Koordinator inaktiv";
+
+    partial void OnHoldProgressPercentChanged(double value) => OnPropertyChanged(nameof(DerivedHoldVisualPercent));
+    partial void OnCoordinatorReadoutChanged(ExerciseCoordinatorReadoutDisplay value)
+    {
+        OnPropertyChanged(nameof(CoordinatorHoldVisualPercent));
+        OnPropertyChanged(nameof(HoldComparisonText));
+    }
+
+    // Local, display-only feedback derivation (mirrors the dashboard's DeriveFeedback approach).
+    private (string message, string severity) DeriveLiveFeedback(bool voiced, double pitch, ExerciseLiveState? live)
+    {
+        if (live?.IsSafetyLocked == true)
+            return ("Koordinator varsler lås — kun visning, ikke håndhevet", "Lås (visning)");
+        if (!voiced || pitch <= 0)
+            return ("Ingen stabil stemme registrert", "Ingen stemme");
+        if (pitch < TargetPitchMin) return ("Litt under målområdet", "Juster");
+        if (pitch > TargetPitchMax) return ("Litt over målområdet", "Juster");
+        return ("Innenfor målområdet", "I mål");
+    }
+
     [RelayCommand]
     private void Begin()
     {
@@ -128,6 +183,10 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         HoldSeconds = 0;
         HoldProgressPercent = 0;
         ElapsedSeconds = 0;
+        RuntimePitchSamples.Clear();
+        RuntimeChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, TargetPitchMin, TargetPitchMax);
+        LiveFeedbackMessage = "Si en jevn tone i målområdet.";
+        LiveFeedbackSeverity = "Nøytral";
         _startUtc = DateTime.UtcNow;
         _lastFrameUtc = _startUtc;
         IsRunning = true;
@@ -171,6 +230,10 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
             PitchStatus = "Stoppet";
             RuntimeStatusMessage = "Øvelse stoppet.";
             CoordinatorReadout = ExerciseCoordinatorReadoutDisplay.Inactive();
+            RuntimePitchSamples.Clear();
+            RuntimeChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, TargetPitchMin, TargetPitchMax);
+            LiveFeedbackMessage = "Øvelse stoppet.";
+            LiveFeedbackSeverity = "Stoppet";
         });
     }
 
@@ -213,6 +276,15 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
                 _holdTargetSeconds, _latestLiveState, hold);
         }
 
+        // Converter-free chart snapshot + local display-only feedback (computed off the UI thread).
+        bool hasVoice = result.IsVoiced && pitch > 0;
+        double samplePx = hasVoice ? RuntimeChartDisplay.ToPx(pitch, _chartMin, _chartMax, ChartHeightPx) : 0;
+        var chartSnap = RuntimeChartDisplay.From(
+            ChartHeightPx, _chartMin, _chartMax, TargetPitchMin, TargetPitchMax,
+            pitch, hasVoice, hasVoice ? status : "Ingen stemme");
+        (string fbMsg, string fbSev) = DeriveLiveFeedback(result.IsVoiced, pitch,
+            _coordinatorEnabled ? _latestLiveState : null);
+
         _ui.Post(() =>
         {
             CurrentPitch = result.IsVoiced ? Math.Round(pitch, 1) : 0;
@@ -224,6 +296,14 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
                 ? (hold >= _holdTargetSeconds ? "Flott — du holder målområdet!" : "Bra — hold tonen rolig i målområdet.")
                 : status == "Ingen stemme" ? "Si en jevn tone for å begynne." : "Juster tonen mot målområdet.";
             if (readout is not null) CoordinatorReadout = readout;
+            RuntimeChart = chartSnap;
+            LiveFeedbackMessage = fbMsg;
+            LiveFeedbackSeverity = fbSev;
+            if (hasVoice)
+            {
+                RuntimePitchSamples.Add(samplePx);
+                while (RuntimePitchSamples.Count > MaxTracePoints) RuntimePitchSamples.RemoveAt(0);
+            }
         });
     }
 

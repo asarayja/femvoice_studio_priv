@@ -24,6 +24,7 @@ internal static class Program
         if (args.Contains("--exercise-runtime-smoke")) return ExerciseRuntimeSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-runtime-integration-smoke")) return ExerciseRuntimeIntegrationSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-coordinator-smoke")) return ExerciseCoordinatorSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--runtime-chart-feedback-smoke")) return RuntimeChartFeedbackSmoke().GetAwaiter().GetResult();
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
@@ -307,6 +308,64 @@ internal static class Program
                   && clearedOnStop && reBeginActive && reBeginLive
                   && onRuntime && backToDetail && wasRunning && clearedByNav;
         Console.WriteLine(ok ? "[coord] Exercise coordinator smoke OK" : "[coord] Exercise coordinator smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Headless verification of the Runtime Chart + Live Feedback slice (no display): the runtime VM
+    // produces a converter-free pitch trace (px heights), a target band + current-pitch marker (chart px),
+    // a local display-only feedback message, and derived + coordinator hold visuals. All display-only;
+    // no OxyPlot, no FeedbackConsistencyGuard, no ComfortZoneController, no persistence/clinical change.
+    private static async Task<int> RuntimeChartFeedbackSmoke()
+    {
+        var svc = new VoiceFeminizationExerciseService();
+        var exercises = svc.GetAllEnhancedExercises();
+        Console.WriteLine($"[chart] Exercises: {exercises.Count}");
+
+        var first = exercises[0]; // Grunnleggende humming (target 140–180 Hz)
+        using var rt = new ExerciseRuntimeViewModel(first, new InlineUiDispatcher(), () => { });
+        await Task.Delay(700); // collect synthetic frames aimed at the target-band midpoint
+
+        var chart = rt.RuntimeChart;
+        int samples = rt.RuntimePitchSamples.Count;
+        bool markerOk = chart.HasVoice && chart.CurrentPitchMarkerPx > 0;
+        bool bandOk = chart.TargetBandHeightPx > 0 && chart.TargetBandTopPx > chart.TargetBandBottomPx;
+        string feedbackMsg = rt.LiveFeedbackMessage;   // capture WHILE running (Stop resets it by design)
+        bool feedbackOk = !string.IsNullOrWhiteSpace(feedbackMsg);
+        bool derivedHoldOk = rt.DerivedHoldVisualPercent > 0;
+        // Coordinator readout is active (it drives the coordinator hold bar). The bar VALUE is 0% here because
+        // resonance is a neutral placeholder (documented) — assert active + that the bar binding resolves.
+        bool coordVisualOk = rt.CoordinatorReadout.IsCoordinatorActive && rt.CoordinatorHoldVisualPercent >= 0;
+
+        Console.WriteLine($"[chart] Exercise: {rt.SelectedExerciseName}");
+        Console.WriteLine($"[chart] Samples: {samples} (cap respected: {samples <= 120})");
+        Console.WriteLine($"[chart] Axis: {chart.ChartMinPitch:F0}-{chart.ChartMaxPitch:F0} Hz, height {chart.ChartHeightPx:F0}px");
+        Console.WriteLine($"[chart] Target band: bottom={chart.TargetBandBottomPx:F0}px top={chart.TargetBandTopPx:F0}px ({(bandOk ? "OK" : "FAIL")})");
+        Console.WriteLine($"[chart] Current marker: {chart.CurrentPitch:F1} Hz @ {chart.CurrentPitchMarkerPx:F0}px ({(markerOk ? "OK" : "FAIL")})");
+        Console.WriteLine($"[chart] Feedback: {rt.LiveFeedbackMessage} [{rt.LiveFeedbackSeverity}]");
+        Console.WriteLine($"[chart] Derived hold: {rt.DerivedHoldVisualPercent:F0}%  Coordinator hold: {rt.CoordinatorHoldVisualPercent:F0}%");
+        Console.WriteLine($"[chart] Hold comparison: {rt.HoldComparisonText}");
+
+        await rt.StopCommand.ExecuteAsync(null);
+        bool stopped = !rt.IsRunning;
+
+        // Navigation via the shell: dashboard -> guide -> detail -> runtime -> back-to-detail
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+        shell.ShowGuideCommand.Execute(null);
+        var guide = shell.CurrentPage as ExerciseGuideViewModel;
+        guide!.OpenExerciseCommand.Execute(guide.Exercises[0]);
+        (shell.CurrentPage as ExerciseDetailViewModel)!.StartCommand.Execute(null);
+        bool onRuntime = shell.CurrentPage is ExerciseRuntimeViewModel;
+        var rvm = shell.CurrentPage as ExerciseRuntimeViewModel;
+        await Task.Delay(50);
+        if (rvm is not null) await rvm.BackCommand.ExecuteAsync(null);
+        bool backToDetail = shell.CurrentPage is ExerciseDetailViewModel;
+        Console.WriteLine($"[chart] Navigation: {(onRuntime && backToDetail ? "OK" : "FAIL")} (runtime={onRuntime} back-to-detail={backToDetail})");
+
+        bool ok = exercises.Count == 15 && samples > 0 && samples <= 120 && markerOk && bandOk
+                  && feedbackOk && feedbackMsg == "Innenfor målområdet" && derivedHoldOk
+                  && coordVisualOk && stopped && onRuntime && backToDetail;
+        Console.WriteLine(ok ? "[chart] Runtime chart feedback smoke OK" : "[chart] Runtime chart feedback smoke FAIL");
         return ok ? 0 : 1;
     }
 }

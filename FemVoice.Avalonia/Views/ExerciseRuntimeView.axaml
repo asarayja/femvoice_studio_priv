@@ -53,12 +53,73 @@
         </StackPanel>
       </Border>
 
-      <!-- Hold progress (display-only) -->
-      <Border BorderBrush="#444" BorderThickness="1" CornerRadius="6" Padding="14">
+      <!-- Runtime pitch chart (converter-free; no OxyPlot). Canvas coords are px-from-bottom. -->
+      <Border BorderBrush="#36c" BorderThickness="1" CornerRadius="6" Padding="14">
         <StackPanel Spacing="6">
+          <TextBlock Text="Pitch-graf (sanntid, syntetisk)" FontWeight="SemiBold" Foreground="#9bf"/>
+          <Grid ColumnDefinitions="Auto,*">
+            <!-- Y-axis labels: max at top, min at bottom -->
+            <Grid Grid.Column="0" Width="44" Height="{Binding RuntimeChart.ChartHeightPx}"
+                  RowDefinitions="Auto,*,Auto" Margin="0,0,6,0">
+              <TextBlock Grid.Row="0" Text="{Binding RuntimeChart.ChartMaxPitch, StringFormat='{}{0:F0} Hz'}" Foreground="#888" FontSize="11"/>
+              <TextBlock Grid.Row="2" Text="{Binding RuntimeChart.ChartMinPitch, StringFormat='{}{0:F0} Hz'}" Foreground="#888" FontSize="11"/>
+            </Grid>
+            <!-- Chart surface -->
+            <Border Grid.Column="1" Background="#11151c" CornerRadius="4" ClipToBounds="True">
+              <Canvas Name="ChartCanvas" Height="{Binding RuntimeChart.ChartHeightPx}" HorizontalAlignment="Stretch">
+                <!-- Target band (green) -->
+                <Rectangle Canvas.Left="0" Canvas.Bottom="{Binding RuntimeChart.TargetBandBottomPx}"
+                           Height="{Binding RuntimeChart.TargetBandHeightPx}"
+                           Width="{Binding #ChartCanvas.Bounds.Width}" Fill="#3343c25a"/>
+                <!-- Recent pitch trace (newest at right) -->
+                <ItemsControl Canvas.Left="0" Canvas.Bottom="0" ItemsSource="{Binding RuntimePitchSamples}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom"/>
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Rectangle Width="3" Margin="1,0" Fill="#4FC3F7" VerticalAlignment="Bottom" Height="{Binding}"/>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <!-- Current pitch marker (yellow line) -->
+                <Rectangle Canvas.Left="0" Canvas.Bottom="{Binding RuntimeChart.CurrentPitchMarkerPx}"
+                           Height="2" Width="{Binding #ChartCanvas.Bounds.Width}" Fill="#FFD54F"
+                           IsVisible="{Binding RuntimeChart.HasVoice}"/>
+              </Canvas>
+            </Border>
+          </Grid>
+          <WrapPanel>
+            <TextBlock Text="{Binding RuntimeChart.CurrentPitch, StringFormat='Nå: {0:F1} Hz'}" Margin="0,0,16,0"/>
+            <TextBlock Text="{Binding RuntimeChart.TargetPitchMin, StringFormat='Mål: {0:F0}'}" Foreground="#9c9"/>
+            <TextBlock Text="{Binding RuntimeChart.TargetPitchMax, StringFormat='–{0:F0} Hz'}" Foreground="#9c9" Margin="0,0,16,0"/>
+            <TextBlock Text="{Binding RuntimeChart.ChartStatusText}" Foreground="#aaa"/>
+          </WrapPanel>
+          <TextBlock Text="Gul linje = nåværende pitch · grønt felt = målområde (kun visning)" Foreground="#666" FontSize="11"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Live feedback (local, display-only — NOT FeedbackConsistencyGuard/SmartCoach) -->
+      <Border BorderBrush="#5a3" BorderThickness="1" CornerRadius="6" Padding="12">
+        <StackPanel Spacing="2">
+          <TextBlock Text="Sanntids-tilbakemelding (kun visning)" FontWeight="SemiBold" Foreground="#7b5"/>
+          <TextBlock Text="{Binding LiveFeedbackMessage}" TextWrapping="Wrap" FontSize="16"/>
+          <TextBlock Text="{Binding LiveFeedbackSeverity, StringFormat='Status: {0}'}" Foreground="#9a9" FontSize="12"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Hold progress (display-only): derived vs coordinator -->
+      <Border BorderBrush="#444" BorderThickness="1" CornerRadius="6" Padding="14">
+        <StackPanel Spacing="4">
           <TextBlock Text="Hold i målområdet (visning)" FontWeight="SemiBold"/>
-          <ProgressBar Minimum="0" Maximum="100" Value="{Binding HoldProgressPercent}" Height="18"/>
-          <TextBlock Text="{Binding HoldSeconds, StringFormat='Holdt: {0:F1} s'}"/>
+          <TextBlock Text="Avledet hold" Foreground="#9cf" FontSize="12"/>
+          <ProgressBar Minimum="0" Maximum="100" Value="{Binding DerivedHoldVisualPercent}" Height="16"/>
+          <TextBlock Text="{Binding HoldSeconds, StringFormat='Holdt: {0:F1} s'}" FontSize="12"/>
+          <TextBlock Text="Koordinator-hold (kun visning, ikke håndhevet)" Foreground="#d9f" FontSize="12" Margin="0,6,0,0"/>
+          <ProgressBar Minimum="0" Maximum="100" Value="{Binding CoordinatorHoldVisualPercent}" Height="16"/>
+          <TextBlock Text="{Binding HoldComparisonText, StringFormat='Differanse: {0}'}" Foreground="#aaa" FontSize="12"/>
         </StackPanel>
       </Border>
 
