@@ -344,7 +344,7 @@ namespace FemVoiceStudio.Tests
             var directory = new DirectoryInfo(AppContext.BaseDirectory);
             while (directory != null)
             {
-                var candidate = System.IO.Path.Combine(directory.FullName, "FemVoiceStudio", "Resources", "Strings.resx");
+                var candidate = System.IO.Path.Combine(directory.FullName, "FemVoice.Core", "Resources", "Strings.resx");
                 if (System.IO.File.Exists(candidate))
                     return candidate;
                 directory = directory.Parent;

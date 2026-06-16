@@ -222,7 +222,7 @@ namespace FemVoiceStudio.Tests
         public void ExportWriter_UsesCompactHeadersAndWiderRecoveryCostColumn()
         {
             var sourcePath = Path.Combine(FindRepositoryRoot(),
-                "FemVoiceStudio", "Services", "ExportWriter.cs");
+                "FemVoice.Core", "Services", "ExportWriter.cs");
             var source = File.ReadAllText(sourcePath);
 
             Assert.Contains("columns.RelativeColumn(3.2f)", source);
@@ -329,7 +329,7 @@ namespace FemVoiceStudio.Tests
         private static Dictionary<string, string> LoadResx(string file)
         {
             var path = Path.Combine(FindRepositoryRoot(),
-                "FemVoiceStudio", "Resources", file);
+                "FemVoice.Core", "Resources", file);
             return XDocument.Load(path)
                 .Root!
                 .Elements("data")

@@ -199,7 +199,7 @@ namespace FemVoiceStudio.Tests
             var directory = new DirectoryInfo(AppContext.BaseDirectory);
             while (directory != null)
             {
-                var candidate = Path.Combine(directory.FullName, "FemVoiceStudio", "Resources");
+                var candidate = Path.Combine(directory.FullName, "FemVoice.Core", "Resources");
                 if (Directory.Exists(candidate))
                     return candidate;
 

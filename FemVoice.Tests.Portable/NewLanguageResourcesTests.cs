@@ -34,7 +34,7 @@ namespace FemVoiceStudio.Tests
             return dir?.FullName ?? Directory.GetCurrentDirectory();
         }
 
-        private static string ResourcesDir() => Path.Combine(RepoRoot(), "FemVoiceStudio", "Resources");
+        private static string ResourcesDir() => Path.Combine(RepoRoot(), "FemVoice.Core", "Resources");
 
         private static Dictionary<string, string> LoadResx(string fileName)
         {
