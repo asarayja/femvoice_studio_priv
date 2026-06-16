@@ -2,9 +2,13 @@
 
 Date: 2026-06-16 · Branch: `avalonia-runtime-chart-feedback-slice` (off `main` @ `a8df6ec`, incl. PR #1–#7).
 
-> **Status: PLANNING ONLY — no chart/feedback code in this prompt.** This branch currently equals `main`
-> plus this plan doc. The slice adds a **display-only, non-clinical** visual feedback layer to the
-> Exercise Runtime screen.
+> **Status: IMPLEMENTED (Linux-verified, headless).** Built as recommended in §16 — a converter-free
+> native-Avalonia pitch chart (Canvas target-band + `ItemsControl` trace + current-pitch marker, fixed axis
+> via the portable `PitchChartAxisRangeCalculator`) + a local display-only live-feedback readout + derived vs
+> coordinator hold bars + `--runtime-chart-feedback-smoke`. OxyPlot.Avalonia and `FeedbackConsistencyGuard`
+> were deferred as planned. The band rendered cleanly via `Canvas.Bottom`/`Height` bindings, so the
+> labelled-guide-line fallback (§6) was not needed. See `_SLICE_REPORT.md` / `_GATE_RESULTS.md` /
+> `_PLACEHOLDERS.md`.
 
 ## 1. Current merged baseline
 `main` (`a8df6ec`): portable core, Audio.Abstractions/Windows, Avalonia shell + dashboard, Exercise Guide +
