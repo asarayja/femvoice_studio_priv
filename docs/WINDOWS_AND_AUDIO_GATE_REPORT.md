@@ -1,6 +1,6 @@
 # Windows Baseline + Audio.Windows — Gate Report
 
-Date: 2026-06-16 · Branch: `linux-portable-core` · Host: Linux (Ubuntu 26.04), .NET 10.0.301 (`~/.dotnet`). **Committed, not pushed.**
+Date: 2026-06-16 · Branch: `linux-portable-core` · Host: Linux (Ubuntu 26.04), .NET 10.0.301 (`~/.dotnet`). **Committed and pushed to `origin/linux-portable-core` for review — NOT merged; `main` untouched.**
 
 This gate: committed the portable-core work in reviewable batches, added the Windows NAudio audio adapter behind the abstraction, verified Linux/Avalonia regression, and statically prepared the WPF/Windows verification. The real Windows build/test **cannot run on this Linux host** and is documented as pending (not invented).
 
@@ -14,6 +14,12 @@ Branch `linux-portable-core` (off `main` @ `e9e0091`), 6 reviewable commits:
 - (docs batch for this gate)
 
 Working tree clean; `bin/obj` ignored. See `COMMIT_BATCH_REVIEW_NOTES.md`.
+
+**Remote / review status:**
+- Remote: `origin` = `https://github.com/asarayja/femvoice_studio_priv.git` (private).
+- Pushed: `git push -u origin linux-portable-core` succeeded. Local `HEAD` == `origin/linux-portable-core` == `07a542c` (matched). `origin/main` unchanged at `e9e0091`.
+- PR: not opened (review branch only). Suggested PR URL: `https://github.com/asarayja/femvoice_studio_priv/pull/new/linux-portable-core`.
+- Final commit pushed/tested-on-Linux: `07a542c` (a subsequent docs-only commit may follow on the same review branch).
 
 ## 2. What was verified on Windows
 **Nothing — no Windows host available.** This is documented honestly in `WINDOWS_BASELINE_TEST_RESULTS.md` with a runbook. What was verified **on Linux** instead: `FemVoice.Core`, `FemVoice.Audio.Abstractions`, `FemVoice.Audio.Windows` (via `EnableWindowsTargeting`), and `FemVoice.Avalonia` all build (0 errors); `FemVoice.Tests.Portable` runs 1570/1580.
@@ -49,6 +55,9 @@ No clinical/scoring/SmartCoach/health/recovery/safety-gate/progression/report/lo
 ## 11. Recommended next phase
 1. **On Windows (closes the only gap):** run `dotnet build`/`dotnet test FemVoiceStudio.slnx`; fill `WINDOWS_BASELINE_TEST_RESULTS.md`; confirm WPF compiles against the shared core and the 30 Windows-only tests pass; do the manual mic smoke for `NAudioCaptureService`.
 2. **Then** (per stop condition, after review): begin the **Avalonia Main Dashboard parity slice** (it is currently only a bootstrap shell — no dashboard exists yet), then the **Exercise Guide + Exercise Detail** slice.
+
+## Recommendation: **DO NOT MERGE — continue review**
+The review branch is pushed and Linux-verified, but merging is **blocked** until the Windows gap closes: (a) `dotnet build`/`test FemVoiceStudio.slnx` green on a Windows host (WPF compiles against the shared core; 30 Windows-only tests pass), and (b) the manual Windows mic smoke for `NAudioCaptureService` passes. Until both are recorded in `WINDOWS_BASELINE_TEST_RESULTS.md` / `AUDIO_WINDOWS_ADAPTER_NOTES.md`, keep the branch in review. No behaviour change has been introduced, so the risk is purely "does WPF still compile/run on Windows" — which only a Windows build can confirm.
 
 ## Stop condition
 Stopping here per the work order. Do not proceed to full Avalonia UI parity until this gate is reviewed and the Windows baseline (step 1) is confirmed.

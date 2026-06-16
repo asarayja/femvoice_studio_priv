@@ -23,5 +23,10 @@ Source grep of `FemVoice.Avalonia/**` for `System.Windows`, `Microsoft.Win32`, `
 
 > Note: `FemVoice.Core` references the NAudio **package** for cross-platform FFT math (`NAudio.Dsp`) used by `ResonanceProxyEngine`, so NAudio is transitively present in the Avalonia output — but **no NAudio capture API** is used on Linux. This is the same as before this gate and is not a Windows-only-capture leak.
 
+## Post-push regression rerun (after `git push -u origin linux-portable-core`)
+- Avalonia build: **succeeded**. Smoke: **OK**.
+- Portable tests: **1569 passed / 11 failed** this run — i.e. the 10 pre-existing localization-data failures **plus** the documented intermittent `ComfortZoneControllerTests.ZoneUpdated_EventRaisedOnUpdate` timing flake (counts oscillate 10↔11 across runs). **No new regression** (nothing changed since the adapter; the push does not alter code).
+- Avalonia reference guard: still only `FemVoice.Core` + `FemVoice.Audio.Abstractions` (no `FemVoice.Audio.Windows`).
+
 ## Verdict
 Avalonia still builds and starts (headless) on Linux; no Windows-only capture/UI dependency leaked in via the Audio.Windows addition. Linux portability preserved.
