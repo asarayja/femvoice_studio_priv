@@ -22,6 +22,7 @@ internal static class Program
         if (args.Contains("--dashboard-smoke")) return DashboardSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-smoke")) return ExerciseSmoke();
         if (args.Contains("--exercise-runtime-smoke")) return ExerciseRuntimeSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--exercise-runtime-integration-smoke")) return ExerciseRuntimeIntegrationSmoke().GetAwaiter().GetResult();
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
@@ -171,6 +172,59 @@ internal static class Program
         bool ok = running && stopped && pitch > 0 && rt.TargetPitchMax > 0
                   && status == "Innenfor målområde" && hold > 0 && onRuntime && backToDetail;
         Console.WriteLine(ok ? "[runtime] Exercise runtime smoke OK" : "[runtime] Exercise runtime smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Headless verification of the runtime target-profile integration (no display): every exercise is
+    // evaluated for a profile mapping, the runtime surfaces the profile, and nav still works.
+    private static async Task<int> ExerciseRuntimeIntegrationSmoke()
+    {
+        var svc = new VoiceFeminizationExerciseService();
+        var exercises = svc.GetAllEnhancedExercises();
+        Console.WriteLine($"[rt-int] Exercises: {exercises.Count}");
+
+        int mapped = 0, fallback = 0;
+        foreach (var ex in exercises)
+        {
+            var d = ExerciseRuntimeTargetProfileDisplay.From(ex);
+            if (d.HasProfile) mapped++; else fallback++;
+        }
+        Console.WriteLine($"[rt-int] Mapped profiles: {mapped}/{exercises.Count}");
+        Console.WriteLine($"[rt-int] Fallback profiles: {fallback}/{exercises.Count}");
+
+        var first = exercises[0];
+        using var rt = new ExerciseRuntimeViewModel(first, new InlineUiDispatcher(), () => { });
+        var prof = rt.TargetProfile;
+        Console.WriteLine($"[rt-int] First: {first.Name}");
+        Console.WriteLine($"[rt-int] Profile: {prof.ProfileType}");
+        Console.WriteLine($"[rt-int] RequiredHoldSeconds: {prof.RequiredHoldSeconds}");
+        Console.WriteLine($"[rt-int] Resonance: {prof.ResonanceTarget}  Stability: {prof.StabilityTarget}  Skills: {prof.VoiceSkillTargets}");
+        Console.WriteLine($"[rt-int] HoldTarget: {rt.HoldTargetDescription}");
+        bool profileShown = prof.HasProfile && !string.IsNullOrWhiteSpace(prof.PurposeText);
+
+        await Task.Delay(500); // synthetic frames in the target band
+        double pitch = rt.CurrentPitch;
+        string status = rt.PitchStatus;
+        await rt.StopCommand.ExecuteAsync(null);
+
+        // Navigation: dashboard -> guide -> detail -> runtime -> back-to-detail
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+        shell.ShowGuideCommand.Execute(null);
+        var guide = shell.CurrentPage as ExerciseGuideViewModel;
+        guide!.OpenExerciseCommand.Execute(guide.Exercises[0]);
+        (shell.CurrentPage as ExerciseDetailViewModel)!.StartCommand.Execute(null);
+        bool onRuntime = shell.CurrentPage is ExerciseRuntimeViewModel;
+        var rvm = shell.CurrentPage as ExerciseRuntimeViewModel;
+        await Task.Delay(50);
+        if (rvm is not null) await rvm.BackCommand.ExecuteAsync(null);
+        bool backToDetail = shell.CurrentPage is ExerciseDetailViewModel;
+        Console.WriteLine($"[rt-int] Runtime: {(onRuntime ? "OK" : "FAIL")}");
+        Console.WriteLine($"[rt-int] Navigation: runtime={onRuntime} back-to-detail={backToDetail}");
+
+        bool ok = exercises.Count == 15 && (mapped + fallback) == 15 && profileShown
+                  && pitch > 0 && status == "Innenfor målområde" && onRuntime && backToDetail;
+        Console.WriteLine(ok ? "[rt-int] Exercise runtime integration smoke OK" : "[rt-int] Exercise runtime integration smoke FAIL");
         return ok ? 0 : 1;
     }
 }
