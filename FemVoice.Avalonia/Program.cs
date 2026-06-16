@@ -25,6 +25,7 @@ internal static class Program
         if (args.Contains("--exercise-runtime-integration-smoke")) return ExerciseRuntimeIntegrationSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-coordinator-smoke")) return ExerciseCoordinatorSmoke().GetAwaiter().GetResult();
         if (args.Contains("--runtime-chart-feedback-smoke")) return RuntimeChartFeedbackSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--shell-smoke")) return ShellSmoke().GetAwaiter().GetResult();
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
@@ -366,6 +367,75 @@ internal static class Program
                   && feedbackOk && feedbackMsg == "Innenfor målområdet" && derivedHoldOk
                   && coordVisualOk && stopped && onRuntime && backToDetail;
         Console.WriteLine(ok ? "[chart] Runtime chart feedback smoke OK" : "[chart] Runtime chart feedback smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Headless verification of the Desktop Shell + Navigation/Layout slice (no display): the shell
+    // constructs, lands on the dashboard, implemented nav switches pages, deferred nav opens a STATIC
+    // placeholder with no side effects, and navigating away from a running runtime disposes it (no
+    // orphaned synthetic capture, no duplicate runtime). All display-only — no clinical/persistence.
+    private static async Task<int> ShellSmoke()
+    {
+        var svc = new VoiceFeminizationExerciseService();
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+
+        bool landsOnDashboard = shell.CurrentPage is MainDashboardViewModel;
+        int implemented = shell.NavItems.Count(n => n.IsImplemented);
+        int deferred = shell.NavItems.Count(n => !n.IsImplemented);
+        Console.WriteLine($"[shell] Nav items: {shell.NavItems.Count} (implemented={implemented}, deferred={deferred})");
+        Console.WriteLine($"[shell] Lands on: {shell.CurrentDestinationLabel}");
+
+        // Implemented nav switches CurrentPage.
+        shell.ShowGuideCommand.Execute(null);
+        bool onGuide = shell.CurrentPage is ExerciseGuideViewModel;
+        shell.ShowDashboardCommand.Execute(null);
+        bool backToDash = shell.CurrentPage is MainDashboardViewModel;
+
+        // Deferred nav opens a STATIC placeholder with no side effect (not IDisposable, holds no services).
+        var deferredItem = shell.NavItems.First(n => !n.IsImplemented);
+        deferredItem.Command.Execute(null);
+        bool onDeferred = shell.CurrentPage is DeferredSurfaceViewModel;
+        bool deferredInert = shell.CurrentPage is DeferredSurfaceViewModel && shell.CurrentPage is not IDisposable;
+        Console.WriteLine($"[shell] Deferred nav '{deferredItem.Label}' -> {(onDeferred ? "static placeholder" : "FAIL")} (inert={deferredInert})");
+
+        // Runtime nav-away disposes the transient runtime (no orphaned capture).
+        shell.ShowGuideCommand.Execute(null);
+        var guide = shell.CurrentPage as ExerciseGuideViewModel;
+        guide!.OpenExerciseCommand.Execute(guide.Exercises[0]);
+        (shell.CurrentPage as ExerciseDetailViewModel)!.StartCommand.Execute(null);
+        var firstRuntime = shell.CurrentPage as ExerciseRuntimeViewModel;
+        await Task.Delay(50);
+        bool runtimeRunning = firstRuntime?.IsRunning == true;
+        shell.ShowDashboardCommand.Execute(null);   // nav away via the rail
+        bool firstDisposedOnNav = firstRuntime is not null && !firstRuntime.IsRunning;
+
+        // Direct proof the synthetic capture loop is no longer driving the disposed runtime: its pitch
+        // trace must NOT keep growing after nav-away (the FrameAvailable handler was unsubscribed in Dispose).
+        int framesAfterNav = firstRuntime?.RuntimePitchSamples.Count ?? -1;
+        await Task.Delay(150);
+        bool noOrphanFrames = firstRuntime is not null && firstRuntime.RuntimePitchSamples.Count == framesAfterNav;
+
+        // Re-open a runtime -> a fresh, distinct, running instance (no duplicate left active).
+        shell.ShowGuideCommand.Execute(null);
+        var guide2 = shell.CurrentPage as ExerciseGuideViewModel;
+        guide2!.OpenExerciseCommand.Execute(guide2.Exercises[0]);
+        (shell.CurrentPage as ExerciseDetailViewModel)!.StartCommand.Execute(null);
+        var secondRuntime = shell.CurrentPage as ExerciseRuntimeViewModel;
+        await Task.Delay(50);
+        bool secondRunning = secondRuntime?.IsRunning == true;
+        bool distinctInstance = secondRuntime is not null && !ReferenceEquals(firstRuntime, secondRuntime);
+        bool firstStillStopped = firstRuntime is not null && !firstRuntime.IsRunning;
+        if (secondRuntime is not null) await secondRuntime.BackCommand.ExecuteAsync(null);
+        Console.WriteLine($"[shell] Runtime lifecycle: running={runtimeRunning} disposed-on-nav={firstDisposedOnNav} " +
+                          $"no-orphan-frames={noOrphanFrames} fresh-instance={distinctInstance} " +
+                          $"second-running={secondRunning} no-orphan={firstStillStopped}");
+
+        bool ok = landsOnDashboard && implemented == 2 && deferred >= 1
+                  && onGuide && backToDash && onDeferred && deferredInert
+                  && runtimeRunning && firstDisposedOnNav && noOrphanFrames
+                  && distinctInstance && secondRunning && firstStillStopped;
+        Console.WriteLine(ok ? "[shell] Shell smoke OK" : "[shell] Shell smoke FAIL");
         return ok ? 0 : 1;
     }
 }
