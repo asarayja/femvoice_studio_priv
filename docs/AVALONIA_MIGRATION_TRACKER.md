@@ -30,7 +30,8 @@ Reference docs: `docs/AUDIT_SUMMARY_FOR_AVALONIA_PLANNING.md`, `AVALONIA_PORT_RE
 | 5 | Theme & localization port | TODO | Agent 6 | Light/dark + runtime language switch work |
 | 6 | Navigation & main dashboard | **MERGED to main (PR #3)** — `MainDashboardViewModel` + dashboard; start/stop + live pitch/stability/health from synthetic audio; top-nav shell added in Phase 8 | Agent 8 | Chart/feedback/theme parity in later slices |
 | 7 | Audio, pitch chart, live feedback | TODO | Agent 7 + 8 | Pitch/comfort-zone parity |
-| 8 | Exercise guide & detail | **SLICE DONE (Linux-verified, PR open)** — Exercise Guide list (15) + Detail + shell nav (dashboard↔guide↔detail); read-only over `VoiceFeminizationExerciseService`; `--exercise-smoke` | Agent 9 | hold-progress / safety-freeze / exercise runtime in a later slice |
+| 8 | Exercise guide & detail | **MERGED to main (PR #4)** — Guide list (15) + Detail + shell nav; read-only over `VoiceFeminizationExerciseService`; `--exercise-smoke` | Agent 9 | — |
+| 8b | Exercise runtime scaffold | **SLICE DONE (Linux-verified, PR open)** — Detail→Runtime nav; `ExerciseRuntimeViewModel`/`View`; synthetic pitch vs target band; display-only hold/elapsed; `--exercise-runtime-smoke` | Agent 9 | real hold via coordinator / session lifecycle / safety-freeze in later slices |
 | 9 | SmartCoach & progression UI | TODO | Agent 10 | Daily rec matches WPF on same data |
 | 10 | Analysis, resonance, chart windows | TODO | Agent 7 + 10 | Resonance/analysis chart parity |
 | 11 | Reports, professional tools, dialogs | TODO | Agent 11 | 4×3 export parity; override clamp intact |

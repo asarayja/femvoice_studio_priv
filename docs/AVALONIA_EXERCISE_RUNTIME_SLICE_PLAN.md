@@ -2,7 +2,7 @@
 
 Date: 2026-06-16 · Branch: `avalonia-exercise-runtime-slice` (off `main` @ `ed0bd43`, incl. PR #1–#4).
 
-> **Status: PLANNING ONLY — no runtime code implemented in this prompt.** This branch currently equals `main` + this plan doc.
+> **Status: IMPLEMENTED (Linux-verified).** This was the prep plan; the runtime scaffold is now built (synthetic-audio runtime view, display-only hold/elapsed, detail↔runtime nav, `--exercise-runtime-smoke`). See `AVALONIA_EXERCISE_RUNTIME_SLICE_REPORT.md`, `AVALONIA_EXERCISE_RUNTIME_GATE_RESULTS.md`, `AVALONIA_EXERCISE_RUNTIME_PLACEHOLDERS.md`. The scope below is what was implemented; the coordinator-based real hold and session lifecycle remain deferred.
 
 ## 1. Current merged baseline
 `main` (`ed0bd43`) includes: portable core, Audio.Abstractions, Audio.Windows, Avalonia shell, Main Dashboard slice (synthetic/noop audio, `--dashboard-smoke`), Exercise Guide + Detail slice (`--exercise-smoke`, 15 exercises, shell nav), Tmds.DBus.Protocol 0.21.3 pin. Linux build green; no vulnerable packages; Avalonia references only `FemVoice.Core` + `FemVoice.Audio.Abstractions`.
