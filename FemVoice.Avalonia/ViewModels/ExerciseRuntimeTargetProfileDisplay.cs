@@ -75,6 +75,17 @@ public sealed class ExerciseRuntimeTargetProfileDisplay
         };
     }
 
+    /// <summary>
+    /// Resolves the (pure) <see cref="ExerciseTargetProfile"/> for an exercise via the Id→type map +
+    /// <see cref="ExerciseProfileFactory"/>, or <c>null</c> when no profile is mapped. Read-only; used to
+    /// drive the VM-local, display-only coordinator readout. Makes no clinical decision, persists nothing.
+    /// </summary>
+    public static ExerciseTargetProfile? ResolveProfile(EnhancedExercise exercise)
+    {
+        var type = ExerciseProfileMap.ForExerciseId(exercise.Id);
+        return type is null ? null : new ExerciseProfileFactory().CreateProfile(type.Value);
+    }
+
     // Resolve a localization key to text; fall back when the key is null/missing (returns the key).
     private static string Loc(string? key, string fallback)
     {
