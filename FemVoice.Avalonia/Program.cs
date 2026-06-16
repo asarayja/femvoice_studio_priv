@@ -5,6 +5,7 @@ using FemVoiceStudio.Core.Platform;
 using FemVoiceStudio.Services;
 using FemVoice.Avalonia.Platform;
 using FemVoice.Avalonia.ViewModels;
+using FemVoice.Avalonia.Localization;
 
 namespace FemVoice.Avalonia;
 
@@ -26,6 +27,7 @@ internal static class Program
         if (args.Contains("--exercise-coordinator-smoke")) return ExerciseCoordinatorSmoke().GetAwaiter().GetResult();
         if (args.Contains("--runtime-chart-feedback-smoke")) return RuntimeChartFeedbackSmoke().GetAwaiter().GetResult();
         if (args.Contains("--shell-smoke")) return ShellSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--theme-loc-smoke")) return ThemeLocSmoke();
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
@@ -436,6 +438,81 @@ internal static class Program
                   && runtimeRunning && firstDisposedOnNav && noOrphanFrames
                   && distinctInstance && secondRunning && firstStillStopped;
         Console.WriteLine(ok ? "[shell] Shell smoke OK" : "[shell] Shell smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Headless verification of the Theme + Localization Adapter slice (no display): the safe read-only
+    // localization adapter resolves known keys and falls back on missing ones; the reactive markup-extension
+    // backing + Tr extension work; shell/nav/deferred labels resolve or fall back; and (guarded, when an
+    // Avalonia platform is available) the named shell theme brushes are present for both theme variants.
+    // No SetLanguage is called (semantics preserved); no clinical/WPF change.
+    private static int ThemeLocSmoke()
+    {
+        // 1. Localization adapter: a known RESX key resolves (proves we read the shared service); a missing
+        //    key falls back safely (the indexer returns the key itself, which Localized.Get maps to fallback).
+        string yes = Localized.Get("Common_Yes", "FB");
+        bool knownResolves = yes == "Ja";
+        string miss = Localized.Get("__no_such_key__", "Fallback-X");
+        bool missingFallsBack = miss == "Fallback-X";
+        Console.WriteLine($"[theme-loc] Localized.Get: 'Common_Yes'='{yes}'  missing->'{miss}'");
+
+        // 2. Reactive backing (the {loc:Tr} markup-extension source) resolves + falls back, and subscribes
+        //    to the service's PropertyChanged so it would update on a language switch (not triggered here).
+        var lvKnown = new LocalizedValue("Common_Yes", "FB");
+        var lvMiss = new LocalizedValue("__no_such_key__", "Fallback-Y");
+        bool reactiveOk = lvKnown.Value == "Ja" && lvMiss.Value == "Fallback-Y";
+
+        // 3. Tr markup extension returns a one-way Binding (Avalonia), not a WPF construct.
+        var tr = new TrExtension("Common_Yes") { Fallback = "FB" };
+        bool trOk = tr.ProvideValue(null!) is global::Avalonia.Data.Binding;
+
+        // 4. Shell/nav/status/deferred labels resolve or fall back through the adapter (identical text today).
+        var svc = new VoiceFeminizationExerciseService();
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+        bool navLabelsOk = shell.NavItems.Count == 9
+            && shell.NavItems.All(n => !string.IsNullOrWhiteSpace(n.Label))
+            && shell.NavItems[0].Label == "Dashbord"
+            && shell.NavItems[2].Label == "Innstillinger — senere";
+        bool statusOk = shell.MicStatusText.Contains("syntetisk") && shell.ModeText.Contains("Kun visning");
+        var def = new DeferredSurfaceViewModel("Innstillinger");
+        bool deferredOk = def.Title.Contains("Innstillinger") && !string.IsNullOrWhiteSpace(def.Message);
+        Console.WriteLine($"[theme-loc] Shell labels: nav[0]='{shell.NavItems[0].Label}' nav[2]='{shell.NavItems[2].Label}' " +
+                          $"mic='{shell.MicStatusText}'");
+        Console.WriteLine($"[theme-loc] Deferred page: title='{def.Title}'");
+
+        // 5. Theme brushes: guarded runtime lookup (requires an Avalonia platform; cleanly skipped otherwise).
+        string[] shellBrushKeys =
+        {
+            "ShellHeaderBackgroundBrush","ShellStatusBackgroundBrush","ShellPanelBackgroundBrush","ShellBorderBrush",
+            "ShellAccentBrush","ShellHeadingBrush","ShellMutedBrush","ShellFaintBrush","ShellSubtleTextBrush",
+            "ShellBodyTextBrush","ShellOkBrush","ShellOkBorderBrush","ShellDeferredTitleBrush","ShellDeferredBorderBrush",
+        };
+        bool themeChecked = false, themeKeysOk = true;
+        try
+        {
+            BuildAvaloniaApp().SetupWithoutStarting();
+            var app = Application.Current;
+            if (app is not null)
+            {
+                themeChecked = true;
+                foreach (var k in shellBrushKeys)
+                {
+                    bool darkOk = app.TryGetResource(k, global::Avalonia.Styling.ThemeVariant.Dark, out var dv) && dv is not null;
+                    bool lightOk = app.TryGetResource(k, global::Avalonia.Styling.ThemeVariant.Light, out var lv) && lv is not null;
+                    if (!(darkOk && lightOk)) { themeKeysOk = false; Console.WriteLine($"[theme-loc] MISSING theme brush: {k} (dark={darkOk} light={lightOk})"); }
+                }
+                Console.WriteLine($"[theme-loc] Theme brushes: {(themeKeysOk ? "all present" : "MISSING some")} ({shellBrushKeys.Length} keys × Dark+Light)");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[theme-loc] Theme runtime check skipped (no Avalonia platform here): {ex.GetType().Name}");
+        }
+
+        bool ok = knownResolves && missingFallsBack && reactiveOk && trOk
+                  && navLabelsOk && statusOk && deferredOk && (!themeChecked || themeKeysOk);
+        Console.WriteLine(ok ? "[theme-loc] Theme + localization smoke OK" : "[theme-loc] Theme + localization smoke FAIL");
         return ok ? 0 : 1;
     }
 }

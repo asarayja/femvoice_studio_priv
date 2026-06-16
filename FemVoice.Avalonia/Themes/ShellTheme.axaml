@@ -1,0 +1,47 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!--
+    Avalonia-only shell theme foundation (display-only). Named brushes for the desktop shell chrome, with
+    Dark and Light variants selected by the app's ActualThemeVariant. Replaces scattered hardcoded hex in
+    MainWindow.axaml. No clinical/domain colour meaning; no WPF theme-manager dependency; changes no behaviour.
+  -->
+  <ResourceDictionary.ThemeDictionaries>
+
+    <!-- Dark variant (current shell appearance, preserved) -->
+    <ResourceDictionary x:Key="Dark">
+      <SolidColorBrush x:Key="ShellHeaderBackgroundBrush" Color="#1B1B1B"/>
+      <SolidColorBrush x:Key="ShellStatusBackgroundBrush" Color="#151515"/>
+      <SolidColorBrush x:Key="ShellPanelBackgroundBrush" Color="#181818"/>
+      <SolidColorBrush x:Key="ShellBorderBrush" Color="#333333"/>
+      <SolidColorBrush x:Key="ShellAccentBrush" Color="#99BBFF"/>
+      <SolidColorBrush x:Key="ShellHeadingBrush" Color="#999999"/>
+      <SolidColorBrush x:Key="ShellMutedBrush" Color="#888888"/>
+      <SolidColorBrush x:Key="ShellFaintBrush" Color="#666666"/>
+      <SolidColorBrush x:Key="ShellSubtleTextBrush" Color="#AAAAAA"/>
+      <SolidColorBrush x:Key="ShellBodyTextBrush" Color="#BBBBBB"/>
+      <SolidColorBrush x:Key="ShellOkBrush" Color="#77BB55"/>
+      <SolidColorBrush x:Key="ShellOkBorderBrush" Color="#33AA33"/>
+      <SolidColorBrush x:Key="ShellDeferredTitleBrush" Color="#DD99BB"/>
+      <SolidColorBrush x:Key="ShellDeferredBorderBrush" Color="#AA66AA"/>
+    </ResourceDictionary>
+
+    <!-- Light variant (prepared for system light theme; sensible equivalents) -->
+    <ResourceDictionary x:Key="Light">
+      <SolidColorBrush x:Key="ShellHeaderBackgroundBrush" Color="#ECECEC"/>
+      <SolidColorBrush x:Key="ShellStatusBackgroundBrush" Color="#F3F3F3"/>
+      <SolidColorBrush x:Key="ShellPanelBackgroundBrush" Color="#F7F7F7"/>
+      <SolidColorBrush x:Key="ShellBorderBrush" Color="#CCCCCC"/>
+      <SolidColorBrush x:Key="ShellAccentBrush" Color="#2255AA"/>
+      <SolidColorBrush x:Key="ShellHeadingBrush" Color="#555555"/>
+      <SolidColorBrush x:Key="ShellMutedBrush" Color="#5A5A5A"/>
+      <SolidColorBrush x:Key="ShellFaintBrush" Color="#8A8A8A"/>
+      <SolidColorBrush x:Key="ShellSubtleTextBrush" Color="#444444"/>
+      <SolidColorBrush x:Key="ShellBodyTextBrush" Color="#333333"/>
+      <SolidColorBrush x:Key="ShellOkBrush" Color="#2E7D32"/>
+      <SolidColorBrush x:Key="ShellOkBorderBrush" Color="#2E7D32"/>
+      <SolidColorBrush x:Key="ShellDeferredTitleBrush" Color="#8E24AA"/>
+      <SolidColorBrush x:Key="ShellDeferredBorderBrush" Color="#BA68C8"/>
+    </ResourceDictionary>
+
+  </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>
