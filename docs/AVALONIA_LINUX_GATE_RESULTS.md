@@ -28,5 +28,12 @@ Source grep of `FemVoice.Avalonia/**` for `System.Windows`, `Microsoft.Win32`, `
 - Portable tests: **1569 passed / 11 failed** this run — i.e. the 10 pre-existing localization-data failures **plus** the documented intermittent `ComfortZoneControllerTests.ZoneUpdated_EventRaisedOnUpdate` timing flake (counts oscillate 10↔11 across runs). **No new regression** (nothing changed since the adapter; the push does not alter code).
 - Avalonia reference guard: still only `FemVoice.Core` + `FemVoice.Audio.Abstractions` (no `FemVoice.Audio.Windows`).
 
+## Dependency security re-verification (NU1903 — Tmds.DBus.Protocol, 2026-06-16)
+After pinning the transitive `Tmds.DBus.Protocol` to **0.21.3** (branch `deps-nu1903-tmds-dbus`; see `DEPENDENCY_SECURITY_NOTES.md`):
+- `FemVoice.Avalonia` build: **succeeded, 0 warnings (NU1903 gone), 0 errors**.
+- `dotnet list --vulnerable --include-transitive`: **no vulnerable packages**.
+- `--smoke`: **OK**. Portable tests: **1570/1580** (no regression).
+- Avalonia reference guard: still only `FemVoice.Core` + `FemVoice.Audio.Abstractions` — the Tmds pin is a direct package reference on the Avalonia head only; **no Windows-only dependency introduced**.
+
 ## Verdict
-Avalonia still builds and starts (headless) on Linux; no Windows-only capture/UI dependency leaked in via the Audio.Windows addition. Linux portability preserved.
+Avalonia still builds and starts (headless) on Linux; no Windows-only capture/UI dependency leaked in via the Audio.Windows addition or the Tmds.DBus.Protocol security pin. Linux portability preserved.
