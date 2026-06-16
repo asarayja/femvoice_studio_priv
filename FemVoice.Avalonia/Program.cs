@@ -29,6 +29,7 @@ internal static class Program
         if (args.Contains("--shell-smoke")) return ShellSmoke().GetAwaiter().GetResult();
         if (args.Contains("--theme-loc-smoke")) return ThemeLocSmoke();
         if (args.Contains("--settings-smoke")) return SettingsSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--runtime-lifecycle-smoke")) return RuntimeLifecycleSmoke().GetAwaiter().GetResult();
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
@@ -146,6 +147,7 @@ internal static class Program
         var exercise = svc.GetAllEnhancedExercises()[0]; // Grunnleggende humming (target 140-180 Hz)
 
         using var rt = new ExerciseRuntimeViewModel(exercise, new InlineUiDispatcher(), () => { });
+        rt.BeginCommand.Execute(null);   // explicit start (runtime no longer auto-starts)
         await Task.Delay(700); // collect synthetic frames aimed at the target-band midpoint
 
         double pitch = rt.CurrentPitch;
@@ -200,6 +202,7 @@ internal static class Program
 
         var first = exercises[0];
         using var rt = new ExerciseRuntimeViewModel(first, new InlineUiDispatcher(), () => { });
+        rt.BeginCommand.Execute(null);   // explicit start (runtime no longer auto-starts)
         var prof = rt.TargetProfile;
         Console.WriteLine($"[rt-int] First: {first.Name}");
         Console.WriteLine($"[rt-int] Profile: {prof.ProfileType}");
@@ -246,6 +249,7 @@ internal static class Program
 
         var first = exercises[0]; // Grunnleggende humming
         using var rt = new ExerciseRuntimeViewModel(first, new InlineUiDispatcher(), () => { });
+        rt.BeginCommand.Execute(null);   // explicit start (runtime no longer auto-starts)
         await Task.Delay(700); // feed synthetic-derived metrics through the coordinator (UpdateMetrics)
 
         var readout = rt.CoordinatorReadout;
@@ -296,6 +300,7 @@ internal static class Program
         // (stop the synthetic capture + clear the VM-local coordinator), not orphan it.
         (shell.CurrentPage as ExerciseDetailViewModel)!.StartCommand.Execute(null);
         var rvm2 = shell.CurrentPage as ExerciseRuntimeViewModel;
+        rvm2?.BeginCommand.Execute(null);   // explicit start (runtime no longer auto-starts)
         await Task.Delay(50);
         bool wasRunning = rvm2?.IsRunning == true;
         shell.ShowGuideCommand.Execute(null);   // top-nav away while running
@@ -327,6 +332,7 @@ internal static class Program
 
         var first = exercises[0]; // Grunnleggende humming (target 140–180 Hz)
         using var rt = new ExerciseRuntimeViewModel(first, new InlineUiDispatcher(), () => { });
+        rt.BeginCommand.Execute(null);   // explicit start (runtime no longer auto-starts)
         await Task.Delay(700); // collect synthetic frames aimed at the target-band midpoint
 
         var chart = rt.RuntimeChart;
@@ -408,6 +414,7 @@ internal static class Program
         guide!.OpenExerciseCommand.Execute(guide.Exercises[0]);
         (shell.CurrentPage as ExerciseDetailViewModel)!.StartCommand.Execute(null);
         var firstRuntime = shell.CurrentPage as ExerciseRuntimeViewModel;
+        firstRuntime?.BeginCommand.Execute(null);   // explicit start (runtime no longer auto-starts)
         await Task.Delay(50);
         bool runtimeRunning = firstRuntime?.IsRunning == true;
         shell.ShowDashboardCommand.Execute(null);   // nav away via the rail
@@ -425,6 +432,7 @@ internal static class Program
         guide2!.OpenExerciseCommand.Execute(guide2.Exercises[0]);
         (shell.CurrentPage as ExerciseDetailViewModel)!.StartCommand.Execute(null);
         var secondRuntime = shell.CurrentPage as ExerciseRuntimeViewModel;
+        secondRuntime?.BeginCommand.Execute(null);   // explicit start (runtime no longer auto-starts)
         await Task.Delay(50);
         bool secondRunning = secondRuntime?.IsRunning == true;
         bool distinctInstance = secondRuntime is not null && !ReferenceEquals(firstRuntime, secondRuntime);
@@ -555,6 +563,7 @@ internal static class Program
         guide!.OpenExerciseCommand.Execute(guide.Exercises[0]);
         (shell.CurrentPage as ExerciseDetailViewModel)!.StartCommand.Execute(null);
         var runtime = shell.CurrentPage as ExerciseRuntimeViewModel;
+        runtime?.BeginCommand.Execute(null);   // explicit start (runtime no longer auto-starts)
         await Task.Delay(50);
         bool runtimeRan = runtime?.IsRunning == true;
         settingsNav!.Command.Execute(null);   // nav to Settings via the rail while running
@@ -567,6 +576,73 @@ internal static class Program
         bool ok = navExists && onSettings && notDisposable && noCommands && sectionsOk && allDeferred
                   && runtimeRan && runtimeDisposed && noOrphanFrames;
         Console.WriteLine(ok ? "[settings] Settings smoke OK" : "[settings] Settings smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Headless verification of the Runtime Lifecycle UI slice (no display): the runtime starts INACTIVE
+    // (no auto-start); Start -> Active with a flowing synthetic stream; Stop -> Stopped with a display-only
+    // session-ended summary and a cleared stream; re-Start gives a fresh Active session with no duplicate
+    // subscription (no orphan frames after stop); nav-away still disposes safely. No persistence/write APIs.
+    private static async Task<int> RuntimeLifecycleSmoke()
+    {
+        var svc = new VoiceFeminizationExerciseService();
+        var exercise = svc.GetAllEnhancedExercises()[0];
+        using var rt = new ExerciseRuntimeViewModel(exercise, new InlineUiDispatcher(), () => { });
+
+        // Initial: inactive (no auto-start).
+        bool initialInactive = rt.Phase == RuntimePhase.Inactive && !rt.IsRunning && rt.IsInactive && !rt.IsStopped;
+
+        // Start -> active; synthetic stream flows.
+        rt.BeginCommand.Execute(null);
+        bool startedActive = rt.Phase == RuntimePhase.Active && rt.IsRunning && !rt.IsInactive && !rt.IsStopped;
+        await Task.Delay(300);
+        bool streamFlowing = rt.RuntimePitchSamples.Count > 0 && rt.CurrentPitch > 0;
+        int activeSamples = rt.RuntimePitchSamples.Count;
+
+        // Stop -> stopped/session-ended; stream cleared; summary present + "not saved".
+        await rt.StopCommand.ExecuteAsync(null);
+        bool stoppedState = rt.Phase == RuntimePhase.Stopped && !rt.IsRunning && rt.IsStopped && !rt.IsInactive;
+        bool streamCleared = rt.RuntimePitchSamples.Count == 0;
+        bool notSaved = rt.SessionEndedSummary.Contains("lagres ikke");
+        Console.WriteLine($"[lifecycle] phases: inactive={initialInactive} active={startedActive} stopped={stoppedState}");
+        Console.WriteLine($"[lifecycle] stream: active-samples={activeSamples} cleared-on-stop={streamCleared}");
+        Console.WriteLine($"[lifecycle] summary: '{rt.SessionEndedSummary}'");
+
+        // Re-Start -> fresh active (summary cleared); stream refills; no duplicate subscription.
+        rt.BeginCommand.Execute(null);
+        bool reStartedActive = rt.Phase == RuntimePhase.Active && rt.IsRunning && rt.SessionEndedSummary == "";
+        await Task.Delay(300);
+        bool reStreamFlowing = rt.RuntimePitchSamples.Count > 0;
+        await rt.StopCommand.ExecuteAsync(null);
+        int framesAfterStop = rt.RuntimePitchSamples.Count;   // 0 (cleared)
+        await Task.Delay(120);
+        bool noOrphanAfterStop = rt.RuntimePitchSamples.Count == framesAfterStop;   // stays 0 -> no double-firing handler
+        Console.WriteLine($"[lifecycle] re-start: active={reStartedActive} flowing={reStreamFlowing} no-orphan-after-stop={noOrphanAfterStop}");
+
+        // Nav-away disposal still stops the runtime + prevents orphan frames.
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+        shell.ShowGuideCommand.Execute(null);
+        var guide = shell.CurrentPage as ExerciseGuideViewModel;
+        guide!.OpenExerciseCommand.Execute(guide.Exercises[0]);
+        (shell.CurrentPage as ExerciseDetailViewModel)!.StartCommand.Execute(null);
+        var navRuntime = shell.CurrentPage as ExerciseRuntimeViewModel;
+        navRuntime?.BeginCommand.Execute(null);
+        await Task.Delay(50);
+        bool navRan = navRuntime?.IsRunning == true;
+        shell.ShowDashboardCommand.Execute(null);   // nav away via the shell
+        bool navDisposed = navRuntime is not null && !navRuntime.IsRunning;
+        int navFrames = navRuntime?.RuntimePitchSamples.Count ?? -1;
+        await Task.Delay(150);
+        bool navNoOrphan = navRuntime is not null && navRuntime.RuntimePitchSamples.Count == navFrames;
+        Console.WriteLine($"[lifecycle] nav-away: ran={navRan} disposed={navDisposed} no-orphan-frames={navNoOrphan}");
+
+        // (Absence of persistence/write APIs on the runtime VM is verified by the source leak guard, not
+        // re-checked here — embedding the token strings would itself trip the leak-guard grep.)
+        bool ok = initialInactive && startedActive && streamFlowing && stoppedState && streamCleared && notSaved
+                  && reStartedActive && reStreamFlowing && noOrphanAfterStop
+                  && navRan && navDisposed && navNoOrphan;
+        Console.WriteLine(ok ? "[lifecycle] Runtime lifecycle smoke OK" : "[lifecycle] Runtime lifecycle smoke FAIL");
         return ok ? 0 : 1;
     }
 }
