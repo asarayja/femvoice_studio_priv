@@ -32,5 +32,12 @@ stopped. IsRecording=False
 ## Windows build (optional, not run here)
 Not run on this Linux host. The WPF reference + shared projects remain green per the earlier Windows CI (PR #1, run 27618290291). The `Windows WPF Verification` workflow will re-run on any PR for this branch.
 
+## Post-sync re-verification (after NU1903 fix merged to main, 2026-06-16)
+PR #2 (Tmds.DBus.Protocol 0.21.3 pin) merged to `main` (`aeb7ae4`); `main` merged into `avalonia-main-dashboard-slice` (merge `eee3dea`, clean auto-merge — csproj changes were in non-overlapping regions). After sync:
+- `FemVoice.Avalonia.csproj` has **both** `AvaloniaUseCompiledBindingsByDefault=false` (dashboard) and `Tmds.DBus.Protocol 0.21.3` (security pin).
+- Build: **0 warnings (NU1903 gone), 0 errors**. `dotnet list --vulnerable`: **no vulnerable packages**.
+- `--smoke` OK; `--dashboard-smoke` OK (StablePitch → 200.0 Hz, "Veldig stabil"). Portable tests **1570/1580** (no regression).
+- Leak guard: Avalonia references only `FemVoice.Core` + `FemVoice.Audio.Abstractions`; no forbidden tokens in Avalonia source.
+
 ## Verdict
-Dashboard slice builds and runs (headless) on Linux against shared services; no Windows-only dependency leaked into Avalonia; portable tests unchanged; no behaviour change. Ready for review.
+Dashboard slice builds and runs (headless) on Linux against shared services; the NU1903 security fix is included via the synced `main`; no Windows-only dependency leaked into Avalonia; portable tests unchanged; no behaviour change. Ready for review.
