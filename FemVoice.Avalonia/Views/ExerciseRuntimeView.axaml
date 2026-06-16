@@ -19,6 +19,26 @@
         </WrapPanel>
       </Border>
 
+      <!-- Target profile (read-only, display-only — from shared ExerciseTargetProfile) -->
+      <Border BorderBrush="#36c" BorderThickness="1" CornerRadius="6" Padding="14">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Mål-profil" FontWeight="SemiBold" Foreground="#9bf"/>
+          <TextBlock Text="{Binding TargetProfile.ProfileStatusMessage}" Foreground="#bbb"/>
+          <WrapPanel>
+            <TextBlock Text="{Binding TargetProfile.TargetPitch, StringFormat='Mål-pitch: {0}'}" Margin="0,0,20,4"/>
+            <TextBlock Text="{Binding TargetProfile.ResonanceTarget, StringFormat='Resonans-mål: {0}'}" Margin="0,0,20,4"/>
+            <TextBlock Text="{Binding TargetProfile.StabilityTarget, StringFormat='Stabilitet: {0}'}" Margin="0,0,20,4"/>
+            <TextBlock Text="{Binding TargetProfile.RequiredHoldSeconds, StringFormat='Hold-mål: {0}'}" Margin="0,0,20,4"/>
+            <TextBlock Text="{Binding TargetProfile.VoiceSkillTargets, StringFormat='Skills: {0}'}" Margin="0,0,20,4"/>
+          </WrapPanel>
+          <TextBlock Text="{Binding TargetProfile.PurposeText, StringFormat='Hensikt: {0}'}" TextWrapping="Wrap"/>
+          <TextBlock Text="{Binding TargetProfile.FocusText, StringFormat='Fokus: {0}'}" TextWrapping="Wrap" Foreground="#aaa"/>
+          <TextBlock Text="{Binding TargetProfile.SafetyText, StringFormat='Sikkerhet: {0}'}" TextWrapping="Wrap" Foreground="#e8a"/>
+          <TextBlock Text="{Binding TargetProfile.CommonMistakesText, StringFormat='Vanlige feil: {0}'}" TextWrapping="Wrap" Foreground="#aaa"
+                     IsVisible="{Binding TargetProfile.HasCommonMistakes}"/>
+        </StackPanel>
+      </Border>
+
       <!-- Live pitch + status -->
       <Border BorderBrush="#444" BorderThickness="1" CornerRadius="6" Padding="14">
         <StackPanel Spacing="6">

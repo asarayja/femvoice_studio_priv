@@ -20,7 +20,8 @@ namespace FemVoice.Avalonia.ViewModels;
 public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
 {
     private const int SampleRate = 44100;
-    private const double HoldTargetSeconds = 5.0;
+    private const double DefaultHoldTargetSeconds = 5.0;
+    private readonly double _holdTargetSeconds;
 
     private readonly IUiDispatcher _ui;
     private readonly Action _back;
@@ -45,6 +46,13 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         Category = string.IsNullOrWhiteSpace(exercise.Category) ? "Øvelse" : exercise.Category;
         Difficulty = ExerciseDisplay.Difficulty(exercise.Difficulty);
 
+        // Read-only target-profile metadata (display only — no clinical decision/enforcement).
+        TargetProfile = ExerciseRuntimeTargetProfileDisplay.From(exercise);
+        // Use the profile's RequiredHoldSeconds as the (display-only) hold target when available.
+        _holdTargetSeconds = TargetProfile.HasProfile && TargetProfile.RequiredHoldSecondsValue > 0
+            ? TargetProfile.RequiredHoldSecondsValue
+            : DefaultHoldTargetSeconds;
+
         // Dedicated synthetic source aimed at the middle of the target band so the scaffold visibly
         // sits "in target" by default. (Windows would inject the real IAudioCaptureService via DI.)
         double mid = (TargetPitchMin > 0 && TargetPitchMax > 0)
@@ -57,6 +65,12 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     }
 
     public EnhancedExercise Exercise { get; }
+
+    /// <summary>Read-only target-profile metadata for the "Mål-profil" panel (display only).</summary>
+    public ExerciseRuntimeTargetProfileDisplay TargetProfile { get; }
+
+    /// <summary>Display-only hold target (from the profile's RequiredHoldSeconds when available).</summary>
+    public string HoldTargetDescription => $"Mål: hold i {_holdTargetSeconds:F0} s (visning)";
 
     [ObservableProperty] private string _selectedExerciseName = "";
     [ObservableProperty] private string _category = "";
@@ -129,7 +143,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         else if (pitch > TargetPitchMax) status = "Over målområde";
         else status = "Innenfor målområde";
 
-        _holdRaw = inRange ? Math.Min(HoldTargetSeconds, _holdRaw + delta) : 0;
+        _holdRaw = inRange ? Math.Min(_holdTargetSeconds, _holdRaw + delta) : 0;
         double hold = _holdRaw;
         int elapsed = (int)(now - _startUtc).TotalSeconds;
 
@@ -138,10 +152,10 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
             CurrentPitch = result.IsVoiced ? Math.Round(pitch, 1) : 0;
             PitchStatus = status;
             HoldSeconds = Math.Round(hold, 1);
-            HoldProgressPercent = Math.Round(hold / HoldTargetSeconds * 100.0, 0);
+            HoldProgressPercent = Math.Round(hold / _holdTargetSeconds * 100.0, 0);
             ElapsedSeconds = elapsed;
             RuntimeStatusMessage = inRange
-                ? (hold >= HoldTargetSeconds ? "Flott — du holder målområdet!" : "Bra — hold tonen rolig i målområdet.")
+                ? (hold >= _holdTargetSeconds ? "Flott — du holder målområdet!" : "Bra — hold tonen rolig i målområdet.")
                 : status == "Ingen stemme" ? "Si en jevn tone for å begynne." : "Juster tonen mot målområdet.";
         });
     }
