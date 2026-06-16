@@ -16,6 +16,15 @@ Principle followed: only **mechanical** compatibility changes from the extractio
 
 Tests run to support these: portable suite (1570/1580) + Audio.Windows/Core/Abstractions/Avalonia builds, all on Linux. WPF build itself: **pending Windows**.
 
+## Fixes driven by Windows CI (run 27617220480, 1st PR build)
+The first Windows CI build **failed at compile** — and only there (the WPF app + shared projects compiled; the failure was isolated to the Windows test project). This is exactly the mechanical class this gate targets.
+
+| File | Reason | Behavior changed | Tests run | Risk |
+| --- | --- | --- | --- | --- |
+| `FemVoiceStudio.Tests/FemVoiceStudio.Tests.csproj` | `TestDatabaseService` (CS0246) was unresolved: the helper moved to `FemVoice.Tests.Portable`, but 4 Windows-kept tests (FrontPageProgressTests, ReportExportViewModelTests, SmartCoachStressSensitiveTests, StressSensitiveExperienceTests) still use it. Added **linked `<Compile Include>`** items pointing at the portable copies of `TestDatabaseService.cs` + `LocalizationTestCollection.cs` + `ReportVerificationTestCollection.cs` (single source of truth in portable; compiled into both assemblies — separate assemblies, no type conflict). | No (test wiring only) | Windows CI re-run (pending) | Low |
+
+> The collection-definition links also preserve test behaviour: `ReportExportViewModelTests` uses `[Collection("ReportVerification")]` (a `DisableParallelization` collection). `[Collection("name")]` is a string attribute (no compile dependency), so its absence wasn't a build error, but linking the definition keeps the original serialization behaviour. `InMemory*Repository` and `TestLocalizationService` referenced by Windows-kept tests resolve via `FemVoice.Core` (they are production/relocated types) — no fix needed.
+
 ## Verified compatibility facts (grep/inspection)
 - **No WPF use of Core internals.** Core defines only 3 internal methods (`AddEdge`, `AddNode`, `EmitFormantsForTesting`); none are referenced by the WPF app. So **no `InternalsVisibleTo("FemVoiceStudio")` is required** on Core. (Core already grants internals to `FemVoiceStudio.Tests` + `FemVoice.Tests.Portable` for `EmitFormantsForTesting`.)
 - **Namespaces preserved** for every moved type (`FemVoiceStudio.Models/.Services/.Audio/.Data`, `FemVoiceStudio.Subsystems.Analysis.ResonanceCategory`, `FemVoiceStudio.Audio.AudioCaptureService`) → no WPF `using`/call-site edits needed.

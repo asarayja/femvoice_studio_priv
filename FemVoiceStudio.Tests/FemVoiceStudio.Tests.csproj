@@ -21,6 +21,18 @@
     <ProjectReference Include="..\FemVoiceStudio\FemVoiceStudio.csproj" />
   </ItemGroup>
 
+  <!-- Shared test-support files. Their single source of truth lives in FemVoice.Tests.Portable;
+       they are LINKED (compiled) into this Windows test assembly too because the Windows-only test
+       set still uses them after the portable-test split (separate assemblies => no type conflict).
+       TestDatabaseService: used by StressSensitiveExperienceTests/ReportExportViewModelTests/etc.
+       *TestCollection: preserve the DisableParallelization collections (e.g. ReportExportViewModelTests
+       uses [Collection("ReportVerification")]). Mechanical wiring only — no behaviour change. -->
+  <ItemGroup>
+    <Compile Include="..\FemVoice.Tests.Portable\TestDatabaseService.cs" Link="TestDatabaseService.cs" />
+    <Compile Include="..\FemVoice.Tests.Portable\LocalizationTestCollection.cs" Link="LocalizationTestCollection.cs" />
+    <Compile Include="..\FemVoice.Tests.Portable\ReportVerificationTestCollection.cs" Link="ReportVerificationTestCollection.cs" />
+  </ItemGroup>
+
   <!-- Temporarily exclude tests with pre-existing issues -->
   <!--
   <ItemGroup>
