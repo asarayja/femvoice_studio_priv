@@ -1,8 +1,10 @@
 # FemVoice Funksjonsoversikt
 
-Status: 2026-06-14
+Status: 2026-06-16 (oppdatert mot faktisk WPF-kode under repo-audit; se `docs/`)
 
-Formål: praktisk oversikt over hvilke hovedfunksjoner FemVoice Studio har nå, hva de gjør, og hvor de bor i koden. Dette er en produkt- og arkitekturoversikt basert på aktiv WPF-kode, DI-wiring og tester. Det er ikke en klinisk validering eller cleanup-plan.
+Formål: praktisk oversikt over hvilke hovedfunksjoner FemVoice Studio har nå, hva de gjør, og hvor de bor i koden. Dette er en produkt- og arkitekturoversikt basert på aktiv WPF-kode, DI-wiring og tester. Det er ikke en klinisk validering, cleanup-plan eller Avalonia-plan — det er en nåtilstand-oversikt.
+
+> Oppdatering 2026-06-16: Filreferanser er verifisert mot koden under repo-auditen. Utdaterte referanser er rettet (se «Rettelser etter audit» nederst). Detaljert audit ligger i `docs/CURRENT_*`-filene og `docs/AUDIT_SUMMARY_FOR_AVALONIA_PLANNING.md`.
 
 ## Kort status
 
@@ -43,7 +45,7 @@ Sprint G Addendum-status per 2026-06-14:
 | Exercise live feedback | Samler resonans, pitch, stabilitet, intensitet, hold progress, safety og inline coach under en øvelse. | `Services/ExerciseIntelligenceCoordinator.cs`, `Models/ExerciseLiveState.cs`, `ViewModels/ExerciseDetailViewModel.cs` |
 | Hold progress | Måler om brukeren holder riktig måltilstand lenge nok, og fryser/stopper ved safety lock eller feil måltilstand. | `ExerciseIntelligenceCoordinator.cs`, `ExerciseSessionTimerState.cs`, `ExerciseDetailViewModel.cs` |
 | Subjektiv rapport | Etter stopp kan brukeren rapportere comfort, fatigue, pressure og motivasjon før adaptiv progresjon vurderes. | `ExerciseWindow.xaml.cs`, `Models/SubjectiveReport.cs`, `Services/ProgressionOrchestrator.cs` |
-| Øvelsessammendrag | UserControl/VM for oppsummering av pitch, resonans, stabilitet og anbefalt neste steg. Ser ut som aktiv/nyere UX-kandidat, men bør wiring-audites. | `Views/ExerciseSummaryView.xaml`, `Views/ExerciseSummaryViewModel.cs`, `Services/SmartCoachExerciseAdapter.cs` |
+| Øvelsessammendrag | Oppsummering av pitch, resonans, stabilitet og anbefalt neste steg etter stopp. **Rettet 2026-06-16:** det finnes IKKE noen `ExerciseSummaryView`/`ExerciseSummaryViewModel`/`SmartCoachExerciseAdapter` — sammendraget rendres inline i `ExerciseWindow.xaml.cs` og hentes fra `SessionAnalyticsStore`. | `Views/ExerciseWindow.xaml.cs`, `Services/SessionAnalyticsStore.cs` |
 
 ## Lydanalyse og biofeedback
 
@@ -78,11 +80,11 @@ Sprint G Addendum-status per 2026-06-14:
 | Learning path | Bygger personlig læringsfase/stage ut fra mål, historikk og kompleksitet. | `Services/LearningPathProfileBuilder.cs`, `Models/LearningPathProfile.cs`, `Services/Progression/ComplexityEngine.cs` |
 | SmartCoach memory | Persisterer coach-råd og utfall for å unngå kortsiktig/glemsk coaching. | `Services/SmartCoachMemoryStore.cs`, `Models/SmartCoachAdviceEntry.cs` |
 | Voice knowledge graph | Modell for sammenhenger mellom stemmedimensjoner, innsikter og anbefalinger. | `Services/VoiceKnowledgeGraphBuilder.cs`, `Models/VoiceKnowledgeGraph.cs` |
-| Inline coach | Gir korte, kontekstuelle coach-meldinger mens brukeren øver. | `Models/InlineCoachMessage.cs`, `ExerciseIntelligenceCoordinator.cs`, `InlineCoachFeedbackMapper.cs` |
+| Inline coach | Gir korte, kontekstuelle coach-meldinger mens brukeren øver. **Rettet 2026-06-16:** `InlineCoachFeedbackMapper` er en klasse inne i `Services/FeedbackPipeline.cs`, ikke en egen fil. | `Models/InlineCoachMessage.cs`, `ExerciseIntelligenceCoordinator.cs`, `Services/FeedbackPipeline.cs` |
 | FeedbackPipeline | Felles port for meldinger før UI viser dem. | `Services/FeedbackPipeline.cs` |
-| FeedbackConsistencyGuard | Prioriterer Safety > Health > Recovery > Comfort > Voice Development > Reporting og undertrykker motstridende meldinger. | `Services/FeedbackConsistencyGuard.cs`, `FeedbackPriorityMatrixTests.cs`, `FeedbackConsistencyGuardTests.cs` |
-| Feedback mappers | Oversetter SmartCoach, inline coach, progression, hydration og vocal health til felles feedbackformat. | `FeedbackPipeline.cs`, `SmartCoachFeedbackMapper.cs`, `ProgressionFeedbackMapper.cs`, `HydrationFeedbackMapper.cs`, `VocalHealthFeedbackMapper.cs` |
-| Legacy feedback service | Brukes særlig på hoveddashboardet for session feedback og sanntidstekst. | `Services/FeedbackService.cs`, `Services/CoachMessageGenerator.cs`, `Services/CoachMessageFormatter.cs` |
+| FeedbackConsistencyGuard | Prioriterer Safety > Health > Recovery > Comfort > Voice Development > Reporting og undertrykker motstridende meldinger. Den maskinlesbare rekkefølgen er `FeedbackPriority`-enumen. | `Services/FeedbackConsistencyGuard.cs`, `FeedbackPriorityMatrixTests.cs`, `FeedbackConsistencyGuardTests.cs` |
+| Feedback mappers | Oversetter SmartCoach, inline coach, progression, hydration og vocal health til felles feedbackformat. **Rettet 2026-06-16:** ALLE mapper-klassene (`SmartCoachFeedbackMapper`, `InlineCoachFeedbackMapper`, `ProgressionFeedbackMapper`, `HydrationFeedbackMapper`, `VocalHealthFeedbackMapper`, `MainScreenFeedbackMapper`) ligger inne i `Services/FeedbackPipeline.cs` — det finnes ingen egne mapper-filer. | `Services/FeedbackPipeline.cs` |
+| Legacy feedback service | Brukes særlig på hoveddashboardet for session feedback og sanntidstekst. **Rettet 2026-06-16:** `CoachMessageGenerator.cs`/`CoachMessageFormatter.cs` finnes IKKE; logikken bor i `FeedbackService.cs`. | `Services/FeedbackService.cs` |
 
 ## Helse, sikkerhet og recovery
 
@@ -107,7 +109,7 @@ Sprint G Addendum-status per 2026-06-14:
 | MasteryEvaluator | Vurderer mastery over tid basert på stabil, trygg og gjentatt gjennomføring. | `Services/MasteryEvaluator.cs`, `Models/MasteryLevel.cs` |
 | ProgressionOrchestrator | Vurderer om øvelsesprofil bør beholdes, tilpasses, pauses eller regresseres etter økt. | `Services/ProgressionOrchestrator.cs`, `Models/ProgressionSessionData.cs` |
 | ExerciseProfileStore | Lagrer personlige øvelsesprofil-tilpasninger i SQLite. | `Services/ExerciseProfileStore.cs`, `Models/ExerciseTargetProfile.cs` |
-| Exercise effectiveness | Måler per-øvelse-effektivitet og lar SmartCoach rangere øvelser som faktisk fungerer for brukeren. | `Services/ExerciseEffectivenessEngine.cs`, `Services/ExerciseEffectivenessProvider.cs`, `Models/ExerciseEffectivenessProfile.cs` |
+| Exercise effectiveness | Måler per-øvelse-effektivitet og lar SmartCoach rangere øvelser som faktisk fungerer for brukeren. **Rettet 2026-06-16:** det finnes ingen `ExerciseEffectivenessProvider.cs` — motoren heter `ExerciseEffectivenessEngine`. | `Services/ExerciseEffectivenessEngine.cs`, `Models/ExerciseEffectivenessProfile.cs` |
 | Trend engine | Bygger trendvinduer, utviklingsprofil og longitudinelle innsikter. | `Services/TrendEngineService.cs`, `Services/LongitudinalInsightEngine.cs`, `Models/TrendWindow.cs`, `Models/LongitudinalInsight.cs` |
 | Pattern detector | Oppdager plateau, breakthrough, regression og andre mønstre i stemmeutviklingen. | `Services/VoicePatternDetector.cs`, `Models/VoicePatternEvents.cs` |
 | Progression-dashboard | Viser progresjonsrelaterte data, kompleksitet og anbefalinger. | `Views/ProgressionWindow.xaml`, `Views/ProgressionDashboard.xaml`, `ViewModels/ProgressionDashboardViewModel.cs` |
@@ -138,7 +140,7 @@ Sprint G Addendum-status per 2026-06-14:
 | Analyzer | Viser detaljert audio-/spectrogramanalyse, resonansstatus, clinical score og debugpanel ved behov. | `Views/AnalyzerWindow.xaml`, `Views/AnalyzerWindow.xaml.cs`, `Services/SpectrogramResonanceMapper.cs` |
 | Resonance window | Eget vindu for resonansanalyse med start, stopp, reset, F1/F2-posisjon, formant-tidslinje, dark/light chart theme og bounded zoom/pan. | `Views/ResonanceWindow.xaml`, `Views/ResonanceWindow.xaml.cs`, `Views/ResonanceChartViewModel.cs`, `Services/AnalysisChartTheme.cs` |
 | Analysis window | Viser analyse-side/rapportering knyttet til stemmedata og dimensjoner, inkludert Dybdeanalyse-grafer med delt chart-theme og bounded zoom/pan. | `Views/AnalysisWindow.xaml`, `Views/AnalysisWindow.xaml.cs`, `ViewModels/AnalysisPageViewModel.cs`, `Services/AnalysisChartTheme.cs` |
-| LiveFeedbackView | UserControl for live feedback med egen VM. Finnes i repoet, men aktiv navigasjon/wiring bør verifiseres før den behandles som hovedflate. | `Views/LiveFeedbackView.xaml`, `Views/LiveFeedbackViewModel.cs` |
+| ~~LiveFeedbackView~~ | **Rettet 2026-06-16:** `Views/LiveFeedbackView.xaml`/`LiveFeedbackViewModel.cs` finnes IKKE i repoet. Live feedback er implementert i `ExerciseWindow` + `ExerciseDetailViewModel`. | `Views/ExerciseWindow.xaml(.cs)`, `ViewModels/ExerciseDetailViewModel.cs` |
 
 ## Profesjonelle verktøy og rapportering
 
@@ -198,9 +200,11 @@ Disse finnes i prosjektet, men bør behandles forsiktig fordi noen er parallelle
 | `Subsystems/*` | Eldre subsystem-lag med audio/data/analysis/progression/smartcoach. Aktiv app bruker primært `App.ConfigureServices`, men sletting krever merge-audit. |
 | `Infra/DependencyInjection.cs` | Eldre DI-oppsett. Aktiv oppstart registrerer tjenester i `App.xaml.cs`. |
 | `ViewModels/ViewModelBase.cs` | Refererer subsystem-abstraksjoner og ser eldre ut sammenlignet med dagens direkte VM-er/DI. |
-| `LiveFeedbackView` / `ExerciseSummaryView` | UserControls med egne VM-er. Kan være aktive/planlagte UX-flater, men er ikke hovednavigasjon alene. |
-| `VoiceHealthService` / `VoiceHealthModule` / `VocalHealthLegacyBridge` | Eldre/parallel health-linje. Aktiv safety-linje er `VocalHealthSupervisor`, men health-kode bør merge-audites før sletting. |
-| `AudioAnalysisEngine_new.cs`, `part2.cs`, `.old`, `.old2`, `.txt` kopier | Artefakter/stubs/backupfiler. Bør ryddes i egen cleanup-runde etter kompilering og referansesøk. |
+| `LiveFeedbackView` / `ExerciseSummaryView` | **Rettet 2026-06-16:** finnes IKKE som filer. Tidligere dokumentert som UX-kandidater, men er aldri implementert som egne views/VM-er. |
+| `VoiceHealthService` | Eldre/parallell health-linje. **Rettet 2026-06-16:** `VoiceHealthModule` og `VocalHealthLegacyBridge` finnes IKKE; kun `VoiceHealthService.cs` (+ `HealthStatus.cs`) eksisterer og ser løsrevet ut fra den aktive gate-flyten (`VocalHealthSupervisor`). Bør merge-audites før sletting. |
+| `AudioAnalysisEngine_new.cs`, `.old`/`.old2`-kopier | Artefakter/stubs/backupfiler. **Rettet 2026-06-16:** `AudioAnalysisEngine_new.cs` kompileres, men inneholder bare `using System;` (tom stub); ingen `part2.cs` finnes. `.old`/`.old2` kompileres ikke. Bør ryddes i egen cleanup-runde. |
+| Død parallell-arkitektur | `Subsystems/**`, `Infra/DependencyInjection.cs` (`AddFemVoiceStudio`), `ViewModels/ViewModelBase.cs`/`SubsystemViewModelBase` har ingen eksterne referanser (aktiv wiring er `App.ConfigureServices`). Skal IKKE porteres til Avalonia. |
+| Test-kode i app-prosjektet | `FemVoiceStudio/Tests/` (4 xUnit-filer) kompileres inn i selve WinExe-en, og app-csproj refererer xUnit/Test.Sdk. Cleanup-kandidat. |
 | `promts/`, `work-documents/new*`, roadmap-filer | Plan-/prompt-/arbeidsdokumenter. Skal ikke brukes alene som sannhet om implementert funksjon. |
 
 ## Kort systemflyt
@@ -230,3 +234,46 @@ Safety > Health > Recovery > Comfort > Voice Development > Reporting
 ```
 
 Rapportering, research, coach-anbefalinger og profesjonelle overrides skal derfor være beskrivende eller mer konservative. De skal ikke kunne overstyre safety-, health- eller recovery-gater.
+
+## Delvis implementerte funksjoner
+
+Disse er aktive, men har begrensninger eller stubbede deler (bekreftet i kode 2026-06-16):
+
+- **Vocal weight / strain / jitter / shimmer / HNR:** `VoiceStrainDetector` returnerer jitter/shimmer = 0 og en placeholder-stddev (`mean*0.1`); `VoiceMetricsCalculator` HNR er en approksimasjon (ikke ekte harmonics-to-noise); `FormantDetectionService` «spectral centroid» er en ZCR-approksimasjon; `VoiceActivityDetector` har en `SpectralCentroidThreshold` som er deklarert, men ubrukt.
+- **Pitch-motorer:** `AudioAnalyzerService` er den aktive forsidemotoren. `AudioAnalysisEngine` (WASAPI→WaveIn fallback) konstrueres, men forsidens capture er bevisst undertrykt; `RealtimeAnalysisEngine` og `AsyncAudioPipeline` ser ut til å være ubrukt i produksjon (bør verifiseres).
+- **Lokalisering:** `String.pt-BR.resx` (feilstavet basenavn) og `Strings_en.resx` (understrek) lastes ikke som satellitter — pt-BR er reelt sett ikke koblet inn. Ca. 19 språk er reelt lastbare.
+- **DB-migrering:** `Resources/DatabaseSchema.sql` og `Data/migrations/001_*.sql` ser dormante ut (kjøres ikke i runtime; migreringen har ugyldig SQLite-syntaks).
+
+## Validert RC-0 baseline-oppførsel
+
+RC-0 er release-candidate-zero valideringsprofilen. Evidence-pipelinen (`Rc0StartupBootstrap`, `Rc0EvidenceExporter`, `Rc0RuntimeLog`, `Rc0WriteFailureSink`, `DiagnosticsNaming`) er en developer-only, aldri-kastende diagnostikk som beviser at audio→pitch→resonans→graf→persistens→rapport-kjeden faktisk kjørte. `Rc0StartupBootstrap.Run()` kjøres FØR DI i `App.OnStartup` og legger igjen baseline-evidence selv ved oppstartskrasj. Økter klassifiseres PASS/WARNING/FAIL/BLOCKED. Evidence skrives til `%LOCALAPPDATA%\FemVoiceStudio\Diagnostics` (med Documents-speil og legacy `RC0_Evidence`-alias). Påvirker aldri safety/health/recovery. Se `docs/CURRENT_DIAGNOSTICS_AND_EVIDENCE.md`.
+
+## Rapporttyper og -format
+
+- **4 rapporttyper:** Clinical, Coach, Outcome, Timeline (`Models/ProfessionalReports.cs`, `ReportAssembler`).
+- **3 format:** PDF (QuestPDF 2026.5.0, Community-lisens, kun tekst/tabell — ingen grafer i PDF), CSV (RFC 4180-escaping), JSON (`System.Text.Json`). Tekst lokaliseres og saneres (`ReportTextSanitizer`). Se `docs/CURRENT_REPORTS_AND_LOCALIZATION.md`.
+
+## Lokaliseringsoppførsel
+
+`LocalizationService` bruker `ResourceManager` + `CultureInfo` (nøytralt språk = norsk). Språkbytte settes via `SetLanguage` (tråd-culture + `PropertyChanged("Item[]")`) og oppdateres live i UI via `{loc:Loc Key}`/`LocConverter` (WPF MarkupExtensions). Preferanse lagres i `language.txt`.
+
+## Kjente begrensninger
+
+- Windows-bundet: WPF + NAudio (WASAPI/WaveIn) + Registry-temadeteksjon + `Microsoft.Win32`-fildialoger. Tester er `net10.0-windows`.
+- Stubbede stemmemetrikker (se «Delvis implementerte funksjoner»).
+- Død parallell-arkitektur (`Subsystems/**`, `Infra/DependencyInjection.cs`) og backup-artefakter (`*.cs.old`) ligger igjen.
+- Test-kode kompileres inn i app-EXE-en.
+- pt-BR-lokalisering er feilkoblet.
+
+## Hva som MÅ bevares ved Avalonia-port
+
+Klinisk scoring, SmartCoach, Voice Health / safety / recovery-gater, progresjon, persistens (SQLite-skjema + delt `femvoice.db`), analytics, diagnostikk/evidence (RC-0), rapportinnhold (4×3), lokaliseringsressurser (kun de dokumenterte navnerettingene), og 15-øvelseskatalogen. Safety-invariant-testene (`SafetyOverrideInvariantTests`, `SafetyPriorityEngineTests`, `ManualOverrideClampTests`, `FeedbackPriorityMatrixTests`) skal holdes grønne gjennom porten. Detaljert ekstraherings-/abstraksjonsplan: `docs/AVALONIA_PORT_READINESS_NOTES.md` og `docs/WPF_DEPENDENCY_MAP.md`.
+
+## Rettelser etter audit (2026-06-16)
+
+Følgende referanser i tidligere versjon var utdaterte og er rettet over:
+
+- **Finnes ikke:** `Views/ExerciseSummaryView.xaml`/`ExerciseSummaryViewModel.cs`, `Views/LiveFeedbackView.xaml`/`LiveFeedbackViewModel.cs`, `Services/CoachMessageGenerator.cs`, `Services/CoachMessageFormatter.cs`, `Services/SmartCoachExerciseAdapter.cs`, `Services/ExerciseEffectivenessProvider.cs`, `VoiceHealthModule`, `VocalHealthLegacyBridge`, `AudioAnalysisEngine part2.cs`.
+- **Ligger inne i `Services/FeedbackPipeline.cs` (ikke egne filer):** `SmartCoachFeedbackMapper`, `InlineCoachFeedbackMapper`, `ProgressionFeedbackMapper`, `HydrationFeedbackMapper`, `VocalHealthFeedbackMapper`, `MainScreenFeedbackMapper`.
+- **Feil navn:** «ExerciseEffectivenessProvider» → faktisk `ExerciseEffectivenessEngine`.
+- **Eksisterer som angitt:** `VoiceHealthService.cs` (men løsrevet fra aktiv gate-flyt).
