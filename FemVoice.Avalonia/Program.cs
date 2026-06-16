@@ -28,6 +28,7 @@ internal static class Program
         if (args.Contains("--runtime-chart-feedback-smoke")) return RuntimeChartFeedbackSmoke().GetAwaiter().GetResult();
         if (args.Contains("--shell-smoke")) return ShellSmoke().GetAwaiter().GetResult();
         if (args.Contains("--theme-loc-smoke")) return ThemeLocSmoke();
+        if (args.Contains("--settings-smoke")) return SettingsSmoke().GetAwaiter().GetResult();
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
@@ -433,7 +434,7 @@ internal static class Program
                           $"no-orphan-frames={noOrphanFrames} fresh-instance={distinctInstance} " +
                           $"second-running={secondRunning} no-orphan={firstStillStopped}");
 
-        bool ok = landsOnDashboard && implemented == 2 && deferred >= 1
+        bool ok = landsOnDashboard && shell.NavItems.Count == 9 && implemented == 3 && deferred == 6
                   && onGuide && backToDash && onDeferred && deferredInert
                   && runtimeRunning && firstDisposedOnNav && noOrphanFrames
                   && distinctInstance && secondRunning && firstStillStopped;
@@ -473,7 +474,7 @@ internal static class Program
         bool navLabelsOk = shell.NavItems.Count == 9
             && shell.NavItems.All(n => !string.IsNullOrWhiteSpace(n.Label))
             && shell.NavItems[0].Label == "Dashbord"
-            && shell.NavItems[2].Label == "Innstillinger — senere";
+            && shell.NavItems[2].Label == "Innstillinger";   // Settings is now an implemented destination
         bool statusOk = shell.MicStatusText.Contains("syntetisk") && shell.ModeText.Contains("Kun visning");
         var def = new DeferredSurfaceViewModel("Innstillinger");
         bool deferredOk = def.Title.Contains("Innstillinger") && !string.IsNullOrWhiteSpace(def.Message);
@@ -513,6 +514,59 @@ internal static class Program
         bool ok = knownResolves && missingFallsBack && reactiveOk && trOk
                   && navLabelsOk && statusOk && deferredOk && (!themeChecked || themeKeysOk);
         Console.WriteLine(ok ? "[theme-loc] Theme + localization smoke OK" : "[theme-loc] Theme + localization smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Headless verification of the Settings scaffold slice (no display): the Settings nav item is an
+    // IMPLEMENTED destination; navigating to it switches CurrentPage to a SettingsViewModel that is purely
+    // inert (not IDisposable, no IRelayCommand props, all rows deferred); the expected 8 cards are present;
+    // and navigating to Settings from a running runtime disposes the runtime safely (no orphaned capture).
+    // No persistence/settings-write APIs are touched. Display-only.
+    private static async Task<int> SettingsSmoke()
+    {
+        var svc = new VoiceFeminizationExerciseService();
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+
+        // Settings nav item exists and is implemented.
+        var settingsNav = shell.NavItems.FirstOrDefault(n => n.Label == "Innstillinger");
+        bool navExists = settingsNav is not null && settingsNav.IsImplemented;
+
+        // Navigating to Settings switches CurrentPage to SettingsViewModel (constructs without side effects).
+        settingsNav?.Command.Execute(null);
+        bool onSettings = shell.CurrentPage is SettingsViewModel;
+        var settings = shell.CurrentPage as SettingsViewModel;
+
+        // Inert: not IDisposable, exposes no IRelayCommand, all rows deferred.
+        bool notDisposable = settings is not null && !typeof(System.IDisposable).IsAssignableFrom(typeof(SettingsViewModel));
+        bool noCommands = settings is not null && settings.GetType().GetProperties()
+            .All(p => !typeof(global::CommunityToolkit.Mvvm.Input.IRelayCommand).IsAssignableFrom(p.PropertyType));
+        int sectionCount = settings?.Sections.Count ?? 0;
+        bool sectionsOk = sectionCount == 8
+            && settings!.Sections.All(s => !string.IsNullOrWhiteSpace(s.Title) && s.Rows.Count > 0);
+        bool allDeferred = settings?.AllControlsDeferred == true
+            && settings.Sections.SelectMany(s => s.Rows).All(r => !r.IsEnabled);
+        Console.WriteLine($"[settings] Nav implemented: {navExists}  onSettings: {onSettings}  sections: {sectionCount}");
+        Console.WriteLine($"[settings] Inert: notDisposable={notDisposable} noCommands={noCommands} allDeferred={allDeferred}");
+
+        // Navigating to Settings from a RUNNING runtime disposes the runtime safely (no orphaned capture).
+        shell.ShowGuideCommand.Execute(null);
+        var guide = shell.CurrentPage as ExerciseGuideViewModel;
+        guide!.OpenExerciseCommand.Execute(guide.Exercises[0]);
+        (shell.CurrentPage as ExerciseDetailViewModel)!.StartCommand.Execute(null);
+        var runtime = shell.CurrentPage as ExerciseRuntimeViewModel;
+        await Task.Delay(50);
+        bool runtimeRan = runtime?.IsRunning == true;
+        settingsNav!.Command.Execute(null);   // nav to Settings via the rail while running
+        bool runtimeDisposed = runtime is not null && !runtime.IsRunning && shell.CurrentPage is SettingsViewModel;
+        int framesAfter = runtime?.RuntimePitchSamples.Count ?? -1;
+        await Task.Delay(150);
+        bool noOrphanFrames = runtime is not null && runtime.RuntimePitchSamples.Count == framesAfter;
+        Console.WriteLine($"[settings] Runtime->Settings: ran={runtimeRan} disposed={runtimeDisposed} no-orphan-frames={noOrphanFrames}");
+
+        bool ok = navExists && onSettings && notDisposable && noCommands && sectionsOk && allDeferred
+                  && runtimeRan && runtimeDisposed && noOrphanFrames;
+        Console.WriteLine(ok ? "[settings] Settings smoke OK" : "[settings] Settings smoke FAIL");
         return ok ? 0 : 1;
     }
 }

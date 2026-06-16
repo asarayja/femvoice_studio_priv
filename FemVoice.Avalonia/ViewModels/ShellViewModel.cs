@@ -37,6 +37,7 @@ public partial class ShellViewModel : ObservableObject
 {
     private readonly MainDashboardViewModel _dashboard;
     private readonly ExerciseGuideViewModel _guide;
+    private readonly SettingsViewModel _settings;
     private readonly IUiDispatcher _ui;
 
     public ShellViewModel(MainDashboardViewModel dashboard, VoiceFeminizationExerciseService exercises, IUiDispatcher ui)
@@ -44,6 +45,7 @@ public partial class ShellViewModel : ObservableObject
         _dashboard = dashboard;
         _ui = ui;
         _guide = new ExerciseGuideViewModel(exercises, OpenExerciseDetail);
+        _settings = new SettingsViewModel();   // inert, display-only; retained singleton, not IDisposable
         _currentPage = dashboard;
 
         // Navigation surface: the two implemented top-level destinations, then deferred placeholders for
@@ -54,7 +56,7 @@ public partial class ShellViewModel : ObservableObject
         {
             new(Localized.Get("Shell_Nav_Dashboard", "Dashbord"), true, ShowDashboardCommand),
             new(Localized.Get("Shell_Nav_Guide", "Øvelsesguide"), true, ShowGuideCommand),
-            new(DeferredLabel("Innstillinger"), false, new RelayCommand(() => ShowDeferred("Innstillinger"))),
+            new(Localized.Get("Shell_Nav_Settings", "Innstillinger"), true, ShowSettingsCommand),
             new(DeferredLabel("Analyse"), false, new RelayCommand(() => ShowDeferred("Analyse"))),
             new(DeferredLabel("Rapporter"), false, new RelayCommand(() => ShowDeferred("Rapporter"))),
             new(DeferredLabel("Diagnostikk"), false, new RelayCommand(() => ShowDeferred("Diagnostikk"))),
@@ -90,6 +92,7 @@ public partial class ShellViewModel : ObservableObject
         // shell nav rail. Retained singletons (_dashboard, _guide) and the static deferred placeholders
         // are never disposed. (Preserves the PR #7/#8 lifecycle fix.)
         if (!ReferenceEquals(oldValue, _dashboard) && !ReferenceEquals(oldValue, _guide)
+            && !ReferenceEquals(oldValue, _settings)
             && oldValue is System.IDisposable disposable)
             disposable.Dispose();
     }
@@ -102,6 +105,7 @@ public partial class ShellViewModel : ObservableObject
             ExerciseGuideViewModel => "Øvelsesguide",
             ExerciseDetailViewModel => "Øvelsesdetalj",
             ExerciseRuntimeViewModel => "Øvelse kjører",
+            SettingsViewModel => Localized.Get("Settings_Title", "Innstillinger"),
             DeferredSurfaceViewModel d => $"{d.SurfaceName} (utsatt)",
             _ => "—",
         };
@@ -109,6 +113,7 @@ public partial class ShellViewModel : ObservableObject
 
     [RelayCommand] private void ShowDashboard() => CurrentPage = _dashboard;
     [RelayCommand] private void ShowGuide() => CurrentPage = _guide;
+    [RelayCommand] private void ShowSettings() => CurrentPage = _settings;   // inert display-only page
 
     // Deferred destinations open a purely static placeholder — no services, no side effects.
     private void ShowDeferred(string surface) => CurrentPage = new DeferredSurfaceViewModel(surface);
