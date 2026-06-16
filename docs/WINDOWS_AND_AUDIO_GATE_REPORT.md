@@ -28,7 +28,7 @@ Per-project trx (nothing filtered/hidden; full artifacts uploaded):
 **297/301 pass.** The 4 failures are all `ThemeNoteButtonStyleTests` (`NoteRadioButtonStyle_ExistsAndCoversAllStates`/`UsesThemeBrushes`, Dark/Light) — **pre-existing**: the theme XAML they assert on is byte-identical to `origin/main`, so the result equals the pre-port baseline. Frozen theme XAML and the assertions are unchanged.
 
 ## 7. Manual mic smoke result
-**⛔ PENDING — requires a Windows host with a real microphone.** CI cannot exercise capture. The adapter is build-verified on Linux + Windows; the runtime mic checklist is in `AUDIO_WINDOWS_ADAPTER_NOTES.md`. This is the one open verification item.
+**⛔ NOT RUN — requires a human on a real Windows machine with a microphone.** CI cannot exercise capture, and the AI dev host is Linux (no WPF runtime / no mic) — so it is honestly recorded as un-run, not faked. A ready-to-fill result template + run instructions + statically pre-confirmed prerequisites (DI wiring `App.xaml.cs:146`, build green, adapter delegates to unchanged `AudioCaptureService`) are in `AUDIO_WINDOWS_ADAPTER_NOTES.md` → "Manual Windows Mic Smoke Result". This is the one open verification item; record PASS/PASS_WITH_WARNINGS there to flip the recommendation to MERGE-READY.
 
 ## 8. Linux regression result (after the Windows fixes)
 **✅ GREEN.** Avalonia + portable core build on Linux; headless smoke OK; Avalonia references **only** `FemVoice.Core` + `FemVoice.Audio.Abstractions` (no `FemVoice.Audio.Windows`/NAudio-capture/`System.Windows`/`Microsoft.Win32`/`OxyPlot.Wpf` leak). Portable tests 1570/1580 (10 pre-existing; occasional +1 `ComfortZoneControllerTests` timing flake). See `AVALONIA_LINUX_GATE_RESULTS.md`.
