@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FemVoice.Avalonia.Localization;   // Localized (safe read-only localization resolver)
 using FemVoiceStudio.Core.Platform;   // IUiDispatcher
 using FemVoiceStudio.Services;   // VoiceFeminizationExerciseService, EnhancedExercise
 
@@ -47,17 +48,19 @@ public partial class ShellViewModel : ObservableObject
 
         // Navigation surface: the two implemented top-level destinations, then deferred placeholders for
         // the missing WPF surfaces. Deferred items navigate ONLY to a static DeferredSurfaceViewModel.
+        // Labels resolve through the safe read-only localization adapter; missing keys fall back to the
+        // current Norwegian text (so behaviour is identical today, but the path is localization-ready).
         NavItems = new List<ShellNavItem>
         {
-            new("Dashbord", true, ShowDashboardCommand),
-            new("Øvelsesguide", true, ShowGuideCommand),
-            new("Innstillinger — senere", false, new RelayCommand(() => ShowDeferred("Innstillinger"))),
-            new("Analyse — senere", false, new RelayCommand(() => ShowDeferred("Analyse"))),
-            new("Rapporter — senere", false, new RelayCommand(() => ShowDeferred("Rapporter"))),
-            new("Diagnostikk — senere", false, new RelayCommand(() => ShowDeferred("Diagnostikk"))),
-            new("Progresjon — senere", false, new RelayCommand(() => ShowDeferred("Progresjon"))),
-            new("SmartCoach — senere", false, new RelayCommand(() => ShowDeferred("SmartCoach"))),
-            new("Mikrofonkalibrering — senere", false, new RelayCommand(() => ShowDeferred("Mikrofonkalibrering"))),
+            new(Localized.Get("Shell_Nav_Dashboard", "Dashbord"), true, ShowDashboardCommand),
+            new(Localized.Get("Shell_Nav_Guide", "Øvelsesguide"), true, ShowGuideCommand),
+            new(DeferredLabel("Innstillinger"), false, new RelayCommand(() => ShowDeferred("Innstillinger"))),
+            new(DeferredLabel("Analyse"), false, new RelayCommand(() => ShowDeferred("Analyse"))),
+            new(DeferredLabel("Rapporter"), false, new RelayCommand(() => ShowDeferred("Rapporter"))),
+            new(DeferredLabel("Diagnostikk"), false, new RelayCommand(() => ShowDeferred("Diagnostikk"))),
+            new(DeferredLabel("Progresjon"), false, new RelayCommand(() => ShowDeferred("Progresjon"))),
+            new(DeferredLabel("SmartCoach"), false, new RelayCommand(() => ShowDeferred("SmartCoach"))),
+            new(DeferredLabel("Mikrofonkalibrering"), false, new RelayCommand(() => ShowDeferred("Mikrofonkalibrering"))),
         };
     }
 
@@ -68,9 +71,13 @@ public partial class ShellViewModel : ObservableObject
 
     // ── Display-only status strip (no real mic, no persistence, no clinical change) ──
     /// <summary>Display-only microphone/signal status: the Avalonia head uses synthetic audio only.</summary>
-    public string MicStatusText => "Mikrofon: syntetisk (kun visning)";
+    public string MicStatusText => Localized.Get("Shell_MicStatus", "Mikrofon: syntetisk (kun visning)");
     /// <summary>Display-only mode banner stating the safety posture of the Avalonia head.</summary>
-    public string ModeText => "Kun visning · ingen lagring · ingen klinisk endring";
+    public string ModeText => Localized.Get("Shell_Mode", "Kun visning · ingen lagring · ingen klinisk endring");
+
+    // Deferred nav label: "<Surface> — senere", localization-ready with the current text as fallback.
+    private static string DeferredLabel(string surface)
+        => Localized.Get($"Shell_Nav_{surface}_Deferred", $"{surface} — senere");
     /// <summary>Label of the current destination, for the status strip.</summary>
     [ObservableProperty] private string _currentDestinationLabel = "Dashbord";
 
