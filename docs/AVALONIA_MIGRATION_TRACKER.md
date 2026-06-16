@@ -22,11 +22,11 @@ Reference docs: `docs/AUDIT_SUMMARY_FOR_AVALONIA_PLANNING.md`, `AVALONIA_PORT_RE
 
 | Phase | Title | Status | Owner | Gate to next |
 | --- | --- | --- | --- | --- |
-| 0 | Safety snapshot & build verification | **BLOCKED** (no build env here) | Agent 1 | Real baseline captured on Windows |
-| 1 | Project split & shared core extraction | **PLANNED, not executed** | Agent 2 | Extraction compiles + portable tests green |
-| 2 | Platform abstraction interfaces | TODO | Agent 3 | Interfaces compile; WPF still builds |
-| 3 | Windows audio backend behind abstraction | TODO | Agent 4 | Windows audio works via `IAudioCaptureService`; DSP tests green |
-| 4 | Avalonia shell bootstrap | TODO | Agent 5 | Avalonia app boots + DI resolves |
+| 0 | Safety snapshot & build verification | **Linux done / Windows PENDING** | Agent 1/2 | Real WPF baseline captured on Windows (`WINDOWS_BASELINE_TEST_RESULTS.md`) |
+| 1 | Project split & shared core extraction | **DONE (Linux-verified) / WPF compile PENDING on Windows** | Agent 2 | WPF builds against shared core on Windows |
+| 2 | Platform abstraction interfaces | **DONE (interfaces in FemVoice.Core/Platform; Avalonia impls)** | Agent 3 | — |
+| 3 | Windows audio backend behind abstraction | **DONE (FemVoice.Audio.Windows + NAudioCaptureService; Linux-compile-verified) / manual Windows mic test PENDING** | Agent 4 | Manual Windows mic smoke (`AUDIO_WINDOWS_ADAPTER_NOTES.md`) |
+| 4 | Avalonia shell bootstrap | **DONE (boots headless; DI resolves on Linux)** | Agent 5 | — |
 | 5 | Theme & localization port | TODO | Agent 6 | Light/dark + runtime language switch work |
 | 6 | Navigation & main dashboard | TODO | Agent 8 | Start/stop session + live feedback in Avalonia |
 | 7 | Audio, pitch chart, live feedback | TODO | Agent 7 + 8 | Pitch/comfort-zone parity |
