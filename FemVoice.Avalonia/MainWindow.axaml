@@ -1,0 +1,14 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="FemVoice.Avalonia.MainWindow"
+        Width="820" Height="520"
+        Title="FemVoice Studio — Avalonia (Linux portable-core shell)">
+  <ScrollViewer>
+    <StackPanel Margin="24" Spacing="10">
+      <TextBlock Text="FemVoice Studio — Avalonia shell" FontSize="22" FontWeight="Bold"/>
+      <TextBlock TextWrapping="Wrap"
+                 Text="Minimal bootstrap shell. The full Windows feature-parity UI is NOT ported yet (see docs/AVALONIA_LINUX_BOOTSTRAP_STATUS.md). The shared, UI-free clinical/scoring/SmartCoach/Voice-Health/recovery/progression/analytics/report/diagnostics/localization core (FemVoice.Core) is wired via Microsoft.Extensions.DependencyInjection. Audio capture uses a synthetic/no-op backend on Linux behind IAudioCaptureService; NAudio capture stays Windows-only."/>
+      <TextBlock x:Name="StatusText" FontWeight="SemiBold"/>
+    </StackPanel>
+  </ScrollViewer>
+</Window>
