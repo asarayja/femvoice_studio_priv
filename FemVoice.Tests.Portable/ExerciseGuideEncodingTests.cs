@@ -272,8 +272,8 @@ namespace FemVoiceStudio.Tests
             var directory = new DirectoryInfo(AppContext.BaseDirectory);
             while (directory is not null)
             {
-                var candidate = Path.Combine(directory.FullName, "FemVoiceStudio");
-                if (Directory.Exists(candidate) && File.Exists(Path.Combine(candidate, "FemVoiceStudio.csproj")))
+                var candidate = Path.Combine(directory.FullName, "FemVoice.Core");
+                if (Directory.Exists(candidate) && File.Exists(Path.Combine(candidate, "FemVoice.Core.csproj")))
                     return candidate;
 
                 directory = directory.Parent;

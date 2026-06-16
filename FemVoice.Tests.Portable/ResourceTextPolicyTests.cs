@@ -166,7 +166,7 @@ namespace FemVoiceStudio.Tests
             var directory = new DirectoryInfo(AppContext.BaseDirectory);
             while (directory != null)
             {
-                var candidate = Path.Combine(directory.FullName, "FemVoiceStudio", "Resources");
+                var candidate = Path.Combine(directory.FullName, "FemVoice.Core", "Resources");
                 if (Directory.Exists(candidate))
                     return candidate;
 
@@ -181,9 +181,9 @@ namespace FemVoiceStudio.Tests
             var directory = new DirectoryInfo(AppContext.BaseDirectory);
             while (directory != null)
             {
-                var candidate = Path.Combine(directory.FullName, "FemVoiceStudio");
+                var candidate = Path.Combine(directory.FullName, "FemVoice.Core");
                 if (Directory.Exists(candidate) &&
-                    File.Exists(Path.Combine(candidate, "FemVoiceStudio.csproj")))
+                    File.Exists(Path.Combine(candidate, "FemVoice.Core.csproj")))
                 {
                     return candidate;
                 }

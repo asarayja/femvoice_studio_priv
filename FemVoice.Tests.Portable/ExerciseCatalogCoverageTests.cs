@@ -316,7 +316,7 @@ namespace FemVoiceStudio.Tests
 
         private static Dictionary<string, string> LoadNeutralResourceValues()
         {
-            var resourceDirectory = FindRepoSubdirectory(Path.Combine("FemVoiceStudio", "Resources"));
+            var resourceDirectory = FindRepoSubdirectory(Path.Combine("FemVoice.Core", "Resources"));
             var neutralResourcePath = Path.Combine(resourceDirectory, "Strings.resx");
             var document = XDocument.Load(neutralResourcePath);
 
@@ -336,7 +336,7 @@ namespace FemVoiceStudio.Tests
 
         private static string ReadExerciseDataServiceSource()
         {
-            var dir = FindRepoSubdirectory(Path.Combine("FemVoiceStudio", "Data"));
+            var dir = FindRepoSubdirectory(Path.Combine("FemVoice.Core", "Data"));
             return File.ReadAllText(Path.Combine(dir, "ExerciseDataService.cs"));
         }
 

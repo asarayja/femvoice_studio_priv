@@ -47,16 +47,9 @@ namespace FemVoiceStudio.Subsystems.Analysis
         public double Shimmer { get; set; }
     }
 
-    /// <summary>
-    /// Resonance category classification
-    /// </summary>
-    public enum ResonanceCategory
-    {
-        Unknown = 0,
-        Back = 1,      // Masculine
-        Neutral = 2,
-        Forward = 3    // Feminine
-    }
+    // ResonanceCategory was relocated to FemVoice.Core/Models/ResonanceCategory.cs (same namespace,
+    // FemVoiceStudio.Subsystems.Analysis) during the Linux portable-core split, because live Models
+    // depend on it. This (dead) file consumes it via the FemVoice.Core reference.
 
     /// <summary>
     /// Voice parameter types

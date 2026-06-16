@@ -1,4 +1,13 @@
 <Solution>
+  <!-- Shared, cross-platform (net10.0) projects — build/test on Linux/macOS/Windows -->
+  <Project Path="FemVoice.Core/FemVoice.Core.csproj" />
+  <Project Path="FemVoice.Audio.Abstractions/FemVoice.Audio.Abstractions.csproj" />
+  <Project Path="FemVoice.Tests.Portable/FemVoice.Tests.Portable.csproj" />
+  <!-- Avalonia head (net10.0) — minimal bootstrap shell -->
+  <Project Path="FemVoice.Avalonia/FemVoice.Avalonia.csproj" />
+  <!-- Windows audio backend (net10.0-windows) — NAudio capture behind IAudioCaptureService -->
+  <Project Path="FemVoice.Audio.Windows/FemVoice.Audio.Windows.csproj" />
+  <!-- WPF reference implementation (net10.0-windows) — Windows-only, frozen baseline -->
   <Project Path="FemVoiceStudio/FemVoiceStudio.csproj" />
   <Project Path="FemVoiceStudio.Tests/FemVoiceStudio.Tests.csproj" />
 </Solution>

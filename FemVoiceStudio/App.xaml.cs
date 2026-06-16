@@ -7,6 +7,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using FemVoiceStudio.Data;
 using FemVoiceStudio.Audio;
+using FemVoiceStudio.Audio.Abstractions;
+using FemVoiceStudio.Audio.Windows;
 using FemVoiceStudio.Services;
 using FemVoiceStudio.Services.Progression;
 using FemVoiceStudio.ViewModels;
@@ -138,6 +140,10 @@ public partial class App : Application
         services.AddSingleton<ResonanceProxyEngine>();
         services.AddSingleton<FemVoiceScoreEngine>();
         services.AddSingleton<ComfortZoneController>();
+        // Windows audio capture behind the platform-neutral abstraction (FemVoice.Audio.Windows).
+        // Additive: existing windows still construct AudioCaptureService directly; migrating those
+        // call sites to inject IAudioCaptureService is deferred to the Avalonia UI-parity phases.
+        services.AddSingleton<IAudioCaptureService, NAudioCaptureService>();
         // VoiceHealthMonitor fjernet: Analyze() ble aldri kalt i produksjon
         // (integrasjonsauditen) — helse drives av VocalHealthSupervisor-stien.
 
