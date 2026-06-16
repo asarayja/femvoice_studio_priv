@@ -34,6 +34,8 @@
   <ItemGroup>
     <ProjectReference Include="..\FemVoice.Core\FemVoice.Core.csproj" />
     <ProjectReference Include="..\FemVoice.Audio.Abstractions\FemVoice.Audio.Abstractions.csproj" />
+    <!-- AudioCaptureService moved here; WPF code uses it via this reference (namespace unchanged). -->
+    <ProjectReference Include="..\FemVoice.Audio.Windows\FemVoice.Audio.Windows.csproj" />
   </ItemGroup>
 
   <ItemGroup>
