@@ -39,6 +39,9 @@
         </StackPanel>
       </Border>
 
+      <!-- Live session content — visible only while a synthetic session is running -->
+      <StackPanel IsVisible="{Binding IsRunning}" Spacing="14">
+
       <!-- Live pitch + status -->
       <Border BorderBrush="#444" BorderThickness="1" CornerRadius="6" Padding="14">
         <StackPanel Spacing="6">
@@ -159,10 +162,39 @@
         </StackPanel>
       </Border>
 
-      <StackPanel Orientation="Horizontal" Spacing="8">
-        <Button Content="Stopp" Command="{Binding StopCommand}" IsEnabled="{Binding IsRunning}" Width="100"/>
-        <Button Content="Start på nytt" Command="{Binding BeginCommand}" IsEnabled="{Binding !IsRunning}" Width="120"/>
       </StackPanel>
+      <!-- /Live session content -->
+
+      <!-- Lifecycle controls + display-only state (synthetic; never saved) -->
+      <Border BorderBrush="{DynamicResource ShellBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
+        <StackPanel Spacing="8">
+          <WrapPanel>
+            <TextBlock Text="{Binding PhaseText, StringFormat='Tilstand: {0}'}" FontWeight="SemiBold" Margin="0,0,20,0"/>
+            <TextBlock Text="{Binding RecommendedDurationText}" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,0,20,0"/>
+            <TextBlock Text="{Binding ElapsedText, StringFormat='Tid: {0}'}" Foreground="{DynamicResource ShellMutedBrush}"/>
+          </WrapPanel>
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="Start" Command="{Binding BeginCommand}" IsEnabled="{Binding !IsRunning}" Width="100"/>
+            <Button Content="Stopp" Command="{Binding StopCommand}" IsEnabled="{Binding IsRunning}" Width="100"/>
+          </StackPanel>
+
+          <!-- Inactive: before first Start -->
+          <Border IsVisible="{Binding IsInactive}" BorderBrush="{DynamicResource ShellAccentBrush}" BorderThickness="1" CornerRadius="6" Padding="10">
+            <TextBlock Text="Klar til å starte — trykk Start for en syntetisk, visning-bare kjøring."
+                       TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+          </Border>
+
+          <!-- Stopped: display-only session-ended summary -->
+          <Border IsVisible="{Binding IsStopped}" BorderBrush="{DynamicResource ShellOkBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Økt avsluttet" FontWeight="SemiBold" Foreground="{DynamicResource ShellOkBrush}"/>
+              <TextBlock Text="{Binding SessionEndedSummary}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            </StackPanel>
+          </Border>
+
+          <TextBlock Text="{Binding NotSavedNote}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12"/>
+        </StackPanel>
+      </Border>
 
     </StackPanel>
   </ScrollViewer>

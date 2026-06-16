@@ -10,6 +10,17 @@ using FemVoiceStudio.Services;              // PitchTraceStabilizer, LiveMetrics
 
 namespace FemVoice.Avalonia.ViewModels;
 
+/// <summary>Display-only runtime lifecycle phase (synthetic; no persistence/clinical meaning).</summary>
+public enum RuntimePhase
+{
+    /// <summary>Before the first Start (or after a fresh navigation) — nothing is running.</summary>
+    Inactive,
+    /// <summary>A synthetic session is running.</summary>
+    Active,
+    /// <summary>The session was stopped — a display-only session-ended summary is shown.</summary>
+    Stopped,
+}
+
 /// <summary>
 /// Safe Avalonia exercise-runtime scaffold. Drives the SHARED, UI-free DSP services
 /// (PitchDetectionService + PitchTraceStabilizer + LiveMetricsService) from a dedicated SYNTHETIC
@@ -54,6 +65,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     private DateTime _startUtc;
     private DateTime _lastFrameUtc;
     private double _holdRaw;   // unrounded hold accumulator (display value is rounded separately)
+    private double _peakHoldPercent;   // best hold % this session (for the display-only session-ended summary)
 
     public ExerciseRuntimeViewModel(EnhancedExercise exercise, IUiDispatcher ui, Action back)
     {
@@ -97,7 +109,10 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         _capture = new SyntheticAudioCaptureService { BaseFrequency = mid, Mode = SyntheticAudioMode.StablePitch };
         _capture.FrameAvailable += OnFrameAvailable;
 
-        Begin();
+        // Explicit lifecycle: start Inactive (no auto-start). The user presses Start (BeginCommand) to run
+        // the synthetic session; the FrameAvailable handler is subscribed once here and only fires while the
+        // capture is started (in Begin) — re-Start does not re-subscribe.
+        RuntimeStatusMessage = "Klar — trykk Start for å begynne (syntetisk, kun visning).";
     }
 
     public EnhancedExercise Exercise { get; }
@@ -124,6 +139,36 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     [ObservableProperty] private double _holdSeconds;
     [ObservableProperty] private double _holdProgressPercent;
     [ObservableProperty] private string _runtimeStatusMessage = "Gjør deg klar …";
+
+    // ── Lifecycle (display-only; synthetic — no persistence/clinical meaning) ─────────
+    [ObservableProperty] private RuntimePhase _phase = RuntimePhase.Inactive;
+    [ObservableProperty] private string _sessionEndedSummary = "";
+
+    /// <summary>True before the first Start (synthetic session not yet running).</summary>
+    public bool IsInactive => Phase == RuntimePhase.Inactive;
+    /// <summary>True after Stop — the session-ended summary panel is shown.</summary>
+    public bool IsStopped => Phase == RuntimePhase.Stopped;
+    /// <summary>Short phase label for the lifecycle bar.</summary>
+    public string PhaseText => Phase switch
+    {
+        RuntimePhase.Inactive => "Klar",
+        RuntimePhase.Active => "Aktiv (syntetisk)",
+        RuntimePhase.Stopped => "Stoppet",
+        _ => "—",
+    };
+    /// <summary>Display-only recommended duration from the exercise definition (read-only).</summary>
+    public string RecommendedDurationText => Exercise.DurationMinutes > 0
+        ? $"Anbefalt varighet: {Exercise.DurationMinutes} min (veiledende)"
+        : "Anbefalt varighet: —";
+    /// <summary>Static note: the synthetic session is never saved.</summary>
+    public string NotSavedNote => "Økten lagres ikke — visning-bare syntetisk kjøring.";
+
+    partial void OnPhaseChanged(RuntimePhase value)
+    {
+        OnPropertyChanged(nameof(IsInactive));
+        OnPropertyChanged(nameof(IsStopped));
+        OnPropertyChanged(nameof(PhaseText));
+    }
 
     /// <summary>
     /// DISPLAY-ONLY readout of the VM-local ExerciseIntelligenceCoordinator's in-memory state, shown
@@ -180,6 +225,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         _stabilizer.Reset();
         _metrics.Reset();
         _holdRaw = 0;
+        _peakHoldPercent = 0;
         HoldSeconds = 0;
         HoldProgressPercent = 0;
         ElapsedSeconds = 0;
@@ -187,9 +233,11 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         RuntimeChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, TargetPitchMin, TargetPitchMax);
         LiveFeedbackMessage = "Si en jevn tone i målområdet.";
         LiveFeedbackSeverity = "Nøytral";
+        SessionEndedSummary = "";
         _startUtc = DateTime.UtcNow;
         _lastFrameUtc = _startUtc;
         IsRunning = true;
+        Phase = RuntimePhase.Active;
         RuntimeStatusMessage = "Øvelse i gang — hold tonen i målområdet.";
         StartCoordinatorReadout();
         _ = _capture.StartAsync(new AudioCaptureOptions(SampleRate));
@@ -226,7 +274,11 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         if (_coordinatorEnabled) _coordinator.StopExercise();
         _ui.Post(() =>
         {
+            // Build the display-only session-ended summary from the last live values BEFORE clearing them.
+            SessionEndedSummary =
+                $"Økt fullført (kun visning) · varighet {ElapsedText} · beste hold {_peakHoldPercent:F0} %. {NotSavedNote}";
             IsRunning = false;
+            Phase = RuntimePhase.Stopped;
             PitchStatus = "Stoppet";
             RuntimeStatusMessage = "Øvelse stoppet.";
             CoordinatorReadout = ExerciseCoordinatorReadoutDisplay.Inactive();
@@ -291,6 +343,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
             PitchStatus = status;
             HoldSeconds = Math.Round(hold, 1);
             HoldProgressPercent = Math.Round(hold / _holdTargetSeconds * 100.0, 0);
+            if (HoldProgressPercent > _peakHoldPercent) _peakHoldPercent = HoldProgressPercent;
             ElapsedSeconds = elapsed;
             RuntimeStatusMessage = inRange
                 ? (hold >= _holdTargetSeconds ? "Flott — du holder målområdet!" : "Bra — hold tonen rolig i målområdet.")
