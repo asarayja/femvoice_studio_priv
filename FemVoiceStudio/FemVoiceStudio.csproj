@@ -25,11 +25,15 @@
     </PackageReference>
   </ItemGroup>
 
+  <!-- Linux portable-core split (2026-06-16): the UI-free domain (Models, scoring, SmartCoach,
+       health/recovery/progression, analytics, data/SQLite, diagnostics, localization core, audio DSP)
+       and the RESX moved to FemVoice.Core (net10.0). This WPF head now references them.
+       NOTE: this project targets net10.0-windows + WPF and is built/verified ONLY on Windows.
+       The Resources\Strings.resx EmbeddedResource block was removed because the RESX now lives in
+       FemVoice.Core (RootNamespace=FemVoiceStudio preserves the manifest base name). -->
   <ItemGroup>
-    <EmbeddedResource Update="Resources\Strings.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
+    <ProjectReference Include="..\FemVoice.Core\FemVoice.Core.csproj" />
+    <ProjectReference Include="..\FemVoice.Audio.Abstractions\FemVoice.Audio.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

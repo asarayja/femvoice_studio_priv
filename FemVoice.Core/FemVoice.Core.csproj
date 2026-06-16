@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- CRITICAL: keep RootNamespace = FemVoiceStudio so the embedded RESX manifest name stays
+         "FemVoiceStudio.Resources.Strings", matching the hardcoded base name in
+         LocalizationService.cs / LevelClassificationSystem.cs. Changing this silently breaks localization. -->
+    <RootNamespace>FemVoiceStudio</RootNamespace>
+    <AssemblyName>FemVoice.Core</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.0" />
+    <PackageReference Include="QuestPDF" Version="2026.5.0" />
+    <PackageReference Include="NAudio" Version="2.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FemVoice.Audio.Abstractions\FemVoice.Audio.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>
