@@ -28,7 +28,7 @@ Per-project trx (nothing filtered/hidden; full artifacts uploaded):
 **297/301 pass.** The 4 failures are all `ThemeNoteButtonStyleTests` (`NoteRadioButtonStyle_ExistsAndCoversAllStates`/`UsesThemeBrushes`, Dark/Light) — **pre-existing**: the theme XAML they assert on is byte-identical to `origin/main`, so the result equals the pre-port baseline. Frozen theme XAML and the assertions are unchanged.
 
 ## 7. Manual mic smoke result
-**⛔ NOT RUN — requires a human on a real Windows machine with a microphone.** CI cannot exercise capture, and the AI dev host is Linux (no WPF runtime / no mic) — so it is honestly recorded as un-run, not faked. A ready-to-fill result template + run instructions + statically pre-confirmed prerequisites (DI wiring `App.xaml.cs:146`, build green, adapter delegates to unchanged `AudioCaptureService`) are in `AUDIO_WINDOWS_ADAPTER_NOTES.md` → "Manual Windows Mic Smoke Result". This is the one open verification item; record PASS/PASS_WITH_WARNINGS there to flip the recommendation to MERGE-READY.
+**✅ PASS_WITH_WARNINGS** — performed by the user (Asarayja) on a Windows machine. The WPF app builds, launches, the dashboard opens, recording start/stop works, and microphone signal behaves as expected; no blocking issue. Optional no-device/device-lost edge cases and full calibration were not exhaustively exercised, hence PASS_WITH_WARNINGS rather than full PASS. Full record in `AUDIO_WINDOWS_ADAPTER_NOTES.md` → "Manual Windows Mic Smoke Result".
 
 ## 8. Linux regression result (after the Windows fixes)
 **✅ GREEN.** Avalonia + portable core build on Linux; headless smoke OK; Avalonia references **only** `FemVoice.Core` + `FemVoice.Audio.Abstractions` (no `FemVoice.Audio.Windows`/NAudio-capture/`System.Windows`/`Microsoft.Win32`/`OxyPlot.Wpf` leak). Portable tests 1570/1580 (10 pre-existing; occasional +1 `ComfortZoneControllerTests` timing flake). See `AVALONIA_LINUX_GATE_RESULTS.md`.
@@ -45,8 +45,8 @@ Per-project trx (nothing filtered/hidden; full artifacts uploaded):
 ## 10. Behaviour changes: **NO**
 No clinical/scoring/SmartCoach/health/recovery/safety-gate/progression/report/localization-semantics/diagnostics/analytics/persistence/exercise-catalog behaviour changed. Changes were: code relocations (namespaces preserved), two behaviour-neutral type extractions, additive DI wiring + the audio adapter (pure delegation), three **mechanical** test/assembly compat fixes (TestDatabaseService link, `InternalsVisibleTo` restore, ResonanceContrastDemo path), the CI workflow, commits/PR, and docs. No assertions or product resources were modified.
 
-## 11. Recommendation: **KEEP BLOCKED (continue review) — one item from merge-ready**
-All automated gates are green: WPF builds on Windows, the safety-invariant + Windows-only + portable suites pass except the 14 documented pre-existing failures, Linux/Avalonia regression is clean, and no behaviour changed. **The single remaining gate item is the manual Windows microphone smoke** for `NAudioCaptureService` (needs a human + a Windows mic — I cannot perform it). Per the work order ("do not merge unless the report explicitly says merge-ready"), this is **not merge-ready yet**; it becomes merge-ready once the mic smoke is recorded in `AUDIO_WINDOWS_ADAPTER_NOTES.md`. Optionally, the team may also fix the 14 pre-existing failures as a separate, approved change before/after merge.
+## 11. Recommendation: **MERGE-READY**
+Manual Windows mic smoke has been performed by the user and recorded as **PASS_WITH_WARNINGS**. Automated Windows CI build/test is green, safety-invariant suites are green, Linux/Avalonia regression is green, and no behaviour change was introduced. **The branch is merge-ready.** (The 14 pre-existing test failures — localization-data + theme-style — are unrelated to this work and may be addressed as a separate, approved change.)
 
 ## Stop condition
-Stopping after this report. Do not merge until merge-ready (manual mic smoke recorded). Do not start Avalonia dashboard parity until this gate is reviewed.
+Gate complete and MERGE-READY. After merge, the next phase is the Avalonia Main Dashboard parity slice.

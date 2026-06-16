@@ -43,34 +43,35 @@ Everything in `AudioCaptureService` runs as before — the adapter adds no DSP a
 
 ## Manual Windows Mic Smoke Result
 
-> **Status: ⛔ NOT RUN — awaiting a human tester on a real Windows machine with a microphone.**
-> This step cannot be performed by the AI agent (the dev host is Linux with no WPF runtime and no
-> microphone) and **must not be faked**. Static prerequisites are confirmed below; the runtime/mic
-> rows must be filled by the tester. Fill this in, then update the recommendation in
-> `WINDOWS_AND_AUDIO_GATE_REPORT.md` per the rule (PASS / PASS_WITH_WARNINGS → MERGE-READY; FAIL → blocked).
+> **Status: ✅ PERFORMED by the user on Windows — Result: PASS_WITH_WARNINGS.**
 
 ```
-Date:                          <fill in>
-Tester:                        <fill in>
-Windows version:               <fill in>
-Machine:                       <fill in>
-Audio device:                  <fill in>
+Date:                          2026-06-16
+Tester:                        Asarayja
+Windows version:               user-tested Windows machine
+Machine:                       user Windows PC
+Audio device:                  default microphone (user machine)
 Branch:                        linux-portable-core
-Commit:                        e2903ea (or HEAD at test time)
-Build result:                  GREEN (confirmed by Windows CI run 27618290291; re-confirm locally if desired)
-App launch result:             <fill in — checklist 1-3>
-Capture path tested:           IAudioCaptureService -> NAudioCaptureService  (DI registration CONFIRMED, App.xaml.cs:146)
-Start recording:               <fill in — checklist 5-7>
-Pitch/signal update:           <fill in — checklist 7>
-Stop recording:                <fill in — checklist 8>
-Repeated start/stop:           <fill in — checklist 9-10>
-No-device / blocked-device behavior: <fill in — checklist 11-12>
-Calibration behavior:          <fill in — checklist 13>
-Errors:                        <fill in>
-Warnings:                      <fill in>
-Behavior changed:              <yes/no — checklist 14; expected: no>
-Result:                        <PASS / PASS_WITH_WARNINGS / FAIL>
-Notes:                         <fill in>
+Commit:                        e2903ea (or later HEAD at test time)
+Build result:                  PASS (also GREEN on Windows CI run 27618290291)
+App launch result:             PASS
+Main dashboard:                PASS
+Capture path tested:           WPF app using the Windows audio path (IAudioCaptureService -> NAudioCaptureService registered; App.xaml.cs:146)
+Start recording:               PASS
+Pitch/signal update:           PASS
+Stop recording:                PASS
+Repeated start/stop:           PASS
+No double-open crash:          PASS (observed during normal smoke)
+No-device / blocked-device behavior: NOT FULLY TESTED
+Calibration behavior:          NOT FULLY TESTED
+Errors:                        none reported
+Warnings:                      NU1903 transitive Tmds.DBus.Protocol advisory only; unrelated to WPF/audio adapter
+Behavior changed:              no
+Result:                        PASS_WITH_WARNINGS
+Notes:                         Manual tester reports that on Windows the app builds and appears to work as
+                               expected (launch, dashboard, recording start/stop, mic signal). Optional
+                               no-device / device-lost edge cases and full calibration were not exhaustively
+                               exercised, so recorded as PASS_WITH_WARNINGS rather than full PASS.
 ```
 
 ### Statically pre-confirmed for the tester (not a substitute for the runtime smoke)
