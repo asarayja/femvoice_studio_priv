@@ -19,6 +19,7 @@
         <DataTemplate DataType="vm:MainDashboardViewModel"><views:DashboardView/></DataTemplate>
         <DataTemplate DataType="vm:ExerciseGuideViewModel"><views:ExerciseGuideView/></DataTemplate>
         <DataTemplate DataType="vm:ExerciseDetailViewModel"><views:ExerciseDetailView/></DataTemplate>
+        <DataTemplate DataType="vm:ExerciseRuntimeViewModel"><views:ExerciseRuntimeView/></DataTemplate>
       </ContentControl.DataTemplates>
     </ContentControl>
   </DockPanel>

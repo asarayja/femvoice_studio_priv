@@ -16,10 +16,12 @@ namespace FemVoice.Avalonia.ViewModels;
 public partial class ExerciseDetailViewModel : ObservableObject
 {
     private readonly Action _back;
+    private readonly Action _startExercise;
 
-    public ExerciseDetailViewModel(EnhancedExercise exercise, Action back)
+    public ExerciseDetailViewModel(EnhancedExercise exercise, Action back, Action startExercise)
     {
         _back = back;
+        _startExercise = startExercise;
         Exercise = exercise;
         Steps = exercise.Steps ?? new List<string>();
         Metrics = exercise.Metrics?.Select(ExerciseDisplay.Metric).ToList() ?? new List<string>();
@@ -49,8 +51,7 @@ public partial class ExerciseDetailViewModel : ObservableObject
     [ObservableProperty] private string _startStatus = "";
 
     [RelayCommand]
-    private void Start() =>
-        StartStatus = "«Start øvelse» er ikke koblet i denne slilen (øvelsesruntime kommer i en senere slice).";
+    private void Start() => _startExercise();   // navigates to the Exercise Runtime view
 
     [RelayCommand]
     private void Back() => _back();

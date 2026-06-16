@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FemVoiceStudio.Core.Platform;   // IUiDispatcher
 using FemVoiceStudio.Services;   // VoiceFeminizationExerciseService, EnhancedExercise
 
 namespace FemVoice.Avalonia.ViewModels;
@@ -13,10 +14,12 @@ public partial class ShellViewModel : ObservableObject
 {
     private readonly MainDashboardViewModel _dashboard;
     private readonly ExerciseGuideViewModel _guide;
+    private readonly IUiDispatcher _ui;
 
-    public ShellViewModel(MainDashboardViewModel dashboard, VoiceFeminizationExerciseService exercises)
+    public ShellViewModel(MainDashboardViewModel dashboard, VoiceFeminizationExerciseService exercises, IUiDispatcher ui)
     {
         _dashboard = dashboard;
+        _ui = ui;
         _guide = new ExerciseGuideViewModel(exercises, OpenExerciseDetail);
         _currentPage = dashboard;
     }
@@ -29,5 +32,8 @@ public partial class ShellViewModel : ObservableObject
     [RelayCommand] private void ShowGuide() => CurrentPage = _guide;
 
     private void OpenExerciseDetail(EnhancedExercise exercise)
-        => CurrentPage = new ExerciseDetailViewModel(exercise, ShowGuide);
+        => CurrentPage = new ExerciseDetailViewModel(exercise, ShowGuide, () => ShowRuntime(exercise));
+
+    private void ShowRuntime(EnhancedExercise exercise)
+        => CurrentPage = new ExerciseRuntimeViewModel(exercise, _ui, () => OpenExerciseDetail(exercise));
 }

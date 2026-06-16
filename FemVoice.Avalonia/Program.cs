@@ -21,6 +21,7 @@ internal static class Program
         if (args.Contains("--smoke")) return Smoke();
         if (args.Contains("--dashboard-smoke")) return DashboardSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-smoke")) return ExerciseSmoke();
+        if (args.Contains("--exercise-runtime-smoke")) return ExerciseRuntimeSmoke().GetAwaiter().GetResult();
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
@@ -110,7 +111,7 @@ internal static class Program
 
         // Shell navigation: dashboard -> guide -> detail -> guide
         var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
-        var shell = new ShellViewModel(dash, svc);
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
         bool onDashboard = shell.CurrentPage is MainDashboardViewModel;
         shell.ShowGuideCommand.Execute(null);
         var guidePage = shell.CurrentPage as ExerciseGuideViewModel;
@@ -127,6 +128,49 @@ internal static class Program
 
         bool ok = count == 15 && onDashboard && onGuide && onDetail && backToGuide && detail.Steps.Count > 0;
         Console.WriteLine(ok ? "[exercise] Exercise smoke OK" : "[exercise] Exercise smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Headless verification of the Exercise Runtime slice (no display): synthetic pitch drives the
+    // runtime VM into the exercise target band, hold/elapsed advance, and detail -> runtime -> back nav works.
+    private static async Task<int> ExerciseRuntimeSmoke()
+    {
+        var svc = new VoiceFeminizationExerciseService();
+        var exercise = svc.GetAllEnhancedExercises()[0]; // Grunnleggende humming (target 140-180 Hz)
+
+        using var rt = new ExerciseRuntimeViewModel(exercise, new InlineUiDispatcher(), () => { });
+        await Task.Delay(700); // collect synthetic frames aimed at the target-band midpoint
+
+        double pitch = rt.CurrentPitch;
+        string status = rt.PitchStatus;
+        double hold = rt.HoldSeconds;
+        bool running = rt.IsRunning;
+        Console.WriteLine($"[runtime] Exercise: {rt.SelectedExerciseName}");
+        Console.WriteLine($"[runtime] Target: {rt.TargetPitchMin:F0}-{rt.TargetPitchMax:F0} Hz");
+        Console.WriteLine($"[runtime] Pitch: {pitch:F1} Hz");
+        Console.WriteLine($"[runtime] Status: {status}");
+        Console.WriteLine($"[runtime] Hold: {hold:F1}s ({rt.HoldProgressPercent:F0}%)  Elapsed: {rt.ElapsedText}");
+        await rt.StopCommand.ExecuteAsync(null);
+        bool stopped = !rt.IsRunning;
+
+        // Navigation via the shell: dashboard -> guide -> detail -> runtime -> back-to-detail
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+        shell.ShowGuideCommand.Execute(null);
+        var guide = shell.CurrentPage as ExerciseGuideViewModel;
+        guide!.OpenExerciseCommand.Execute(guide.Exercises[0]);
+        var detail = shell.CurrentPage as ExerciseDetailViewModel;
+        detail!.StartCommand.Execute(null);
+        bool onRuntime = shell.CurrentPage is ExerciseRuntimeViewModel;
+        var rvm = shell.CurrentPage as ExerciseRuntimeViewModel;
+        await Task.Delay(100);
+        if (rvm is not null) await rvm.BackCommand.ExecuteAsync(null);
+        bool backToDetail = shell.CurrentPage is ExerciseDetailViewModel;
+        Console.WriteLine($"[runtime] Navigation: runtime={onRuntime} back-to-detail={backToDetail}");
+
+        bool ok = running && stopped && pitch > 0 && rt.TargetPitchMax > 0
+                  && status == "Innenfor målområde" && hold > 0 && onRuntime && backToDetail;
+        Console.WriteLine(ok ? "[runtime] Exercise runtime smoke OK" : "[runtime] Exercise runtime smoke FAIL");
         return ok ? 0 : 1;
     }
 }
