@@ -14,6 +14,12 @@
     <PackageReference Include="Avalonia.Desktop" Version="11.2.1" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <!-- Security: pin the transitive Tmds.DBus.Protocol (pulled by Avalonia.FreeDesktop 11.2.1 = 0.20.0)
+         to the lowest patched version that resolves NU1903 / GHSA-xrw6-gwf8-vvr9. Avalonia 11.2.x
+         still ships 0.20.0; the Avalonia-side fix only lands in 11.3.x, so we pin the transitive
+         directly here rather than take a wider Avalonia minor bump. Remove this once Avalonia is
+         upgraded to a line that already references a patched Tmds.DBus.Protocol. -->
+    <PackageReference Include="Tmds.DBus.Protocol" Version="0.21.3" />
   </ItemGroup>
 
   <ItemGroup>
