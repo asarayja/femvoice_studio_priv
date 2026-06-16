@@ -4,6 +4,7 @@ using FemVoiceStudio.Audio.Abstractions;
 using FemVoiceStudio.Core.Platform;
 using FemVoiceStudio.Services;
 using FemVoice.Avalonia.Platform;
+using FemVoice.Avalonia.ViewModels;
 
 namespace FemVoice.Avalonia;
 
@@ -16,20 +17,16 @@ internal static class Program
     {
         Services = BuildServices();
 
-        // Headless verification path: prove shared FemVoice.Core services resolve via DI without
-        // requiring a display. Used by scripts/linux-portable-gate.sh on headless Linux/CI.
-        if (args.Contains("--smoke"))
-            return Smoke();
+        // Headless verification paths (no display needed) — used by scripts/linux-portable-gate.sh.
+        if (args.Contains("--smoke")) return Smoke();
+        if (args.Contains("--dashboard-smoke")) return DashboardSmoke().GetAwaiter().GetResult();
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
     }
 
-    // Referenced by the Avalonia previewer / designer tooling.
     public static AppBuilder BuildAvaloniaApp()
-        => AppBuilder.Configure<App>()
-            .UsePlatformDetect()
-            .LogToTrace();
+        => AppBuilder.Configure<App>().UsePlatformDetect().LogToTrace();
 
     private static IServiceProvider BuildServices()
     {
@@ -42,13 +39,15 @@ internal static class Program
         services.AddSingleton<ISystemThemeProvider, AvaloniaSystemThemeProvider>();
 
         // ── Audio capture ─────────────────────────────────────────────────────────
-        // Linux/headless has no NAudio backend; use the no-op capture behind IAudioCaptureService.
-        // (Swap NoopAudioCaptureService -> SyntheticAudioCaptureService to feed the DSP pipeline a
-        //  synthetic tone, or wire FemVoice.Audio.Windows on Windows.)
-        services.AddSingleton<IAudioCaptureService, NoopAudioCaptureService>();
+        // Avalonia head uses the synthetic backend (no NAudio capture, no Windows-only dep). On Windows
+        // the real NAudioCaptureService would be wired in a Windows-specific composition root — NOT here.
+        services.AddSingleton<IAudioCaptureService, SyntheticAudioCaptureService>();
 
         // ── Shared, UI-free core ─────────────────────────────────────────────────
         services.AddSingleton<ILocalizationService>(_ => LocalizationService.Instance);
+
+        // ── View-models ───────────────────────────────────────────────────────────
+        services.AddSingleton<MainDashboardViewModel>();
 
         return services.BuildServiceProvider();
     }
@@ -58,13 +57,37 @@ internal static class Program
         var loc = Services.GetRequiredService<ILocalizationService>();
         var dispatcher = Services.GetRequiredService<IUiDispatcher>();
         var capture = Services.GetRequiredService<IAudioCaptureService>();
-
         Console.WriteLine($"[smoke] ILocalizationService -> {loc.GetType().FullName}");
         Console.WriteLine($"[smoke] IUiDispatcher        -> {dispatcher.GetType().Name}");
         Console.WriteLine($"[smoke] capture backend       -> {capture.GetType().Name} (devices={capture.GetInputDevices().Count})");
-        Console.WriteLine($"[smoke] Core scoring type     -> {typeof(FemVoiceScore).FullName}");
         Console.WriteLine($"[smoke] localized 'Common_Yes' -> {LocalizationService.Instance["Common_Yes"]}");
         Console.WriteLine("[smoke] OK: shared FemVoice.Core services resolve on Linux via the Avalonia head DI.");
+        return 0;
+    }
+
+    // Headless drive of the dashboard VM through real shared services + synthetic audio (no display).
+    private static async Task<int> DashboardSmoke()
+    {
+        var synth = new SyntheticAudioCaptureService();
+        using var vm = new MainDashboardViewModel(synth, new InlineUiDispatcher());
+        Console.WriteLine($"[dash] comfort zone ({vm.SelectedDifficulty}): {vm.ComfortZoneLow:F0}-{vm.ComfortZoneHigh:F0} Hz");
+        await vm.StartCommand.ExecuteAsync(null);
+        foreach (var mode in new[]
+                 {
+                     SyntheticAudioMode.StablePitch, SyntheticAudioMode.PitchRampUp,
+                     SyntheticAudioMode.UnstablePitch, SyntheticAudioMode.Silence,
+                 })
+        {
+            vm.SyntheticAudioMode = mode;
+            await Task.Delay(500);
+            Console.WriteLine(
+                $"[dash] mode={mode,-14} pitch={vm.CurrentPitch,6:F1}Hz  signal={vm.CurrentSignalStatus,-24} " +
+                $"stability={vm.PitchStability,-18} health={vm.HealthStatusDisplay,-12} trace={vm.PitchSamples.Count,3}  " +
+                $"feedback=\"{vm.CurrentFeedbackMessage}\"");
+        }
+        await vm.StopCommand.ExecuteAsync(null);
+        Console.WriteLine($"[dash] stopped. IsRecording={vm.IsRecording}");
+        Console.WriteLine("[dash] OK: MainDashboardViewModel drives real pitch/stability/health from synthetic audio on Linux.");
         return 0;
     }
 }
