@@ -20,6 +20,7 @@ internal static class Program
         // Headless verification paths (no display needed) — used by scripts/linux-portable-gate.sh.
         if (args.Contains("--smoke")) return Smoke();
         if (args.Contains("--dashboard-smoke")) return DashboardSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--exercise-smoke")) return ExerciseSmoke();
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
@@ -46,8 +47,12 @@ internal static class Program
         // ── Shared, UI-free core ─────────────────────────────────────────────────
         services.AddSingleton<ILocalizationService>(_ => LocalizationService.Instance);
 
+        // ── Shared exercise catalog (read-only; pure, no DB/WPF) ───────────────────
+        services.AddSingleton<VoiceFeminizationExerciseService>();
+
         // ── View-models ───────────────────────────────────────────────────────────
         services.AddSingleton<MainDashboardViewModel>();
+        services.AddSingleton<ShellViewModel>();
 
         return services.BuildServiceProvider();
     }
@@ -89,5 +94,39 @@ internal static class Program
         Console.WriteLine($"[dash] stopped. IsRecording={vm.IsRecording}");
         Console.WriteLine("[dash] OK: MainDashboardViewModel drives real pitch/stability/health from synthetic audio on Linux.");
         return 0;
+    }
+
+    // Headless verification of the Exercise Guide + Detail slice (no display): catalog loads, detail
+    // opens, and shell navigation dashboard -> guide -> detail -> guide works.
+    private static int ExerciseSmoke()
+    {
+        var svc = new VoiceFeminizationExerciseService();
+        var guide = new ExerciseGuideViewModel(svc, _ => { });
+        int count = guide.Count;
+        Console.WriteLine($"[exercise] Exercises: {count}");
+        if (count == 0) { Console.WriteLine("[exercise] Exercise smoke FAIL: no exercises"); return 1; }
+        Console.WriteLine($"[exercise] First: {guide.Exercises[0].Name}");
+        Console.WriteLine($"[exercise] Categories: {string.Join(", ", guide.Categories)}");
+
+        // Shell navigation: dashboard -> guide -> detail -> guide
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc);
+        bool onDashboard = shell.CurrentPage is MainDashboardViewModel;
+        shell.ShowGuideCommand.Execute(null);
+        var guidePage = shell.CurrentPage as ExerciseGuideViewModel;
+        bool onGuide = guidePage is not null;
+        guidePage!.OpenExerciseCommand.Execute(guidePage.Exercises[0]);
+        var detail = shell.CurrentPage as ExerciseDetailViewModel;
+        bool onDetail = detail is not null;
+        Console.WriteLine($"[exercise] Detail: {(onDetail ? "OK" : "FAIL")}");
+        if (onDetail)
+            Console.WriteLine($"[exercise] Detail title='{detail!.Title}', steps={detail.Steps.Count}, targetPitch={detail.TargetPitchText}");
+        detail!.BackCommand.Execute(null);
+        bool backToGuide = shell.CurrentPage is ExerciseGuideViewModel;
+        Console.WriteLine($"[exercise] nav: dashboard={onDashboard} guide={onGuide} detail={onDetail} back-to-guide={backToGuide}");
+
+        bool ok = count == 15 && onDashboard && onGuide && onDetail && backToGuide && detail.Steps.Count > 0;
+        Console.WriteLine(ok ? "[exercise] Exercise smoke OK" : "[exercise] Exercise smoke FAIL");
+        return ok ? 0 : 1;
     }
 }
