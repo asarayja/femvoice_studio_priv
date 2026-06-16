@@ -23,6 +23,20 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     private const double DefaultHoldTargetSeconds = 5.0;
     private readonly double _holdTargetSeconds;
 
+    // ── VM-local coordinator readout (DISPLAY-ONLY) ──────────────────────────────────
+    // The parameterless ExerciseIntelligenceCoordinator is wired READ-ONLY as a readout source only:
+    // it holds no DB/recorder/gate/SmartCoach (those live only in the full ctor, never used here).
+    // We feed it synthetic-derived metrics via UpdateMetrics and surface its in-memory hold/state.
+    // Nothing here is persisted, gated, scored, or enforced — the safety-lock value is shown as text.
+    private const int    SyntheticUserId           = 1;     // positive probe id; coordinator writes no DB
+    private const double  CoordResonancePlaceholder = 60.0;  // neutral placeholder (pitch is the only real feed)
+    private const double  CoordStabilityPlaceholder = 0.8;   // neutral placeholder
+    private const double  CoordHealthPlaceholder    = 100.0; // safe → never trips a health-threshold lock
+    private readonly ExerciseIntelligenceCoordinator _coordinator = new();
+    private readonly ExerciseTargetProfile? _coordinatorProfile;
+    private readonly bool _coordinatorEnabled;
+    private ExerciseLiveState? _latestLiveState;   // last snapshot from ExerciseUpdated (display only)
+
     private readonly IUiDispatcher _ui;
     private readonly Action _back;
     private readonly SyntheticAudioCaptureService _capture;
@@ -52,6 +66,14 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         _holdTargetSeconds = TargetProfile.HasProfile && TargetProfile.RequiredHoldSecondsValue > 0
             ? TargetProfile.RequiredHoldSecondsValue
             : DefaultHoldTargetSeconds;
+
+        // Resolve the pure ExerciseTargetProfile for the VM-local, display-only coordinator readout.
+        // Enabled only when a profile is mapped; otherwise the readout shows "unavailable" (documented).
+        // Subscribe BEFORE Begin() so the coordinator's initial default-state event is captured.
+        _coordinatorProfile = ExerciseRuntimeTargetProfileDisplay.ResolveProfile(exercise);
+        _coordinatorEnabled = _coordinatorProfile is not null;
+        if (_coordinatorEnabled)
+            _coordinator.ExerciseUpdated += OnCoordinatorState;
 
         // Dedicated synthetic source aimed at the middle of the target band so the scaffold visibly
         // sits "in target" by default. (Windows would inject the real IAudioCaptureService via DI.)
@@ -89,6 +111,13 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     [ObservableProperty] private double _holdProgressPercent;
     [ObservableProperty] private string _runtimeStatusMessage = "Gjør deg klar …";
 
+    /// <summary>
+    /// DISPLAY-ONLY readout of the VM-local ExerciseIntelligenceCoordinator's in-memory state, shown
+    /// alongside the derived hold for comparison. Never enforced, persisted, gated, or scored.
+    /// </summary>
+    [ObservableProperty] private ExerciseCoordinatorReadoutDisplay _coordinatorReadout =
+        ExerciseCoordinatorReadoutDisplay.Inactive();
+
     [RelayCommand]
     private void Begin()
     {
@@ -103,19 +132,45 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         _lastFrameUtc = _startUtc;
         IsRunning = true;
         RuntimeStatusMessage = "Øvelse i gang — hold tonen i målområdet.";
+        StartCoordinatorReadout();
         _ = _capture.StartAsync(new AudioCaptureOptions(SampleRate));
     }
+
+    /// <summary>
+    /// Starts the VM-local coordinator in read-only readout mode (in-memory only). When no profile is
+    /// mapped the readout stays "Inactive" (documented). StartExercise internally stops any prior
+    /// session first, so re-Begin() is safe. No persistence/gate/SmartCoach is touched.
+    /// </summary>
+    private void StartCoordinatorReadout()
+    {
+        if (!_coordinatorEnabled || _coordinatorProfile is null)
+        {
+            CoordinatorReadout = ExerciseCoordinatorReadoutDisplay.Inactive();
+            return;
+        }
+        _latestLiveState = null;
+        _coordinator.StartExercise(_coordinatorProfile, SyntheticUserId);
+        CoordinatorReadout = ExerciseCoordinatorReadoutDisplay.From(
+            _coordinator.IsExerciseActive, _coordinator.GetHoldProgress(),
+            _holdTargetSeconds, _latestLiveState, _holdRaw);
+    }
+
+    /// <summary>Captures the latest coordinator state snapshot (display only; benign cross-thread ref set).</summary>
+    private void OnCoordinatorState(ExerciseLiveState state) => _latestLiveState = state;
 
     [RelayCommand]
     private async System.Threading.Tasks.Task Stop()
     {
         if (!IsRunning) return;
         await _capture.StopAsync().ConfigureAwait(false);
+        // Clear the VM-local coordinator's in-memory state (safe no-op when inactive; persists nothing).
+        if (_coordinatorEnabled) _coordinator.StopExercise();
         _ui.Post(() =>
         {
             IsRunning = false;
             PitchStatus = "Stoppet";
             RuntimeStatusMessage = "Øvelse stoppet.";
+            CoordinatorReadout = ExerciseCoordinatorReadoutDisplay.Inactive();
         });
     }
 
@@ -147,6 +202,17 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         double hold = _holdRaw;
         int elapsed = (int)(now - _startUtc).TotalSeconds;
 
+        // Feed the VM-local coordinator READ-ONLY: pitch is the real signal; resonance/stability/health
+        // are documented neutral placeholders. Read its in-memory hold/state for the display-only readout.
+        ExerciseCoordinatorReadoutDisplay? readout = null;
+        if (_coordinatorEnabled && _coordinator.IsExerciseActive)
+        {
+            _coordinator.UpdateMetrics(CoordResonancePlaceholder, pitch, CoordStabilityPlaceholder, CoordHealthPlaceholder);
+            readout = ExerciseCoordinatorReadoutDisplay.From(
+                _coordinator.IsExerciseActive, _coordinator.GetHoldProgress(),
+                _holdTargetSeconds, _latestLiveState, hold);
+        }
+
         _ui.Post(() =>
         {
             CurrentPitch = result.IsVoiced ? Math.Round(pitch, 1) : 0;
@@ -157,12 +223,17 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
             RuntimeStatusMessage = inRange
                 ? (hold >= _holdTargetSeconds ? "Flott — du holder målområdet!" : "Bra — hold tonen rolig i målområdet.")
                 : status == "Ingen stemme" ? "Si en jevn tone for å begynne." : "Juster tonen mot målområdet.";
+            if (readout is not null) CoordinatorReadout = readout;
         });
     }
 
     public void Dispose()
     {
+        IsRunning = false;                       // mark stopped (also when navigated away via top nav)
         _capture.FrameAvailable -= OnFrameAvailable;
-        _ = _capture.StopAsync();
+        _ = _capture.StopAsync();                // cancels the synthetic capture loop (no more frames)
+        if (_coordinatorEnabled) _coordinator.ExerciseUpdated -= OnCoordinatorState;
+        _coordinator.StopExercise();             // in-memory clear; no persistence
+        _coordinator.Dispose();
     }
 }

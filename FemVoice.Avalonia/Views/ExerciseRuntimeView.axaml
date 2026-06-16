@@ -62,6 +62,34 @@
         </StackPanel>
       </Border>
 
+      <!-- Coordinator readout (DISPLAY-ONLY — parameterless ExerciseIntelligenceCoordinator, NOT enforced) -->
+      <Border BorderBrush="#a6a" BorderThickness="1" CornerRadius="6" Padding="14">
+        <StackPanel Spacing="6">
+          <TextBlock Text="Koordinator-readout" FontWeight="SemiBold" Foreground="#d9f"/>
+          <TextBlock Text="{Binding CoordinatorReadout.ReadoutMode}" Foreground="#999" FontSize="12"/>
+          <WrapPanel>
+            <TextBlock Text="{Binding CoordinatorReadout.IsCoordinatorActive, StringFormat='Aktiv: {0}'}" Margin="0,0,20,4"/>
+            <TextBlock Text="{Binding CoordinatorReadout.CoordinatorStatusText, StringFormat='Tilstand: {0}'}" Margin="0,0,20,4"/>
+          </WrapPanel>
+          <TextBlock Text="Koordinator-hold vs. avledet hold:" Foreground="#bbb"/>
+          <WrapPanel>
+            <TextBlock Text="{Binding CoordinatorReadout.CoordinatorHoldProgressPercent, StringFormat='Koordinator: {0:F0}%'}" Margin="0,0,20,4"/>
+            <TextBlock Text="{Binding CoordinatorReadout.CoordinatorHoldSeconds, StringFormat='({0:F1} s)'}" Margin="0,0,20,4"/>
+            <TextBlock Text="{Binding CoordinatorReadout.DerivedHoldProgressPercent, StringFormat='Avledet: {0:F0}%'}" Margin="0,0,20,4"/>
+            <TextBlock Text="{Binding CoordinatorReadout.DerivedHoldSeconds, StringFormat='({0:F1} s)'}" Margin="0,0,20,4"/>
+          </WrapPanel>
+          <ProgressBar Minimum="0" Maximum="100" Value="{Binding CoordinatorReadout.CoordinatorHoldProgressPercent}" Height="14"/>
+          <TextBlock Text="{Binding CoordinatorReadout.HoldDifferenceDisplay, StringFormat='Differanse: {0}'}" Foreground="#aaa"/>
+          <TextBlock Text="{Binding CoordinatorReadout.CoordinatorGuidanceText}" TextWrapping="Wrap"/>
+          <Border Background="#3a2a3a" CornerRadius="4" Padding="8">
+            <StackPanel Spacing="2">
+              <TextBlock Text="{Binding CoordinatorReadout.CoordinatorSafetyLockDisplay}" Foreground="#f9c" FontWeight="SemiBold" TextWrapping="Wrap"/>
+              <TextBlock Text="{Binding CoordinatorReadout.CoordinatorRawStateSummary}" Foreground="#888" FontSize="11" TextWrapping="Wrap"/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Border>
+
       <!-- Runtime status -->
       <Border BorderBrush="#5a3" BorderThickness="1" CornerRadius="6" Padding="12">
         <StackPanel Spacing="2">

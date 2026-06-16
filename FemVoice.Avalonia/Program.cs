@@ -23,6 +23,7 @@ internal static class Program
         if (args.Contains("--exercise-smoke")) return ExerciseSmoke();
         if (args.Contains("--exercise-runtime-smoke")) return ExerciseRuntimeSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-runtime-integration-smoke")) return ExerciseRuntimeIntegrationSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--exercise-coordinator-smoke")) return ExerciseCoordinatorSmoke().GetAwaiter().GetResult();
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
@@ -225,6 +226,87 @@ internal static class Program
         bool ok = exercises.Count == 15 && (mapped + fallback) == 15 && profileShown
                   && pitch > 0 && status == "Innenfor målområde" && onRuntime && backToDetail;
         Console.WriteLine(ok ? "[rt-int] Exercise runtime integration smoke OK" : "[rt-int] Exercise runtime integration smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Headless verification of the Coordinator Readout slice (no display): the runtime VM drives a
+    // VM-local, parameterless ExerciseIntelligenceCoordinator READ-ONLY (display-only), produces a
+    // hold/progress readout, labels the safety state non-enforced, and stop/back clears the in-memory
+    // coordinator state. Nothing is persisted, gated, scored, or enforced.
+    private static async Task<int> ExerciseCoordinatorSmoke()
+    {
+        var svc = new VoiceFeminizationExerciseService();
+        var exercises = svc.GetAllEnhancedExercises();
+        Console.WriteLine($"[coord] Exercises: {exercises.Count}");
+
+        var first = exercises[0]; // Grunnleggende humming
+        using var rt = new ExerciseRuntimeViewModel(first, new InlineUiDispatcher(), () => { });
+        await Task.Delay(700); // feed synthetic-derived metrics through the coordinator (UpdateMetrics)
+
+        var readout = rt.CoordinatorReadout;
+        bool active = readout.IsCoordinatorActive;
+        // Coordinator either produced a readout (live-state received) or is documented unavailable.
+        bool liveStateReceived = !readout.CoordinatorRawStateSummary.StartsWith("(ingen");
+        bool readoutMode = readout.ReadoutMode.Contains("ikke håndhevet"); // display-only / NOT enforced
+        bool safetyDisplayOnly = readout.CoordinatorSafetyLockDisplay.Contains("kun visning"); // non-enforced label
+
+        Console.WriteLine($"[coord] Exercise: {rt.SelectedExerciseName}");
+        Console.WriteLine($"[coord] Coordinator active: {active}");
+        Console.WriteLine($"[coord] Coordinator hold: {readout.CoordinatorHoldSeconds:F1}s ({readout.CoordinatorHoldProgressPercent:F0}%)");
+        Console.WriteLine($"[coord] Derived hold: {readout.DerivedHoldSeconds:F1}s ({readout.DerivedHoldProgressPercent:F0}%)");
+        Console.WriteLine($"[coord] Hold difference: {readout.HoldDifferenceDisplay}");
+        Console.WriteLine($"[coord] Coordinator state: {readout.CoordinatorStatusText}");
+        Console.WriteLine($"[coord] Raw: {readout.CoordinatorRawStateSummary}");
+        Console.WriteLine($"[coord] Safety readout: {(safetyDisplayOnly ? "display-only" : readout.CoordinatorSafetyLockDisplay)}");
+        Console.WriteLine($"[coord] Readout mode: {readout.ReadoutMode}");
+
+        // Stop must clear the VM-local coordinator state (no persistence).
+        await rt.StopCommand.ExecuteAsync(null);
+        bool clearedOnStop = !rt.CoordinatorReadout.IsCoordinatorActive;
+        Console.WriteLine($"[coord] After stop -> coordinator active: {rt.CoordinatorReadout.IsCoordinatorActive}");
+
+        // Re-Begin must re-activate the coordinator and produce a FRESH live-state — verifies the single
+        // ExerciseUpdated subscription survives a stop/start cycle (no double-subscribe, no stale session).
+        rt.BeginCommand.Execute(null);
+        await Task.Delay(300);
+        bool reBeginActive = rt.CoordinatorReadout.IsCoordinatorActive;
+        bool reBeginLive = !rt.CoordinatorReadout.CoordinatorRawStateSummary.StartsWith("(ingen");
+        Console.WriteLine($"[coord] Re-Begin -> active={reBeginActive} live-state={reBeginLive}");
+        await rt.StopCommand.ExecuteAsync(null);
+
+        // Navigation A via the shell: dashboard -> guide -> detail -> runtime -> back-to-detail (own Back).
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+        shell.ShowGuideCommand.Execute(null);
+        var guide = shell.CurrentPage as ExerciseGuideViewModel;
+        guide!.OpenExerciseCommand.Execute(guide.Exercises[0]);
+        (shell.CurrentPage as ExerciseDetailViewModel)!.StartCommand.Execute(null);
+        bool onRuntime = shell.CurrentPage is ExerciseRuntimeViewModel;
+        var rvm = shell.CurrentPage as ExerciseRuntimeViewModel;
+        await Task.Delay(50);
+        if (rvm is not null) await rvm.BackCommand.ExecuteAsync(null);
+        bool backToDetail = shell.CurrentPage is ExerciseDetailViewModel;
+
+        // Navigation B: leaving a RUNNING runtime via the always-visible top nav must DISPOSE it
+        // (stop the synthetic capture + clear the VM-local coordinator), not orphan it.
+        (shell.CurrentPage as ExerciseDetailViewModel)!.StartCommand.Execute(null);
+        var rvm2 = shell.CurrentPage as ExerciseRuntimeViewModel;
+        await Task.Delay(50);
+        bool wasRunning = rvm2?.IsRunning == true;
+        shell.ShowGuideCommand.Execute(null);   // top-nav away while running
+        bool clearedByNav = rvm2 is not null && !rvm2.IsRunning && shell.CurrentPage is ExerciseGuideViewModel;
+        Console.WriteLine($"[coord] Navigation: runtime={onRuntime} back-to-detail={backToDetail} " +
+                          $"nav-away-clears={clearedByNav} (was-running={wasRunning})");
+
+        // The coordinator was enabled for exercise #1 (mapped profile), so we expect the active path.
+        // If a future exercise had no mapped profile, the readout would be documented unavailable instead.
+        if (!active)
+            Console.WriteLine("[coord] Coordinator readout unavailable: documented");
+
+        bool ok = exercises.Count == 15 && active && liveStateReceived && readoutMode && safetyDisplayOnly
+                  && clearedOnStop && reBeginActive && reBeginLive
+                  && onRuntime && backToDetail && wasRunning && clearedByNav;
+        Console.WriteLine(ok ? "[coord] Exercise coordinator smoke OK" : "[coord] Exercise coordinator smoke FAIL");
         return ok ? 0 : 1;
     }
 }
