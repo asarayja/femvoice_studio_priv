@@ -2,7 +2,7 @@
 
 Date: 2026-06-16 · Branch: `avalonia-exercise-guide-slice` (off `main` @ `2d49f9c`, which includes PR #1/#2/#3).
 
-> **Status: PREPARATION ONLY — not implemented in this prompt.** This doc captures scope + a wiring approach so the next prompt can implement directly. No Exercise Guide code exists on this branch yet (it's the same as `main` plus this plan doc).
+> **Status: IMPLEMENTED (Linux-verified).** This was the prep plan; the slice is now built. Chosen exercise source: `VoiceFeminizationExerciseService.GetAllEnhancedExercises()` (pure, no DB, all 15). Navigation: lightweight `ShellViewModel` + `ContentControl`/`DataTemplate`. See `AVALONIA_EXERCISE_GUIDE_SLICE_REPORT.md`, `AVALONIA_EXERCISE_GUIDE_GATE_RESULTS.md`, `AVALONIA_EXERCISE_GUIDE_PLACEHOLDERS.md`. The scope/wiring below is what was implemented.
 
 ## Goal
 Second real Avalonia parity slice: an Exercise Guide list + Exercise Detail screen, navigable from the dashboard, driven by the **shared, UI-free** exercise services (`FemVoice.Core`). No clinical/domain behaviour change; no Windows-only dependency in `FemVoice.Avalonia`.
