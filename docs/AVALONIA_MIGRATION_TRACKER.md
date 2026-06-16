@@ -28,9 +28,9 @@ Reference docs: `docs/AUDIT_SUMMARY_FOR_AVALONIA_PLANNING.md`, `AVALONIA_PORT_RE
 | 3 | Windows audio backend behind abstraction | **DONE (FemVoice.Audio.Windows + NAudioCaptureService; Linux-compile-verified) / manual Windows mic test PENDING** | Agent 4 | Manual Windows mic smoke (`AUDIO_WINDOWS_ADAPTER_NOTES.md`) |
 | 4 | Avalonia shell bootstrap | **DONE (boots headless; DI resolves on Linux)** | Agent 5 | — |
 | 5 | Theme & localization port | TODO | Agent 6 | Light/dark + runtime language switch work |
-| 6 | Navigation & main dashboard | **SLICE DONE (Linux-verified)** — `MainDashboardViewModel` + dashboard layout; start/stop + live pitch/stability/health from synthetic audio; nav/pro-tools placeholders | Agent 8 | Chart/feedback/theme parity in later slices |
+| 6 | Navigation & main dashboard | **MERGED to main (PR #3)** — `MainDashboardViewModel` + dashboard; start/stop + live pitch/stability/health from synthetic audio; top-nav shell added in Phase 8 | Agent 8 | Chart/feedback/theme parity in later slices |
 | 7 | Audio, pitch chart, live feedback | TODO | Agent 7 + 8 | Pitch/comfort-zone parity |
-| 8 | Exercise guide & detail | TODO | Agent 9 | 15 exercises, hold-progress, safety freeze parity |
+| 8 | Exercise guide & detail | **SLICE DONE (Linux-verified, PR open)** — Exercise Guide list (15) + Detail + shell nav (dashboard↔guide↔detail); read-only over `VoiceFeminizationExerciseService`; `--exercise-smoke` | Agent 9 | hold-progress / safety-freeze / exercise runtime in a later slice |
 | 9 | SmartCoach & progression UI | TODO | Agent 10 | Daily rec matches WPF on same data |
 | 10 | Analysis, resonance, chart windows | TODO | Agent 7 + 10 | Resonance/analysis chart parity |
 | 11 | Reports, professional tools, dialogs | TODO | Agent 11 | 4×3 export parity; override clamp intact |

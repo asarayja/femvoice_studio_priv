@@ -1,0 +1,63 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="FemVoice.Avalonia.Views.ExerciseDetailView">
+  <ScrollViewer>
+    <StackPanel Margin="20" Spacing="12">
+
+      <StackPanel Orientation="Horizontal" Spacing="10">
+        <Button Content="← Tilbake" Command="{Binding BackCommand}"/>
+        <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold" VerticalAlignment="Center"/>
+      </StackPanel>
+
+      <!-- Metadata -->
+      <Border BorderBrush="#444" BorderThickness="1" CornerRadius="6" Padding="12">
+        <WrapPanel>
+          <TextBlock Text="{Binding Category, StringFormat='Kategori: {0}'}" Margin="0,0,20,4"/>
+          <TextBlock Text="{Binding DifficultyText, StringFormat='Nivå: {0}'}" Margin="0,0,20,4"/>
+          <TextBlock Text="{Binding GoalText, StringFormat='Fokus: {0}'}" Margin="0,0,20,4"/>
+          <TextBlock Text="{Binding FrequencyText, StringFormat='Frekvens: {0}'}" Margin="0,0,20,4"/>
+          <TextBlock Text="{Binding DurationText, StringFormat='Varighet: {0}'}" Margin="0,0,20,4"/>
+          <TextBlock Text="{Binding TargetPitchText, StringFormat='Mål-pitch: {0}'}" Margin="0,0,20,4"/>
+          <TextBlock Text="{Binding MetricsText, StringFormat='Mål-skills: {0}'}" Margin="0,0,20,4"/>
+        </WrapPanel>
+      </Border>
+
+      <!-- Purpose -->
+      <StackPanel Spacing="3">
+        <TextBlock Text="Hensikt" FontWeight="SemiBold"/>
+        <TextBlock Text="{Binding Purpose}" TextWrapping="Wrap"/>
+        <TextBlock Text="{Binding Rationale}" TextWrapping="Wrap" Foreground="#aaa" Margin="0,4,0,0"/>
+      </StackPanel>
+
+      <!-- Instructions -->
+      <StackPanel Spacing="4">
+        <TextBlock Text="Instruksjoner" FontWeight="SemiBold"/>
+        <ItemsControl ItemsSource="{Binding Steps}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2">
+                <TextBlock Text="•" Foreground="#4FC3F7"/>
+                <TextBlock Text="{Binding}" TextWrapping="Wrap"/>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+      <!-- Safety / health -->
+      <Border BorderBrush="#a63" BorderThickness="1" CornerRadius="6" Padding="12">
+        <StackPanel Spacing="2">
+          <TextBlock Text="Sikkerhet og helse" FontWeight="SemiBold" Foreground="#e8a"/>
+          <TextBlock Text="{Binding SafetyNote}" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Start (placeholder) -->
+      <StackPanel Spacing="6">
+        <Button Content="Start øvelse" Command="{Binding StartCommand}" Width="140" HorizontalAlignment="Left"/>
+        <TextBlock Text="{Binding StartStatus}" Foreground="#c96" TextWrapping="Wrap"/>
+      </StackPanel>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
