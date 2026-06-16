@@ -2,7 +2,7 @@
 
 Date: 2026-06-16 · Branch: `avalonia-exercise-runtime-integration-slice` (off `main` @ `cb5f201`, incl. PR #1–#5).
 
-> **Status: PLANNING ONLY — no integration code in this prompt.** This branch currently equals `main` + this plan doc.
+> **Status: IMPLEMENTED (Linux-verified).** This was the prep plan; the integration is built — read-only `ExerciseTargetProfile`/`IndicatorPackage` panel via `ExerciseProfileMap` (Id 1–15 → ProfileType, 15/15 mapped) + `ExerciseProfileFactory`, `RequiredHoldSeconds` as display-only hold target, `--exercise-runtime-integration-smoke`. See `AVALONIA_EXERCISE_RUNTIME_INTEGRATION_SLICE_REPORT.md` / `_GATE_RESULTS.md` / `_PLACEHOLDERS.md`. The scope below is what was implemented; coordinator-based real hold + session lifecycle remain deferred.
 
 ## 1. Current merged baseline
 `main` (`cb5f201`): portable core, Audio.Abstractions, Audio.Windows, Avalonia shell + dashboard, Exercise Guide + Detail, Exercise Runtime **scaffold** (synthetic audio, display-only hold/elapsed), Tmds 0.21.3 pin. Linux build green; all four smokes OK; no vulnerable packages; Avalonia refs only `FemVoice.Core` + `FemVoice.Audio.Abstractions`.

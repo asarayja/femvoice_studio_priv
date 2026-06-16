@@ -31,7 +31,8 @@ Reference docs: `docs/AUDIT_SUMMARY_FOR_AVALONIA_PLANNING.md`, `AVALONIA_PORT_RE
 | 6 | Navigation & main dashboard | **MERGED to main (PR #3)** — `MainDashboardViewModel` + dashboard; start/stop + live pitch/stability/health from synthetic audio; top-nav shell added in Phase 8 | Agent 8 | Chart/feedback/theme parity in later slices |
 | 7 | Audio, pitch chart, live feedback | TODO | Agent 7 + 8 | Pitch/comfort-zone parity |
 | 8 | Exercise guide & detail | **MERGED to main (PR #4)** — Guide list (15) + Detail + shell nav; read-only over `VoiceFeminizationExerciseService`; `--exercise-smoke` | Agent 9 | — |
-| 8b | Exercise runtime scaffold | **SLICE DONE (Linux-verified, PR open)** — Detail→Runtime nav; `ExerciseRuntimeViewModel`/`View`; synthetic pitch vs target band; display-only hold/elapsed; `--exercise-runtime-smoke` | Agent 9 | real hold via coordinator / session lifecycle / safety-freeze in later slices |
+| 8b | Exercise runtime scaffold | **MERGED to main (PR #5)** — Detail→Runtime nav; `ExerciseRuntimeViewModel`/`View`; synthetic pitch vs target band; display-only hold/elapsed; `--exercise-runtime-smoke` | Agent 9 | — |
+| 8c | Exercise runtime target-profile integration | **SLICE DONE (Linux-verified, PR open)** — read-only `ExerciseTargetProfile`/`IndicatorPackage` panel; Id→ProfileType map (15/15, 0 fallback); `RequiredHoldSeconds` as display-only hold target; `--exercise-runtime-integration-smoke` | Agent 9 | real hold via coordinator / session lifecycle / safety-freeze in later slices |
 | 9 | SmartCoach & progression UI | TODO | Agent 10 | Daily rec matches WPF on same data |
 | 10 | Analysis, resonance, chart windows | TODO | Agent 7 + 10 | Resonance/analysis chart parity |
 | 11 | Reports, professional tools, dialogs | TODO | Agent 11 | 4×3 export parity; override clamp intact |
