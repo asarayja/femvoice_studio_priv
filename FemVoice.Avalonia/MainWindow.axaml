@@ -3,24 +3,93 @@
         xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
         xmlns:views="clr-namespace:FemVoice.Avalonia.Views"
         x:Class="FemVoice.Avalonia.MainWindow"
-        Width="980" Height="700"
+        Width="1100" Height="760"
+        MinWidth="900" MinHeight="620"
+        WindowStartupLocation="CenterScreen"
         Title="FemVoice Studio — Avalonia">
+  <!-- Desktop shell: header (top) · status strip (bottom) · [nav rail | content | info sidebar] -->
   <DockPanel>
-    <!-- Lightweight top navigation (no nav framework) -->
-    <Border DockPanel.Dock="Top" Background="#1b1b1b" Padding="10,8" BorderBrush="#333" BorderThickness="0,0,0,1">
-      <StackPanel Orientation="Horizontal" Spacing="8">
-        <Button Content="Dashboard" Command="{Binding ShowDashboardCommand}"/>
-        <Button Content="Øvelsesguide" Command="{Binding ShowGuideCommand}"/>
+
+    <!-- Header -->
+    <Border DockPanel.Dock="Top" Background="#1b1b1b" Padding="14,10" BorderBrush="#333" BorderThickness="0,0,0,1">
+      <StackPanel Orientation="Horizontal" Spacing="10">
+        <TextBlock Text="FemVoice Studio" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+        <TextBlock Text="Avalonia desktop · kun visning" FontSize="12" Foreground="#888" VerticalAlignment="Center"/>
       </StackPanel>
     </Border>
 
-    <ContentControl Content="{Binding CurrentPage}">
-      <ContentControl.DataTemplates>
-        <DataTemplate DataType="vm:MainDashboardViewModel"><views:DashboardView/></DataTemplate>
-        <DataTemplate DataType="vm:ExerciseGuideViewModel"><views:ExerciseGuideView/></DataTemplate>
-        <DataTemplate DataType="vm:ExerciseDetailViewModel"><views:ExerciseDetailView/></DataTemplate>
-        <DataTemplate DataType="vm:ExerciseRuntimeViewModel"><views:ExerciseRuntimeView/></DataTemplate>
-      </ContentControl.DataTemplates>
-    </ContentControl>
+    <!-- Bottom status strip (display-only; no real mic, no persistence) -->
+    <Border DockPanel.Dock="Bottom" Background="#151515" Padding="12,6" BorderBrush="#333" BorderThickness="0,1,0,0">
+      <DockPanel>
+        <TextBlock DockPanel.Dock="Left" Text="{Binding MicStatusText}" Foreground="#9bf" FontSize="12"/>
+        <TextBlock DockPanel.Dock="Right" Text="{Binding ModeText}" Foreground="#888" FontSize="12"/>
+        <TextBlock Text="{Binding CurrentDestinationLabel, StringFormat='Side: {0}'}"
+                   HorizontalAlignment="Center" Foreground="#aaa" FontSize="12"/>
+      </DockPanel>
+    </Border>
+
+    <!-- Body: nav rail | content | info sidebar -->
+    <Grid ColumnDefinitions="220,*,260">
+
+      <!-- Left navigation rail (implemented destinations + deferred placeholders) -->
+      <Border Grid.Column="0" Background="#181818" BorderBrush="#333" BorderThickness="0,0,1,0" Padding="10">
+        <ScrollViewer>
+          <StackPanel Spacing="4">
+            <TextBlock Text="Navigasjon" FontWeight="SemiBold" Foreground="#999" Margin="2,0,0,6"/>
+            <ItemsControl ItemsSource="{Binding NavItems}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:ShellNavItem">
+                  <Button Content="{Binding Label}" Command="{Binding Command}"
+                          HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                          Margin="0,1" Padding="10,6"/>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock Text="Flater merket «senere» er visning-bare plassholdere."
+                       TextWrapping="Wrap" Foreground="#666" FontSize="11" Margin="2,10,0,0"/>
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+
+      <!-- Central content -->
+      <ContentControl Grid.Column="1" Content="{Binding CurrentPage}">
+        <ContentControl.DataTemplates>
+          <DataTemplate DataType="vm:MainDashboardViewModel"><views:DashboardView/></DataTemplate>
+          <DataTemplate DataType="vm:ExerciseGuideViewModel"><views:ExerciseGuideView/></DataTemplate>
+          <DataTemplate DataType="vm:ExerciseDetailViewModel"><views:ExerciseDetailView/></DataTemplate>
+          <DataTemplate DataType="vm:ExerciseRuntimeViewModel"><views:ExerciseRuntimeView/></DataTemplate>
+          <!-- Static deferred placeholder (no services, no side effects) -->
+          <DataTemplate DataType="vm:DeferredSurfaceViewModel">
+            <ScrollViewer>
+              <StackPanel Margin="24" Spacing="10" MaxWidth="640" HorizontalAlignment="Left">
+                <TextBlock Text="{Binding Title}" FontSize="20" FontWeight="Bold" Foreground="#d9b"/>
+                <Border BorderBrush="#a6a" BorderThickness="1" CornerRadius="6" Padding="14">
+                  <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Foreground="#bbb"/>
+                </Border>
+                <TextBlock Text="Denne flaten utfører ingenting og endrer ingen klinisk/lagret tilstand."
+                           Foreground="#666" FontSize="12" TextWrapping="Wrap"/>
+              </StackPanel>
+            </ScrollViewer>
+          </DataTemplate>
+        </ContentControl.DataTemplates>
+      </ContentControl>
+
+      <!-- Right info sidebar (static, display-only placeholder) -->
+      <Border Grid.Column="2" Background="#181818" BorderBrush="#333" BorderThickness="1,0,0,0" Padding="12">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Info" FontWeight="SemiBold" Foreground="#999"/>
+          <Border BorderBrush="#3a3" BorderThickness="1" CornerRadius="6" Padding="10">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Visning-bare modus" FontWeight="SemiBold" Foreground="#7b5" FontSize="13"/>
+              <TextBlock Text="Syntetisk lyd · ingen mikrofon · ingen lagring · ingen klinisk endring."
+                         TextWrapping="Wrap" Foreground="#aaa" FontSize="12"/>
+            </StackPanel>
+          </Border>
+          <TextBlock Text="Profesjonelle verktøy, rapporter, analyse og innstillinger kommer i senere faser."
+                     TextWrapping="Wrap" Foreground="#666" FontSize="12"/>
+        </StackPanel>
+      </Border>
+
+    </Grid>
   </DockPanel>
 </Window>
