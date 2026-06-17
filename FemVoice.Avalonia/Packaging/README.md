@@ -38,19 +38,62 @@ goes under `artifacts/` (gitignored).
 | `linux/package-deb.sh [rid]` | Build a Debian/Ubuntu `.deb` | `linux-x64` (`linux-arm64`) | `artifacts/packages/deb/femvoice-studio_<ver>_<arch>.deb` |
 
 `package-deb.sh` (re)publishes first for determinism, then lays out a minimal package:
-`/opt/femvoice-studio` (app files), `/usr/bin/femvoice-studio` (thin launcher → the framework-dependent apphost),
-`/usr/share/applications/femvoice-studio.desktop`, and a `DEBIAN/control` with safe metadata. It fails with a
-clear message if `dpkg-deb` is unavailable, and uses `dpkg-deb --root-owner-group` so package files are owned
-by `root:root` without needing root/`fakeroot`. The `.deb` is framework-dependent (it does **not** bundle or
-install .NET) — a matching .NET 10 runtime must already be present on the target.
+- `/opt/femvoice-studio` — published app files
+- `/usr/bin/femvoice-studio` — launcher **script** that runs the managed DLL via `dotnet` (see below)
+- `/usr/share/applications/femvoice-studio.desktop` — desktop entry (`Exec=femvoice-studio`)
+- `/usr/share/doc/femvoice-studio/copyright` — machine-readable copyright (from `linux/debian-copyright`)
+- `/usr/share/doc/femvoice-studio/README.Debian` — short install/runtime note (from `linux/README.Debian`)
+- `DEBIAN/control` — `Maintainer: A hansen <rassyhansen@gmail.com>`, `Homepage`, framework-dependent `Description`
 
-## Templates (inert; future bundling)
-- `macos/Info.plist` — macOS `.app` bundle metadata (incl. a static `NSMicrophoneUsageDescription` readiness
-  string; no real capture exists yet).
-- `linux/femvoice-studio.desktop` — Linux desktop entry.
+It fails with a clear message if `dpkg-deb` is unavailable, and uses `dpkg-deb --root-owner-group` so package
+files are owned by `root:root` without needing root/`fakeroot`. The `.deb` is framework-dependent (it does
+**not** bundle or install .NET) — a compatible .NET 10 desktop runtime must already be present on the target.
 
-A future packaging slice would wire these into a bundling step (e.g. produce a `.app` on macOS, an AppImage/
-tarball on Linux). That step is deferred; this slice only establishes readiness + verifies publish works.
+### Installed launch path & runtime requirement (root cause of the "flash then vanish" bug)
+The first `.deb` made `/usr/bin/femvoice-studio` simply `exec` the published **apphost**
+(`/opt/femvoice-studio/FemVoice.Avalonia`). A framework-dependent apphost only resolves a **system-registered**
+runtime (`DOTNET_ROOT`, `/etc/dotnet/install_location_*`, or `/usr/share/dotnet`). On machines where .NET is
+installed elsewhere (e.g. a user-local install on `PATH`), the apphost prints *"You must install .NET to run
+this application"* and exits **131** — the window appears briefly in the taskbar/dock and then disappears.
+
+The launcher is now a small `bash` script instead:
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+APP_DIR="/opt/femvoice-studio"
+APP_DLL="$APP_DIR/FemVoice.Avalonia.dll"
+if ! command -v dotnet >/dev/null 2>&1; then
+  echo "FemVoice Studio requires the .NET runtime to be installed." >&2
+  echo "Install the matching .NET desktop/runtime package, then run femvoice-studio again." >&2
+  exit 127
+fi
+cd "$APP_DIR"
+exec dotnet "$APP_DLL" "$@"
+```
+This resolves the runtime from `PATH` (so it works wherever `dotnet` is reachable) and, when `dotnet` is missing,
+prints a clear message and exits `127` instead of flashing and dying. The launcher uses no `sudo`, installs
+nothing, and writes no user/system state.
+
+### Install & run
+```
+sudo apt install ./artifacts/packages/deb/femvoice-studio_0.1.0_amd64.deb   # install (requires .NET runtime on PATH)
+femvoice-studio --smoke      # headless self-check
+femvoice-studio              # launch the desktop preview
+cat /usr/share/doc/femvoice-studio/copyright
+```
+If `dotnet` is not installed, install a compatible .NET 10 desktop runtime first (this package is
+framework-dependent by design and does not bundle .NET). A self-contained `.deb` that bundles the runtime is a
+**separate, deferred** packaging slice.
+
+## Templates
+- `macos/Info.plist` — **inert** macOS `.app` bundle metadata (incl. a static `NSMicrophoneUsageDescription`
+  readiness string; no real capture exists yet). Not wired into any build step yet.
+- `linux/femvoice-studio.desktop` — Linux desktop entry. **Installed by `package-deb.sh`** into
+  `/usr/share/applications/`; the default `dotnet build/publish` does not consume it.
+- `linux/debian-copyright` — machine-readable copyright, installed as `/usr/share/doc/femvoice-studio/copyright`.
+- `linux/README.Debian` — short runtime/launch note, installed as `/usr/share/doc/femvoice-studio/README.Debian`.
+
+A macOS `.app`/`.dmg` bundling step (consuming `Info.plist`) and a self-contained `.deb` remain **deferred**.
 
 ## Verified (on Linux)
 Framework-dependent publish for `linux-x64` and `osx-x64` completed and produced a valid apphost plus the
@@ -62,6 +105,13 @@ self-contained.
 
 The helper scripts were exercised end-to-end: `publish-linux.sh linux-x64` + `publish-macos.sh osx-x64`
 published successfully, and `package-deb.sh linux-x64` produced `femvoice-studio_0.1.0_amd64.deb` with the
-expected layout (`/opt/femvoice-studio/FemVoice.Avalonia`, `/usr/bin/femvoice-studio`,
-`/usr/share/applications/femvoice-studio.desktop`) and `root:root` ownership. The `.deb` was **built but not
-installed**. See `docs/AVALONIA_DESKTOP_PACKAGING_READINESS_GATE_RESULTS.md`.
+expected layout (`/opt/femvoice-studio/FemVoice.Avalonia.dll`, `/usr/bin/femvoice-studio`,
+`/usr/share/applications/femvoice-studio.desktop`, `/usr/share/doc/femvoice-studio/{copyright,README.Debian}`),
+`root:root` ownership, and `Maintainer: A hansen <rassyhansen@gmail.com>`.
+
+The new launcher was verified directly (the exact script the `.deb` installs): with `dotnet` **on PATH** it runs
+`--smoke` OK and launches the GUI (window stays up); with `dotnet` **absent** it prints the clear message and
+exits `127`. A real GUI launch via the launcher stayed alive (no apphost ".NET not found"/exit-131 flash). The
+old (apphost) launcher was confirmed to fail with exit `131` on this user-local-runtime box, reproducing the
+reported "flash then vanish". See `docs/AVALONIA_DESKTOP_PACKAGING_READINESS_GATE_RESULTS.md` and
+`docs/AVALONIA_DESKTOP_PACKAGING_READINESS_SLICE_REPORT.md`.

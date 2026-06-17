@@ -108,3 +108,44 @@ scripts (framework-dependent by default, no root, no install, no `dpkg` maintain
 
 ## Behaviour change
 **None to clinical/domain behaviour. WPF untouched.** Packaging helper scripts + inert template + smoke checks only; default build/run unchanged.
+
+---
+
+# Follow-up 2: installed Linux launch fix + Debian author/license metadata
+
+Date: 2026-06-17 · Branch: `avalonia-desktop-packaging-deb-helpers-slice` (PR #17) · Host: Linux (.NET 10 user-local `~/.dotnet`).
+
+## Investigation — root cause of "starts briefly then disappears"
+Reproduced on the test box (the `.deb` was installed during manual testing):
+- `which femvoice-studio` → `/usr/bin/femvoice-studio`; the installed launcher did `exec /opt/femvoice-studio/FemVoice.Avalonia` (the framework-dependent **apphost**).
+- No system-registered .NET runtime exists (`command -v dotnet` → none; no `/usr/share/dotnet`, `/usr/lib/dotnet`, `/etc/dotnet`); .NET is installed user-locally at `~/.dotnet`.
+- Running the apphost in a clean (GUI-like) env → `You must install .NET to run this application. … .NET location: Not found` → **exit 131**. The launcher (which only execs the apphost) reproduced the same exit 131. The GUI window appears briefly then vanishes.
+- `dotnet /opt/femvoice-studio/FemVoice.Avalonia.dll --smoke` with the user-local runtime → **smoke OK, exit 0**.
+
+**Root cause:** a framework-dependent **apphost** only resolves a *system-registered* runtime; with .NET installed elsewhere (user-local on PATH) it cannot find a runtime and exits 131. Not a missing native dep, not a bad `.desktop`, not a missing executable bit, not an Avalonia crash.
+
+## Fix
+- `/usr/bin/femvoice-studio` is now a small `bash` launcher: checks `command -v dotnet` (clear message + exit 127 if missing), `cd /opt/femvoice-studio`, `exec dotnet /opt/femvoice-studio/FemVoice.Avalonia.dll "$@"`. No sudo, no install, no state writes.
+- `.desktop` keeps `Exec=femvoice-studio` (now resolves the script launcher).
+- Package stays framework-dependent (no .NET bundled/installed).
+
+## Debian metadata / license
+- `DEBIAN/control`: `Maintainer: A hansen <rassyhansen@gmail.com>`, `Homepage: https://github.com/asarayja/femvoice_studio_priv`, framework-dependent `Description`. (Homepage included because this is an explicitly private/proprietary preview package, consistent with the copyright `Source`; it would be omitted for public distribution.)
+- New `/usr/share/doc/femvoice-studio/copyright` (machine-readable, `License: Proprietary` — no LICENSE file in the repo, so no OSS license is invented) and `/usr/share/doc/femvoice-studio/README.Debian`.
+- Templates: `Packaging/linux/debian-copyright`, `Packaging/linux/README.Debian`.
+
+## Gate (this follow-up)
+- **Build**: 0 warnings / 0 errors.
+- **Smokes**: 15/15 OK (extended `--packaging-smoke` prints `launcher: …=True` and `metadata: …=True`).
+- **Portable tests**: 1569/1580 — 10 known localization-data failures + the known intermittent `ComfortZoneControllerTests.ZoneUpdated_EventRaisedOnUpdate` flake; no new failures (packaging-only change).
+- **Vulnerable packages**: none; `Tmds.DBus.Protocol` 0.21.3.
+- **Leak guards**: base + packaging clean; new packaging files (`.sh`, `debian-copyright`, `README.Debian`, `.desktop`) clean of forbidden runtime tokens.
+
+## Practical verification
+- `publish-linux.sh linux-x64` → published; published `--smoke` OK. `publish-macos.sh osx-x64` → OK.
+- `package-deb.sh linux-x64` → built `femvoice-studio_0.1.0_amd64.deb` (clean, root:root). `dpkg-deb -I` shows the new Maintainer/Homepage/Description; `dpkg-deb -c` shows `/usr/bin/femvoice-studio`, `.desktop`, `copyright`, `README.Debian`, and `/opt/.../FemVoice.Avalonia.dll`. `copyright` present.
+- **Launcher (the exact packaged script):** `dotnet` absent → clear message + exit 127; `dotnet` present → `--smoke` OK (exit 0); **real GUI launch stayed alive the full 10s** (no exit-131 flash).
+- **Install note:** the box's `sudo` is not available non-interactively, so the new `.deb` was **not re-installed**; the fix is verified by running the exact packaged launcher script + by `.deb` inspection. Re-`apt install` to confirm the installed GUI (the launcher script is what gets placed at `/usr/bin/femvoice-studio`).
+
+## Behaviour change
+**None to clinical/domain behaviour. WPF untouched.** Launcher/metadata/doc + smoke checks only; default build/run unchanged.
