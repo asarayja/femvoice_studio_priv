@@ -32,6 +32,7 @@ internal static class Program
         if (args.Contains("--runtime-lifecycle-smoke")) return RuntimeLifecycleSmoke().GetAwaiter().GetResult();
         if (args.Contains("--analysis-scaffold-smoke")) return AnalysisScaffoldSmoke().GetAwaiter().GetResult();
         if (args.Contains("--reports-scaffold-smoke")) return ReportsScaffoldSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--diagnostics-scaffold-smoke")) return DiagnosticsScaffoldSmoke().GetAwaiter().GetResult();
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
@@ -444,7 +445,7 @@ internal static class Program
                           $"no-orphan-frames={noOrphanFrames} fresh-instance={distinctInstance} " +
                           $"second-running={secondRunning} no-orphan={firstStillStopped}");
 
-        bool ok = landsOnDashboard && shell.NavItems.Count == 9 && implemented == 5 && deferred == 4
+        bool ok = landsOnDashboard && shell.NavItems.Count == 9 && implemented == 6 && deferred == 3
                   && onGuide && backToDash && onDeferred && deferredInert
                   && runtimeRunning && firstDisposedOnNav && noOrphanFrames
                   && distinctInstance && secondRunning && firstStillStopped;
@@ -750,6 +751,58 @@ internal static class Program
         bool ok = navExists && onReports && notDisposable && noCommands && cardsOk && allDeferred
                   && runtimeRan && runtimeDisposed && noOrphanFrames;
         Console.WriteLine(ok ? "[reports] Reports scaffold smoke OK" : "[reports] Reports scaffold smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Headless verification of the Diagnostics/Export/Backup scaffold slice (no display): the Diagnostics nav
+    // item is an IMPLEMENTED destination; navigating switches CurrentPage to a DiagnosticsViewModel that is
+    // purely inert (not IDisposable, no IRelayCommand, all cards deferred); the expected placeholder cards are
+    // present; and navigating to Diagnostics from a running runtime disposes the runtime safely (no orphaned
+    // capture). No file dialog / export / backup / restore / persistence APIs are touched (source leak guard).
+    private static async Task<int> DiagnosticsScaffoldSmoke()
+    {
+        var svc = new VoiceFeminizationExerciseService();
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+
+        // Diagnostics nav item exists and is implemented.
+        var diagNav = shell.NavItems.FirstOrDefault(n => n.Label == "Diagnostikk");
+        bool navExists = diagNav is not null && diagNav.IsImplemented;
+
+        // Navigating to Diagnostics switches CurrentPage to DiagnosticsViewModel (no side effects).
+        diagNav?.Command.Execute(null);
+        bool onDiagnostics = shell.CurrentPage is DiagnosticsViewModel;
+        var diag = shell.CurrentPage as DiagnosticsViewModel;
+
+        // Inert: not IDisposable, no IRelayCommand; placeholder cards present + all deferred.
+        bool notDisposable = diag is not null && !typeof(System.IDisposable).IsAssignableFrom(typeof(DiagnosticsViewModel));
+        bool noCommands = diag is not null && diag.GetType().GetProperties()
+            .All(p => !typeof(global::CommunityToolkit.Mvvm.Input.IRelayCommand).IsAssignableFrom(p.PropertyType));
+        int cardCount = diag?.Cards.Count ?? 0;
+        bool cardsOk = cardCount >= 6 && diag!.Cards.All(c => !string.IsNullOrWhiteSpace(c.Title) && !c.IsEnabled);
+        bool allDeferred = diag?.AllActionsDeferred == true;
+        Console.WriteLine($"[diag] nav-implemented={navExists} onDiagnostics={onDiagnostics} cards={cardCount}");
+        Console.WriteLine($"[diag] inert: notDisposable={notDisposable} noCommands={noCommands} cardsOk={cardsOk} allDeferred={allDeferred}");
+
+        // Navigating to Diagnostics from a RUNNING runtime disposes the runtime safely (no orphaned capture).
+        shell.ShowGuideCommand.Execute(null);
+        var guide = shell.CurrentPage as ExerciseGuideViewModel;
+        guide!.OpenExerciseCommand.Execute(guide.Exercises[0]);
+        (shell.CurrentPage as ExerciseDetailViewModel)!.StartCommand.Execute(null);
+        var runtime = shell.CurrentPage as ExerciseRuntimeViewModel;
+        runtime?.BeginCommand.Execute(null);   // explicit start (runtime no longer auto-starts)
+        await Task.Delay(50);
+        bool runtimeRan = runtime?.IsRunning == true;
+        diagNav!.Command.Execute(null);   // nav to Diagnostics via the rail while running
+        bool runtimeDisposed = runtime is not null && !runtime.IsRunning && shell.CurrentPage is DiagnosticsViewModel;
+        int framesAfter = runtime?.RuntimePitchSamples.Count ?? -1;
+        await Task.Delay(150);
+        bool noOrphanFrames = runtime is not null && runtime.RuntimePitchSamples.Count == framesAfter;
+        Console.WriteLine($"[diag] Runtime->Diagnostics: ran={runtimeRan} disposed={runtimeDisposed} no-orphan-frames={noOrphanFrames}");
+
+        bool ok = navExists && onDiagnostics && notDisposable && noCommands && cardsOk && allDeferred
+                  && runtimeRan && runtimeDisposed && noOrphanFrames;
+        Console.WriteLine(ok ? "[diag] Diagnostics scaffold smoke OK" : "[diag] Diagnostics scaffold smoke FAIL");
         return ok ? 0 : 1;
     }
 }
