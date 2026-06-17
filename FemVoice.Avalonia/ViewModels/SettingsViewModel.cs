@@ -157,11 +157,19 @@ public sealed class SettingsViewModel
         Title = Localized.Get("Settings_Title", "Innstillinger");
         DeferredBadge = Localized.Get("Scaffold_DeferredBadge", "Utsatt · kun visning");
         DeferredBanner = Localized.Get("Settings_ScaffoldNotice",
-            "Visning-bare innstillinger: alle valg er utsatt. Ingenting lagres, ingen språk-/tema-bytte, " +
-            "ingen profilendring, ingen sikkerhetskopi — dette kommer i en senere fase.");
+            "De fleste innstillingene er utsatt (kun visning). Lokale UI-valg (tema/språk/bevegelse) lagres " +
+            "lokalt på maskinen, men aktiveres ikke ennå — ingen språk-/tema-bytte i appen, ingen profilendring, " +
+            "ingen sikkerhetskopi. Det kommer i en senere fase.");
         SafetyNote = Localized.Get("Settings_ScaffoldSafety",
             "Kun visning · ingen lagring · ingen klinisk endring.");
     }
+
+    private UiPreferencesViewModel? _preferences;
+    /// <summary>Stage-1 interactive harmless UI preferences (theme / language / reduce-motion), persisted to an
+    /// Avalonia-local file. LAZILY constructed so no file I/O occurs until the Settings page is shown — the shell
+    /// retains this VM from startup, but the preferences file is only read on first access. The behaviour-heavy
+    /// sections (audio/privacy/database/voice-goal/about) remain inert/deferred and are unaffected.</summary>
+    public UiPreferencesViewModel Preferences => _preferences ??= new UiPreferencesViewModel();
 
     public string Title { get; }
     public string DeferredBadge { get; }
