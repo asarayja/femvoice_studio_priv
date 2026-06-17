@@ -15,8 +15,11 @@ right (wide desktop windows). The reading-oriented scaffold pages shared the sam
   with a wider `MaxWidth` and a consistent `Margin="24"`, so on a wide window the content is centered/balanced and
   on a narrow window it still fills.
 - **Settings** (`SettingsView.axaml`): centered, `MaxWidth=1000`; section cards now flow in a **responsive
-  `WrapPanel`** (each card `Width=480`) — **2 columns on a wide window, 1 when narrow** — directly reducing the
-  empty right side. Disabled controls + deferred labels/chips unchanged.
+  `WrapPanel`** — **2 columns on a normal/wide window, 1 when narrow** — directly reducing the empty right side.
+  Disabled controls + deferred labels/chips unchanged. **Follow-up fix (after the first screenshot showed a single
+  column + empty right at a typical window width):** card width narrowed **480 → 340** so two cards (+ spacing) fit
+  in ~700px of content region and 2 columns engage at normal desktop sizes; each row switched to **label-above-
+  control** so the combo/toggle/button stay readable in the narrower card.
 - **SmartCoach / Progression / Analysis / Reports / Diagnostics** scaffolds: centered, `MaxWidth=960`. Cards/values
   unchanged (still synthetic "—", disabled actions).
 - **Exercise Guide** (`ExerciseGuideView.axaml`): centered, `MaxWidth=1100` — rows stay readable on a wide window;
