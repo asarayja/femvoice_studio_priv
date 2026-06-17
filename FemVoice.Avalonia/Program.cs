@@ -18,7 +18,17 @@ internal static class Program
     {
         Services = BuildServices();
 
-        // Headless verification paths (no display needed) — used by scripts/linux-portable-gate.sh.
+        // Headless verification paths — used by scripts/linux-portable-gate.sh. A matched smoke returns via
+        // ExitAfterSmoke() to dodge an intermittent native GL atexit-teardown segfault on exit (see note there).
+        if (TryDispatchSmoke(args) is int smokeCode) return ExitAfterSmoke(smokeCode);
+
+        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        return 0;
+    }
+
+    // Returns a headless verification smoke's exit code if args select one; null for the real GUI launch.
+    private static int? TryDispatchSmoke(string[] args)
+    {
         if (args.Contains("--smoke")) return Smoke();
         if (args.Contains("--dashboard-smoke")) return DashboardSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-smoke")) return ExerciseSmoke();
@@ -35,9 +45,27 @@ internal static class Program
         if (args.Contains("--diagnostics-scaffold-smoke")) return DiagnosticsScaffoldSmoke().GetAwaiter().GetResult();
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
+        if (args.Contains("--visual-baseline-smoke")) return VisualBaselineSmoke();
+        return null;
+    }
 
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
-        return 0;
+    [System.Runtime.InteropServices.DllImport("libc", EntryPoint = "_exit")]
+    private static extern void LibcUnderscoreExit(int status);
+
+    // A smoke may initialize the Avalonia X11/GL platform (SetupWithoutStarting + UsePlatformDetect). On some
+    // Linux GPU drivers (observed: NVIDIA proprietary GL) the driver's atexit teardown INTERMITTENTLY segfaults
+    // at process exit — AFTER the smoke has computed and printed its result — turning a passing smoke into a
+    // spurious SIGSEGV/139 exit (~1 in 12 runs). The smoke's result and return code are correct; only native
+    // teardown is unsafe. So once the result is produced, flush output and terminate via POSIX _exit(), which
+    // skips atexit handlers (and thus the buggy driver teardown). Linux-only; the real GUI path
+    // (StartWithClassicDesktopLifetime) is untouched and manages its own shutdown.
+    private static int ExitAfterSmoke(int code)
+    {
+        Console.Out.Flush();
+        Console.Error.Flush();
+        if (System.OperatingSystem.IsLinux())
+            LibcUnderscoreExit(code);   // does not return
+        return code;
     }
 
     public static AppBuilder BuildAvaloniaApp()
@@ -919,14 +947,25 @@ internal static class Program
     // a display is available: `dotnet artifacts/publish/<rid>/FemVoice.Avalonia.dll --packaged-theme-smoke`.
     private static int PackagedThemeSmoke()
     {
-        // Closed set of custom shell brush keys referenced by the views' AXAML via {DynamicResource ...}
-        // (MainWindow + all Views). Verified there are no other custom resource keys and no StaticResource use.
-        // The source-only cross-check below flags any future view that references a key outside this set.
+        // Closed set of custom shell brush keys defined in ShellTheme.axaml (Dark+Light) and referenced by the
+        // shell/views via {DynamicResource ...}. Expanded by the dark visual-baseline slice (surfaces, semantic
+        // palette, chart/chip). The source-only cross-check below flags any view that references a Shell* key
+        // outside this set; the resolution loop verifies each listed key resolves to a brush in BOTH variants.
         string[] viewBrushKeys =
         {
-            "ShellHeaderBackgroundBrush","ShellStatusBackgroundBrush","ShellPanelBackgroundBrush","ShellBorderBrush",
-            "ShellAccentBrush","ShellHeadingBrush","ShellMutedBrush","ShellFaintBrush","ShellSubtleTextBrush",
-            "ShellBodyTextBrush","ShellOkBrush","ShellOkBorderBrush","ShellDeferredTitleBrush","ShellDeferredBorderBrush",
+            // Surfaces
+            "ShellWindowBackgroundBrush","ShellHeaderBackgroundBrush","ShellStatusBackgroundBrush",
+            "ShellPanelBackgroundBrush","ShellCardBackgroundBrush","ShellBorderBrush",
+            // Text
+            "ShellHeadingBrush","ShellBodyTextBrush","ShellSubtleTextBrush","ShellMutedBrush","ShellFaintBrush",
+            // Accent + semantic palette
+            "ShellAccentBrush","ShellPrimaryBrush","ShellPrimaryHoverBrush","ShellSecondaryBrush",
+            "ShellSuccessBrush","ShellWarningBrush","ShellDangerBrush",
+            // Success + deferred accents
+            "ShellOkBrush","ShellOkBorderBrush","ShellDeferredTitleBrush","ShellDeferredBorderBrush",
+            // Chart / chip surfaces
+            "ShellChartBackgroundBrush","ShellChartTraceBrush","ShellTargetBandBrush","ShellMarkerBrush",
+            "ShellChipBackgroundBrush","ShellChipTextBrush",
         };
 
         // Runtime theme check: requires an Avalonia platform. If the platform cannot initialize (genuinely
@@ -998,6 +1037,95 @@ internal static class Program
         bool runtimeOk = !runtimeChecked || (fluentOk && keysOk);
         bool allOk = runtimeOk && axamlCrossOk;
         Console.WriteLine(allOk ? "[pkg-theme] Packaged theme/resource smoke OK" : "[pkg-theme] Packaged theme/resource smoke FAIL");
+        return allOk ? 0 : 1;
+    }
+
+    // Read-only, headless-safe verification of the dark visual-baseline slice. No window, no screenshots, no UI
+    // change, no display REQUIRED to run. Confirms the Avalonia head is dark-first and exposes the FemVoice
+    // theme palette, that the deferred nav surfaces stay deferred, and that Settings stays inert (no actions /
+    // no theme or settings persistence wired). The runtime theme checks need an Avalonia platform (a display)
+    // and are cleanly SKIPPED (not failed) when none is present, mirroring --theme-loc/--packaged-theme-smoke.
+    private static int VisualBaselineSmoke()
+    {
+        // ── Platform-independent checks (always run) ──
+        var svc = new VoiceFeminizationExerciseService();
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+        int implemented = shell.NavItems.Count(n => n.IsImplemented);
+        int deferred = shell.NavItems.Count(n => !n.IsImplemented);
+        bool navOk = shell.NavItems.Count == 9 && implemented == 6 && deferred == 3;   // deferred surfaces stay deferred
+
+        // Settings stays display-only/inert: not IDisposable, exposes no IRelayCommand (no actions/persistence wired).
+        bool settingsInert = !typeof(System.IDisposable).IsAssignableFrom(typeof(SettingsViewModel))
+            && typeof(SettingsViewModel).GetProperties()
+                .All(p => !typeof(global::CommunityToolkit.Mvvm.Input.IRelayCommand).IsAssignableFrom(p.PropertyType));
+        Console.WriteLine($"[visual] nav: total={shell.NavItems.Count} implemented={implemented} deferred={deferred} ok={navOk}");
+        Console.WriteLine($"[visual] Settings inert (no actions/persistence): {settingsInert}");
+
+        // ── Runtime theme checks (need an Avalonia platform; skipped, not failed, when headless) ──
+        string[] paletteKeys =
+        {
+            "ShellWindowBackgroundBrush","ShellHeaderBackgroundBrush","ShellStatusBackgroundBrush",
+            "ShellPanelBackgroundBrush","ShellCardBackgroundBrush","ShellBorderBrush",
+            "ShellAccentBrush","ShellPrimaryBrush","ShellSecondaryBrush",
+            "ShellSuccessBrush","ShellWarningBrush","ShellDangerBrush",
+        };
+        bool runtimeChecked = false, darkFirst = false, paletteOk = true;
+        string variant = "(skipped — no Avalonia platform)";
+        try
+        {
+            BuildAvaloniaApp().SetupWithoutStarting();
+            var app = Application.Current;
+            if (app is not null)
+            {
+                runtimeChecked = true;
+                darkFirst = global::Avalonia.Styling.ThemeVariant.Dark.Equals(app.RequestedThemeVariant);
+                variant = app.ActualThemeVariant?.ToString() ?? "(null)";
+                foreach (var k in paletteKeys)
+                    if (!(app.TryGetResource(k, global::Avalonia.Styling.ThemeVariant.Dark, out var v) && v is global::Avalonia.Media.IBrush))
+                    { paletteOk = false; Console.WriteLine($"[visual] MISSING palette brush (Dark): {k}"); }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[visual] runtime theme check skipped (no Avalonia platform here): {ex.GetType().Name}");
+        }
+        Console.WriteLine(runtimeChecked
+            ? $"[visual] runtime: dark-first(RequestedThemeVariant=Dark)={darkFirst} palette={paletteKeys.Length}-brushes-resolve={paletteOk} actualVariant='{variant}'"
+            : "[visual] runtime: SKIPPED (no Avalonia platform/display — not a defect)");
+
+        // ── Source-only check: implemented views use theme resources, not hardcoded light-grey defaults ──
+        // Cleanly skipped from the published DLL (no source AXAML present).
+        bool srcChecked = false, srcOk = true;
+        try
+        {
+            string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+            string viewsDir = System.IO.Path.Combine(projectDir, "Views");
+            if (System.IO.File.Exists(System.IO.Path.Combine(projectDir, "MainWindow.axaml")) && System.IO.Directory.Exists(viewsDir))
+            {
+                srcChecked = true;
+                var lightDefault = new System.Text.RegularExpressions.Regex(@"#(888|444|999|aaa|bbb|666)\b",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                var files = new System.Collections.Generic.List<string> { System.IO.Path.Combine(projectDir, "MainWindow.axaml") };
+                files.AddRange(System.IO.Directory.EnumerateFiles(viewsDir, "*.axaml"));
+                foreach (var f in files)
+                {
+                    string text = System.IO.File.ReadAllText(f);
+                    string name = System.IO.Path.GetFileName(f);
+                    if (lightDefault.IsMatch(text)) { srcOk = false; Console.WriteLine($"[visual] light-default grey hex still present in {name}"); }
+                    if (!text.Contains("DynamicResource Shell")) { srcOk = false; Console.WriteLine($"[visual] {name} does not reference theme brushes"); }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[visual] source check skipped: {ex.GetType().Name}");
+        }
+        Console.WriteLine($"[visual] source theme-usage check: {(srcChecked ? (srcOk ? "OK (source tree)" : "FAILED") : "skipped (published output / no source)")}");
+
+        bool runtimeOk = !runtimeChecked || (darkFirst && paletteOk);
+        bool allOk = navOk && settingsInert && runtimeOk && srcOk;
+        Console.WriteLine(allOk ? "[visual] Visual baseline smoke OK" : "[visual] Visual baseline smoke FAIL");
         return allOk ? 0 : 1;
     }
 }
