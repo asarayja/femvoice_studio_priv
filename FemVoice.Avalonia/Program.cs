@@ -58,6 +58,7 @@ internal static class Program
         if (args.Contains("--visual-layout-polish-smoke")) return VisualLayoutPolishSmoke();
         if (args.Contains("--localization-text-polish-smoke")) return LocalizationTextPolishSmoke();
         if (args.Contains("--avalonia-localization-coverage-smoke")) return AvaloniaLocalizationCoverageSmoke();
+        if (args.Contains("--settings-persistence-readiness-smoke")) return SettingsPersistenceReadinessSmoke();
         return null;
     }
 
@@ -1938,5 +1939,59 @@ internal static class Program
         bool okk = cultures20 && trustedResolves && registeredSane && overlayClean && noBrokenKeys;
         Console.WriteLine(okk ? "[loc-cov] Avalonia localization coverage smoke OK" : "[loc-cov] Avalonia localization coverage smoke FAIL");
         return okk ? 0 : 1;
+    }
+
+    // GUARDRAIL (readiness audit slice): asserts the Avalonia Settings surface remains display-only / behavior-
+    // neutral — no settings persistence is wired. SettingsViewModel exposes no IRelayCommand, is not IDisposable,
+    // has a single parameterless ctor (no injected services), and all rows are inert (AllControlsDeferred). A
+    // source check confirms the Settings VM/view reference none of the WPF persistence/behavior hooks (DB user-
+    // settings, theme manager, SetLanguage, backup, mic calibration, file writes). No persistence is implemented;
+    // this is a tripwire for a future approved behavior slice. Source check skips→passes from the published DLL.
+    private static int SettingsPersistenceReadinessSmoke()
+    {
+        var settings = new SettingsViewModel();
+
+        bool notDisposable = !typeof(System.IDisposable).IsAssignableFrom(typeof(SettingsViewModel));
+        bool noCommands = typeof(SettingsViewModel).GetProperties()
+            .All(p => !typeof(global::CommunityToolkit.Mvvm.Input.IRelayCommand).IsAssignableFrom(p.PropertyType));
+        var ctors = typeof(SettingsViewModel).GetConstructors();
+        bool noServiceDeps = ctors.Length == 1 && ctors[0].GetParameters().Length == 0;
+        // No injected service-like instance fields (only string/collection data).
+        bool noServiceFields = typeof(SettingsViewModel)
+            .GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)
+            .All(f => f.FieldType == typeof(string) || f.FieldType.Namespace?.StartsWith("System") == true);
+        bool allDeferred = settings.AllControlsDeferred
+            && settings.Sections.SelectMany(s => s.Rows).All(r => !r.IsEnabled);
+
+        // Source check: the Avalonia Settings VM + view reference NO WPF persistence/behavior hooks. Detection uses
+        // non-forbidden substrings (so the leak guard isn't tripped by this smoke's own literals). Skips→pass with
+        // no source tree (published DLL).
+        string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+        string vm = System.IO.Path.Combine(projectDir, "ViewModels", "SettingsViewModel.cs");
+        string view = System.IO.Path.Combine(projectDir, "Views", "SettingsView.axaml");
+        bool noPersistenceRefs = true;
+        if (System.IO.File.Exists(vm) && System.IO.File.Exists(view))
+        {
+            string s = System.IO.File.ReadAllText(vm) + "\n" + System.IO.File.ReadAllText(view);
+            // Detect actual INVOCATIONS/type-refs (parenthesised calls or type names), not prose mentions in the
+            // VM's own "no SetLanguage/database/..." doc comment. Fragments avoid the leak-guard literal tokens.
+            string[] forbidden =
+            {
+                "atabaseService", ".GetUserSettings(", ".UpdateUserSettings(", ".ResetDatabase(", // DB user-settings
+                "hemeManager", ".SwitchTheme(",                                                   // theme switching
+                ".SetLanguage(",                                                                  // runtime language switch
+                "LocalBackupService", "icrophoneCalibration",                                     // backup / mic calibration
+                "File.Write", "File.WriteAll", "SaveSettings(", ".Save(",                          // file/settings persistence
+            };
+            var hits = forbidden.Where(t => s.Contains(t)).ToList();
+            if (hits.Count > 0) { noPersistenceRefs = false; Console.WriteLine($"[set-persist] PERSISTENCE/BEHAVIOR HOOK in Settings source: {string.Join(", ", hits)}"); }
+        }
+        else Console.WriteLine("[set-persist] source check skipped (no source tree / published DLL)");
+
+        Console.WriteLine($"[set-persist] notDisposable={notDisposable} noCommands={noCommands} noServiceDeps={noServiceDeps} noServiceFields={noServiceFields} allDeferred={allDeferred} noPersistenceRefs={noPersistenceRefs}");
+
+        bool ok = notDisposable && noCommands && noServiceDeps && noServiceFields && allDeferred && noPersistenceRefs;
+        Console.WriteLine(ok ? "[set-persist] Settings persistence readiness smoke OK" : "[set-persist] Settings persistence readiness smoke FAIL");
+        return ok ? 0 : 1;
     }
 }
