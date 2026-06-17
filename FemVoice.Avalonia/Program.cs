@@ -53,6 +53,7 @@ internal static class Program
         if (args.Contains("--macos-packaging-readiness-smoke")) return MacosPackagingReadinessSmoke();
         if (args.Contains("--macos-icon-readiness-smoke")) return MacosIconReadinessSmoke();
         if (args.Contains("--exercise-guide-filter-search-smoke")) return ExerciseGuideFilterSearchSmoke();
+        if (args.Contains("--smartcoach-progression-ui-scaffold-smoke")) return SmartCoachProgressionUiScaffoldSmoke();
         return null;
     }
 
@@ -439,12 +440,21 @@ internal static class Program
         shell.ShowDashboardCommand.Execute(null);
         bool backToDash = shell.CurrentPage is MainDashboardViewModel;
 
-        // Deferred nav opens a STATIC placeholder with no side effect (not IDisposable, holds no services).
-        var deferredItem = shell.NavItems.First(n => !n.IsImplemented);
+        // A generic deferred nav (Mikrofonkalibrering) opens a STATIC placeholder with no side effect
+        // (not IDisposable, holds no services).
+        var deferredItem = shell.NavItems.First(n => !n.IsImplemented && n.Label.Contains("Mikrofon"));
         deferredItem.Command.Execute(null);
         bool onDeferred = shell.CurrentPage is DeferredSurfaceViewModel;
         bool deferredInert = shell.CurrentPage is DeferredSurfaceViewModel && shell.CurrentPage is not IDisposable;
         Console.WriteLine($"[shell] Deferred nav '{deferredItem.Label}' -> {(onDeferred ? "static placeholder" : "FAIL")} (inert={deferredInert})");
+
+        // Progresjon/SmartCoach are still deferred (not functional) but now open inert display-only SCAFFOLD
+        // pages (no services, not IDisposable) instead of the bare generic placeholder.
+        shell.NavItems.First(n => n.Label.Contains("Progresjon")).Command.Execute(null);
+        bool onProgScaffold = shell.CurrentPage is ProgressionScaffoldViewModel && shell.CurrentPage is not IDisposable;
+        shell.NavItems.First(n => n.Label.Contains("SmartCoach")).Command.Execute(null);
+        bool onCoachScaffold = shell.CurrentPage is SmartCoachScaffoldViewModel && shell.CurrentPage is not IDisposable;
+        Console.WriteLine($"[shell] Scaffold nav: progression={onProgScaffold} smartcoach={onCoachScaffold} (inert, deferred)");
 
         // Runtime nav-away disposes the transient runtime (no orphaned capture).
         shell.ShowGuideCommand.Execute(null);
@@ -481,7 +491,7 @@ internal static class Program
                           $"second-running={secondRunning} no-orphan={firstStillStopped}");
 
         bool ok = landsOnDashboard && shell.NavItems.Count == 9 && implemented == 6 && deferred == 3
-                  && onGuide && backToDash && onDeferred && deferredInert
+                  && onGuide && backToDash && onDeferred && deferredInert && onProgScaffold && onCoachScaffold
                   && runtimeRunning && firstDisposedOnNav && noOrphanFrames
                   && distinctInstance && secondRunning && firstStillStopped;
         Console.WriteLine(ok ? "[shell] Shell smoke OK" : "[shell] Shell smoke FAIL");
@@ -1645,5 +1655,55 @@ internal static class Program
                      && searchFiltersByName && combined && emptyState && clearSearchReturnsAll && opensExercise && noTargetHzInRows;
         Console.WriteLine(allOk ? "[guide-filter] Exercise Guide filter/search smoke OK" : "[guide-filter] Exercise Guide filter/search smoke FAIL");
         return allOk ? 0 : 1;
+    }
+
+    // Verifies the DEFERRED, display-only SmartCoach + Progression UI scaffolds: navigation opens the scaffold
+    // VMs (inert, not IDisposable, hold no injected services — proven by a parameterless ctor), both are clearly
+    // marked deferred with disabled actions and SYNTHETIC "—" placeholders (no real recommendations/scores/levels),
+    // the placeholder cards exist, and the shell sidebar (9 items, 3 deferred) + dashboard navigation remain intact.
+    // No engine/scoring/safety-gate/persistence is touched (build + project leak-guard enforce no such reference).
+    private static int SmartCoachProgressionUiScaffoldSmoke()
+    {
+        var svc = new VoiceFeminizationExerciseService();
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+
+        // Navigation to both deferred scaffolds works; each opens its inert scaffold VM (not IDisposable).
+        shell.NavItems.First(n => n.Label.Contains("Progresjon")).Command.Execute(null);
+        var prog = shell.CurrentPage as ProgressionScaffoldViewModel;
+        bool progNav = prog is not null && shell.CurrentPage is not IDisposable;
+        shell.NavItems.First(n => n.Label.Contains("SmartCoach")).Command.Execute(null);
+        var coach = shell.CurrentPage as SmartCoachScaffoldViewModel;
+        bool coachNav = coach is not null && shell.CurrentPage is not IDisposable;
+
+        // Sidebar intact (still 9 items, still 3 deferred) and dashboard nav still works.
+        bool navIntact = shell.NavItems.Count == 9 && shell.NavItems.Count(n => !n.IsImplemented) == 3;
+        shell.ShowDashboardCommand.Execute(null);
+        bool backToDash = shell.CurrentPage is MainDashboardViewModel;
+
+        // Hold NO injected services (a single parameterless constructor).
+        static bool OnlyParameterlessCtor(Type t)
+        {
+            var c = t.GetConstructors();
+            return c.Length == 1 && c[0].GetParameters().Length == 0;
+        }
+        bool noServiceDeps = OnlyParameterlessCtor(typeof(SmartCoachScaffoldViewModel))
+                             && OnlyParameterlessCtor(typeof(ProgressionScaffoldViewModel));
+
+        // Deferred + disabled + synthetic placeholders (no real numbers/recommendations).
+        bool coachDeferred = coach!.DeferredBadge.Contains("Utsatt") && !coach.ActionEnabled
+                             && coach.Placeholder == "—" && coach.TodayRecommendation.Length > 0
+                             && coach.StreakLabel.Length > 0 && coach.SessionsLabel.Length > 0 && coach.HealthLabel.Length > 0;
+        bool progDeferred = prog!.DeferredBadge.Contains("Utsatt") && !prog.ActionEnabled
+                            && prog.ScoreValue == "—" && prog.ProgressValue == 0
+                            && prog.Parameters.Count == 3 && prog.Parameters.All(p => p.Value == "—")
+                            && prog.LevelName.Length > 0 && prog.ScoreLabel.Length > 0;
+
+        Console.WriteLine($"[sc-prog] progNav={progNav} coachNav={coachNav} navIntact={navIntact} backToDash={backToDash} noServiceDeps={noServiceDeps}");
+        Console.WriteLine($"[sc-prog] coachDeferred(disabled+synthetic)={coachDeferred} progDeferred(disabled+3 synthetic params)={progDeferred}");
+
+        bool ok = progNav && coachNav && navIntact && backToDash && noServiceDeps && coachDeferred && progDeferred;
+        Console.WriteLine(ok ? "[sc-prog] SmartCoach/Progression UI scaffold smoke OK" : "[sc-prog] SmartCoach/Progression UI scaffold smoke FAIL");
+        return ok ? 0 : 1;
     }
 }
