@@ -52,6 +52,7 @@ internal static class Program
         if (args.Contains("--signing-readiness-smoke")) return SigningReadinessSmoke();
         if (args.Contains("--macos-packaging-readiness-smoke")) return MacosPackagingReadinessSmoke();
         if (args.Contains("--macos-icon-readiness-smoke")) return MacosIconReadinessSmoke();
+        if (args.Contains("--exercise-guide-filter-search-smoke")) return ExerciseGuideFilterSearchSmoke();
         return null;
     }
 
@@ -1563,5 +1564,86 @@ internal static class Program
                   && gracefulWhenAbsent && noFabrication && existingReadinessIntact && noSecrets;
         Console.WriteLine(ok ? "[macos-icon] macOS icon readiness smoke OK" : "[macos-icon] macOS icon readiness smoke FAIL");
         return ok ? 0 : 1;
+    }
+
+    // Verifies the Exercise Guide list-level WPF parity: category-filter chips ("Alle" + goals) + a name/description
+    // search that combine (category AND search) over the in-memory display list — DISPLAY-ONLY (no persistence,
+    // analytics, DB, or session writes). Also confirms default-shows-all, category subset, clearing returns all,
+    // search by name/description, combined filter, empty state, that a filtered card still opens the exercise page
+    // directly, and that the list rows carry no target-Hz. Pure VM/logic + a source check; no display needed.
+    private static int ExerciseGuideFilterSearchSmoke()
+    {
+        var svc = new VoiceFeminizationExerciseService();
+        var guide = new ExerciseGuideViewModel(svc, _ => { });
+        int total = guide.Exercises.Count;
+        if (total == 0) { Console.WriteLine("[guide-filter] FAIL: no exercises"); return 1; }
+
+        // Chips: "Alle" + at least one goal; "Alle" selected by default.
+        bool chipsExist = guide.CategoryChips.Count >= 2
+                          && guide.CategoryChips.Any(c => c.Label == ExerciseGuideViewModel.AllCategory);
+        bool defaultAll = guide.SelectedCategory == ExerciseGuideViewModel.AllCategory
+                          && guide.FilteredCount == total && guide.HasResults;
+
+        // Select a real (non-"Alle") category chip -> a valid, non-empty subset, all matching that goal.
+        var cat = guide.CategoryChips.First(c => c.Label != ExerciseGuideViewModel.AllCategory).Label;
+        guide.SelectCategoryCommand.Execute(cat);
+        int expectCat = guide.Exercises.Count(c => string.Equals(c.GoalText, cat, StringComparison.OrdinalIgnoreCase));
+        bool categorySubset = guide.FilteredCount == expectCat && expectCat > 0 && guide.FilteredCount <= total
+                              && guide.FilteredExercises.All(c => string.Equals(c.GoalText, cat, StringComparison.OrdinalIgnoreCase));
+        bool oneChipSelected = guide.CategoryChips.Count(c => c.IsSelected) == 1
+                               && guide.CategoryChips.Single(c => c.IsSelected).Label == cat;
+
+        // Clearing category back to "Alle" returns all.
+        guide.SelectCategoryCommand.Execute(ExerciseGuideViewModel.AllCategory);
+        bool clearCategoryReturnsAll = guide.FilteredCount == total;
+
+        // Search by name (case-insensitive) — match WPF (Name OR Description). Use a lowercased token from card[0].
+        var token = new string(guide.Exercises[0].Name.Trim().Split(' ')[0].Take(4).ToArray()).ToLowerInvariant();
+        guide.SearchText = token;
+        bool searchFiltersByName = guide.FilteredCount > 0 && guide.FilteredCount <= total
+            && guide.FilteredExercises.All(c =>
+                c.Name.Contains(token, StringComparison.OrdinalIgnoreCase)
+                || c.ShortDescription.Contains(token, StringComparison.OrdinalIgnoreCase));
+
+        // Combined: category + search both applied (intersection, never larger than search-only).
+        int searchOnly = guide.FilteredCount;
+        guide.SelectCategoryCommand.Execute(cat);
+        bool combined = guide.FilteredCount <= searchOnly
+            && guide.FilteredExercises.All(c =>
+                string.Equals(c.GoalText, cat, StringComparison.OrdinalIgnoreCase)
+                && (c.Name.Contains(token, StringComparison.OrdinalIgnoreCase)
+                    || c.ShortDescription.Contains(token, StringComparison.OrdinalIgnoreCase)));
+
+        // Empty state: a no-match search yields zero and flips IsEmpty.
+        guide.SelectCategoryCommand.Execute(ExerciseGuideViewModel.AllCategory);
+        guide.SearchText = "zzqx-no-such-exercise-xqzz";
+        bool emptyState = guide.FilteredCount == 0 && guide.IsEmpty && !guide.HasResults;
+
+        // Clearing the search returns all (with "Alle").
+        guide.SearchText = "";
+        bool clearSearchReturnsAll = guide.FilteredCount == total && guide.HasResults;
+
+        // A filtered card still opens the exercise (runtime) page directly (WPF parity, via the shell).
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+        shell.ShowGuideCommand.Execute(null);
+        var guidePage = shell.CurrentPage as ExerciseGuideViewModel;
+        guidePage!.SelectCategoryCommand.Execute(cat);
+        guidePage.OpenExerciseCommand.Execute(guidePage.FilteredExercises[0]);
+        bool opensExercise = shell.CurrentPage is ExerciseRuntimeViewModel;
+
+        // Source check: the Guide row template carries no target-pitch (Hz). Skipped (true) if no source tree.
+        string viewPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "Views", "ExerciseGuideView.axaml"));
+        bool noTargetHzInRows = !System.IO.File.Exists(viewPath)
+                                || !System.IO.File.ReadAllText(viewPath).Contains("TargetPitchText");
+
+        Console.WriteLine($"[guide-filter] total={total} chips={guide.CategoryChips.Count} chipsExist={chipsExist} defaultAll={defaultAll} categorySubset={categorySubset}({cat}={expectCat}) oneChipSelected={oneChipSelected} clearCatAll={clearCategoryReturnsAll}");
+        Console.WriteLine($"[guide-filter] searchByName('{token}')={searchFiltersByName} combined={combined} emptyState={emptyState} clearSearchAll={clearSearchReturnsAll} opensExercise={opensExercise} noTargetHzInRows={noTargetHzInRows}");
+
+        bool allOk = chipsExist && defaultAll && categorySubset && oneChipSelected && clearCategoryReturnsAll
+                     && searchFiltersByName && combined && emptyState && clearSearchReturnsAll && opensExercise && noTargetHzInRows;
+        Console.WriteLine(allOk ? "[guide-filter] Exercise Guide filter/search smoke OK" : "[guide-filter] Exercise Guide filter/search smoke FAIL");
+        return allOk ? 0 : 1;
     }
 }
