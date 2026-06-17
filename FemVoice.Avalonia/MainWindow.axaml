@@ -69,6 +69,7 @@
           <DataTemplate DataType="vm:SettingsViewModel"><views:SettingsView/></DataTemplate>
           <DataTemplate DataType="vm:AnalysisViewModel"><views:AnalysisView/></DataTemplate>
           <DataTemplate DataType="vm:ReportsViewModel"><views:ReportsView/></DataTemplate>
+          <DataTemplate DataType="vm:DiagnosticsViewModel"><views:DiagnosticsView/></DataTemplate>
           <!-- Static deferred placeholder (no services, no side effects) -->
           <DataTemplate DataType="vm:DeferredSurfaceViewModel">
             <ScrollViewer>

@@ -1,0 +1,50 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
+             x:Class="FemVoice.Avalonia.Views.DiagnosticsView">
+  <!-- Display-only diagnostics scaffold: static placeholder cards with disabled actions. Shell theme brushes; no converters. -->
+  <ScrollViewer>
+    <StackPanel Margin="20" Spacing="14" MaxWidth="820" HorizontalAlignment="Left">
+
+      <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold"/>
+
+      <!-- Deferred / not-saved banner -->
+      <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
+        <TextBlock Text="{Binding ScaffoldNotice}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+      </Border>
+
+      <!-- Disabled, inert global actions (no command, no file dialog) -->
+      <WrapPanel>
+        <Button Content="Generer støttepakke (senere)" IsEnabled="False" Padding="10,4" Margin="0,0,8,8"/>
+        <Button Content="Eksporter diagnostikk (senere)" IsEnabled="False" Padding="10,4" Margin="0,0,8,8"/>
+        <Button Content="Lag sikkerhetskopi (senere)" IsEnabled="False" Padding="10,4" Margin="0,0,8,8"/>
+        <Button Content="Gjenopprett (senere)" IsEnabled="False" Padding="10,4" Margin="0,0,8,8"/>
+        <Button Content="Åpne diagnostikkmappe (senere)" IsEnabled="False" Padding="10,4" Margin="0,0,8,8"/>
+      </WrapPanel>
+
+      <!-- One card per diagnostics/export/backup placeholder -->
+      <ItemsControl ItemsSource="{Binding Cards}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="vm:DiagnosticsCard">
+            <Border BorderBrush="{DynamicResource ShellBorderBrush}" BorderThickness="1" CornerRadius="6"
+                    Padding="14" Margin="0,0,0,10" Background="{DynamicResource ShellPanelBackgroundBrush}">
+              <StackPanel Spacing="6">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Grid.Column="0" Text="{Binding Title}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}"/>
+                  <TextBlock Grid.Column="1" Text="{Binding Status}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" VerticalAlignment="Center"/>
+                </Grid>
+                <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+                <!-- Inert per-card action: disabled, bound to the row's false flag, no command -->
+                <Button Content="Åpne (senere)" IsEnabled="{Binding IsEnabled}" Padding="10,3" HorizontalAlignment="Left"/>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <TextBlock Text="Diagnostikk/eksport er en visning-bare plassholder — ingen ekte diagnostikk, støttepakke, eksport, sikkerhetskopi eller gjenoppretting."
+                 Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
