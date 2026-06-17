@@ -66,7 +66,7 @@
         <ContentControl.DataTemplates>
           <DataTemplate DataType="vm:MainDashboardViewModel"><views:DashboardView/></DataTemplate>
           <DataTemplate DataType="vm:ExerciseGuideViewModel"><views:ExerciseGuideView/></DataTemplate>
-          <DataTemplate DataType="vm:ExerciseDetailViewModel"><views:ExerciseDetailView/></DataTemplate>
+          <!-- The exercise guide opens the exercise page (runtime) directly — no separate detail page (WPF parity). -->
           <DataTemplate DataType="vm:ExerciseRuntimeViewModel"><views:ExerciseRuntimeView/></DataTemplate>
           <DataTemplate DataType="vm:SettingsViewModel"><views:SettingsView/></DataTemplate>
           <DataTemplate DataType="vm:AnalysisViewModel"><views:AnalysisView/></DataTemplate>

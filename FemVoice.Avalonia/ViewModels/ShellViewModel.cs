@@ -47,7 +47,7 @@ public partial class ShellViewModel : ObservableObject
     {
         _dashboard = dashboard;
         _ui = ui;
-        _guide = new ExerciseGuideViewModel(exercises, OpenExerciseDetail);
+        _guide = new ExerciseGuideViewModel(exercises, OpenExercise);
         _settings = new SettingsViewModel();        // inert, display-only; retained singleton, not IDisposable
         _analysis = new AnalysisViewModel();        // inert, display-only; retained singleton, not IDisposable
         _reports = new ReportsViewModel();          // inert, display-only; retained singleton, not IDisposable
@@ -110,8 +110,7 @@ public partial class ShellViewModel : ObservableObject
         {
             MainDashboardViewModel => "Dashbord",
             ExerciseGuideViewModel => "Øvelsesguide",
-            ExerciseDetailViewModel => "Øvelsesdetalj",
-            ExerciseRuntimeViewModel => "Øvelse kjører",
+            ExerciseRuntimeViewModel => "Øvelse",
             SettingsViewModel => Localized.Get("Settings_Title", "Innstillinger"),
             AnalysisViewModel => Localized.Get("Shell_Nav_Analysis", "Analyse"),
             ReportsViewModel => Localized.Get("Shell_Nav_Reports", "Rapporter"),
@@ -131,9 +130,8 @@ public partial class ShellViewModel : ObservableObject
     // Deferred destinations open a purely static placeholder — no services, no side effects.
     private void ShowDeferred(string surface) => CurrentPage = new DeferredSurfaceViewModel(surface);
 
-    private void OpenExerciseDetail(EnhancedExercise exercise)
-        => CurrentPage = new ExerciseDetailViewModel(exercise, ShowGuide, () => ShowRuntime(exercise));
-
-    private void ShowRuntime(EnhancedExercise exercise)
-        => CurrentPage = new ExerciseRuntimeViewModel(exercise, _ui, () => OpenExerciseDetail(exercise));
+    // WPF parity: the exercise guide opens the exercise page DIRECTLY (one page, one Start) — there is no
+    // separate detail page and no second Start. Back returns to the guide.
+    private void OpenExercise(EnhancedExercise exercise)
+        => CurrentPage = new ExerciseRuntimeViewModel(exercise, _ui, ShowGuide);
 }

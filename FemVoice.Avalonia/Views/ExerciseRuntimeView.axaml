@@ -1,11 +1,11 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="FemVoice.Avalonia.Views.ExerciseRuntimeView">
-  <!-- WPF-parity layout: the original ExerciseWindow has NO pitch graph on the exercise/session screen; it uses
-       a two-column grid (info/guidance left, session controls + live readouts right). This view mirrors that:
-       the runtime pitch chart is intentionally NOT rendered here (the VM keeps its chart data model for the
-       headless runtime-chart smoke), and the sections are arranged in a grid so the session controls are visible
-       without long scrolling. Display-only; no clinical/domain/WPF change. -->
+  <!-- WPF parity: the exercise guide opens THIS page directly (one page, one Start — no separate detail page,
+       no second Start). Pre-start info (focus/purpose/instructions) is shown alongside the session controls;
+       pressing Start activates the same page. No pitch graph here (WPF has none). Wording is focus-aware
+       (pitch is demoted to a secondary technical detail for non-pitch exercises). Display-only; no clinical/
+       domain/WPF change. -->
   <ScrollViewer>
     <StackPanel Margin="20" Spacing="14">
 
@@ -16,55 +16,85 @@
                    Foreground="{DynamicResource ShellHeadingBrush}"/>
       </StackPanel>
 
-      <!-- Compact metadata row -->
+      <!-- Focus-aware metadata strip -->
       <Border Classes="card">
-        <WrapPanel>
-          <TextBlock Text="{Binding Category, StringFormat='Kategori: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          <TextBlock Text="{Binding Difficulty, StringFormat='Nivå: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          <TextBlock Text="{Binding TargetPitchText, StringFormat='Målområde: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          <TextBlock Text="{Binding ElapsedText, StringFormat='Tid: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-        </WrapPanel>
+        <StackPanel Spacing="4">
+          <WrapPanel>
+            <TextBlock Text="{Binding Category, StringFormat='Kategori: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <TextBlock Text="{Binding Difficulty, StringFormat='Nivå: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <TextBlock Text="{Binding FocusLabel, StringFormat='Fokus: {0}'}" Margin="0,0,20,4" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <TextBlock Text="{Binding DurationText, StringFormat='Varighet: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <!-- Pitch target shown prominently ONLY when pitch is the primary focus -->
+            <TextBlock Text="{Binding TargetPitchText, StringFormat='Målområde: {0}'}" Margin="0,0,20,4"
+                       Foreground="{DynamicResource ShellBodyTextBrush}" IsVisible="{Binding IsPitchFocused}"/>
+          </WrapPanel>
+          <!-- For non-pitch exercises, the pitch range is a secondary technical detail (muted) -->
+          <TextBlock Text="{Binding SecondaryPitchText}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"
+                     IsVisible="{Binding ShowSecondaryPitch}"/>
+        </StackPanel>
       </Border>
 
-      <!-- Main two-column grid: info/guidance (left) · session controls + live readouts (right) -->
+      <!-- Two-column grid: info/guidance (left) · session controls + live readouts (right) -->
       <Grid ColumnDefinitions="1.2*,0.8*">
 
-        <!-- ── Left column: target profile + live status + feedback/guidance ── -->
+        <!-- ── Left column: focus/purpose + instructions + (technical) profile + live readouts ── -->
         <StackPanel Grid.Column="0" Spacing="14" Margin="0,0,8,0">
 
-          <!-- Target profile (read-only, display-only — from shared ExerciseTargetProfile) -->
+          <!-- Focus + purpose (leads with the exercise's actual focus, not pitch) -->
+          <Border Classes="card">
+            <StackPanel Spacing="6">
+              <TextBlock Text="{Binding FocusSummary}" FontWeight="SemiBold" FontSize="15" TextWrapping="Wrap"
+                         Foreground="{DynamicResource ShellAccentBrush}"/>
+              <TextBlock Text="{Binding Purpose}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text="{Binding Rationale}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,2,0,0"/>
+              <TextBlock Text="{Binding SafetyNote}" TextWrapping="Wrap" Foreground="{DynamicResource ShellWarningBrush}" FontSize="12" Margin="0,4,0,0"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Instructions / steps -->
+          <Border Classes="card">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Instruksjoner" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+              <ItemsControl ItemsSource="{Binding Steps}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,3">
+                      <Ellipse Width="10" Height="10" Fill="{DynamicResource ShellPrimaryBrush}" VerticalAlignment="Top" Margin="0,4,0,0"/>
+                      <TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+
+          <!-- Technical target profile (secondary detail — read-only, display-only) -->
           <Border Classes="card" BorderBrush="{DynamicResource ShellSecondaryBrush}">
             <StackPanel Spacing="4">
-              <TextBlock Text="Mål-profil" FontWeight="SemiBold" Foreground="{DynamicResource ShellSecondaryBrush}"/>
+              <TextBlock Text="Mål-profil (teknisk)" FontWeight="SemiBold" Foreground="{DynamicResource ShellSecondaryBrush}"/>
               <TextBlock Text="{Binding TargetProfile.ProfileStatusMessage}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
               <WrapPanel>
-                <TextBlock Text="{Binding TargetProfile.TargetPitch, StringFormat='Mål-pitch: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-                <TextBlock Text="{Binding TargetProfile.ResonanceTarget, StringFormat='Resonans-mål: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-                <TextBlock Text="{Binding TargetProfile.StabilityTarget, StringFormat='Stabilitet: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-                <TextBlock Text="{Binding TargetProfile.RequiredHoldSeconds, StringFormat='Hold-mål: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-                <TextBlock Text="{Binding TargetProfile.VoiceSkillTargets, StringFormat='Skills: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                <TextBlock Text="{Binding TargetProfile.TargetPitch, StringFormat='Mål-pitch: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellMutedBrush}"/>
+                <TextBlock Text="{Binding TargetProfile.ResonanceTarget, StringFormat='Resonans-mål: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellMutedBrush}"/>
+                <TextBlock Text="{Binding TargetProfile.StabilityTarget, StringFormat='Stabilitet: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellMutedBrush}"/>
+                <TextBlock Text="{Binding TargetProfile.RequiredHoldSeconds, StringFormat='Hold-mål: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellMutedBrush}"/>
+                <TextBlock Text="{Binding MetricsText, StringFormat='Mål-skills: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellMutedBrush}"/>
               </WrapPanel>
-              <TextBlock Text="{Binding TargetProfile.PurposeText, StringFormat='Hensikt: {0}'}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
               <TextBlock Text="{Binding TargetProfile.FocusText, StringFormat='Fokus: {0}'}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}"/>
-              <TextBlock Text="{Binding TargetProfile.SafetyText, StringFormat='Sikkerhet: {0}'}" TextWrapping="Wrap" Foreground="{DynamicResource ShellWarningBrush}"/>
               <TextBlock Text="{Binding TargetProfile.CommonMistakesText, StringFormat='Vanlige feil: {0}'}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}"
                          IsVisible="{Binding TargetProfile.HasCommonMistakes}"/>
             </StackPanel>
           </Border>
 
-          <!-- Live pitch + status (text readout; no graph — WPF parity) — visible while running -->
+          <!-- Live status (text readout; no graph — WPF parity) — visible while running -->
           <Border Classes="card" IsVisible="{Binding IsRunning}">
             <StackPanel Spacing="6">
               <TextBlock Text="Sanntid (syntetisk lyd)" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-              <StackPanel Orientation="Horizontal" Spacing="6">
+              <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsPitchFocused}">
                 <TextBlock Text="{Binding CurrentPitch, StringFormat='{}{0:F1}'}" FontSize="34" FontWeight="Bold" Foreground="{DynamicResource ShellAccentBrush}"/>
                 <TextBlock Text="Hz" VerticalAlignment="Bottom" Margin="0,0,0,6" Foreground="{DynamicResource ShellMutedBrush}"/>
               </StackPanel>
               <TextBlock Text="{Binding PitchStatus, StringFormat='Status: {0}'}" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-              <WrapPanel>
-                <TextBlock Text="{Binding TargetPitchMin, StringFormat='Mål min: {0:F0} Hz'}" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,0,16,0"/>
-                <TextBlock Text="{Binding TargetPitchMax, StringFormat='Mål maks: {0:F0} Hz'}" Foreground="{DynamicResource ShellMutedBrush}"/>
-              </WrapPanel>
             </StackPanel>
           </Border>
 
@@ -73,21 +103,13 @@
             <StackPanel Spacing="2">
               <TextBlock Text="Sanntids-tilbakemelding (kun visning)" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}"/>
               <TextBlock Text="{Binding LiveFeedbackMessage}" TextWrapping="Wrap" FontSize="16" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-              <TextBlock Text="{Binding LiveFeedbackSeverity, StringFormat='Status: {0}'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-            </StackPanel>
-          </Border>
-
-          <!-- Guidance -->
-          <Border Classes="card" BorderBrush="{DynamicResource ShellSuccessBrush}" IsVisible="{Binding IsRunning}">
-            <StackPanel Spacing="2">
-              <TextBlock Text="Veiledning" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}"/>
-              <TextBlock Text="{Binding RuntimeStatusMessage}" TextWrapping="Wrap" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text="{Binding RuntimeStatusMessage}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
             </StackPanel>
           </Border>
 
         </StackPanel>
 
-        <!-- ── Right column: session controls (always visible) + hold + coordinator readout ── -->
+        <!-- ── Right column: session controls (always visible — ONE Start) + hold + coordinator ── -->
         <StackPanel Grid.Column="1" Spacing="14" Margin="8,0,0,0">
 
           <!-- Session controls + lifecycle state (synthetic; never saved) -->
@@ -122,7 +144,7 @@
             </StackPanel>
           </Border>
 
-          <!-- Hold progress (display-only): derived vs coordinator — the WPF-style live "meters" -->
+          <!-- Hold progress (display-only): derived vs coordinator -->
           <Border Classes="card" IsVisible="{Binding IsRunning}">
             <StackPanel Spacing="4">
               <TextBlock Text="Hold i målområdet (visning)" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
@@ -145,10 +167,6 @@
                 <TextBlock Text="{Binding CoordinatorReadout.CoordinatorStatusText, StringFormat='Tilstand: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
               </WrapPanel>
               <ProgressBar Minimum="0" Maximum="100" Value="{Binding CoordinatorReadout.CoordinatorHoldProgressPercent}" Height="14"/>
-              <WrapPanel>
-                <TextBlock Text="{Binding CoordinatorReadout.CoordinatorHoldProgressPercent, StringFormat='Koordinator: {0:F0}%'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-                <TextBlock Text="{Binding CoordinatorReadout.DerivedHoldProgressPercent, StringFormat='Avledet: {0:F0}%'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-              </WrapPanel>
               <TextBlock Text="{Binding CoordinatorReadout.HoldDifferenceDisplay, StringFormat='Differanse: {0}'}" Foreground="{DynamicResource ShellMutedBrush}"/>
               <TextBlock Text="{Binding CoordinatorReadout.CoordinatorGuidanceText}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
               <Border Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="4" Padding="8">
