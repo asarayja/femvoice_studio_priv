@@ -6,7 +6,7 @@
        SYNTHETIC "—" placeholders, an empty/disabled progress bar, and a disabled action. No progression
        calculation, no safety gate, no scoring, no persistence. Dark baseline. -->
   <ScrollViewer>
-    <StackPanel Margin="20" Spacing="12" MaxWidth="820" HorizontalAlignment="Left">
+    <StackPanel Margin="24" Spacing="12" MaxWidth="960" HorizontalAlignment="Center">
 
       <!-- Header: title + deferred badge -->
       <StackPanel Orientation="Horizontal" Spacing="10">

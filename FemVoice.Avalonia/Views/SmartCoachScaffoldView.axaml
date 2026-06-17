@@ -5,7 +5,7 @@
        (today's-focus card + streak/sessions/health tiles) with SYNTHETIC "—" placeholders and a disabled
        action. No engine, no scoring, no recommendations, no persistence. Dark baseline. -->
   <ScrollViewer>
-    <StackPanel Margin="20" Spacing="12" MaxWidth="820" HorizontalAlignment="Left">
+    <StackPanel Margin="24" Spacing="12" MaxWidth="960" HorizontalAlignment="Center">
 
       <!-- Header: title + deferred badge -->
       <StackPanel Orientation="Horizontal" Spacing="10">

@@ -8,7 +8,9 @@
        name/description search; they combine (category AND search) over the in-memory list — DISPLAY-ONLY, no
        persistence/analytics. Progress/counts here are DISPLAY-ONLY placeholders (0). Whole-row click opens the
        exercise. Dark baseline. -->
-  <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,*">
+  <!-- Layout polish: centered, max-width content column so rows stay readable and the page is balanced on a wide
+       desktop window (filter/search + list behaviour unchanged). -->
+  <Grid Margin="24" RowDefinitions="Auto,Auto,Auto,*" MaxWidth="1100" HorizontalAlignment="Center">
     <TextBlock Grid.Row="0" Text="{Binding Heading}" FontSize="20" FontWeight="Bold" Margin="0,0,0,10"
                Foreground="{DynamicResource ShellHeadingBrush}"/>
 

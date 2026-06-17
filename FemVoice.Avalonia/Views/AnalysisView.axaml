@@ -5,7 +5,7 @@
   <!-- Display-only Analysis/Resonance scaffold: converter-free mini bar-charts over SYNTHETIC in-memory
        sample data, + static summary placeholders. No third-party charting, no converters, no database/saved state. -->
   <ScrollViewer>
-    <StackPanel Margin="20" Spacing="14" MaxWidth="820" HorizontalAlignment="Left">
+    <StackPanel Margin="24" Spacing="14" MaxWidth="960" HorizontalAlignment="Center">
 
       <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold"/>
 
