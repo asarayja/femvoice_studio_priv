@@ -151,3 +151,55 @@ awaiting the async `Stop()` before asserting `stopped` — 18 stress runs, 0 fai
 Build 0/0; **19/19 smokes OK (all exit 0)**; vuln clean; Tmds 0.21.3; refs Core + Audio.Abstractions only; leak
 guard clean; portable 1570/1580 (10 known baseline; 1569 with the `ComfortZone` flake); published smokes + `.deb` +
 macOS publish OK. No clinical/domain/WPF/data change. Signing/notarization still **not started**.
+
+---
+
+## Follow-up 3 (same PR #19): exercise flow (no double-start) + focus-aware wording
+
+Two WPF-parity issues from manual testing: (1) a double-start flow (detail "Start øvelse" → a second runtime page
+with another Start); (2) pitch-centric wording for every exercise. UX/flow/copy parity only; no clinical/domain/
+WPF/data/pitch/target-profile change.
+
+### WPF reference check (inspected, not guessed)
+Re-inspected the frozen `FemVoiceStudio/Views/ExerciseWindow.xaml`:
+- WPF opens an exercise from the guide list (clickable `ExerciseCard`) by switching the SAME window to its
+  `DetailView` (a `Visibility` toggle — **not** a separate window/page).
+- The `DetailView` IS the exercise page: left column = info/guidance/steps; **right column = the session panel
+  with the timer + the Start/Stop buttons**. So **the first Start is on the exercise page and starts the session
+  directly — there is no separate detail page and no second Start (no double-start).**
+- WPF uses **exercise-specific** guidance (data-driven `GuidanceItems` + a `FeedbackModeKey` badge), not
+  pitch-only wording, and even removed the raw target-Hz panel ("TargetPitchPanel FJERNET").
+
+### Flow fix (no double-start)
+The Avalonia guide now opens the exercise page (the runtime view) **directly**; the redundant detail page was
+removed. One page, one Start:
+- `ShellViewModel`: the guide's open action is now `OpenExercise(e) => CurrentPage = new ExerciseRuntimeViewModel(e, _ui, ShowGuide)`. Back returns to the guide.
+- **Deleted** `ExerciseDetailViewModel` + `ExerciseDetailView(.axaml/.cs)` and the MainWindow detail `DataTemplate`.
+- The runtime VM was enriched with the pre-start info it needs (Purpose, Rationale, Steps, focus labels) so the
+  single page shows purpose/instructions before Start and the session controls + live readouts after Start — all
+  on the same page (verified: Start/Stop keep the same VM instance, no navigation). Lifecycle (Begin/Stop) and the
+  synthetic data path are unchanged internally.
+
+### Focus-aware wording (not pitch-centric)
+Wording is now derived from the exercise's `GoalCategory` (Pitch / Resonance / Intonation / Breathing / Combined):
+- A `FocusSummary` leads each exercise with its actual focus (e.g. resonance exercises say *"lysere resonans og
+  fremre plassering — ikke bare tonehøyde"*, breath exercises emphasize pust/støtte).
+- `Fokus: <label>` replaces the always-pitch metadata; the **pitch target is shown prominently only for
+  pitch-focused exercises** (`IsPitchFocused` = Pitch/Combined). For non-pitch exercises the pitch range is shown
+  only as a **secondary technical detail** ("Tekniske mål (tonehøyde): …"), and the technical "Mål-profil" panel is
+  clearly secondary. No exercise definitions, target profiles, or thresholds changed — display only.
+
+### New smoke `--exercise-flow-parity-smoke` (read-only, deterministic)
+Verifies: the guide card opens the exercise page directly (Inactive, one pending Start) with **no separate
+start page**; Start activates the SAME page instance and Stop keeps it (no second-page navigation); a non-pitch
+exercise reports `IsPitchFocused=false` (pitch not primary) while a pitch exercise reports `true`; the dashboard
+chart is retained; the exercise page has no pitch chart; no separate `ExerciseDetailView` exists; no charting
+dependency. (Coordinator smoke's nav-B was updated to open a fresh exercise after the now-`→guide` Back.)
+
+### Kept
+Dashboard chart, Exercise Guide clickable cards, the grid layouts, the dark baseline.
+
+### Follow-up 3 gate
+Build 0/0; **20/20 smokes OK (all exit 0)** incl. `--exercise-flow-parity-smoke`; vuln clean; Tmds 0.21.3; refs
+Core + Audio.Abstractions only; leak guard clean; portable 1570/1580; published smokes + `.deb` + macOS publish OK.
+No clinical/domain/WPF/data change. Signing/notarization still **not started**.

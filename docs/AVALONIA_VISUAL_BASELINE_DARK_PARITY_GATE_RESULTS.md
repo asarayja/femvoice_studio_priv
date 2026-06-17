@@ -89,3 +89,22 @@ Date: 2026-06-17 · same branch.
 
 ### Behaviour change
 **None to clinical/domain behaviour. WPF untouched.** Visual/UX layout + a read-only smoke. Signing/notarization **not started**.
+
+---
+
+## Follow-up 3 gate (same PR #19): exercise flow (no double-start) + focus-aware wording
+
+Date: 2026-06-17 · same branch.
+
+- **WPF reference**: `FemVoiceStudio/Views/ExerciseWindow.xaml` (read-only). One window; the guide opens the SAME window's DetailView (a Visibility toggle, not a separate page); the session timer + Start/Stop live on that page → the first Start starts directly, NO double-start; exercise-specific guidance (not pitch-only). Avalonia adjusted to match.
+- **Flow fix**: the guide opens the exercise page (runtime view) DIRECTLY; the redundant `ExerciseDetailViewModel` + `ExerciseDetailView` were deleted (+ MainWindow detail DataTemplate). One page, one Start; Back → guide. Runtime VM enriched with pre-start info (Purpose/Rationale/Steps/focus labels). Lifecycle/data path unchanged.
+- **Wording fix**: focus-aware via `GoalCategory` — `FocusSummary` + `Fokus: <label>`; pitch target prominent only for pitch-focused exercises (Pitch/Combined); non-pitch exercises demote pitch to a secondary technical detail. No exercise definitions/target profiles/thresholds changed.
+- **Build**: 0 warnings / 0 errors.
+- **Smokes**: **20/20 OK, all exit 0** (added `--exercise-flow-parity-smoke`): opens-exercise-page=True, no-separate-start-page=True, start-same-page=True, stop-same-page=True; non-pitch 'Grunnleggende humming' (Resonance) isPitchFocused=False; pitch 'Stigende toner' isPitchFocused=True; dashboard chart retained; no charting dep. Updated the Detail→Runtime navigation in ~12 existing smokes (guide opens runtime directly); fixed the coordinator smoke's nav-B to re-open a fresh exercise.
+- **Vulnerable packages**: none; Tmds 0.21.3; refs Core + Audio.Abstractions only.
+- **Leak guard**: clean. No OxyPlot/charting dependency.
+- **Publish/package**: `publish-linux.sh` OK; published `--theme-loc`/`--packaged-theme`/`--visual-baseline`/`--visual-interaction-chart`/`--exercise-layout-parity`/`--exercise-flow-parity` smokes all exit 0; `.deb` builds; `publish-macos.sh osx-x64` OK.
+- **Portable**: 1570/1580 (10 known localization-data baseline; 1569 with the intermittent `ComfortZone` flake). No new failures.
+
+### Behaviour change
+**None to clinical/domain behaviour. WPF untouched.** UX flow (one page, one Start) + focus-aware display wording + a read-only smoke. Signing/notarization **not started**.
