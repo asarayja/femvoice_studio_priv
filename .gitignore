@@ -2,6 +2,8 @@
 [Bb]in/
 [Oo]bj/
 publish/
+# Packaging output (publish/<rid>, .deb packages, package-work) from FemVoice.Avalonia/Packaging helpers
+/artifacts/
 
 # Visual Studio / IDE
 .vs/

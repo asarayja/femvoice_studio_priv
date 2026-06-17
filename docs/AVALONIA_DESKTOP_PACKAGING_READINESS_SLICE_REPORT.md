@@ -51,3 +51,58 @@ only Core + Audio.Abstractions · Tmds 0.21.3 · portable 1570/1580 · Windows C
 ## 7. Behaviour changes
 **None to clinical/domain behaviour. WPF untouched.** Packaging metadata + inert templates only; default
 build/run behaviour is unchanged.
+
+---
+
+## Follow-up (PR #17): `.deb` helpers, installed-launch fix, Debian author/license metadata
+
+> Still packaging/launcher infrastructure only; behavior-neutral. No clinical/domain/WPF change · no real mic ·
+> no persistence · no signing/notarization.
+
+### A. Manual installed-launch failure — root cause
+Symptom (manual Linux test): the installed app appears briefly in the taskbar/dock, then disappears.
+
+Investigation on the test box (package was installed): `/usr/bin/femvoice-studio` was a launcher that did
+`exec /opt/femvoice-studio/FemVoice.Avalonia` — the framework-dependent **apphost**. There is **no
+system-registered .NET runtime** (`command -v dotnet` → none; no `/usr/share/dotnet`/`/usr/lib/dotnet`/`/etc/dotnet`);
+.NET is installed user-locally at `~/.dotnet`. Running the apphost in a clean (GUI-like) env →
+`You must install .NET to run this application … .NET location: Not found` → **exit 131**. Running the same app via
+`dotnet /opt/femvoice-studio/FemVoice.Avalonia.dll --smoke` → **OK (exit 0)**.
+
+**Root cause:** a framework-dependent apphost resolves only a *system-registered* runtime; with .NET installed
+elsewhere it cannot find one and exits 131 before the window stays up. (Not a missing native dep / bad `.desktop` /
+missing exec bit / Avalonia crash.)
+
+### B. Fix
+- `/usr/bin/femvoice-studio` is now a small `bash` launcher: `command -v dotnet` guard (clear message + `exit 127`
+  if missing), `cd /opt/femvoice-studio`, `exec dotnet /opt/femvoice-studio/FemVoice.Avalonia.dll "$@"`. No sudo,
+  no install, no state writes. `.desktop` keeps `Exec=femvoice-studio`. Package stays framework-dependent.
+
+### C. Debian metadata + license
+- `DEBIAN/control`: `Maintainer: A hansen <rassyhansen@gmail.com>`, `Homepage: https://github.com/asarayja/femvoice_studio_priv`
+  (kept because this is an explicitly **private/proprietary preview** package; would be dropped for public release),
+  framework-dependent `Description`.
+- New `/usr/share/doc/femvoice-studio/copyright` (machine-readable; `License: Proprietary` — **no LICENSE file in
+  the repo, so no open-source license is invented**) and `/usr/share/doc/femvoice-studio/README.Debian`. Templates:
+  `Packaging/linux/debian-copyright`, `Packaging/linux/README.Debian`.
+
+### D. Files changed (follow-up)
+- **Edit** `Packaging/linux/package-deb.sh` — `dotnet` launcher; control Maintainer/Homepage/Description; install
+  `copyright` + `README.Debian` under `/usr/share/doc/femvoice-studio`.
+- **New** `Packaging/linux/debian-copyright`, `Packaging/linux/README.Debian`.
+- **Edit** `Packaging/linux/femvoice-studio.desktop` — comment accuracy (installed by the `.deb`).
+- **Edit** `Program.cs` — `--packaging-smoke` extended (launcher + metadata + copyright checks; read-only).
+- **Docs** README + `_GATE_RESULTS.md` + this report + tracker.
+
+### E. Verification (follow-up)
+Build 0/0 · 15/15 smokes OK · no vulnerable packages · Tmds 0.21.3 · refs only Core + Audio.Abstractions · leak
+guards clean · portable **1569/1580** (10 known localization-data + 1 known `ComfortZone…` flake; no new failures).
+Practical: publish (linux/macos) OK; `.deb` built clean (root:root) with the new metadata + `copyright` +
+`README.Debian`; **packaged launcher** verified — `dotnet` missing → clear message + exit 127, `dotnet` present →
+`--smoke` OK, **real GUI launch stayed alive 10s** (no exit-131 flash). The old apphost launcher was reproduced
+failing with exit 131. `sudo` was unavailable non-interactively, so the new `.deb` was **not re-installed**;
+re-`apt install` to confirm the installed GUI (the verified launcher script is exactly what lands at
+`/usr/bin/femvoice-studio`).
+
+### F. Deferred
+Self-contained `.deb` (bundling .NET) · macOS `.app`/`.dmg` bundling · signing/notarization · real capture/persistence.

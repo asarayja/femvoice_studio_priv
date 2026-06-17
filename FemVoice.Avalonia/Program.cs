@@ -843,8 +843,64 @@ internal static class Program
         Console.WriteLine($"[pkg] templates: macos/Info.plist={plistOk} linux/.desktop={desktopOk}");
         Console.WriteLine($"[pkg] runtime refs: Core={refCore} Abstractions={refAbstractions} no-other-FemVoice.Audio={noOtherFemVoiceAudio}");
 
+        // --- Packaging helper scripts (publish + .deb) ---
+        string pkgLinux = System.IO.Path.Combine(projectDir, "Packaging", "linux");
+        string pkgMac = System.IO.Path.Combine(projectDir, "Packaging", "macos");
+        string publishLinuxPath = System.IO.Path.Combine(pkgLinux, "publish-linux.sh");
+        string packageDebPath = System.IO.Path.Combine(pkgLinux, "package-deb.sh");
+        string publishMacPath = System.IO.Path.Combine(pkgMac, "publish-macos.sh");
+        string desktopPath = System.IO.Path.Combine(pkgLinux, "femvoice-studio.desktop");
+        bool helpersExist = System.IO.File.Exists(publishLinuxPath) && System.IO.File.Exists(packageDebPath) && System.IO.File.Exists(publishMacPath);
+        string pl = System.IO.File.Exists(publishLinuxPath) ? System.IO.File.ReadAllText(publishLinuxPath) : "";
+        string deb = System.IO.File.Exists(packageDebPath) ? System.IO.File.ReadAllText(packageDebPath) : "";
+        string pm = System.IO.File.Exists(publishMacPath) ? System.IO.File.ReadAllText(publishMacPath) : "";
+        string desktop = System.IO.File.Exists(desktopPath) ? System.IO.File.ReadAllText(desktopPath) : "";
+
+        bool helpersRefProj = pl.Contains("FemVoice.Avalonia.csproj") && pm.Contains("FemVoice.Avalonia.csproj");
+        bool helpersFdd = pl.Contains("--self-contained false") && pm.Contains("--self-contained false");
+        bool helpersArtifacts = pl.Contains("artifacts/publish") && pm.Contains("artifacts/publish");
+        bool debRefsDpkg = deb.Contains("dpkg-deb");
+        bool debOut = deb.Contains("artifacts/packages/deb");
+        bool debOpt = deb.Contains("/opt/femvoice-studio");
+        bool debDesktop = deb.Contains("/usr/share/applications") && deb.Contains("femvoice-studio.desktop");
+        bool debNoSudo = deb.Length > 0 && !deb.Contains("sudo");
+        bool debNoMaintScripts = deb.Length > 0 && !deb.Contains("postinst") && !deb.Contains("preinst")
+                                 && !deb.Contains("prerm") && !deb.Contains("postrm");
+        bool desktopExec = desktop.Contains("Exec=femvoice-studio");
+
+        // --- Launcher robustness: /usr/bin/femvoice-studio runs the DLL via `dotnet`, not the apphost. ---
+        bool debLauncherPath = deb.Contains("/usr/bin/femvoice-studio");
+        bool debLauncherUsesDotnet = deb.Contains("exec dotnet");
+        bool debLauncherTargetsDll = deb.Contains("FemVoice.Avalonia.dll");
+        bool debLauncherChecksDotnet = deb.Contains("command -v dotnet");
+        // No automatic dependency install / no system-state mutation from the helper or launcher.
+        bool debNoInstall = deb.Length > 0 && !deb.Contains("apt-get") && !deb.Contains("apt install")
+                            && !deb.Contains("systemctl") && !deb.Contains("chown root");
+
+        // --- Debian metadata: maintainer/author + machine-readable copyright (no invented OSS license). ---
+        bool debMaintainer = deb.Contains("A hansen <rassyhansen@gmail.com>");
+        bool debCopyrightInstalled = deb.Contains("/usr/share/doc/femvoice-studio/copyright");
+        string copyrightTplPath = System.IO.Path.Combine(pkgLinux, "debian-copyright");
+        bool copyrightTplExists = System.IO.File.Exists(copyrightTplPath);
+        string cc = copyrightTplExists ? System.IO.File.ReadAllText(copyrightTplPath) : "";
+        bool copyrightProprietary = cc.Contains("License: Proprietary");
+        bool copyrightNoInventedOss = cc.Length > 0 && !cc.Contains("MIT License") && !cc.Contains("Apache License")
+                                      && !cc.Contains("GNU General Public") && !cc.Contains("BSD License")
+                                      && !cc.Contains("Mozilla Public License");
+
+        Console.WriteLine($"[pkg] helpers: present={helpersExist} ref-csproj={helpersRefProj} fdd-default={helpersFdd} ->artifacts/publish={helpersArtifacts}");
+        Console.WriteLine($"[pkg] deb: dpkg-deb={debRefsDpkg} out=artifacts/packages/deb={debOut} /opt={debOpt} .desktop={debDesktop} no-sudo={debNoSudo} no-maint-scripts={debNoMaintScripts}");
+        Console.WriteLine($"[pkg] launcher: path={debLauncherPath} uses-dotnet={debLauncherUsesDotnet} targets-dll={debLauncherTargetsDll} checks-dotnet={debLauncherChecksDotnet} no-install={debNoInstall}");
+        Console.WriteLine($"[pkg] metadata: maintainer={debMaintainer} copyright-installed={debCopyrightInstalled} copyright-tpl={copyrightTplExists} proprietary={copyrightProprietary} no-invented-oss={copyrightNoInventedOss}");
+        Console.WriteLine($"[pkg] .desktop Exec=femvoice-studio: {desktopExec}");
+        bool helpersOk = helpersExist && helpersRefProj && helpersFdd && helpersArtifacts
+                         && debRefsDpkg && debOut && debOpt && debDesktop && debNoSudo && debNoMaintScripts && desktopExec
+                         && debLauncherPath && debLauncherUsesDotnet && debLauncherTargetsDll && debLauncherChecksDotnet && debNoInstall
+                         && debMaintainer && debCopyrightInstalled && copyrightTplExists && copyrightProprietary && copyrightNoInventedOss;
+
         bool ok = csprojFound && ridsOk && tmdsPinned && noTrim && refsOk
-                  && plistOk && desktopOk && refCore && refAbstractions && noOtherFemVoiceAudio;
+                  && plistOk && desktopOk && refCore && refAbstractions && noOtherFemVoiceAudio
+                  && helpersOk;
         Console.WriteLine(ok ? "[pkg] Packaging readiness smoke OK" : "[pkg] Packaging readiness smoke FAIL");
         return ok ? 0 : 1;
     }
