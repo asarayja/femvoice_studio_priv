@@ -1,7 +1,10 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="FemVoice.Avalonia.App"
-             RequestedThemeVariant="Default">
+             RequestedThemeVariant="Dark">
+  <!-- Dark-first: the FemVoice Avalonia identity is the dark variant (navy slate + purple accent), matching
+       the Windows/WPF dark reference. RequestedThemeVariant is scoped to the Avalonia head only; it does not
+       change WPF, localization, or any clinical/domain behaviour, and adds no theme persistence. -->
   <Application.Resources>
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>
@@ -12,5 +15,69 @@
   </Application.Resources>
   <Application.Styles>
     <FluentTheme />
+
+    <!-- ── Visual-baseline control styles (display-only; layered on FluentTheme Dark) ──
+         All purely cosmetic: backgrounds/foregrounds/radii. No triggers that change behaviour, no commands. -->
+
+    <!-- Primary action button (large purple Start / primary actions) -->
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="{DynamicResource ShellPrimaryBrush}"/>
+      <Setter Property="Foreground" Value="#FFFFFF"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Padding" Value="16,8"/>
+    </Style>
+    <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource ShellPrimaryHoverBrush}"/>
+      <Setter Property="TextBlock.Foreground" Value="#FFFFFF"/>
+    </Style>
+
+    <!-- Secondary action button (blue) -->
+    <Style Selector="Button.secondary">
+      <Setter Property="Background" Value="{DynamicResource ShellSecondaryBrush}"/>
+      <Setter Property="Foreground" Value="#FFFFFF"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Padding" Value="14,7"/>
+    </Style>
+    <Style Selector="Button.secondary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource ShellPrimaryHoverBrush}"/>
+      <Setter Property="TextBlock.Foreground" Value="#FFFFFF"/>
+    </Style>
+
+    <!-- Left-rail navigation button: flat, full-width, left-aligned -->
+    <Style Selector="Button.nav">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="{DynamicResource ShellBodyTextBrush}"/>
+      <Setter Property="HorizontalAlignment" Value="Stretch"/>
+      <Setter Property="HorizontalContentAlignment" Value="Left"/>
+      <Setter Property="CornerRadius" Value="6"/>
+      <Setter Property="Padding" Value="10,7"/>
+    </Style>
+    <Style Selector="Button.nav:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource ShellCardBackgroundBrush}"/>
+      <Setter Property="TextBlock.Foreground" Value="{DynamicResource ShellAccentBrush}"/>
+    </Style>
+    <!-- Deferred nav items: visibly de-emphasised (still navigable to their deferred placeholder page) -->
+    <Style Selector="Button.nav.deferred">
+      <Setter Property="Foreground" Value="{DynamicResource ShellFaintBrush}"/>
+      <Setter Property="FontStyle" Value="Italic"/>
+    </Style>
+
+    <!-- Reusable elevated card surface -->
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="{DynamicResource ShellCardBackgroundBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource ShellBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="Padding" Value="16"/>
+    </Style>
+
+    <!-- Category / status chip -->
+    <Style Selector="Border.chip">
+      <Setter Property="Background" Value="{DynamicResource ShellChipBackgroundBrush}"/>
+      <Setter Property="CornerRadius" Value="6"/>
+      <Setter Property="Padding" Value="8,2"/>
+    </Style>
   </Application.Styles>
 </Application>

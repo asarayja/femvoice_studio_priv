@@ -1,46 +1,89 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <!--
-    Avalonia-only shell theme foundation (display-only). Named brushes for the desktop shell chrome, with
-    Dark and Light variants selected by the app's ActualThemeVariant. Replaces scattered hardcoded hex in
-    MainWindow.axaml. No clinical/domain colour meaning; no WPF theme-manager dependency; changes no behaviour.
+    Avalonia-only shell theme foundation (display-only). Named brushes for the desktop shell + views, with
+    Dark and Light variants selected by the app's ActualThemeVariant. The app is dark-first
+    (App.axaml RequestedThemeVariant="Dark"); the Dark variant is the FemVoice visual identity (navy slate
+    background, purple primary accent, green success, red danger, blue secondary). The Light variant carries
+    sensible equivalents so every key resolves in both variants. VISUAL ONLY: no clinical/domain colour
+    meaning, no WPF theme-manager dependency, no behaviour change, no persistence.
   -->
   <ResourceDictionary.ThemeDictionaries>
 
-    <!-- Dark variant (current shell appearance, preserved) -->
+    <!-- ───────────────────────── Dark variant (FemVoice identity, dark-first) ───────────────────────── -->
     <ResourceDictionary x:Key="Dark">
-      <SolidColorBrush x:Key="ShellHeaderBackgroundBrush" Color="#1B1B1B"/>
-      <SolidColorBrush x:Key="ShellStatusBackgroundBrush" Color="#151515"/>
-      <SolidColorBrush x:Key="ShellPanelBackgroundBrush" Color="#181818"/>
-      <SolidColorBrush x:Key="ShellBorderBrush" Color="#333333"/>
-      <SolidColorBrush x:Key="ShellAccentBrush" Color="#99BBFF"/>
-      <SolidColorBrush x:Key="ShellHeadingBrush" Color="#999999"/>
-      <SolidColorBrush x:Key="ShellMutedBrush" Color="#888888"/>
-      <SolidColorBrush x:Key="ShellFaintBrush" Color="#666666"/>
-      <SolidColorBrush x:Key="ShellSubtleTextBrush" Color="#AAAAAA"/>
-      <SolidColorBrush x:Key="ShellBodyTextBrush" Color="#BBBBBB"/>
-      <SolidColorBrush x:Key="ShellOkBrush" Color="#77BB55"/>
-      <SolidColorBrush x:Key="ShellOkBorderBrush" Color="#33AA33"/>
-      <SolidColorBrush x:Key="ShellDeferredTitleBrush" Color="#DD99BB"/>
-      <SolidColorBrush x:Key="ShellDeferredBorderBrush" Color="#AA66AA"/>
+      <!-- Surfaces -->
+      <SolidColorBrush x:Key="ShellWindowBackgroundBrush" Color="#0E1422"/>
+      <SolidColorBrush x:Key="ShellHeaderBackgroundBrush" Color="#0B0F1A"/>
+      <SolidColorBrush x:Key="ShellStatusBackgroundBrush" Color="#0B0F1A"/>
+      <SolidColorBrush x:Key="ShellPanelBackgroundBrush" Color="#141B2D"/>
+      <SolidColorBrush x:Key="ShellCardBackgroundBrush" Color="#1A2336"/>
+      <SolidColorBrush x:Key="ShellBorderBrush" Color="#2A3650"/>
+      <!-- Text -->
+      <SolidColorBrush x:Key="ShellHeadingBrush" Color="#E8ECF4"/>
+      <SolidColorBrush x:Key="ShellBodyTextBrush" Color="#C7CEDB"/>
+      <SolidColorBrush x:Key="ShellSubtleTextBrush" Color="#AEB6C6"/>
+      <SolidColorBrush x:Key="ShellMutedBrush" Color="#8A93A6"/>
+      <SolidColorBrush x:Key="ShellFaintBrush" Color="#6B7488"/>
+      <!-- Accent + semantic palette -->
+      <SolidColorBrush x:Key="ShellAccentBrush" Color="#B794F6"/>
+      <SolidColorBrush x:Key="ShellPrimaryBrush" Color="#7C5CFF"/>
+      <SolidColorBrush x:Key="ShellPrimaryHoverBrush" Color="#6A4AE6"/>
+      <SolidColorBrush x:Key="ShellSecondaryBrush" Color="#4F8DF7"/>
+      <SolidColorBrush x:Key="ShellSuccessBrush" Color="#48BB78"/>
+      <SolidColorBrush x:Key="ShellWarningBrush" Color="#ED8936"/>
+      <SolidColorBrush x:Key="ShellDangerBrush" Color="#F56565"/>
+      <!-- Success accents (kept names for existing references) -->
+      <SolidColorBrush x:Key="ShellOkBrush" Color="#5FD08A"/>
+      <SolidColorBrush x:Key="ShellOkBorderBrush" Color="#2F855A"/>
+      <!-- Deferred / placeholder accents -->
+      <SolidColorBrush x:Key="ShellDeferredTitleBrush" Color="#D6A8E8"/>
+      <SolidColorBrush x:Key="ShellDeferredBorderBrush" Color="#6B4A8A"/>
+      <!-- Chart / chip surfaces -->
+      <SolidColorBrush x:Key="ShellChartBackgroundBrush" Color="#0C1019"/>
+      <SolidColorBrush x:Key="ShellChartTraceBrush" Color="#4FC3F7"/>
+      <SolidColorBrush x:Key="ShellTargetBandBrush" Color="#5543C25A"/>
+      <SolidColorBrush x:Key="ShellMarkerBrush" Color="#FFD54F"/>
+      <SolidColorBrush x:Key="ShellChipBackgroundBrush" Color="#2B3A55"/>
+      <SolidColorBrush x:Key="ShellChipTextBrush" Color="#CFE2FF"/>
     </ResourceDictionary>
 
-    <!-- Light variant (prepared for system light theme; sensible equivalents) -->
+    <!-- ───────────────────────── Light variant (sensible equivalents) ───────────────────────── -->
     <ResourceDictionary x:Key="Light">
-      <SolidColorBrush x:Key="ShellHeaderBackgroundBrush" Color="#ECECEC"/>
-      <SolidColorBrush x:Key="ShellStatusBackgroundBrush" Color="#F3F3F3"/>
-      <SolidColorBrush x:Key="ShellPanelBackgroundBrush" Color="#F7F7F7"/>
-      <SolidColorBrush x:Key="ShellBorderBrush" Color="#CCCCCC"/>
-      <SolidColorBrush x:Key="ShellAccentBrush" Color="#2255AA"/>
-      <SolidColorBrush x:Key="ShellHeadingBrush" Color="#555555"/>
-      <SolidColorBrush x:Key="ShellMutedBrush" Color="#5A5A5A"/>
+      <!-- Surfaces -->
+      <SolidColorBrush x:Key="ShellWindowBackgroundBrush" Color="#F4F6FB"/>
+      <SolidColorBrush x:Key="ShellHeaderBackgroundBrush" Color="#ECEFF6"/>
+      <SolidColorBrush x:Key="ShellStatusBackgroundBrush" Color="#ECEFF6"/>
+      <SolidColorBrush x:Key="ShellPanelBackgroundBrush" Color="#F0F2F8"/>
+      <SolidColorBrush x:Key="ShellCardBackgroundBrush" Color="#FFFFFF"/>
+      <SolidColorBrush x:Key="ShellBorderBrush" Color="#D2D8E4"/>
+      <!-- Text -->
+      <SolidColorBrush x:Key="ShellHeadingBrush" Color="#1A2238"/>
+      <SolidColorBrush x:Key="ShellBodyTextBrush" Color="#2A3550"/>
+      <SolidColorBrush x:Key="ShellSubtleTextBrush" Color="#3C4866"/>
+      <SolidColorBrush x:Key="ShellMutedBrush" Color="#5A6480"/>
       <SolidColorBrush x:Key="ShellFaintBrush" Color="#8A8A8A"/>
-      <SolidColorBrush x:Key="ShellSubtleTextBrush" Color="#444444"/>
-      <SolidColorBrush x:Key="ShellBodyTextBrush" Color="#333333"/>
+      <!-- Accent + semantic palette -->
+      <SolidColorBrush x:Key="ShellAccentBrush" Color="#6C3FD6"/>
+      <SolidColorBrush x:Key="ShellPrimaryBrush" Color="#6A4AE6"/>
+      <SolidColorBrush x:Key="ShellPrimaryHoverBrush" Color="#573BC4"/>
+      <SolidColorBrush x:Key="ShellSecondaryBrush" Color="#2563C9"/>
+      <SolidColorBrush x:Key="ShellSuccessBrush" Color="#2E9E5B"/>
+      <SolidColorBrush x:Key="ShellWarningBrush" Color="#C9701B"/>
+      <SolidColorBrush x:Key="ShellDangerBrush" Color="#D63B3B"/>
+      <!-- Success accents -->
       <SolidColorBrush x:Key="ShellOkBrush" Color="#2E7D32"/>
       <SolidColorBrush x:Key="ShellOkBorderBrush" Color="#2E7D32"/>
+      <!-- Deferred / placeholder accents -->
       <SolidColorBrush x:Key="ShellDeferredTitleBrush" Color="#8E24AA"/>
       <SolidColorBrush x:Key="ShellDeferredBorderBrush" Color="#BA68C8"/>
+      <!-- Chart / chip surfaces -->
+      <SolidColorBrush x:Key="ShellChartBackgroundBrush" Color="#E7ECF5"/>
+      <SolidColorBrush x:Key="ShellChartTraceBrush" Color="#1E88E5"/>
+      <SolidColorBrush x:Key="ShellTargetBandBrush" Color="#553BA55A"/>
+      <SolidColorBrush x:Key="ShellMarkerBrush" Color="#E0A100"/>
+      <SolidColorBrush x:Key="ShellChipBackgroundBrush" Color="#DBE6FA"/>
+      <SolidColorBrush x:Key="ShellChipTextBrush" Color="#234A86"/>
     </ResourceDictionary>
 
   </ResourceDictionary.ThemeDictionaries>
