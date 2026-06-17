@@ -43,14 +43,16 @@ public sealed class ProgressionScaffoldViewModel
 
     // FemVoice-score tile (WPF: FemVoiceScore) — placeholder, no real score.
     public string ScoreValue => "—";
-    public string ScoreLabel => Localized.Get("Dashboard_Score", "FemVoice-score");
+    // Scaffold key: the Core Dashboard_Score resolves to the English "Score".
+    public string ScoreLabel => Localized.Get("Progression_Scaffold_ScoreLabel", "FemVoice-score");
     public string SyntheticNote => Localized.Get("Scaffold_Synthetic", "Syntetisk · ingen lagring");
 
     // Parameter rows (WPF: Resonance / Pitch / Intonation progress bars) — synthetic "—" values.
     public IReadOnlyList<ScaffoldMetricRow> Parameters { get; } = new List<ScaffoldMetricRow>
     {
         new(Localized.Get("Dashboard_Resonance", "Resonans"), "—"),
-        new(Localized.Get("Dashboard_Pitch", "Tonehøyde"), "—"),
+        // Scaffold key: the Core Dashboard_Pitch resolves to the English "Pitch"; use "Tonehøyde" for consistency.
+        new(Localized.Get("Progression_Scaffold_ParamPitch", "Tonehøyde"), "—"),
         new(Localized.Get("Dashboard_Intonation", "Intonasjon"), "—"),
     };
 
