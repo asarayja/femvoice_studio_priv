@@ -1328,6 +1328,19 @@ internal static class Program
         bool noChartingLib = !refs.Any(n => n!.Contains("Plot") || n!.Contains("Chart"));
         Console.WriteLine($"[ex-flow] nonPitchOk={nonPitchOk} pitchOk={pitchOk} dashboard-chart={dashChart} no-charting-lib={noChartingLib}");
 
+        // (5) Exercise Guide LIST parity (WPF): per-row session count + today's-progress summary are present;
+        //     target-pitch (Hz) is NOT in the list; the list leads with goal/focus, not pitch.
+        var card0 = guide?.Exercises.FirstOrDefault();
+        bool listFieldsOk = card0 is not null
+            && !string.IsNullOrWhiteSpace(card0.SessionCountText)   // per-exercise completed-session count (display-only)
+            && !string.IsNullOrWhiteSpace(card0.FrequencyText)
+            && !string.IsNullOrWhiteSpace(card0.GoalText)
+            // Frequency must be the formatted WPF text, not the raw enum name (e.g. no "...GangerUkentlig").
+            && (guide?.Exercises.All(c => !c.FrequencyText.Contains("Ganger")) ?? false);
+        bool progressOk = guide is not null
+            && !string.IsNullOrWhiteSpace(guide.TodaysProgressText) && !string.IsNullOrWhiteSpace(guide.ProgressNote);
+        Console.WriteLine($"[ex-flow] list: sessionCount='{card0?.SessionCountText}' freq='{card0?.FrequencyText}' goal='{card0?.GoalText}' todaysProgress='{guide?.TodaysProgressText}' listFields={listFieldsOk} progress={progressOk}");
+
         // Source-only: exercise page has no pitch chart; dashboard keeps its chart; no separate detail view exists.
         bool srcChecked = false, srcOk = true;
         try
@@ -1345,13 +1358,36 @@ internal static class Program
                 { srcOk = false; Console.WriteLine("[ex-flow] dashboard lost its chart"); }
                 if (System.IO.File.Exists(System.IO.Path.Combine(viewsDir, "ExerciseDetailView.axaml")))
                 { srcOk = false; Console.WriteLine("[ex-flow] a separate ExerciseDetailView still exists (double-start risk)"); }
+                // Guide LIST parity: no target-pitch (Hz) in the list; progress/session-count display present.
+                string gp = System.IO.Path.Combine(viewsDir, "ExerciseGuideView.axaml");
+                if (System.IO.File.Exists(gp))
+                {
+                    string gx = System.IO.File.ReadAllText(gp);
+                    if (gx.Contains("TargetPitchText") || gx.Contains("Mål-pitch"))
+                    { srcOk = false; Console.WriteLine("[ex-flow] guide list still shows target pitch (Hz)"); }
+                    if (!(gx.Contains("SessionCountText") && gx.Contains("TodaysProgressText")))
+                    { srcOk = false; Console.WriteLine("[ex-flow] guide list missing progress/session-count display"); }
+                }
+                // No persistence/analytics dependency introduced in the guide list VMs.
+                string vmDir = System.IO.Path.Combine(System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..")), "ViewModels");
+                foreach (var vmf in new[] { "ExerciseGuideViewModel.cs", "ExerciseCardViewModel.cs" })
+                {
+                    string p = System.IO.Path.Combine(vmDir, vmf);
+                    if (System.IO.File.Exists(p))
+                    {
+                        string t = System.IO.File.ReadAllText(p);
+                        // Detect persistence/analytics deps via substrings (avoids embedding the forbidden token literals).
+                        if (t.Contains("AnalyticsStore") || t.Contains("DatabaseService") || t.Contains("SessionRecorder"))
+                        { srcOk = false; Console.WriteLine($"[ex-flow] {vmf} introduces a persistence/analytics dependency"); }
+                    }
+                }
             }
         }
         catch (Exception ex) { Console.WriteLine($"[ex-flow] source check skipped: {ex.GetType().Name}"); }
         Console.WriteLine($"[ex-flow] source check: {(srcChecked ? (srcOk ? "OK (source tree)" : "FAILED") : "skipped (published output / no source)")}");
 
         bool allOk = opensExercisePage && noSeparateStartPage && startSamePage && stopSamePage
-                     && nonPitchOk && pitchOk && dashChart && noChartingLib && srcOk;
+                     && nonPitchOk && pitchOk && listFieldsOk && progressOk && dashChart && noChartingLib && srcOk;
         Console.WriteLine(allOk ? "[ex-flow] Exercise flow parity smoke OK" : "[ex-flow] Exercise flow parity smoke FAIL");
         return allOk ? 0 : 1;
     }
