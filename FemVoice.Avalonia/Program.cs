@@ -1476,14 +1476,17 @@ internal static class Program
 
         string dmgScript = System.IO.Path.Combine(mac, "package-dmg.sh");
         string readme = System.IO.Path.Combine(mac, "README.md");
+        string notarizeDoc = System.IO.Path.Combine(mac, "NOTARIZATION.md");
         string app = System.IO.File.ReadAllText(appScript);
         string dmg = System.IO.File.Exists(dmgScript) ? System.IO.File.ReadAllText(dmgScript) : "";
 
-        bool docsExist = System.IO.File.Exists(readme) && System.IO.File.Exists(System.IO.Path.Combine(mac, "NOTARIZATION.md"));
+        bool docsExist = System.IO.File.Exists(readme) && System.IO.File.Exists(notarizeDoc);
         bool scriptsExist = System.IO.File.Exists(appScript) && System.IO.File.Exists(dmgScript);
         bool appFlags = app.Contains("--check") && app.Contains("--dry-run") && app.Contains("--help");
         bool dmgFlags = dmg.Contains("--check") && dmg.Contains("--dry-run") && dmg.Contains("--help");
-        bool dmgHandlesHdiutil = dmg.Contains("hdiutil");   // builds with it / skips gracefully without it
+        // Verify the documented graceful-skip CONTRACT, not just that the word "hdiutil" appears: build mode must
+        // guard on `command -v hdiutil` and skip (off macOS) rather than calling `hdiutil create` unconditionally.
+        bool dmgHandlesHdiutil = dmg.Contains("command -v hdiutil") && dmg.Contains("skipping");
         bool appUsesPlist = app.Contains("Info.plist");
         // No real signing: neither script contains a codesign/notarytool INVOCATION (flag-bearing); the "no
         // codesign" comments are non-invocations.
@@ -1492,8 +1495,9 @@ internal static class Program
         // Unsigned + future-signing flows intact.
         bool unsignedFlowsIntact = System.IO.File.Exists(System.IO.Path.Combine(mac, "publish-macos.sh"))
                                 && System.IO.File.Exists(System.IO.Path.Combine(mac, "notarization-readiness.sh"));
-        // No key material committed in the new readiness files.
-        var files = new[] { appScript, dmgScript, readme };
+        // No key material committed in the new readiness files — incl. NOTARIZATION.md, the doc that discusses
+        // Apple credentials and is the most likely to accidentally receive a pasted key block.
+        var files = new[] { appScript, dmgScript, readme, notarizeDoc };
         bool noSecrets = files.All(f => System.IO.File.Exists(f) && !System.IO.File.ReadAllText(f).Contains("-----BEGIN"));
 
         Console.WriteLine($"[macos-pkg] docs(README+NOTARIZATION)={docsExist} scripts(app+dmg)={scriptsExist} app-flags={appFlags} dmg-flags={dmgFlags} dmg-hdiutil={dmgHandlesHdiutil} app-uses-plist={appUsesPlist}");

@@ -13,6 +13,16 @@ Date: 2026-06-17 · Branch: `macos-app-dmg-packaging-readiness-slice` (off `main
 - `--macos-packaging-readiness-smoke` (source): `docs=True scripts(app+dmg)=True app-flags=True dmg-flags=True dmg-hdiutil=True app-uses-plist=True no-real-signing=True unsigned+notarization-flows-intact=True no-secrets-committed=True`.
 - From the published DLL: cleanly **skips** ("no source tree") and returns 0 (same source-tree-inspection nature as `--packaging-smoke`/`--signing-readiness-smoke`).
 
+## Adversarial security review (multi-agent) + post-review hardening
+A 4-dimension adversarial review (script-safety / secret-safety / boundaries / smoke-doc) raised 3 findings; 2 were
+confirmed (both in-readiness-scope smoke-correctness), fixed on this branch, 0 remain:
+1. **(medium)** `--macos-packaging-readiness-smoke` no-secrets scan omitted `NOTARIZATION.md` — the credential-discussing
+   doc most likely to receive a pasted key (the sibling `--signing-readiness-smoke` already scans it). **Fixed**:
+   `NOTARIZATION.md` added to the `-----BEGIN` scan array.
+2. **(low)** `dmgHandlesHdiutil` asserted only that the word "hdiutil" appeared, not that the graceful-skip guard
+   exists. **Fixed**: now verifies the build-mode guard tokens (`command -v hdiutil` + `skipping`), so deleting the
+   off-macOS skip guard would fail the smoke. After fixes: build 0/0, 22/22 smokes, leak guard clean.
+
 ## New scripts (verified directly; POSIX `sh`, dash-clean)
 `package-app.sh` and `package-dmg.sh`: `--help`/`--check`/`--dry-run` all **exit 0**; unknown option → **exit 2**.
 - `package-app.sh osx-x64` (actual build, on Linux): published + assembled an **unsigned** `FemVoice Studio.app`

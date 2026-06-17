@@ -38,10 +38,13 @@ destructive operations, require no secrets, and print no credential values.
 ## Smoke coverage
 **New `--macos-packaging-readiness-smoke`** (22nd, read-only): verifies the macOS README + NOTARIZATION docs exist;
 `package-app.sh`/`package-dmg.sh` exist and expose `--check`/`--dry-run`/`--help`; `package-app.sh` uses
-`Info.plist`; `package-dmg.sh` handles `hdiutil`; neither contains a `codesign`/`notarytool` invocation (no real
-signing); the unsigned `publish-macos.sh` + `notarization-readiness.sh` flows are intact; and no key material is
-committed. Inspects the source tree (like `--packaging-smoke`); from the **published DLL** it cleanly **skips and
-returns 0** (the `Packaging/` scripts/docs are not shipped).
+`Info.plist`; `package-dmg.sh` carries the off-macOS graceful-skip guard (`command -v hdiutil` + `skipping`, not
+merely the word "hdiutil"); neither contains a `codesign`/`notarytool` invocation (no real signing); the unsigned
+`publish-macos.sh` + `notarization-readiness.sh` flows are intact; and no key material (`-----BEGIN`) is committed
+in any of the new scripts/docs **including `NOTARIZATION.md`** (the credential-discussing doc). Inspects the source
+tree (like `--packaging-smoke`); from the **published DLL** it cleanly **skips and returns 0** (the `Packaging/`
+scripts/docs are not shipped). The two strengthened checks (NOTARIZATION.md secret scan; hdiutil guard) were added
+in response to the adversarial review — see the gate results.
 
 ## Guardrails (verified)
 `Tmds.DBus.Protocol` 0.21.3; `FemVoice.Avalonia` references only `FemVoice.Core` + `FemVoice.Audio.Abstractions`;
