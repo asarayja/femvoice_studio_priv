@@ -11,7 +11,7 @@ Date: 2026-06-17 · Branch: `avalonia-stage1-ui-preference-persistence-slice` (o
 ## Smokes (31 — all OK, all exit 0)
 `--smoke` … `--settings-persistence-readiness-smoke` (30 prior; readiness smoke updated to the post-Stage-1
 guardrail) + **`--settings-preferences-persistence-smoke` (new, 31st)** → **31/31 OK.**
-- `--settings-preferences-persistence-smoke`: `defaults=True saved=True reload=True corruptFallback=True normalizeLang=True pathLocal=True`.
+- `--settings-preferences-persistence-smoke`: `defaults=True saved=True reload=True corruptFallback=True normalizeLang=True pathLocal=True saveFailureGraceful=True` (the last added in controlled review — fail-safe Save).
 - `--settings-persistence-readiness-smoke` (updated): `notDisposable=True sectionsInert=True scanned=True noWpfHooks=True noRuntimeActivation=True`.
 - `--settings-smoke` / `--settings-visual-parity-smoke` (inert sections + VM shape) remain green; `--avalonia-localization-coverage-smoke` green (7 new `Settings_LocalPrefs_*` keys registered in the backlog).
 

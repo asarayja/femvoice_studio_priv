@@ -44,6 +44,7 @@ public static class ScaffoldStrings
         "Settings_LocalPrefs_Reload",
         "Settings_LocalPrefs_ReduceMotion",
         "Settings_LocalPrefs_Saved",
+        "Settings_LocalPrefs_SaveFailed",
         "Settings_LocalPrefs_Reloaded",
         "Analysis_Formant",
         "Analysis_FormantDesc",

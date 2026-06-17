@@ -56,12 +56,15 @@ public partial class UiPreferencesViewModel : ObservableObject
     /// <summary>Current edited values as a model (no I/O).</summary>
     public UiPreferences Current() => new() { Theme = Theme, Language = Language, ReduceMotion = ReduceMotion };
 
-    // Persist ONLY — does not apply theme/language at runtime.
+    // Persist ONLY — does not apply theme/language at runtime. Fail-safe: a failed write surfaces a status
+    // message instead of throwing (the store never throws).
     [RelayCommand]
     private void Save()
     {
-        _store.Save(Current());
-        Status = Localized.Get("Settings_LocalPrefs_Saved", "Lagret (kun lagring — ingen kjøretidsendring).");
+        bool ok = _store.Save(Current());
+        Status = ok
+            ? Localized.Get("Settings_LocalPrefs_Saved", "Lagret (kun lagring — ingen kjøretidsendring).")
+            : Localized.Get("Settings_LocalPrefs_SaveFailed", "Kunne ikke lagre innstillingene lokalt.");
     }
 
     // Reload from disk (discards unsaved edits).

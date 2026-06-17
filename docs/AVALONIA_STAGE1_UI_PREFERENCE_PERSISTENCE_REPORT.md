@@ -14,7 +14,9 @@ Date: 2026-06-17 · Branch: `avalonia-stage1-ui-preference-persistence-slice` (o
 - **`Preferences/UiPreferencesStore.cs`** — Avalonia-owned, file-backed (`System.Text.Json`). Default path
   `<ApplicationData>/FemVoiceAvalonia/ui-preferences.json` — **distinct from any WPF settings file / the SQLite DB**.
   `Load()` returns safe defaults on missing/empty/invalid/**corrupt** file (catches all, never throws → no startup
-  crash). `Save()` writes the normalized prefs; creates the folder if needed. Accepts an explicit path (tests).
+  crash). `Save()` is **fail-safe too** (controlled-review hardening): it wraps `CreateDirectory`/`WriteAllText` in
+  try-catch and returns `bool` (false on I/O failure — permission/disk-full/locked/parent-is-a-file) instead of
+  throwing, so the UI cannot crash on Save. Creates the folder if needed. Accepts an explicit path (tests).
 - **`ViewModels/UiPreferencesViewModel.cs`** — interactive editor for the 3 prefs + `SaveCommand`/`ReloadCommand`;
   loads current values on construct. Theme options (enum) + language options (reuse Avalonia-owned
   `ScaffoldStrings.Cultures`, **no WPF LocalizationService**). **No runtime activation** — Save/Reload only
@@ -36,7 +38,16 @@ keeps a parameterless ctor, no command properties, and is not IDisposable; the S
 ## Smoke coverage
 - **New `--settings-preferences-persistence-smoke`** (31st): round-trips the store via a TEMP path — defaults when
   no file, save writes the file, reload is exact, **corrupt file → safe defaults (no throw)**, unknown language
-  normalises to default, and the default path is Avalonia-local (`FemVoiceAvalonia/ui-preferences.json`, not a DB/WPF file).
+  normalises to default, the default path is Avalonia-local (`FemVoiceAvalonia/ui-preferences.json`, not a DB/WPF
+  file), and a **Save to an un-creatable path (parent is a file) returns false without throwing** (the fail-safe Save).
+
+## Controlled multi-agent review outcome
+A read-only 3-agent review (UI, persistence/store, guardrails) ran before integration: UI **pass/0**, guardrails
+**pass/0**, **0 blockers**. The store agent raised one **major** (Save lacked I/O try-catch — asymmetric with the
+fail-safe Load) and one **minor** (no Save-failure test). The Integrator applied the minimal in-scope fix (fail-safe
+`Save` → `bool` + a "Kunne ikke lagre" status in the VM) and added the save-failure smoke case; the broader
+edge-case matrix (concurrent/locked file) is documented as acceptable for an app-data preference file and otherwise
+deferred. No recommendation required forbidden references or runtime activation; none were rejected on those grounds.
 - **Updated `--settings-persistence-readiness-smoke`** (post-Stage-1 guardrail): behaviour-heavy sections still
   inert; `SettingsViewModel` not IDisposable; the Settings VM/view **and** the 3 preference files reference NO
   WPF/DB/clinical hooks (DB user-settings, `ThemeManager`, `SetLanguage`, backup, mic calibration) and perform **no

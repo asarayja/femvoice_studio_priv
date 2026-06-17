@@ -2039,8 +2039,17 @@ internal static class Program
             bool pathLocal = defPath.Contains("FemVoiceAvalonia") && defPath.EndsWith("ui-preferences.json")
                 && !defPath.Contains(".db") && !defPath.Contains("Strings");
 
-            Console.WriteLine($"[prefs] defaults={defaultsOk} saved={saved} reload={reloadOk} corruptFallback={corruptOk} normalizeLang={normOk} pathLocal={pathLocal}");
-            bool ok = defaultsOk && saved && reloadOk && corruptOk && normOk && pathLocal;
+            // 7) Save to an un-creatable path (parent is a FILE) → fail-safe: returns false, no throw, UI safe.
+            string blockerFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+                "femvoice-avalonia-prefs-smoke", System.Guid.NewGuid().ToString("N") + ".blocker");
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(blockerFile)!);
+            System.IO.File.WriteAllText(blockerFile, "x");
+            var badStore = new global::FemVoice.Avalonia.Preferences.UiPreferencesStore(
+                System.IO.Path.Combine(blockerFile, "ui-preferences.json"));   // parent is a file → CreateDirectory fails
+            bool saveFailureGraceful = badStore.Save(new global::FemVoice.Avalonia.Preferences.UiPreferences()) == false;
+
+            Console.WriteLine($"[prefs] defaults={defaultsOk} saved={saved} reload={reloadOk} corruptFallback={corruptOk} normalizeLang={normOk} pathLocal={pathLocal} saveFailureGraceful={saveFailureGraceful}");
+            bool ok = defaultsOk && saved && reloadOk && corruptOk && normOk && pathLocal && saveFailureGraceful;
             Console.WriteLine(ok ? "[prefs] Settings preferences persistence smoke OK" : "[prefs] Settings preferences persistence smoke FAIL");
             return ok ? 0 : 1;
         }

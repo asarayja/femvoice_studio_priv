@@ -51,11 +51,23 @@ public sealed class UiPreferencesStore
         }
     }
 
-    /// <summary>Persist the (normalized) preferences to the Avalonia-local file. Creates the folder if needed.</summary>
-    public void Save(UiPreferences preferences)
+    /// <summary>Persist the (normalized) preferences to the Avalonia-local file. Creates the folder if needed.
+    /// Fail-safe (symmetric with <see cref="Load"/>): an I/O error (permission denied, disk full, locked file,
+    /// invalid path / parent-is-a-file) is swallowed and reported as <c>false</c> rather than thrown, so the UI
+    /// cannot crash on Save. Returns <c>true</c> when the file was written.</summary>
+    public bool Save(UiPreferences preferences)
     {
-        var dir = Path.GetDirectoryName(FilePath);
-        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-        File.WriteAllText(FilePath, JsonSerializer.Serialize(preferences.Normalized(), JsonOptions));
+        try
+        {
+            var dir = Path.GetDirectoryName(FilePath);
+            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+            File.WriteAllText(FilePath, JsonSerializer.Serialize(preferences.Normalized(), JsonOptions));
+            return true;
+        }
+        catch (Exception)
+        {
+            // App-data preference file: a failed write is non-fatal and must never crash the UI.
+            return false;
+        }
     }
 }
