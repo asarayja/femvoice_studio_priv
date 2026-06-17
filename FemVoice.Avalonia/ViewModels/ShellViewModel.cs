@@ -41,6 +41,8 @@ public partial class ShellViewModel : ObservableObject
     private readonly AnalysisViewModel _analysis;
     private readonly ReportsViewModel _reports;
     private readonly DiagnosticsViewModel _diagnostics;
+    private readonly ProgressionScaffoldViewModel _progression;
+    private readonly SmartCoachScaffoldViewModel _smartCoach;
     private readonly IUiDispatcher _ui;
 
     public ShellViewModel(MainDashboardViewModel dashboard, VoiceFeminizationExerciseService exercises, IUiDispatcher ui)
@@ -52,6 +54,8 @@ public partial class ShellViewModel : ObservableObject
         _analysis = new AnalysisViewModel();        // inert, display-only; retained singleton, not IDisposable
         _reports = new ReportsViewModel();          // inert, display-only; retained singleton, not IDisposable
         _diagnostics = new DiagnosticsViewModel();  // inert, display-only; retained singleton, not IDisposable
+        _progression = new ProgressionScaffoldViewModel();  // deferred, display-only scaffold; no services, not IDisposable
+        _smartCoach = new SmartCoachScaffoldViewModel();    // deferred, display-only scaffold; no services, not IDisposable
         _currentPage = dashboard;
 
         // Navigation surface: the two implemented top-level destinations, then deferred placeholders for
@@ -66,8 +70,10 @@ public partial class ShellViewModel : ObservableObject
             new(Localized.Get("Shell_Nav_Analysis", "Analyse"), true, ShowAnalysisCommand),
             new(Localized.Get("Shell_Nav_Reports", "Rapporter"), true, ShowReportsCommand),
             new(Localized.Get("Shell_Nav_Diagnostics", "Diagnostikk"), true, ShowDiagnosticsCommand),
-            new(DeferredLabel("Progresjon"), false, new RelayCommand(() => ShowDeferred("Progresjon"))),
-            new(DeferredLabel("SmartCoach"), false, new RelayCommand(() => ShowDeferred("SmartCoach"))),
+            // Progresjon/SmartCoach remain DEFERRED (not functional) but now open richer display-only scaffold
+            // pages (no services, no engines, no side effects) instead of the bare generic placeholder.
+            new(DeferredLabel("Progresjon"), false, ShowProgressionCommand),
+            new(DeferredLabel("SmartCoach"), false, ShowSmartCoachCommand),
             new(DeferredLabel("Mikrofonkalibrering"), false, new RelayCommand(() => ShowDeferred("Mikrofonkalibrering"))),
         };
     }
@@ -100,6 +106,7 @@ public partial class ShellViewModel : ObservableObject
         if (!ReferenceEquals(oldValue, _dashboard) && !ReferenceEquals(oldValue, _guide)
             && !ReferenceEquals(oldValue, _settings) && !ReferenceEquals(oldValue, _analysis)
             && !ReferenceEquals(oldValue, _reports) && !ReferenceEquals(oldValue, _diagnostics)
+            && !ReferenceEquals(oldValue, _progression) && !ReferenceEquals(oldValue, _smartCoach)
             && oldValue is System.IDisposable disposable)
             disposable.Dispose();
     }
@@ -115,6 +122,8 @@ public partial class ShellViewModel : ObservableObject
             AnalysisViewModel => Localized.Get("Shell_Nav_Analysis", "Analyse"),
             ReportsViewModel => Localized.Get("Shell_Nav_Reports", "Rapporter"),
             DiagnosticsViewModel => Localized.Get("Shell_Nav_Diagnostics", "Diagnostikk"),
+            ProgressionScaffoldViewModel => $"{Localized.Get("Shell_Nav_Progresjon", "Progresjon")} (utsatt)",
+            SmartCoachScaffoldViewModel => $"{Localized.Get("SmartCoach_Title", "SmartCoach")} (utsatt)",
             DeferredSurfaceViewModel d => $"{d.SurfaceName} (utsatt)",
             _ => "—",
         };
@@ -126,6 +135,8 @@ public partial class ShellViewModel : ObservableObject
     [RelayCommand] private void ShowAnalysis() => CurrentPage = _analysis;          // inert display-only page
     [RelayCommand] private void ShowReports() => CurrentPage = _reports;            // inert display-only page
     [RelayCommand] private void ShowDiagnostics() => CurrentPage = _diagnostics;    // inert display-only page
+    [RelayCommand] private void ShowProgression() => CurrentPage = _progression;    // deferred display-only scaffold
+    [RelayCommand] private void ShowSmartCoach() => CurrentPage = _smartCoach;      // deferred display-only scaffold
 
     // Deferred destinations open a purely static placeholder — no services, no side effects.
     private void ShowDeferred(string surface) => CurrentPage = new DeferredSurfaceViewModel(surface);

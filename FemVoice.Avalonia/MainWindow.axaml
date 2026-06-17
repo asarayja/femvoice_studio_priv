@@ -72,6 +72,9 @@
           <DataTemplate DataType="vm:AnalysisViewModel"><views:AnalysisView/></DataTemplate>
           <DataTemplate DataType="vm:ReportsViewModel"><views:ReportsView/></DataTemplate>
           <DataTemplate DataType="vm:DiagnosticsViewModel"><views:DiagnosticsView/></DataTemplate>
+          <!-- Deferred, display-only scaffolds (no services, no engines, no side effects) -->
+          <DataTemplate DataType="vm:ProgressionScaffoldViewModel"><views:ProgressionScaffoldView/></DataTemplate>
+          <DataTemplate DataType="vm:SmartCoachScaffoldViewModel"><views:SmartCoachScaffoldView/></DataTemplate>
           <!-- Static deferred placeholder (no services, no side effects) -->
           <DataTemplate DataType="vm:DeferredSurfaceViewModel">
             <ScrollViewer>
