@@ -15,7 +15,9 @@ public sealed class SmartCoachScaffoldViewModel
 {
     public string SurfaceName => "SmartCoach";
 
-    public string Title => Localized.Get("SmartCoach_Title", "SmartCoach");
+    // Use the product name "SmartCoach" (one word) consistently — the Core key resolves to "Smart Coach" (two
+    // words), which is inconsistent with the nav label; a scaffold key keeps it deterministic.
+    public string Title => Localized.Get("SmartCoach_Scaffold_Title", "SmartCoach");
     public string DeferredBadge => Localized.Get("Scaffold_DeferredBadge", "Utsatt · kun visning");
     public string Intro => Localized.Get("SmartCoach_Scaffold_Intro",
         "SmartCoach er ikke aktiv i denne visningen. Layouten under viser den planlagte strukturen med "
@@ -29,9 +31,11 @@ public sealed class SmartCoachScaffoldViewModel
 
     // Stat tiles (WPF: CurrentStreak / SessionsThisWeek / HealthScore) — placeholder "—", no real numbers.
     public string Placeholder => "—";
+    // Scaffold keys keep the three tile labels consistent (the Core SmartCoach_Sessions/_Health keys resolve to
+    // the terse lowercase "økter"/"helse", which clashes with "Dager på rad").
     public string StreakLabel => Localized.Get("SmartCoach_Scaffold_StreakLabel", "Dager på rad");
-    public string SessionsLabel => Localized.Get("SmartCoach_Sessions", "Økter denne uken");
-    public string HealthLabel => Localized.Get("SmartCoach_Health", "Helsescore");
+    public string SessionsLabel => Localized.Get("SmartCoach_Scaffold_SessionsLabel", "Økter denne uken");
+    public string HealthLabel => Localized.Get("SmartCoach_Scaffold_HealthLabel", "Helsescore");
     public string SyntheticNote => Localized.Get("Scaffold_Synthetic", "Syntetisk · ingen lagring");
 
     // Read-only safety note (WPF shows a health warning banner; here it is a static, non-clinical note).

@@ -61,7 +61,7 @@
            y-axis labels). px == "distance from bottom" via the shared RuntimeChartDisplay geometry. No third-party charting lib. -->
       <Border Grid.Row="3" Grid.ColumnSpan="2" Classes="card" Margin="0,0,0,12" MinHeight="260">
         <Grid RowDefinitions="Auto,*">
-          <TextBlock Grid.Row="0" Text="Pitch-trace (Hz, nyeste til høyre)" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <TextBlock Grid.Row="0" Text="Tonehøyde (Hz, nyeste til høyre)" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
           <Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,8,0,0">
             <!-- Y-axis frequency labels: max at top, min at bottom -->
             <Grid Grid.Column="0" Width="46" Height="{Binding DashboardChart.ChartHeightPx}" RowDefinitions="Auto,*,Auto" Margin="0,0,6,0">
@@ -97,7 +97,7 @@
                              IsVisible="{Binding DashboardChart.HasVoice}"/>
                 </Canvas>
                 <!-- Empty-state hint (centered, subtle) when not recording -->
-                <TextBlock Text="Pitch-trace vises her under opptak" HorizontalAlignment="Center" VerticalAlignment="Center"
+                <TextBlock Text="Tonehøyde vises her under opptak" HorizontalAlignment="Center" VerticalAlignment="Center"
                            Foreground="{DynamicResource ShellFaintBrush}" IsVisible="{Binding !IsRecording}"/>
               </Panel>
             </Border>

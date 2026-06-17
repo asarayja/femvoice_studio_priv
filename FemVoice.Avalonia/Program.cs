@@ -56,6 +56,7 @@ internal static class Program
         if (args.Contains("--smartcoach-progression-ui-scaffold-smoke")) return SmartCoachProgressionUiScaffoldSmoke();
         if (args.Contains("--settings-visual-parity-smoke")) return SettingsVisualParitySmoke();
         if (args.Contains("--visual-layout-polish-smoke")) return VisualLayoutPolishSmoke();
+        if (args.Contains("--localization-text-polish-smoke")) return LocalizationTextPolishSmoke();
         return null;
     }
 
@@ -1818,6 +1819,58 @@ internal static class Program
                   && settingsInert && scaffoldsDeferred && guideFilterIntact && searchWorks
                   && dashboardChartIntact && navIntact;
         Console.WriteLine(ok ? "[layout] Visual layout polish smoke OK" : "[layout] Visual layout polish smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Verifies the localization/text polish: key Avalonia scaffold labels use the expected consistent Norwegian
+    // wording (no English/terse leftovers like "Pitch"/"Score"/"Audio settings"/"økter"/"helse"), the
+    // deferred/display-only phrasing is consistent ("Utsatt"/"kun visning"/"Kommer senere"), the privacy row
+    // labels are short (not the long Core consent paragraphs), and the Dashboard chart label says "Tonehøyde"
+    // (source check — skipped/true with no source tree). Behavior-neutral; no language switching/persistence.
+    private static int LocalizationTextPolishSmoke()
+    {
+        var coach = new SmartCoachScaffoldViewModel();
+        var prog = new ProgressionScaffoldViewModel();
+        var settings = new SettingsViewModel();
+
+        // SmartCoach tile labels consistent; product name one word.
+        bool coachLabels = coach.StreakLabel == "Dager på rad" && coach.SessionsLabel == "Økter denne uken"
+            && coach.HealthLabel == "Helsescore" && coach.Title == "SmartCoach";
+        // Progression: FemVoice-score (not "Score"); params Resonans/Tonehøyde/Intonasjon (not "Pitch").
+        var progParams = prog.Parameters.Select(p => p.Label).ToList();
+        bool progLabels = prog.ScoreLabel == "FemVoice-score"
+            && progParams.SequenceEqual(new[] { "Resonans", "Tonehøyde", "Intonasjon" });
+        // Settings: Norwegian "Lydinnstillinger" present, no English "Audio settings"; privacy labels short.
+        var sectionTitles = settings.Sections.Select(s => s.Title).ToList();
+        bool settingsAudioNo = sectionTitles.Any(t => t == "Lydinnstillinger")
+            && sectionTitles.All(t => t != "Audio settings");
+        var allRowLabels = settings.Sections.SelectMany(s => s.Rows).Select(r => r.Label).ToList();
+        bool privacyShort = allRowLabels.Any(l => l == "Diagnostikk-samtykke")
+            && allRowLabels.All(l => l.Length <= 48);   // no long consent paragraph used as a label
+
+        // No English/terse leftovers across the scaffold labels.
+        var allText = new List<string> { coach.StreakLabel, coach.SessionsLabel, coach.HealthLabel, coach.Title,
+            prog.ScoreLabel }.Concat(progParams).Concat(sectionTitles).Concat(allRowLabels).ToList();
+        var banned = new[] { "Pitch", "Score", "økter", "helse", "Audio settings" };
+        bool noEnglishLeftovers = allText.All(t => !banned.Contains(t));
+
+        // Consistent deferred/display-only phrasing.
+        bool deferredConsistent = coach.DeferredBadge.Contains("Utsatt") && prog.DeferredBadge.Contains("Utsatt")
+            && settings.DeferredBadge.Contains("Utsatt")
+            && coach.DeferredBadge.Contains("kun visning") && settings.DeferredBadge.Contains("kun visning");
+
+        // Dashboard chart label is Norwegian "Tonehøyde", not "Pitch-trace" (source check; skip→true if no source).
+        string dashView = System.IO.Path.GetFullPath(System.IO.Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "Views", "DashboardView.axaml"));
+        bool dashLabelNo = !System.IO.File.Exists(dashView)
+            || (System.IO.File.ReadAllText(dashView).Contains("Tonehøyde") && !System.IO.File.ReadAllText(dashView).Contains("Pitch-trace"));
+
+        Console.WriteLine($"[loc-text] coachLabels={coachLabels} progLabels={progLabels} settingsAudioNorsk={settingsAudioNo} privacyShort={privacyShort}");
+        Console.WriteLine($"[loc-text] noEnglishLeftovers={noEnglishLeftovers} deferredConsistent={deferredConsistent} dashLabelTonehøyde={dashLabelNo}");
+
+        bool ok = coachLabels && progLabels && settingsAudioNo && privacyShort && noEnglishLeftovers
+                  && deferredConsistent && dashLabelNo;
+        Console.WriteLine(ok ? "[loc-text] Localization text polish smoke OK" : "[loc-text] Localization text polish smoke FAIL");
         return ok ? 0 : 1;
     }
 }

@@ -96,7 +96,8 @@ public sealed class SettingsViewModel
                 }),
 
             // Audio — WPF: CheckBox "hear own voice" + Button "open mic calibration".
-            new(Localized.Get("Settings_AudioSettings", "Lydinngang"),
+            // Scaffold key: the Core Settings_AudioSettings resolves to the English "Audio settings".
+            new(Localized.Get("Settings_Scaffold_Audio", "Lydinnstillinger"),
                 Localized.Get("Settings_HearOwnVoiceDesc", "Mikrofon og «hør egen stemme» (utsatt)."),
                 new List<SettingsRow>
                 {
@@ -137,8 +138,10 @@ public sealed class SettingsViewModel
                 Localized.Get("Privacy_LocalStorage", "Data lagres lokalt. Diagnostikk og forskning (utsatt)."),
                 new List<SettingsRow>
                 {
-                    new(Localized.Get("Privacy_DiagnosticsConsent", "Diagnostikk-samtykke"), deferred, SettingsControlKind.Toggle, Localized.Get("Privacy_DiagnosticsConsent", "Diagnostikk-samtykke")),
-                    new(Localized.Get("Privacy_ResearchWarning", "Forskningsdeling"), deferred, SettingsControlKind.Toggle, Localized.Get("Privacy_ResearchWarning", "Forskningsdeling")),
+                    // Scaffold keys: the Core Privacy_* keys resolve to long consent paragraphs (unsuitable as a row
+                    // label / toggle caption); use short Norwegian labels here.
+                    new(Localized.Get("Settings_Scaffold_PrivacyDiagnostics", "Diagnostikk-samtykke"), deferred, SettingsControlKind.Toggle, Localized.Get("Settings_Scaffold_PrivacyDiagnostics", "Diagnostikk-samtykke")),
+                    new(Localized.Get("Settings_Scaffold_PrivacyResearch", "Forskningsdeling"), deferred, SettingsControlKind.Toggle, Localized.Get("Settings_Scaffold_PrivacyResearch", "Forskningsdeling")),
                 }),
 
             // About — read-only info.
