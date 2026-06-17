@@ -108,3 +108,21 @@ Date: 2026-06-17 · same branch.
 
 ### Behaviour change
 **None to clinical/domain behaviour. WPF untouched.** UX flow (one page, one Start) + focus-aware display wording + a read-only smoke. Signing/notarization **not started**.
+
+---
+
+## Follow-up 4 gate (same PR #19): Exercise Guide list parity
+
+Date: 2026-06-17 · same branch.
+
+- **WPF reference**: `ExerciseWindow.xaml` ListView (read-only). Per row: icon · Name · Goal chip + Difficulty • Duration · Frequency chip · trimmed Description · per-exercise session count ("N økter") + chevron; a top "today's progress" card (minutes + sessions). NO target-pitch (Hz) in the list.
+- **List changes**: removed target-pitch (Hz) + verbose `Nivå:/Fokus:/Varighet:` labels from the list rows (pitch stays on the exercise page); rows match WPF (Name · Goal chip + Difficulty • Duration · Frequency chip · trimmed Description · session count + chevron); added a "Dagens fremgang" summary card. Progress/counts are DISPLAY-ONLY placeholders (`0 min · 0 økter`) — no persistence/analytics, no invented numbers, clearly labelled by a ProgressNote. Whole-row click + dark baseline kept; list leads with goal/focus (non-pitch not pitch-centric).
+- **Build**: 0 warnings / 0 errors.
+- **Smokes**: **20/20 OK, all exit 0**; `--exercise-flow-parity-smoke` extended with list-parity checks (sessionCount='0 økter', freq='Daglig', goal='Resonans', todaysProgress='0 min · 0 økter', listFields=True, progress=True; source: no target-pitch in guide list, progress display present, no persistence/analytics dep in guide/card VMs).
+- **Vulnerable packages**: none; Tmds 0.21.3; refs Core + Audio.Abstractions only.
+- **Leak guard**: clean (the smoke's persistence absence-check uses non-forbidden substrings `DatabaseService`/`SessionRecorder`, not the forbidden token literals).
+- **Publish/package**: `publish-linux.sh` OK; published `--exercise-flow-parity-smoke` exit 0; `.deb` builds; `publish-macos.sh osx-x64` OK.
+- **Portable**: 1570/1580 (10 known localization-data baseline; 1569 with the intermittent `ComfortZone` flake). No new failures.
+
+### Behaviour change
+**None to clinical/domain behaviour. WPF untouched.** Guide list display parity + display-only progress placeholders + a read-only smoke. No persistence/DB/analytics added. Signing/notarization **not started**.

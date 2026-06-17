@@ -203,3 +203,41 @@ Dashboard chart, Exercise Guide clickable cards, the grid layouts, the dark base
 Build 0/0; **20/20 smokes OK (all exit 0)** incl. `--exercise-flow-parity-smoke`; vuln clean; Tmds 0.21.3; refs
 Core + Audio.Abstractions only; leak guard clean; portable 1570/1580; published smokes + `.deb` + macOS publish OK.
 No clinical/domain/WPF/data change. Signing/notarization still **not started**.
+
+---
+
+## Follow-up 4 (same PR #19): Exercise Guide list parity
+
+Issue: the Avalonia guide list showed extra metadata WPF's list did not (target pitch / verbose labels) and
+missed the original progress/session counts. Visual/UX parity only; no persistence/DB/analytics.
+
+### WPF Exercise Guide list reference (inspected `FemVoiceStudio/Views/ExerciseWindow.xaml` ListView, read-only)
+Per row WPF shows: icon badge · **Name** · a **Goal chip** (focus/category) + **Difficulty** • **Duration min** ·
+a **Frequency** chip · a **trimmed Description** · and on the right a **per-exercise session count**
+(`TotalSessions` → "N økter") + a chevron. Above the list there is a **"Today's progress"** summary card (minutes +
+session count) and category filter chips. **WPF does NOT show a target-pitch (Hz) value in the list** (that is a
+detail/exercise-page field).
+
+### Avalonia list changes (parity)
+- **Removed** the target-pitch (Hz) "Mål-pitch" field and the verbose `Nivå:/Fokus:/Varighet:` labels from the list
+  rows (the pitch target remains on the exercise page only).
+- Rows now match WPF: Name · Goal chip (`GoalText`) + Difficulty • Duration · Frequency chip · trimmed Description ·
+  right-aligned **session count + chevron**.
+- Added a **"Dagens fremgang" (today's progress)** summary card (minutes + sessions) above the list.
+- **Progress/counts are DISPLAY-ONLY placeholders (`0 min · 0 økter`, `0 økter` per row)** — this preview has **no
+  session persistence/analytics**, so the truthful value is 0; a `ProgressNote` states the preview does not track
+  progress. **No `SessionAnalyticsStore`/`IDatabaseService`/`ExerciseSessionRecorder`/DB read, no invented numbers.**
+- Kept: whole-row click → opens the exercise; dark baseline; the chevron affordance.
+- Because the list leads with the **Goal/focus** (not pitch), non-pitch exercises are no longer pitch-centric in the list.
+
+### `--exercise-flow-parity-smoke` (extended)
+Now also asserts: list fields present (per-row `SessionCountText` + `FrequencyText` + `GoalText`), the today's-progress
+summary present (`TodaysProgressText` + `ProgressNote`), the guide view source has **no `TargetPitchText`/`Mål-pitch`**
+and **does** bind the session-count + today's-progress, and the guide/card VMs introduce **no persistence/analytics
+dependency**.
+
+### Follow-up 4 gate
+Build 0/0; **20/20 smokes OK (all exit 0)**; vuln clean; Tmds 0.21.3; refs Core + Audio.Abstractions only; leak
+guard clean (the smoke's persistence absence-check uses non-forbidden substrings); portable 1570/1580 (1569 with the
+`ComfortZone` flake); published smokes + `.deb` + macOS publish OK. No clinical/domain/WPF/data/persistence change.
+Signing/notarization still **not started**.
