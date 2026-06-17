@@ -19,6 +19,10 @@
   <key>CFBundleVersion</key>              <string>0.1.0</string>
   <key>CFBundleShortVersionString</key>   <string>0.1.0</string>
   <key>CFBundleExecutable</key>           <string>FemVoice.Avalonia</string>
+  <!-- Icon readiness: macOS looks for Contents/Resources/AppIcon.icns. When that file is absent (no production
+       icon committed yet), macOS falls back to the generic app icon — packaging and launch are unaffected. See
+       AppIcon.icns.README.md. No production icon/branding is invented here. -->
+  <key>CFBundleIconFile</key>             <string>AppIcon</string>
   <key>CFBundlePackageType</key>          <string>APPL</string>
   <key>LSMinimumSystemVersion</key>       <string>11.0</string>
   <key>NSHighResolutionCapable</key>      <true/>

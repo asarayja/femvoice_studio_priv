@@ -37,10 +37,15 @@ esac
 PUBLISH_DIR="$REPO_ROOT/artifacts/publish/$RID"
 APP="$REPO_ROOT/artifacts/dist/$RID/FemVoice Studio.app"
 PLIST="$SCRIPT_DIR/Info.plist"
+# Optional app icon (readiness): Info.plist references CFBundleIconFile=AppIcon -> Contents/Resources/AppIcon.icns.
+# This file is intentionally NOT committed (no production icon/branding invented). If a real AppIcon.icns is dropped
+# here later, it is bundled automatically; if absent, macOS uses the generic icon. See AppIcon.icns.README.md.
+ICON="$SCRIPT_DIR/AppIcon.icns"
 
 echo "[macos-app] unsigned .app readiness — mode=$MODE rid=$RID (no codesign, no notarize, no secrets)"
-if [ -f "$PLIST" ]; then echo "  Info.plist: present (CFBundleExecutable=FemVoice.Avalonia)"; else echo "  Info.plist MISSING" >&2; exit 1; fi
+if [ -f "$PLIST" ]; then echo "  Info.plist: present (CFBundleExecutable=FemVoice.Avalonia, CFBundleIconFile=AppIcon)"; else echo "  Info.plist MISSING" >&2; exit 1; fi
 if [ -f "$SCRIPT_DIR/publish-macos.sh" ]; then echo "  publish helper: publish-macos.sh present"; else echo "  publish-macos.sh MISSING" >&2; exit 1; fi
+if [ -f "$ICON" ]; then echo "  app icon: AppIcon.icns present (will be bundled)"; else echo "  app icon: AppIcon.icns absent — system default (production icon deferred; see AppIcon.icns.README.md)"; fi
 echo "  optional tools: codesign=$(have codesign) (this script never signs)"
 
 if [ "$MODE" = check ]; then
@@ -55,7 +60,8 @@ if [ "$MODE" = dry-run ]; then
   echo "    2. mkdir -p '<dist>/FemVoice Studio.app/Contents/MacOS' (+ /Contents/Resources)"
   echo "    3. cp Info.plist -> Contents/Info.plist"
   echo "    4. cp -R publish/$RID/. -> Contents/MacOS/"
-  echo "    5. chmod +x Contents/MacOS/FemVoice.Avalonia  (apphost; NOT codesigned)"
+  echo "    5. if AppIcon.icns present: cp -> Contents/Resources/AppIcon.icns (else skip — system default)"
+  echo "    6. chmod +x Contents/MacOS/FemVoice.Avalonia  (apphost; NOT codesigned)"
   echo "    NB: real codesign/notarize/staple happen ONLY in a future credentialed slice — never here."
   echo "[macos-app] OK — dry-run (nothing built or signed)."
   exit 0
@@ -70,6 +76,13 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$PLIST" "$APP/Contents/Info.plist"
 cp -R "$PUBLISH_DIR/." "$APP/Contents/MacOS/"
 if [ -f "$APP/Contents/MacOS/FemVoice.Avalonia" ]; then chmod +x "$APP/Contents/MacOS/FemVoice.Avalonia"; fi
+# Bundle the app icon ONLY if a real AppIcon.icns has been provided; never fail when it is absent.
+if [ -f "$ICON" ]; then
+  cp "$ICON" "$APP/Contents/Resources/AppIcon.icns"
+  echo "  icon: bundled AppIcon.icns -> Contents/Resources/"
+else
+  echo "  icon: AppIcon.icns absent — bundle uses the system default (production icon deferred; not an error)"
+fi
 echo "  built UNSIGNED bundle: $APP"
 echo "  (no codesign performed — sign/notarize in a future credentialed slice; see NOTARIZATION.md)"
 echo "[macos-app] OK — unsigned .app bundle ready."

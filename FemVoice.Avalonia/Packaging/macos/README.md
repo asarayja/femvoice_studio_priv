@@ -19,9 +19,17 @@ artifacts/dist/<rid>/FemVoice Studio.app/
   Contents/
     Info.plist            (from Packaging/macos/Info.plist — CFBundleExecutable = FemVoice.Avalonia)
     MacOS/                (the published apphost FemVoice.Avalonia + FemVoice.Avalonia.dll + all managed/native bits)
-    Resources/            (reserved for icons; no production branding invented here)
+    Resources/            (AppIcon.icns is copied here only if present — see "App icon" below)
 ```
 The bundle is **framework-dependent** (a compatible .NET 10 runtime must be present on the target) and **unsigned**.
+
+## App icon (readiness — no production icon committed)
+`Info.plist` wires `CFBundleIconFile = AppIcon`, so macOS looks for `Contents/Resources/AppIcon.icns`.
+`package-app.sh` copies `Packaging/macos/AppIcon.icns` into `Contents/Resources/` **only if that file exists**; when
+it is absent (the current state) the bundle uses the generic system icon and packaging/launch are unaffected (no
+error). No production icon/branding is invented or committed — only the readiness note `AppIcon.icns.README.md`,
+which documents the expected path and how to generate a real `.icns` later (`sips`/`iconutil`, macOS-only). The
+read-only `--macos-icon-readiness-smoke` covers this.
 
 ## `.dmg` (optional, macOS-only)
 `package-dmg.sh <rid>` wraps the `.app` with `hdiutil create … -format UDZO`. **`hdiutil` is macOS-only**, so on
