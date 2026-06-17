@@ -1,0 +1,12 @@
+[Desktop Entry]
+# Linux .desktop entry TEMPLATE (readiness only — NOT wired into the build or installed by it).
+# Static template for a future Linux packaging step (e.g. .tar.gz / AppImage / .deb). The default
+# build/publish does not consume or install this file. No runtime behaviour, no permissions.
+Type=Application
+Name=FemVoice Studio
+Comment=Voice feminization training (Avalonia desktop preview — display-only)
+Exec=FemVoice.Avalonia
+Icon=femvoice-studio
+Terminal=false
+Categories=Education;Audio;
+StartupNotify=true

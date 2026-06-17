@@ -11,6 +11,22 @@
     <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 
+  <!-- Cross-platform desktop packaging readiness (behavior-neutral; affects `dotnet publish` only).
+       RuntimeIdentifiers is PLURAL, so it enables RID-targeted publish/restore but does NOT force a RID on
+       the default `dotnet build` / `dotnet run` (which stay portable, unchanged). Trimming is explicitly
+       DISABLED because the Avalonia head uses reflection bindings (AvaloniaUseCompiledBindingsByDefault=false),
+       so a trimmed publish would break bindings. SelfContained is left unset — the publish command chooses it
+       via the self-contained publish flag. No Windows-only target; no mobile. See FemVoice.Avalonia/Packaging/README.md. -->
+  <PropertyGroup>
+    <RuntimeIdentifiers>linux-x64;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
+    <UseAppHost>true</UseAppHost>
+    <PublishTrimmed>false</PublishTrimmed>
+    <Product>FemVoice Studio</Product>
+    <AssemblyTitle>FemVoice Studio (Avalonia desktop)</AssemblyTitle>
+    <Version>0.1.0-dev</Version>
+    <InformationalVersion>0.1.0-dev (Avalonia desktop preview — display-only)</InformationalVersion>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.2.1" />
     <PackageReference Include="Avalonia.Desktop" Version="11.2.1" />

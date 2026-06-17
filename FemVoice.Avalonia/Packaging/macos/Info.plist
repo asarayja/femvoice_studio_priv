@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  macOS .app bundle Info.plist TEMPLATE (readiness only — NOT wired into the build).
+  This is a static template for a future macOS bundling step; the default build/publish does not consume it.
+  NSMicrophoneUsageDescription is STATIC readiness metadata: the Avalonia head uses synthetic audio and
+  implements NO real microphone capture — this string becomes relevant only when a real capture backend is
+  added in a future slice. No runtime permission is requested by code today.
+  Version note: CFBundleVersion/CFBundleShortVersionString use the numeric release form "0.1.0" (Apple bundle
+  versions must be numeric), mirroring the csproj <Version>0.1.0-dev</Version> with the dev suffix dropped. A
+  future bundling step should derive these from the csproj version rather than hardcoding them.
+-->
+
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key>                 <string>FemVoice Studio</string>
+  <key>CFBundleDisplayName</key>          <string>FemVoice Studio</string>
+  <key>CFBundleIdentifier</key>           <string>com.femvoice.studio</string>
+  <key>CFBundleVersion</key>              <string>0.1.0</string>
+  <key>CFBundleShortVersionString</key>   <string>0.1.0</string>
+  <key>CFBundleExecutable</key>           <string>FemVoice.Avalonia</string>
+  <key>CFBundlePackageType</key>          <string>APPL</string>
+  <key>LSMinimumSystemVersion</key>       <string>11.0</string>
+  <key>NSHighResolutionCapable</key>      <true/>
+  <key>LSApplicationCategoryType</key>    <string>public.app-category.education</string>
+  <key>NSMicrophoneUsageDescription</key> <string>FemVoice Studio bruker mikrofonen til stemmetrening. (Ikke aktiv i denne visning-bare versjonen.)</string>
+</dict>
+</plist>
