@@ -1,16 +1,22 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="FemVoice.Avalonia.Views.ExerciseRuntimeView">
+  <!-- WPF-parity layout: the original ExerciseWindow has NO pitch graph on the exercise/session screen; it uses
+       a two-column grid (info/guidance left, session controls + live readouts right). This view mirrors that:
+       the runtime pitch chart is intentionally NOT rendered here (the VM keeps its chart data model for the
+       headless runtime-chart smoke), and the sections are arranged in a grid so the session controls are visible
+       without long scrolling. Display-only; no clinical/domain/WPF change. -->
   <ScrollViewer>
     <StackPanel Margin="20" Spacing="14">
 
+      <!-- Header: back + title -->
       <StackPanel Orientation="Horizontal" Spacing="10">
         <Button Content="← Tilbake" Command="{Binding BackCommand}"/>
         <TextBlock Text="{Binding SelectedExerciseName}" FontSize="22" FontWeight="Bold" VerticalAlignment="Center"
                    Foreground="{DynamicResource ShellHeadingBrush}"/>
       </StackPanel>
 
-      <!-- Exercise metadata -->
+      <!-- Compact metadata row -->
       <Border Classes="card">
         <WrapPanel>
           <TextBlock Text="{Binding Category, StringFormat='Kategori: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
@@ -20,182 +26,142 @@
         </WrapPanel>
       </Border>
 
-      <!-- Target profile (read-only, display-only — from shared ExerciseTargetProfile) -->
-      <Border Classes="card" BorderBrush="{DynamicResource ShellSecondaryBrush}">
-        <StackPanel Spacing="4">
-          <TextBlock Text="Mål-profil" FontWeight="SemiBold" Foreground="{DynamicResource ShellSecondaryBrush}"/>
-          <TextBlock Text="{Binding TargetProfile.ProfileStatusMessage}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          <WrapPanel>
-            <TextBlock Text="{Binding TargetProfile.TargetPitch, StringFormat='Mål-pitch: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <TextBlock Text="{Binding TargetProfile.ResonanceTarget, StringFormat='Resonans-mål: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <TextBlock Text="{Binding TargetProfile.StabilityTarget, StringFormat='Stabilitet: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <TextBlock Text="{Binding TargetProfile.RequiredHoldSeconds, StringFormat='Hold-mål: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <TextBlock Text="{Binding TargetProfile.VoiceSkillTargets, StringFormat='Skills: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          </WrapPanel>
-          <TextBlock Text="{Binding TargetProfile.PurposeText, StringFormat='Hensikt: {0}'}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          <TextBlock Text="{Binding TargetProfile.FocusText, StringFormat='Fokus: {0}'}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}"/>
-          <TextBlock Text="{Binding TargetProfile.SafetyText, StringFormat='Sikkerhet: {0}'}" TextWrapping="Wrap" Foreground="{DynamicResource ShellWarningBrush}"/>
-          <TextBlock Text="{Binding TargetProfile.CommonMistakesText, StringFormat='Vanlige feil: {0}'}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}"
-                     IsVisible="{Binding TargetProfile.HasCommonMistakes}"/>
-        </StackPanel>
-      </Border>
+      <!-- Main two-column grid: info/guidance (left) · session controls + live readouts (right) -->
+      <Grid ColumnDefinitions="1.2*,0.8*">
 
-      <!-- Live session content — visible only while a synthetic session is running -->
-      <StackPanel IsVisible="{Binding IsRunning}" Spacing="14">
+        <!-- ── Left column: target profile + live status + feedback/guidance ── -->
+        <StackPanel Grid.Column="0" Spacing="14" Margin="0,0,8,0">
 
-      <!-- Live pitch + status -->
-      <Border Classes="card">
-        <StackPanel Spacing="6">
-          <TextBlock Text="Sanntid (syntetisk lyd)" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-          <StackPanel Orientation="Horizontal" Spacing="6">
-            <TextBlock Text="{Binding CurrentPitch, StringFormat='{}{0:F1}'}" FontSize="34" FontWeight="Bold" Foreground="{DynamicResource ShellAccentBrush}"/>
-            <TextBlock Text="Hz" VerticalAlignment="Bottom" Margin="0,0,0,6" Foreground="{DynamicResource ShellMutedBrush}"/>
-          </StackPanel>
-          <TextBlock Text="{Binding PitchStatus, StringFormat='Status: {0}'}" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          <TextBlock Text="{Binding TargetPitchMin, StringFormat='Mål min: {0:F0} Hz'}" Foreground="{DynamicResource ShellMutedBrush}"/>
-          <TextBlock Text="{Binding TargetPitchMax, StringFormat='Mål maks: {0:F0} Hz'}" Foreground="{DynamicResource ShellMutedBrush}"/>
-        </StackPanel>
-      </Border>
-
-      <!-- Runtime pitch chart (converter-free; no OxyPlot). Canvas coords are px-from-bottom. -->
-      <Border Classes="card" BorderBrush="{DynamicResource ShellSecondaryBrush}">
-        <StackPanel Spacing="6">
-          <TextBlock Text="Pitch-graf (sanntid, syntetisk)" FontWeight="SemiBold" Foreground="{DynamicResource ShellSecondaryBrush}"/>
-          <Grid ColumnDefinitions="Auto,*">
-            <!-- Y-axis labels: max at top, min at bottom -->
-            <Grid Grid.Column="0" Width="44" Height="{Binding RuntimeChart.ChartHeightPx}"
-                  RowDefinitions="Auto,*,Auto" Margin="0,0,6,0">
-              <TextBlock Grid.Row="0" Text="{Binding RuntimeChart.ChartMaxPitch, StringFormat='{}{0:F0} Hz'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
-              <TextBlock Grid.Row="2" Text="{Binding RuntimeChart.ChartMinPitch, StringFormat='{}{0:F0} Hz'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
-            </Grid>
-            <!-- Chart surface -->
-            <Border Grid.Column="1" Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="4" ClipToBounds="True">
-              <Canvas Name="ChartCanvas" Height="{Binding RuntimeChart.ChartHeightPx}" HorizontalAlignment="Stretch">
-                <!-- Target band (green) -->
-                <Rectangle Canvas.Left="0" Canvas.Bottom="{Binding RuntimeChart.TargetBandBottomPx}"
-                           Height="{Binding RuntimeChart.TargetBandHeightPx}"
-                           Width="{Binding #ChartCanvas.Bounds.Width}" Fill="{DynamicResource ShellTargetBandBrush}"/>
-                <!-- Recent pitch trace (newest at right) -->
-                <ItemsControl Canvas.Left="0" Canvas.Bottom="0" ItemsSource="{Binding RuntimePitchSamples}">
-                  <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                      <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom"/>
-                    </ItemsPanelTemplate>
-                  </ItemsControl.ItemsPanel>
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                      <Rectangle Width="3" Margin="1,0" Fill="{DynamicResource ShellChartTraceBrush}" VerticalAlignment="Bottom" Height="{Binding}"/>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <!-- Current pitch marker (yellow line) -->
-                <Rectangle Canvas.Left="0" Canvas.Bottom="{Binding RuntimeChart.CurrentPitchMarkerPx}"
-                           Height="2" Width="{Binding #ChartCanvas.Bounds.Width}" Fill="{DynamicResource ShellMarkerBrush}"
-                           IsVisible="{Binding RuntimeChart.HasVoice}"/>
-              </Canvas>
-            </Border>
-          </Grid>
-          <WrapPanel>
-            <TextBlock Text="{Binding RuntimeChart.CurrentPitch, StringFormat='Nå: {0:F1} Hz'}" Margin="0,0,16,0" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <TextBlock Text="{Binding RuntimeChart.TargetPitchMin, StringFormat='Mål: {0:F0}'}" Foreground="{DynamicResource ShellSuccessBrush}"/>
-            <TextBlock Text="{Binding RuntimeChart.TargetPitchMax, StringFormat='–{0:F0} Hz'}" Foreground="{DynamicResource ShellSuccessBrush}" Margin="0,0,16,0"/>
-            <TextBlock Text="{Binding RuntimeChart.ChartStatusText}" Foreground="{DynamicResource ShellMutedBrush}"/>
-          </WrapPanel>
-          <TextBlock Text="Gul linje = nåværende pitch · grønt felt = målområde (kun visning)" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11"/>
-        </StackPanel>
-      </Border>
-
-      <!-- Live feedback (local, display-only — NOT FeedbackConsistencyGuard/SmartCoach) -->
-      <Border Classes="card" BorderBrush="{DynamicResource ShellSuccessBrush}">
-        <StackPanel Spacing="2">
-          <TextBlock Text="Sanntids-tilbakemelding (kun visning)" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}"/>
-          <TextBlock Text="{Binding LiveFeedbackMessage}" TextWrapping="Wrap" FontSize="16" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          <TextBlock Text="{Binding LiveFeedbackSeverity, StringFormat='Status: {0}'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-        </StackPanel>
-      </Border>
-
-      <!-- Hold progress (display-only): derived vs coordinator -->
-      <Border Classes="card">
-        <StackPanel Spacing="4">
-          <TextBlock Text="Hold i målområdet (visning)" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-          <TextBlock Text="Avledet hold" Foreground="{DynamicResource ShellSecondaryBrush}" FontSize="12"/>
-          <ProgressBar Minimum="0" Maximum="100" Value="{Binding DerivedHoldVisualPercent}" Height="16"/>
-          <TextBlock Text="{Binding HoldSeconds, StringFormat='Holdt: {0:F1} s'}" FontSize="12" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          <TextBlock Text="Koordinator-hold (kun visning, ikke håndhevet)" Foreground="{DynamicResource ShellDeferredTitleBrush}" FontSize="12" Margin="0,6,0,0"/>
-          <ProgressBar Minimum="0" Maximum="100" Value="{Binding CoordinatorHoldVisualPercent}" Height="16"/>
-          <TextBlock Text="{Binding HoldComparisonText, StringFormat='Differanse: {0}'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-        </StackPanel>
-      </Border>
-
-      <!-- Coordinator readout (DISPLAY-ONLY — parameterless ExerciseIntelligenceCoordinator, NOT enforced) -->
-      <Border Classes="card" BorderBrush="{DynamicResource ShellDeferredBorderBrush}">
-        <StackPanel Spacing="6">
-          <TextBlock Text="Koordinator-readout" FontWeight="SemiBold" Foreground="{DynamicResource ShellDeferredTitleBrush}"/>
-          <TextBlock Text="{Binding CoordinatorReadout.ReadoutMode}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-          <WrapPanel>
-            <TextBlock Text="{Binding CoordinatorReadout.IsCoordinatorActive, StringFormat='Aktiv: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <TextBlock Text="{Binding CoordinatorReadout.CoordinatorStatusText, StringFormat='Tilstand: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          </WrapPanel>
-          <TextBlock Text="Koordinator-hold vs. avledet hold:" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          <WrapPanel>
-            <TextBlock Text="{Binding CoordinatorReadout.CoordinatorHoldProgressPercent, StringFormat='Koordinator: {0:F0}%'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <TextBlock Text="{Binding CoordinatorReadout.CoordinatorHoldSeconds, StringFormat='({0:F1} s)'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellMutedBrush}"/>
-            <TextBlock Text="{Binding CoordinatorReadout.DerivedHoldProgressPercent, StringFormat='Avledet: {0:F0}%'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <TextBlock Text="{Binding CoordinatorReadout.DerivedHoldSeconds, StringFormat='({0:F1} s)'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellMutedBrush}"/>
-          </WrapPanel>
-          <ProgressBar Minimum="0" Maximum="100" Value="{Binding CoordinatorReadout.CoordinatorHoldProgressPercent}" Height="14"/>
-          <TextBlock Text="{Binding CoordinatorReadout.HoldDifferenceDisplay, StringFormat='Differanse: {0}'}" Foreground="{DynamicResource ShellMutedBrush}"/>
-          <TextBlock Text="{Binding CoordinatorReadout.CoordinatorGuidanceText}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          <Border Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="4" Padding="8">
-            <StackPanel Spacing="2">
-              <TextBlock Text="{Binding CoordinatorReadout.CoordinatorSafetyLockDisplay}" Foreground="{DynamicResource ShellDeferredTitleBrush}" FontWeight="SemiBold" TextWrapping="Wrap"/>
-              <TextBlock Text="{Binding CoordinatorReadout.CoordinatorRawStateSummary}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" TextWrapping="Wrap"/>
-            </StackPanel>
-          </Border>
-        </StackPanel>
-      </Border>
-
-      <!-- Runtime status -->
-      <Border Classes="card" BorderBrush="{DynamicResource ShellSuccessBrush}">
-        <StackPanel Spacing="2">
-          <TextBlock Text="Veiledning" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}"/>
-          <TextBlock Text="{Binding RuntimeStatusMessage}" TextWrapping="Wrap" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-        </StackPanel>
-      </Border>
-
-      </StackPanel>
-      <!-- /Live session content -->
-
-      <!-- Lifecycle controls + display-only state (synthetic; never saved) -->
-      <Border Classes="card">
-        <StackPanel Spacing="8">
-          <WrapPanel>
-            <TextBlock Text="{Binding PhaseText, StringFormat='Tilstand: {0}'}" FontWeight="SemiBold" Margin="0,0,20,0" Foreground="{DynamicResource ShellHeadingBrush}"/>
-            <TextBlock Text="{Binding RecommendedDurationText}" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,0,20,0"/>
-            <TextBlock Text="{Binding ElapsedText, StringFormat='Tid: {0}'}" Foreground="{DynamicResource ShellMutedBrush}"/>
-          </WrapPanel>
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button Content="Start" Classes="primary" Command="{Binding BeginCommand}" IsEnabled="{Binding !IsRunning}" Width="110"/>
-            <Button Content="Stopp" Classes="secondary" Command="{Binding StopCommand}" IsEnabled="{Binding IsRunning}" Width="110"/>
-          </StackPanel>
-
-          <!-- Inactive: before first Start -->
-          <Border IsVisible="{Binding IsInactive}" BorderBrush="{DynamicResource ShellAccentBrush}" BorderThickness="1" CornerRadius="6" Padding="10">
-            <TextBlock Text="Klar til å starte — trykk Start for en syntetisk, visning-bare kjøring."
-                       TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          </Border>
-
-          <!-- Stopped: display-only session-ended summary -->
-          <Border IsVisible="{Binding IsStopped}" BorderBrush="{DynamicResource ShellOkBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10">
+          <!-- Target profile (read-only, display-only — from shared ExerciseTargetProfile) -->
+          <Border Classes="card" BorderBrush="{DynamicResource ShellSecondaryBrush}">
             <StackPanel Spacing="4">
-              <TextBlock Text="Økt avsluttet" FontWeight="SemiBold" Foreground="{DynamicResource ShellOkBrush}"/>
-              <TextBlock Text="{Binding SessionEndedSummary}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text="Mål-profil" FontWeight="SemiBold" Foreground="{DynamicResource ShellSecondaryBrush}"/>
+              <TextBlock Text="{Binding TargetProfile.ProfileStatusMessage}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <WrapPanel>
+                <TextBlock Text="{Binding TargetProfile.TargetPitch, StringFormat='Mål-pitch: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                <TextBlock Text="{Binding TargetProfile.ResonanceTarget, StringFormat='Resonans-mål: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                <TextBlock Text="{Binding TargetProfile.StabilityTarget, StringFormat='Stabilitet: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                <TextBlock Text="{Binding TargetProfile.RequiredHoldSeconds, StringFormat='Hold-mål: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                <TextBlock Text="{Binding TargetProfile.VoiceSkillTargets, StringFormat='Skills: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              </WrapPanel>
+              <TextBlock Text="{Binding TargetProfile.PurposeText, StringFormat='Hensikt: {0}'}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text="{Binding TargetProfile.FocusText, StringFormat='Fokus: {0}'}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}"/>
+              <TextBlock Text="{Binding TargetProfile.SafetyText, StringFormat='Sikkerhet: {0}'}" TextWrapping="Wrap" Foreground="{DynamicResource ShellWarningBrush}"/>
+              <TextBlock Text="{Binding TargetProfile.CommonMistakesText, StringFormat='Vanlige feil: {0}'}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}"
+                         IsVisible="{Binding TargetProfile.HasCommonMistakes}"/>
             </StackPanel>
           </Border>
 
-          <TextBlock Text="{Binding NotSavedNote}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12"/>
+          <!-- Live pitch + status (text readout; no graph — WPF parity) — visible while running -->
+          <Border Classes="card" IsVisible="{Binding IsRunning}">
+            <StackPanel Spacing="6">
+              <TextBlock Text="Sanntid (syntetisk lyd)" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="{Binding CurrentPitch, StringFormat='{}{0:F1}'}" FontSize="34" FontWeight="Bold" Foreground="{DynamicResource ShellAccentBrush}"/>
+                <TextBlock Text="Hz" VerticalAlignment="Bottom" Margin="0,0,0,6" Foreground="{DynamicResource ShellMutedBrush}"/>
+              </StackPanel>
+              <TextBlock Text="{Binding PitchStatus, StringFormat='Status: {0}'}" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <WrapPanel>
+                <TextBlock Text="{Binding TargetPitchMin, StringFormat='Mål min: {0:F0} Hz'}" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,0,16,0"/>
+                <TextBlock Text="{Binding TargetPitchMax, StringFormat='Mål maks: {0:F0} Hz'}" Foreground="{DynamicResource ShellMutedBrush}"/>
+              </WrapPanel>
+            </StackPanel>
+          </Border>
+
+          <!-- Live feedback (local, display-only — NOT FeedbackConsistencyGuard/SmartCoach) -->
+          <Border Classes="card" BorderBrush="{DynamicResource ShellSuccessBrush}" IsVisible="{Binding IsRunning}">
+            <StackPanel Spacing="2">
+              <TextBlock Text="Sanntids-tilbakemelding (kun visning)" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}"/>
+              <TextBlock Text="{Binding LiveFeedbackMessage}" TextWrapping="Wrap" FontSize="16" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text="{Binding LiveFeedbackSeverity, StringFormat='Status: {0}'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Guidance -->
+          <Border Classes="card" BorderBrush="{DynamicResource ShellSuccessBrush}" IsVisible="{Binding IsRunning}">
+            <StackPanel Spacing="2">
+              <TextBlock Text="Veiledning" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}"/>
+              <TextBlock Text="{Binding RuntimeStatusMessage}" TextWrapping="Wrap" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            </StackPanel>
+          </Border>
+
         </StackPanel>
-      </Border>
+
+        <!-- ── Right column: session controls (always visible) + hold + coordinator readout ── -->
+        <StackPanel Grid.Column="1" Spacing="14" Margin="8,0,0,0">
+
+          <!-- Session controls + lifecycle state (synthetic; never saved) -->
+          <Border Classes="card">
+            <StackPanel Spacing="8">
+              <TextBlock Text="{Binding ElapsedText}" FontSize="40" FontWeight="Bold" HorizontalAlignment="Center"
+                         Foreground="{DynamicResource ShellHeadingBrush}"/>
+              <WrapPanel HorizontalAlignment="Center">
+                <TextBlock Text="{Binding PhaseText, StringFormat='Tilstand: {0}'}" FontWeight="SemiBold" Margin="0,0,16,0" Foreground="{DynamicResource ShellAccentBrush}"/>
+                <TextBlock Text="{Binding RecommendedDurationText}" Foreground="{DynamicResource ShellMutedBrush}"/>
+              </WrapPanel>
+              <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                <Button Content="Start" Classes="primary" Command="{Binding BeginCommand}" IsEnabled="{Binding !IsRunning}" Width="110"/>
+                <Button Content="Stopp" Classes="secondary" Command="{Binding StopCommand}" IsEnabled="{Binding IsRunning}" Width="110"/>
+              </StackPanel>
+
+              <!-- Inactive: before first Start -->
+              <Border IsVisible="{Binding IsInactive}" BorderBrush="{DynamicResource ShellAccentBrush}" BorderThickness="1" CornerRadius="6" Padding="10">
+                <TextBlock Text="Klar til å starte — trykk Start for en syntetisk, visning-bare kjøring."
+                           TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              </Border>
+
+              <!-- Stopped: display-only session-ended summary -->
+              <Border IsVisible="{Binding IsStopped}" BorderBrush="{DynamicResource ShellOkBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10">
+                <StackPanel Spacing="4">
+                  <TextBlock Text="Økt avsluttet" FontWeight="SemiBold" Foreground="{DynamicResource ShellOkBrush}"/>
+                  <TextBlock Text="{Binding SessionEndedSummary}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                </StackPanel>
+              </Border>
+
+              <TextBlock Text="{Binding NotSavedNote}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Hold progress (display-only): derived vs coordinator — the WPF-style live "meters" -->
+          <Border Classes="card" IsVisible="{Binding IsRunning}">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Hold i målområdet (visning)" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+              <TextBlock Text="Avledet hold" Foreground="{DynamicResource ShellSecondaryBrush}" FontSize="12"/>
+              <ProgressBar Minimum="0" Maximum="100" Value="{Binding DerivedHoldVisualPercent}" Height="16"/>
+              <TextBlock Text="{Binding HoldSeconds, StringFormat='Holdt: {0:F1} s'}" FontSize="12" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text="Koordinator-hold (kun visning, ikke håndhevet)" Foreground="{DynamicResource ShellDeferredTitleBrush}" FontSize="12" Margin="0,6,0,0"/>
+              <ProgressBar Minimum="0" Maximum="100" Value="{Binding CoordinatorHoldVisualPercent}" Height="16"/>
+              <TextBlock Text="{Binding HoldComparisonText, StringFormat='Differanse: {0}'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Coordinator readout (DISPLAY-ONLY — parameterless ExerciseIntelligenceCoordinator, NOT enforced) -->
+          <Border Classes="card" BorderBrush="{DynamicResource ShellDeferredBorderBrush}" IsVisible="{Binding IsRunning}">
+            <StackPanel Spacing="6">
+              <TextBlock Text="Koordinator-readout" FontWeight="SemiBold" Foreground="{DynamicResource ShellDeferredTitleBrush}"/>
+              <TextBlock Text="{Binding CoordinatorReadout.ReadoutMode}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <WrapPanel>
+                <TextBlock Text="{Binding CoordinatorReadout.IsCoordinatorActive, StringFormat='Aktiv: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                <TextBlock Text="{Binding CoordinatorReadout.CoordinatorStatusText, StringFormat='Tilstand: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              </WrapPanel>
+              <ProgressBar Minimum="0" Maximum="100" Value="{Binding CoordinatorReadout.CoordinatorHoldProgressPercent}" Height="14"/>
+              <WrapPanel>
+                <TextBlock Text="{Binding CoordinatorReadout.CoordinatorHoldProgressPercent, StringFormat='Koordinator: {0:F0}%'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                <TextBlock Text="{Binding CoordinatorReadout.DerivedHoldProgressPercent, StringFormat='Avledet: {0:F0}%'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              </WrapPanel>
+              <TextBlock Text="{Binding CoordinatorReadout.HoldDifferenceDisplay, StringFormat='Differanse: {0}'}" Foreground="{DynamicResource ShellMutedBrush}"/>
+              <TextBlock Text="{Binding CoordinatorReadout.CoordinatorGuidanceText}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <Border Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="4" Padding="8">
+                <StackPanel Spacing="2">
+                  <TextBlock Text="{Binding CoordinatorReadout.CoordinatorSafetyLockDisplay}" Foreground="{DynamicResource ShellDeferredTitleBrush}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                  <TextBlock Text="{Binding CoordinatorReadout.CoordinatorRawStateSummary}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" TextWrapping="Wrap"/>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </Border>
+
+        </StackPanel>
+      </Grid>
 
     </StackPanel>
   </ScrollViewer>

@@ -1,6 +1,9 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="FemVoice.Avalonia.Views.ExerciseDetailView">
+  <!-- WPF-parity layout: two-column grid (purpose/instructions left · metadata/safety/start right) so the key
+       content + the Start action are visible without long scrolling. No pitch graph (WPF has none here).
+       Display-only; no clinical/domain/WPF change. -->
   <ScrollViewer>
     <StackPanel Margin="20" Spacing="12">
 
@@ -14,58 +17,67 @@
                    Foreground="{DynamicResource ShellHeadingBrush}"/>
       </StackPanel>
 
-      <!-- Metadata -->
-      <Border Classes="card">
-        <WrapPanel>
-          <TextBlock Text="{Binding Category, StringFormat='Kategori: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          <TextBlock Text="{Binding DifficultyText, StringFormat='Nivå: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          <TextBlock Text="{Binding GoalText, StringFormat='Fokus: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          <TextBlock Text="{Binding FrequencyText, StringFormat='Frekvens: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          <TextBlock Text="{Binding DurationText, StringFormat='Varighet: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          <TextBlock Text="{Binding TargetPitchText, StringFormat='Mål-pitch: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          <TextBlock Text="{Binding MetricsText, StringFormat='Mål-skills: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-        </WrapPanel>
-      </Border>
+      <!-- Two-column grid -->
+      <Grid ColumnDefinitions="1.3*,0.7*">
 
-      <!-- Purpose -->
-      <Border Classes="card">
-        <StackPanel Spacing="3">
-          <TextBlock Text="Hensikt" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-          <TextBlock Text="{Binding Purpose}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          <TextBlock Text="{Binding Rationale}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,4,0,0"/>
+        <!-- Left: purpose + instructions -->
+        <StackPanel Grid.Column="0" Spacing="12" Margin="0,0,8,0">
+          <Border Classes="card">
+            <StackPanel Spacing="3">
+              <TextBlock Text="Hensikt" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+              <TextBlock Text="{Binding Purpose}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text="{Binding Rationale}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,4,0,0"/>
+            </StackPanel>
+          </Border>
+
+          <Border Classes="card">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Instruksjoner" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+              <ItemsControl ItemsSource="{Binding Steps}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,3">
+                      <Ellipse Width="10" Height="10" Fill="{DynamicResource ShellPrimaryBrush}" VerticalAlignment="Top" Margin="0,4,0,0"/>
+                      <TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
         </StackPanel>
-      </Border>
 
-      <!-- Instructions -->
-      <Border Classes="card">
-        <StackPanel Spacing="4">
-          <TextBlock Text="Instruksjoner" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-          <ItemsControl ItemsSource="{Binding Steps}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,3">
-                  <Ellipse Width="10" Height="10" Fill="{DynamicResource ShellPrimaryBrush}" VerticalAlignment="Top" Margin="0,4,0,0"/>
-                  <TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-                </StackPanel>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
+        <!-- Right: metadata + safety + start -->
+        <StackPanel Grid.Column="1" Spacing="12" Margin="8,0,0,0">
+          <Border Classes="card">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Detaljer" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+              <TextBlock Text="{Binding Category, StringFormat='Kategori: {0}'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text="{Binding DifficultyText, StringFormat='Nivå: {0}'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text="{Binding GoalText, StringFormat='Fokus: {0}'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text="{Binding FrequencyText, StringFormat='Frekvens: {0}'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text="{Binding DurationText, StringFormat='Varighet: {0}'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text="{Binding TargetPitchText, StringFormat='Mål-pitch: {0}'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text="{Binding MetricsText, StringFormat='Mål-skills: {0}'}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            </StackPanel>
+          </Border>
+
+          <Border Classes="card" BorderBrush="{DynamicResource ShellWarningBrush}">
+            <StackPanel Spacing="2">
+              <TextBlock Text="Sikkerhet og helse" FontWeight="SemiBold" Foreground="{DynamicResource ShellWarningBrush}"/>
+              <TextBlock Text="{Binding SafetyNote}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            </StackPanel>
+          </Border>
+
+          <Border Classes="card">
+            <StackPanel Spacing="6">
+              <Button Content="Start øvelse" Classes="primary" Command="{Binding StartCommand}" HorizontalAlignment="Stretch"/>
+              <TextBlock Text="{Binding StartStatus}" Foreground="{DynamicResource ShellWarningBrush}" TextWrapping="Wrap"/>
+            </StackPanel>
+          </Border>
         </StackPanel>
-      </Border>
 
-      <!-- Safety / health -->
-      <Border Classes="card" BorderBrush="{DynamicResource ShellWarningBrush}">
-        <StackPanel Spacing="2">
-          <TextBlock Text="Sikkerhet og helse" FontWeight="SemiBold" Foreground="{DynamicResource ShellWarningBrush}"/>
-          <TextBlock Text="{Binding SafetyNote}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-        </StackPanel>
-      </Border>
-
-      <!-- Start (placeholder) -->
-      <StackPanel Spacing="6">
-        <Button Content="Start øvelse" Classes="primary" Command="{Binding StartCommand}" HorizontalAlignment="Left"/>
-        <TextBlock Text="{Binding StartStatus}" Foreground="{DynamicResource ShellWarningBrush}" TextWrapping="Wrap"/>
-      </StackPanel>
+      </Grid>
 
     </StackPanel>
   </ScrollViewer>
