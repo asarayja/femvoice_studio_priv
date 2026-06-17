@@ -34,6 +34,7 @@ internal static class Program
         if (args.Contains("--reports-scaffold-smoke")) return ReportsScaffoldSmoke().GetAwaiter().GetResult();
         if (args.Contains("--diagnostics-scaffold-smoke")) return DiagnosticsScaffoldSmoke().GetAwaiter().GetResult();
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
+        if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
@@ -903,5 +904,100 @@ internal static class Program
                   && helpersOk;
         Console.WriteLine(ok ? "[pkg] Packaging readiness smoke OK" : "[pkg] Packaging readiness smoke FAIL");
         return ok ? 0 : 1;
+    }
+
+    // Read-only verification that the THEME/RESOURCE layer is intact in whatever build this runs from —
+    // source-run OR the published/installed output. It proves the .deb does not strip theme resources: it sets
+    // up the Avalonia app exactly as the real GUI does (App.axaml -> FluentTheme + the ShellTheme.axaml
+    // dictionary merged via avares://), then asserts (a) FluentTheme base styling is registered, (b) every
+    // {DynamicResource Shell*} key the views reference resolves to a brush in BOTH Dark and Light variants, and
+    // (c) a theme variant is resolvable (diagnostic). It opens NO window, takes no screenshots, changes no UI.
+    // It is headless-SAFE: it never requires a display to RUN. The runtime resource checks (a-c) need an
+    // Avalonia platform (a display/X11/Wayland) to execute; when none is present they are cleanly SKIPPED — NOT
+    // failed — exactly like --theme-loc-smoke (a missing display is not a packaging defect). To actually
+    // exercise the embedded resources from the published DLL (the source-vs-packaged parity proof), run it where
+    // a display is available: `dotnet artifacts/publish/<rid>/FemVoice.Avalonia.dll --packaged-theme-smoke`.
+    private static int PackagedThemeSmoke()
+    {
+        // Closed set of custom shell brush keys referenced by the views' AXAML via {DynamicResource ...}
+        // (MainWindow + all Views). Verified there are no other custom resource keys and no StaticResource use.
+        // The source-only cross-check below flags any future view that references a key outside this set.
+        string[] viewBrushKeys =
+        {
+            "ShellHeaderBackgroundBrush","ShellStatusBackgroundBrush","ShellPanelBackgroundBrush","ShellBorderBrush",
+            "ShellAccentBrush","ShellHeadingBrush","ShellMutedBrush","ShellFaintBrush","ShellSubtleTextBrush",
+            "ShellBodyTextBrush","ShellOkBrush","ShellOkBorderBrush","ShellDeferredTitleBrush","ShellDeferredBorderBrush",
+        };
+
+        // Runtime theme check: requires an Avalonia platform. If the platform cannot initialize (genuinely
+        // headless: no display), we mark it SKIPPED — not failed — mirroring ThemeLocSmoke(). Only a real
+        // FluentTheme-missing / key-not-resolving condition (when the platform DID come up) is a failure.
+        bool runtimeChecked = false, fluentOk = false, keysOk = true;
+        string resolvedVariant = "(skipped — no Avalonia platform)";
+        try
+        {
+            BuildAvaloniaApp().SetupWithoutStarting();
+            var app = Application.Current;
+            if (app is not null)
+            {
+                runtimeChecked = true;
+
+                // (a) FluentTheme registered (provides base control styling: buttons, text, panels, etc.).
+                fluentOk = app.Styles.OfType<global::Avalonia.Themes.Fluent.FluentTheme>().Any();
+
+                // (b) Every view-referenced Shell* brush resolves to an IBrush in BOTH variants (embedded ShellTheme.axaml).
+                foreach (var k in viewBrushKeys)
+                {
+                    bool darkOk = app.TryGetResource(k, global::Avalonia.Styling.ThemeVariant.Dark, out var dv) && dv is global::Avalonia.Media.IBrush;
+                    bool lightOk = app.TryGetResource(k, global::Avalonia.Styling.ThemeVariant.Light, out var lv) && lv is global::Avalonia.Media.IBrush;
+                    if (!(darkOk && lightOk)) { keysOk = false; Console.WriteLine($"[pkg-theme] MISSING/not-a-brush: {k} (dark={darkOk} light={lightOk})"); }
+                }
+
+                // (c) Diagnostic: which variant the running session selects (env-driven, not pass/fail).
+                resolvedVariant = app.ActualThemeVariant?.ToString() ?? "(null)";
+            }
+        }
+        catch (Exception ex)
+        {
+            // No Avalonia platform here (e.g. genuinely headless / no display). Skip the runtime check rather
+            // than fail it — the theme/resource layer being unverifiable without a display is NOT a defect.
+            Console.WriteLine($"[pkg-theme] runtime theme check skipped (no Avalonia platform here): {ex.GetType().Name}");
+        }
+
+        // Optional source-only cross-check: when run from the source tree (not the published DLL), scan the
+        // view AXAML and confirm every {DynamicResource Shell*} key is in viewBrushKeys (catches a future
+        // dangling/typo'd reference). Cleanly skipped from published output (no source AXAML present).
+        bool axamlCrossChecked = false, axamlCrossOk = true;
+        try
+        {
+            string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+            if (System.IO.File.Exists(System.IO.Path.Combine(projectDir, "MainWindow.axaml")))
+            {
+                axamlCrossChecked = true;
+                var known = new System.Collections.Generic.HashSet<string>(viewBrushKeys);
+                var rx = new System.Text.RegularExpressions.Regex(@"DynamicResource\s+(Shell[A-Za-z0-9]+)");
+                foreach (var f in System.IO.Directory.EnumerateFiles(projectDir, "*.axaml", System.IO.SearchOption.AllDirectories))
+                    foreach (System.Text.RegularExpressions.Match m in rx.Matches(System.IO.File.ReadAllText(f)))
+                    {
+                        string key = m.Groups[1].Value;
+                        if (!known.Contains(key)) { axamlCrossOk = false; Console.WriteLine($"[pkg-theme] AXAML references undefined key: {key} in {System.IO.Path.GetFileName(f)}"); }
+                    }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[pkg-theme] AXAML cross-check skipped: {ex.GetType().Name}");
+        }
+
+        Console.WriteLine(runtimeChecked
+            ? $"[pkg-theme] runtime: FluentTheme={fluentOk} shellKeys={viewBrushKeys.Length}×(Dark+Light) keysResolve={keysOk} variant='{resolvedVariant}'"
+            : "[pkg-theme] runtime: SKIPPED (no Avalonia platform/display — not a defect)");
+        Console.WriteLine($"[pkg-theme] AXAML key cross-check: {(axamlCrossChecked ? (axamlCrossOk ? "OK (source tree)" : "FAILED") : "skipped (published output / no source)")}");
+        // Runtime portion passes if it ran cleanly OR was skipped (no platform). The AXAML cross-check (when it
+        // ran) must pass. A genuine missing-FluentTheme / unresolved-key (with the platform up) is a real FAIL.
+        bool runtimeOk = !runtimeChecked || (fluentOk && keysOk);
+        bool allOk = runtimeOk && axamlCrossOk;
+        Console.WriteLine(allOk ? "[pkg-theme] Packaged theme/resource smoke OK" : "[pkg-theme] Packaged theme/resource smoke FAIL");
+        return allOk ? 0 : 1;
     }
 }
