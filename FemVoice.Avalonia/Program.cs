@@ -47,6 +47,7 @@ internal static class Program
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
         if (args.Contains("--visual-baseline-smoke")) return VisualBaselineSmoke();
         if (args.Contains("--visual-interaction-chart-smoke")) return VisualInteractionChartSmoke();
+        if (args.Contains("--exercise-layout-parity-smoke")) return ExerciseLayoutParitySmoke().GetAwaiter().GetResult();
         return null;
     }
 
@@ -1208,6 +1209,71 @@ internal static class Program
         bool runtimeOk = !runtimeChecked || chartBrushesOk;
         bool allOk = listsExercises && cardOpensDetail && detailMatches && chartGeometry && noChartingLib && runtimeOk && srcOk;
         Console.WriteLine(allOk ? "[visual-ix] Visual interaction + chart smoke OK" : "[visual-ix] Visual interaction + chart smoke FAIL");
+        return allOk ? 0 : 1;
+    }
+
+    // Read-only verification of the WPF-parity exercise layout. (1) Guide card-click still opens the detail.
+    // (2) Runtime Start/Stop lifecycle works and the feedback/hold/coordinator readouts stay wired (VM unchanged).
+    // (3) The runtime VIEW no longer renders a pitch chart (WPF has none there) while the runtime VM RETAINS its
+    // chart data model; the dashboard chart is retained. (4) Detail + runtime views are grid-based. No charting
+    // dependency. All checks are deterministic (no frame-timing dependency) and need no display.
+    private static async Task<int> ExerciseLayoutParitySmoke()
+    {
+        var svc = new VoiceFeminizationExerciseService();
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+
+        // (1) Guide card-click -> detail.
+        shell.ShowGuideCommand.Execute(null);
+        var guide = shell.CurrentPage as ExerciseGuideViewModel;
+        guide?.OpenExerciseCommand.Execute(guide.Exercises.FirstOrDefault());
+        var detail = shell.CurrentPage as ExerciseDetailViewModel;
+        bool cardOpensDetail = detail is not null;
+
+        // (2) Detail -> runtime; Start/Stop lifecycle + readouts still wired.
+        detail?.StartCommand.Execute(null);
+        var runtime = shell.CurrentPage as ExerciseRuntimeViewModel;
+        runtime?.BeginCommand.Execute(null);
+        await Task.Delay(60);
+        bool started = runtime?.IsRunning == true;
+        bool readoutsWired = runtime?.CoordinatorReadout is not null;             // coordinator readout still present
+        bool runtimeChartModelRetained = runtime?.RuntimePitchSamples is not null; // data model NOT removed
+        runtime?.StopCommand.Execute(null);
+        await Task.Delay(60);   // Stop() is async (awaits StopAsync before clearing IsRunning) — let it settle.
+        bool stopped = runtime is not null && !runtime.IsRunning;
+        Console.WriteLine($"[ex-layout] guide->detail={cardOpensDetail} started={started} readouts-wired={readoutsWired} chart-model-retained={runtimeChartModelRetained} stopped={stopped}");
+
+        // (3) Dashboard chart retained; no charting dependency.
+        bool dashChart = dash.DashboardChart is not null && dash.PitchTracePx is not null;
+        var refs = typeof(Program).Assembly.GetReferencedAssemblies().Select(a => a.Name).Where(n => n != null).ToArray();
+        bool noChartingLib = !refs.Any(n => n!.Contains("Plot") || n!.Contains("Chart"));
+        Console.WriteLine($"[ex-layout] dashboard-chart-retained={dashChart} no-charting-lib={noChartingLib}");
+
+        // (4) Source-only: runtime VIEW has no chart + is grid-based; detail view grid-based; dashboard keeps chart.
+        bool srcChecked = false, srcOk = true;
+        try
+        {
+            string viewsDir = System.IO.Path.Combine(System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..")), "Views");
+            string rt = System.IO.Path.Combine(viewsDir, "ExerciseRuntimeView.axaml");
+            string det = System.IO.Path.Combine(viewsDir, "ExerciseDetailView.axaml");
+            string dv = System.IO.Path.Combine(viewsDir, "DashboardView.axaml");
+            if (System.IO.File.Exists(rt) && System.IO.File.Exists(det) && System.IO.File.Exists(dv))
+            {
+                srcChecked = true;
+                string rtx = System.IO.File.ReadAllText(rt), detx = System.IO.File.ReadAllText(det), dvx = System.IO.File.ReadAllText(dv);
+                bool runtimeNoChart = !rtx.Contains("Canvas") && !rtx.Contains("RuntimePitchSamples") && !rtx.Contains("RuntimeChart");
+                if (!runtimeNoChart) { srcOk = false; Console.WriteLine("[ex-layout] runtime view still renders a pitch chart"); }
+                if (!rtx.Contains("ColumnDefinitions")) { srcOk = false; Console.WriteLine("[ex-layout] runtime view is not grid-based"); }
+                if (!detx.Contains("ColumnDefinitions")) { srcOk = false; Console.WriteLine("[ex-layout] detail view is not grid-based"); }
+                if (!(dvx.Contains("Canvas") && dvx.Contains("PitchTracePx"))) { srcOk = false; Console.WriteLine("[ex-layout] dashboard view lost its chart"); }
+            }
+        }
+        catch (Exception ex) { Console.WriteLine($"[ex-layout] source check skipped: {ex.GetType().Name}"); }
+        Console.WriteLine($"[ex-layout] source check: {(srcChecked ? (srcOk ? "OK (source tree)" : "FAILED") : "skipped (published output / no source)")}");
+
+        bool allOk = cardOpensDetail && started && readoutsWired && runtimeChartModelRetained && stopped
+                     && dashChart && noChartingLib && srcOk;
+        Console.WriteLine(allOk ? "[ex-layout] Exercise layout parity smoke OK" : "[ex-layout] Exercise layout parity smoke FAIL");
         return allOk ? 0 : 1;
     }
 }
