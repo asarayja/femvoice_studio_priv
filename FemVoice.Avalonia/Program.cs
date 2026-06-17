@@ -55,6 +55,7 @@ internal static class Program
         if (args.Contains("--exercise-guide-filter-search-smoke")) return ExerciseGuideFilterSearchSmoke();
         if (args.Contains("--smartcoach-progression-ui-scaffold-smoke")) return SmartCoachProgressionUiScaffoldSmoke();
         if (args.Contains("--settings-visual-parity-smoke")) return SettingsVisualParitySmoke();
+        if (args.Contains("--visual-layout-polish-smoke")) return VisualLayoutPolishSmoke();
         return null;
     }
 
@@ -1758,6 +1759,65 @@ internal static class Program
                   && allInert && chipsOnActionable && hasCombo && hasToggle && hasButton
                   && deferredWording && navIntact;
         Console.WriteLine(ok ? "[settings-vis] Settings visual parity smoke OK" : "[settings-vis] Settings visual parity smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Verifies the visual layout-polish pass is behavior-neutral: the polished views adopt a centered content
+    // column (Settings + scaffolds + Exercise Guide) and Settings uses a responsive WrapPanel for section cards
+    // (source inspection — skipped/true when no source tree, e.g. from the published DLL); AND the display-only
+    // guarantees still hold at the VM level (Settings inert, SmartCoach/Progression deferred+disabled, Exercise
+    // Guide filter/search intact, Dashboard chart model present). No behavior is enabled.
+    private static int VisualLayoutPolishSmoke()
+    {
+        string viewsDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Views"));
+        // Returns the file text, or "" if absent. Source checks treat absent as a skip (pass).
+        string View(string name)
+        {
+            string p = System.IO.Path.Combine(viewsDir, name);
+            return System.IO.File.Exists(p) ? System.IO.File.ReadAllText(p) : "";
+        }
+        bool SourcePresent = System.IO.File.Exists(System.IO.Path.Combine(viewsDir, "SettingsView.axaml"));
+
+        // ---- Source (XAML) layout checks — skipped (true) when the source tree isn't shipped. ----
+        string settings = View("SettingsView.axaml");
+        bool settingsResponsive = !SourcePresent || (settings.Contains("WrapPanel") && settings.Contains("HorizontalAlignment=\"Center\""));
+        bool scaffoldsCentered = !SourcePresent || new[]
+        {
+            "SmartCoachScaffoldView.axaml", "ProgressionScaffoldView.axaml",
+            "AnalysisView.axaml", "ReportsView.axaml", "DiagnosticsView.axaml",
+        }.All(v => View(v).Contains("HorizontalAlignment=\"Center\""));
+        string guide = View("ExerciseGuideView.axaml");
+        bool guideCentered = !SourcePresent || (guide.Contains("HorizontalAlignment=\"Center\"")
+                              && guide.Contains("SearchText") && guide.Contains("CategoryChips")
+                              && !guide.Contains("TargetPitchText"));   // filter/search kept, no target-Hz reintroduced
+
+        // ---- VM display-only guarantees (always run; independent of source tree). ----
+        var settingsVm = new SettingsViewModel();
+        bool settingsInert = settingsVm.AllControlsDeferred
+            && !typeof(System.IDisposable).IsAssignableFrom(typeof(SettingsViewModel));
+        var coach = new SmartCoachScaffoldViewModel();
+        var prog = new ProgressionScaffoldViewModel();
+        bool scaffoldsDeferred = !coach.ActionEnabled && !prog.ActionEnabled
+            && prog.Parameters.All(p => p.Value == "—")
+            && typeof(SmartCoachScaffoldViewModel).GetConstructors()[0].GetParameters().Length == 0
+            && typeof(ProgressionScaffoldViewModel).GetConstructors()[0].GetParameters().Length == 0;
+
+        var svc = new VoiceFeminizationExerciseService();
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+        var guideVm = new ExerciseGuideViewModel(svc, _ => { });
+        bool guideFilterIntact = guideVm.CategoryChips.Count >= 2 && guideVm.FilteredExercises.Count == guideVm.Exercises.Count;
+        guideVm.SearchText = "zzqx-none"; bool searchWorks = guideVm.FilteredCount == 0; guideVm.SearchText = "";
+        bool dashboardChartIntact = dash.DashboardChart is not null;   // chart model unchanged
+        bool navIntact = shell.NavItems.Count == 9 && shell.NavItems.Count(n => n.IsImplemented) == 6;
+
+        Console.WriteLine($"[layout] source={(SourcePresent ? "present" : "skipped")} settingsResponsive={settingsResponsive} scaffoldsCentered={scaffoldsCentered} guideCentered={guideCentered}");
+        Console.WriteLine($"[layout] settingsInert={settingsInert} scaffoldsDeferred={scaffoldsDeferred} guideFilterIntact={guideFilterIntact}&searchWorks={searchWorks} dashboardChartIntact={dashboardChartIntact} navIntact={navIntact}");
+
+        bool ok = settingsResponsive && scaffoldsCentered && guideCentered
+                  && settingsInert && scaffoldsDeferred && guideFilterIntact && searchWorks
+                  && dashboardChartIntact && navIntact;
+        Console.WriteLine(ok ? "[layout] Visual layout polish smoke OK" : "[layout] Visual layout polish smoke FAIL");
         return ok ? 0 : 1;
     }
 }
