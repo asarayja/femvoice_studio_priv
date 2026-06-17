@@ -5,7 +5,7 @@
   <!-- Display-only Reports / Professional scaffold: static placeholder cards + disabled actions.
        No report generation, no file dialogs, no database/history. Shell theme brushes; no converters. -->
   <ScrollViewer>
-    <StackPanel Margin="20" Spacing="14" MaxWidth="820" HorizontalAlignment="Left">
+    <StackPanel Margin="24" Spacing="14" MaxWidth="960" HorizontalAlignment="Center">
 
       <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold"/>
 
