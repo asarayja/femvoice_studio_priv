@@ -67,3 +67,25 @@ Dashboard chart now uses the shared converter-free `RuntimeChartDisplay` geometr
 
 ### Behaviour change
 **None to clinical/domain behaviour. WPF untouched.** Visual/UX + display-only chart geometry + a read-only smoke. Signing/notarization **not started**.
+
+---
+
+## Follow-up 2 gate (same PR #19): WPF-parity exercise/runtime layout
+
+Date: 2026-06-17 · same branch.
+
+- **WPF reference**: `FemVoiceStudio/Views/ExerciseWindow.xaml` inspected (read-only). NO pitch graph on the exercise/session screen; two-column grid (info/guidance/steps left · session timer/start-stop + live-feedback metrics right). Avalonia layout adjusted to match.
+- **Build**: 0 warnings / 0 errors.
+- **Smokes**: **19/19 OK, all exit 0** (added `--exercise-layout-parity-smoke`): guide->detail=True, started=True, readouts-wired=True, chart-model-retained=True, stopped=True, dashboard-chart-retained=True, no-charting-lib=True, source check OK (runtime view has no Canvas/RuntimePitchSamples/RuntimeChart + is grid-based; detail grid-based; dashboard keeps chart). A stop-race flake (async `Stop()`) was fixed by awaiting before asserting `stopped` — stress 18 runs, 0 failures.
+- **Vulnerable packages**: none; Tmds 0.21.3; refs Core + Audio.Abstractions only.
+- **Leak guard**: clean. No OxyPlot/charting dependency (csproj unchanged).
+- **Publish/package**: `publish-linux.sh` OK; published `--theme-loc`/`--packaged-theme`/`--visual-baseline`/`--visual-interaction-chart`/`--exercise-layout-parity` smokes all exit 0; `.deb` builds; `publish-macos.sh osx-x64` OK.
+- **Portable**: 1570/1580 (10 known localization-data baseline; 1569 acceptable with the intermittent `ComfortZone` flake). No new failures.
+
+### Exercise layout changes
+- Runtime view: pitch chart **removed** (VM chart data model retained); two-column grid (info/feedback left · session controls + hold/coordinator readouts right); session timer + Start/Stop visible without long scrolling.
+- Detail view: two-column grid (purpose/instructions left · details/safety/Start right).
+- Dashboard chart, Exercise Guide clickable cards: **kept**.
+
+### Behaviour change
+**None to clinical/domain behaviour. WPF untouched.** Visual/UX layout + a read-only smoke. Signing/notarization **not started**.

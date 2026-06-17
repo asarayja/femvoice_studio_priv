@@ -101,3 +101,53 @@ only; leak guard clean (no OxyPlot/charting dep — csproj unchanged); portable 
 ### Manual Linux visual verification (follow-up)
 Launched the dark UI again for screenshot; the Exercise Guide rows are clickable and the dashboard chart shows the
 comfort band + grid + axis labels + marker + trace (recorded in the report turn).
+
+---
+
+## Follow-up 2 (same PR #19): WPF-parity exercise/runtime layout (no pitch graph, grid layout)
+
+The user compared against the original Windows/WPF UI and flagged two exercise-screen parity issues. Visual/UX
+layout only; no clinical/domain/WPF/data/pitch/target-profile change.
+
+### WPF reference check (inspected, not guessed)
+Inspected the frozen `FemVoiceStudio/Views/ExerciseWindow.xaml` (the single WPF window for the exercise
+experience — there is no separate WPF detail/guide window; the Avalonia Guide→Detail→Runtime split is
+Avalonia-specific). Findings:
+- **The WPF exercise/session screen has NO pitch graph** (no chart/plot/graph/polyline/canvas of any kind). The
+  realtime feedback is metric **bars** (resonance/stability/pitch-direction `ProgressBar`s) + score chips + status
+  text, in Grids. (WPF even removed the raw target-Hz panel: *"TargetPitchPanel FJERNET — ingen Hz-verdier
+  eksponeres i UI"*.)
+- **WPF DetailView is a two-column grid**: left (1.25*, scrollable) = exercise info card + guidance (UniformGrid
+  2-col) + numbered steps; right (0.75*, MinWidth 420 / MaxWidth 560) = the session panel (large 48px timer +
+  Start/Stop + feedback) then the live-feedback metrics. The exercise list (the "guide") uses clickable
+  `ExerciseCard`s (`Cursor=Hand`) — confirming the Avalonia clickable-card is WPF-accurate.
+
+### Why the Avalonia layout was adjusted
+The Avalonia **Runtime** view had a large pitch chart + ~8 stacked cards in one long vertical scroll — neither
+matches WPF (no graph there) nor avoids scrolling. So:
+- **Pitch chart removed from the Runtime view** (the `Canvas` chart with band/trace/marker/axis is gone). The
+  runtime **VM keeps its chart data model** (`RuntimeChart` + `RuntimePitchSamples`) so `--runtime-chart-feedback-smoke`
+  and the runtime logic are unchanged — only the on-screen chart is gone, matching WPF.
+- **Runtime view is now a two-column grid**: left = target-profile + (running) live pitch/status text +
+  feedback/guidance; right = the session panel (large elapsed timer + phase + Start/Stop, always visible) +
+  (running) hold-progress "meters" + the coordinator readout. Key controls are visible without long scrolling.
+- **Detail view is now a two-column grid**: left = purpose + instructions; right = details + safety + Start. No
+  pitch graph (WPF has none here either).
+- Both views keep an outer `ScrollViewer` and proportional star columns so smaller windows still scroll gracefully
+  (no fixed Windows-only dimensions).
+
+### Kept (not reverted)
+Dashboard dark chart (comfort band + grid + marker + trace), Exercise Guide clickable cards + dark styling,
+dark-first baseline, shared ShellTheme, and the `--visual-baseline` / `--visual-interaction-chart` smokes.
+
+### New smoke `--exercise-layout-parity-smoke` (read-only, deterministic, no display)
+Verifies: guide card-click still opens the detail; runtime Start/Stop lifecycle works and the coordinator readout
+stays wired; the runtime VM **retains** its chart data model; the runtime **view** no longer renders a chart
+(`Canvas`/`RuntimePitchSamples`/`RuntimeChart` absent) and is grid-based; the detail view is grid-based; the
+dashboard view **keeps** its chart; and no charting dependency is referenced. (A flaky stop-race was fixed by
+awaiting the async `Stop()` before asserting `stopped` — 18 stress runs, 0 failures.)
+
+### Follow-up 2 gate
+Build 0/0; **19/19 smokes OK (all exit 0)**; vuln clean; Tmds 0.21.3; refs Core + Audio.Abstractions only; leak
+guard clean; portable 1570/1580 (10 known baseline; 1569 with the `ComfortZone` flake); published smokes + `.deb` +
+macOS publish OK. No clinical/domain/WPF/data change. Signing/notarization still **not started**.
