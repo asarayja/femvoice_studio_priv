@@ -84,6 +84,33 @@
       <Setter Property="BorderBrush" Value="{DynamicResource ShellPrimaryBrush}"/>
     </Style>
 
+    <!-- Exercise Guide category-filter chip (toggle pill). Unselected = muted chip surface; selected (a
+         converter-free bool->class binding) = accent fill. Dark-baseline brushes. -->
+    <Style Selector="Button.chipFilter">
+      <Setter Property="Background" Value="{DynamicResource ShellChipBackgroundBrush}"/>
+      <Setter Property="Foreground" Value="{DynamicResource ShellChipTextBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource ShellBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="14"/>
+      <Setter Property="Padding" Value="14,5"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="Button.chipFilter:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource ShellPanelBackgroundBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource ShellAccentBrush}"/>
+    </Style>
+    <Style Selector="Button.chipFilter.selected">
+      <Setter Property="Background" Value="{DynamicResource ShellPrimaryBrush}"/>
+      <Setter Property="Foreground" Value="#FFFFFF"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource ShellPrimaryBrush}"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style Selector="Button.chipFilter.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource ShellPrimaryHoverBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource ShellPrimaryHoverBrush}"/>
+    </Style>
+
     <!-- Reusable elevated card surface -->
     <Style Selector="Border.card">
       <Setter Property="Background" Value="{DynamicResource ShellCardBackgroundBrush}"/>
