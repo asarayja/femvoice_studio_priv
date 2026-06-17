@@ -4,58 +4,67 @@
   <ScrollViewer>
     <StackPanel Margin="20" Spacing="12">
 
-      <StackPanel Orientation="Horizontal" Spacing="10">
-        <Button Content="← Tilbake" Command="{Binding BackCommand}"/>
-        <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold" VerticalAlignment="Center"/>
+      <!-- Hero header: back + purple icon badge + title -->
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <Button Content="← Tilbake" Command="{Binding BackCommand}" VerticalAlignment="Center"/>
+        <Border Width="44" Height="44" CornerRadius="22" Background="{DynamicResource ShellPrimaryBrush}" VerticalAlignment="Center">
+          <TextBlock Text="♪" FontSize="22" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+        <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold" VerticalAlignment="Center"
+                   Foreground="{DynamicResource ShellHeadingBrush}"/>
       </StackPanel>
 
       <!-- Metadata -->
-      <Border BorderBrush="#444" BorderThickness="1" CornerRadius="6" Padding="12">
+      <Border Classes="card">
         <WrapPanel>
-          <TextBlock Text="{Binding Category, StringFormat='Kategori: {0}'}" Margin="0,0,20,4"/>
-          <TextBlock Text="{Binding DifficultyText, StringFormat='Nivå: {0}'}" Margin="0,0,20,4"/>
-          <TextBlock Text="{Binding GoalText, StringFormat='Fokus: {0}'}" Margin="0,0,20,4"/>
-          <TextBlock Text="{Binding FrequencyText, StringFormat='Frekvens: {0}'}" Margin="0,0,20,4"/>
-          <TextBlock Text="{Binding DurationText, StringFormat='Varighet: {0}'}" Margin="0,0,20,4"/>
-          <TextBlock Text="{Binding TargetPitchText, StringFormat='Mål-pitch: {0}'}" Margin="0,0,20,4"/>
-          <TextBlock Text="{Binding MetricsText, StringFormat='Mål-skills: {0}'}" Margin="0,0,20,4"/>
+          <TextBlock Text="{Binding Category, StringFormat='Kategori: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+          <TextBlock Text="{Binding DifficultyText, StringFormat='Nivå: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+          <TextBlock Text="{Binding GoalText, StringFormat='Fokus: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+          <TextBlock Text="{Binding FrequencyText, StringFormat='Frekvens: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+          <TextBlock Text="{Binding DurationText, StringFormat='Varighet: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+          <TextBlock Text="{Binding TargetPitchText, StringFormat='Mål-pitch: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+          <TextBlock Text="{Binding MetricsText, StringFormat='Mål-skills: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
         </WrapPanel>
       </Border>
 
       <!-- Purpose -->
-      <StackPanel Spacing="3">
-        <TextBlock Text="Hensikt" FontWeight="SemiBold"/>
-        <TextBlock Text="{Binding Purpose}" TextWrapping="Wrap"/>
-        <TextBlock Text="{Binding Rationale}" TextWrapping="Wrap" Foreground="#aaa" Margin="0,4,0,0"/>
-      </StackPanel>
+      <Border Classes="card">
+        <StackPanel Spacing="3">
+          <TextBlock Text="Hensikt" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <TextBlock Text="{Binding Purpose}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+          <TextBlock Text="{Binding Rationale}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,4,0,0"/>
+        </StackPanel>
+      </Border>
 
       <!-- Instructions -->
-      <StackPanel Spacing="4">
-        <TextBlock Text="Instruksjoner" FontWeight="SemiBold"/>
-        <ItemsControl ItemsSource="{Binding Steps}">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate>
-              <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2">
-                <TextBlock Text="•" Foreground="#4FC3F7"/>
-                <TextBlock Text="{Binding}" TextWrapping="Wrap"/>
-              </StackPanel>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </StackPanel>
+      <Border Classes="card">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Instruksjoner" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <ItemsControl ItemsSource="{Binding Steps}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,3">
+                  <Ellipse Width="10" Height="10" Fill="{DynamicResource ShellPrimaryBrush}" VerticalAlignment="Top" Margin="0,4,0,0"/>
+                  <TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
 
       <!-- Safety / health -->
-      <Border BorderBrush="#a63" BorderThickness="1" CornerRadius="6" Padding="12">
+      <Border Classes="card" BorderBrush="{DynamicResource ShellWarningBrush}">
         <StackPanel Spacing="2">
-          <TextBlock Text="Sikkerhet og helse" FontWeight="SemiBold" Foreground="#e8a"/>
-          <TextBlock Text="{Binding SafetyNote}" TextWrapping="Wrap"/>
+          <TextBlock Text="Sikkerhet og helse" FontWeight="SemiBold" Foreground="{DynamicResource ShellWarningBrush}"/>
+          <TextBlock Text="{Binding SafetyNote}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
         </StackPanel>
       </Border>
 
       <!-- Start (placeholder) -->
       <StackPanel Spacing="6">
-        <Button Content="Start øvelse" Command="{Binding StartCommand}" Width="140" HorizontalAlignment="Left"/>
-        <TextBlock Text="{Binding StartStatus}" Foreground="#c96" TextWrapping="Wrap"/>
+        <Button Content="Start øvelse" Classes="primary" Command="{Binding StartCommand}" HorizontalAlignment="Left"/>
+        <TextBlock Text="{Binding StartStatus}" Foreground="{DynamicResource ShellWarningBrush}" TextWrapping="Wrap"/>
       </StackPanel>
 
     </StackPanel>

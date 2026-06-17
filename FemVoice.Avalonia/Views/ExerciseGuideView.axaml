@@ -2,31 +2,37 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="FemVoice.Avalonia.Views.ExerciseGuideView">
   <Grid Margin="20" RowDefinitions="Auto,Auto,*">
-    <TextBlock Grid.Row="0" Text="{Binding Heading}" FontSize="20" FontWeight="Bold" Margin="0,0,0,4"/>
-    <TextBlock Grid.Row="1" Foreground="#888" Margin="0,0,0,12" TextWrapping="Wrap"
+    <TextBlock Grid.Row="0" Text="{Binding Heading}" FontSize="20" FontWeight="Bold" Margin="0,0,0,4"
+               Foreground="{DynamicResource ShellHeadingBrush}"/>
+    <TextBlock Grid.Row="1" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,0,0,12" TextWrapping="Wrap"
                Text="Les-bare oversikt over øvelseskatalogen fra delte tjenester. Velg en øvelse for detaljer."/>
     <ScrollViewer Grid.Row="2">
       <ItemsControl ItemsSource="{Binding Exercises}">
         <ItemsControl.ItemTemplate>
           <DataTemplate>
-            <Border BorderBrush="#444" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10">
-              <Grid ColumnDefinitions="*,Auto">
-                <StackPanel Grid.Column="0" Spacing="3">
+            <Border Classes="card" Margin="0,0,0,10">
+              <Grid ColumnDefinitions="Auto,*,Auto">
+                <!-- Purple icon accent badge -->
+                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20" VerticalAlignment="Top" Margin="0,0,12,0"
+                        Background="{DynamicResource ShellPrimaryBrush}">
+                  <TextBlock Text="♪" FontSize="20" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel Grid.Column="1" Spacing="3">
                   <StackPanel Orientation="Horizontal" Spacing="8">
-                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="15"/>
-                    <Border Background="#2b3a55" CornerRadius="4" Padding="6,1">
-                      <TextBlock Text="{Binding Category}" Foreground="#cfe2ff" FontSize="11"/>
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellHeadingBrush}"/>
+                    <Border Classes="chip" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding Category}" Foreground="{DynamicResource ShellChipTextBrush}" FontSize="11"/>
                     </Border>
                   </StackPanel>
-                  <TextBlock Text="{Binding ShortDescription}" Foreground="#bbb" TextWrapping="Wrap"/>
+                  <TextBlock Text="{Binding ShortDescription}" Foreground="{DynamicResource ShellBodyTextBrush}" TextWrapping="Wrap"/>
                   <WrapPanel>
-                    <TextBlock Text="{Binding DifficultyText, StringFormat='Nivå: {0}'}" Foreground="#999" Margin="0,0,16,0"/>
-                    <TextBlock Text="{Binding GoalText, StringFormat='Fokus: {0}'}" Foreground="#999" Margin="0,0,16,0"/>
-                    <TextBlock Text="{Binding TargetPitchText, StringFormat='Mål-pitch: {0}'}" Foreground="#999" Margin="0,0,16,0"/>
-                    <TextBlock Text="{Binding DurationText, StringFormat='Varighet: {0}'}" Foreground="#999"/>
+                    <TextBlock Text="{Binding DifficultyText, StringFormat='Nivå: {0}'}" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,0,16,0"/>
+                    <TextBlock Text="{Binding GoalText, StringFormat='Fokus: {0}'}" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,0,16,0"/>
+                    <TextBlock Text="{Binding TargetPitchText, StringFormat='Mål-pitch: {0}'}" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,0,16,0"/>
+                    <TextBlock Text="{Binding DurationText, StringFormat='Varighet: {0}'}" Foreground="{DynamicResource ShellMutedBrush}"/>
                   </WrapPanel>
                 </StackPanel>
-                <Button Grid.Column="1" Content="Åpne" VerticalAlignment="Center" Width="80"
+                <Button Grid.Column="2" Content="Åpne ›" Classes="secondary" VerticalAlignment="Center" Width="90"
                         Command="{Binding $parent[ItemsControl].DataContext.OpenExerciseCommand}"
                         CommandParameter="{Binding}"/>
               </Grid>
