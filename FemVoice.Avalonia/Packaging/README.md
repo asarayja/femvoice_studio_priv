@@ -93,7 +93,11 @@ framework-dependent by design and does not bundle .NET). A self-contained `.deb`
 - `linux/debian-copyright` — machine-readable copyright, installed as `/usr/share/doc/femvoice-studio/copyright`.
 - `linux/README.Debian` — short runtime/launch note, installed as `/usr/share/doc/femvoice-studio/README.Debian`.
 
-A macOS `.app`/`.dmg` bundling step (consuming `Info.plist`) and a self-contained `.deb` remain **deferred**.
+macOS `.app`/`.dmg` bundling is now available (unsigned, readiness): `macos/package-app.sh <rid>` assembles
+`artifacts/dist/<rid>/FemVoice Studio.app` from the publish output (consuming `Info.plist`; runs on any OS, no
+signing), and `macos/package-dmg.sh <rid>` builds a `.dmg` when `hdiutil` is available (macOS) or skips gracefully
+otherwise. Both support `--check`/`--dry-run`/`--help` and require no secrets. See `macos/README.md`. A
+self-contained `.deb` and real signing/notarization remain **deferred**.
 
 ## Signing / notarization readiness (future — no real signing today)
 Local packages are **unsigned** and that flow is fully supported. Signing/notarization is **deferred**; only
