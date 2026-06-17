@@ -33,6 +33,7 @@ internal static class Program
         if (args.Contains("--analysis-scaffold-smoke")) return AnalysisScaffoldSmoke().GetAwaiter().GetResult();
         if (args.Contains("--reports-scaffold-smoke")) return ReportsScaffoldSmoke().GetAwaiter().GetResult();
         if (args.Contains("--diagnostics-scaffold-smoke")) return DiagnosticsScaffoldSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--packaging-smoke")) return PackagingSmoke();
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
@@ -803,6 +804,48 @@ internal static class Program
         bool ok = navExists && onDiagnostics && notDisposable && noCommands && cardsOk && allDeferred
                   && runtimeRan && runtimeDisposed && noOrphanFrames;
         Console.WriteLine(ok ? "[diag] Diagnostics scaffold smoke OK" : "[diag] Diagnostics scaffold smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Behavior-neutral verification of the desktop packaging-readiness slice (no display, no publish): inspect
+    // the FemVoice.Avalonia project metadata (RuntimeIdentifiers for Linux/macOS, Tmds.DBus.Protocol pin,
+    // trimming disabled, exactly Core + Audio.Abstractions project refs), confirm the inert packaging templates
+    // exist, and confirm at runtime that the head references no FemVoice.Audio.* assembly other than Abstractions.
+    // Read-only; changes nothing. (Forbidden token literals are deliberately NOT embedded here — verified via
+    // positive checks + the source leak guard.)
+    private static int PackagingSmoke()
+    {
+        // AppContext.BaseDirectory = .../FemVoice.Avalonia/bin/<cfg>/net10.0/  ->  up 3 = the project dir.
+        string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+        string csprojPath = System.IO.Path.Combine(projectDir, "FemVoice.Avalonia.csproj");
+        bool csprojFound = System.IO.File.Exists(csprojPath);
+        string csproj = csprojFound ? System.IO.File.ReadAllText(csprojPath) : "";
+
+        string[] rids = { "linux-x64", "linux-arm64", "osx-x64", "osx-arm64" };
+        bool ridsOk = csprojFound && csproj.Contains("<RuntimeIdentifiers>") && rids.All(csproj.Contains);
+        bool tmdsPinned = csproj.Contains("Tmds.DBus.Protocol\" Version=\"0.21.3\"");
+        bool noTrim = csproj.Contains("<PublishTrimmed>false");
+        int projRefCount = csproj.Split("<ProjectReference ").Length - 1;
+        // Exactly 2 project refs, both Core + Audio.Abstractions present -> implicitly no third (Windows audio) ref.
+        bool refsOk = projRefCount == 2 && csproj.Contains("FemVoice.Core") && csproj.Contains("FemVoice.Audio.Abstractions");
+
+        bool plistOk = System.IO.File.Exists(System.IO.Path.Combine(projectDir, "Packaging", "macos", "Info.plist"));
+        bool desktopOk = System.IO.File.Exists(System.IO.Path.Combine(projectDir, "Packaging", "linux", "femvoice-studio.desktop"));
+
+        // Runtime reflection: the head references Core + Audio.Abstractions and NO other FemVoice.Audio.* assembly.
+        var refs = typeof(Program).Assembly.GetReferencedAssemblies().Select(a => a.Name).Where(n => n != null).ToArray();
+        bool refCore = refs.Contains("FemVoice.Core");
+        bool refAbstractions = refs.Contains("FemVoice.Audio.Abstractions");
+        bool noOtherFemVoiceAudio = refs.Where(n => n!.StartsWith("FemVoice.Audio.")).All(n => n == "FemVoice.Audio.Abstractions");
+
+        Console.WriteLine($"[pkg] csproj: found={csprojFound} RIDs(linux-x64;linux-arm64;osx-x64;osx-arm64)={ridsOk} Tmds-pin-0.21.3={tmdsPinned} no-trim={noTrim}");
+        Console.WriteLine($"[pkg] project refs: count={projRefCount} core+abstractions-only={refsOk}");
+        Console.WriteLine($"[pkg] templates: macos/Info.plist={plistOk} linux/.desktop={desktopOk}");
+        Console.WriteLine($"[pkg] runtime refs: Core={refCore} Abstractions={refAbstractions} no-other-FemVoice.Audio={noOtherFemVoiceAudio}");
+
+        bool ok = csprojFound && ridsOk && tmdsPinned && noTrim && refsOk
+                  && plistOk && desktopOk && refCore && refAbstractions && noOtherFemVoiceAudio;
+        Console.WriteLine(ok ? "[pkg] Packaging readiness smoke OK" : "[pkg] Packaging readiness smoke FAIL");
         return ok ? 0 : 1;
     }
 }
