@@ -2,12 +2,20 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
              x:Class="FemVoice.Avalonia.Views.SettingsView">
-  <!-- Display-only Settings scaffold: cards + inert rows. All interactive controls are IsEnabled=False with
-       no command/binding (no side effects). Colours use the shell theme brushes; no value converters. -->
+  <!-- Display-only Settings scaffold mirroring WPF SettingsWindow sections. Each row renders a DISABLED control
+       of its kind (combo/toggle/button) plus an "Utsatt" chip — every control is IsEnabled=False, bound to
+       nothing, with no command (no side effects). Dark baseline via shell theme brushes; no value converters. -->
   <ScrollViewer>
-    <StackPanel Margin="20" Spacing="14" MaxWidth="760" HorizontalAlignment="Left">
+    <StackPanel Margin="20" Spacing="12" MaxWidth="780" HorizontalAlignment="Left">
 
-      <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold"/>
+      <!-- Header: title + deferred badge -->
+      <StackPanel Orientation="Horizontal" Spacing="10">
+        <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold" VerticalAlignment="Center"
+                   Foreground="{DynamicResource ShellHeadingBrush}"/>
+        <Border Classes="chip" VerticalAlignment="Center">
+          <TextBlock Text="{Binding DeferredBadge}" Foreground="{DynamicResource ShellChipTextBrush}" FontSize="11"/>
+        </Border>
+      </StackPanel>
 
       <!-- Deferred banner -->
       <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
@@ -25,12 +33,19 @@
                 <ItemsControl ItemsSource="{Binding Rows}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="vm:SettingsRow">
-                      <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                      <Grid ColumnDefinitions="*,Auto" Margin="0,5,0,0">
                         <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellBodyTextBrush}" VerticalAlignment="Center"/>
-                        <!-- Inert: disabled control bound to nothing; status text conveys 'deferred'. -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                          <TextBlock Text="{Binding Value}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" VerticalAlignment="Center"/>
-                          <Button Content="…" IsEnabled="{Binding IsEnabled}" Padding="10,2" MinWidth="40"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                          <!-- Compact "Utsatt" chip on actionable rows -->
+                          <Border Classes="chip" VerticalAlignment="Center" IsVisible="{Binding ShowDeferredChip}">
+                            <TextBlock Text="{Binding DeferredChip}" Foreground="{DynamicResource ShellChipTextBrush}" FontSize="10"/>
+                          </Border>
+                          <!-- Info: read-only value text -->
+                          <TextBlock Text="{Binding Value}" IsVisible="{Binding IsInfo}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" VerticalAlignment="Center"/>
+                          <!-- Disabled control matching the WPF control kind (all inert) -->
+                          <ComboBox IsVisible="{Binding IsCombo}" IsEnabled="False" MinWidth="180" PlaceholderText="{Binding ControlText}"/>
+                          <CheckBox IsVisible="{Binding IsToggle}" IsEnabled="False" Content="{Binding ControlText}"/>
+                          <Button IsVisible="{Binding IsButton}" IsEnabled="False" Content="{Binding ControlText}" Padding="12,3"/>
                         </StackPanel>
                       </Grid>
                     </DataTemplate>
@@ -42,7 +57,7 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
 
-      <TextBlock Text="Innstillinger er en visning-bare plassholder i denne fasen — ingen handlinger er aktive."
+      <TextBlock Text="{Binding SafetyNote}"
                  Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
 
     </StackPanel>

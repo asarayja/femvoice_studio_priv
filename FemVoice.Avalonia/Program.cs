@@ -54,6 +54,7 @@ internal static class Program
         if (args.Contains("--macos-icon-readiness-smoke")) return MacosIconReadinessSmoke();
         if (args.Contains("--exercise-guide-filter-search-smoke")) return ExerciseGuideFilterSearchSmoke();
         if (args.Contains("--smartcoach-progression-ui-scaffold-smoke")) return SmartCoachProgressionUiScaffoldSmoke();
+        if (args.Contains("--settings-visual-parity-smoke")) return SettingsVisualParitySmoke();
         return null;
     }
 
@@ -600,7 +601,7 @@ internal static class Program
         bool noCommands = settings is not null && settings.GetType().GetProperties()
             .All(p => !typeof(global::CommunityToolkit.Mvvm.Input.IRelayCommand).IsAssignableFrom(p.PropertyType));
         int sectionCount = settings?.Sections.Count ?? 0;
-        bool sectionsOk = sectionCount == 8
+        bool sectionsOk = sectionCount == 9
             && settings!.Sections.All(s => !string.IsNullOrWhiteSpace(s.Title) && s.Rows.Count > 0);
         bool allDeferred = settings?.AllControlsDeferred == true
             && settings.Sections.SelectMany(s => s.Rows).All(r => !r.IsEnabled);
@@ -1704,6 +1705,59 @@ internal static class Program
 
         bool ok = progNav && coachNav && navIntact && backToDash && noServiceDeps && coachDeferred && progDeferred;
         Console.WriteLine(ok ? "[sc-prog] SmartCoach/Progression UI scaffold smoke OK" : "[sc-prog] SmartCoach/Progression UI scaffold smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Verifies the DISPLAY-ONLY Settings visual scaffold: navigation opens the inert SettingsViewModel (no
+    // services — parameterless ctor, no IRelayCommand, not IDisposable); the WPF-like section cards exist
+    // (9: General/Theme/Language/Audio/VoiceGoal/Accessibility/Data/Privacy/About); every row is inert
+    // (IsEnabled=false) and actionable rows render a representative DISABLED control (combo/toggle/button) with
+    // an "Utsatt" chip; and the shell sidebar (9 items, 6 implemented) stays intact. No persistence/DB/analytics
+    // or real theme/language/audio/database/privacy/backup behavior is invoked (build + leak-guard enforce it).
+    private static int SettingsVisualParitySmoke()
+    {
+        var svc = new VoiceFeminizationExerciseService();
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+
+        var nav = shell.NavItems.FirstOrDefault(n => n.Label == "Innstillinger");
+        bool navOk = nav is not null && nav.IsImplemented;
+        nav?.Command.Execute(null);
+        var settings = shell.CurrentPage as SettingsViewModel;
+        bool onSettings = settings is not null;
+
+        // Inert / no services: not IDisposable, no IRelayCommand property, single parameterless ctor.
+        bool notDisposable = !typeof(System.IDisposable).IsAssignableFrom(typeof(SettingsViewModel));
+        bool noCommands = typeof(SettingsViewModel).GetProperties()
+            .All(p => !typeof(global::CommunityToolkit.Mvvm.Input.IRelayCommand).IsAssignableFrom(p.PropertyType));
+        var ctors = typeof(SettingsViewModel).GetConstructors();
+        bool noServiceDeps = ctors.Length == 1 && ctors[0].GetParameters().Length == 0;
+
+        // WPF-like section set: 9 non-empty section cards (titles are localization-resolved, so we assert the
+        // count + non-emptiness rather than brittle language-specific substrings).
+        bool sectionsOk = settings!.Sections.Count == 9
+            && settings.Sections.All(s => !string.IsNullOrWhiteSpace(s.Title) && s.Rows.Count > 0);
+
+        var rows = settings.Sections.SelectMany(s => s.Rows).ToList();
+        // Every control inert; actionable rows carry an "Utsatt" chip.
+        bool allInert = rows.All(r => !r.IsEnabled);
+        bool chipsOnActionable = rows.Where(r => r.Kind != SettingsControlKind.Info).All(r => r.ShowDeferredChip);
+        // Representative disabled controls present (not just generic text): at least one combo, toggle, button.
+        bool hasCombo = rows.Any(r => r.Kind == SettingsControlKind.Combo);
+        bool hasToggle = rows.Any(r => r.Kind == SettingsControlKind.Toggle);
+        bool hasButton = rows.Any(r => r.Kind == SettingsControlKind.Button);
+        bool deferredWording = settings.DeferredBadge.Contains("Utsatt") && settings.DeferredBanner.Length > 0;
+
+        // Sidebar intact.
+        bool navIntact = shell.NavItems.Count == 9 && shell.NavItems.Count(n => n.IsImplemented) == 6;
+
+        Console.WriteLine($"[settings-vis] onSettings={onSettings} navOk={navOk} sections={settings.Sections.Count} controls(combo/toggle/button)={hasCombo}/{hasToggle}/{hasButton}");
+        Console.WriteLine($"[settings-vis] allInert={allInert} chipsOnActionable={chipsOnActionable} deferredWording={deferredWording} notDisposable={notDisposable} noCommands={noCommands} noServiceDeps={noServiceDeps} navIntact={navIntact}");
+
+        bool ok = navOk && onSettings && notDisposable && noCommands && noServiceDeps && sectionsOk
+                  && allInert && chipsOnActionable && hasCombo && hasToggle && hasButton
+                  && deferredWording && navIntact;
+        Console.WriteLine(ok ? "[settings-vis] Settings visual parity smoke OK" : "[settings-vis] Settings visual parity smoke FAIL");
         return ok ? 0 : 1;
     }
 }
