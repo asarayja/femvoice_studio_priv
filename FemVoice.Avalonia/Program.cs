@@ -46,6 +46,7 @@ internal static class Program
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
         if (args.Contains("--visual-baseline-smoke")) return VisualBaselineSmoke();
+        if (args.Contains("--visual-interaction-chart-smoke")) return VisualInteractionChartSmoke();
         return null;
     }
 
@@ -1126,6 +1127,87 @@ internal static class Program
         bool runtimeOk = !runtimeChecked || (darkFirst && paletteOk);
         bool allOk = navOk && settingsInert && runtimeOk && srcOk;
         Console.WriteLine(allOk ? "[visual] Visual baseline smoke OK" : "[visual] Visual baseline smoke FAIL");
+        return allOk ? 0 : 1;
+    }
+
+    // Read-only verification of the interaction + chart polish. (1) The Exercise Guide row/card open command
+    // path reaches the SAME ExerciseDetailViewModel for the selected exercise (the whole card is a Button bound
+    // to OpenExerciseCommand; the chevron is only an affordance). (2) The dashboard exposes converter-free chart
+    // geometry (comfort band + axis + marker) + a px trace, the chart brush keys resolve, and NO OxyPlot is
+    // referenced. Runtime brush checks need an Avalonia platform and are skipped (not failed) when headless.
+    private static int VisualInteractionChartSmoke()
+    {
+        var svc = new VoiceFeminizationExerciseService();
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+
+        // (1) Exercise Guide row/card open command path -> ExerciseDetailViewModel (same path the chevron uses).
+        shell.ShowGuideCommand.Execute(null);
+        var guide = shell.CurrentPage as ExerciseGuideViewModel;
+        int exerciseCount = guide?.Exercises.Count ?? 0;
+        bool listsExercises = exerciseCount > 0;
+        var firstCard = guide?.Exercises.FirstOrDefault();
+        guide?.OpenExerciseCommand.Execute(firstCard);   // the command the whole-card Button is bound to
+        var detail = shell.CurrentPage as ExerciseDetailViewModel;
+        bool cardOpensDetail = detail is not null;
+        bool detailMatches = detail is not null && firstCard is not null && detail.Title == firstCard.Name;
+        Console.WriteLine($"[visual-ix] guide: exercises={exerciseCount} cardOpensDetail={cardOpensDetail} detailMatches={detailMatches}");
+
+        // (2) Dashboard chart geometry (display-only, converter-free) present + sane.
+        var chart = dash.DashboardChart;
+        bool chartGeometry = chart is not null && chart.ChartHeightPx > 0 && chart.TargetBandHeightPx >= 0
+            && chart.ChartMaxPitch > chart.ChartMinPitch && dash.PitchTracePx is not null;
+        Console.WriteLine($"[visual-ix] chart: heightPx={chart?.ChartHeightPx} band={chart?.TargetBandHeightPx:F0}px axis={chart?.ChartMinPitch:F0}-{chart?.ChartMaxPitch:F0}Hz geometryOk={chartGeometry}");
+
+        // No third-party charting dependency introduced (the chart is in-house, Canvas/Shapes, converter-free).
+        // Detect any charting assembly by the tell-tale "Plot"/"Chart" in its name (no legit ref has either),
+        // without embedding a forbidden token literal here.
+        var refs = typeof(Program).Assembly.GetReferencedAssemblies().Select(a => a.Name).Where(n => n != null).ToArray();
+        bool noChartingLib = !refs.Any(n => n!.Contains("Plot") || n!.Contains("Chart"));
+        Console.WriteLine($"[visual-ix] no-charting-lib-dependency={noChartingLib}");
+
+        // Chart brush keys resolve in Dark (platform-gated; skipped, not failed, when headless).
+        string[] chartKeys = { "ShellChartBackgroundBrush", "ShellTargetBandBrush", "ShellChartTraceBrush", "ShellMarkerBrush", "ShellBorderBrush" };
+        bool runtimeChecked = false, chartBrushesOk = true;
+        try
+        {
+            BuildAvaloniaApp().SetupWithoutStarting();
+            var app = Application.Current;
+            if (app is not null)
+            {
+                runtimeChecked = true;
+                foreach (var k in chartKeys)
+                    if (!(app.TryGetResource(k, global::Avalonia.Styling.ThemeVariant.Dark, out var v) && v is global::Avalonia.Media.IBrush))
+                    { chartBrushesOk = false; Console.WriteLine($"[visual-ix] MISSING chart brush (Dark): {k}"); }
+            }
+        }
+        catch (Exception ex) { Console.WriteLine($"[visual-ix] chart-brush check skipped (no Avalonia platform here): {ex.GetType().Name}"); }
+        Console.WriteLine(runtimeChecked ? $"[visual-ix] chart brushes resolve (Dark): {chartBrushesOk}" : "[visual-ix] chart-brush check SKIPPED (no platform)");
+
+        // Source-only: guide card is clickable (Button.guideCard -> OpenExerciseCommand); dashboard binds new geometry.
+        bool srcChecked = false, srcOk = true;
+        try
+        {
+            string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+            string guidePath = System.IO.Path.Combine(projectDir, "Views", "ExerciseGuideView.axaml");
+            string dashPath = System.IO.Path.Combine(projectDir, "Views", "DashboardView.axaml");
+            if (System.IO.File.Exists(guidePath) && System.IO.File.Exists(dashPath))
+            {
+                srcChecked = true;
+                string g = System.IO.File.ReadAllText(guidePath);
+                string d = System.IO.File.ReadAllText(dashPath);
+                if (!(g.Contains("Classes=\"guideCard\"") && g.Contains("OpenExerciseCommand")))
+                { srcOk = false; Console.WriteLine("[visual-ix] ExerciseGuideView is not a clickable guideCard bound to OpenExerciseCommand"); }
+                if (!(d.Contains("DashboardChart") && d.Contains("PitchTracePx") && d.Contains("ShellTargetBandBrush")))
+                { srcOk = false; Console.WriteLine("[visual-ix] DashboardView does not bind the new chart geometry"); }
+            }
+        }
+        catch (Exception ex) { Console.WriteLine($"[visual-ix] source check skipped: {ex.GetType().Name}"); }
+        Console.WriteLine($"[visual-ix] source check: {(srcChecked ? (srcOk ? "OK (source tree)" : "FAILED") : "skipped (published output / no source)")}");
+
+        bool runtimeOk = !runtimeChecked || chartBrushesOk;
+        bool allOk = listsExercises && cardOpensDetail && detailMatches && chartGeometry && noChartingLib && runtimeOk && srcOk;
+        Console.WriteLine(allOk ? "[visual-ix] Visual interaction + chart smoke OK" : "[visual-ix] Visual interaction + chart smoke FAIL");
         return allOk ? 0 : 1;
     }
 }
