@@ -5,7 +5,7 @@
 Type=Application
 Name=FemVoice Studio
 Comment=Voice feminization training (Avalonia desktop preview — display-only)
-Exec=FemVoice.Avalonia
+Exec=femvoice-studio
 Icon=femvoice-studio
 Terminal=false
 Categories=Education;Audio;
