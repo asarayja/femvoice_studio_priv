@@ -1,7 +1,8 @@
 [Desktop Entry]
-# Linux .desktop entry TEMPLATE (readiness only — NOT wired into the build or installed by it).
-# Static template for a future Linux packaging step (e.g. .tar.gz / AppImage / .deb). The default
-# build/publish does not consume or install this file. No runtime behaviour, no permissions.
+# Linux desktop entry for FemVoice Studio. The default dotnet build/publish does NOT consume or
+# install this file; it is installed under /usr/share/applications only by the .deb helper
+# (Packaging/linux/package-deb.sh). Exec resolves the /usr/bin/femvoice-studio launcher (which runs
+# the app via `dotnet`). No runtime behaviour, no permissions.
 Type=Application
 Name=FemVoice Studio
 Comment=Voice feminization training (Avalonia desktop preview — display-only)

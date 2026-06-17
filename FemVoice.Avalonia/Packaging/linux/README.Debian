@@ -1,0 +1,25 @@
+FemVoice Studio (Avalonia desktop preview)
+==========================================
+
+This package is a display-only, cross-platform desktop preview of FemVoice Studio.
+
+Runtime requirement (framework-dependent)
+------------------------------------------
+This is a framework-dependent build. It does NOT bundle or install .NET. A
+compatible .NET 10 desktop runtime must already be installed on the system and
+the "dotnet" command must be on PATH. If it is not, running "femvoice-studio"
+prints a clear message and exits without starting.
+
+Launching
+---------
+  femvoice-studio            # start the desktop preview
+  femvoice-studio --smoke    # headless self-check (verifies shared services resolve)
+
+The /usr/bin/femvoice-studio launcher runs:
+  dotnet /opt/femvoice-studio/FemVoice.Avalonia.dll
+
+Not enabled in this preview
+---------------------------
+Real microphone capture, data persistence, report export, support-package
+generation, backup/restore, SmartCoach/progression updates, and clinical
+safety-gate / voice-health enforcement are NOT enabled in this Avalonia preview.

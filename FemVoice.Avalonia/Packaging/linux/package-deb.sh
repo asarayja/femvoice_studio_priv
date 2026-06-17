@@ -32,35 +32,60 @@ echo "Publishing before packaging ..."
 
 # Minimal Debian package layout under artifacts/package-work/<rid>.
 rm -rf "$WORK"
-mkdir -p "$WORK/opt/femvoice-studio" "$WORK/usr/bin" "$WORK/usr/share/applications" "$WORK/DEBIAN" "$OUT_DIR"
+mkdir -p "$WORK/opt/femvoice-studio" "$WORK/usr/bin" "$WORK/usr/share/applications" \
+         "$WORK/usr/share/doc/femvoice-studio" "$WORK/DEBIAN" "$OUT_DIR"
 
 # App files under /opt/femvoice-studio
 cp -r "$PUBLISH_DIR/." "$WORK/opt/femvoice-studio/"
 
-# Launcher under /usr/bin/femvoice-studio (runs the framework-dependent apphost).
+# Launcher under /usr/bin/femvoice-studio.
+# A small wrapper that runs the managed DLL via `dotnet` instead of relying on the
+# framework-dependent apphost. The apphost only resolves a SYSTEM-REGISTERED runtime
+# (DOTNET_ROOT / /etc/dotnet / /usr/share/dotnet); when .NET is installed elsewhere
+# (e.g. a user-local install on PATH) the apphost prints "You must install .NET" and
+# exits, which looks like the window flashing and vanishing. Going through `dotnet`
+# resolves the runtime from PATH and gives a clear message if it is missing.
 cat > "$WORK/usr/bin/femvoice-studio" <<'LAUNCHER'
-#!/bin/sh
-# Requires a matching .NET runtime installed on the system (this is a framework-dependent build).
-exec /opt/femvoice-studio/FemVoice.Avalonia "$@"
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="/opt/femvoice-studio"
+APP_DLL="$APP_DIR/FemVoice.Avalonia.dll"
+
+if ! command -v dotnet >/dev/null 2>&1; then
+  echo "FemVoice Studio requires the .NET runtime to be installed." >&2
+  echo "Install the matching .NET desktop/runtime package, then run femvoice-studio again." >&2
+  exit 127
+fi
+
+cd "$APP_DIR"
+exec dotnet "$APP_DLL" "$@"
 LAUNCHER
 chmod 0755 "$WORK/usr/bin/femvoice-studio"
 
 # Desktop entry under /usr/share/applications/femvoice-studio.desktop
 cp "$SCRIPT_DIR/femvoice-studio.desktop" "$WORK/usr/share/applications/femvoice-studio.desktop"
 
-# DEBIAN/control (safe metadata; NO maintainer scripts in this slice).
+# DEBIAN/control (safe metadata; NO Debian maintainer hook scripts in this slice).
 cat > "$WORK/DEBIAN/control" <<CONTROL
 Package: femvoice-studio
 Version: $VERSION
 Section: sound
 Priority: optional
 Architecture: $DEB_ARCH
-Maintainer: FemVoice Studio
-Description: FemVoice Studio Avalonia desktop preview
- Display-only cross-platform desktop preview. This is a framework-dependent build:
- a matching .NET 10 runtime must already be installed on the system. This package does
- NOT install .NET and does NOT request microphone permissions.
+Maintainer: A hansen <rassyhansen@gmail.com>
+Homepage: https://github.com/asarayja/femvoice_studio_priv
+Description: FemVoice Studio Avalonia desktop preview (framework-dependent)
+ Display-only cross-platform desktop preview of FemVoice Studio. This is a
+ framework-dependent build: a compatible .NET 10 desktop runtime must already be
+ installed on the system (this package does NOT bundle or install .NET). It does
+ NOT request microphone permissions and does not enable real capture/persistence.
 CONTROL
+
+# Machine-readable copyright + a short README.Debian under /usr/share/doc/femvoice-studio.
+cp "$SCRIPT_DIR/debian-copyright" "$WORK/usr/share/doc/femvoice-studio/copyright"
+cp "$SCRIPT_DIR/README.Debian"    "$WORK/usr/share/doc/femvoice-studio/README.Debian"
+chmod 0644 "$WORK/usr/share/doc/femvoice-studio/copyright" "$WORK/usr/share/doc/femvoice-studio/README.Debian"
 
 DEB="$OUT_DIR/femvoice-studio_${VERSION}_${DEB_ARCH}.deb"
 # --root-owner-group sets root:root ownership inside the package without needing root/fakeroot.

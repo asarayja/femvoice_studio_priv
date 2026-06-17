@@ -1,0 +1,16 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: FemVoice Studio
+Source: https://github.com/asarayja/femvoice_studio_priv
+
+Files: *
+Copyright: 2026 A hansen
+License: Proprietary
+ FemVoice Studio is currently distributed as a private/proprietary preview. No
+ public open-source license has been granted for this package. If a public
+ license is added to the repository later, this file should be updated to match
+ it (and the LICENSE file should be the source of truth).
+ .
+ This package is framework-dependent and additionally relies on third-party
+ components installed separately (the .NET runtime) and bundled managed
+ libraries (e.g. Avalonia, Tmds.DBus.Protocol), each governed by their own
+ licenses.
