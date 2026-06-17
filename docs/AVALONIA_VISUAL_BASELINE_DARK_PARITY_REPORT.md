@@ -241,3 +241,24 @@ Build 0/0; **20/20 smokes OK (all exit 0)**; vuln clean; Tmds 0.21.3; refs Core 
 guard clean (the smoke's persistence absence-check uses non-forbidden substrings); portable 1570/1580 (1569 with the
 `ComfortZone` flake); published smokes + `.deb` + macOS publish OK. No clinical/domain/WPF/data/persistence change.
 Signing/notarization still **not started**.
+
+### Follow-up 4b: deeper WPF list-reference inspection (view-model level)
+Re-inspected the WPF guide list at the view-model level to confirm the parity is complete and to document the
+source of the progress/count values (read-only — `FemVoiceStudio/ViewModels/ExerciseListViewModel.cs`,
+`FemVoiceStudio/Models/Exercise.cs`, `FemVoiceStudio/Views/ExerciseWindow.xaml`):
+- The WPF list binds `ObservableCollection<Exercise>` from `ExerciseDataService.GetAllExercises()`. The `Exercise`
+  model's list fields are: `IconGlyph`, `Name`, `Goal` (+`GoalIconGlyph`), `DisplayDifficulty`, `DurationMinutes`,
+  `FrequencyText`, `Description`, and **`TotalSessions`** (+ unused-in-row `HasStreak`/`IsCompletedToday`).
+- **The per-row `TotalSessions` count and the top card's today's `TotalMinutesToday`/`TotalExercisesToday` are
+  DB-backed** (`ExerciseDataService.GetCompletedSessionsToday()/GetTotalMinutesToday()` → SQLite). We must not read
+  that. So the Avalonia display-only `0 økter` / `0 min · 0 økter` placeholders (clearly labelled by `ProgressNote`)
+  are the correct, honest equivalent in a no-persistence preview — same layout/intent, real value unavailable
+  without persistence (which is deferred).
+- **Avalonia list row fields now match WPF exactly**: Name · Goal chip + Difficulty • Duration · Frequency chip ·
+  single-line trimmed Description · session count + chevron. **No extra Avalonia-only metadata** (target-pitch and
+  the verbose `Nivå:/Fokus:/Varighet:` labels were removed in follow-up 4; description is now single-line like WPF).
+- **Deferred (WPF list FEATURES, not per-row metadata)**: the WPF list also has **category-filter chips**
+  (All/Pitch/Resonance/Intonation/Breathing/Practice) and a **search box**. These are interactive list features, not
+  row fields; they are out of scope for this display-parity slice and remain deferred (no behaviour added here).
+- Conclusion: the Exercise Guide **list-field + progress/count parity is complete**; the only WPF list items not
+  replicated are the (deferred) filter/search features and the real DB-backed counts (display-only `0` placeholders).

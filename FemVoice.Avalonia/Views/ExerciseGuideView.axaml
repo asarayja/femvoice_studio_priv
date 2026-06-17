@@ -49,8 +49,9 @@
                       <TextBlock Text="{Binding FrequencyText}" Foreground="{DynamicResource ShellChipTextBrush}" FontSize="11"/>
                     </Border>
                   </StackPanel>
+                  <!-- WPF shows a single-line, character-ellipsis-trimmed description in the list row. -->
                   <TextBlock Text="{Binding ShortDescription}" Foreground="{DynamicResource ShellBodyTextBrush}"
-                             TextTrimming="CharacterEllipsis" MaxLines="2"/>
+                             TextTrimming="CharacterEllipsis" MaxLines="1"/>
                 </StackPanel>
                 <!-- Right: per-exercise session count (display-only) + chevron affordance -->
                 <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" Spacing="2" Margin="10,0,0,0">
