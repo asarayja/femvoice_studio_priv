@@ -59,6 +59,7 @@ internal static class Program
         if (args.Contains("--localization-text-polish-smoke")) return LocalizationTextPolishSmoke();
         if (args.Contains("--avalonia-localization-coverage-smoke")) return AvaloniaLocalizationCoverageSmoke();
         if (args.Contains("--settings-persistence-readiness-smoke")) return SettingsPersistenceReadinessSmoke();
+        if (args.Contains("--settings-preferences-persistence-smoke")) return SettingsPreferencesPersistenceSmoke();
         return null;
     }
 
@@ -1941,57 +1942,120 @@ internal static class Program
         return okk ? 0 : 1;
     }
 
-    // GUARDRAIL (readiness audit slice): asserts the Avalonia Settings surface remains display-only / behavior-
-    // neutral — no settings persistence is wired. SettingsViewModel exposes no IRelayCommand, is not IDisposable,
-    // has a single parameterless ctor (no injected services), and all rows are inert (AllControlsDeferred). A
-    // source check confirms the Settings VM/view reference none of the WPF persistence/behavior hooks (DB user-
-    // settings, theme manager, SetLanguage, backup, mic calibration, file writes). No persistence is implemented;
-    // this is a tripwire for a future approved behavior slice. Source check skips→passes from the published DLL.
+    // GUARDRAIL (post Stage 1): the Settings persistence stays HARMLESS and BOUNDED. The behaviour-heavy sections
+    // (audio/privacy/database/voice-goal/about) remain inert; SettingsViewModel is not IDisposable. The Settings
+    // VM/view AND the new Avalonia-local preference code reference NONE of the WPF/DB/clinical hooks (DB user-
+    // settings, ThemeManager, SetLanguage, backup, mic calibration) and perform NO runtime activation (no theme
+    // variant applied, no thread/UI culture changed, no Application.Current theme write). Avalonia-local file
+    // persistence (the Stage-1 store) is allowed. Source scan skips→passes from the published DLL.
     private static int SettingsPersistenceReadinessSmoke()
     {
         var settings = new SettingsViewModel();
 
         bool notDisposable = !typeof(System.IDisposable).IsAssignableFrom(typeof(SettingsViewModel));
-        bool noCommands = typeof(SettingsViewModel).GetProperties()
-            .All(p => !typeof(global::CommunityToolkit.Mvvm.Input.IRelayCommand).IsAssignableFrom(p.PropertyType));
-        var ctors = typeof(SettingsViewModel).GetConstructors();
-        bool noServiceDeps = ctors.Length == 1 && ctors[0].GetParameters().Length == 0;
-        // No injected service-like instance fields (only string/collection data).
-        bool noServiceFields = typeof(SettingsViewModel)
-            .GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)
-            .All(f => f.FieldType == typeof(string) || f.FieldType.Namespace?.StartsWith("System") == true);
-        bool allDeferred = settings.AllControlsDeferred
+        // Behaviour-heavy sections stay inert/deferred (Stage 1 only adds the separate harmless prefs card).
+        bool sectionsInert = settings.AllControlsDeferred
             && settings.Sections.SelectMany(s => s.Rows).All(r => !r.IsEnabled);
 
-        // Source check: the Avalonia Settings VM + view reference NO WPF persistence/behavior hooks. Detection uses
-        // non-forbidden substrings (so the leak guard isn't tripped by this smoke's own literals). Skips→pass with
-        // no source tree (published DLL).
+        // Source scan across the Settings VM/view + the Avalonia-local preference files: NO WPF/DB/clinical hooks
+        // and NO runtime activation. Fragments avoid the leak-guard literal tokens. Skips→pass with no source tree.
         string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
-        string vm = System.IO.Path.Combine(projectDir, "ViewModels", "SettingsViewModel.cs");
-        string view = System.IO.Path.Combine(projectDir, "Views", "SettingsView.axaml");
-        bool noPersistenceRefs = true;
-        if (System.IO.File.Exists(vm) && System.IO.File.Exists(view))
+        string[] files =
         {
-            string s = System.IO.File.ReadAllText(vm) + "\n" + System.IO.File.ReadAllText(view);
-            // Detect actual INVOCATIONS/type-refs (parenthesised calls or type names), not prose mentions in the
-            // VM's own "no SetLanguage/database/..." doc comment. Fragments avoid the leak-guard literal tokens.
-            string[] forbidden =
+            System.IO.Path.Combine(projectDir, "ViewModels", "SettingsViewModel.cs"),
+            System.IO.Path.Combine(projectDir, "Views", "SettingsView.axaml"),
+            System.IO.Path.Combine(projectDir, "ViewModels", "UiPreferencesViewModel.cs"),
+            System.IO.Path.Combine(projectDir, "Preferences", "UiPreferences.cs"),
+            System.IO.Path.Combine(projectDir, "Preferences", "UiPreferencesStore.cs"),
+        };
+        bool noWpfHooks = true, noRuntimeActivation = true; bool scanned = false;
+        if (files.All(System.IO.File.Exists))
+        {
+            scanned = true;
+            string s = string.Join("\n", files.Select(System.IO.File.ReadAllText));
+            // WPF/DB/clinical hooks (invocations/type-refs, not prose) — detected via non-forbidden fragments.
+            string[] wpfHooks =
             {
-                "atabaseService", ".GetUserSettings(", ".UpdateUserSettings(", ".ResetDatabase(", // DB user-settings
-                "hemeManager", ".SwitchTheme(",                                                   // theme switching
-                ".SetLanguage(",                                                                  // runtime language switch
-                "LocalBackupService", "icrophoneCalibration",                                     // backup / mic calibration
-                "File.Write", "File.WriteAll", "SaveSettings(", ".Save(",                          // file/settings persistence
+                "atabaseService", ".GetUserSettings(", ".UpdateUserSettings(", ".ResetDatabase(", "UserSettings",
+                "hemeManager", ".SwitchTheme(", ".SetLanguage(", "LocalBackupService", "icrophoneCalibration",
             };
-            var hits = forbidden.Where(t => s.Contains(t)).ToList();
-            if (hits.Count > 0) { noPersistenceRefs = false; Console.WriteLine($"[set-persist] PERSISTENCE/BEHAVIOR HOOK in Settings source: {string.Join(", ", hits)}"); }
+            var h1 = wpfHooks.Where(t => s.Contains(t)).ToList();
+            if (h1.Count > 0) { noWpfHooks = false; Console.WriteLine($"[set-persist] WPF/DB/clinical hook in Settings/prefs source: {string.Join(", ", h1)}"); }
+            // Runtime activation of theme/culture (Stage 2 — must NOT appear yet).
+            string[] activation = { "RequestedThemeVariant", "ThemeVariant", "Application.Current", "Thread.CurrentThread", "CurrentUICulture", "CurrentCulture =" };
+            var h2 = activation.Where(t => s.Contains(t)).ToList();
+            if (h2.Count > 0) { noRuntimeActivation = false; Console.WriteLine($"[set-persist] RUNTIME ACTIVATION token in prefs source: {string.Join(", ", h2)}"); }
         }
-        else Console.WriteLine("[set-persist] source check skipped (no source tree / published DLL)");
+        else Console.WriteLine("[set-persist] source scan skipped (no source tree / published DLL)");
 
-        Console.WriteLine($"[set-persist] notDisposable={notDisposable} noCommands={noCommands} noServiceDeps={noServiceDeps} noServiceFields={noServiceFields} allDeferred={allDeferred} noPersistenceRefs={noPersistenceRefs}");
+        Console.WriteLine($"[set-persist] notDisposable={notDisposable} sectionsInert={sectionsInert} scanned={scanned} noWpfHooks={noWpfHooks} noRuntimeActivation={noRuntimeActivation}");
 
-        bool ok = notDisposable && noCommands && noServiceDeps && noServiceFields && allDeferred && noPersistenceRefs;
+        bool ok = notDisposable && sectionsInert && noWpfHooks && noRuntimeActivation;
         Console.WriteLine(ok ? "[set-persist] Settings persistence readiness smoke OK" : "[set-persist] Settings persistence readiness smoke FAIL");
         return ok ? 0 : 1;
+    }
+
+    // Stage 1 round-trip: the Avalonia-local UI-preference store loads safe defaults when no file exists, saves to
+    // an Avalonia-owned path, reloads exactly, and falls back to defaults on a corrupt file (never throwing). Uses
+    // a TEMP path (no touch to real user data). Confirms the path is Avalonia-local (not a WPF/DB file). No
+    // runtime activation is performed.
+    private static int SettingsPreferencesPersistenceSmoke()
+    {
+        string tmp = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "femvoice-avalonia-prefs-smoke", System.Guid.NewGuid().ToString("N"), "ui-preferences.json");
+        try
+        {
+            var store = new global::FemVoice.Avalonia.Preferences.UiPreferencesStore(tmp);
+
+            // 1) Defaults when no file exists.
+            var d = store.Load();
+            bool defaultsOk = !System.IO.File.Exists(tmp)
+                && d.Theme == global::FemVoice.Avalonia.Preferences.ThemePreference.System
+                && d.Language == "nb-NO" && d.ReduceMotion == false;
+
+            // 2) Save → file written under the temp (Avalonia-local) path.
+            store.Save(new global::FemVoice.Avalonia.Preferences.UiPreferences
+            {
+                Theme = global::FemVoice.Avalonia.Preferences.ThemePreference.Dark, Language = "de-DE", ReduceMotion = true,
+            });
+            bool saved = System.IO.File.Exists(tmp);
+
+            // 3) Reload → exact round-trip.
+            var r = store.Load();
+            bool reloadOk = r.Theme == global::FemVoice.Avalonia.Preferences.ThemePreference.Dark
+                && r.Language == "de-DE" && r.ReduceMotion == true;
+
+            // 4) Corrupt file → safe defaults, no throw.
+            System.IO.File.WriteAllText(tmp, "{ this is not valid json ]]");
+            var c = store.Load();
+            bool corruptOk = c.Theme == global::FemVoice.Avalonia.Preferences.ThemePreference.System && c.Language == "nb-NO";
+
+            // 5) Unknown language normalises to the default.
+            store.Save(new global::FemVoice.Avalonia.Preferences.UiPreferences { Language = "zz-ZZ" });
+            bool normOk = store.Load().Language == "nb-NO";
+
+            // 6) Default path is Avalonia-local (own folder), not a WPF/DB file.
+            string defPath = global::FemVoice.Avalonia.Preferences.UiPreferencesStore.DefaultPath();
+            bool pathLocal = defPath.Contains("FemVoiceAvalonia") && defPath.EndsWith("ui-preferences.json")
+                && !defPath.Contains(".db") && !defPath.Contains("Strings");
+
+            // 7) Save to an un-creatable path (parent is a FILE) → fail-safe: returns false, no throw, UI safe.
+            string blockerFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+                "femvoice-avalonia-prefs-smoke", System.Guid.NewGuid().ToString("N") + ".blocker");
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(blockerFile)!);
+            System.IO.File.WriteAllText(blockerFile, "x");
+            var badStore = new global::FemVoice.Avalonia.Preferences.UiPreferencesStore(
+                System.IO.Path.Combine(blockerFile, "ui-preferences.json"));   // parent is a file → CreateDirectory fails
+            bool saveFailureGraceful = badStore.Save(new global::FemVoice.Avalonia.Preferences.UiPreferences()) == false;
+
+            Console.WriteLine($"[prefs] defaults={defaultsOk} saved={saved} reload={reloadOk} corruptFallback={corruptOk} normalizeLang={normOk} pathLocal={pathLocal} saveFailureGraceful={saveFailureGraceful}");
+            bool ok = defaultsOk && saved && reloadOk && corruptOk && normOk && pathLocal && saveFailureGraceful;
+            Console.WriteLine(ok ? "[prefs] Settings preferences persistence smoke OK" : "[prefs] Settings preferences persistence smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        finally
+        {
+            try { var dir = System.IO.Path.GetDirectoryName(System.IO.Path.GetDirectoryName(tmp)); if (dir != null && System.IO.Directory.Exists(dir)) System.IO.Directory.Delete(dir, true); } catch { }
+        }
     }
 }

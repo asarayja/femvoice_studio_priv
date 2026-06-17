@@ -37,6 +37,15 @@ public static class ScaffoldStrings
     /// these as a documented fallback, not a failure.</summary>
     public static readonly IReadOnlyList<string> NativeTranslationBacklog = new[]
     {
+        // Stage-1 local UI-preference labels (Avalonia-only; awaiting native translation like the rest).
+        "Settings_LocalPrefs_Title",
+        "Settings_LocalPrefs_Note",
+        "Settings_LocalPrefs_Save",
+        "Settings_LocalPrefs_Reload",
+        "Settings_LocalPrefs_ReduceMotion",
+        "Settings_LocalPrefs_Saved",
+        "Settings_LocalPrefs_SaveFailed",
+        "Settings_LocalPrefs_Reloaded",
         "Analysis_Formant",
         "Analysis_FormantDesc",
         "Analysis_FormantSummary",
