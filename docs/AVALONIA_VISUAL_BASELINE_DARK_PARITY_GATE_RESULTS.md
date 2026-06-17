@@ -45,3 +45,25 @@ fires). No new failures (this slice changes no test-compiled code).
 ## Behaviour change
 **None to clinical/domain behaviour. WPF untouched. No UI redesign.** Visual theming/layout + a read-only smoke +
 a Linux-only smoke-exit hardening + docs. Default build/run unchanged. Signing/notarization **not started**.
+
+---
+
+## Follow-up polish gate (same PR #19): Exercise Guide row-click + Dashboard chart parity
+
+Date: 2026-06-17 · same branch.
+
+- **Build**: 0 warnings / 0 errors.
+- **Smokes**: **18/18 OK, all exit 0** (added `--visual-interaction-chart-smoke`): guide exercises=15, cardOpensDetail=True, detailMatches=True; chart heightPx=200, comfort band ~117px, axis ~135–255 Hz, geometryOk=True; no-charting-lib-dependency=True; chart brushes resolve (Dark); source check OK. No regression in `--dashboard-smoke`/`--exercise-smoke`/`--runtime-chart-feedback-smoke`/`--visual-baseline-smoke`.
+- **Vulnerable packages**: none; `Tmds.DBus.Protocol` 0.21.3; refs Core + Audio.Abstractions only.
+- **Leak guard**: clean. No OxyPlot/charting dependency — csproj has no charting `PackageReference`; the smoke's "no charting lib" check + the doc comment avoid embedding a forbidden literal.
+- **Publish/package**: `publish-linux.sh` OK; published `--theme-loc`/`--packaged-theme`/`--visual-baseline`/`--visual-interaction-chart` smokes all exit 0; `.deb` builds; `publish-macos.sh osx-x64` OK.
+- **Portable**: 1570/1580 (known baseline; no new failures — no test-compiled code changed).
+
+### Interaction change
+Exercise Guide rows are clickable `Button.guideCard` bound to the existing `OpenExerciseCommand` (same path as before); keyboard-focusable; hover/pressed/cursor states. Non-interactive "Åpne ›" chevron affordance retained.
+
+### Chart change
+Dashboard chart now uses the shared converter-free `RuntimeChartDisplay` geometry: windowed axis (comfort zone ± padding via portable `PitchChartAxisRangeCalculator`), green comfort band, subtle grid lines, current-pitch marker, y-axis Hz labels, scaled trace, centered empty-state. Display-only `DashboardChart` + `PitchTracePx` added to the dashboard VM; **data pipeline / pitch detection / target profiles unchanged**.
+
+### Behaviour change
+**None to clinical/domain behaviour. WPF untouched.** Visual/UX + display-only chart geometry + a read-only smoke. Signing/notarization **not started**.

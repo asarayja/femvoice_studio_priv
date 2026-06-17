@@ -61,3 +61,43 @@ Unblocked from a visual standpoint, but **NOT started** (separate, deferred slic
 ## Deferred
 Pixel-perfect parity, real theme switching/persistence, visual redesign beyond baseline, and the deferred clinical
 surfaces (Progression / SmartCoach / Microphone calibration).
+
+---
+
+## Follow-up polish (same PR #19): Exercise Guide row-click + Dashboard chart parity
+
+Two parity/UX gaps from manual screenshots, addressed on the same branch. Visual/UX-only; no clinical/domain/WPF
+behaviour change, no data/pitch/target-profile change, no persistence, no real mic, no new charting dependency.
+
+### 1. Exercise Guide row/card click
+The whole exercise row is now a `Button.guideCard` bound to the existing `OpenExerciseCommand` (same command the
+old "Åpne" button used) — clicking/tapping anywhere on the card, or Enter/Space when it is keyboard-focused, opens
+the exercise detail. Hover (accent border) / pressed (purple border) / `Cursor=Hand` make it feel clickable. The
+inner button was replaced by a non-interactive "Åpne ›" chevron affordance (avoids a nested button). No exercise
+data or selection semantics changed.
+
+### 2. Dashboard pitch chart parity
+The dashboard chart was a crude Hz≈px bar fill. It now uses the same converter-free Canvas geometry as the runtime
+chart, via the shared display-only `RuntimeChartDisplay` + portable `PitchChartAxisRangeCalculator`: a fixed axis
+windowed around the comfort zone, a green comfort-zone band, subtle horizontal grid lines, a current-pitch marker
+line, y-axis frequency labels (max/min Hz), a properly-scaled pitch trace (px-from-bottom), and a centered subtle
+empty-state hint when not recording. The dashboard VM gained display-only `DashboardChart` (geometry snapshot) +
+`PitchTracePx` (px heights) derived from the existing stabilized pitch — **the synthetic/audio pipeline, pitch
+detection, and target-profile behaviour are unchanged**; `PitchSamples` (Hz) is retained.
+
+### New smoke `--visual-interaction-chart-smoke` (read-only)
+Verifies: Exercise Guide exposes the row/card open command path and opening the first card reaches the SAME
+`ExerciseDetailViewModel` (`Title == card.Name`); the guide lists its 15 exercises; the dashboard exposes chart
+geometry (height/band/axis) + a px trace; no charting-library dependency is referenced (detected via "Plot"/"Chart"
+in referenced-assembly names — no forbidden literal embedded); chart brush keys resolve in Dark (platform-gated,
+skipped-not-failed headless); and (source-only) the guide card is a `Button.guideCard` bound to `OpenExerciseCommand`
+and the dashboard binds the new geometry.
+
+### Follow-up gate
+Build 0/0; **18/18 smokes OK (all exit 0)** incl. the new one; vuln clean; Tmds 0.21.3; refs Core + Audio.Abstractions
+only; leak guard clean (no OxyPlot/charting dep — csproj unchanged); portable 1570/1580; published-output smokes +
+`.deb` + macOS publish OK.
+
+### Manual Linux visual verification (follow-up)
+Launched the dark UI again for screenshot; the Exercise Guide rows are clickable and the dashboard chart shows the
+comfort band + grid + axis labels + marker + trace (recorded in the report turn).
