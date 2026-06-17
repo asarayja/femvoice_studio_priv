@@ -2,16 +2,20 @@
 
 Date: 2026-06-17 · Branch: `avalonia-stage2b-language-activation-slice` (off `main` @ `aa35246`) · Host: Linux (.NET 10 user-local `~/.dotnet`, `DISPLAY=:0`).
 
-> Stage 2B: Avalonia-only runtime language activation (startup + on Save) via an Avalonia-LOCAL culture +
-> Avalonia-owned ResourceManager. No Core SetLanguage, no global thread-culture change, no native translations,
-> no reduce-motion activation. Stage-2A theme activation intact.
+> Stage 2B: Avalonia-only **startup** language activation via an Avalonia-LOCAL culture + Avalonia-owned
+> ResourceManager. Language applies at startup (truthful copy — applied live only on restart, not for already-
+> rendered views). No Core SetLanguage, no global thread-culture change, no native translations, no reduce-motion
+> activation. Stage-2A theme activation (live) intact.
+>
+> **PR #32 manual-fix:** root cause = VMs resolve once at construction (no live refresh, issue D) + Save status
+> overpromised live activation (issue E). Fix = startup-only with truthful copy; the smoke now enforces it.
 
 ## Build
 `dotnet build FemVoice.Avalonia/FemVoice.Avalonia.csproj` → **Build succeeded. 0 Warning(s) 0 Error(s).**
 
 ## Smokes (33 — all OK, all exit 0)
 32 prior + **`--settings-language-activation-smoke` (new, 33rd)** → **33/33 OK.**
-- `--settings-language-activation-smoke`: `svApplied=True enApplied=True nbApplied=True scaffoldFallsBack=True startupRead=True missingSafe=True corruptSafe=True unknownSafe=True threadCultureUntouched=True`.
+- `--settings-language-activation-smoke`: `svApplied=True enApplied=True nbApplied=True scaffoldFallsBack=True startupRead=True missingSafe=True corruptSafe=True unknownSafe=True threadCultureUntouched=True capturedUnchanged=True truthfulStatus=True` (the last two added in the PR #32 manual-fix — prove live-needs-restart semantics + truthful Save copy).
 - `--settings-persistence-readiness-smoke` (updated): `notDisposable=True sectionsInert=True scanned=True noWpfHooks=True noGlobalCulture=True`.
 - `--settings-theme-activation-smoke` (Stage 2A) still OK; `--theme-loc-smoke` / `--localization-text-polish-smoke` / `--avalonia-localization-coverage-smoke` / `--settings-smoke` / `--settings-visual-parity-smoke` green.
 

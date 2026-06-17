@@ -2217,10 +2217,29 @@ internal static class Program
             bool threadCultureUntouched = System.Globalization.CultureInfo.CurrentUICulture.Name == threadUiBefore
                 && System.Globalization.CultureInfo.CurrentCulture.Name == threadBefore;
 
+            // Already-rendered semantics: a string resolved BEFORE a language change does NOT retroactively change
+            // (mirrors VM properties bound once → live refresh needs restart). Captured value stays as resolved.
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
+            string capturedBefore = G("Settings_Title", "fb");          // "Innstillinger"
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");
+            bool capturedUnchanged = capturedBefore == "Innstillinger"; // the already-resolved string is unaffected
+
+            // TRUTHFUL copy: Save status says theme is live + language applies on RESTART, and does NOT claim live
+            // language activation (the regression that caused the manual failure).
+            var vm = new global::FemVoice.Avalonia.ViewModels.UiPreferencesViewModel(
+                new global::FemVoice.Avalonia.Preferences.UiPreferencesStore(System.IO.Path.Combine(root, "vm-prefs.json")));
+            vm.Language = "sv-SE";
+            vm.SaveCommand.Execute(null);
+            bool truthfulStatus = vm.Status.Contains("omstart")
+                && !vm.Status.Contains("og språk er aktivert")
+                && !vm.Status.Contains("språk er aktivert");
+
             Console.WriteLine($"[lang] svApplied={svApplied} enApplied={enApplied} nbApplied={nbApplied} scaffoldFallsBack={scaffoldFallsBack}");
             Console.WriteLine($"[lang] startupRead={startupRead} missingSafe={missingSafe} corruptSafe={corruptSafe} unknownSafe={unknownSafe} threadCultureUntouched={threadCultureUntouched}");
+            Console.WriteLine($"[lang] capturedUnchanged(live-needs-restart)={capturedUnchanged} truthfulStatus={truthfulStatus} status=\"{vm.Status}\"");
 
-            bool ok = svApplied && enApplied && nbApplied && scaffoldFallsBack && startupRead && missingSafe && corruptSafe && unknownSafe && threadCultureUntouched;
+            bool ok = svApplied && enApplied && nbApplied && scaffoldFallsBack && startupRead && missingSafe && corruptSafe && unknownSafe
+                && threadCultureUntouched && capturedUnchanged && truthfulStatus;
             Console.WriteLine(ok ? "[lang] Settings language activation smoke OK" : "[lang] Settings language activation smoke FAIL");
             return ok ? 0 : 1;
         }

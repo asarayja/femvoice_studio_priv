@@ -2,11 +2,25 @@
 
 Date: 2026-06-17 · Branch: `avalonia-stage2b-language-activation-slice` (off `main` @ `aa35246`).
 
-> **Stage 2B only.** Activates the saved **language** preference at runtime, **Avalonia-only**, within the existing
-> Avalonia-owned localization/scaffold mechanism. It does NOT add native translations for the backlog, does NOT
-> activate reduce-motion, and keeps Stage-2A theme activation intact. No WPF `LocalizationService`/`SetLanguage`/
-> `LocExtension`/`LocConverter`, no DB/`UserSettings`/SQLite/`IDatabaseService`, no WPF `ThemeManager`, no
-> Core/WPF/clinical/audio behaviour change, **no global thread-culture change**.
+> **Stage 2B only — STARTUP-ONLY language activation (truthful).** Activates the saved **language** preference,
+> **Avalonia-only**, applied at **app startup** within the existing Avalonia-owned localization/scaffold mechanism.
+> Saving persists + applies the language to the Avalonia-local resolver, but **already-rendered text refreshes on
+> restart, not live** (the UI copy says so — see "Manual-test fix" below). It does NOT add native translations for
+> the backlog, does NOT activate reduce-motion, and keeps Stage-2A theme activation (live) intact. No WPF
+> `LocalizationService`/`SetLanguage`/`LocExtension`/`LocConverter`, no DB/`UserSettings`/SQLite/`IDatabaseService`,
+> no WPF `ThemeManager`, no Core/WPF/clinical/audio behaviour change, **no global thread-culture change**.
+
+## Manual-test fix (PR #32 review)
+Manual testing reported "changing language doesn't work." **Root cause:** Avalonia VMs resolve `Localized.Get(...)`
+once at construction and bind to get-only properties with no change-notification, so changing the language on Save
+did **not** refresh already-rendered views (issue **D**); meanwhile the Save status text overpromised by saying
+language was "aktivert" live (issue **E**). Startup activation itself works (VMs built after `ApplyFromStore`
+resolve Core-backed keys in the saved language). Of the 146 Avalonia `Localized.Get` keys, **31 are Core-resource-
+backed** (these follow the language — including most Settings-page headers) and **115 are Avalonia-only scaffold
+keys** (these stay Norwegian by design — no native parity). A true live refresh would require per-VM `INotify`
+plumbing across ~all VMs (broad/risky), so per the smallest-safe-fix rule this slice is **startup-only with
+truthful copy**: the Save status now says "Tema brukes med en gang. Språk brukes ved omstart (kun oversatt tekst
+følger språket; resten vises på norsk)." and no longer claims live language switching.
 
 ## How language activation works (Avalonia-LOCAL)
 The Avalonia resolver `Localized` now owns an **Avalonia-LOCAL `CurrentCulture`** and an **Avalonia-owned
@@ -36,18 +50,23 @@ untouched. `CurrentCulture` defaults to the Core service culture, so startup res
 - Core-resource-backed Avalonia text (e.g. `Settings_Title`) follows the selected language: nb=`Innstillinger`,
   en=`Settings`, sv-SE=`Inställningar`.
 
-## Live-switch boundary (documented; not expanded)
-Newly-constructed Avalonia views pick up the new language immediately; **already-rendered text refreshes on the
-next navigation / app restart**. A full live re-render of already-built views would require broad VM/`INotify`
-refactoring, which is intentionally **out of scope** for this slice (per the stop/report rule). Saving persists the
-language and applies it to `Localized.CurrentCulture`, so it is fully in effect after a restart.
+## Live-switch boundary (startup-only; truthful)
+**Language is applied at startup, not live.** Newly-constructed Avalonia views pick up the new language, but
+already-rendered text refreshes only on **app restart** — a full live re-render of already-built views would
+require broad VM/`INotify` refactoring, intentionally **out of scope** (per the stop/report rule). Saving persists
+the language and applies it to `Localized.CurrentCulture`, so it is fully in effect after a restart. The Settings
+copy and Save status state this truthfully and do not claim live language switching.
 
 ## Smoke coverage
-- **New `--settings-language-activation-smoke`** (33rd; pure resolver/culture logic, no Avalonia platform → also
-  runs from the published DLL): saved sv-SE/en-US/nb-NO apply (Core-backed `Settings_Title`/`Common_Save` resolve
-  in the selected language); Avalonia-only scaffold key falls back; **startup read** via `ApplyFromStore`;
+- **`--settings-language-activation-smoke`** (33rd; pure resolver/culture logic, no Avalonia platform → also runs
+  from the published DLL): saved sv-SE/en-US/nb-NO apply (Core-backed `Settings_Title`/`Common_Save` resolve in the
+  selected language); Avalonia-only scaffold key falls back; **startup read** via `ApplyFromStore`;
   **missing/corrupt** file → no apply (sentinel preserved); **unknown** language (`zz-ZZ`) → normalized to `nb-NO`;
-  and crucially **`threadCultureUntouched=True`** (the global thread culture is never changed — Avalonia-local only).
+  **`threadCultureUntouched=True`** (global thread culture never changed — Avalonia-local only); **and (manual-fix
+  additions)** `capturedUnchanged=True` (a string resolved before a language change does not retroactively change —
+  models "live refresh needs restart") and **`truthfulStatus=True`** (the Save status says "omstart"/restart and
+  does NOT claim live language activation — this assertion fails on the old overpromising copy, catching the
+  manual issue).
 - **Updated `--settings-persistence-readiness-smoke`**: now also scans `LanguageActivation.cs` + `Localized.cs`;
   Avalonia-local language activation (`Localized.CurrentCulture`) and theme activation are allowed, while GLOBAL
   thread-culture change / Core culture mutation / Core `SetLanguage` and reduce-motion activation remain forbidden.
