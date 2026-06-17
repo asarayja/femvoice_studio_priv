@@ -51,6 +51,7 @@ internal static class Program
         if (args.Contains("--exercise-flow-parity-smoke")) return ExerciseFlowParitySmoke().GetAwaiter().GetResult();
         if (args.Contains("--signing-readiness-smoke")) return SigningReadinessSmoke();
         if (args.Contains("--macos-packaging-readiness-smoke")) return MacosPackagingReadinessSmoke();
+        if (args.Contains("--macos-icon-readiness-smoke")) return MacosIconReadinessSmoke();
         return null;
     }
 
@@ -1506,6 +1507,61 @@ internal static class Program
         bool ok = docsExist && scriptsExist && appFlags && dmgFlags && dmgHandlesHdiutil && appUsesPlist
                   && noRealSigning && unsignedFlowsIntact && noSecrets;
         Console.WriteLine(ok ? "[macos-pkg] macOS packaging readiness smoke OK" : "[macos-pkg] macOS packaging readiness smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Read-only verification of the macOS app-icon / .icns READINESS surface: the future icon path is documented;
+    // Info.plist wires CFBundleIconFile=AppIcon; package-app.sh bundles AppIcon.icns ONLY if present and handles
+    // its absence gracefully (no failure, no required icon); the packaging never FABRICATES an icon (no
+    // iconutil/sips synthesis); and no production icon/branding is invented. Inspects the source tree (like
+    // --packaging-smoke); from the published DLL (no source tree) it cleanly SKIPS and returns 0.
+    private static int MacosIconReadinessSmoke()
+    {
+        string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+        string mac = System.IO.Path.Combine(projectDir, "Packaging", "macos");
+        string appScript = System.IO.Path.Combine(mac, "package-app.sh");
+        if (!System.IO.File.Exists(appScript))
+        {
+            Console.WriteLine("[macos-icon] skipped (published output / no source tree) — readiness surface lives in the source Packaging/ tree");
+            Console.WriteLine("[macos-icon] macOS icon readiness smoke OK");
+            return 0;   // graceful skip from the published DLL
+        }
+
+        string iconDoc = System.IO.Path.Combine(mac, "AppIcon.icns.README.md");
+        string plist = System.IO.Path.Combine(mac, "Info.plist");
+        string app = System.IO.File.ReadAllText(appScript);
+        string doc = System.IO.File.Exists(iconDoc) ? System.IO.File.ReadAllText(iconDoc) : "";
+        string pl = System.IO.File.Exists(plist) ? System.IO.File.ReadAllText(plist) : "";
+
+        // Future icon path documented (the placeholder README names the expected AppIcon.icns asset).
+        bool iconDocsExist = System.IO.File.Exists(iconDoc);
+        bool iconPathDocumented = doc.Contains("AppIcon.icns") && doc.Contains("Packaging/macos/AppIcon.icns");
+        // Info.plist wires CFBundleIconFile = AppIcon.
+        bool cfBundleIconWired = pl.Contains("CFBundleIconFile") && pl.Contains("<string>AppIcon</string>");
+        // package-app.sh bundles the icon ONLY conditionally (guarded by `if [ -f "$ICON"`) into Contents/Resources.
+        bool appHandlesIconConditionally = app.Contains("AppIcon.icns") && app.Contains("if [ -f \"$ICON\"")
+                                        && app.Contains("Contents/Resources");
+        // Absent-icon path is graceful (a readiness note, not a failure / not required).
+        bool gracefulWhenAbsent = app.Contains("absent") && (app.Contains("not an error") || app.Contains("system default"))
+                                  && app.Contains("deferred");
+        // No production icon FABRICATION: packaging never synthesizes an icon (no iconutil/sips generation in the
+        // script). The .icns is only ever COPIED from an externally-provided asset.
+        bool noFabrication = !app.Contains("iconutil") && !app.Contains("sips ");
+        // Existing macOS packaging readiness intact.
+        bool existingReadinessIntact = System.IO.File.Exists(System.IO.Path.Combine(mac, "package-dmg.sh"))
+                                    && System.IO.File.Exists(System.IO.Path.Combine(mac, "README.md"))
+                                    && System.IO.File.Exists(System.IO.Path.Combine(mac, "publish-macos.sh"));
+        // No key material committed in the new icon-readiness files.
+        bool noSecrets = !doc.Contains("-----BEGIN");
+        // Informational: whether a real icon is committed (deferred state = absent). Not gated on.
+        bool icnsCommitted = System.IO.File.Exists(System.IO.Path.Combine(mac, "AppIcon.icns"));
+
+        Console.WriteLine($"[macos-icon] icon-docs={iconDocsExist} path-documented={iconPathDocumented} CFBundleIconFile=AppIcon={cfBundleIconWired} conditional-bundle={appHandlesIconConditionally} graceful-when-absent={gracefulWhenAbsent}");
+        Console.WriteLine($"[macos-icon] no-fabrication(iconutil/sips)={noFabrication} existing-readiness-intact={existingReadinessIntact} no-secrets={noSecrets} icns-committed={icnsCommitted} (false = production icon deferred)");
+
+        bool ok = iconDocsExist && iconPathDocumented && cfBundleIconWired && appHandlesIconConditionally
+                  && gracefulWhenAbsent && noFabrication && existingReadinessIntact && noSecrets;
+        Console.WriteLine(ok ? "[macos-icon] macOS icon readiness smoke OK" : "[macos-icon] macOS icon readiness smoke FAIL");
         return ok ? 0 : 1;
     }
 }

@@ -96,8 +96,11 @@ framework-dependent by design and does not bundle .NET). A self-contained `.deb`
 macOS `.app`/`.dmg` bundling is now available (unsigned, readiness): `macos/package-app.sh <rid>` assembles
 `artifacts/dist/<rid>/FemVoice Studio.app` from the publish output (consuming `Info.plist`; runs on any OS, no
 signing), and `macos/package-dmg.sh <rid>` builds a `.dmg` when `hdiutil` is available (macOS) or skips gracefully
-otherwise. Both support `--check`/`--dry-run`/`--help` and require no secrets. See `macos/README.md`. A
-self-contained `.deb` and real signing/notarization remain **deferred**.
+otherwise. Both support `--check`/`--dry-run`/`--help` and require no secrets. See `macos/README.md`. The `.app` is
+**icon-ready**: `Info.plist` wires `CFBundleIconFile = AppIcon` and `package-app.sh` bundles `macos/AppIcon.icns`
+into `Contents/Resources/` only if present (absent today — production icon deferred, see
+`macos/AppIcon.icns.README.md`; covered by `--macos-icon-readiness-smoke`). A self-contained `.deb` and real
+signing/notarization remain **deferred**.
 
 ## Signing / notarization readiness (future — no real signing today)
 Local packages are **unsigned** and that flow is fully supported. Signing/notarization is **deferred**; only
