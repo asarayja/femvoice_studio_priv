@@ -57,28 +57,51 @@
         </StackPanel>
       </Border>
 
-      <!-- Pitch trace (converter-free placeholder; OxyPlot.Avalonia port deferred — see AVALONIA_CHART_PORT_NOTES.md) -->
+      <!-- Pitch trace: converter-free Canvas chart (comfort-zone band + grid + scaled trace + current marker +
+           y-axis labels). px == "distance from bottom" via the shared RuntimeChartDisplay geometry. No third-party charting lib. -->
       <Border Grid.Row="3" Grid.ColumnSpan="2" Classes="card" Margin="0,0,0,12" MinHeight="260">
         <Grid RowDefinitions="Auto,*">
           <TextBlock Grid.Row="0" Text="Pitch-trace (Hz, nyeste til høyre)" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-          <Border Grid.Row="1" Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="6" Margin="0,8,0,0" ClipToBounds="True">
-            <Panel>
-              <TextBlock Text="Pitch-trace vises her under opptak"
-                         HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,10,0,0" Foreground="{DynamicResource ShellFaintBrush}"/>
-              <ItemsControl ItemsSource="{Binding PitchSamples}" VerticalAlignment="Bottom">
-                <ItemsControl.ItemsPanel>
-                  <ItemsPanelTemplate>
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom"/>
-                  </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate>
-                    <Rectangle Width="3" Margin="1,0" Fill="{DynamicResource ShellChartTraceBrush}" VerticalAlignment="Bottom" Height="{Binding}"/>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
-            </Panel>
-          </Border>
+          <Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,8,0,0">
+            <!-- Y-axis frequency labels: max at top, min at bottom -->
+            <Grid Grid.Column="0" Width="46" Height="{Binding DashboardChart.ChartHeightPx}" RowDefinitions="Auto,*,Auto" Margin="0,0,6,0">
+              <TextBlock Grid.Row="0" Text="{Binding DashboardChart.ChartMaxPitch, StringFormat='{}{0:F0} Hz'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
+              <TextBlock Grid.Row="2" Text="{Binding DashboardChart.ChartMinPitch, StringFormat='{}{0:F0} Hz'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
+            </Grid>
+            <!-- Plot surface -->
+            <Border Grid.Column="1" Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="6" ClipToBounds="True">
+              <Panel>
+                <Canvas Name="DashChartCanvas" Height="{Binding DashboardChart.ChartHeightPx}" HorizontalAlignment="Stretch">
+                  <!-- Subtle horizontal grid lines -->
+                  <Rectangle Canvas.Left="0" Canvas.Bottom="50"  Height="1" Width="{Binding #DashChartCanvas.Bounds.Width}" Fill="{DynamicResource ShellBorderBrush}"/>
+                  <Rectangle Canvas.Left="0" Canvas.Bottom="100" Height="1" Width="{Binding #DashChartCanvas.Bounds.Width}" Fill="{DynamicResource ShellBorderBrush}"/>
+                  <Rectangle Canvas.Left="0" Canvas.Bottom="150" Height="1" Width="{Binding #DashChartCanvas.Bounds.Width}" Fill="{DynamicResource ShellBorderBrush}"/>
+                  <!-- Comfort-zone band (green, around the target range) -->
+                  <Rectangle Canvas.Left="0" Canvas.Bottom="{Binding DashboardChart.TargetBandBottomPx}"
+                             Height="{Binding DashboardChart.TargetBandHeightPx}"
+                             Width="{Binding #DashChartCanvas.Bounds.Width}" Fill="{DynamicResource ShellTargetBandBrush}"/>
+                  <!-- Pitch trace (newest at right), scaled into the axis -->
+                  <ItemsControl Canvas.Left="0" Canvas.Bottom="0" ItemsSource="{Binding PitchTracePx}">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate><StackPanel Orientation="Horizontal" VerticalAlignment="Bottom"/></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Rectangle Width="3" Margin="1,0" Fill="{DynamicResource ShellChartTraceBrush}" VerticalAlignment="Bottom" Height="{Binding}"/>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <!-- Current-pitch marker line -->
+                  <Rectangle Canvas.Left="0" Canvas.Bottom="{Binding DashboardChart.CurrentPitchMarkerPx}"
+                             Height="2" Width="{Binding #DashChartCanvas.Bounds.Width}" Fill="{DynamicResource ShellMarkerBrush}"
+                             IsVisible="{Binding DashboardChart.HasVoice}"/>
+                </Canvas>
+                <!-- Empty-state hint (centered, subtle) when not recording -->
+                <TextBlock Text="Pitch-trace vises her under opptak" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Foreground="{DynamicResource ShellFaintBrush}" IsVisible="{Binding !IsRecording}"/>
+              </Panel>
+            </Border>
+          </Grid>
         </Grid>
       </Border>
 
