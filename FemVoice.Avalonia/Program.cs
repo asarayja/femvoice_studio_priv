@@ -57,6 +57,7 @@ internal static class Program
         if (args.Contains("--settings-visual-parity-smoke")) return SettingsVisualParitySmoke();
         if (args.Contains("--visual-layout-polish-smoke")) return VisualLayoutPolishSmoke();
         if (args.Contains("--localization-text-polish-smoke")) return LocalizationTextPolishSmoke();
+        if (args.Contains("--avalonia-localization-coverage-smoke")) return AvaloniaLocalizationCoverageSmoke();
         return null;
     }
 
@@ -1872,5 +1873,70 @@ internal static class Program
                   && deferredConsistent && dashLabelNo;
         Console.WriteLine(ok ? "[loc-text] Localization text polish smoke OK" : "[loc-text] Localization text polish smoke FAIL");
         return ok ? 0 : 1;
+    }
+
+    // Verifies the Avalonia-owned 20-language scaffold localization coverage: the 20 supported cultures are
+    // registered; the trusted overlay resolves the culture-invariant product name; every Avalonia-only scaffold
+    // key is ACCOUNTED FOR (either trusted or in the documented native-translation backlog) with NO broken/missing
+    // or undocumented key; no mojibake in the overlay; Core resx is not the source (Avalonia-owned). Distinguishes
+    // trusted / documented-fallback / broken and FAILS only on a broken/undocumented key. The source cross-check
+    // skips (passes) from the published DLL where the source tree isn't shipped.
+    private static int AvaloniaLocalizationCoverageSmoke()
+    {
+        var cultures = global::FemVoice.Avalonia.Localization.ScaffoldStrings.Cultures;
+        var trusted = global::FemVoice.Avalonia.Localization.ScaffoldStrings.TrustedKeys;
+        var backlog = global::FemVoice.Avalonia.Localization.ScaffoldStrings.NativeTranslationBacklog;
+        var registered = new System.Collections.Generic.HashSet<string>(trusted, StringComparer.Ordinal);
+        foreach (var k in backlog) registered.Add(k);
+
+        // 20 cultures (source of truth = WPF language combo).
+        var expected = new[] { "nb-NO","en-US","sv-SE","da-DK","fi-FI","de-DE","fr-FR","es-ES","pt-BR","it-IT",
+            "hr-HR","nl-NL","pl-PL","tr-TR","uk-UA","ro-RO","cs-CZ","hu-HU","el-GR","ar" };
+        bool cultures20 = cultures.Count == 20 && expected.All(c => cultures.Contains(c));
+
+        // Trusted overlay resolves the culture-invariant product name across cultures.
+        bool trustedResolves = trusted.Count >= 1
+            && new[] { "nb-NO", "de-DE", "ar" }.All(c =>
+                global::FemVoice.Avalonia.Localization.ScaffoldStrings.TryGet(c, "SmartCoach_Scaffold_Title", out var v) && v == "SmartCoach");
+
+        // Registered set is sane: non-trivial, trusted/backlog disjoint, no mojibake / malformed entries.
+        bool registeredSane = registered.Count >= 100
+            && !trusted.Intersect(backlog).Any()
+            && registered.All(k => k.Length > 0 && !k.Contains('�') && !k.Contains(' '));
+
+        // No mojibake / empties in the trusted overlay values.
+        bool overlayClean = new[] { "SmartCoach_Scaffold_Title" }.All(k =>
+            global::FemVoice.Avalonia.Localization.ScaffoldStrings.TryGet("nb-NO", k, out var v)
+            && v.Length > 0 && !v.Contains('�'));
+
+        // Source cross-check (skips→pass with no source tree): every Avalonia-only Localized.Get key (referenced in
+        // the .cs sources and absent from Core neutral Strings.resx) must be in the registered set — else it is a
+        // broken/undocumented key and the smoke FAILS.
+        string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+        string coreNeutral = System.IO.Path.GetFullPath(System.IO.Path.Combine(projectDir, "..", "FemVoice.Core", "Resources", "Strings.resx"));
+        bool noBrokenKeys = true; int undocumented = 0;
+        if (System.IO.Directory.Exists(projectDir) && System.IO.File.Exists(coreNeutral))
+        {
+            string core = System.IO.File.ReadAllText(coreNeutral);
+            var rx = new System.Text.RegularExpressions.Regex("Localized\\.Get\\(\"([^\"]+)\"");
+            var referenced = new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
+            foreach (var f in System.IO.Directory.EnumerateFiles(projectDir, "*.cs", System.IO.SearchOption.AllDirectories))
+                foreach (System.Text.RegularExpressions.Match m in rx.Matches(System.IO.File.ReadAllText(f)))
+                    referenced.Add(m.Groups[1].Value);
+            foreach (var k in referenced)
+            {
+                if (k == "__no_such_key__") continue;                          // deliberate probe key
+                if (core.Contains($"name=\"{k}\"")) continue;                  // resolved by Core (not Avalonia-only)
+                if (!registered.Contains(k)) { noBrokenKeys = false; undocumented++; Console.WriteLine($"[loc-cov] UNDOCUMENTED scaffold key: {k}"); }
+            }
+        }
+        else Console.WriteLine("[loc-cov] source cross-check skipped (no source tree / published DLL)");
+
+        Console.WriteLine($"[loc-cov] cultures={cultures.Count}(20={cultures20}) trusted={trusted.Count} documentedFallback={backlog.Count} broken={undocumented}");
+        Console.WriteLine($"[loc-cov] trustedResolves={trustedResolves} registeredSane={registeredSane} overlayClean={overlayClean} noBrokenKeys={noBrokenKeys}");
+
+        bool okk = cultures20 && trustedResolves && registeredSane && overlayClean && noBrokenKeys;
+        Console.WriteLine(okk ? "[loc-cov] Avalonia localization coverage smoke OK" : "[loc-cov] Avalonia localization coverage smoke FAIL");
+        return okk ? 0 : 1;
     }
 }

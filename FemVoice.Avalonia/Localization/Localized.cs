@@ -19,6 +19,11 @@ public static class Localized
     public static string Get(string key, string fallback)
     {
         if (string.IsNullOrEmpty(key)) return fallback;
+        // 1) Avalonia-owned scaffold overlay (trusted, culture-invariant values only; Core resx untouched).
+        if (ScaffoldStrings.TryGet(LocalizationService.Instance.CurrentCulture?.Name, key, out var overlay)
+            && !string.IsNullOrWhiteSpace(overlay))
+            return overlay;
+        // 2) Shared Core resolver (per-culture); 3) Norwegian neutral fallback when missing.
         string value = LocalizationService.Instance[key];
         return string.IsNullOrWhiteSpace(value) || value == key ? fallback : value;
     }
