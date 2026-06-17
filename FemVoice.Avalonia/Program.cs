@@ -31,6 +31,7 @@ internal static class Program
         if (args.Contains("--settings-smoke")) return SettingsSmoke().GetAwaiter().GetResult();
         if (args.Contains("--runtime-lifecycle-smoke")) return RuntimeLifecycleSmoke().GetAwaiter().GetResult();
         if (args.Contains("--analysis-scaffold-smoke")) return AnalysisScaffoldSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--reports-scaffold-smoke")) return ReportsScaffoldSmoke().GetAwaiter().GetResult();
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
@@ -443,7 +444,7 @@ internal static class Program
                           $"no-orphan-frames={noOrphanFrames} fresh-instance={distinctInstance} " +
                           $"second-running={secondRunning} no-orphan={firstStillStopped}");
 
-        bool ok = landsOnDashboard && shell.NavItems.Count == 9 && implemented == 4 && deferred == 5
+        bool ok = landsOnDashboard && shell.NavItems.Count == 9 && implemented == 5 && deferred == 4
                   && onGuide && backToDash && onDeferred && deferredInert
                   && runtimeRunning && firstDisposedOnNav && noOrphanFrames
                   && distinctInstance && secondRunning && firstStillStopped;
@@ -483,7 +484,9 @@ internal static class Program
         bool navLabelsOk = shell.NavItems.Count == 9
             && shell.NavItems.All(n => !string.IsNullOrWhiteSpace(n.Label))
             && shell.NavItems[0].Label == "Dashbord"
-            && shell.NavItems[2].Label == "Innstillinger";   // Settings is now an implemented destination
+            && shell.NavItems[2].Label == "Innstillinger"   // Settings implemented
+            && shell.NavItems[3].Label == "Analyse"          // Analysis implemented
+            && shell.NavItems[4].Label == "Rapporter";       // Reports implemented
         bool statusOk = shell.MicStatusText.Contains("syntetisk") && shell.ModeText.Contains("Kun visning");
         var def = new DeferredSurfaceViewModel("Innstillinger");
         bool deferredOk = def.Title.Contains("Innstillinger") && !string.IsNullOrWhiteSpace(def.Message);
@@ -695,6 +698,58 @@ internal static class Program
         bool ok = navExists && onAnalysis && notDisposable && noCommands && seriesOk && summaryOk
                   && runtimeRan && runtimeDisposed && noOrphanFrames;
         Console.WriteLine(ok ? "[analysis] Analysis scaffold smoke OK" : "[analysis] Analysis scaffold smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Headless verification of the Reports/Professional scaffold slice (no display): the Reports nav item is
+    // an IMPLEMENTED destination; navigating switches CurrentPage to a ReportsViewModel that is purely inert
+    // (not IDisposable, no IRelayCommand, all cards deferred); the expected placeholder cards are present; and
+    // navigating to Reports from a running runtime disposes the runtime safely (no orphaned capture). No file
+    // dialog / export / persistence APIs are touched (verified by the source leak guard).
+    private static async Task<int> ReportsScaffoldSmoke()
+    {
+        var svc = new VoiceFeminizationExerciseService();
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+
+        // Reports nav item exists and is implemented.
+        var reportsNav = shell.NavItems.FirstOrDefault(n => n.Label == "Rapporter");
+        bool navExists = reportsNav is not null && reportsNav.IsImplemented;
+
+        // Navigating to Reports switches CurrentPage to ReportsViewModel (no side effects).
+        reportsNav?.Command.Execute(null);
+        bool onReports = shell.CurrentPage is ReportsViewModel;
+        var reports = shell.CurrentPage as ReportsViewModel;
+
+        // Inert: not IDisposable, no IRelayCommand; placeholder cards present + all deferred.
+        bool notDisposable = reports is not null && !typeof(System.IDisposable).IsAssignableFrom(typeof(ReportsViewModel));
+        bool noCommands = reports is not null && reports.GetType().GetProperties()
+            .All(p => !typeof(global::CommunityToolkit.Mvvm.Input.IRelayCommand).IsAssignableFrom(p.PropertyType));
+        int cardCount = reports?.Cards.Count ?? 0;
+        bool cardsOk = cardCount >= 6 && reports!.Cards.All(c => !string.IsNullOrWhiteSpace(c.Title) && !c.IsEnabled);
+        bool allDeferred = reports?.AllActionsDeferred == true;
+        Console.WriteLine($"[reports] nav-implemented={navExists} onReports={onReports} cards={cardCount}");
+        Console.WriteLine($"[reports] inert: notDisposable={notDisposable} noCommands={noCommands} cardsOk={cardsOk} allDeferred={allDeferred}");
+
+        // Navigating to Reports from a RUNNING runtime disposes the runtime safely (no orphaned capture).
+        shell.ShowGuideCommand.Execute(null);
+        var guide = shell.CurrentPage as ExerciseGuideViewModel;
+        guide!.OpenExerciseCommand.Execute(guide.Exercises[0]);
+        (shell.CurrentPage as ExerciseDetailViewModel)!.StartCommand.Execute(null);
+        var runtime = shell.CurrentPage as ExerciseRuntimeViewModel;
+        runtime?.BeginCommand.Execute(null);   // explicit start (runtime no longer auto-starts)
+        await Task.Delay(50);
+        bool runtimeRan = runtime?.IsRunning == true;
+        reportsNav!.Command.Execute(null);   // nav to Reports via the rail while running
+        bool runtimeDisposed = runtime is not null && !runtime.IsRunning && shell.CurrentPage is ReportsViewModel;
+        int framesAfter = runtime?.RuntimePitchSamples.Count ?? -1;
+        await Task.Delay(150);
+        bool noOrphanFrames = runtime is not null && runtime.RuntimePitchSamples.Count == framesAfter;
+        Console.WriteLine($"[reports] Runtime->Reports: ran={runtimeRan} disposed={runtimeDisposed} no-orphan-frames={noOrphanFrames}");
+
+        bool ok = navExists && onReports && notDisposable && noCommands && cardsOk && allDeferred
+                  && runtimeRan && runtimeDisposed && noOrphanFrames;
+        Console.WriteLine(ok ? "[reports] Reports scaffold smoke OK" : "[reports] Reports scaffold smoke FAIL");
         return ok ? 0 : 1;
     }
 }
