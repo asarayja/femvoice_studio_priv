@@ -22,7 +22,8 @@ It never prints env-var **values** and never runs `notarytool submit`.
 
 ## Future requirements (choose later; none implemented here)
 1. **Apple Developer account** + a **Developer ID Application** certificate in the signing keychain.
-2. Build a `.app` bundle (consuming `Packaging/macos/Info.plist`) — a separate deferred bundling slice.
+2. Build the `.app` bundle with `package-app.sh <rid>` (unsigned; consumes `Info.plist`) — see `README.md`. The
+   future signing steps below operate on that `artifacts/dist/<rid>/FemVoice Studio.app`.
 3. **Codesign with hardened runtime:**
    `codesign --force --options runtime --timestamp --sign "$FEMVOICE_MACOS_SIGNING_IDENTITY" [--entitlements <file>] <App>.app`
 4. **Entitlements (only if needed later):** a minimal entitlements plist; this app is display-only with no real

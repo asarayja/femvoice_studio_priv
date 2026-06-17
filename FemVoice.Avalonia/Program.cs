@@ -50,6 +50,7 @@ internal static class Program
         if (args.Contains("--exercise-layout-parity-smoke")) return ExerciseLayoutParitySmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-flow-parity-smoke")) return ExerciseFlowParitySmoke().GetAwaiter().GetResult();
         if (args.Contains("--signing-readiness-smoke")) return SigningReadinessSmoke();
+        if (args.Contains("--macos-packaging-readiness-smoke")) return MacosPackagingReadinessSmoke();
         return null;
     }
 
@@ -1453,6 +1454,58 @@ internal static class Program
         bool ok = docsExist && scriptsExist && scriptFlags && scriptHidesValues
                   && unsignedFlows && signingNotMandatory && noSecrets && envDocumented;
         Console.WriteLine(ok ? "[sign] Signing readiness smoke OK" : "[sign] Signing readiness smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Read-only verification of the macOS .app / .dmg packaging readiness surface: the docs + package-app.sh +
+    // package-dmg.sh exist, expose --check/--dry-run/--help, build UNSIGNED bundles only (no codesign/notarytool
+    // invocation), require no Apple credentials, and the existing unsigned publish + notarization-readiness flows
+    // are intact. Runs NO scripts, requires NO secrets. Inspects the source tree (like --packaging-smoke); from
+    // the published DLL (no source tree) it cleanly SKIPS and returns 0.
+    private static int MacosPackagingReadinessSmoke()
+    {
+        string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+        string mac = System.IO.Path.Combine(projectDir, "Packaging", "macos");
+        string appScript = System.IO.Path.Combine(mac, "package-app.sh");
+        if (!System.IO.File.Exists(appScript))
+        {
+            Console.WriteLine("[macos-pkg] skipped (published output / no source tree) — readiness surface lives in the source Packaging/ tree");
+            Console.WriteLine("[macos-pkg] macOS packaging readiness smoke OK");
+            return 0;   // graceful skip from the published DLL
+        }
+
+        string dmgScript = System.IO.Path.Combine(mac, "package-dmg.sh");
+        string readme = System.IO.Path.Combine(mac, "README.md");
+        string notarizeDoc = System.IO.Path.Combine(mac, "NOTARIZATION.md");
+        string app = System.IO.File.ReadAllText(appScript);
+        string dmg = System.IO.File.Exists(dmgScript) ? System.IO.File.ReadAllText(dmgScript) : "";
+
+        bool docsExist = System.IO.File.Exists(readme) && System.IO.File.Exists(notarizeDoc);
+        bool scriptsExist = System.IO.File.Exists(appScript) && System.IO.File.Exists(dmgScript);
+        bool appFlags = app.Contains("--check") && app.Contains("--dry-run") && app.Contains("--help");
+        bool dmgFlags = dmg.Contains("--check") && dmg.Contains("--dry-run") && dmg.Contains("--help");
+        // Verify the documented graceful-skip CONTRACT, not just that the word "hdiutil" appears: build mode must
+        // guard on `command -v hdiutil` and skip (off macOS) rather than calling `hdiutil create` unconditionally.
+        bool dmgHandlesHdiutil = dmg.Contains("command -v hdiutil") && dmg.Contains("skipping");
+        bool appUsesPlist = app.Contains("Info.plist");
+        // No real signing: neither script contains a codesign/notarytool INVOCATION (flag-bearing); the "no
+        // codesign" comments are non-invocations.
+        bool noRealSigning = !app.Contains("codesign -") && !app.Contains("notarytool ")
+                          && !dmg.Contains("codesign -") && !dmg.Contains("notarytool ");
+        // Unsigned + future-signing flows intact.
+        bool unsignedFlowsIntact = System.IO.File.Exists(System.IO.Path.Combine(mac, "publish-macos.sh"))
+                                && System.IO.File.Exists(System.IO.Path.Combine(mac, "notarization-readiness.sh"));
+        // No key material committed in the new readiness files — incl. NOTARIZATION.md, the doc that discusses
+        // Apple credentials and is the most likely to accidentally receive a pasted key block.
+        var files = new[] { appScript, dmgScript, readme, notarizeDoc };
+        bool noSecrets = files.All(f => System.IO.File.Exists(f) && !System.IO.File.ReadAllText(f).Contains("-----BEGIN"));
+
+        Console.WriteLine($"[macos-pkg] docs(README+NOTARIZATION)={docsExist} scripts(app+dmg)={scriptsExist} app-flags={appFlags} dmg-flags={dmgFlags} dmg-hdiutil={dmgHandlesHdiutil} app-uses-plist={appUsesPlist}");
+        Console.WriteLine($"[macos-pkg] no-real-signing(no codesign/notarytool invocation)={noRealSigning} unsigned+notarization-flows-intact={unsignedFlowsIntact} no-secrets-committed={noSecrets}");
+
+        bool ok = docsExist && scriptsExist && appFlags && dmgFlags && dmgHandlesHdiutil && appUsesPlist
+                  && noRealSigning && unsignedFlowsIntact && noSecrets;
+        Console.WriteLine(ok ? "[macos-pkg] macOS packaging readiness smoke OK" : "[macos-pkg] macOS packaging readiness smoke FAIL");
         return ok ? 0 : 1;
     }
 }
