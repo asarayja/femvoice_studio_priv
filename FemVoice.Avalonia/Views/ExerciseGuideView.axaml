@@ -10,7 +10,11 @@
       <ItemsControl ItemsSource="{Binding Exercises}">
         <ItemsControl.ItemTemplate>
           <DataTemplate>
-            <Border Classes="card" Margin="0,0,0,10">
+            <!-- The whole row is a button: clicking/tapping anywhere (or Enter/Space when focused) opens the
+                 exercise via the same OpenExerciseCommand the chevron affordance points to. -->
+            <Button Classes="guideCard" Margin="0,0,0,10" ToolTip.Tip="Åpne øvelsen"
+                    Command="{Binding $parent[ItemsControl].DataContext.OpenExerciseCommand}"
+                    CommandParameter="{Binding}">
               <Grid ColumnDefinitions="Auto,*,Auto">
                 <!-- Purple icon accent badge -->
                 <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20" VerticalAlignment="Top" Margin="0,0,12,0"
@@ -32,11 +36,11 @@
                     <TextBlock Text="{Binding DurationText, StringFormat='Varighet: {0}'}" Foreground="{DynamicResource ShellMutedBrush}"/>
                   </WrapPanel>
                 </StackPanel>
-                <Button Grid.Column="2" Content="Åpne ›" Classes="secondary" VerticalAlignment="Center" Width="90"
-                        Command="{Binding $parent[ItemsControl].DataContext.OpenExerciseCommand}"
-                        CommandParameter="{Binding}"/>
+                <!-- Non-interactive open affordance (the whole card is the button — no nested button) -->
+                <TextBlock Grid.Column="2" Text="Åpne ›" VerticalAlignment="Center" Margin="10,0,0,0"
+                           Foreground="{DynamicResource ShellAccentBrush}" FontWeight="SemiBold"/>
               </Grid>
-            </Border>
+            </Button>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>

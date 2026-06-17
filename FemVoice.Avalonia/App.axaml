@@ -64,6 +64,26 @@
       <Setter Property="FontStyle" Value="Italic"/>
     </Style>
 
+    <!-- Clickable card-row button (whole Exercise Guide row opens the exercise; keyboard-focusable) -->
+    <Style Selector="Button.guideCard">
+      <Setter Property="Background" Value="{DynamicResource ShellCardBackgroundBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource ShellBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="Padding" Value="16"/>
+      <Setter Property="HorizontalAlignment" Value="Stretch"/>
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+      <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="Button.guideCard:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource ShellPanelBackgroundBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource ShellAccentBrush}"/>
+    </Style>
+    <Style Selector="Button.guideCard:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource ShellCardBackgroundBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource ShellPrimaryBrush}"/>
+    </Style>
+
     <!-- Reusable elevated card surface -->
     <Style Selector="Border.card">
       <Setter Property="Background" Value="{DynamicResource ShellCardBackgroundBrush}"/>
