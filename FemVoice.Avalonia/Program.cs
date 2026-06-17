@@ -49,6 +49,7 @@ internal static class Program
         if (args.Contains("--visual-interaction-chart-smoke")) return VisualInteractionChartSmoke();
         if (args.Contains("--exercise-layout-parity-smoke")) return ExerciseLayoutParitySmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-flow-parity-smoke")) return ExerciseFlowParitySmoke().GetAwaiter().GetResult();
+        if (args.Contains("--signing-readiness-smoke")) return SigningReadinessSmoke();
         return null;
     }
 
@@ -1390,5 +1391,68 @@ internal static class Program
                      && nonPitchOk && pitchOk && listFieldsOk && progressOk && dashChart && noChartingLib && srcOk;
         Console.WriteLine(allOk ? "[ex-flow] Exercise flow parity smoke OK" : "[ex-flow] Exercise flow parity smoke FAIL");
         return allOk ? 0 : 1;
+    }
+
+    // Read-only verification that the desktop package SIGNING/NOTARIZATION READINESS surface is in place and
+    // non-invasive: the Linux/macOS readiness docs + dry-run/check scripts exist; the scripts expose
+    // --check/--dry-run/--help and hide secret values; the unsigned local flows (publish/package) are intact;
+    // signing is NOT wired into the build (not mandatory); and no credential/key material was committed. It runs
+    // NO scripts, requires NO secrets, and reads the source tree (like --packaging-smoke). From the published
+    // DLL (no source tree) it cleanly SKIPS and returns 0.
+    private static int SigningReadinessSmoke()
+    {
+        string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+        string lin = System.IO.Path.Combine(projectDir, "Packaging", "linux");
+        string mac = System.IO.Path.Combine(projectDir, "Packaging", "macos");
+        string signDoc = System.IO.Path.Combine(lin, "SIGNING.md");
+        if (!System.IO.File.Exists(signDoc))
+        {
+            Console.WriteLine("[sign] skipped (published output / no source tree) — readiness surface lives in the source Packaging/ tree");
+            Console.WriteLine("[sign] Signing readiness smoke OK");
+            return 0;   // graceful skip from the published DLL (the docs/scripts are not shipped)
+        }
+
+        string notarizeDoc = System.IO.Path.Combine(mac, "NOTARIZATION.md");
+        string signScript = System.IO.Path.Combine(lin, "signing-readiness.sh");
+        string notarizeScript = System.IO.Path.Combine(mac, "notarization-readiness.sh");
+
+        bool docsExist = System.IO.File.Exists(signDoc) && System.IO.File.Exists(notarizeDoc);
+        bool scriptsExist = System.IO.File.Exists(signScript) && System.IO.File.Exists(notarizeScript);
+        string ss = scriptsExist ? System.IO.File.ReadAllText(signScript) : "";
+        string ns = scriptsExist ? System.IO.File.ReadAllText(notarizeScript) : "";
+        // Each script exposes --check/--dry-run/--help and explicitly hides secret values.
+        bool scriptFlags = new[] { ss, ns }.All(s => s.Contains("--check") && s.Contains("--dry-run") && s.Contains("--help"));
+        bool scriptHidesValues = new[] { ss, ns }.All(s => s.Contains("value hidden") || s.Contains("values never printed") || s.Contains("never print"));
+
+        // Unsigned local flows intact.
+        bool unsignedFlows = System.IO.File.Exists(System.IO.Path.Combine(lin, "publish-linux.sh"))
+                          && System.IO.File.Exists(System.IO.Path.Combine(lin, "package-deb.sh"))
+                          && System.IO.File.Exists(System.IO.Path.Combine(mac, "publish-macos.sh"));
+
+        // Signing is NOT wired into the build scripts (not mandatory locally): the package/publish scripts must
+        // not invoke the readiness scripts or any signing tool.
+        string deb = System.IO.File.ReadAllText(System.IO.Path.Combine(lin, "package-deb.sh"));
+        string pubMac = System.IO.File.ReadAllText(System.IO.Path.Combine(mac, "publish-macos.sh"));
+        // The build/publish scripts must not auto-run the readiness scripts, and must not contain an actual
+        // signing INVOCATION (flag-bearing command). NB: "no codesign" comments in the scripts are non-invocations.
+        bool signingNotMandatory = !deb.Contains("signing-readiness") && !pubMac.Contains("notarization-readiness")
+                                   && !deb.Contains("dpkg-sig --sign") && !deb.Contains("gpg --")
+                                   && !pubMac.Contains("codesign --") && !pubMac.Contains("notarytool ");
+
+        // No secrets/keys committed in the readiness files (no PEM key material; scripts only READ env vars).
+        var readinessFiles = new[] { signDoc, notarizeDoc, signScript, notarizeScript };
+        bool noSecrets = readinessFiles.All(f => !System.IO.File.ReadAllText(f).Contains("-----BEGIN"));
+
+        // Optional env vars are documented (presence only) — sanity-check a representative one in each doc.
+        bool envDocumented = System.IO.File.ReadAllText(signDoc).Contains("FEMVOICE_DEB_SIGNING_KEY_ID")
+                          && System.IO.File.ReadAllText(notarizeDoc).Contains("APPLE_NOTARY_PROFILE");
+
+        Console.WriteLine($"[sign] docs(SIGNING.md+NOTARIZATION.md)={docsExist} scripts(present)={scriptsExist} flags(--check/--dry-run/--help)={scriptFlags} hides-values={scriptHidesValues}");
+        Console.WriteLine($"[sign] unsigned-flows-intact={unsignedFlows} signing-not-mandatory(not-wired-into-build)={signingNotMandatory} no-secrets-committed={noSecrets} env-vars-documented={envDocumented}");
+
+        bool ok = docsExist && scriptsExist && scriptFlags && scriptHidesValues
+                  && unsignedFlows && signingNotMandatory && noSecrets && envDocumented;
+        Console.WriteLine(ok ? "[sign] Signing readiness smoke OK" : "[sign] Signing readiness smoke FAIL");
+        return ok ? 0 : 1;
     }
 }

@@ -95,6 +95,20 @@ framework-dependent by design and does not bundle .NET). A self-contained `.deb`
 
 A macOS `.app`/`.dmg` bundling step (consuming `Info.plist`) and a self-contained `.deb` remain **deferred**.
 
+## Signing / notarization readiness (future — no real signing today)
+Local packages are **unsigned** and that flow is fully supported. Signing/notarization is **deferred**; only
+readiness (docs + dry-run/check scripts) is in place. No secrets, certificates, GPG keys, or Apple account are
+required or committed, and signing is **not** wired into `package-deb.sh`/`publish-macos.sh`.
+- Linux `.deb`: see `linux/SIGNING.md`; check with `linux/signing-readiness.sh --check` (or `--dry-run`/`--help`).
+- macOS codesign/notarize: see `macos/NOTARIZATION.md`; check with `macos/notarization-readiness.sh --check`.
+
+Both scripts are POSIX `sh`, exit `0` in `--check`/`--dry-run` **without secrets** (even when `gpg`/`dpkg-sig`/
+`codesign`/`xcrun` are absent — reported as optional, future-only), and **never print env-var values**. Optional
+env vars are documented only (e.g. `FEMVOICE_DEB_SIGNING_KEY_ID`, `APPLE_NOTARY_PROFILE`) — never required for
+local builds, never committed. The read-only `--signing-readiness-smoke` covers the readiness surface (docs +
+scripts + dry-run/check/help flags + unsigned-flow-intact + signing-not-wired-into-build + no-secrets); see
+`docs/AVALONIA_SIGNING_NOTARIZATION_READINESS_REPORT.md`.
+
 ## Verified (on Linux)
 Framework-dependent publish for `linux-x64` and `osx-x64` completed and produced a valid apphost plus the
 expected managed DLLs (`FemVoice.Core`, `FemVoice.Audio.Abstractions`, `Avalonia`, `Tmds.DBus.Protocol` — and
