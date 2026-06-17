@@ -60,6 +60,7 @@ internal static class Program
         if (args.Contains("--avalonia-localization-coverage-smoke")) return AvaloniaLocalizationCoverageSmoke();
         if (args.Contains("--settings-persistence-readiness-smoke")) return SettingsPersistenceReadinessSmoke();
         if (args.Contains("--settings-preferences-persistence-smoke")) return SettingsPreferencesPersistenceSmoke();
+        if (args.Contains("--settings-theme-activation-smoke")) return SettingsThemeActivationSmoke();
         return null;
     }
 
@@ -1100,7 +1101,14 @@ internal static class Program
             if (app is not null)
             {
                 runtimeChecked = true;
-                darkFirst = global::Avalonia.Styling.ThemeVariant.Dark.Equals(app.RequestedThemeVariant);
+                // Stage 2A: a valid saved user theme preference legitimately overrides the dark baseline at startup
+                // (ApplyFromStore runs in OnFrameworkInitializationCompleted). Accept the Dark baseline when there is
+                // no/invalid saved preference, or the EXACTLY-applied saved preference variant when one exists.
+                var savedStore = new global::FemVoice.Avalonia.Preferences.UiPreferencesStore();
+                var expectedVariant = savedStore.TryLoad(out var savedPrefs)
+                    ? global::FemVoice.Avalonia.Theming.ThemeActivation.ToVariant(savedPrefs.Theme)
+                    : global::Avalonia.Styling.ThemeVariant.Dark;
+                darkFirst = expectedVariant.Equals(app.RequestedThemeVariant);
                 variant = app.ActualThemeVariant?.ToString() ?? "(null)";
                 foreach (var k in paletteKeys)
                     if (!(app.TryGetResource(k, global::Avalonia.Styling.ThemeVariant.Dark, out var v) && v is global::Avalonia.Media.IBrush))
@@ -1112,7 +1120,7 @@ internal static class Program
             Console.WriteLine($"[visual] runtime theme check skipped (no Avalonia platform here): {ex.GetType().Name}");
         }
         Console.WriteLine(runtimeChecked
-            ? $"[visual] runtime: dark-first(RequestedThemeVariant=Dark)={darkFirst} palette={paletteKeys.Length}-brushes-resolve={paletteOk} actualVariant='{variant}'"
+            ? $"[visual] runtime: theme-matches-baseline-or-savedpref={darkFirst} palette={paletteKeys.Length}-brushes-resolve={paletteOk} actualVariant='{variant}'"
             : "[visual] runtime: SKIPPED (no Avalonia platform/display — not a defect)");
 
         // ── Source-only check: implemented views use theme resources, not hardcoded light-grey defaults ──
@@ -1942,12 +1950,13 @@ internal static class Program
         return okk ? 0 : 1;
     }
 
-    // GUARDRAIL (post Stage 1): the Settings persistence stays HARMLESS and BOUNDED. The behaviour-heavy sections
+    // GUARDRAIL (post Stage 2A): the Settings persistence stays HARMLESS and BOUNDED. The behaviour-heavy sections
     // (audio/privacy/database/voice-goal/about) remain inert; SettingsViewModel is not IDisposable. The Settings
-    // VM/view AND the new Avalonia-local preference code reference NONE of the WPF/DB/clinical hooks (DB user-
-    // settings, ThemeManager, SetLanguage, backup, mic calibration) and perform NO runtime activation (no theme
-    // variant applied, no thread/UI culture changed, no Application.Current theme write). Avalonia-local file
-    // persistence (the Stage-1 store) is allowed. Source scan skips→passes from the published DLL.
+    // VM/view, the Avalonia-local preference code, AND the theme-activation service reference NONE of the WPF/DB/
+    // clinical hooks (DB user-settings, WPF theme manager, SetLanguage, backup, mic calibration) and perform NO
+    // LANGUAGE/CULTURE or reduce-motion activation (no thread/UI culture change). Theme activation via Avalonia
+    // RequestedThemeVariant (in ThemeActivation) IS allowed as of Stage 2A; Avalonia-local file persistence is
+    // allowed. Source scan skips→passes from the published DLL.
     private static int SettingsPersistenceReadinessSmoke()
     {
         var settings = new SettingsViewModel();
@@ -1960,6 +1969,8 @@ internal static class Program
         // Source scan across the Settings VM/view + the Avalonia-local preference files: NO WPF/DB/clinical hooks
         // and NO runtime activation. Fragments avoid the leak-guard literal tokens. Skips→pass with no source tree.
         string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+        // Scans the prefs files + the Stage-2A theme-activation service. (Theme activation IS allowed as of Stage 2A,
+        // confined to ThemeActivation; language + reduce-motion must remain non-activated.)
         string[] files =
         {
             System.IO.Path.Combine(projectDir, "ViewModels", "SettingsViewModel.cs"),
@@ -1967,8 +1978,9 @@ internal static class Program
             System.IO.Path.Combine(projectDir, "ViewModels", "UiPreferencesViewModel.cs"),
             System.IO.Path.Combine(projectDir, "Preferences", "UiPreferences.cs"),
             System.IO.Path.Combine(projectDir, "Preferences", "UiPreferencesStore.cs"),
+            System.IO.Path.Combine(projectDir, "Theming", "ThemeActivation.cs"),
         };
-        bool noWpfHooks = true, noRuntimeActivation = true; bool scanned = false;
+        bool noWpfHooks = true, noLangActivation = true; bool scanned = false;
         if (files.All(System.IO.File.Exists))
         {
             scanned = true;
@@ -1981,16 +1993,17 @@ internal static class Program
             };
             var h1 = wpfHooks.Where(t => s.Contains(t)).ToList();
             if (h1.Count > 0) { noWpfHooks = false; Console.WriteLine($"[set-persist] WPF/DB/clinical hook in Settings/prefs source: {string.Join(", ", h1)}"); }
-            // Runtime activation of theme/culture (Stage 2 — must NOT appear yet).
-            string[] activation = { "RequestedThemeVariant", "ThemeVariant", "Application.Current", "Thread.CurrentThread", "CurrentUICulture", "CurrentCulture =" };
-            var h2 = activation.Where(t => s.Contains(t)).ToList();
-            if (h2.Count > 0) { noRuntimeActivation = false; Console.WriteLine($"[set-persist] RUNTIME ACTIVATION token in prefs source: {string.Join(", ", h2)}"); }
+            // LANGUAGE / CULTURE / reduce-motion activation must NOT appear (Stage 2A activates THEME only; Avalonia
+            // RequestedThemeVariant/ThemeVariant in ThemeActivation is allowed).
+            string[] langActivation = { "Thread.CurrentThread", "CurrentUICulture", "CurrentCulture =", "CultureInfo.Default" };
+            var h2 = langActivation.Where(t => s.Contains(t)).ToList();
+            if (h2.Count > 0) { noLangActivation = false; Console.WriteLine($"[set-persist] LANGUAGE/CULTURE activation token in prefs source: {string.Join(", ", h2)}"); }
         }
         else Console.WriteLine("[set-persist] source scan skipped (no source tree / published DLL)");
 
-        Console.WriteLine($"[set-persist] notDisposable={notDisposable} sectionsInert={sectionsInert} scanned={scanned} noWpfHooks={noWpfHooks} noRuntimeActivation={noRuntimeActivation}");
+        Console.WriteLine($"[set-persist] notDisposable={notDisposable} sectionsInert={sectionsInert} scanned={scanned} noWpfHooks={noWpfHooks} noLangActivation={noLangActivation}");
 
-        bool ok = notDisposable && sectionsInert && noWpfHooks && noRuntimeActivation;
+        bool ok = notDisposable && sectionsInert && noWpfHooks && noLangActivation;
         Console.WriteLine(ok ? "[set-persist] Settings persistence readiness smoke OK" : "[set-persist] Settings persistence readiness smoke FAIL");
         return ok ? 0 : 1;
     }
@@ -2056,6 +2069,84 @@ internal static class Program
         finally
         {
             try { var dir = System.IO.Path.GetDirectoryName(System.IO.Path.GetDirectoryName(tmp)); if (dir != null && System.IO.Directory.Exists(dir)) System.IO.Directory.Delete(dir, true); } catch { }
+        }
+    }
+
+    // Stage 2A: the saved THEME preference is applied to the running Avalonia app (Avalonia-only), while a missing/
+    // corrupt preference preserves the default (dark) baseline, and LANGUAGE + REDUCE-MOTION are NOT runtime-
+    // activated. Initializes the Avalonia platform headlessly (SetupWithoutStarting); SKIPS (pass) when no display.
+    private static int SettingsThemeActivationSmoke()
+    {
+        string root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "femvoice-theme-activation-smoke", System.Guid.NewGuid().ToString("N"));
+        string file = System.IO.Path.Combine(root, "ui-preferences.json");
+        global::FemVoice.Avalonia.Preferences.UiPreferencesStore Store() => new(file);
+        void Write(global::FemVoice.Avalonia.Preferences.ThemePreference t, string lang, bool rm)
+            => Store().Save(new global::FemVoice.Avalonia.Preferences.UiPreferences { Theme = t, Language = lang, ReduceMotion = rm });
+
+        // Mapping is pure (no platform needed).
+        bool mapOk = global::FemVoice.Avalonia.Theming.ThemeActivation.ToVariant(global::FemVoice.Avalonia.Preferences.ThemePreference.Dark) == global::Avalonia.Styling.ThemeVariant.Dark
+            && global::FemVoice.Avalonia.Theming.ThemeActivation.ToVariant(global::FemVoice.Avalonia.Preferences.ThemePreference.Light) == global::Avalonia.Styling.ThemeVariant.Light
+            && global::FemVoice.Avalonia.Theming.ThemeActivation.ToVariant(global::FemVoice.Avalonia.Preferences.ThemePreference.System) == global::Avalonia.Styling.ThemeVariant.Default;
+
+        try
+        {
+            BuildAvaloniaApp().SetupWithoutStarting();
+            var app = Application.Current;
+            if (app is null)
+            {
+                Console.WriteLine("[theme] runtime apply SKIPPED (no Avalonia platform/display — not a defect)");
+                Console.WriteLine($"[theme] mapOk={mapOk}");
+                Console.WriteLine(mapOk ? "[theme] Settings theme activation smoke OK" : "[theme] Settings theme activation smoke FAIL");
+                return mapOk ? 0 : 1;
+            }
+
+            // Saved Dark / Light / System apply at "startup" (ApplyFromStore).
+            Write(global::FemVoice.Avalonia.Preferences.ThemePreference.Dark, "nb-NO", false);
+            bool darkApplied = global::FemVoice.Avalonia.Theming.ThemeActivation.ApplyFromStore(Store())
+                && global::Avalonia.Styling.ThemeVariant.Dark.Equals(app.RequestedThemeVariant);
+            Write(global::FemVoice.Avalonia.Preferences.ThemePreference.Light, "nb-NO", false);
+            bool lightApplied = global::FemVoice.Avalonia.Theming.ThemeActivation.ApplyFromStore(Store())
+                && global::Avalonia.Styling.ThemeVariant.Light.Equals(app.RequestedThemeVariant);
+            Write(global::FemVoice.Avalonia.Preferences.ThemePreference.System, "nb-NO", false);
+            bool systemApplied = global::FemVoice.Avalonia.Theming.ThemeActivation.ApplyFromStore(Store())
+                && global::Avalonia.Styling.ThemeVariant.Default.Equals(app.RequestedThemeVariant);
+
+            // Missing file → no apply, baseline preserved (sentinel stays).
+            try { System.IO.File.Delete(file); } catch { }
+            app.RequestedThemeVariant = global::Avalonia.Styling.ThemeVariant.Dark;   // baseline sentinel
+            bool missingSafe = !global::FemVoice.Avalonia.Theming.ThemeActivation.ApplyFromStore(Store())
+                && global::Avalonia.Styling.ThemeVariant.Dark.Equals(app.RequestedThemeVariant);
+
+            // Corrupt file → no apply, baseline preserved.
+            System.IO.Directory.CreateDirectory(root);
+            System.IO.File.WriteAllText(file, "{ not valid json ]]");
+            app.RequestedThemeVariant = global::Avalonia.Styling.ThemeVariant.Dark;
+            bool corruptSafe = !global::FemVoice.Avalonia.Theming.ThemeActivation.ApplyFromStore(Store())
+                && global::Avalonia.Styling.ThemeVariant.Dark.Equals(app.RequestedThemeVariant);
+
+            // Language + reduce-motion are NOT runtime-activated: applying a theme must not change the UI culture.
+            string cultureBefore = System.Globalization.CultureInfo.CurrentUICulture.Name;
+            Write(global::FemVoice.Avalonia.Preferences.ThemePreference.Light, "de-DE", true);
+            bool applied = global::FemVoice.Avalonia.Theming.ThemeActivation.ApplyFromStore(Store());
+            string cultureAfter = System.Globalization.CultureInfo.CurrentUICulture.Name;
+            bool noLanguageActivation = cultureBefore == cultureAfter;   // theme applied, culture untouched
+
+            Console.WriteLine($"[theme] mapOk={mapOk} darkApplied={darkApplied} lightApplied={lightApplied} systemApplied={systemApplied}");
+            Console.WriteLine($"[theme] missingSafe={missingSafe} corruptSafe={corruptSafe} noLanguageActivation={noLanguageActivation}(culture {cultureBefore}->{cultureAfter}, themeApplied={applied})");
+
+            bool ok = mapOk && darkApplied && lightApplied && systemApplied && missingSafe && corruptSafe && noLanguageActivation;
+            Console.WriteLine(ok ? "[theme] Settings theme activation smoke OK" : "[theme] Settings theme activation smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[theme] runtime apply SKIPPED (no Avalonia platform here): {ex.GetType().Name}");
+            Console.WriteLine(mapOk ? "[theme] Settings theme activation smoke OK" : "[theme] Settings theme activation smoke FAIL");
+            return mapOk ? 0 : 1;
+        }
+        finally
+        {
+            try { var dir = System.IO.Path.GetDirectoryName(root); if (dir != null && System.IO.Directory.Exists(dir)) System.IO.Directory.Delete(dir, true); } catch { }
         }
     }
 }
