@@ -34,6 +34,12 @@ public partial class ExerciseGuideViewModel : ObservableObject
     public int Count => Exercises.Count;
     public string Heading => $"Øvelsesguide — {Count} øvelser";
 
+    // WPF parity: the list has a "today's progress" summary (minutes + session count). This preview has NO session
+    // persistence, so these are a clearly-labelled display-only placeholder (0) — no analytics/DB read, no invented
+    // numbers. The ProgressNote states the preview does not track progress.
+    public string TodaysProgressText => "0 min · 0 økter";
+    public string ProgressNote => "Visning — fremgang lagres ikke i denne forhåndsvisningen (ingen lagring).";
+
     [RelayCommand]
     private void OpenExercise(ExerciseCardViewModel? card)
     {

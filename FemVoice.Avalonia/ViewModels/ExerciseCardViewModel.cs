@@ -24,4 +24,9 @@ public sealed class ExerciseCardViewModel
         ? string.Join(", ", Exercise.Metrics.Select(ExerciseDisplay.Metric))
         : "—";
     public string DurationText => $"{Exercise.DurationMinutes} min";
+    public string FrequencyText => ExerciseDisplay.Frequency(Exercise.Frequency);
+    // WPF parity: the list shows a per-exercise completed-session count ("N økter"). This Avalonia preview has NO
+    // session persistence/analytics, so the truthful display-only value is 0 for every exercise (clearly labelled
+    // as a display-only preview by the list's progress note). No DB/analytics read, no invented numbers.
+    public string SessionCountText => "0 økter";
 }
