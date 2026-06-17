@@ -34,20 +34,32 @@ public sealed class UiPreferencesStore
     }
 
     /// <summary>Load preferences; return safe defaults on any missing/empty/invalid/corrupt file (never throws).</summary>
-    public UiPreferences Load()
+    public UiPreferences Load() => TryLoad(out var prefs) ? prefs : UiPreferences.Defaults();
+
+    /// <summary>
+    /// Try to load a VALID saved preferences file. Returns <c>true</c> with the normalized preferences only when
+    /// the file exists and parses; returns <c>false</c> (and defaults) on missing/empty/invalid/corrupt/unreadable.
+    /// Never throws. Stage 2A uses this so theme activation applies ONLY a real, user-saved preference and otherwise
+    /// preserves the existing default (dark) visual baseline.
+    /// </summary>
+    public bool TryLoad(out UiPreferences preferences)
     {
+        preferences = UiPreferences.Defaults();
         try
         {
-            if (!File.Exists(FilePath)) return UiPreferences.Defaults();
+            if (!File.Exists(FilePath)) return false;
             string json = File.ReadAllText(FilePath);
-            if (string.IsNullOrWhiteSpace(json)) return UiPreferences.Defaults();
+            if (string.IsNullOrWhiteSpace(json)) return false;
             var loaded = JsonSerializer.Deserialize<UiPreferences>(json);
-            return (loaded ?? UiPreferences.Defaults()).Normalized();
+            if (loaded is null) return false;
+            preferences = loaded.Normalized();
+            return true;
         }
         catch (Exception)
         {
-            // Corrupt/unreadable file → safe defaults, no crash. (Intentionally does not rethrow.)
-            return UiPreferences.Defaults();
+            // Corrupt/unreadable file → false + safe defaults, no crash. (Intentionally does not rethrow.)
+            preferences = UiPreferences.Defaults();
+            return false;
         }
     }
 

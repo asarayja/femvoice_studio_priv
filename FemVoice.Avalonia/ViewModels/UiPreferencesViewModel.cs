@@ -56,14 +56,16 @@ public partial class UiPreferencesViewModel : ObservableObject
     /// <summary>Current edited values as a model (no I/O).</summary>
     public UiPreferences Current() => new() { Theme = Theme, Language = Language, ReduceMotion = ReduceMotion };
 
-    // Persist ONLY — does not apply theme/language at runtime. Fail-safe: a failed write surfaces a status
-    // message instead of throwing (the store never throws).
+    // Persist, then (Stage 2A) live-apply ONLY the theme to the running Avalonia app — language and reduce-motion
+    // remain persisted-only (not activated). Fail-safe: a failed write surfaces a status message; ThemeActivation
+    // is null-safe (no-op when there is no running Application).
     [RelayCommand]
     private void Save()
     {
         bool ok = _store.Save(Current());
+        if (ok) FemVoice.Avalonia.Theming.ThemeActivation.Apply(Theme);   // theme only — no language/reduce-motion activation
         Status = ok
-            ? Localized.Get("Settings_LocalPrefs_Saved", "Lagret (kun lagring — ingen kjøretidsendring).")
+            ? Localized.Get("Settings_LocalPrefs_Saved", "Lagret. Tema er aktivert; språk/bevegelse lagres men aktiveres ikke ennå.")
             : Localized.Get("Settings_LocalPrefs_SaveFailed", "Kunne ikke lagre innstillingene lokalt.");
     }
 
