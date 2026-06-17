@@ -56,16 +56,21 @@ public partial class UiPreferencesViewModel : ObservableObject
     /// <summary>Current edited values as a model (no I/O).</summary>
     public UiPreferences Current() => new() { Theme = Theme, Language = Language, ReduceMotion = ReduceMotion };
 
-    // Persist, then (Stage 2A) live-apply ONLY the theme to the running Avalonia app — language and reduce-motion
-    // remain persisted-only (not activated). Fail-safe: a failed write surfaces a status message; ThemeActivation
-    // is null-safe (no-op when there is no running Application).
+    // Persist, then live-apply theme (Stage 2A) and the Avalonia-local language (Stage 2B). Reduce-motion remains
+    // persisted-only (not activated). Language takes full effect on the next navigation / app restart (no broad
+    // live-refresh of already-rendered views). Fail-safe: a failed write surfaces a status message; the activators
+    // are null/Avalonia-local and safe.
     [RelayCommand]
     private void Save()
     {
         bool ok = _store.Save(Current());
-        if (ok) FemVoice.Avalonia.Theming.ThemeActivation.Apply(Theme);   // theme only — no language/reduce-motion activation
+        if (ok)
+        {
+            FemVoice.Avalonia.Theming.ThemeActivation.Apply(Theme);                 // theme — applies live
+            FemVoice.Avalonia.Localization.LanguageActivation.Apply(Language);      // language — Avalonia-local; full effect on restart
+        }
         Status = ok
-            ? Localized.Get("Settings_LocalPrefs_Saved", "Lagret. Tema er aktivert; språk/bevegelse lagres men aktiveres ikke ennå.")
+            ? Localized.Get("Settings_LocalPrefs_Saved", "Lagret. Tema og språk er aktivert (språk fullt ved omstart); bevegelse lagres men aktiveres ikke ennå.")
             : Localized.Get("Settings_LocalPrefs_SaveFailed", "Kunne ikke lagre innstillingene lokalt.");
     }
 
