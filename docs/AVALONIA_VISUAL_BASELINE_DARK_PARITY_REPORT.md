@@ -1,0 +1,264 @@
+# Avalonia Cross-platform Visual Baseline / Dark Theme Parity — Report
+
+Date: 2026-06-17 · Branch: `avalonia-visual-baseline-dark-parity-slice` · Host: Linux (.NET 10 user-local `~/.dotnet`).
+
+> Visual styling/layout only. No clinical/domain/WPF behaviour changed. No real mic, persistence, export,
+> SmartCoach/progression, safety-gate, voice-health. No signing/notarization. No theme/settings persistence.
+
+## Visual reference
+The Windows/WPF **dark-mode** screenshots (Dashboard, Exercise Guide, Exercise Detail, Settings) were used as the
+design reference. The Avalonia baseline is **not pixel-perfect** — it follows the same dark visual identity:
+navy slate background, purple primary accent, green success / red danger / blue secondary accents, rounded cards,
+subtle borders, consistent spacing, white headings, muted gray secondary text, intentionally-disabled deferred
+controls.
+
+## What changed (visual only)
+- **Dark-first**: `App.axaml` `RequestedThemeVariant="Dark"` (Avalonia head only). The app now resolves the Dark
+  variant by default regardless of the OS/session theme (previously `Default` → Light on this box, which read as
+  washed-out). FluentTheme renders dark controls, removing the light-gray button wall.
+- **Theme palette** (`Themes/ShellTheme.axaml`): the 14 existing `Shell*` brushes retuned to navy/purple, plus
+  new surface + semantic + chart/chip keys (28 total, defined in **both** Dark and Light).
+- **Control styles** (`App.axaml`): `Button.primary` (purple), `Button.secondary` (blue), `Button.nav` flat rail
+  + `.nav.deferred` (de-emphasised), `Border.card` (elevated surface), `Border.chip`. Cosmetic only.
+- **Shell** (`MainWindow.axaml`): navy window background; heading-coloured title; nav rail buttons use `.nav`,
+  deferred items de-emphasised but still navigable to their deferred placeholder page.
+- **Dashboard**: cards; large purple **Start**; accent live-pitch number; green comfort-zone text; themed
+  feedback + pitch-trace (chart background + cyan trace via theme keys); disabled pro-tools chips.
+- **Exercise Guide**: dark cards with purple circular icon badge, category chip, blue **Åpne ›**.
+- **Exercise Detail**: hero header with purple icon badge; cards; purple step bullets; purple **Start øvelse**;
+  warning-coloured safety card.
+- **Exercise Runtime**: all hardcoded hex → theme brushes; cards; primary/secondary Start/Stop; themed chart
+  (background/target-band/trace/marker keys).
+- **Settings / Analysis / Reports / Diagnostics**: upgraded existing brush-driven cards to the elevated `.card`
+  style; Analysis mini-chart background themed. Inert/disabled actions unchanged.
+
+All bindings and Norwegian display text were preserved exactly; no view logic changed.
+
+## Behaviour
+**None changed.** No clinical/domain/WPF change; deferred surfaces remain deferred; Settings stays inert (no
+actions, no theme/settings persistence). Project references unchanged (Core + Audio.Abstractions only);
+`Tmds.DBus.Protocol` pinned 0.21.3; no forbidden runtime/platform references introduced.
+
+## Crash robustness fix (NVIDIA GL atexit teardown)
+During the gate, the platform-initializing smokes (`--theme-loc-smoke`, `--packaged-theme-smoke`,
+`--visual-baseline-smoke`) were found to **intermittently segfault on process exit (~1/12 runs, SIGSEGV/139,
+core dumped)**. Root cause (from the coredump): the NVIDIA proprietary GL driver crashes in its `atexit` teardown
+(`__run_exit_handlers` → `libGLX_nvidia.so`/`libnvidia-glcore.so`) at exit, *after* the smoke already produced
+its correct result — `SetupWithoutStarting()` + `UsePlatformDetect()` initializes X11/GL when a display is
+present. Not our logic, not a packaging issue. Fix: once a smoke has its result, flush output and terminate via
+POSIX `_exit()` (skips `atexit` handlers, hence the buggy driver teardown); Linux-only; the real GUI path is
+untouched. Verified: **90 consecutive runs (30× each of the 3 smokes) → 0 non-zero exits, 0 new coredumps.**
+
+## Manual Linux visual verification
+The packaged/published path (`cd artifacts/publish/linux-x64 && DISPLAY=:0 dotnet FemVoice.Avalonia.dll`) was
+launched for screenshot inspection; result recorded in the slice report turn (UI opens dark-themed and stays
+visible). `sudo` is unavailable non-interactively, so the `.deb` was not re-installed; the published path is the
+same runtime the `.deb` launcher uses.
+
+## Signing/notarization
+Unblocked from a visual standpoint, but **NOT started** (separate, deferred slice).
+
+## Deferred
+Pixel-perfect parity, real theme switching/persistence, visual redesign beyond baseline, and the deferred clinical
+surfaces (Progression / SmartCoach / Microphone calibration).
+
+---
+
+## Follow-up polish (same PR #19): Exercise Guide row-click + Dashboard chart parity
+
+Two parity/UX gaps from manual screenshots, addressed on the same branch. Visual/UX-only; no clinical/domain/WPF
+behaviour change, no data/pitch/target-profile change, no persistence, no real mic, no new charting dependency.
+
+### 1. Exercise Guide row/card click
+The whole exercise row is now a `Button.guideCard` bound to the existing `OpenExerciseCommand` (same command the
+old "Åpne" button used) — clicking/tapping anywhere on the card, or Enter/Space when it is keyboard-focused, opens
+the exercise detail. Hover (accent border) / pressed (purple border) / `Cursor=Hand` make it feel clickable. The
+inner button was replaced by a non-interactive "Åpne ›" chevron affordance (avoids a nested button). No exercise
+data or selection semantics changed.
+
+### 2. Dashboard pitch chart parity
+The dashboard chart was a crude Hz≈px bar fill. It now uses the same converter-free Canvas geometry as the runtime
+chart, via the shared display-only `RuntimeChartDisplay` + portable `PitchChartAxisRangeCalculator`: a fixed axis
+windowed around the comfort zone, a green comfort-zone band, subtle horizontal grid lines, a current-pitch marker
+line, y-axis frequency labels (max/min Hz), a properly-scaled pitch trace (px-from-bottom), and a centered subtle
+empty-state hint when not recording. The dashboard VM gained display-only `DashboardChart` (geometry snapshot) +
+`PitchTracePx` (px heights) derived from the existing stabilized pitch — **the synthetic/audio pipeline, pitch
+detection, and target-profile behaviour are unchanged**; `PitchSamples` (Hz) is retained.
+
+### New smoke `--visual-interaction-chart-smoke` (read-only)
+Verifies: Exercise Guide exposes the row/card open command path and opening the first card reaches the SAME
+`ExerciseDetailViewModel` (`Title == card.Name`); the guide lists its 15 exercises; the dashboard exposes chart
+geometry (height/band/axis) + a px trace; no charting-library dependency is referenced (detected via "Plot"/"Chart"
+in referenced-assembly names — no forbidden literal embedded); chart brush keys resolve in Dark (platform-gated,
+skipped-not-failed headless); and (source-only) the guide card is a `Button.guideCard` bound to `OpenExerciseCommand`
+and the dashboard binds the new geometry.
+
+### Follow-up gate
+Build 0/0; **18/18 smokes OK (all exit 0)** incl. the new one; vuln clean; Tmds 0.21.3; refs Core + Audio.Abstractions
+only; leak guard clean (no OxyPlot/charting dep — csproj unchanged); portable 1570/1580; published-output smokes +
+`.deb` + macOS publish OK.
+
+### Manual Linux visual verification (follow-up)
+Launched the dark UI again for screenshot; the Exercise Guide rows are clickable and the dashboard chart shows the
+comfort band + grid + axis labels + marker + trace (recorded in the report turn).
+
+---
+
+## Follow-up 2 (same PR #19): WPF-parity exercise/runtime layout (no pitch graph, grid layout)
+
+The user compared against the original Windows/WPF UI and flagged two exercise-screen parity issues. Visual/UX
+layout only; no clinical/domain/WPF/data/pitch/target-profile change.
+
+### WPF reference check (inspected, not guessed)
+Inspected the frozen `FemVoiceStudio/Views/ExerciseWindow.xaml` (the single WPF window for the exercise
+experience — there is no separate WPF detail/guide window; the Avalonia Guide→Detail→Runtime split is
+Avalonia-specific). Findings:
+- **The WPF exercise/session screen has NO pitch graph** (no chart/plot/graph/polyline/canvas of any kind). The
+  realtime feedback is metric **bars** (resonance/stability/pitch-direction `ProgressBar`s) + score chips + status
+  text, in Grids. (WPF even removed the raw target-Hz panel: *"TargetPitchPanel FJERNET — ingen Hz-verdier
+  eksponeres i UI"*.)
+- **WPF DetailView is a two-column grid**: left (1.25*, scrollable) = exercise info card + guidance (UniformGrid
+  2-col) + numbered steps; right (0.75*, MinWidth 420 / MaxWidth 560) = the session panel (large 48px timer +
+  Start/Stop + feedback) then the live-feedback metrics. The exercise list (the "guide") uses clickable
+  `ExerciseCard`s (`Cursor=Hand`) — confirming the Avalonia clickable-card is WPF-accurate.
+
+### Why the Avalonia layout was adjusted
+The Avalonia **Runtime** view had a large pitch chart + ~8 stacked cards in one long vertical scroll — neither
+matches WPF (no graph there) nor avoids scrolling. So:
+- **Pitch chart removed from the Runtime view** (the `Canvas` chart with band/trace/marker/axis is gone). The
+  runtime **VM keeps its chart data model** (`RuntimeChart` + `RuntimePitchSamples`) so `--runtime-chart-feedback-smoke`
+  and the runtime logic are unchanged — only the on-screen chart is gone, matching WPF.
+- **Runtime view is now a two-column grid**: left = target-profile + (running) live pitch/status text +
+  feedback/guidance; right = the session panel (large elapsed timer + phase + Start/Stop, always visible) +
+  (running) hold-progress "meters" + the coordinator readout. Key controls are visible without long scrolling.
+- **Detail view is now a two-column grid**: left = purpose + instructions; right = details + safety + Start. No
+  pitch graph (WPF has none here either).
+- Both views keep an outer `ScrollViewer` and proportional star columns so smaller windows still scroll gracefully
+  (no fixed Windows-only dimensions).
+
+### Kept (not reverted)
+Dashboard dark chart (comfort band + grid + marker + trace), Exercise Guide clickable cards + dark styling,
+dark-first baseline, shared ShellTheme, and the `--visual-baseline` / `--visual-interaction-chart` smokes.
+
+### New smoke `--exercise-layout-parity-smoke` (read-only, deterministic, no display)
+Verifies: guide card-click still opens the detail; runtime Start/Stop lifecycle works and the coordinator readout
+stays wired; the runtime VM **retains** its chart data model; the runtime **view** no longer renders a chart
+(`Canvas`/`RuntimePitchSamples`/`RuntimeChart` absent) and is grid-based; the detail view is grid-based; the
+dashboard view **keeps** its chart; and no charting dependency is referenced. (A flaky stop-race was fixed by
+awaiting the async `Stop()` before asserting `stopped` — 18 stress runs, 0 failures.)
+
+### Follow-up 2 gate
+Build 0/0; **19/19 smokes OK (all exit 0)**; vuln clean; Tmds 0.21.3; refs Core + Audio.Abstractions only; leak
+guard clean; portable 1570/1580 (10 known baseline; 1569 with the `ComfortZone` flake); published smokes + `.deb` +
+macOS publish OK. No clinical/domain/WPF/data change. Signing/notarization still **not started**.
+
+---
+
+## Follow-up 3 (same PR #19): exercise flow (no double-start) + focus-aware wording
+
+Two WPF-parity issues from manual testing: (1) a double-start flow (detail "Start øvelse" → a second runtime page
+with another Start); (2) pitch-centric wording for every exercise. UX/flow/copy parity only; no clinical/domain/
+WPF/data/pitch/target-profile change.
+
+### WPF reference check (inspected, not guessed)
+Re-inspected the frozen `FemVoiceStudio/Views/ExerciseWindow.xaml`:
+- WPF opens an exercise from the guide list (clickable `ExerciseCard`) by switching the SAME window to its
+  `DetailView` (a `Visibility` toggle — **not** a separate window/page).
+- The `DetailView` IS the exercise page: left column = info/guidance/steps; **right column = the session panel
+  with the timer + the Start/Stop buttons**. So **the first Start is on the exercise page and starts the session
+  directly — there is no separate detail page and no second Start (no double-start).**
+- WPF uses **exercise-specific** guidance (data-driven `GuidanceItems` + a `FeedbackModeKey` badge), not
+  pitch-only wording, and even removed the raw target-Hz panel ("TargetPitchPanel FJERNET").
+
+### Flow fix (no double-start)
+The Avalonia guide now opens the exercise page (the runtime view) **directly**; the redundant detail page was
+removed. One page, one Start:
+- `ShellViewModel`: the guide's open action is now `OpenExercise(e) => CurrentPage = new ExerciseRuntimeViewModel(e, _ui, ShowGuide)`. Back returns to the guide.
+- **Deleted** `ExerciseDetailViewModel` + `ExerciseDetailView(.axaml/.cs)` and the MainWindow detail `DataTemplate`.
+- The runtime VM was enriched with the pre-start info it needs (Purpose, Rationale, Steps, focus labels) so the
+  single page shows purpose/instructions before Start and the session controls + live readouts after Start — all
+  on the same page (verified: Start/Stop keep the same VM instance, no navigation). Lifecycle (Begin/Stop) and the
+  synthetic data path are unchanged internally.
+
+### Focus-aware wording (not pitch-centric)
+Wording is now derived from the exercise's `GoalCategory` (Pitch / Resonance / Intonation / Breathing / Combined):
+- A `FocusSummary` leads each exercise with its actual focus (e.g. resonance exercises say *"lysere resonans og
+  fremre plassering — ikke bare tonehøyde"*, breath exercises emphasize pust/støtte).
+- `Fokus: <label>` replaces the always-pitch metadata; the **pitch target is shown prominently only for
+  pitch-focused exercises** (`IsPitchFocused` = Pitch/Combined). For non-pitch exercises the pitch range is shown
+  only as a **secondary technical detail** ("Tekniske mål (tonehøyde): …"), and the technical "Mål-profil" panel is
+  clearly secondary. No exercise definitions, target profiles, or thresholds changed — display only.
+
+### New smoke `--exercise-flow-parity-smoke` (read-only, deterministic)
+Verifies: the guide card opens the exercise page directly (Inactive, one pending Start) with **no separate
+start page**; Start activates the SAME page instance and Stop keeps it (no second-page navigation); a non-pitch
+exercise reports `IsPitchFocused=false` (pitch not primary) while a pitch exercise reports `true`; the dashboard
+chart is retained; the exercise page has no pitch chart; no separate `ExerciseDetailView` exists; no charting
+dependency. (Coordinator smoke's nav-B was updated to open a fresh exercise after the now-`→guide` Back.)
+
+### Kept
+Dashboard chart, Exercise Guide clickable cards, the grid layouts, the dark baseline.
+
+### Follow-up 3 gate
+Build 0/0; **20/20 smokes OK (all exit 0)** incl. `--exercise-flow-parity-smoke`; vuln clean; Tmds 0.21.3; refs
+Core + Audio.Abstractions only; leak guard clean; portable 1570/1580; published smokes + `.deb` + macOS publish OK.
+No clinical/domain/WPF/data change. Signing/notarization still **not started**.
+
+---
+
+## Follow-up 4 (same PR #19): Exercise Guide list parity
+
+Issue: the Avalonia guide list showed extra metadata WPF's list did not (target pitch / verbose labels) and
+missed the original progress/session counts. Visual/UX parity only; no persistence/DB/analytics.
+
+### WPF Exercise Guide list reference (inspected `FemVoiceStudio/Views/ExerciseWindow.xaml` ListView, read-only)
+Per row WPF shows: icon badge · **Name** · a **Goal chip** (focus/category) + **Difficulty** • **Duration min** ·
+a **Frequency** chip · a **trimmed Description** · and on the right a **per-exercise session count**
+(`TotalSessions` → "N økter") + a chevron. Above the list there is a **"Today's progress"** summary card (minutes +
+session count) and category filter chips. **WPF does NOT show a target-pitch (Hz) value in the list** (that is a
+detail/exercise-page field).
+
+### Avalonia list changes (parity)
+- **Removed** the target-pitch (Hz) "Mål-pitch" field and the verbose `Nivå:/Fokus:/Varighet:` labels from the list
+  rows (the pitch target remains on the exercise page only).
+- Rows now match WPF: Name · Goal chip (`GoalText`) + Difficulty • Duration · Frequency chip · trimmed Description ·
+  right-aligned **session count + chevron**.
+- Added a **"Dagens fremgang" (today's progress)** summary card (minutes + sessions) above the list.
+- **Progress/counts are DISPLAY-ONLY placeholders (`0 min · 0 økter`, `0 økter` per row)** — this preview has **no
+  session persistence/analytics**, so the truthful value is 0; a `ProgressNote` states the preview does not track
+  progress. **No `SessionAnalyticsStore`/`IDatabaseService`/`ExerciseSessionRecorder`/DB read, no invented numbers.**
+- Kept: whole-row click → opens the exercise; dark baseline; the chevron affordance.
+- Because the list leads with the **Goal/focus** (not pitch), non-pitch exercises are no longer pitch-centric in the list.
+
+### `--exercise-flow-parity-smoke` (extended)
+Now also asserts: list fields present (per-row `SessionCountText` + `FrequencyText` + `GoalText`), the today's-progress
+summary present (`TodaysProgressText` + `ProgressNote`), the guide view source has **no `TargetPitchText`/`Mål-pitch`**
+and **does** bind the session-count + today's-progress, and the guide/card VMs introduce **no persistence/analytics
+dependency**.
+
+### Follow-up 4 gate
+Build 0/0; **20/20 smokes OK (all exit 0)**; vuln clean; Tmds 0.21.3; refs Core + Audio.Abstractions only; leak
+guard clean (the smoke's persistence absence-check uses non-forbidden substrings); portable 1570/1580 (1569 with the
+`ComfortZone` flake); published smokes + `.deb` + macOS publish OK. No clinical/domain/WPF/data/persistence change.
+Signing/notarization still **not started**.
+
+### Follow-up 4b: deeper WPF list-reference inspection (view-model level)
+Re-inspected the WPF guide list at the view-model level to confirm the parity is complete and to document the
+source of the progress/count values (read-only — `FemVoiceStudio/ViewModels/ExerciseListViewModel.cs`,
+`FemVoiceStudio/Models/Exercise.cs`, `FemVoiceStudio/Views/ExerciseWindow.xaml`):
+- The WPF list binds `ObservableCollection<Exercise>` from `ExerciseDataService.GetAllExercises()`. The `Exercise`
+  model's list fields are: `IconGlyph`, `Name`, `Goal` (+`GoalIconGlyph`), `DisplayDifficulty`, `DurationMinutes`,
+  `FrequencyText`, `Description`, and **`TotalSessions`** (+ unused-in-row `HasStreak`/`IsCompletedToday`).
+- **The per-row `TotalSessions` count and the top card's today's `TotalMinutesToday`/`TotalExercisesToday` are
+  DB-backed** (`ExerciseDataService.GetCompletedSessionsToday()/GetTotalMinutesToday()` → SQLite). We must not read
+  that. So the Avalonia display-only `0 økter` / `0 min · 0 økter` placeholders (clearly labelled by `ProgressNote`)
+  are the correct, honest equivalent in a no-persistence preview — same layout/intent, real value unavailable
+  without persistence (which is deferred).
+- **Avalonia list row fields now match WPF exactly**: Name · Goal chip + Difficulty • Duration · Frequency chip ·
+  single-line trimmed Description · session count + chevron. **No extra Avalonia-only metadata** (target-pitch and
+  the verbose `Nivå:/Fokus:/Varighet:` labels were removed in follow-up 4; description is now single-line like WPF).
+- **Deferred (WPF list FEATURES, not per-row metadata)**: the WPF list also has **category-filter chips**
+  (All/Pitch/Resonance/Intonation/Breathing/Practice) and a **search box**. These are interactive list features, not
+  row fields; they are out of scope for this display-parity slice and remain deferred (no behaviour added here).
+- Conclusion: the Exercise Guide **list-field + progress/count parity is complete**; the only WPF list items not
+  replicated are the (deferred) filter/search features and the real DB-backed counts (display-only `0` placeholders).

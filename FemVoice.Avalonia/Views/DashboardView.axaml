@@ -6,82 +6,109 @@
 
       <!-- Header -->
       <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Spacing="2" Margin="0,0,0,12">
-        <TextBlock Text="FemVoice Studio — Hoveddashboard (Avalonia)" FontSize="22" FontWeight="Bold"/>
-        <TextBlock Foreground="#888" TextWrapping="Wrap"
+        <TextBlock Text="FemVoice Studio — Hoveddashboard (Avalonia)" FontSize="22" FontWeight="Bold"
+                   Foreground="{DynamicResource ShellHeadingBrush}"/>
+        <TextBlock Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"
                    Text="Parity-slice. Pitch/stabilitet/helse drives av delte tjenester (FemVoice.Core) fra syntetisk lyd på Linux. Full feedback-pipeline, SmartCoach, rapporter og temaparitet kommer senere — se docs/AVALONIA_MAIN_DASHBOARD_PLACEHOLDERS.md."/>
       </StackPanel>
 
       <!-- Session controls -->
-      <Border Grid.Row="1" Grid.Column="0" BorderBrush="#444" BorderThickness="1" CornerRadius="6" Padding="14" Margin="0,0,8,12">
+      <Border Grid.Row="1" Grid.Column="0" Classes="card" Margin="0,0,8,12">
         <StackPanel Spacing="10">
-          <TextBlock Text="Økt" FontWeight="SemiBold"/>
+          <TextBlock Text="Økt" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
           <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button Content="Start" Command="{Binding StartCommand}" IsEnabled="{Binding !IsRecording}" Width="90"/>
+            <Button Content="Start" Classes="primary" Command="{Binding StartCommand}" IsEnabled="{Binding !IsRecording}" Width="100"/>
             <Button Content="Stopp" Command="{Binding StopCommand}" IsEnabled="{Binding IsRecording}" Width="90"/>
-            <TextBlock VerticalAlignment="Center" Text="{Binding IsRecording, StringFormat='Tar opp: {0}'}"/>
+            <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding IsRecording, StringFormat='Tar opp: {0}'}"/>
           </StackPanel>
           <StackPanel Orientation="Horizontal" Spacing="8">
-            <TextBlock VerticalAlignment="Center" Text="Vanskelighetsgrad:"/>
+            <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}" Text="Vanskelighetsgrad:"/>
             <ComboBox ItemsSource="{Binding DifficultyOptions}" SelectedItem="{Binding SelectedDifficulty}" MinWidth="150"/>
           </StackPanel>
           <StackPanel Orientation="Horizontal" Spacing="8">
-            <TextBlock VerticalAlignment="Center" Text="Syntetisk lyd (Linux):"/>
+            <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}" Text="Syntetisk lyd (Linux):"/>
             <ComboBox ItemsSource="{Binding SyntheticAudioModes}" SelectedItem="{Binding SyntheticAudioMode}" MinWidth="150"/>
           </StackPanel>
         </StackPanel>
       </Border>
 
       <!-- Live metrics -->
-      <Border Grid.Row="1" Grid.Column="1" BorderBrush="#444" BorderThickness="1" CornerRadius="6" Padding="14" Margin="8,0,0,12">
+      <Border Grid.Row="1" Grid.Column="1" Classes="card" Margin="8,0,0,12">
         <StackPanel Spacing="6">
-          <TextBlock Text="Sanntid" FontWeight="SemiBold"/>
+          <TextBlock Text="Sanntid" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
           <StackPanel Orientation="Horizontal" Spacing="6">
-            <TextBlock Text="{Binding CurrentPitch, StringFormat='{}{0:F1}'}" FontSize="34" FontWeight="Bold"/>
-            <TextBlock Text="Hz" VerticalAlignment="Bottom" Margin="0,0,0,6" Foreground="#888"/>
+            <TextBlock Text="{Binding CurrentPitch, StringFormat='{}{0:F1}'}" FontSize="34" FontWeight="Bold"
+                       Foreground="{DynamicResource ShellAccentBrush}"/>
+            <TextBlock Text="Hz" VerticalAlignment="Bottom" Margin="0,0,0,6" Foreground="{DynamicResource ShellMutedBrush}"/>
           </StackPanel>
-          <TextBlock Text="{Binding CurrentSignalStatus, StringFormat='Signal: {0}'}"/>
-          <TextBlock Text="{Binding PitchStability, StringFormat='Stabilitet: {0}'}"/>
-          <TextBlock Text="{Binding HealthStatusDisplay, StringFormat='Helse: {0}'}"/>
-          <TextBlock Text="{Binding ComfortZoneLow, StringFormat='Komfortsone: {0:F0}–'}"/>
-          <TextBlock Text="{Binding ComfortZoneHigh, StringFormat='… {0:F0} Hz'}" Margin="0,-6,0,0"/>
+          <TextBlock Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding CurrentSignalStatus, StringFormat='Signal: {0}'}"/>
+          <TextBlock Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding PitchStability, StringFormat='Stabilitet: {0}'}"/>
+          <TextBlock Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding HealthStatusDisplay, StringFormat='Helse: {0}'}"/>
+          <TextBlock Foreground="{DynamicResource ShellSuccessBrush}" Text="{Binding ComfortZoneLow, StringFormat='Komfortsone: {0:F0}–'}"/>
+          <TextBlock Foreground="{DynamicResource ShellSuccessBrush}" Text="{Binding ComfortZoneHigh, StringFormat='… {0:F0} Hz'}" Margin="0,-6,0,0"/>
         </StackPanel>
       </Border>
 
       <!-- Feedback -->
-      <Border Grid.Row="2" Grid.ColumnSpan="2" BorderBrush="#5a3" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+      <Border Grid.Row="2" Grid.ColumnSpan="2" Classes="card" BorderBrush="{DynamicResource ShellSuccessBrush}" Margin="0,0,0,12">
         <StackPanel Spacing="2">
-          <TextBlock Text="Tilbakemelding" FontWeight="SemiBold" Foreground="#7b5"/>
-          <TextBlock Text="{Binding CurrentFeedbackMessage}" TextWrapping="Wrap" FontSize="15"/>
+          <TextBlock Text="Tilbakemelding" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}"/>
+          <TextBlock Text="{Binding CurrentFeedbackMessage}" TextWrapping="Wrap" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
         </StackPanel>
       </Border>
 
-      <!-- Pitch trace (converter-free placeholder; OxyPlot.Avalonia port deferred — see AVALONIA_CHART_PORT_NOTES.md) -->
-      <Border Grid.Row="3" Grid.ColumnSpan="2" BorderBrush="#444" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12" MinHeight="260">
+      <!-- Pitch trace: converter-free Canvas chart (comfort-zone band + grid + scaled trace + current marker +
+           y-axis labels). px == "distance from bottom" via the shared RuntimeChartDisplay geometry. No third-party charting lib. -->
+      <Border Grid.Row="3" Grid.ColumnSpan="2" Classes="card" Margin="0,0,0,12" MinHeight="260">
         <Grid RowDefinitions="Auto,*">
-          <TextBlock Grid.Row="0" Text="Pitch-trace (Hz, nyeste til høyre)" FontWeight="SemiBold"/>
-          <Panel Grid.Row="1">
-            <TextBlock Text="Pitch-trace vises her under opptak"
-                       HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="#666"/>
-            <ItemsControl ItemsSource="{Binding PitchSamples}" VerticalAlignment="Bottom">
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                  <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom"/>
-                </ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <Rectangle Width="3" Margin="1,0" Fill="#4FC3F7" VerticalAlignment="Bottom" Height="{Binding}"/>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </Panel>
+          <TextBlock Grid.Row="0" Text="Pitch-trace (Hz, nyeste til høyre)" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,8,0,0">
+            <!-- Y-axis frequency labels: max at top, min at bottom -->
+            <Grid Grid.Column="0" Width="46" Height="{Binding DashboardChart.ChartHeightPx}" RowDefinitions="Auto,*,Auto" Margin="0,0,6,0">
+              <TextBlock Grid.Row="0" Text="{Binding DashboardChart.ChartMaxPitch, StringFormat='{}{0:F0} Hz'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
+              <TextBlock Grid.Row="2" Text="{Binding DashboardChart.ChartMinPitch, StringFormat='{}{0:F0} Hz'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
+            </Grid>
+            <!-- Plot surface -->
+            <Border Grid.Column="1" Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="6" ClipToBounds="True">
+              <Panel>
+                <Canvas Name="DashChartCanvas" Height="{Binding DashboardChart.ChartHeightPx}" HorizontalAlignment="Stretch">
+                  <!-- Subtle horizontal grid lines -->
+                  <Rectangle Canvas.Left="0" Canvas.Bottom="50"  Height="1" Width="{Binding #DashChartCanvas.Bounds.Width}" Fill="{DynamicResource ShellBorderBrush}"/>
+                  <Rectangle Canvas.Left="0" Canvas.Bottom="100" Height="1" Width="{Binding #DashChartCanvas.Bounds.Width}" Fill="{DynamicResource ShellBorderBrush}"/>
+                  <Rectangle Canvas.Left="0" Canvas.Bottom="150" Height="1" Width="{Binding #DashChartCanvas.Bounds.Width}" Fill="{DynamicResource ShellBorderBrush}"/>
+                  <!-- Comfort-zone band (green, around the target range) -->
+                  <Rectangle Canvas.Left="0" Canvas.Bottom="{Binding DashboardChart.TargetBandBottomPx}"
+                             Height="{Binding DashboardChart.TargetBandHeightPx}"
+                             Width="{Binding #DashChartCanvas.Bounds.Width}" Fill="{DynamicResource ShellTargetBandBrush}"/>
+                  <!-- Pitch trace (newest at right), scaled into the axis -->
+                  <ItemsControl Canvas.Left="0" Canvas.Bottom="0" ItemsSource="{Binding PitchTracePx}">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate><StackPanel Orientation="Horizontal" VerticalAlignment="Bottom"/></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Rectangle Width="3" Margin="1,0" Fill="{DynamicResource ShellChartTraceBrush}" VerticalAlignment="Bottom" Height="{Binding}"/>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <!-- Current-pitch marker line -->
+                  <Rectangle Canvas.Left="0" Canvas.Bottom="{Binding DashboardChart.CurrentPitchMarkerPx}"
+                             Height="2" Width="{Binding #DashChartCanvas.Bounds.Width}" Fill="{DynamicResource ShellMarkerBrush}"
+                             IsVisible="{Binding DashboardChart.HasVoice}"/>
+                </Canvas>
+                <!-- Empty-state hint (centered, subtle) when not recording -->
+                <TextBlock Text="Pitch-trace vises her under opptak" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Foreground="{DynamicResource ShellFaintBrush}" IsVisible="{Binding !IsRecording}"/>
+              </Panel>
+            </Border>
+          </Grid>
         </Grid>
       </Border>
 
       <!-- Professional tools placeholders (navigation moved to the shell top bar) -->
-      <Border Grid.Row="4" Grid.ColumnSpan="2" BorderBrush="#444" BorderThickness="1" CornerRadius="6" Padding="12">
+      <Border Grid.Row="4" Grid.ColumnSpan="2" Classes="card">
         <StackPanel Spacing="8">
-          <TextBlock Text="Profesjonelle verktøy (placeholder — senere slices)" FontWeight="SemiBold" Foreground="#888"/>
+          <TextBlock Text="Profesjonelle verktøy (placeholder — senere slices)" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}"/>
           <WrapPanel>
             <Button Content="Kliniker" IsEnabled="False" Margin="0,0,8,0"/>
             <Button Content="Coach" IsEnabled="False" Margin="0,0,8,0"/>

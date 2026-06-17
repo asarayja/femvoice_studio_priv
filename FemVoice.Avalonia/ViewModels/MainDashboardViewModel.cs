@@ -29,6 +29,9 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     private readonly LiveMetricsService _metrics = new();
     private const int SampleRate = 44100;
     private const int MaxTracePoints = 200;
+    private const double ChartHeightPx = 200;   // fixed chart surface height; px == "distance from bottom"
+    private double _chartMin;                    // fixed axis range derived from the comfort zone (display-only)
+    private double _chartMax;
 
     public MainDashboardViewModel(IAudioCaptureService capture, IUiDispatcher ui)
     {
@@ -63,8 +66,16 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         if (_capture is SyntheticAudioCaptureService synth) synth.Mode = value;
     }
 
-    /// <summary>Recent stabilized pitch values for the chart (oldest → newest).</summary>
+    /// <summary>Recent stabilized pitch values (Hz) — kept for parity with the prior trace consumers.</summary>
     public ObservableCollection<double> PitchSamples { get; } = new();
+
+    /// <summary>Recent pitch trace as px-from-bottom heights for the converter-free chart (oldest → newest).</summary>
+    public ObservableCollection<double> PitchTracePx { get; } = new();
+
+    /// <summary>Display-only scalar chart state (axis range, comfort-zone band, current-pitch marker) in chart
+    /// px space — reuses the runtime chart's immutable helper. No OxyPlot, no converter, no clinical decision.</summary>
+    [ObservableProperty] private RuntimeChartDisplay _dashboardChart =
+        RuntimeChartDisplay.Empty(ChartHeightPx, 120, 260, 150, 220);
 
     // ── Commands ──────────────────────────────────────────────────────────────
     [RelayCommand]
@@ -74,6 +85,8 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         _stabilizer.Reset();
         _metrics.Reset();
         PitchSamples.Clear();
+        PitchTracePx.Clear();
+        DashboardChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, ComfortZoneLow, ComfortZoneHigh);
         if (_capture is SyntheticAudioCaptureService synth) synth.Mode = SyntheticAudioMode;
         await _capture.StartAsync(new AudioCaptureOptions(SampleRate)).ConfigureAwait(false);
         IsRecording = true;
@@ -110,10 +123,17 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
             HealthStatusDisplay = HealthText(health);
             CurrentFeedbackMessage = DeriveFeedback(result.IsVoiced, stability, health, stabilized);
 
-            if (result.IsVoiced && stabilized > 0)
+            bool voiced = result.IsVoiced && stabilized > 0;
+            // Display-only chart snapshot (axis + comfort band fixed; marker follows current pitch). No data change.
+            DashboardChart = RuntimeChartDisplay.From(
+                ChartHeightPx, _chartMin, _chartMax, ComfortZoneLow, ComfortZoneHigh,
+                stabilized, voiced, voiced ? "Stemme registrert" : "Venter på stemme …");
+            if (voiced)
             {
                 PitchSamples.Add(stabilized);
                 while (PitchSamples.Count > MaxTracePoints) PitchSamples.RemoveAt(0);
+                PitchTracePx.Add(RuntimeChartDisplay.ToPx(stabilized, _chartMin, _chartMax, ChartHeightPx));
+                while (PitchTracePx.Count > MaxTracePoints) PitchTracePx.RemoveAt(0);
             }
         });
     }
@@ -131,6 +151,12 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         var range = PitchTargetZonePolicy.ForDifficulty(SelectedDifficulty);
         ComfortZoneLow = range.Min;
         ComfortZoneHigh = range.Max;
+        // Fixed display axis derived from the comfort zone (pure, portable calculator). Display-only.
+        var axis = PitchChartAxisRangeCalculator.Calculate(System.Array.Empty<double>(), ComfortZoneLow, ComfortZoneHigh);
+        _chartMin = axis.Minimum;
+        _chartMax = axis.Maximum;
+        PitchTracePx.Clear();
+        DashboardChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, ComfortZoneLow, ComfortZoneHigh);
     }
 
     private static string StabilityText(StabilityState s) => s switch

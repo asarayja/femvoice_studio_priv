@@ -7,6 +7,7 @@
         Width="1100" Height="760"
         MinWidth="900" MinHeight="620"
         WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource ShellWindowBackgroundBrush}"
         Title="FemVoice Studio — Avalonia">
   <!-- Desktop shell: header (top) · status strip (bottom) · [nav rail | content | info sidebar].
        Shell colours use named theme brushes (Themes/ShellTheme.axaml, Dark/Light). Static labels use the
@@ -17,7 +18,8 @@
     <Border DockPanel.Dock="Top" Background="{DynamicResource ShellHeaderBackgroundBrush}" Padding="14,10"
             BorderBrush="{DynamicResource ShellBorderBrush}" BorderThickness="0,0,0,1">
       <StackPanel Orientation="Horizontal" Spacing="10">
-        <TextBlock Text="FemVoice Studio" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+        <TextBlock Text="FemVoice Studio" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"
+                   Foreground="{DynamicResource ShellHeadingBrush}"/>
         <TextBlock Text="{loc:Tr Key=Shell_HeaderSubtitle, Fallback='Avalonia desktop · kun visning'}"
                    FontSize="12" Foreground="{DynamicResource ShellMutedBrush}" VerticalAlignment="Center"/>
       </StackPanel>
@@ -48,8 +50,8 @@
               <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="vm:ShellNavItem">
                   <Button Content="{Binding Label}" Command="{Binding Command}"
-                          HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                          Margin="0,1" Padding="10,6"/>
+                          Classes="nav" Classes.deferred="{Binding !IsImplemented}"
+                          Margin="0,1"/>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
@@ -64,7 +66,7 @@
         <ContentControl.DataTemplates>
           <DataTemplate DataType="vm:MainDashboardViewModel"><views:DashboardView/></DataTemplate>
           <DataTemplate DataType="vm:ExerciseGuideViewModel"><views:ExerciseGuideView/></DataTemplate>
-          <DataTemplate DataType="vm:ExerciseDetailViewModel"><views:ExerciseDetailView/></DataTemplate>
+          <!-- The exercise guide opens the exercise page (runtime) directly — no separate detail page (WPF parity). -->
           <DataTemplate DataType="vm:ExerciseRuntimeViewModel"><views:ExerciseRuntimeView/></DataTemplate>
           <DataTemplate DataType="vm:SettingsViewModel"><views:SettingsView/></DataTemplate>
           <DataTemplate DataType="vm:AnalysisViewModel"><views:AnalysisView/></DataTemplate>

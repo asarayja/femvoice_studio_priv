@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FemVoiceStudio.Audio;                 // PitchDetectionService
@@ -78,6 +80,10 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         SelectedExerciseName = exercise.Name;
         Category = string.IsNullOrWhiteSpace(exercise.Category) ? "Øvelse" : exercise.Category;
         Difficulty = ExerciseDisplay.Difficulty(exercise.Difficulty);
+        Steps = exercise.Steps ?? new List<string>();
+        MetricsText = exercise.Metrics is { Count: > 0 }
+            ? string.Join(", ", exercise.Metrics.Select(ExerciseDisplay.Metric))
+            : "—";
 
         // Read-only target-profile metadata (display only — no clinical decision/enforcement).
         TargetProfile = ExerciseRuntimeTargetProfileDisplay.From(exercise);
@@ -129,6 +135,31 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     public double TargetPitchMin { get; }
     public double TargetPitchMax { get; }
     public string TargetPitchText => ExerciseDisplay.TargetPitch(TargetPitchMin, TargetPitchMax);
+
+    // ── Pre-start exercise info (display-only; from the shared catalog — the single exercise page now shows
+    //    this directly, replacing the old separate detail page). Nothing computed clinically here. ──
+    public string Purpose => Exercise.Description;
+    public string Rationale => Exercise.ScientificRationale;
+    public IReadOnlyList<string> Steps { get; }
+    public string GoalText => ExerciseDisplay.Goal(Exercise.Goal);
+    public string FrequencyText => Exercise.Frequency.ToString();
+    public string DurationText => $"{Exercise.DurationMinutes} min";
+    public string MetricsText { get; }
+    // General, non-clinical reminder (the catalog has no per-exercise safety field) — NOT a Voice-Health gate.
+    public string SafetyNote =>
+        "Øv uten press: stopp ved ubehag, slapp av i hals/skuldre, og ta pauser. " +
+        "Helse og sikkerhet går alltid foran tonehøyde.";
+
+    // ── Focus-aware wording (display-only — reflects the exercise's goal/category, NOT always pitch) ──
+    /// <summary>Focus label from the exercise goal (Tonehøyde/Resonans/Intonasjon/Pust/Kombinert).</summary>
+    public string FocusLabel => ExerciseDisplay.Goal(Exercise.Goal);
+    /// <summary>Focus-specific one-line summary so non-pitch exercises don't read as pitch-centric.</summary>
+    public string FocusSummary => ExerciseDisplay.FocusSummary(Exercise.Goal);
+    /// <summary>True when tonehøyde is the PRIMARY focus (Pitch/Combined) — show the pitch target prominently.</summary>
+    public bool IsPitchFocused => ExerciseDisplay.IsPitchPrimary(Exercise.Goal);
+    /// <summary>For non-pitch exercises, the pitch range is shown only as a SECONDARY technical detail.</summary>
+    public bool ShowSecondaryPitch => !IsPitchFocused && TargetPitchMin > 0 && TargetPitchMax > 0;
+    public string SecondaryPitchText => $"Tekniske mål (tonehøyde): {TargetPitchText}";
 
     [ObservableProperty] private bool _isRunning;
     [ObservableProperty] private double _currentPitch;
