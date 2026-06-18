@@ -50,12 +50,23 @@ untouched. `CurrentCulture` defaults to the Core service culture, so startup res
 - Core-resource-backed Avalonia text (e.g. `Settings_Title`) follows the selected language: nb=`Innstillinger`,
   en=`Settings`, sv-SE=`Inställningar`.
 
-## Live-switch boundary (startup-only; truthful)
-**Language is applied at startup, not live.** Newly-constructed Avalonia views pick up the new language, but
-already-rendered text refreshes only on **app restart** — a full live re-render of already-built views would
-require broad VM/`INotify` refactoring, intentionally **out of scope** (per the stop/report rule). Saving persists
-the language and applies it to `Localized.CurrentCulture`, so it is fully in effect after a restart. The Settings
-copy and Save status state this truthfully and do not claim live language switching.
+## Startup-only; NO live refresh (truthful)
+**Language is applied at app STARTUP only.** `Save` **persists** the language but deliberately does **not** switch
+the running resolver — so there is no inconsistent half-live state and **no live-refresh claim**. The saved
+language takes effect on the **next launch/restart** (`App.OnFrameworkInitializationCompleted` → `ApplyFromStore`).
+In-session live refresh is **deferred** (a full live re-render of already-rendered views would need broad
+VM/`INotify` refactoring — out of scope). The Settings copy and Save status state this truthfully ("Tema brukes med
+en gang. Språk brukes ved omstart …") and never claim live language switching. Theme activation (Stage 2A) remains
+**live** on Save and at startup.
+
+## Coverage / fallback (sparse — native parity deferred)
+Only **31 of 146** Avalonia `Localized.Get` keys are Core-resource-backed (these follow the saved language — e.g.
+the Settings page title and the Theme/Language section labels). The other **115** are Avalonia-only **scaffold**
+keys that exist only in Norwegian, and several language resx files (notably **sv-SE**) are **sparse** and fall back
+through their parent chain to the **Norwegian neutral** resource. Consequently the high-visibility UI (nav rail,
+Dashboard, status, most labels) stays Norwegian for every language today. **No full language parity is claimed.**
+Populating the high-visibility scaffold strings + sparse resx is the **next slice** (native translation), explicitly
+**deferred** here per the slice decision.
 
 ## Smoke coverage
 - **`--settings-language-activation-smoke`** (33rd; pure resolver/culture logic, no Avalonia platform → also runs
@@ -64,9 +75,10 @@ copy and Save status state this truthfully and do not claim live language switch
   **missing/corrupt** file → no apply (sentinel preserved); **unknown** language (`zz-ZZ`) → normalized to `nb-NO`;
   **`threadCultureUntouched=True`** (global thread culture never changed — Avalonia-local only); **and (manual-fix
   additions)** `capturedUnchanged=True` (a string resolved before a language change does not retroactively change —
-  models "live refresh needs restart") and **`truthfulStatus=True`** (the Save status says "omstart"/restart and
-  does NOT claim live language activation — this assertion fails on the old overpromising copy, catching the
-  manual issue).
+  models "live refresh needs restart"); **`saveDoesNotSwitchLive=True`** (Save persists the language but does NOT
+  switch the running resolver — enforces startup-only / no live refresh); and **`truthfulStatus=True`** (the Save
+  status says "omstart"/restart and does NOT claim live language activation — this assertion fails on the old
+  overpromising copy, catching the manual issue).
 - **Updated `--settings-persistence-readiness-smoke`**: now also scans `LanguageActivation.cs` + `Localized.cs`;
   Avalonia-local language activation (`Localized.CurrentCulture`) and theme activation are allowed, while GLOBAL
   thread-culture change / Core culture mutation / Core `SetLanguage` and reduce-motion activation remain forbidden.

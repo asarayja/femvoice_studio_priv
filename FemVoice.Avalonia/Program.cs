@@ -2224,22 +2224,27 @@ internal static class Program
             global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");
             bool capturedUnchanged = capturedBefore == "Innstillinger"; // the already-resolved string is unaffected
 
-            // TRUTHFUL copy: Save status says theme is live + language applies on RESTART, and does NOT claim live
-            // language activation (the regression that caused the manual failure).
+            // NO LIVE REFRESH: Save persists language but must NOT switch the running resolver (language applies on
+            // restart only). Set a sentinel culture, Save a different language, assert the resolver is unchanged.
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");   // sentinel
+            string cultureBeforeSave = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name;
             var vm = new global::FemVoice.Avalonia.ViewModels.UiPreferencesViewModel(
                 new global::FemVoice.Avalonia.Preferences.UiPreferencesStore(System.IO.Path.Combine(root, "vm-prefs.json")));
             vm.Language = "sv-SE";
             vm.SaveCommand.Execute(null);
+            bool saveDoesNotSwitchLive = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name == cultureBeforeSave;
+            // TRUTHFUL copy: Save status says theme is live + language applies on RESTART, and does NOT claim live
+            // language activation (the regression that caused the manual failure).
             bool truthfulStatus = vm.Status.Contains("omstart")
                 && !vm.Status.Contains("og språk er aktivert")
                 && !vm.Status.Contains("språk er aktivert");
 
             Console.WriteLine($"[lang] svApplied={svApplied} enApplied={enApplied} nbApplied={nbApplied} scaffoldFallsBack={scaffoldFallsBack}");
             Console.WriteLine($"[lang] startupRead={startupRead} missingSafe={missingSafe} corruptSafe={corruptSafe} unknownSafe={unknownSafe} threadCultureUntouched={threadCultureUntouched}");
-            Console.WriteLine($"[lang] capturedUnchanged(live-needs-restart)={capturedUnchanged} truthfulStatus={truthfulStatus} status=\"{vm.Status}\"");
+            Console.WriteLine($"[lang] capturedUnchanged(live-needs-restart)={capturedUnchanged} saveDoesNotSwitchLive={saveDoesNotSwitchLive} truthfulStatus={truthfulStatus} status=\"{vm.Status}\"");
 
             bool ok = svApplied && enApplied && nbApplied && scaffoldFallsBack && startupRead && missingSafe && corruptSafe && unknownSafe
-                && threadCultureUntouched && capturedUnchanged && truthfulStatus;
+                && threadCultureUntouched && capturedUnchanged && saveDoesNotSwitchLive && truthfulStatus;
             Console.WriteLine(ok ? "[lang] Settings language activation smoke OK" : "[lang] Settings language activation smoke FAIL");
             return ok ? 0 : 1;
         }

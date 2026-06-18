@@ -57,20 +57,15 @@ public partial class UiPreferencesViewModel : ObservableObject
     /// <summary>Current edited values as a model (no I/O).</summary>
     public UiPreferences Current() => new() { Theme = Theme, Language = Language, ReduceMotion = ReduceMotion };
 
-    // Persist, then apply theme LIVE (Stage 2A). Language (Stage 2B) is set on the Avalonia-local resolver so any
-    // view built afterwards uses it, but already-rendered text only refreshes on RESTART (no broad live-refresh of
-    // existing views) — the status copy says so truthfully and does not claim live language switching. Reduce-motion
-    // remains persisted-only. Fail-safe: a failed write surfaces a status message; the activators are null/Avalonia-
-    // local and safe.
+    // Persist, then apply THEME live (Stage 2A). LANGUAGE (Stage 2B) is persisted only and applied at the next
+    // app STARTUP — Save deliberately does NOT switch the running resolver, so there is no inconsistent half-live
+    // state and no live-refresh claim (in-session live refresh is deferred to a later slice). Reduce-motion remains
+    // persisted-only. Fail-safe: a failed write surfaces a status message; ThemeActivation is null-safe.
     [RelayCommand]
     private void Save()
     {
         bool ok = _store.Save(Current());
-        if (ok)
-        {
-            FemVoice.Avalonia.Theming.ThemeActivation.Apply(Theme);                 // theme — applies live
-            FemVoice.Avalonia.Localization.LanguageActivation.Apply(Language);      // language — Avalonia-local; visible after restart
-        }
+        if (ok) FemVoice.Avalonia.Theming.ThemeActivation.Apply(Theme);   // theme — applies live; language applies on restart
         Status = ok
             ? Localized.Get("Settings_LocalPrefs_Saved",
                 "Lagret. Tema brukes med en gang. Språk brukes ved omstart (kun oversatt tekst følger språket; resten vises på norsk).")

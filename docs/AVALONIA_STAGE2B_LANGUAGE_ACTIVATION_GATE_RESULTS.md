@@ -15,7 +15,8 @@ Date: 2026-06-17 · Branch: `avalonia-stage2b-language-activation-slice` (off `m
 
 ## Smokes (33 — all OK, all exit 0)
 32 prior + **`--settings-language-activation-smoke` (new, 33rd)** → **33/33 OK.**
-- `--settings-language-activation-smoke`: `svApplied=True enApplied=True nbApplied=True scaffoldFallsBack=True startupRead=True missingSafe=True corruptSafe=True unknownSafe=True threadCultureUntouched=True capturedUnchanged=True truthfulStatus=True` (the last two added in the PR #32 manual-fix — prove live-needs-restart semantics + truthful Save copy).
+- `--settings-language-activation-smoke`: `svApplied=True enApplied=True nbApplied=True scaffoldFallsBack=True startupRead=True missingSafe=True corruptSafe=True unknownSafe=True threadCultureUntouched=True capturedUnchanged=True saveDoesNotSwitchLive=True truthfulStatus=True` (the last three from the PR #32 manual-fix — prove live-needs-restart semantics, Save-persists-but-doesn't-switch-live, and truthful Save copy).
+- **Startup-only confirmed:** en-US startup activation flips Core-backed strings (Settings/Theme/Language); nb-NO default works; sv-SE sparse → safe Norwegian fallback; Save persists language but does NOT switch the running resolver (applies on restart). No live-refresh claim.
 - `--settings-persistence-readiness-smoke` (updated): `notDisposable=True sectionsInert=True scanned=True noWpfHooks=True noGlobalCulture=True`.
 - `--settings-theme-activation-smoke` (Stage 2A) still OK; `--theme-loc-smoke` / `--localization-text-polish-smoke` / `--avalonia-localization-coverage-smoke` / `--settings-smoke` / `--settings-visual-parity-smoke` green.
 
