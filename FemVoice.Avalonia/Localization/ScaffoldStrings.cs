@@ -32,6 +32,10 @@ public static class ScaffoldStrings
         ["SmartCoach_Scaffold_Title"] = "SmartCoach",
     };
 
+    // Per-language Avalonia-owned overlay for the high-visibility scaffold strings (keyed by 2-letter language),
+    // MACHINE-GENERATED (see ScaffoldTranslations). English is the global fallback (handled in Localized.Get).
+    private static Dictionary<string, Dictionary<string, string>> Overlay => ScaffoldTranslations.ByLanguage;
+
     /// <summary>Avalonia scaffold keys that currently fall back to the Norwegian neutral text and AWAIT native
     /// translation for the non-Norwegian cultures (documented; not broken/missing). The coverage smoke treats
     /// these as a documented fallback, not a failure.</summary>
@@ -163,7 +167,17 @@ public static class ScaffoldStrings
     /// </summary>
     public static bool TryGet(string? culture, string key, out string value)
     {
-        _ = culture; // reserved for future per-culture native translations
-        return ProductInvariant.TryGetValue(key, out value!);
+        // Culture-invariant trusted values first (e.g. the product name).
+        if (ProductInvariant.TryGetValue(key, out value!)) return true;
+        // Per-culture overlay (by 2-letter language, e.g. "en" for en-US/en-GB). Norwegian and unlisted cultures
+        // fall through (value stays unset) → Core resources / Norwegian fallback in Localized.
+        if (!string.IsNullOrEmpty(culture))
+        {
+            var lang = (culture.Length >= 2 ? culture.Substring(0, 2) : culture);
+            if (Overlay.TryGetValue(lang, out var dict) && dict.TryGetValue(key, out value!))
+                return true;
+        }
+        value = null!;
+        return false;
     }
 }

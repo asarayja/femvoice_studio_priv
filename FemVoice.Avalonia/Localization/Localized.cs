@@ -28,26 +28,73 @@ public static class Localized
     private static readonly ResourceManager Resources =
         new ResourceManager("FemVoiceStudio.Resources.Strings", typeof(LocalizationService).Assembly);
 
+    /// <summary>Raised (on the calling thread) whenever <see cref="CurrentCulture"/> changes, so the Avalonia UI
+    /// can re-resolve its localized text live. Avalonia-local only.</summary>
+    public static event System.Action? LanguageChanged;
+
+    private static CultureInfo _currentCulture = LocalizationService.Instance.CurrentCulture;
+
     /// <summary>Avalonia-LOCAL current UI culture (Stage 2B). Defaults to the Core service culture; set only via
-    /// <see cref="LanguageActivation"/>. This is NOT the global thread culture and NOT the Core service culture.</summary>
-    public static CultureInfo CurrentCulture { get; set; } = LocalizationService.Instance.CurrentCulture;
+    /// <see cref="LanguageActivation"/>. This is NOT the global thread culture and NOT the Core service culture.
+    /// Changing it raises <see cref="LanguageChanged"/> for a live UI refresh.</summary>
+    public static CultureInfo CurrentCulture
+    {
+        get => _currentCulture;
+        set
+        {
+            if (value is null || Equals(_currentCulture, value)) return;
+            _currentCulture = value;
+            LanguageChanged?.Invoke();
+        }
+    }
 
     /// <summary>
     /// Resolve <paramref name="key"/> for the Avalonia-local <see cref="CurrentCulture"/>; return
     /// <paramref name="fallback"/> when the key is missing (resolved value is null/empty or equals the key).
     /// </summary>
+    private static readonly CultureInfo English = new("en");
+    private static readonly CultureInfo Norwegian = new("nb-NO");
+    private static bool IsNorwegian(CultureInfo c) => c.TwoLetterISOLanguageName is "nb" or "no" or "nn";
+    private static bool Valid(string? v, string key) => !string.IsNullOrWhiteSpace(v) && v != key;
+    private static string? Core(string key, CultureInfo c) { try { return Resources.GetString(key, c); } catch (Exception) { return null; } }
+
+    /// <summary>
+    /// Resolve <paramref name="key"/> for the Avalonia-local <see cref="CurrentCulture"/>. Resolution order:
+    /// (1) the per-language Avalonia overlay; (2) a genuine culture-specific value from the shared resources;
+    /// (3) ENGLISH fallback (overlay then shared resources) for non-Norwegian cultures; (4) the Norwegian source
+    /// string passed as <paramref name="fallback"/>. For Norwegian, the Norwegian source is used directly. This is
+    /// Avalonia-local only — no SetLanguage, no thread-culture change, no shared-Core mutation.
+    /// </summary>
     public static string Get(string key, string fallback)
     {
         if (string.IsNullOrEmpty(key)) return fallback;
         var culture = CurrentCulture ?? CultureInfo.CurrentUICulture;
-        // 1) Avalonia-owned scaffold overlay (trusted, culture-invariant values only).
+
+        // 1) Avalonia overlay for the selected language (product-invariant + machine translations).
         if (ScaffoldStrings.TryGet(culture.Name, key, out var overlay) && !string.IsNullOrWhiteSpace(overlay))
             return overlay;
-        // 2) Avalonia-owned read-only resolution of the shared resources for the Avalonia-local culture;
-        //    3) provided fallback when missing (covers Avalonia-only scaffold keys absent from the resources).
-        string? value;
-        try { value = Resources.GetString(key, culture); }
-        catch (Exception) { value = null; }
-        return string.IsNullOrWhiteSpace(value) || value == key ? fallback : value;
+
+        // Norwegian is the source language: use the shared (neutral) resource or the Norwegian fallback directly.
+        if (IsNorwegian(culture))
+        {
+            var nb = Core(key, culture);
+            return Valid(nb, key) ? nb! : fallback;
+        }
+
+        // 2) Genuine culture-specific value from the shared resources (i.e. different from the Norwegian neutral).
+        var neutral = Core(key, Norwegian);
+        var cultureValue = Core(key, culture);
+        if (Valid(cultureValue, key) && cultureValue != neutral)
+            return cultureValue!;
+
+        // 3) ENGLISH fallback (global) — Avalonia overlay first, then the shared English resource.
+        if (ScaffoldStrings.TryGet("en", key, out var en) && !string.IsNullOrWhiteSpace(en))
+            return en;
+        var enCore = Core(key, English);
+        if (Valid(enCore, key) && enCore != neutral)
+            return enCore!;
+
+        // 4) Norwegian source string (last resort).
+        return fallback;
     }
 }

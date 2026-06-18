@@ -2186,9 +2186,23 @@ internal static class Program
             global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
             bool nbApplied = G("Settings_Title", "fb") == "Innstillinger";
 
-            // Avalonia-only scaffold key (absent in shared resources) → fallback regardless of language (no parity).
-            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");
-            bool scaffoldFallsBack = G("Settings_LocalPrefs_Title", "Lokale UI-innstillinger") == "Lokale UI-innstillinger";
+            // ALL 20 cultures switch the navigable UI: each non-Norwegian culture returns a translated (non-source)
+            // value for a high-visibility key.
+            string[] all20 = { "sv-SE","da-DK","fi-FI","de-DE","fr-FR","es-ES","pt-BR","it-IT","hr-HR","nl-NL",
+                "pl-PL","tr-TR","uk-UA","ro-RO","cs-CZ","hu-HU","el-GR","ar","en-US" };
+            bool allCulturesSwitch = true;
+            foreach (var c in all20)
+            {
+                global::FemVoice.Avalonia.Localization.LanguageActivation.Apply(c);
+                var v = G("Shell_Nav_Settings", "Innstillinger");
+                if (string.IsNullOrWhiteSpace(v) || v == "Innstillinger") { allCulturesSwitch = false; Console.WriteLine($"[lang] NOT translated for {c}: Shell_Nav_Settings='{v}'"); }
+            }
+
+            // ENGLISH is the global fallback: a culture OUTSIDE the 20 (no overlay, no Core translation) falls back to
+            // ENGLISH (overlay for scaffold keys; English Core for Core-backed keys), NOT Norwegian.
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("is-IS");   // not supported → English fallback
+            bool englishFallback = G("Shell_Nav_Settings", "Innstillinger") == "Settings"
+                && G("Settings_Title", "fb") == "Settings";
 
             // Startup read: a saved language is applied via ApplyFromStore.
             Store().Save(new global::FemVoice.Avalonia.Preferences.UiPreferences { Language = "sv-SE" });
@@ -2217,34 +2231,40 @@ internal static class Program
             bool threadCultureUntouched = System.Globalization.CultureInfo.CurrentUICulture.Name == threadUiBefore
                 && System.Globalization.CultureInfo.CurrentCulture.Name == threadBefore;
 
-            // Already-rendered semantics: a string resolved BEFORE a language change does NOT retroactively change
-            // (mirrors VM properties bound once → live refresh needs restart). Captured value stays as resolved.
-            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
-            string capturedBefore = G("Settings_Title", "fb");          // "Innstillinger"
+            // ENGLISH OVERLAY: scaffold-only nav/chrome strings now switch to English live (Norwegian for nb / fallback).
             global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");
-            bool capturedUnchanged = capturedBefore == "Innstillinger"; // the already-resolved string is unaffected
+            bool englishOverlay = G("Shell_Nav_Settings", "Innstillinger") == "Settings"
+                && G("Settings_LocalPrefs_Title", "Lokale UI-innstillinger") == "Local UI settings";
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
+            bool norwegianFallback = G("Shell_Nav_Settings", "Innstillinger") == "Innstillinger"
+                && G("Settings_LocalPrefs_Title", "Lokale UI-innstillinger") == "Lokale UI-innstillinger";
 
-            // NO LIVE REFRESH: Save persists language but must NOT switch the running resolver (language applies on
-            // restart only). Set a sentinel culture, Save a different language, assert the resolver is unchanged.
+            // LIVE REFRESH SIGNAL: changing the language raises Localized.LanguageChanged (the shell re-renders on it).
+            int events = 0;
+            System.Action handler = () => events++;
+            global::FemVoice.Avalonia.Localization.Localized.LanguageChanged += handler;
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");   // change
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");   // no-op (same culture → no event)
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");   // change
+            global::FemVoice.Avalonia.Localization.Localized.LanguageChanged -= handler;
+            bool liveRefreshSignal = events == 2;
+
+            // LIVE on Save: saving a new language switches the running resolver immediately (raises LanguageChanged).
             global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");   // sentinel
-            string cultureBeforeSave = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name;
             var vm = new global::FemVoice.Avalonia.ViewModels.UiPreferencesViewModel(
                 new global::FemVoice.Avalonia.Preferences.UiPreferencesStore(System.IO.Path.Combine(root, "vm-prefs.json")));
-            vm.Language = "sv-SE";
+            vm.Language = "en-US";
             vm.SaveCommand.Execute(null);
-            bool saveDoesNotSwitchLive = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name == cultureBeforeSave;
-            // TRUTHFUL copy: Save status says theme is live + language applies on RESTART, and does NOT claim live
-            // language activation (the regression that caused the manual failure).
-            bool truthfulStatus = vm.Status.Contains("omstart")
-                && !vm.Status.Contains("og språk er aktivert")
-                && !vm.Status.Contains("språk er aktivert");
+            // Save switched the resolver live to en-US — so even the status itself renders in English ("Saved…").
+            bool saveAppliesLive = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name == "en-US"
+                && (vm.Status.Contains("Saved") || vm.Status.Contains("Lagret"));
 
-            Console.WriteLine($"[lang] svApplied={svApplied} enApplied={enApplied} nbApplied={nbApplied} scaffoldFallsBack={scaffoldFallsBack}");
+            Console.WriteLine($"[lang] svApplied={svApplied} enApplied={enApplied} nbApplied={nbApplied} allCulturesSwitch={allCulturesSwitch} englishFallback={englishFallback}");
             Console.WriteLine($"[lang] startupRead={startupRead} missingSafe={missingSafe} corruptSafe={corruptSafe} unknownSafe={unknownSafe} threadCultureUntouched={threadCultureUntouched}");
-            Console.WriteLine($"[lang] capturedUnchanged(live-needs-restart)={capturedUnchanged} saveDoesNotSwitchLive={saveDoesNotSwitchLive} truthfulStatus={truthfulStatus} status=\"{vm.Status}\"");
+            Console.WriteLine($"[lang] englishOverlay={englishOverlay} norwegianFallback={norwegianFallback} liveRefreshSignal={liveRefreshSignal} saveAppliesLive={saveAppliesLive} status=\"{vm.Status}\"");
 
-            bool ok = svApplied && enApplied && nbApplied && scaffoldFallsBack && startupRead && missingSafe && corruptSafe && unknownSafe
-                && threadCultureUntouched && capturedUnchanged && saveDoesNotSwitchLive && truthfulStatus;
+            bool ok = svApplied && enApplied && nbApplied && allCulturesSwitch && englishFallback && startupRead && missingSafe && corruptSafe && unknownSafe
+                && threadCultureUntouched && englishOverlay && norwegianFallback && liveRefreshSignal && saveAppliesLive;
             Console.WriteLine(ok ? "[lang] Settings language activation smoke OK" : "[lang] Settings language activation smoke FAIL");
             return ok ? 0 : 1;
         }

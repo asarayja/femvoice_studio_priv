@@ -43,7 +43,7 @@ public partial class UiPreferencesViewModel : ObservableObject
 
     public string Heading => Localized.Get("Settings_LocalPrefs_Title", "Lokale UI-innstillinger");
     public string Note => Localized.Get("Settings_LocalPrefs_Note",
-        "Lagres lokalt på denne maskinen. Tema brukes med en gang. Språk brukes ved omstart " +
+        "Lagres lokalt på denne maskinen. Tema og språk brukes med en gang " +
         "(kun oversatt tekst følger språket; resten vises på norsk inntil videre). Bevegelsesvalget lagres, men er ikke aktivt ennå.");
     public string SaveLabel => Localized.Get("Settings_LocalPrefs_Save", "Lagre");
     public string ReloadLabel => Localized.Get("Settings_LocalPrefs_Reload", "Last på nytt");
@@ -57,18 +57,22 @@ public partial class UiPreferencesViewModel : ObservableObject
     /// <summary>Current edited values as a model (no I/O).</summary>
     public UiPreferences Current() => new() { Theme = Theme, Language = Language, ReduceMotion = ReduceMotion };
 
-    // Persist, then apply THEME live (Stage 2A). LANGUAGE (Stage 2B) is persisted only and applied at the next
-    // app STARTUP — Save deliberately does NOT switch the running resolver, so there is no inconsistent half-live
-    // state and no live-refresh claim (in-session live refresh is deferred to a later slice). Reduce-motion remains
-    // persisted-only. Fail-safe: a failed write surfaces a status message; ThemeActivation is null-safe.
+    // Persist, then apply THEME (Stage 2A) and LANGUAGE (Stage 2B) LIVE — both take effect immediately. Language
+    // activation raises Localized.LanguageChanged, which makes the shell re-render its localized text in the new
+    // culture without a restart. Only TRANSLATED text changes; strings with no translation stay Norwegian (the
+    // status says so). Reduce-motion remains persisted-only. Fail-safe: a failed write surfaces a status message.
     [RelayCommand]
     private void Save()
     {
         bool ok = _store.Save(Current());
-        if (ok) FemVoice.Avalonia.Theming.ThemeActivation.Apply(Theme);   // theme — applies live; language applies on restart
+        if (ok)
+        {
+            FemVoice.Avalonia.Theming.ThemeActivation.Apply(Theme);              // theme — live
+            FemVoice.Avalonia.Localization.LanguageActivation.Apply(Language);   // language — live (raises LanguageChanged)
+        }
         Status = ok
             ? Localized.Get("Settings_LocalPrefs_Saved",
-                "Lagret. Tema brukes med en gang. Språk brukes ved omstart (kun oversatt tekst følger språket; resten vises på norsk).")
+                "Lagret. Tema og språk er oppdatert (kun oversatt tekst endres; resten vises på norsk inntil videre).")
             : Localized.Get("Settings_LocalPrefs_SaveFailed", "Kunne ikke lagre innstillingene lokalt.");
     }
 
