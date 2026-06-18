@@ -63,6 +63,7 @@ internal static class Program
         if (args.Contains("--settings-theme-activation-smoke")) return SettingsThemeActivationSmoke();
         if (args.Contains("--settings-language-activation-smoke")) return SettingsLanguageActivationSmoke();
         if (args.Contains("--settings-reduce-motion-activation-smoke")) return SettingsReduceMotionActivationSmoke();
+        if (args.Contains("--avalonia-translation-contribution-smoke")) return AvaloniaTranslationContributionSmoke();
         return null;
     }
 
@@ -2337,5 +2338,87 @@ internal static class Program
             global::FemVoice.Avalonia.Localization.Localized.CurrentCulture = originalCulture;
             try { var dir = System.IO.Path.GetDirectoryName(root); if (dir != null && System.IO.Directory.Exists(dir)) System.IO.Directory.Delete(dir, true); } catch { }
         }
+    }
+
+    // Translation contribution/readiness validation: the per-culture review metadata is complete and honest, the
+    // visible scaffold translations cover every supported overlay language, the English fallback holds, and no
+    // forbidden (WPF-loc/DB/global-culture) references crept into the translation files. Pure metadata/coverage
+    // checks run anywhere; the source scan skips→passes from the published DLL.
+    private static int AvaloniaTranslationContributionSmoke()
+    {
+        var meta = global::FemVoice.Avalonia.Localization.TranslationStatus.All;
+        var cultures = global::FemVoice.Avalonia.Localization.ScaffoldStrings.Cultures;
+        var byLang = global::FemVoice.Avalonia.Localization.ScaffoldTranslations.ByLanguage;
+        var originalCulture = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture;
+        try
+        {
+            // 1) All 20 cultures have metadata (exact set match with ScaffoldStrings.Cultures).
+            var metaCodes = new System.Collections.Generic.HashSet<string>(meta.Select(m => m.Code), StringComparer.OrdinalIgnoreCase);
+            bool metadata20 = meta.Count == 20 && cultures.Count == 20 && cultures.All(c => metaCodes.Contains(c));
+
+            // 2) Exactly one source (nb-NO) and one fallback (en-US).
+            bool sourceIsNb = meta.Count(m => m.IsSource) == 1 && global::FemVoice.Avalonia.Localization.TranslationStatus.Get("nb-NO")!.IsSource;
+            bool fallbackIsEn = meta.Count(m => m.IsFallback) == 1 && global::FemVoice.Avalonia.Localization.TranslationStatus.Get("en-US")!.IsFallback;
+
+            // 3) The 18 others are machine-generated AND not native-reviewed; and NO machine language is marked reviewed.
+            var others = meta.Where(m => m.Code is not "nb-NO" and not "en-US").ToList();
+            bool eighteenMachineUnreviewed = others.Count == 18
+                && others.All(m => m.IsMachineGenerated && !m.IsNativeReviewed && !string.IsNullOrWhiteSpace(m.Notes));
+            bool noOverclaim = !meta.Any(m => m.IsMachineGenerated && m.IsNativeReviewed);
+
+            // 4) Required visible keys (English overlay set) are covered + non-empty for every overlay language.
+            var required = global::FemVoice.Avalonia.Localization.TranslationStatus.RequiredVisibleKeys;
+            bool requiredCoverage = required.Count > 0;
+            bool noEmpty = true;
+            foreach (var kv in byLang)
+            {
+                foreach (var key in required)
+                    if (!kv.Value.TryGetValue(key, out var v) || string.IsNullOrWhiteSpace(v))
+                    { requiredCoverage = false; Console.WriteLine($"[tr-contrib] MISSING/empty key '{key}' for '{kv.Key}'"); }
+                if (kv.Value.Values.Any(string.IsNullOrWhiteSpace)) noEmpty = false;
+            }
+
+            // 5) English fallback for an unsupported culture (outside the 20).
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("is-IS");
+            bool englishFallback = global::FemVoice.Avalonia.Localization.Localized.Get("Shell_Nav_Settings", "Innstillinger") == "Settings";
+
+            // 6) Machine-generated caveat present + non-empty.
+            bool caveatPresent = !string.IsNullOrWhiteSpace(global::FemVoice.Avalonia.Localization.TranslationStatus.MachineTranslationCaveat)
+                && global::FemVoice.Avalonia.Localization.TranslationStatus.MachineTranslationCaveat.Contains("native");
+
+            // 7) Source scan (skip→pass published): the translation files contain NO WPF-loc/DB/global-culture refs.
+            //    Detection uses non-forbidden fragments so this smoke does not trip the leak guard itself.
+            string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+            string[] files =
+            {
+                System.IO.Path.Combine(projectDir, "Localization", "TranslationStatus.cs"),
+                System.IO.Path.Combine(projectDir, "Localization", "ScaffoldTranslations.cs"),
+                System.IO.Path.Combine(projectDir, "Localization", "ScaffoldStrings.cs"),
+                System.IO.Path.Combine(projectDir, "Localization", "Localized.cs"),
+            };
+            bool noForbidden = true; bool scanned = false;
+            if (files.All(System.IO.File.Exists))
+            {
+                scanned = true;
+                string s = string.Join("\n", files.Select(System.IO.File.ReadAllText));
+                string[] forbidden =
+                {
+                    "atabaseService", "UserSettings", "hemeManager", "ocExtension", "ocConverter",
+                    ".SetLanguage(", "Thread.CurrentThread", "CultureInfo.CurrentCulture =", "CurrentUICulture =",
+                };
+                var hits = forbidden.Where(t => s.Contains(t)).ToList();
+                if (hits.Count > 0) { noForbidden = false; Console.WriteLine($"[tr-contrib] FORBIDDEN ref in translation source: {string.Join(", ", hits)}"); }
+            }
+            else Console.WriteLine("[tr-contrib] source scan skipped (no source tree / published DLL)");
+
+            Console.WriteLine($"[tr-contrib] metadata20={metadata20} sourceIsNb={sourceIsNb} fallbackIsEn={fallbackIsEn} machineUnreviewed(18)={eighteenMachineUnreviewed} noOverclaim={noOverclaim}");
+            Console.WriteLine($"[tr-contrib] requiredKeys={required.Count} requiredCoverage={requiredCoverage} noEmpty={noEmpty} englishFallback={englishFallback} caveatPresent={caveatPresent} scanned={scanned} noForbidden={noForbidden}");
+
+            bool ok = metadata20 && sourceIsNb && fallbackIsEn && eighteenMachineUnreviewed && noOverclaim
+                && requiredCoverage && noEmpty && englishFallback && caveatPresent && noForbidden;
+            Console.WriteLine(ok ? "[tr-contrib] Avalonia translation contribution smoke OK" : "[tr-contrib] Avalonia translation contribution smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        finally { global::FemVoice.Avalonia.Localization.Localized.CurrentCulture = originalCulture; }
     }
 }
