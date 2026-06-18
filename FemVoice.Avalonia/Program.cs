@@ -65,6 +65,7 @@ internal static class Program
         if (args.Contains("--settings-reduce-motion-activation-smoke")) return SettingsReduceMotionActivationSmoke();
         if (args.Contains("--avalonia-translation-contribution-smoke")) return AvaloniaTranslationContributionSmoke();
         if (args.Contains("--avalonia-audio-readiness-smoke")) return AvaloniaAudioReadinessSmoke();
+        if (args.Contains("--avalonia-audio-backend-smoke")) return AvaloniaAudioBackendSmoke();
         return null;
     }
 
@@ -2476,6 +2477,64 @@ internal static class Program
 
         bool ok = syntheticOk && noopOk && nullOk && noCaptureStarted && shellSurfacesStatus && noForbidden;
         Console.WriteLine(ok ? "[audio] Avalonia audio readiness smoke OK" : "[audio] Avalonia audio readiness smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Stage 3B: the cross-platform capture backend SKELETON behind the abstraction is constructible + enumerates
+    // safely (0 devices in CI/headless), degrades to "unavailable", starts NO capture automatically, has a fail-safe
+    // opt-in start/stop that produces NO frames, and AudioReadiness reports it truthfully. The synthetic runtime
+    // backend is unaffected. Source scan (skip→pass published) keeps the backend free of Windows-audio/WPF/DB refs.
+    private static int AvaloniaAudioBackendSmoke()
+    {
+        var backend = new global::FemVoiceStudio.Audio.Abstractions.CrossPlatformAudioCaptureService();
+
+        // Constructible + safe enumeration (0 devices, no throw) + unavailable until a native binding exists.
+        int frames = 0; backend.FrameAvailable += (_, _) => frames++;   // must stay 0 (no capture produces frames)
+        bool enumerationSafe = backend.GetInputDevices() is { Count: 0 };
+        bool unavailable = backend.IsBackendAvailable == false;
+
+        // No capture starts automatically (we only constructed + enumerated).
+        bool noAutoCapture = frames == 0;
+
+        // Opt-in probe: explicit StartAsync/StopAsync is fail-safe and produces NO frames (feeds no clinical runtime).
+        bool probeSafe;
+        try
+        {
+            backend.StartAsync(new global::FemVoiceStudio.Audio.Abstractions.AudioCaptureOptions()).GetAwaiter().GetResult();
+            backend.StopAsync().GetAwaiter().GetResult();
+            probeSafe = frames == 0;   // skeleton never emits frames
+        }
+        catch (Exception ex) { probeSafe = false; Console.WriteLine($"[audio-be] probe threw: {ex.GetType().Name}"); }
+
+        // AudioReadiness reports the cross-platform skeleton truthfully (Real backend, unavailable, no real capture).
+        var r = new global::FemVoice.Avalonia.Audio.AudioReadiness(backend);
+        bool readinessTruthful = r.BackendKind == global::FemVoice.Avalonia.Audio.AudioBackendKind.Real
+            && r.IsBackendAvailable == false && r.IsRealCaptureAvailable == false
+            && !string.IsNullOrWhiteSpace(r.StatusText) && r.StatusText.Contains("utilgjengelig");
+
+        // Synthetic backend still reports synthetic (runtime path unaffected).
+        bool syntheticUnaffected = new global::FemVoice.Avalonia.Audio.AudioReadiness(
+            new global::FemVoiceStudio.Audio.Abstractions.SyntheticAudioCaptureService()).StatusText.Contains("syntetisk");
+
+        // Source scan (skip→pass published): the skeleton backend has no Windows-audio/WPF/DB refs (non-forbidden fragments).
+        string repoRoot = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        string beFile = System.IO.Path.Combine(repoRoot, "FemVoice.Audio.Abstractions", "CrossPlatformAudioCaptureService.cs");
+        bool noForbidden = true; bool scanned = false;
+        if (System.IO.File.Exists(beFile))
+        {
+            scanned = true;
+            string s = System.IO.File.ReadAllText(beFile);
+            string[] forbidden = { "Audio.Windows", "NAudio", "WaveIn", "Wasapi", "atabaseService", "ystem.Windows", "hemeManager" };
+            var hits = forbidden.Where(t => s.Contains(t)).ToList();
+            if (hits.Count > 0) { noForbidden = false; Console.WriteLine($"[audio-be] FORBIDDEN ref in backend source: {string.Join(", ", hits)}"); }
+        }
+        else Console.WriteLine("[audio-be] source scan skipped (no source tree / published DLL)");
+
+        Console.WriteLine($"[audio-be] enumerationSafe={enumerationSafe} unavailable={unavailable} noAutoCapture={noAutoCapture} probeSafe={probeSafe} readinessTruthful={readinessTruthful} syntheticUnaffected={syntheticUnaffected} scanned={scanned} noForbidden={noForbidden}");
+        Console.WriteLine($"[audio-be] skeleton.status=\"{r.StatusText}\" devices={r.DeviceCount}");
+
+        bool ok = enumerationSafe && unavailable && noAutoCapture && probeSafe && readinessTruthful && syntheticUnaffected && noForbidden;
+        Console.WriteLine(ok ? "[audio-be] Avalonia audio backend smoke OK" : "[audio-be] Avalonia audio backend smoke FAIL");
         return ok ? 0 : 1;
     }
 }
