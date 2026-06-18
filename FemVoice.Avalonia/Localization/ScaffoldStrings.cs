@@ -41,6 +41,9 @@ public static class ScaffoldStrings
     /// these as a documented fallback, not a failure.</summary>
     public static readonly IReadOnlyList<string> NativeTranslationBacklog = new[]
     {
+        // Stage 3A audio-readiness status keys (Avalonia-only; Norwegian fallback until translated).
+        "Audio_Backend_NotConfigured",
+        "Audio_DevicesFound",
         // Stage-1 local UI-preference labels (Avalonia-only; awaiting native translation like the rest).
         "Settings_LocalPrefs_Title",
         "Settings_LocalPrefs_Note",
