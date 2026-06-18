@@ -47,12 +47,18 @@ public partial class ShellViewModel : ObservableObject
     private ProgressionScaffoldViewModel _progression = null!;
     private SmartCoachScaffoldViewModel _smartCoach = null!;
     private readonly RelayCommand _showMicCalibrationCommand;
+    private readonly FemVoice.Avalonia.Audio.AudioReadiness _audioReadiness;
 
-    public ShellViewModel(MainDashboardViewModel dashboard, VoiceFeminizationExerciseService exercises, IUiDispatcher ui)
+    public ShellViewModel(MainDashboardViewModel dashboard, VoiceFeminizationExerciseService exercises, IUiDispatcher ui,
+        FemVoiceStudio.Audio.Abstractions.IAudioCaptureService? capture = null)
     {
         _dashboard = dashboard;
         _exercises = exercises;
         _ui = ui;
+        // Stage 3A: truthful audio status via the approved capture abstraction (read-only; never starts capture).
+        // The Avalonia app's default backend is synthetic; fall back to it when no service is injected (headless).
+        _audioReadiness = new FemVoice.Avalonia.Audio.AudioReadiness(
+            capture ?? new FemVoiceStudio.Audio.Abstractions.SyntheticAudioCaptureService());
         _showMicCalibrationCommand = new RelayCommand(() => ShowDeferred("Mikrofonkalibrering"));
         BuildPages();
         BuildNav();
@@ -130,7 +136,7 @@ public partial class ShellViewModel : ObservableObject
 
     // ── Display-only status strip (no real mic, no persistence, no clinical change) ──
     /// <summary>Display-only microphone/signal status: the Avalonia head uses synthetic audio only.</summary>
-    public string MicStatusText => Localized.Get("Shell_MicStatus", "Mikrofon: syntetisk (kun visning)");
+    public string MicStatusText => _audioReadiness.StatusText;   // truthful, abstraction-backed (Stage 3A)
     /// <summary>Display-only mode banner stating the safety posture of the Avalonia head.</summary>
     public string ModeText => Localized.Get("Shell_Mode", "Kun visning · ingen lagring · ingen klinisk endring");
 

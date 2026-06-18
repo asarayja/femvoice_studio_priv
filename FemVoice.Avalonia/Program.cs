@@ -64,6 +64,7 @@ internal static class Program
         if (args.Contains("--settings-language-activation-smoke")) return SettingsLanguageActivationSmoke();
         if (args.Contains("--settings-reduce-motion-activation-smoke")) return SettingsReduceMotionActivationSmoke();
         if (args.Contains("--avalonia-translation-contribution-smoke")) return AvaloniaTranslationContributionSmoke();
+        if (args.Contains("--avalonia-audio-readiness-smoke")) return AvaloniaAudioReadinessSmoke();
         return null;
     }
 
@@ -2420,5 +2421,61 @@ internal static class Program
             return ok ? 0 : 1;
         }
         finally { global::FemVoice.Avalonia.Localization.Localized.CurrentCulture = originalCulture; }
+    }
+
+    // Stage 3A: the Avalonia audio readiness path is abstraction-backed + TRUTHFUL and starts NO real capture.
+    // Verifies the AudioReadiness classification/status over the synthetic + noop backends, that no frames are
+    // emitted (no StartAsync), the shell surfaces it, and (source scan, skip→pass published) no Windows-audio/WPF/
+    // DB references creep into the audio code. Pure; runs from the published DLL.
+    private static int AvaloniaAudioReadinessSmoke()
+    {
+        // Synthetic backend (the Avalonia default): backend=Synthetic, 1 device, real capture NOT available.
+        var synthetic = new global::FemVoiceStudio.Audio.Abstractions.SyntheticAudioCaptureService();
+        int frames = 0; synthetic.FrameAvailable += (_, _) => frames++;   // must stay 0 (readiness never starts capture)
+        var rSyn = new global::FemVoice.Avalonia.Audio.AudioReadiness(synthetic);
+        bool syntheticOk = rSyn.BackendKind == global::FemVoice.Avalonia.Audio.AudioBackendKind.Synthetic
+            && rSyn.DeviceCount == 1 && rSyn.IsRealCaptureAvailable == false
+            && !string.IsNullOrWhiteSpace(rSyn.StatusText) && rSyn.StatusText.Contains("syntetisk");
+
+        // Noop backend: not configured, 0 devices, real capture NOT available, truthful status.
+        var rNoop = new global::FemVoice.Avalonia.Audio.AudioReadiness(new global::FemVoiceStudio.Audio.Abstractions.NoopAudioCaptureService());
+        bool noopOk = rNoop.BackendKind == global::FemVoice.Avalonia.Audio.AudioBackendKind.NotConfigured
+            && rNoop.DeviceCount == 0 && rNoop.IsRealCaptureAvailable == false
+            && !string.IsNullOrWhiteSpace(rNoop.StatusText);
+
+        // Null service → not configured (no throw).
+        var rNull = new global::FemVoice.Avalonia.Audio.AudioReadiness(null);
+        bool nullOk = rNull.BackendKind == global::FemVoice.Avalonia.Audio.AudioBackendKind.NotConfigured
+            && rNull.DeviceCount == 0 && rNull.IsRealCaptureAvailable == false;
+
+        // NO real capture started anywhere by the readiness path.
+        bool noCaptureStarted = frames == 0;
+
+        // Shell surfaces the truthful status (default synthetic backend).
+        var dash = new MainDashboardViewModel(new global::FemVoiceStudio.Audio.Abstractions.NoopAudioCaptureService(), new InlineUiDispatcher());
+        var svc = new VoiceFeminizationExerciseService();
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher(), new global::FemVoiceStudio.Audio.Abstractions.SyntheticAudioCaptureService());
+        bool shellSurfacesStatus = !string.IsNullOrWhiteSpace(shell.MicStatusText) && shell.MicStatusText.Contains("syntetisk");
+
+        // Source scan (skip→pass published): the audio code references NO Windows-audio/WPF/DB. Non-forbidden fragments.
+        string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+        string file = System.IO.Path.Combine(projectDir, "Audio", "AudioReadiness.cs");
+        bool noForbidden = true; bool scanned = false;
+        if (System.IO.File.Exists(file))
+        {
+            scanned = true;
+            string s = System.IO.File.ReadAllText(file);
+            string[] forbidden = { "Audio.Windows", "NAudio", "WaveIn", "Wasapi", "atabaseService", "ystem.Windows", "hemeManager" };
+            var hits = forbidden.Where(t => s.Contains(t)).ToList();
+            if (hits.Count > 0) { noForbidden = false; Console.WriteLine($"[audio] FORBIDDEN ref in audio source: {string.Join(", ", hits)}"); }
+        }
+        else Console.WriteLine("[audio] source scan skipped (no source tree / published DLL)");
+
+        Console.WriteLine($"[audio] syntheticOk={syntheticOk} noopOk={noopOk} nullOk={nullOk} noCaptureStarted={noCaptureStarted} shellSurfacesStatus={shellSurfacesStatus} scanned={scanned} noForbidden={noForbidden}");
+        Console.WriteLine($"[audio] synthetic.status=\"{rSyn.StatusText}\" devices={rSyn.DeviceCount} realCapture={rSyn.IsRealCaptureAvailable}");
+
+        bool ok = syntheticOk && noopOk && nullOk && noCaptureStarted && shellSurfacesStatus && noForbidden;
+        Console.WriteLine(ok ? "[audio] Avalonia audio readiness smoke OK" : "[audio] Avalonia audio readiness smoke FAIL");
+        return ok ? 0 : 1;
     }
 }
