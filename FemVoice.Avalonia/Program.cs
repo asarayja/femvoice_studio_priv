@@ -62,6 +62,7 @@ internal static class Program
         if (args.Contains("--settings-preferences-persistence-smoke")) return SettingsPreferencesPersistenceSmoke();
         if (args.Contains("--settings-theme-activation-smoke")) return SettingsThemeActivationSmoke();
         if (args.Contains("--settings-language-activation-smoke")) return SettingsLanguageActivationSmoke();
+        if (args.Contains("--settings-reduce-motion-activation-smoke")) return SettingsReduceMotionActivationSmoke();
         return null;
     }
 
@@ -1951,14 +1952,14 @@ internal static class Program
         return okk ? 0 : 1;
     }
 
-    // GUARDRAIL (post Stage 2B): the Settings persistence stays HARMLESS and BOUNDED. The behaviour-heavy sections
+    // GUARDRAIL (post Stage 2C): the Settings persistence stays HARMLESS and BOUNDED. The behaviour-heavy sections
     // (audio/privacy/database/voice-goal/about) remain inert; SettingsViewModel is not IDisposable. The Settings
     // VM/view, the Avalonia-local preference code, and the theme/language activation services reference NONE of the
     // WPF/DB/clinical hooks (DB user-settings, WPF theme manager, Core SetLanguage, backup, mic calibration) and
-    // perform NO GLOBAL thread-culture change / Core culture mutation (and no reduce-motion activation). Theme
-    // activation (Avalonia RequestedThemeVariant in ThemeActivation) and Avalonia-LOCAL language activation
-    // (Localized.CurrentCulture in LanguageActivation) ARE allowed; Avalonia-local file persistence is allowed.
-    // Source scan skips→passes from the published DLL.
+    // perform NO GLOBAL thread-culture change / Core culture mutation. ALLOWED Avalonia-local activations: theme
+    // (RequestedThemeVariant in ThemeActivation), language (Localized.CurrentCulture in LanguageActivation), and
+    // reduce-motion (Avalonia-local MotionActivation state — an Avalonia UI motion preference only, no WPF/Core/DB).
+    // Avalonia-local file persistence is allowed. Source scan skips→passes from the published DLL.
     private static int SettingsPersistenceReadinessSmoke()
     {
         var settings = new SettingsViewModel();
@@ -2270,6 +2271,69 @@ internal static class Program
         }
         finally
         {
+            global::FemVoice.Avalonia.Localization.Localized.CurrentCulture = originalCulture;
+            try { var dir = System.IO.Path.GetDirectoryName(root); if (dir != null && System.IO.Directory.Exists(dir)) System.IO.Directory.Delete(dir, true); } catch { }
+        }
+    }
+
+    // Stage 2C: the saved REDUCE-MOTION preference drives the Avalonia-owned MotionActivation state — at startup
+    // (ApplyFromStore) and live on Save. Missing/corrupt files fall back to the safe default (not reduced). Theme
+    // (2A) and language (2B) activation still work. Pure (no Avalonia platform needed); runs from the published DLL.
+    private static int SettingsReduceMotionActivationSmoke()
+    {
+        string root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "femvoice-motion-smoke", System.Guid.NewGuid().ToString("N"));
+        string file = System.IO.Path.Combine(root, "ui-preferences.json");
+        global::FemVoice.Avalonia.Preferences.UiPreferencesStore Store() => new(file);
+        var originalCulture = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture;
+        try
+        {
+            // Saved true / false applied at startup.
+            Store().Save(new global::FemVoice.Avalonia.Preferences.UiPreferences { ReduceMotion = true });
+            bool trueLoaded = global::FemVoice.Avalonia.Accessibility.MotionActivation.ApplyFromStore(Store())
+                && global::FemVoice.Avalonia.Accessibility.MotionActivation.ReduceMotion == true;
+            Store().Save(new global::FemVoice.Avalonia.Preferences.UiPreferences { ReduceMotion = false });
+            bool falseLoaded = global::FemVoice.Avalonia.Accessibility.MotionActivation.ApplyFromStore(Store())
+                && global::FemVoice.Avalonia.Accessibility.MotionActivation.ReduceMotion == false;
+
+            // Missing file → safe default (not reduced); set a sentinel first.
+            try { System.IO.File.Delete(file); } catch { }
+            global::FemVoice.Avalonia.Accessibility.MotionActivation.Apply(true);   // sentinel
+            bool missingSafe = !global::FemVoice.Avalonia.Accessibility.MotionActivation.ApplyFromStore(Store())
+                && global::FemVoice.Avalonia.Accessibility.MotionActivation.ReduceMotion == false;
+
+            // Corrupt file → safe default (not reduced).
+            System.IO.Directory.CreateDirectory(root);
+            System.IO.File.WriteAllText(file, "{ not valid json ]]");
+            global::FemVoice.Avalonia.Accessibility.MotionActivation.Apply(true);   // sentinel
+            bool corruptSafe = !global::FemVoice.Avalonia.Accessibility.MotionActivation.ApplyFromStore(Store())
+                && global::FemVoice.Avalonia.Accessibility.MotionActivation.ReduceMotion == false;
+
+            // Live on Save: saving reduce-motion=true switches the running state and raises the change event.
+            int events = 0; System.Action<bool> h = _ => events++;
+            global::FemVoice.Avalonia.Accessibility.MotionActivation.Apply(false);   // baseline
+            global::FemVoice.Avalonia.Accessibility.MotionActivation.ReduceMotionChanged += h;
+            var vm = new global::FemVoice.Avalonia.ViewModels.UiPreferencesViewModel(
+                new global::FemVoice.Avalonia.Preferences.UiPreferencesStore(System.IO.Path.Combine(root, "vm-prefs.json")));
+            vm.ReduceMotion = true;
+            vm.SaveCommand.Execute(null);
+            global::FemVoice.Avalonia.Accessibility.MotionActivation.ReduceMotionChanged -= h;
+            bool saveAppliesLive = global::FemVoice.Avalonia.Accessibility.MotionActivation.ReduceMotion == true && events >= 1;
+
+            // Stage 2A theme + Stage 2B language still work.
+            bool themeStillWorks = global::FemVoice.Avalonia.Theming.ThemeActivation.ToVariant(global::FemVoice.Avalonia.Preferences.ThemePreference.Dark)
+                == global::Avalonia.Styling.ThemeVariant.Dark;
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");
+            bool languageStillWorks = global::FemVoice.Avalonia.Localization.Localized.Get("Shell_Nav_Settings", "Innstillinger") == "Settings";
+
+            Console.WriteLine($"[motion] trueLoaded={trueLoaded} falseLoaded={falseLoaded} missingSafe={missingSafe} corruptSafe={corruptSafe} saveAppliesLive={saveAppliesLive}");
+            Console.WriteLine($"[motion] themeStillWorks={themeStillWorks} languageStillWorks={languageStillWorks}");
+            bool ok = trueLoaded && falseLoaded && missingSafe && corruptSafe && saveAppliesLive && themeStillWorks && languageStillWorks;
+            Console.WriteLine(ok ? "[motion] Settings reduce-motion activation smoke OK" : "[motion] Settings reduce-motion activation smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        finally
+        {
+            global::FemVoice.Avalonia.Accessibility.MotionActivation.Apply(false);
             global::FemVoice.Avalonia.Localization.Localized.CurrentCulture = originalCulture;
             try { var dir = System.IO.Path.GetDirectoryName(root); if (dir != null && System.IO.Directory.Exists(dir)) System.IO.Directory.Delete(dir, true); } catch { }
         }

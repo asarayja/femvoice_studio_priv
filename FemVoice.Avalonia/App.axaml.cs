@@ -15,8 +15,10 @@ public partial class App : Application
         FemVoice.Avalonia.Theming.ThemeActivation.ApplyFromStore();
         // Stage 2B: apply the saved language preference to the Avalonia-LOCAL resolver before the window renders.
         // Fail-safe — applies only a valid saved preference; no Core SetLanguage, no global thread-culture change.
-        // Reduce-motion remains persisted-only.
         FemVoice.Avalonia.Localization.LanguageActivation.ApplyFromStore();
+        // Stage 2C: apply the saved reduce-motion preference to the Avalonia-owned motion state (Avalonia-local;
+        // no WPF/Core/DB). Future Avalonia motion effects gate on MotionActivation.ReduceMotion.
+        FemVoice.Avalonia.Accessibility.MotionActivation.ApplyFromStore();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
