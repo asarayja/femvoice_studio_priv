@@ -44,7 +44,7 @@ public partial class UiPreferencesViewModel : ObservableObject
     public string Heading => Localized.Get("Settings_LocalPrefs_Title", "Lokale UI-innstillinger");
     public string Note => Localized.Get("Settings_LocalPrefs_Note",
         "Lagres lokalt på denne maskinen. Tema og språk brukes med en gang " +
-        "(kun oversatt tekst følger språket; resten vises på norsk inntil videre). Bevegelsesvalget lagres, men er ikke aktivt ennå.");
+        "(kun oversatt tekst følger språket; resten vises på norsk inntil videre). Reduser bevegelse er aktiv og respekteres av appens bevegelseseffekter.");
     public string SaveLabel => Localized.Get("Settings_LocalPrefs_Save", "Lagre");
     public string ReloadLabel => Localized.Get("Settings_LocalPrefs_Reload", "Last på nytt");
     public string ThemeLabel => Localized.Get("Settings_ThemePreference", "Tema");
@@ -67,12 +67,13 @@ public partial class UiPreferencesViewModel : ObservableObject
         bool ok = _store.Save(Current());
         if (ok)
         {
-            FemVoice.Avalonia.Theming.ThemeActivation.Apply(Theme);              // theme — live
-            FemVoice.Avalonia.Localization.LanguageActivation.Apply(Language);   // language — live (raises LanguageChanged)
+            FemVoice.Avalonia.Theming.ThemeActivation.Apply(Theme);                  // theme — live
+            FemVoice.Avalonia.Localization.LanguageActivation.Apply(Language);       // language — live (raises LanguageChanged)
+            FemVoice.Avalonia.Accessibility.MotionActivation.Apply(ReduceMotion);    // reduce-motion — live (Avalonia motion state)
         }
         Status = ok
             ? Localized.Get("Settings_LocalPrefs_Saved",
-                "Lagret. Tema og språk er oppdatert (kun oversatt tekst endres; resten vises på norsk inntil videre).")
+                "Lagret. Tema, språk og bevegelsesvalg er oppdatert (kun oversatt tekst endres; resten vises på norsk inntil videre).")
             : Localized.Get("Settings_LocalPrefs_SaveFailed", "Kunne ikke lagre innstillingene lokalt.");
     }
 
