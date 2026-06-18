@@ -61,6 +61,7 @@ internal static class Program
         if (args.Contains("--settings-persistence-readiness-smoke")) return SettingsPersistenceReadinessSmoke();
         if (args.Contains("--settings-preferences-persistence-smoke")) return SettingsPreferencesPersistenceSmoke();
         if (args.Contains("--settings-theme-activation-smoke")) return SettingsThemeActivationSmoke();
+        if (args.Contains("--settings-language-activation-smoke")) return SettingsLanguageActivationSmoke();
         return null;
     }
 
@@ -1950,13 +1951,14 @@ internal static class Program
         return okk ? 0 : 1;
     }
 
-    // GUARDRAIL (post Stage 2A): the Settings persistence stays HARMLESS and BOUNDED. The behaviour-heavy sections
+    // GUARDRAIL (post Stage 2B): the Settings persistence stays HARMLESS and BOUNDED. The behaviour-heavy sections
     // (audio/privacy/database/voice-goal/about) remain inert; SettingsViewModel is not IDisposable. The Settings
-    // VM/view, the Avalonia-local preference code, AND the theme-activation service reference NONE of the WPF/DB/
-    // clinical hooks (DB user-settings, WPF theme manager, SetLanguage, backup, mic calibration) and perform NO
-    // LANGUAGE/CULTURE or reduce-motion activation (no thread/UI culture change). Theme activation via Avalonia
-    // RequestedThemeVariant (in ThemeActivation) IS allowed as of Stage 2A; Avalonia-local file persistence is
-    // allowed. Source scan skips→passes from the published DLL.
+    // VM/view, the Avalonia-local preference code, and the theme/language activation services reference NONE of the
+    // WPF/DB/clinical hooks (DB user-settings, WPF theme manager, Core SetLanguage, backup, mic calibration) and
+    // perform NO GLOBAL thread-culture change / Core culture mutation (and no reduce-motion activation). Theme
+    // activation (Avalonia RequestedThemeVariant in ThemeActivation) and Avalonia-LOCAL language activation
+    // (Localized.CurrentCulture in LanguageActivation) ARE allowed; Avalonia-local file persistence is allowed.
+    // Source scan skips→passes from the published DLL.
     private static int SettingsPersistenceReadinessSmoke()
     {
         var settings = new SettingsViewModel();
@@ -1969,8 +1971,10 @@ internal static class Program
         // Source scan across the Settings VM/view + the Avalonia-local preference files: NO WPF/DB/clinical hooks
         // and NO runtime activation. Fragments avoid the leak-guard literal tokens. Skips→pass with no source tree.
         string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
-        // Scans the prefs files + the Stage-2A theme-activation service. (Theme activation IS allowed as of Stage 2A,
-        // confined to ThemeActivation; language + reduce-motion must remain non-activated.)
+        // Scans the prefs files + the Stage-2A theme-activation service + the Stage-2B language-activation service.
+        // Theme activation (ThemeActivation) and Avalonia-LOCAL language activation (LanguageActivation, via
+        // Localized.CurrentCulture) ARE allowed as of Stage 2A/2B; what must NOT appear is any GLOBAL thread-culture
+        // change, Core LocalizationService SetLanguage / culture mutation, or reduce-motion activation.
         string[] files =
         {
             System.IO.Path.Combine(projectDir, "ViewModels", "SettingsViewModel.cs"),
@@ -1979,8 +1983,10 @@ internal static class Program
             System.IO.Path.Combine(projectDir, "Preferences", "UiPreferences.cs"),
             System.IO.Path.Combine(projectDir, "Preferences", "UiPreferencesStore.cs"),
             System.IO.Path.Combine(projectDir, "Theming", "ThemeActivation.cs"),
+            System.IO.Path.Combine(projectDir, "Localization", "LanguageActivation.cs"),
+            System.IO.Path.Combine(projectDir, "Localization", "Localized.cs"),
         };
-        bool noWpfHooks = true, noLangActivation = true; bool scanned = false;
+        bool noWpfHooks = true, noGlobalCulture = true; bool scanned = false;
         if (files.All(System.IO.File.Exists))
         {
             scanned = true;
@@ -1993,17 +1999,22 @@ internal static class Program
             };
             var h1 = wpfHooks.Where(t => s.Contains(t)).ToList();
             if (h1.Count > 0) { noWpfHooks = false; Console.WriteLine($"[set-persist] WPF/DB/clinical hook in Settings/prefs source: {string.Join(", ", h1)}"); }
-            // LANGUAGE / CULTURE / reduce-motion activation must NOT appear (Stage 2A activates THEME only; Avalonia
-            // RequestedThemeVariant/ThemeVariant in ThemeActivation is allowed).
-            string[] langActivation = { "Thread.CurrentThread", "CurrentUICulture", "CurrentCulture =", "CultureInfo.Default" };
-            var h2 = langActivation.Where(t => s.Contains(t)).ToList();
-            if (h2.Count > 0) { noLangActivation = false; Console.WriteLine($"[set-persist] LANGUAGE/CULTURE activation token in prefs source: {string.Join(", ", h2)}"); }
+            // GLOBAL thread-culture change or Core-service culture mutation must NOT appear (language activation is
+            // Avalonia-LOCAL via Localized.CurrentCulture only). The Avalonia-local set "Localized.CurrentCulture ="
+            // is allowed and intentionally not in this list.
+            string[] globalCulture =
+            {
+                "Thread.CurrentThread", "CultureInfo.CurrentCulture =", "CultureInfo.CurrentUICulture =",
+                "CurrentUICulture =", "Instance.CurrentCulture =", "Instance.SetLanguage(",
+            };
+            var h2 = globalCulture.Where(t => s.Contains(t)).ToList();
+            if (h2.Count > 0) { noGlobalCulture = false; Console.WriteLine($"[set-persist] GLOBAL culture / Core-mutation token in prefs source: {string.Join(", ", h2)}"); }
         }
         else Console.WriteLine("[set-persist] source scan skipped (no source tree / published DLL)");
 
-        Console.WriteLine($"[set-persist] notDisposable={notDisposable} sectionsInert={sectionsInert} scanned={scanned} noWpfHooks={noWpfHooks} noLangActivation={noLangActivation}");
+        Console.WriteLine($"[set-persist] notDisposable={notDisposable} sectionsInert={sectionsInert} scanned={scanned} noWpfHooks={noWpfHooks} noGlobalCulture={noGlobalCulture}");
 
-        bool ok = notDisposable && sectionsInert && noWpfHooks && noLangActivation;
+        bool ok = notDisposable && sectionsInert && noWpfHooks && noGlobalCulture;
         Console.WriteLine(ok ? "[set-persist] Settings persistence readiness smoke OK" : "[set-persist] Settings persistence readiness smoke FAIL");
         return ok ? 0 : 1;
     }
@@ -2146,6 +2157,120 @@ internal static class Program
         }
         finally
         {
+            try { var dir = System.IO.Path.GetDirectoryName(root); if (dir != null && System.IO.Directory.Exists(dir)) System.IO.Directory.Delete(dir, true); } catch { }
+        }
+    }
+
+    // Stage 2B: the saved LANGUAGE preference drives the Avalonia-local resolver (Localized.CurrentCulture), at
+    // startup (ApplyFromStore) and on Apply — WITHOUT changing the global thread culture or calling Core
+    // SetLanguage. Core-backed keys resolve in the selected language; Avalonia-only scaffold keys fall back (no
+    // native parity). Missing/corrupt/unknown preferences fall back safely. Pure (no Avalonia platform needed);
+    // reads the shared embedded resources, so it also runs from the published DLL.
+    private static int SettingsLanguageActivationSmoke()
+    {
+        var originalCulture = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture;
+        string threadUiBefore = System.Globalization.CultureInfo.CurrentUICulture.Name;
+        string threadBefore = System.Globalization.CultureInfo.CurrentCulture.Name;
+        string root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "femvoice-lang-activation-smoke", System.Guid.NewGuid().ToString("N"));
+        string file = System.IO.Path.Combine(root, "ui-preferences.json");
+        global::FemVoice.Avalonia.Preferences.UiPreferencesStore Store() => new(file);
+        string G(string key, string fb) => global::FemVoice.Avalonia.Localization.Localized.Get(key, fb);
+        try
+        {
+            // Core-backed key resolves in the applied language; Avalonia-local culture is set (not the thread culture).
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("sv-SE");
+            bool svApplied = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name == "sv-SE"
+                && G("Settings_Title", "fb") == "Inställningar";
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");
+            bool enApplied = G("Settings_Title", "fb") == "Settings" && G("Common_Save", "fb") == "Save";
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
+            bool nbApplied = G("Settings_Title", "fb") == "Innstillinger";
+
+            // ALL 20 cultures switch the navigable UI: each non-Norwegian culture returns a translated (non-source)
+            // value for a high-visibility key.
+            string[] all20 = { "sv-SE","da-DK","fi-FI","de-DE","fr-FR","es-ES","pt-BR","it-IT","hr-HR","nl-NL",
+                "pl-PL","tr-TR","uk-UA","ro-RO","cs-CZ","hu-HU","el-GR","ar","en-US" };
+            bool allCulturesSwitch = true;
+            foreach (var c in all20)
+            {
+                global::FemVoice.Avalonia.Localization.LanguageActivation.Apply(c);
+                var v = G("Shell_Nav_Settings", "Innstillinger");
+                if (string.IsNullOrWhiteSpace(v) || v == "Innstillinger") { allCulturesSwitch = false; Console.WriteLine($"[lang] NOT translated for {c}: Shell_Nav_Settings='{v}'"); }
+            }
+
+            // ENGLISH is the global fallback: a culture OUTSIDE the 20 (no overlay, no Core translation) falls back to
+            // ENGLISH (overlay for scaffold keys; English Core for Core-backed keys), NOT Norwegian.
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("is-IS");   // not supported → English fallback
+            bool englishFallback = G("Shell_Nav_Settings", "Innstillinger") == "Settings"
+                && G("Settings_Title", "fb") == "Settings";
+
+            // Startup read: a saved language is applied via ApplyFromStore.
+            Store().Save(new global::FemVoice.Avalonia.Preferences.UiPreferences { Language = "sv-SE" });
+            bool startupRead = global::FemVoice.Avalonia.Localization.LanguageActivation.ApplyFromStore(Store())
+                && global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name == "sv-SE";
+
+            // Missing file → no apply (sentinel preserved).
+            try { System.IO.File.Delete(file); } catch { }
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("de-DE");   // sentinel
+            bool missingSafe = !global::FemVoice.Avalonia.Localization.LanguageActivation.ApplyFromStore(Store())
+                && global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name == "de-DE";
+
+            // Corrupt file → no apply (sentinel preserved).
+            System.IO.Directory.CreateDirectory(root);
+            System.IO.File.WriteAllText(file, "{ not valid json ]]");
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("de-DE");
+            bool corruptSafe = !global::FemVoice.Avalonia.Localization.LanguageActivation.ApplyFromStore(Store())
+                && global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name == "de-DE";
+
+            // Unknown/unsupported language saved → model normalizes to nb-NO → applied.
+            Store().Save(new global::FemVoice.Avalonia.Preferences.UiPreferences { Language = "zz-ZZ" });
+            bool unknownSafe = global::FemVoice.Avalonia.Localization.LanguageActivation.ApplyFromStore(Store())
+                && global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name == "nb-NO";
+
+            // Boundary: language activation must NOT change the global thread culture (Avalonia-local only).
+            bool threadCultureUntouched = System.Globalization.CultureInfo.CurrentUICulture.Name == threadUiBefore
+                && System.Globalization.CultureInfo.CurrentCulture.Name == threadBefore;
+
+            // ENGLISH OVERLAY: scaffold-only nav/chrome strings now switch to English live (Norwegian for nb / fallback).
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");
+            bool englishOverlay = G("Shell_Nav_Settings", "Innstillinger") == "Settings"
+                && G("Settings_LocalPrefs_Title", "Lokale UI-innstillinger") == "Local UI settings";
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
+            bool norwegianFallback = G("Shell_Nav_Settings", "Innstillinger") == "Innstillinger"
+                && G("Settings_LocalPrefs_Title", "Lokale UI-innstillinger") == "Lokale UI-innstillinger";
+
+            // LIVE REFRESH SIGNAL: changing the language raises Localized.LanguageChanged (the shell re-renders on it).
+            int events = 0;
+            System.Action handler = () => events++;
+            global::FemVoice.Avalonia.Localization.Localized.LanguageChanged += handler;
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");   // change
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");   // no-op (same culture → no event)
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");   // change
+            global::FemVoice.Avalonia.Localization.Localized.LanguageChanged -= handler;
+            bool liveRefreshSignal = events == 2;
+
+            // LIVE on Save: saving a new language switches the running resolver immediately (raises LanguageChanged).
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");   // sentinel
+            var vm = new global::FemVoice.Avalonia.ViewModels.UiPreferencesViewModel(
+                new global::FemVoice.Avalonia.Preferences.UiPreferencesStore(System.IO.Path.Combine(root, "vm-prefs.json")));
+            vm.Language = "en-US";
+            vm.SaveCommand.Execute(null);
+            // Save switched the resolver live to en-US — so even the status itself renders in English ("Saved…").
+            bool saveAppliesLive = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name == "en-US"
+                && (vm.Status.Contains("Saved") || vm.Status.Contains("Lagret"));
+
+            Console.WriteLine($"[lang] svApplied={svApplied} enApplied={enApplied} nbApplied={nbApplied} allCulturesSwitch={allCulturesSwitch} englishFallback={englishFallback}");
+            Console.WriteLine($"[lang] startupRead={startupRead} missingSafe={missingSafe} corruptSafe={corruptSafe} unknownSafe={unknownSafe} threadCultureUntouched={threadCultureUntouched}");
+            Console.WriteLine($"[lang] englishOverlay={englishOverlay} norwegianFallback={norwegianFallback} liveRefreshSignal={liveRefreshSignal} saveAppliesLive={saveAppliesLive} status=\"{vm.Status}\"");
+
+            bool ok = svApplied && enApplied && nbApplied && allCulturesSwitch && englishFallback && startupRead && missingSafe && corruptSafe && unknownSafe
+                && threadCultureUntouched && englishOverlay && norwegianFallback && liveRefreshSignal && saveAppliesLive;
+            Console.WriteLine(ok ? "[lang] Settings language activation smoke OK" : "[lang] Settings language activation smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        finally
+        {
+            global::FemVoice.Avalonia.Localization.Localized.CurrentCulture = originalCulture;
             try { var dir = System.IO.Path.GetDirectoryName(root); if (dir != null && System.IO.Directory.Exists(dir)) System.IO.Directory.Delete(dir, true); } catch { }
         }
     }

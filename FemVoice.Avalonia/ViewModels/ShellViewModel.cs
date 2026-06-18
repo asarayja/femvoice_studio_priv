@@ -35,33 +35,52 @@ public sealed class ShellNavItem
 /// </summary>
 public partial class ShellViewModel : ObservableObject
 {
-    private readonly MainDashboardViewModel _dashboard;
-    private readonly ExerciseGuideViewModel _guide;
-    private readonly SettingsViewModel _settings;
-    private readonly AnalysisViewModel _analysis;
-    private readonly ReportsViewModel _reports;
-    private readonly DiagnosticsViewModel _diagnostics;
-    private readonly ProgressionScaffoldViewModel _progression;
-    private readonly SmartCoachScaffoldViewModel _smartCoach;
+    private readonly MainDashboardViewModel _dashboard;   // hardcoded strings (not localized) — never rebuilt
+    private readonly VoiceFeminizationExerciseService _exercises;
     private readonly IUiDispatcher _ui;
+    // Localized page VMs — rebuilt on a language change so their text re-resolves in the new culture.
+    private ExerciseGuideViewModel _guide = null!;
+    private SettingsViewModel _settings = null!;
+    private AnalysisViewModel _analysis = null!;
+    private ReportsViewModel _reports = null!;
+    private DiagnosticsViewModel _diagnostics = null!;
+    private ProgressionScaffoldViewModel _progression = null!;
+    private SmartCoachScaffoldViewModel _smartCoach = null!;
+    private readonly RelayCommand _showMicCalibrationCommand;
 
     public ShellViewModel(MainDashboardViewModel dashboard, VoiceFeminizationExerciseService exercises, IUiDispatcher ui)
     {
         _dashboard = dashboard;
+        _exercises = exercises;
         _ui = ui;
-        _guide = new ExerciseGuideViewModel(exercises, OpenExercise);
-        _settings = new SettingsViewModel();        // inert, display-only; retained singleton, not IDisposable
-        _analysis = new AnalysisViewModel();        // inert, display-only; retained singleton, not IDisposable
-        _reports = new ReportsViewModel();          // inert, display-only; retained singleton, not IDisposable
-        _diagnostics = new DiagnosticsViewModel();  // inert, display-only; retained singleton, not IDisposable
-        _progression = new ProgressionScaffoldViewModel();  // deferred, display-only scaffold; no services, not IDisposable
-        _smartCoach = new SmartCoachScaffoldViewModel();    // deferred, display-only scaffold; no services, not IDisposable
+        _showMicCalibrationCommand = new RelayCommand(() => ShowDeferred("Mikrofonkalibrering"));
+        BuildPages();
+        BuildNav();
         _currentPage = dashboard;
 
-        // Navigation surface: the two implemented top-level destinations, then deferred placeholders for
-        // the missing WPF surfaces. Deferred items navigate ONLY to a static DeferredSurfaceViewModel.
-        // Labels resolve through the safe read-only localization adapter; missing keys fall back to the
-        // current Norwegian text (so behaviour is identical today, but the path is localization-ready).
+        // Stage 2B: live language refresh. When the Avalonia-local culture changes (startup or Save), rebuild the
+        // localized nav rail + the current localized page + chrome so the UI re-renders in the new language without
+        // a restart. The dashboard uses hardcoded strings and is intentionally not rebuilt.
+        Localized.LanguageChanged += OnLanguageChanged;
+    }
+
+    // (Re)create the localized page view-models. Display-only / inert; none hold services or are IDisposable
+    // except the dashboard (which is not rebuilt here).
+    private void BuildPages()
+    {
+        _guide = new ExerciseGuideViewModel(_exercises, OpenExercise);
+        _settings = new SettingsViewModel();
+        _analysis = new AnalysisViewModel();
+        _reports = new ReportsViewModel();
+        _diagnostics = new DiagnosticsViewModel();
+        _progression = new ProgressionScaffoldViewModel();
+        _smartCoach = new SmartCoachScaffoldViewModel();
+    }
+
+    // (Re)build the navigation rail. Labels resolve through the read-only localization adapter for the current
+    // Avalonia culture; missing keys fall back to Norwegian.
+    private void BuildNav()
+    {
         NavItems = new List<ShellNavItem>
         {
             new(Localized.Get("Shell_Nav_Dashboard", "Dashbord"), true, ShowDashboardCommand),
@@ -70,16 +89,42 @@ public partial class ShellViewModel : ObservableObject
             new(Localized.Get("Shell_Nav_Analysis", "Analyse"), true, ShowAnalysisCommand),
             new(Localized.Get("Shell_Nav_Reports", "Rapporter"), true, ShowReportsCommand),
             new(Localized.Get("Shell_Nav_Diagnostics", "Diagnostikk"), true, ShowDiagnosticsCommand),
-            // Progresjon/SmartCoach remain DEFERRED (not functional) but now open richer display-only scaffold
-            // pages (no services, no engines, no side effects) instead of the bare generic placeholder.
             new(DeferredLabel("Progresjon"), false, ShowProgressionCommand),
             new(DeferredLabel("SmartCoach"), false, ShowSmartCoachCommand),
-            new(DeferredLabel("Mikrofonkalibrering"), false, new RelayCommand(() => ShowDeferred("Mikrofonkalibrering"))),
+            new(DeferredLabel("Mikrofonkalibrering"), false, _showMicCalibrationCommand),
         };
     }
 
+    // Live language refresh: rebuild pages + nav, re-point the current page to the freshly-built same-type VM
+    // (so its localized text re-resolves), and re-raise chrome strings. The dashboard and a running exercise are
+    // left in place (dashboard isn't localized; an in-progress exercise must not be torn down by a language change).
+    private void OnLanguageChanged()
+    {
+        void Refresh()
+        {
+            var current = CurrentPage;
+            BuildPages();
+            BuildNav();
+            OnPropertyChanged(nameof(MicStatusText));
+            OnPropertyChanged(nameof(ModeText));
+            CurrentPage = current switch
+            {
+                ExerciseGuideViewModel => _guide,
+                SettingsViewModel => _settings,
+                AnalysisViewModel => _analysis,
+                ReportsViewModel => _reports,
+                DiagnosticsViewModel => _diagnostics,
+                ProgressionScaffoldViewModel => _progression,
+                SmartCoachScaffoldViewModel => _smartCoach,
+                DeferredSurfaceViewModel d => new DeferredSurfaceViewModel(d.SurfaceName),
+                _ => current,   // dashboard / running exercise: leave in place
+            };
+        }
+        if (_ui is not null) _ui.Post(Refresh); else Refresh();
+    }
+
     /// <summary>Navigation entries for the shell rail (implemented destinations + deferred placeholders).</summary>
-    public IReadOnlyList<ShellNavItem> NavItems { get; }
+    [ObservableProperty] private IReadOnlyList<ShellNavItem> _navItems = new List<ShellNavItem>();
 
     [ObservableProperty] private object _currentPage;
 
