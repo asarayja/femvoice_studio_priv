@@ -21,8 +21,9 @@ public sealed record CultureTranslationStatus(
 /// <see cref="CultureTranslationStatus.IsNativeReviewed"/> after a native speaker signs off).
 ///
 /// IMPORTANT: the 18 machine-generated languages MUST NOT be marked native-reviewed until an actual native-speaker
-/// review happens. No production/clinical native-parity may be claimed before that. See
-/// docs/AVALONIA_TRANSLATION_CONTRIBUTION_WORKFLOW.md.
+/// review happens. No production/clinical native-parity may be claimed before that. To mark a language reviewed,
+/// set its <see cref="CultureTranslationStatus.IsNativeReviewed"/> to true (and IsMachineGenerated to false) only
+/// after a real native-speaker review.
 /// </summary>
 public static class TranslationStatus
 {
