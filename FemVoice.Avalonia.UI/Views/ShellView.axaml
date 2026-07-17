@@ -76,6 +76,8 @@
             <!-- Deferred, display-only scaffolds (no services, no engines, no side effects) -->
             <DataTemplate DataType="vm:ProgressionScaffoldViewModel"><views:ProgressionScaffoldView/></DataTemplate>
             <DataTemplate DataType="vm:SmartCoachScaffoldViewModel"><views:SmartCoachScaffoldView/></DataTemplate>
+            <!-- Engine-backed SmartCoach (real SmartCoachEngine on the real DB) -->
+            <DataTemplate DataType="vm:SmartCoachViewModel"><views:SmartCoachView/></DataTemplate>
             <!-- Static deferred placeholder (no services, no side effects) -->
             <DataTemplate DataType="vm:DeferredSurfaceViewModel">
               <ScrollViewer>

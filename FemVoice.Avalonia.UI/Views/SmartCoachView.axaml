@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="FemVoice.Avalonia.Views.SmartCoachView">
+  <!-- Engine-backed SmartCoach: the REAL Core SmartCoachEngine's daily recommendation on the REAL database. -->
+  <ScrollViewer>
+    <StackPanel Margin="20" Spacing="14" MaxWidth="960" HorizontalAlignment="Center">
+
+      <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+
+      <!-- Unavailable (no DB / engine error) -->
+      <Border Classes="card" IsVisible="{Binding !EngineAvailable}" BorderBrush="{DynamicResource ShellWarningBrush}">
+        <TextBlock Text="{Binding UnavailableNote}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+      </Border>
+
+      <!-- Engine-backed content -->
+      <StackPanel Spacing="14" IsVisible="{Binding EngineAvailable}">
+
+        <!-- Health warning (safety first) -->
+        <Border Classes="card" IsVisible="{Binding HasHealthWarning}" BorderBrush="{DynamicResource ShellDangerBrush}">
+          <StackPanel Spacing="4">
+            <TextBlock Text="Helsevarsel" FontWeight="SemiBold" Foreground="{DynamicResource ShellDangerBrush}"/>
+            <TextBlock Text="{Binding HealthWarningText}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Today's recommendation -->
+        <Border Classes="card">
+          <StackPanel Spacing="8">
+            <TextBlock Text="Dagens anbefaling" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Border Background="{DynamicResource ShellChipBackgroundBrush}" CornerRadius="6" Padding="8,3">
+                <TextBlock Text="{Binding FocusLabel, StringFormat='Fokus: {0}'}" Foreground="{DynamicResource ShellAccentBrush}" FontWeight="SemiBold"/>
+              </Border>
+              <Border Background="{DynamicResource ShellChipBackgroundBrush}" CornerRadius="6" Padding="8,3">
+                <TextBlock Text="{Binding DurationText}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              </Border>
+            </StackPanel>
+            <TextBlock Text="{Binding RecommendationText}" TextWrapping="Wrap" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Weekly target + status -->
+        <Border Classes="card">
+          <StackPanel Spacing="6">
+            <TextBlock Text="Ukesmål og status" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+            <TextBlock Text="{Binding WeeklyTargetText}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <TextBlock Text="{Binding StatusSummary}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}"/>
+          </StackPanel>
+        </Border>
+
+        <TextBlock Text="{Binding DataNote}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
+      </StackPanel>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

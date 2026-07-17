@@ -79,6 +79,7 @@ internal static class Program
         if (args.Contains("--snapshot-smoke")) return SnapshotSmoke();
         if (args.Contains("--session-history-persistence-smoke")) return SessionHistoryPersistenceSmoke();
         if (args.Contains("--database-service-smoke")) return DatabaseServiceSmoke();
+        if (args.Contains("--smartcoach-engine-smoke")) return SmartCoachEngineSmoke();
         return null;
     }
 
@@ -184,6 +185,47 @@ internal static class Program
     // NOT EXISTS), reads seeded settings, and round-trips a real TrainingSession (save → GetRecentSessions). Uses a
     // unique test DB file under <MyDocuments>/FemVoiceStudio/ and deletes it (+ WAL/SHM sidecars) after. Proves the
     // WPF database works in the Avalonia head with REAL data (no demo data), so engines can be wired on it next.
+    // Real SmartCoachEngine on the real DB: on an empty DB it must return a (new-user) daily recommendation without
+    // throwing; after saving real TrainingSessions it still returns a sensible recommendation (focus + text +
+    // duration). Proves the frozen SmartCoach engine runs read-only in the Avalonia head on REAL data.
+    private static int SmartCoachEngineSmoke()
+    {
+        string fileName = $"femvoice-sc-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+        string full = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio", fileName);
+        void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+        Cleanup();
+        try
+        {
+            var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+            var engine = new global::FemVoiceStudio.Services.SmartCoachEngine(db, global::FemVoiceStudio.Services.LocalizationService.Instance);
+
+            var rec0 = engine.GenerateDailyRecommendation(1);                // empty DB → new-user recommendation
+            bool emptyOk = rec0 is not null && !string.IsNullOrWhiteSpace(rec0.RecommendationText);
+
+            for (int i = 0; i < 5; i++)
+                db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
+                {
+                    UserId = 1, StartTime = DateTime.UtcNow.AddDays(-i).AddMinutes(-8), EndTime = DateTime.UtcNow.AddDays(-i),
+                    AveragePitch = 170 + i, MinPitch = 150, MaxPitch = 200, OverallScore = 65 + i,
+                    IntonationScore = 60, ResonanceScore = 62, VoiceHealthScore = 90, Feedback = "sc-smoke",
+                });
+
+            var rec1 = engine.GenerateDailyRecommendation(1);                // with data → still sensible
+            int weekly = engine.GetWeeklySessionTarget(1);
+            string status = engine.GetStatusSummary(1);
+            bool dataOk = rec1 is not null && !string.IsNullOrWhiteSpace(rec1.RecommendationText)
+                          && !string.IsNullOrWhiteSpace(rec1.FocusArea) && weekly > 0 && !string.IsNullOrWhiteSpace(status);
+
+            Console.WriteLine($"[smartcoach] emptyOk={emptyOk} dataOk={dataOk} focus='{rec1?.FocusArea}' dur={rec1?.RecommendedDurationMinutes}min weekly={weekly}");
+            Console.WriteLine($"[smartcoach] rec: {rec1?.RecommendationText}");
+            bool ok = emptyOk && dataOk;
+            Console.WriteLine(ok ? "[smartcoach] SmartCoach engine smoke OK" : "[smartcoach] SmartCoach engine smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[smartcoach] SmartCoach engine smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
+        finally { Cleanup(); }
+    }
+
     private static int DatabaseServiceSmoke()
     {
         string fileName = $"femvoice-dbsmoke-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
@@ -643,13 +685,13 @@ internal static class Program
         bool deferredInert = shell.CurrentPage is DeferredSurfaceViewModel && shell.CurrentPage is not IDisposable;
         Console.WriteLine($"[shell] Deferred nav '{deferredItem.Label}' -> {(onDeferred ? "static placeholder" : "FAIL")} (inert={deferredInert})");
 
-        // Progresjon/SmartCoach are still deferred (not functional) but now open inert display-only SCAFFOLD
-        // pages (no services, not IDisposable) instead of the bare generic placeholder.
+        // Progresjon is still a deferred inert SCAFFOLD; SmartCoach is now ENGINE-BACKED (real SmartCoachViewModel;
+        // in this headless shell it has no DB → fails safe to an "unavailable" state, no crash).
         shell.NavItems.First(n => n.Label.Contains("Progresjon")).Command.Execute(null);
         bool onProgScaffold = shell.CurrentPage is ProgressionScaffoldViewModel && shell.CurrentPage is not IDisposable;
         shell.NavItems.First(n => n.Label.Contains("SmartCoach")).Command.Execute(null);
-        bool onCoachScaffold = shell.CurrentPage is SmartCoachScaffoldViewModel && shell.CurrentPage is not IDisposable;
-        Console.WriteLine($"[shell] Scaffold nav: progression={onProgScaffold} smartcoach={onCoachScaffold} (inert, deferred)");
+        bool onCoachScaffold = shell.CurrentPage is SmartCoachViewModel && shell.CurrentPage is not IDisposable;
+        Console.WriteLine($"[shell] nav: progression={onProgScaffold} (scaffold) smartcoach={onCoachScaffold} (engine-backed)");
 
         // Runtime nav-away disposes the transient runtime (no orphaned capture).
         shell.ShowGuideCommand.Execute(null);
@@ -685,7 +727,7 @@ internal static class Program
                           $"no-orphan-frames={noOrphanFrames} fresh-instance={distinctInstance} " +
                           $"second-running={secondRunning} no-orphan={firstStillStopped}");
 
-        bool ok = landsOnDashboard && shell.NavItems.Count == 9 && implemented == 6 && deferred == 3
+        bool ok = landsOnDashboard && shell.NavItems.Count == 9 && implemented == 7 && deferred == 2
                   && onGuide && backToDash && onDeferred && deferredInert && onProgScaffold && onCoachScaffold
                   && runtimeRunning && firstDisposedOnNav && noOrphanFrames
                   && distinctInstance && secondRunning && firstStillStopped;
@@ -1270,7 +1312,7 @@ internal static class Program
         var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
         int implemented = shell.NavItems.Count(n => n.IsImplemented);
         int deferred = shell.NavItems.Count(n => !n.IsImplemented);
-        bool navOk = shell.NavItems.Count == 9 && implemented == 6 && deferred == 3;   // deferred surfaces stay deferred
+        bool navOk = shell.NavItems.Count == 9 && implemented == 7 && deferred == 2;   // deferred surfaces stay deferred
 
         // Settings stays display-only/inert: not IDisposable, exposes no IRelayCommand (no actions/persistence wired).
         bool settingsInert = !typeof(System.IDisposable).IsAssignableFrom(typeof(SettingsViewModel))
@@ -1877,41 +1919,41 @@ internal static class Program
         var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
         var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
 
-        // Navigation to both deferred scaffolds works; each opens its inert scaffold VM (not IDisposable).
+        // Progression is still a deferred scaffold; SmartCoach is now ENGINE-BACKED (real SmartCoachViewModel).
         shell.NavItems.First(n => n.Label.Contains("Progresjon")).Command.Execute(null);
         var prog = shell.CurrentPage as ProgressionScaffoldViewModel;
         bool progNav = prog is not null && shell.CurrentPage is not IDisposable;
         shell.NavItems.First(n => n.Label.Contains("SmartCoach")).Command.Execute(null);
-        var coach = shell.CurrentPage as SmartCoachScaffoldViewModel;
-        bool coachNav = coach is not null && shell.CurrentPage is not IDisposable;
+        var coach = shell.CurrentPage as SmartCoachViewModel;
+        // No DB is injected in this headless shell, so the engine-backed page fails SAFE to an "unavailable" state
+        // (no crash, no DB opened) rather than showing scaffold placeholders.
+        bool coachNav = coach is not null && shell.CurrentPage is not IDisposable
+                        && !coach.EngineAvailable && !string.IsNullOrWhiteSpace(coach.UnavailableNote);
 
-        // Sidebar intact (still 9 items, still 3 deferred) and dashboard nav still works.
-        bool navIntact = shell.NavItems.Count == 9 && shell.NavItems.Count(n => !n.IsImplemented) == 3;
+        // Sidebar intact (9 items; SmartCoach now implemented → 2 deferred) and dashboard nav still works.
+        bool navIntact = shell.NavItems.Count == 9 && shell.NavItems.Count(n => !n.IsImplemented) == 2
+                         && shell.NavItems.First(n => n.Label.Contains("SmartCoach")).IsImplemented;
         shell.ShowDashboardCommand.Execute(null);
         bool backToDash = shell.CurrentPage is MainDashboardViewModel;
 
-        // Hold NO injected services (a single parameterless constructor).
+        // Progression scaffold holds NO injected services (a single parameterless constructor).
         static bool OnlyParameterlessCtor(Type t)
         {
             var c = t.GetConstructors();
             return c.Length == 1 && c[0].GetParameters().Length == 0;
         }
-        bool noServiceDeps = OnlyParameterlessCtor(typeof(SmartCoachScaffoldViewModel))
-                             && OnlyParameterlessCtor(typeof(ProgressionScaffoldViewModel));
+        bool noServiceDeps = OnlyParameterlessCtor(typeof(ProgressionScaffoldViewModel));
 
-        // Deferred + disabled + synthetic placeholders (no real numbers/recommendations).
-        bool coachDeferred = coach!.DeferredBadge.Contains("Utsatt") && !coach.ActionEnabled
-                             && coach.Placeholder == "—" && coach.TodayRecommendation.Length > 0
-                             && coach.StreakLabel.Length > 0 && coach.SessionsLabel.Length > 0 && coach.HealthLabel.Length > 0;
+        // Progression: still deferred + disabled + synthetic placeholders.
         bool progDeferred = prog!.DeferredBadge.Contains("Utsatt") && !prog.ActionEnabled
                             && prog.ScoreValue == "—" && prog.ProgressValue == 0
                             && prog.Parameters.Count == 3 && prog.Parameters.All(p => p.Value == "—")
                             && prog.LevelName.Length > 0 && prog.ScoreLabel.Length > 0;
 
-        Console.WriteLine($"[sc-prog] progNav={progNav} coachNav={coachNav} navIntact={navIntact} backToDash={backToDash} noServiceDeps={noServiceDeps}");
-        Console.WriteLine($"[sc-prog] coachDeferred(disabled+synthetic)={coachDeferred} progDeferred(disabled+3 synthetic params)={progDeferred}");
+        Console.WriteLine($"[sc-prog] progNav={progNav} coachNav(engine-backed,safe)={coachNav} navIntact={navIntact} backToDash={backToDash} noServiceDeps={noServiceDeps}");
+        Console.WriteLine($"[sc-prog] progDeferred(disabled+3 synthetic params)={progDeferred}");
 
-        bool ok = progNav && coachNav && navIntact && backToDash && noServiceDeps && coachDeferred && progDeferred;
+        bool ok = progNav && coachNav && navIntact && backToDash && noServiceDeps && progDeferred;
         Console.WriteLine(ok ? "[sc-prog] SmartCoach/Progression UI scaffold smoke OK" : "[sc-prog] SmartCoach/Progression UI scaffold smoke FAIL");
         return ok ? 0 : 1;
     }
@@ -1957,7 +1999,7 @@ internal static class Program
         bool deferredWording = settings.DeferredBadge.Contains("Utsatt") && settings.DeferredBanner.Length > 0;
 
         // Sidebar intact.
-        bool navIntact = shell.NavItems.Count == 9 && shell.NavItems.Count(n => n.IsImplemented) == 6;
+        bool navIntact = shell.NavItems.Count == 9 && shell.NavItems.Count(n => n.IsImplemented) == 7;
 
         Console.WriteLine($"[settings-vis] onSettings={onSettings} navOk={navOk} sections={settings.Sections.Count} controls(combo/toggle/button)={hasCombo}/{hasToggle}/{hasButton}");
         Console.WriteLine($"[settings-vis] allInert={allInert} chipsOnActionable={chipsOnActionable} deferredWording={deferredWording} notDisposable={notDisposable} noCommands={noCommands} noServiceDeps={noServiceDeps} navIntact={navIntact}");
@@ -2016,7 +2058,7 @@ internal static class Program
         bool guideFilterIntact = guideVm.CategoryChips.Count >= 2 && guideVm.FilteredExercises.Count == guideVm.Exercises.Count;
         guideVm.SearchText = "zzqx-none"; bool searchWorks = guideVm.FilteredCount == 0; guideVm.SearchText = "";
         bool dashboardChartIntact = dash.DashboardChart is not null;   // chart model unchanged
-        bool navIntact = shell.NavItems.Count == 9 && shell.NavItems.Count(n => n.IsImplemented) == 6;
+        bool navIntact = shell.NavItems.Count == 9 && shell.NavItems.Count(n => n.IsImplemented) == 7;
 
         Console.WriteLine($"[layout] source={(SourcePresent ? "present" : "skipped")} settingsResponsive={settingsResponsive} scaffoldsCentered={scaffoldsCentered} guideCentered={guideCentered}");
         Console.WriteLine($"[layout] settingsInert={settingsInert} scaffoldsDeferred={scaffoldsDeferred} guideFilterIntact={guideFilterIntact}&searchWorks={searchWorks} dashboardChartIntact={dashboardChartIntact} navIntact={navIntact}");

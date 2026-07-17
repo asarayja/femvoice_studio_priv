@@ -48,13 +48,18 @@ public partial class ShellViewModel : ObservableObject
     private SmartCoachScaffoldViewModel _smartCoach = null!;
     private readonly RelayCommand _showMicCalibrationCommand;
     private readonly FemVoice.Avalonia.Audio.AudioReadiness _audioReadiness;
+    // Real Core database (injected by DI in production; null in headless/tests → engine-backed pages fall back to a
+    // truthful "unavailable" state rather than opening a DB). Enables the real SmartCoach engine, etc.
+    private readonly FemVoiceStudio.Data.IDatabaseService? _database;
 
     public ShellViewModel(MainDashboardViewModel dashboard, VoiceFeminizationExerciseService exercises, IUiDispatcher ui,
-        FemVoiceStudio.Audio.Abstractions.IAudioCaptureService? capture = null)
+        FemVoiceStudio.Audio.Abstractions.IAudioCaptureService? capture = null,
+        FemVoiceStudio.Data.IDatabaseService? database = null)
     {
         _dashboard = dashboard;
         _exercises = exercises;
         _ui = ui;
+        _database = database;
         // Stage 3A: truthful audio status via the approved capture abstraction (read-only; never starts capture).
         // The Avalonia app's default backend is synthetic; fall back to it when no service is injected (headless).
         _audioReadiness = new FemVoice.Avalonia.Audio.AudioReadiness(
@@ -96,7 +101,7 @@ public partial class ShellViewModel : ObservableObject
             new(Localized.Get("Shell_Nav_Reports", "Rapporter"), true, ShowReportsCommand),
             new(Localized.Get("Shell_Nav_Diagnostics", "Diagnostikk"), true, ShowDiagnosticsCommand),
             new(DeferredLabel("Progresjon"), false, ShowProgressionCommand),
-            new(DeferredLabel("SmartCoach"), false, ShowSmartCoachCommand),
+            new(Localized.Get("Shell_Nav_SmartCoach", "SmartCoach"), true, ShowSmartCoachCommand),   // engine-backed
             new(DeferredLabel("Mikrofonkalibrering"), false, _showMicCalibrationCommand),
         };
     }
@@ -174,6 +179,7 @@ public partial class ShellViewModel : ObservableObject
             ReportsViewModel => Localized.Get("Shell_Nav_Reports", "Rapporter"),
             DiagnosticsViewModel => Localized.Get("Shell_Nav_Diagnostics", "Diagnostikk"),
             ProgressionScaffoldViewModel => $"{Localized.Get("Shell_Nav_Progresjon", "Progresjon")} (utsatt)",
+            SmartCoachViewModel => Localized.Get("SmartCoach_Scaffold_Title", "SmartCoach"),
             SmartCoachScaffoldViewModel => $"{Localized.Get("SmartCoach_Title", "SmartCoach")} (utsatt)",
             DeferredSurfaceViewModel d => $"{d.SurfaceName} (utsatt)",
             _ => "—",
@@ -187,7 +193,9 @@ public partial class ShellViewModel : ObservableObject
     [RelayCommand] private void ShowReports() => CurrentPage = _reports;            // inert display-only page
     [RelayCommand] private void ShowDiagnostics() => CurrentPage = _diagnostics;    // inert display-only page
     [RelayCommand] private void ShowProgression() => CurrentPage = _progression;    // deferred display-only scaffold
-    [RelayCommand] private void ShowSmartCoach() => CurrentPage = _smartCoach;      // deferred display-only scaffold
+    // Engine-backed: run the REAL SmartCoachEngine on the REAL database (falls back to a truthful "unavailable"
+    // state when no DB is injected, e.g. headless/tests). Fresh each open so it reflects the latest saved sessions.
+    [RelayCommand] private void ShowSmartCoach() => CurrentPage = new SmartCoachViewModel(_database);
 
     // Deferred destinations open a purely static placeholder — no services, no side effects.
     private void ShowDeferred(string surface) => CurrentPage = new DeferredSurfaceViewModel(surface);
