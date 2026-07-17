@@ -59,7 +59,9 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
 
     private readonly IUiDispatcher _ui;
     private readonly Action _back;
-    private readonly SyntheticAudioCaptureService _capture;
+    private readonly IAudioCaptureService _capture;
+    /// <summary>True when this session is driven by the SYNTHETIC target-tuned source (no real mic).</summary>
+    public bool IsSyntheticSource { get; }
     private readonly PitchDetectionService _pitch = new(SampleRate);
     private readonly PitchTraceStabilizer _stabilizer = new();
     private readonly LiveMetricsService _metrics = new();
@@ -74,7 +76,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     private readonly History.SessionHistoryStore? _history;
 
     public ExerciseRuntimeViewModel(EnhancedExercise exercise, IUiDispatcher ui, Action back,
-        History.SessionHistoryStore? history = null)
+        History.SessionHistoryStore? history = null, bool useRealMic = false)
     {
         Exercise = exercise;
         _ui = ui;
@@ -113,12 +115,24 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         _chartMax = axis.Maximum;
         _runtimeChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, TargetPitchMin, TargetPitchMax);
 
-        // Dedicated synthetic source aimed at the middle of the target band so the scaffold visibly
-        // sits "in target" by default. (Windows would inject the real IAudioCaptureService via DI.)
+        // Audio source. In production (real mic available) the exercise is driven by the REAL microphone — the same
+        // pitch/coordinator pipeline, just real frames. Otherwise (no mic / tests) a dedicated synthetic source aimed
+        // at the middle of the target band drives it so the scaffold visibly sits "in target". Only the frame SOURCE
+        // differs — no clinical logic changes.
         double mid = (TargetPitchMin > 0 && TargetPitchMax > 0)
             ? (TargetPitchMin + TargetPitchMax) / 2.0
             : 200.0;
-        _capture = new SyntheticAudioCaptureService { BaseFrequency = mid, Mode = SyntheticAudioMode.StablePitch };
+        if (useRealMic)
+        {
+            var real = AudioCaptureBackendFactory.CreateForRuntime();   // real-when-available, else synthetic
+            _capture = real;
+            IsSyntheticSource = real is SyntheticAudioCaptureService;
+        }
+        else
+        {
+            _capture = new SyntheticAudioCaptureService { BaseFrequency = mid, Mode = SyntheticAudioMode.StablePitch };
+            IsSyntheticSource = true;
+        }
         _capture.FrameAvailable += OnFrameAvailable;
 
         // Explicit lifecycle: start Inactive (no auto-start). The user presses Start (BeginCommand) to run
@@ -413,7 +427,8 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     {
         IsRunning = false;                       // mark stopped (also when navigated away via top nav)
         _capture.FrameAvailable -= OnFrameAvailable;
-        _ = _capture.StopAsync();                // cancels the synthetic capture loop (no more frames)
+        _ = _capture.StopAsync();                // stops the capture loop (synthetic or real) — no more frames
+        (_capture as IDisposable)?.Dispose();    // release a real capture backend (e.g. ALSA) if used
         if (_coordinatorEnabled) _coordinator.ExerciseUpdated -= OnCoordinatorState;
         _coordinator.StopExercise();             // in-memory clear; no persistence
         _coordinator.Dispose();
