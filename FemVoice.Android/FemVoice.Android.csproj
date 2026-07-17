@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Avalonia ANDROID head for FemVoice Studio (the 4th platform). It reuses the SAME shared UI as the desktop head:
+    it references FemVoice.Avalonia and hosts the shared `App` + `ShellView` (set as the single-view MainView by
+    App.OnFrameworkInitializationCompleted's ISingleViewApplicationLifetime branch). No clinical/domain logic lives
+    here — it is a thin platform head only.
+
+    Build/run requires the Android workload (`dotnet workload install android`) AND an Android SDK; it is therefore
+    NOT part of FemVoiceStudio.slnx or scripts/linux-portable-gate.sh, so the cross-platform Linux gate stays green
+    on machines without the Android SDK. See README.md in this folder for provisioning + build/run steps.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>21</SupportedOSPlatformVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>Exe</OutputType>
+
+    <ApplicationId>com.femvoice.studio</ApplicationId>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
+
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <AndroidManifest>Properties\AndroidManifest.xml</AndroidManifest>
+    <!-- Reflection bindings (matches the desktop head; AvaloniaUseCompiledBindingsByDefault=false). -->
+    <AndroidLinkMode>None</AndroidLinkMode>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Android" Version="11.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Shared UI (App, ShellView, all views + view-models). -->
+    <ProjectReference Include="..\FemVoice.Avalonia\FemVoice.Avalonia.csproj" />
+  </ItemGroup>
+
+</Project>
