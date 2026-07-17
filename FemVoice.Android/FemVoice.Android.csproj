@@ -32,8 +32,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Shared UI (App, ShellView, all views + view-models). -->
-    <ProjectReference Include="..\FemVoice.Avalonia\FemVoice.Avalonia.csproj" />
+    <!-- Shared UI library (App, ShellView, all views + view-models, DI). A platform-neutral net10.0 library with
+         NO Avalonia.Desktop, so the self-contained Android app can consume it. -->
+    <ProjectReference Include="..\FemVoice.Avalonia.UI\FemVoice.Avalonia.UI.csproj" />
   </ItemGroup>
 
 </Project>

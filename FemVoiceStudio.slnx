@@ -3,7 +3,9 @@
   <Project Path="FemVoice.Core/FemVoice.Core.csproj" />
   <Project Path="FemVoice.Audio.Abstractions/FemVoice.Audio.Abstractions.csproj" />
   <Project Path="FemVoice.Tests.Portable/FemVoice.Tests.Portable.csproj" />
-  <!-- Avalonia head (net10.0) — minimal bootstrap shell -->
+  <!-- Shared Avalonia UI library (net10.0, no Avalonia.Desktop) — consumed by the desktop + Android heads -->
+  <Project Path="FemVoice.Avalonia.UI/FemVoice.Avalonia.UI.csproj" />
+  <!-- Avalonia desktop head (net10.0) — thin Exe: entry point + smokes + snapshot -->
   <Project Path="FemVoice.Avalonia/FemVoice.Avalonia.csproj" />
   <!-- Windows audio backend (net10.0-windows) — NAudio capture behind IAudioCaptureService -->
   <Project Path="FemVoice.Audio.Windows/FemVoice.Audio.Windows.csproj" />

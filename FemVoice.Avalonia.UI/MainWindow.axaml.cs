@@ -11,6 +11,6 @@ public partial class MainWindow : Window
     {
         AvaloniaXamlLoader.Load(this);
         // Shell hosts the dashboard + exercise guide/detail via ContentControl + DataTemplates.
-        DataContext = Program.Services.GetRequiredService<ShellViewModel>();
+        DataContext = AppServices.Services.GetRequiredService<ShellViewModel>();
     }
 }

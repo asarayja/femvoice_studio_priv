@@ -33,7 +33,7 @@ public partial class App : Application
             // with the same ShellViewModel from the shared DI container. Design/behaviour reuse the desktop shell.
             singleView.MainView = new Views.ShellView
             {
-                DataContext = Program.Services.GetRequiredService<ShellViewModel>(),
+                DataContext = AppServices.Services.GetRequiredService<ShellViewModel>(),
             };
         }
 
