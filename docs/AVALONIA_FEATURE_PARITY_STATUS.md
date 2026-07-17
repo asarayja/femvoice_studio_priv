@@ -18,7 +18,8 @@ data) · ❌ not ported.
 | SmartCoachDashboard/Detail — engine-backed daily recommendation, streak, health | 🟡 SmartCoach | **REAL** engine: `SmartCoachEngine.GenerateDailyRecommendation` on the real DB (PR #53). |
 | ProgressionDashboard/Window — level, progress bar, FemVoice score, parameter rows | 🟡 Progression | **REAL** level + FemVoice score + `ProgressionService` summary on the real DB (PR #54). Per-dimension rings deferred. |
 | ResonanceWindow · ResonanceContrastDemoWindow · AnalyzerWindow | ❌ | No dedicated Avalonia screen (resonance appears only as a synthetic mini-chart in the Analysis scaffold). |
-| CalendarWindow · DayDetailsWindow · StatisticsWindow | ❌ | Represented only as a deferred "kalender/historikk" card in Reports. |
+| StatisticsWindow | 🟡 Statistikk | **REAL** stats (total/streak/days/time/avg pitch/consistency/score) from the DB (PR #58). |
+| CalendarWindow | 🟡 Kalender | **REAL** training-day history (last 90 days) from the DB (PR #59). DayDetails view deferred. |
 | ClinicianDashboard · CoachDashboard · CaseReviewWindow | ❌ | Deferred cards in Reports; no real panels. |
 | ManualOverrideWindow (safety clamp) | ❌ | Not ported. |
 | MicrophoneCalibrationWindow | ❌ | Deferred card in Settings/Diagnostics. |
