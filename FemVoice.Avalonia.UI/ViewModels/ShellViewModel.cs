@@ -215,5 +215,9 @@ public partial class ShellViewModel : ObservableObject
     // WPF parity: the exercise guide opens the exercise page DIRECTLY (one page, one Start) — there is no
     // separate detail page and no second Start. Back returns to the guide.
     private void OpenExercise(EnhancedExercise exercise)
-        => CurrentPage = new ExerciseRuntimeViewModel(exercise, _ui, ShowGuide, new History.SessionHistoryStore());
+        // useRealMic only when a real microphone is actually available (true in production via the DI-injected
+        // backend; false in headless/tests → the exercise keeps its target-tuned synthetic source, so the exercise
+        // smokes stay deterministic). Only the frame SOURCE differs — no clinical change.
+        => CurrentPage = new ExerciseRuntimeViewModel(exercise, _ui, ShowGuide, new History.SessionHistoryStore(),
+            useRealMic: _audioReadiness.IsRealCaptureAvailable);
 }
