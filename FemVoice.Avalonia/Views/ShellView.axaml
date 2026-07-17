@@ -98,7 +98,7 @@
             <StackPanel Spacing="4">
               <TextBlock Text="{loc:Tr Key=Shell_DisplayOnlyMode, Fallback='Visning-bare modus'}"
                          FontWeight="SemiBold" Foreground="{DynamicResource ShellOkBrush}" FontSize="13"/>
-              <TextBlock Text="{loc:Tr Key=Shell_DisplayOnlyDetail, Fallback='Syntetisk lyd · ingen mikrofon · ingen lagring · ingen klinisk endring.'}"
+              <TextBlock Text="{loc:Tr Key=Shell_DisplayOnlyDetail, Fallback='Ekte mikrofon når tilgjengelig · ingen lagring · ingen klinisk endring.'}"
                          TextWrapping="Wrap" Foreground="{DynamicResource ShellSubtleTextBrush}" FontSize="12"/>
             </StackPanel>
           </Border>

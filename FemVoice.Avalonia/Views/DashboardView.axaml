@@ -9,7 +9,7 @@
         <TextBlock Text="FemVoice Studio — Hoveddashboard (Avalonia)" FontSize="22" FontWeight="Bold"
                    Foreground="{DynamicResource ShellHeadingBrush}"/>
         <TextBlock Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"
-                   Text="Parity-slice. Pitch/stabilitet/helse drives av delte tjenester (FemVoice.Core) fra syntetisk lyd på Linux. Full feedback-pipeline, SmartCoach, rapporter og temaparitet kommer senere — se docs/AVALONIA_MAIN_DASHBOARD_PLACEHOLDERS.md."/>
+                   Text="Pitch/stabilitet/helse drives av delte tjenester (FemVoice.Core) fra ekte mikrofon når en er tilgjengelig, ellers syntetisk testlyd. Full feedback-pipeline, SmartCoach og rapporter kommer senere — se docs/AVALONIA_MAIN_DASHBOARD_PLACEHOLDERS.md."/>
       </StackPanel>
 
       <!-- Session controls -->
@@ -25,8 +25,9 @@
             <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}" Text="Vanskelighetsgrad:"/>
             <ComboBox ItemsSource="{Binding DifficultyOptions}" SelectedItem="{Binding SelectedDifficulty}" MinWidth="150"/>
           </StackPanel>
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}" Text="Syntetisk lyd (Linux):"/>
+          <!-- Synthetic test-tone selector: only relevant when no real microphone is available (hidden otherwise). -->
+          <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsSyntheticBackend}">
+            <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}" Text="Syntetisk testlyd:"/>
             <ComboBox ItemsSource="{Binding SyntheticAudioModes}" SelectedItem="{Binding SyntheticAudioMode}" MinWidth="150"/>
           </StackPanel>
         </StackPanel>

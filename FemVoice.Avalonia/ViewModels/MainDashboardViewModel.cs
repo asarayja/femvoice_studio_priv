@@ -58,6 +58,10 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     [ObservableProperty] private DifficultyLevel _selectedDifficulty = DifficultyLevel.Nybegynner;
     partial void OnSelectedDifficultyChanged(DifficultyLevel value) => UpdateComfortZone();
 
+    /// <summary>True when the active capture backend is the synthetic display-only source (no real microphone).
+    /// Drives visibility of the synthetic test-tone selector — it is hidden when a real mic drives the dashboard.</summary>
+    public bool IsSyntheticBackend => _capture is SyntheticAudioCaptureService;
+
     public Array SyntheticAudioModes { get; } = Enum.GetValues(typeof(SyntheticAudioMode));
 
     [ObservableProperty] private SyntheticAudioMode _syntheticAudioMode = SyntheticAudioMode.StablePitch;
