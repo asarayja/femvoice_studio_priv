@@ -74,7 +74,7 @@ Windows CI. The WPF app remains the frozen parity baseline. See `docs/AVALONIA_B
 | 9 | SmartCoach & progression UI | TODO (display scaffold done in 8t; real engine-backed behavior deferred) | Agent 10 | Daily rec matches WPF on same data |
 | 10 | Analysis, resonance, chart windows | IN PROGRESS — **structural design parity done** (PR open): Avalonia AnalysisView rebuilt to the WPF layout (header band + 4-card stats row + 2-column chart-card grid) over synthetic display-only data; real analysis-engine data + OxyPlot + resonance scatter/timeline deferred | Agent 7 + 10 | Resonance/analysis chart parity |
 | 11 | Reports, professional tools, dialogs | IN PROGRESS — **structural design parity done** (PR open): Avalonia ReportsView rebuilt to a WPF-style hub (header band + 2-column card grid + status chips), display-only; real generation/export + clinician/coach/case-review deferred | Agent 11 | 4×3 export parity; override clamp intact |
-| 12 | Settings, backup/restore, diagnostics | TODO | Agent 12 | RC-0 writes; backup/restore parity |
+| 12 | Settings, backup/restore, diagnostics | IN PROGRESS — Diagnostics **structural design parity done** (PR open): DiagnosticsView rebuilt to a WPF-style hub (header band + 2-column card grid + status chips), display-only; real support-package/export/backup-restore + RC-0 writes deferred | Agent 12 | RC-0 writes; backup/restore parity |
 | 13 | Parity testing & cleanup | TODO | Agent 1 + 13 | Full parity matrix green; cleanup logged |
 
 ---
