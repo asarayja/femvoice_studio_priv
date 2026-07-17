@@ -100,7 +100,7 @@ public partial class ShellViewModel : ObservableObject
             new(Localized.Get("Shell_Nav_Analysis", "Analyse"), true, ShowAnalysisCommand),
             new(Localized.Get("Shell_Nav_Reports", "Rapporter"), true, ShowReportsCommand),
             new(Localized.Get("Shell_Nav_Diagnostics", "Diagnostikk"), true, ShowDiagnosticsCommand),
-            new(DeferredLabel("Progresjon"), false, ShowProgressionCommand),
+            new(Localized.Get("Shell_Nav_Progresjon", "Progresjon"), true, ShowProgressionCommand),   // engine-backed
             new(Localized.Get("Shell_Nav_SmartCoach", "SmartCoach"), true, ShowSmartCoachCommand),   // engine-backed
             new(DeferredLabel("Mikrofonkalibrering"), false, _showMicCalibrationCommand),
         };
@@ -178,6 +178,7 @@ public partial class ShellViewModel : ObservableObject
             AnalysisViewModel => Localized.Get("Shell_Nav_Analysis", "Analyse"),
             ReportsViewModel => Localized.Get("Shell_Nav_Reports", "Rapporter"),
             DiagnosticsViewModel => Localized.Get("Shell_Nav_Diagnostics", "Diagnostikk"),
+            ProgressionViewModel => Localized.Get("Shell_Nav_Progresjon", "Progresjon"),
             ProgressionScaffoldViewModel => $"{Localized.Get("Shell_Nav_Progresjon", "Progresjon")} (utsatt)",
             SmartCoachViewModel => Localized.Get("SmartCoach_Scaffold_Title", "SmartCoach"),
             SmartCoachScaffoldViewModel => $"{Localized.Get("SmartCoach_Title", "SmartCoach")} (utsatt)",
@@ -192,7 +193,8 @@ public partial class ShellViewModel : ObservableObject
     [RelayCommand] private void ShowAnalysis() => CurrentPage = _analysis;          // inert display-only page
     [RelayCommand] private void ShowReports() => CurrentPage = _reports;            // inert display-only page
     [RelayCommand] private void ShowDiagnostics() => CurrentPage = _diagnostics;    // inert display-only page
-    [RelayCommand] private void ShowProgression() => CurrentPage = _progression;    // deferred display-only scaffold
+    // Engine-backed: real training level + FemVoice score + ProgressionService summary on the real DB (null-safe).
+    [RelayCommand] private void ShowProgression() => CurrentPage = new ProgressionViewModel(_database);
     // Engine-backed: run the REAL SmartCoachEngine on the REAL database (falls back to a truthful "unavailable"
     // state when no DB is injected, e.g. headless/tests). Fresh each open so it reflects the latest saved sessions.
     [RelayCommand] private void ShowSmartCoach() => CurrentPage = new SmartCoachViewModel(_database);

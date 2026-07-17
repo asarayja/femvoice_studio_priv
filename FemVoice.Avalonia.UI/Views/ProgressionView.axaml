@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="FemVoice.Avalonia.Views.ProgressionView">
+  <!-- Engine-backed Progression: real level + FemVoice score + summary from the real database. -->
+  <ScrollViewer>
+    <StackPanel Margin="20" Spacing="14" MaxWidth="960" HorizontalAlignment="Center">
+
+      <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+
+      <!-- Unavailable (no DB / engine error) -->
+      <Border Classes="card" IsVisible="{Binding !EngineAvailable}" BorderBrush="{DynamicResource ShellWarningBrush}">
+        <TextBlock Text="{Binding UnavailableNote}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+      </Border>
+
+      <StackPanel Spacing="14" IsVisible="{Binding EngineAvailable}">
+
+        <!-- Level + FemVoice score -->
+        <Grid ColumnDefinitions="*,*">
+          <Border Grid.Column="0" Classes="card" Margin="0,0,6,0">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Nivå" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="{Binding LevelEmoji}" FontSize="26"/>
+                <TextBlock Text="{Binding LevelName}" FontSize="22" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource ShellAccentBrush}"/>
+              </StackPanel>
+              <TextBlock Text="{Binding LevelDescription}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+            </StackPanel>
+          </Border>
+          <Border Grid.Column="1" Classes="card" Margin="6,0,0,0">
+            <StackPanel Spacing="4">
+              <TextBlock Text="FemVoice-score" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="{Binding FemVoiceScoreText}" FontSize="34" FontWeight="Bold" Foreground="{DynamicResource ShellAccentBrush}"/>
+                <TextBlock Text="/ 100" VerticalAlignment="Bottom" Margin="0,0,0,6" Foreground="{DynamicResource ShellMutedBrush}"/>
+              </StackPanel>
+              <TextBlock Text="{Binding SessionCountText}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Text="{Binding AveragePitchText, StringFormat='Snitt tonehøyde: {0}'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+            </StackPanel>
+          </Border>
+        </Grid>
+
+        <!-- Progression summary (real engine) -->
+        <Border Classes="card">
+          <StackPanel Spacing="6">
+            <TextBlock Text="Progresjonssammendrag" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+            <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <TextBlock Text="{Binding RecommendedDifficultyText}" Foreground="{DynamicResource ShellMutedBrush}"/>
+          </StackPanel>
+        </Border>
+
+        <TextBlock Text="{Binding DataNote}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
+      </StackPanel>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
