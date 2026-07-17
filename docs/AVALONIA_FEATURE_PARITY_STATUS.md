@@ -12,11 +12,11 @@ data) · ❌ not ported.
 | MainWindow — start/stop, live pitch chart, comfort zone, stability/health, difficulty | 🟡 Dashboard | **Real live mic → pitch/stability/health + chart** (Linux). Simplified feedback string — full FeedbackConsistencyGuard / FemVoiceScore / VocalHealthSupervisor / Hydration NOT wired. |
 | ExerciseWindow — list, filters/search, guidance, live feedback, hold, subjective report, save | 🟡 Exercise Guide + Runtime | List (15) + filters/search + guidance + hold/target UI real. **Exercise runtime still uses target-tuned SYNTHETIC audio (not the real mic); no subjective report, no save→progression, no persistence.** |
 | SettingsWindow — theme, language, audio, voice-goal, backup/restore/clear, accessibility, privacy | 🟡 Settings | Theme/language/reduce-motion persist + apply (Avalonia-local). **No DB settings, mic calibration, backup/restore/clear, voice-goal profile, or privacy export/delete.** |
-| AnalysisWindow — OxyPlot resonance/pitch/prosody/health over real session data | 🟦 Analysis | WPF-structure layout (stat cards + charts) but **synthetic data, no OxyPlot, no session history**. |
-| ReportExportWindow — 4 report types × 3 formats (QuestPDF/CSV) | 🟦 Reports | Card hub only. **No report generation/export.** |
+| AnalysisWindow — OxyPlot resonance/pitch/prosody/health over real session data | 🟡 Analysis | **REAL** pitch/score trends + summary stats from the DB (PR #56). OxyPlot + per-dimension resonance/intonation rings (WPF sources from `SessionAnalyticsStore`) deferred. |
+| ReportExportWindow — 4 report types × 3 formats (QuestPDF/CSV) | 🟡 Reports | **REAL** progress-summary report preview from the DB (PR #57). Full 4×3 generation + export (OutcomeProfile/notes/audit assembler + file dialogs) deferred. |
 | Diagnostics / SupportPackage / backup / RC-0 / research anonymization | 🟦 Diagnostics | Card hub only. **No support package, backup/restore, RC-0 export.** |
-| SmartCoachDashboard/Detail — engine-backed daily recommendation, streak, health | 🟦 SmartCoach | Structure + "—" placeholders. **No engine.** |
-| ProgressionDashboard/Window — level, progress bar, FemVoice score, parameter rows | 🟦 Progression | Structure + "—" placeholders. **No engine.** |
+| SmartCoachDashboard/Detail — engine-backed daily recommendation, streak, health | 🟡 SmartCoach | **REAL** engine: `SmartCoachEngine.GenerateDailyRecommendation` on the real DB (PR #53). |
+| ProgressionDashboard/Window — level, progress bar, FemVoice score, parameter rows | 🟡 Progression | **REAL** level + FemVoice score + `ProgressionService` summary on the real DB (PR #54). Per-dimension rings deferred. |
 | ResonanceWindow · ResonanceContrastDemoWindow · AnalyzerWindow | ❌ | No dedicated Avalonia screen (resonance appears only as a synthetic mini-chart in the Analysis scaffold). |
 | CalendarWindow · DayDetailsWindow · StatisticsWindow | ❌ | Represented only as a deferred "kalender/historikk" card in Reports. |
 | ClinicianDashboard · CoachDashboard · CaseReviewWindow | ❌ | Deferred cards in Reports; no real panels. |
