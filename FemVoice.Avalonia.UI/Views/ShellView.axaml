@@ -79,6 +79,7 @@
             <!-- Engine-backed (real engines on the real DB) -->
             <DataTemplate DataType="vm:SmartCoachViewModel"><views:SmartCoachView/></DataTemplate>
             <DataTemplate DataType="vm:ProgressionViewModel"><views:ProgressionView/></DataTemplate>
+            <DataTemplate DataType="vm:StatisticsViewModel"><views:StatisticsView/></DataTemplate>
             <!-- Static deferred placeholder (no services, no side effects) -->
             <DataTemplate DataType="vm:DeferredSurfaceViewModel">
               <ScrollViewer>

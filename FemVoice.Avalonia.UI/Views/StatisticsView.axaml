@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
+             x:Class="FemVoice.Avalonia.Views.StatisticsView">
+  <!-- Statistics: real training stats from the real database (WPF StatisticsWindow parity). -->
+  <ScrollViewer>
+    <StackPanel Margin="20" Spacing="14" MaxWidth="1000" HorizontalAlignment="Center">
+
+      <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+
+      <Border Classes="card" IsVisible="{Binding !EngineAvailable}" BorderBrush="{DynamicResource ShellWarningBrush}">
+        <TextBlock Text="{Binding UnavailableNote}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+      </Border>
+
+      <StackPanel Spacing="12" IsVisible="{Binding EngineAvailable}">
+        <ItemsControl ItemsSource="{Binding Tiles}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="vm:AnalysisSummaryMetric">
+              <Border Classes="card" Width="220" Margin="0,0,10,10" Padding="14">
+                <StackPanel HorizontalAlignment="Center" Spacing="4">
+                  <TextBlock Text="{Binding Label}" FontSize="12" Foreground="{DynamicResource ShellMutedBrush}" HorizontalAlignment="Center" TextAlignment="Center"/>
+                  <TextBlock Text="{Binding Value}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellAccentBrush}" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock Text="{Binding DataNote}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
+      </StackPanel>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
