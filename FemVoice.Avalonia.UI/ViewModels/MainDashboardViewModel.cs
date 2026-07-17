@@ -33,14 +33,36 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     private double _chartMin;                    // fixed axis range derived from the comfort zone (display-only)
     private double _chartMax;
 
+    // Avalonia-LOCAL, display-only session history (no WPF DB, no clinical scoring — see SessionHistoryStore).
+    private readonly History.SessionHistoryStore _history;
+    private System.DateTime _sessionStart;
+
+    /// <summary>Recent local sessions (newest first, display-only). Populated from the Avalonia-local history store.</summary>
+    public ObservableCollection<History.SessionRecord> RecentSessions { get; } = new();
+
+    [ObservableProperty] private bool _hasRecentSessions;
+
     public MainDashboardViewModel(IAudioCaptureService capture, IUiDispatcher ui)
+        : this(capture, ui, null) { }
+
+    /// <summary>Test/opt-in ctor: inject a history store (e.g. a temp path) so smokes don't touch the real file.</summary>
+    public MainDashboardViewModel(IAudioCaptureService capture, IUiDispatcher ui, History.SessionHistoryStore? history)
     {
         _capture = capture;
         _ui = ui;
+        _history = history ?? new History.SessionHistoryStore();
         _pitch = new PitchDetectionService(SampleRate);
         _capture.FrameAvailable += OnFrameAvailable;
         _capture.DeviceLost += OnDeviceLost;
         UpdateComfortZone();
+        RefreshRecentSessions();
+    }
+
+    private void RefreshRecentSessions()
+    {
+        RecentSessions.Clear();
+        foreach (var r in _history.Recent(5)) RecentSessions.Add(r);
+        HasRecentSessions = RecentSessions.Count > 0;
     }
 
     // ── Live state (bound by the dashboard) ───────────────────────────────────
@@ -93,6 +115,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         DashboardChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, ComfortZoneLow, ComfortZoneHigh);
         if (_capture is SyntheticAudioCaptureService synth) synth.Mode = SyntheticAudioMode;
         await _capture.StartAsync(new AudioCaptureOptions(SampleRate)).ConfigureAwait(false);
+        _sessionStart = System.DateTime.Now;
         IsRecording = true;
         CurrentFeedbackMessage = "Lytter …";
     }
@@ -105,6 +128,20 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         IsRecording = false;
         CurrentSignalStatus = "Ingen stemme";
         CurrentFeedbackMessage = "Økt stoppet.";
+
+        // Record a display-only local session (no clinical scoring, no WPF DB). Skip trivial (<2 s) sessions.
+        int durationSeconds = (int)System.Math.Round((System.DateTime.Now - _sessionStart).TotalSeconds);
+        if (durationSeconds >= 2)
+        {
+            _history.Append(new History.SessionRecord
+            {
+                WhenUtcTicks = System.DateTime.UtcNow.Ticks,
+                Source = "Dashbord",
+                DurationSeconds = durationSeconds,
+                Note = "Kun visning · lokal historikk",
+            });
+            _ui.Post(RefreshRecentSessions);   // update the bound collection on the UI thread
+        }
     }
 
     // ── Analysis (shared services, read-only) ──────────────────────────────────
