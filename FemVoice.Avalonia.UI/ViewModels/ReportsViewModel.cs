@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using FemVoiceStudio.Data;
 using FemVoice.Avalonia.Localization;   // Localized (safe read-only localization resolver)
 
 namespace FemVoice.Avalonia.ViewModels;
@@ -31,8 +33,11 @@ public sealed class ReportsCard
 /// </summary>
 public sealed class ReportsViewModel
 {
-    public ReportsViewModel()
+    public ReportsViewModel() : this(null) { }
+
+    public ReportsViewModel(IDatabaseService? database)
     {
+        BuildPreview(database);
         string deferred = Localized.Get("Reports_DeferredStatus", "Utsatt — kommer senere");
         string sample = Localized.Get("Reports_SampleStatus", "Eksempel (ikke lagret)");
 
@@ -76,4 +81,44 @@ public sealed class ReportsViewModel
 
     /// <summary>Always <c>true</c>: every card/action in the scaffold is deferred/inert.</summary>
     public bool AllActionsDeferred => Cards.All(c => !c.IsEnabled);
+
+    // ── Real progress-summary report PREVIEW (from the real DB) ────────────────────────────────────────────────
+    /// <summary>True when a real progress-summary preview was built from saved sessions.</summary>
+    public bool HasPreview { get; private set; }
+    public string PreviewTitle { get; private set; } = "Fremgangssammendrag";
+    public string PreviewBody { get; private set; } = "";
+
+    // Build a real, read-only progress-summary report preview from the user's saved sessions. NO file export, NO
+    // clinical report assembler (that needs the OutcomeProfile/notes/audit pipeline + file dialogs — a follow-up);
+    // this is the honest report CONTENT the DB can already produce. Fails safe (no preview) with no DB / on error.
+    private void BuildPreview(IDatabaseService? database)
+    {
+        if (database is null) return;
+        try
+        {
+            var sessions = database.GetRecentSessions(50);
+            if (sessions.Count == 0)
+            {
+                HasPreview = true;
+                PreviewBody = "Ingen lagrede økter ennå. Fullfør en økt på dashbordet for å generere et sammendrag.";
+                return;
+            }
+            var ordered = sessions.OrderBy(s => s.StartTime).ToList();
+            var pitches = ordered.Select(s => s.AveragePitch).Where(p => p > 0).ToList();
+            double avgPitch = pitches.Count > 0 ? pitches.Average() : 0;
+            double avgScore = ordered.Average(s => s.OverallScore);
+            double bestScore = ordered.Max(s => s.OverallScore);
+            int totalMinutes = (int)Math.Round(ordered.Sum(s => s.DurationSeconds) / 60.0);
+            DateTime from = ordered.First().StartTime.ToLocalTime();
+            DateTime to = ordered.Last().StartTime.ToLocalTime();
+
+            PreviewBody =
+                $"Periode: {from:yyyy-MM-dd} – {to:yyyy-MM-dd}\n" +
+                $"Antall økter: {ordered.Count} · Total tid: {totalMinutes} min\n" +
+                (avgPitch > 0 ? $"Snitt tonehøyde: {avgPitch:F0} Hz\n" : "") +
+                $"Snitt FemVoice-score: {avgScore:F0} / 100 · Beste økt: {bestScore:F0} / 100";
+            HasPreview = true;
+        }
+        catch { HasPreview = false; }
+    }
 }
