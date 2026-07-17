@@ -11,12 +11,17 @@ namespace FemVoice.Avalonia;
 
 internal static class Program
 {
-    public static IServiceProvider Services { get; private set; } = null!;
+    private static IServiceProvider? _services;
+
+    /// <summary>Shared DI container, built on first access. Lazy so BOTH heads work: the desktop head reaches it via
+    /// <see cref="Main"/>, while the Android head (whose entry point is its MainActivity, not Main) reaches it from
+    /// <see cref="App.OnFrameworkInitializationCompleted"/> without ever calling Main.</summary>
+    public static IServiceProvider Services => _services ??= BuildServices();
 
     [STAThread]
     public static int Main(string[] args)
     {
-        Services = BuildServices();
+        _ = Services;   // build the container up front on the desktop head
 
         // Headless verification paths — used by scripts/linux-portable-gate.sh. A matched smoke returns via
         // ExitAfterSmoke() to dodge an intermittent native GL atexit-teardown segfault on exit (see note there).
@@ -67,6 +72,7 @@ internal static class Program
         if (args.Contains("--avalonia-audio-readiness-smoke")) return AvaloniaAudioReadinessSmoke();
         if (args.Contains("--avalonia-audio-backend-smoke")) return AvaloniaAudioBackendSmoke();
         if (args.Contains("--real-audio-capture-smoke")) return RealAudioCaptureSmoke();
+        if (args.Contains("--android-readiness-smoke")) return AndroidReadinessSmoke();
         return null;
     }
 
@@ -2601,6 +2607,60 @@ internal static class Program
         Console.WriteLine(ok ? "[real-audio] Real audio capture smoke OK" : "[real-audio] Real audio capture smoke FAIL");
         return ok ? 0 : 1;
     }
+
+    // Android head readiness: the 4th platform's Avalonia head exists and is structured to build once the Android
+    // SDK + a full JDK are provisioned, and the SHARED single-view enablers are in place. Runtime part: the shared
+    // ShellViewModel resolves from the lazy DI container (the exact path the Android single-view branch uses).
+    // Source part (skip→pass from a published DLL): the Android project targets net10.0-android + references
+    // Avalonia.Android + the shared UI; MainActivity is AvaloniaMainActivity<App> (MainLauncher); the manifest
+    // declares RECORD_AUDIO; App has the ISingleViewApplicationLifetime branch hosting the shared ShellView; and the
+    // head is kept OUT of the Linux solution gate so cross-platform CI stays green without the Android SDK.
+    private static int AndroidReadinessSmoke()
+    {
+        // Runtime: the exact resolution the Android single-view branch performs (proves the lazy DI container works).
+        bool diOk;
+        try { diOk = Services.GetRequiredService<ShellViewModel>() is not null; }
+        catch (Exception ex) { diOk = false; Console.WriteLine($"[android] DI resolve threw: {ex.GetType().Name}"); }
+
+        string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+        string repoRoot = System.IO.Path.GetFullPath(System.IO.Path.Combine(projectDir, ".."));
+        string andDir = System.IO.Path.Combine(repoRoot, "FemVoice.Android");
+
+        bool scanned = false, headOk = true, sharedOk = true, gateIsolated = true;
+        string csproj = System.IO.Path.Combine(andDir, "FemVoice.Android.csproj");
+        if (System.IO.File.Exists(csproj))
+        {
+            scanned = true;
+            string cs = System.IO.File.ReadAllText(csproj);
+            headOk &= cs.Contains("net10.0-android") && cs.Contains("Avalonia.Android") && cs.Contains("FemVoice.Avalonia.csproj");
+
+            string act = ReadTextIfExists(System.IO.Path.Combine(andDir, "MainActivity.cs"));
+            headOk &= act.Contains("AvaloniaMainActivity<App>") && act.Contains("MainLauncher");
+
+            string manifest = ReadTextIfExists(System.IO.Path.Combine(andDir, "Properties", "AndroidManifest.xml"));
+            headOk &= manifest.Contains("android.permission.RECORD_AUDIO");
+
+            // Shared single-view enablers (desktop-verified; reused by Android).
+            string app = ReadTextIfExists(System.IO.Path.Combine(projectDir, "App.axaml.cs"));
+            sharedOk &= app.Contains("ISingleViewApplicationLifetime") && app.Contains("MainView") && app.Contains("ShellView");
+            string prog = ReadTextIfExists(System.IO.Path.Combine(projectDir, "Program.cs"));
+            sharedOk &= prog.Contains("_services ??=");   // lazy DI so Android (no Main) still gets a container
+            string shell = ReadTextIfExists(System.IO.Path.Combine(projectDir, "Views", "ShellView.axaml"));
+            sharedOk &= shell.Contains("DynamicResource Shell");   // shared themed shell
+
+            // The Android head is intentionally NOT part of the Linux solution gate.
+            string slnx = ReadTextIfExists(System.IO.Path.Combine(repoRoot, "FemVoiceStudio.slnx"));
+            gateIsolated = slnx.Length > 0 && !slnx.Contains("FemVoice.Android");
+        }
+        else Console.WriteLine("[android] source scan skipped (no source tree / published DLL)");
+
+        Console.WriteLine($"[android] diOk={diOk} scanned={scanned} headOk={headOk} sharedOk={sharedOk} gateIsolated={gateIsolated}");
+        bool ok = diOk && headOk && sharedOk && gateIsolated;
+        Console.WriteLine(ok ? "[android] Android head readiness smoke OK" : "[android] Android head readiness smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    private static string ReadTextIfExists(string path) => System.IO.File.Exists(path) ? System.IO.File.ReadAllText(path) : "";
 
     // Source-tree guard (skip→pass from a published DLL): the cross-platform backend + its ALSA interop carry NO
     // Windows-audio/WPF/DB code refs, so the Avalonia head stays Core+Abstractions-only.

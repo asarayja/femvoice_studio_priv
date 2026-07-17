@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          android:versionCode="1"
+          android:versionName="0.1.0">
+  <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
+
+  <!-- Declared now for the future real cross-platform microphone capture (the Android capture backend is a
+       follow-up slice, mirroring the Linux/ALSA path). Runtime permission is requested on first capture use. -->
+  <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+  <application android:label="FemVoice Studio" android:allowBackup="true" />
+</manifest>

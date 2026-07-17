@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Microsoft.Extensions.DependencyInjection;
+using FemVoice.Avalonia.ViewModels;
 
 namespace FemVoice.Avalonia;
 
@@ -22,7 +24,17 @@ public partial class App : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            // Desktop head (Windows/macOS/Linux): the shell lives in a Window that hosts the shared ShellView.
             desktop.MainWindow = new MainWindow();
+        }
+        else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
+        {
+            // Mobile/single-view head (Android): no Window — set the SAME shared ShellView as the root MainView,
+            // with the same ShellViewModel from the shared DI container. Design/behaviour reuse the desktop shell.
+            singleView.MainView = new Views.ShellView
+            {
+                DataContext = Program.Services.GetRequiredService<ShellViewModel>(),
+            };
         }
 
         base.OnFrameworkInitializationCompleted();
