@@ -48,8 +48,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FemVoice.Core\FemVoice.Core.csproj" />
-    <ProjectReference Include="..\FemVoice.Audio.Abstractions\FemVoice.Audio.Abstractions.csproj" />
+    <!-- Desktop head = thin Exe (Program.cs entry + smokes + snapshot). The shared UI (App, views, VMs, themes,
+         localization, DI) lives in FemVoice.Avalonia.UI, which transitively brings FemVoice.Core +
+         FemVoice.Audio.Abstractions. No direct Core/Abstractions ref needed here. -->
+    <ProjectReference Include="..\FemVoice.Avalonia.UI\FemVoice.Avalonia.UI.csproj" />
   </ItemGroup>
 
 </Project>

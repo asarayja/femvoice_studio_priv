@@ -9,7 +9,7 @@
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>
         <!-- Avalonia-only shell theme foundation (Dark/Light named brushes). No clinical/WPF change. -->
-        <ResourceInclude Source="avares://FemVoice.Avalonia/Themes/ShellTheme.axaml"/>
+        <ResourceInclude Source="avares://FemVoice.Avalonia.UI/Themes/ShellTheme.axaml"/>
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </Application.Resources>

@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Platform-neutral SHARED Avalonia UI library: App, ShellView, all views + view-models, themes, localization,
+    platform-service implementations, and the DI composition. It references Avalonia CORE only (NOT Avalonia.Desktop
+    or Avalonia.Headless), so it can be consumed by BOTH the desktop head (FemVoice.Avalonia, which adds
+    Avalonia.Desktop) and the Android head (FemVoice.Android, which adds Avalonia.Android). RootNamespace stays
+    `FemVoice.Avalonia` so every existing x:Class / namespace is unchanged; the assembly name is FemVoice.Avalonia.UI
+    (so avares:// resource URIs use that assembly). References only FemVoice.Core + FemVoice.Audio.Abstractions.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FemVoice.Avalonia</RootNamespace>
+    <AssemblyName>FemVoice.Avalonia.UI</AssemblyName>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.2.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FemVoice.Core\FemVoice.Core.csproj" />
+    <ProjectReference Include="..\FemVoice.Audio.Abstractions\FemVoice.Audio.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The desktop head's headless verification smokes (in FemVoice.Avalonia/Program.cs) exercise some internal
+         UI types (e.g. ScaffoldTranslations, ExerciseDisplay). Expose internals to that Exe only. -->
+    <InternalsVisibleTo Include="FemVoice.Avalonia" />
+  </ItemGroup>
+
+</Project>

@@ -12,12 +12,9 @@ namespace FemVoice.Avalonia;
 
 internal static class Program
 {
-    private static IServiceProvider? _services;
-
-    /// <summary>Shared DI container, built on first access. Lazy so BOTH heads work: the desktop head reaches it via
-    /// <see cref="Main"/>, while the Android head (whose entry point is its MainActivity, not Main) reaches it from
-    /// <see cref="App.OnFrameworkInitializationCompleted"/> without ever calling Main.</summary>
-    public static IServiceProvider Services => _services ??= BuildServices();
+    /// <summary>Shared DI container. The composition now lives in the shared UI library (<see cref="AppServices"/>)
+    /// so BOTH heads use the same container; this delegates for the Exe's smokes/utilities.</summary>
+    private static IServiceProvider Services => AppServices.Services;
 
     [STAThread]
     public static int Main(string[] args)
@@ -104,36 +101,6 @@ internal static class Program
 
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>().UsePlatformDetect().LogToTrace();
-
-    private static IServiceProvider BuildServices()
-    {
-        var services = new ServiceCollection();
-
-        // ── Platform abstractions (Avalonia implementations) ──────────────────────
-        services.AddSingleton<IUiDispatcher, AvaloniaUiDispatcher>();
-        services.AddSingleton<IDialogService, AvaloniaDialogService>();
-        services.AddSingleton<IFileDialogService, AvaloniaFileDialogService>();
-        services.AddSingleton<ISystemThemeProvider, AvaloniaSystemThemeProvider>();
-
-        // ── Audio capture ─────────────────────────────────────────────────────────
-        // The live runtime uses the REAL cross-platform capture backend when a microphone is actually available
-        // (Linux/ALSA today) and falls back to the synthetic display-only backend on headless/CI/no-mic hosts. Only
-        // the SOURCE of frames changes; the shared pitch/stability/health services consuming them are unchanged.
-        // (The Windows real path stays its own Windows composition-root concern — not wired here.)
-        services.AddSingleton<IAudioCaptureService>(_ => AudioCaptureBackendFactory.CreateForRuntime());
-
-        // ── Shared, UI-free core ─────────────────────────────────────────────────
-        services.AddSingleton<ILocalizationService>(_ => LocalizationService.Instance);
-
-        // ── Shared exercise catalog (read-only; pure, no DB/WPF) ───────────────────
-        services.AddSingleton<VoiceFeminizationExerciseService>();
-
-        // ── View-models ───────────────────────────────────────────────────────────
-        services.AddSingleton<MainDashboardViewModel>();
-        services.AddSingleton<ShellViewModel>();
-
-        return services.BuildServiceProvider();
-    }
 
     // Render a page of the shared Avalonia UI to a PNG OFFSCREEN (no visible window needed — works when the
     // session is locked, headless, or in CI). Usage: --snapshot [outPath] [--page dashboard|guide|settings|
@@ -992,15 +959,22 @@ internal static class Program
         bool ridsOk = csprojFound && csproj.Contains("<RuntimeIdentifiers>") && rids.All(csproj.Contains);
         bool tmdsPinned = csproj.Contains("Tmds.DBus.Protocol\" Version=\"0.21.3\"");
         bool noTrim = csproj.Contains("<PublishTrimmed>false");
-        int projRefCount = csproj.Split("<ProjectReference ").Length - 1;
-        // Exactly 2 project refs, both Core + Audio.Abstractions present -> implicitly no third (Windows audio) ref.
-        bool refsOk = projRefCount == 2 && csproj.Contains("FemVoice.Core") && csproj.Contains("FemVoice.Audio.Abstractions");
+        // The shared-UI LIBRARY holds the real "Core + Abstractions only, no Avalonia.Desktop" invariant now.
+        string uiCsprojPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(projectDir, "..", "FemVoice.Avalonia.UI", "FemVoice.Avalonia.UI.csproj"));
+        string uiCsproj = System.IO.File.Exists(uiCsprojPath) ? System.IO.File.ReadAllText(uiCsprojPath) : "";
+        int projRefCount = uiCsproj.Split("<ProjectReference ").Length - 1;
+        // The UI library has exactly 2 project refs (Core + Abstractions) and does NOT reference Avalonia.Desktop
+        // (so the Android head can consume it). The Exe references only the UI library.
+        bool refsOk = projRefCount == 2 && uiCsproj.Contains("FemVoice.Core") && uiCsproj.Contains("FemVoice.Audio.Abstractions")
+            && !uiCsproj.Contains("Include=\"Avalonia.Desktop\"")   // must NOT package-reference Avalonia.Desktop (mobile-safe)
+            && csproj.Contains("FemVoice.Avalonia.UI.csproj");
 
         bool plistOk = System.IO.File.Exists(System.IO.Path.Combine(projectDir, "Packaging", "macos", "Info.plist"));
         bool desktopOk = System.IO.File.Exists(System.IO.Path.Combine(projectDir, "Packaging", "linux", "femvoice-studio.desktop"));
 
-        // Runtime reflection: the head references Core + Audio.Abstractions and NO other FemVoice.Audio.* assembly.
-        var refs = typeof(Program).Assembly.GetReferencedAssemblies().Select(a => a.Name).Where(n => n != null).ToArray();
+        // Runtime reflection over the shared UI assembly: it references Core + Audio.Abstractions and NO other
+        // FemVoice.Audio.* assembly (and, implicitly, no Windows-audio adapter).
+        var refs = typeof(global::FemVoice.Avalonia.ViewModels.ShellViewModel).Assembly.GetReferencedAssemblies().Select(a => a.Name).Where(n => n != null).ToArray();
         bool refCore = refs.Contains("FemVoice.Core");
         bool refAbstractions = refs.Contains("FemVoice.Audio.Abstractions");
         bool noOtherFemVoiceAudio = refs.Where(n => n!.StartsWith("FemVoice.Audio.")).All(n => n == "FemVoice.Audio.Abstractions");
@@ -1147,7 +1121,7 @@ internal static class Program
         bool axamlCrossChecked = false, axamlCrossOk = true;
         try
         {
-            string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+            string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "FemVoice.Avalonia.UI"));  // shared UI source moved here
             if (System.IO.File.Exists(System.IO.Path.Combine(projectDir, "MainWindow.axaml")))
             {
                 axamlCrossChecked = true;
@@ -1244,7 +1218,7 @@ internal static class Program
         bool srcChecked = false, srcOk = true;
         try
         {
-            string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+            string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "FemVoice.Avalonia.UI"));  // shared UI source moved here
             string viewsDir = System.IO.Path.Combine(projectDir, "Views");
             if (System.IO.File.Exists(System.IO.Path.Combine(projectDir, "MainWindow.axaml")) && System.IO.Directory.Exists(viewsDir))
             {
@@ -1332,7 +1306,7 @@ internal static class Program
         bool srcChecked = false, srcOk = true;
         try
         {
-            string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+            string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "FemVoice.Avalonia.UI"));  // shared UI source moved here
             string guidePath = System.IO.Path.Combine(projectDir, "Views", "ExerciseGuideView.axaml");
             string dashPath = System.IO.Path.Combine(projectDir, "Views", "DashboardView.axaml");
             if (System.IO.File.Exists(guidePath) && System.IO.File.Exists(dashPath))
@@ -2085,7 +2059,7 @@ internal static class Program
 
         // Source scan across the Settings VM/view + the Avalonia-local preference files: NO WPF/DB/clinical hooks
         // and NO runtime activation. Fragments avoid the leak-guard literal tokens. Skips→pass with no source tree.
-        string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+        string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "FemVoice.Avalonia.UI"));  // shared UI source moved here
         // Scans the prefs files + the Stage-2A theme-activation service + the Stage-2B language-activation service.
         // Theme activation (ThemeActivation) and Avalonia-LOCAL language activation (LanguageActivation, via
         // Localized.CurrentCulture) ARE allowed as of Stage 2A/2B; what must NOT appear is any GLOBAL thread-culture
@@ -2739,12 +2713,13 @@ internal static class Program
         dash.Dispose();
         (backend as IDisposable)?.Dispose();
 
-        // The DI runtime is wired to the factory (source-inspect; skip→pass from a published DLL).
+        // The shared DI (AppServices in the UI library) wires the runtime backend to the factory (source-inspect;
+        // skip→pass from a published DLL).
         bool wired = true, scanned = false;
-        string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
-        string prog = System.IO.Path.Combine(projectDir, "Program.cs");
-        if (System.IO.File.Exists(prog)) { scanned = true; wired = System.IO.File.ReadAllText(prog).Contains("CreateForRuntime"); }
-        else Console.WriteLine("[rt-audio] Program.cs wiring scan skipped (published DLL)");
+        string uiDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "FemVoice.Avalonia.UI"));
+        string appServices = System.IO.Path.Combine(uiDir, "AppServices.cs");
+        if (System.IO.File.Exists(appServices)) { scanned = true; wired = System.IO.File.ReadAllText(appServices).Contains("CreateForRuntime"); }
+        else Console.WriteLine("[rt-audio] AppServices.cs wiring scan skipped (published DLL)");
 
         Console.WriteLine($"[rt-audio] realDevice={real} fallbackSafe={fallbackSafe} recording={recording} frames={frames} gotFrames={gotFrames} driven={driven} stopped={stopped} wired={wired} scanned={scanned}");
         Console.WriteLine($"[rt-audio] runtime backend = {backend.GetType().Name}");
@@ -2771,6 +2746,7 @@ internal static class Program
         string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
         string repoRoot = System.IO.Path.GetFullPath(System.IO.Path.Combine(projectDir, ".."));
         string andDir = System.IO.Path.Combine(repoRoot, "FemVoice.Android");
+        string uiDir = System.IO.Path.Combine(repoRoot, "FemVoice.Avalonia.UI");   // shared UI library (App/ShellView/DI)
 
         bool scanned = false, headOk = true, sharedOk = true, gateIsolated = true;
         string csproj = System.IO.Path.Combine(andDir, "FemVoice.Android.csproj");
@@ -2778,7 +2754,8 @@ internal static class Program
         {
             scanned = true;
             string cs = System.IO.File.ReadAllText(csproj);
-            headOk &= cs.Contains("net10.0-android") && cs.Contains("Avalonia.Android") && cs.Contains("FemVoice.Avalonia.csproj");
+            // Android references the shared UI LIBRARY (net10.0, no Avalonia.Desktop), not the desktop Exe.
+            headOk &= cs.Contains("net10.0-android") && cs.Contains("Avalonia.Android") && cs.Contains("FemVoice.Avalonia.UI.csproj");
 
             string act = ReadTextIfExists(System.IO.Path.Combine(andDir, "MainActivity.cs"));
             headOk &= act.Contains("AvaloniaMainActivity<App>") && act.Contains("MainLauncher");
@@ -2786,12 +2763,12 @@ internal static class Program
             string manifest = ReadTextIfExists(System.IO.Path.Combine(andDir, "Properties", "AndroidManifest.xml"));
             headOk &= manifest.Contains("android.permission.RECORD_AUDIO");
 
-            // Shared single-view enablers (desktop-verified; reused by Android).
-            string app = ReadTextIfExists(System.IO.Path.Combine(projectDir, "App.axaml.cs"));
+            // Shared single-view enablers (in the UI library; desktop-verified; reused by Android).
+            string app = ReadTextIfExists(System.IO.Path.Combine(uiDir, "App.axaml.cs"));
             sharedOk &= app.Contains("ISingleViewApplicationLifetime") && app.Contains("MainView") && app.Contains("ShellView");
-            string prog = ReadTextIfExists(System.IO.Path.Combine(projectDir, "Program.cs"));
-            sharedOk &= prog.Contains("_services ??=");   // lazy DI so Android (no Main) still gets a container
-            string shell = ReadTextIfExists(System.IO.Path.Combine(projectDir, "Views", "ShellView.axaml"));
+            string appServices = ReadTextIfExists(System.IO.Path.Combine(uiDir, "AppServices.cs"));
+            sharedOk &= appServices.Contains("_services ??=");   // lazy shared DI so Android (no Main) still gets a container
+            string shell = ReadTextIfExists(System.IO.Path.Combine(uiDir, "Views", "ShellView.axaml"));
             sharedOk &= shell.Contains("DynamicResource Shell");   // shared themed shell
 
             // The Android head is intentionally NOT part of the Linux solution gate.
