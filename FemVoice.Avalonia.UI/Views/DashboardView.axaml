@@ -1,57 +1,61 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="FemVoice.Avalonia.Views.DashboardView">
-  <ScrollViewer>
-    <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,*,Auto" ColumnDefinitions="*,*">
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="16" Spacing="12">
 
       <!-- Header -->
-      <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Spacing="2" Margin="0,0,0,12">
-        <TextBlock Text="FemVoice Studio — Hoveddashboard (Avalonia)" FontSize="22" FontWeight="Bold"
+      <StackPanel Spacing="2">
+        <TextBlock Text="FemVoice Studio — Hoveddashboard (Avalonia)" FontSize="22" FontWeight="Bold" TextWrapping="Wrap"
                    Foreground="{DynamicResource ShellHeadingBrush}"/>
         <TextBlock Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"
                    Text="Pitch/stabilitet/helse drives av delte tjenester (FemVoice.Core) fra ekte mikrofon når en er tilgjengelig, ellers syntetisk testlyd. Full feedback-pipeline, SmartCoach og rapporter kommer senere — se docs/AVALONIA_MAIN_DASHBOARD_PLACEHOLDERS.md."/>
       </StackPanel>
 
-      <!-- Session controls -->
-      <Border Grid.Row="1" Grid.Column="0" Classes="card" Margin="0,0,8,12">
-        <StackPanel Spacing="10">
-          <TextBlock Text="Økt" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button Content="Start" Classes="primary" Command="{Binding StartCommand}" IsEnabled="{Binding !IsRecording}" Width="100"/>
-            <Button Content="Stopp" Command="{Binding StopCommand}" IsEnabled="{Binding IsRecording}" Width="90"/>
-            <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding IsRecording, StringFormat='Tar opp: {0}'}"/>
-          </StackPanel>
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}" Text="Vanskelighetsgrad:"/>
-            <ComboBox ItemsSource="{Binding DifficultyOptions}" SelectedItem="{Binding SelectedDifficulty}" MinWidth="150"/>
-          </StackPanel>
-          <!-- Synthetic test-tone selector: only relevant when no real microphone is available (hidden otherwise). -->
-          <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsSyntheticBackend}">
-            <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}" Text="Syntetisk testlyd:"/>
-            <ComboBox ItemsSource="{Binding SyntheticAudioModes}" SelectedItem="{Binding SyntheticAudioMode}" MinWidth="150"/>
-          </StackPanel>
-        </StackPanel>
-      </Border>
+      <!-- Top cards: side-by-side on wide, stacked on narrow (responsive in code-behind). -->
+      <Grid x:Name="TopCards" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto">
 
-      <!-- Live metrics -->
-      <Border Grid.Row="1" Grid.Column="1" Classes="card" Margin="8,0,0,12">
-        <StackPanel Spacing="6">
-          <TextBlock Text="Sanntid" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-          <StackPanel Orientation="Horizontal" Spacing="6">
-            <TextBlock Text="{Binding CurrentPitch, StringFormat='{}{0:F1}'}" FontSize="34" FontWeight="Bold"
-                       Foreground="{DynamicResource ShellAccentBrush}"/>
-            <TextBlock Text="Hz" VerticalAlignment="Bottom" Margin="0,0,0,6" Foreground="{DynamicResource ShellMutedBrush}"/>
+        <!-- Session controls -->
+        <Border x:Name="SessionCard" Grid.Row="0" Grid.Column="0" Classes="card" Margin="0,0,6,0">
+          <StackPanel Spacing="10">
+            <TextBlock Text="Økt" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+            <WrapPanel>
+              <Button Content="Start" Classes="primary" Command="{Binding StartCommand}" IsEnabled="{Binding !IsRecording}" Width="100" Margin="0,0,8,6"/>
+              <Button Content="Stopp" Command="{Binding StopCommand}" IsEnabled="{Binding IsRecording}" Width="90" Margin="0,0,8,6"/>
+              <TextBlock VerticalAlignment="Center" Margin="0,0,0,6" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding IsRecording, StringFormat='Tar opp: {0}'}"/>
+            </WrapPanel>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}" Text="Vanskelighetsgrad:"/>
+              <ComboBox ItemsSource="{Binding DifficultyOptions}" SelectedItem="{Binding SelectedDifficulty}" MinWidth="140"/>
+            </StackPanel>
+            <!-- Synthetic test-tone selector: only relevant when no real microphone is available (hidden otherwise). -->
+            <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsSyntheticBackend}">
+              <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}" Text="Syntetisk testlyd:"/>
+              <ComboBox ItemsSource="{Binding SyntheticAudioModes}" SelectedItem="{Binding SyntheticAudioMode}" MinWidth="140"/>
+            </StackPanel>
           </StackPanel>
-          <TextBlock Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding CurrentSignalStatus, StringFormat='Signal: {0}'}"/>
-          <TextBlock Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding PitchStability, StringFormat='Stabilitet: {0}'}"/>
-          <TextBlock Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding HealthStatusDisplay, StringFormat='Helse: {0}'}"/>
-          <TextBlock Foreground="{DynamicResource ShellSuccessBrush}" Text="{Binding ComfortZoneLow, StringFormat='Komfortsone: {0:F0}–'}"/>
-          <TextBlock Foreground="{DynamicResource ShellSuccessBrush}" Text="{Binding ComfortZoneHigh, StringFormat='… {0:F0} Hz'}" Margin="0,-6,0,0"/>
-        </StackPanel>
-      </Border>
+        </Border>
+
+        <!-- Live metrics -->
+        <Border x:Name="LiveCard" Grid.Row="0" Grid.Column="1" Classes="card" Margin="6,0,0,0">
+          <StackPanel Spacing="6">
+            <TextBlock Text="Sanntid" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="{Binding CurrentPitch, StringFormat='{}{0:F1}'}" FontSize="34" FontWeight="Bold"
+                         Foreground="{DynamicResource ShellAccentBrush}"/>
+              <TextBlock Text="Hz" VerticalAlignment="Bottom" Margin="0,0,0,6" Foreground="{DynamicResource ShellMutedBrush}"/>
+            </StackPanel>
+            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding CurrentSignalStatus, StringFormat='Signal: {0}'}"/>
+            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding PitchStability, StringFormat='Stabilitet: {0}'}"/>
+            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding HealthStatusDisplay, StringFormat='Helse: {0}'}"/>
+            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellSuccessBrush}" Text="{Binding ComfortZoneLow, StringFormat='Komfortsone: {0:F0}–'}"/>
+            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellSuccessBrush}" Text="{Binding ComfortZoneHigh, StringFormat='… {0:F0} Hz'}" Margin="0,-6,0,0"/>
+          </StackPanel>
+        </Border>
+      </Grid>
 
       <!-- Feedback -->
-      <Border Grid.Row="2" Grid.ColumnSpan="2" Classes="card" BorderBrush="{DynamicResource ShellSuccessBrush}" Margin="0,0,0,12">
+      <Border Classes="card" BorderBrush="{DynamicResource ShellSuccessBrush}">
         <StackPanel Spacing="2">
           <TextBlock Text="Tilbakemelding" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}"/>
           <TextBlock Text="{Binding CurrentFeedbackMessage}" TextWrapping="Wrap" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
@@ -60,9 +64,9 @@
 
       <!-- Pitch trace: converter-free Canvas chart (comfort-zone band + grid + scaled trace + current marker +
            y-axis labels). px == "distance from bottom" via the shared RuntimeChartDisplay geometry. No third-party charting lib. -->
-      <Border Grid.Row="3" Grid.ColumnSpan="2" Classes="card" Margin="0,0,0,12" MinHeight="260">
+      <Border Classes="card" MinHeight="260">
         <Grid RowDefinitions="Auto,*">
-          <TextBlock Grid.Row="0" Text="Tonehøyde (Hz, nyeste til høyre)" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <TextBlock Grid.Row="0" Text="Tonehøyde (Hz, nyeste til høyre)" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{DynamicResource ShellHeadingBrush}"/>
           <Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,8,0,0">
             <!-- Y-axis frequency labels: max at top, min at bottom -->
             <Grid Grid.Column="0" Width="46" Height="{Binding DashboardChart.ChartHeightPx}" RowDefinitions="Auto,*,Auto" Margin="0,0,6,0">
@@ -98,7 +102,7 @@
                              IsVisible="{Binding DashboardChart.HasVoice}"/>
                 </Canvas>
                 <!-- Empty-state hint (centered, subtle) when not recording -->
-                <TextBlock Text="Tonehøyde vises her under opptak" HorizontalAlignment="Center" VerticalAlignment="Center"
+                <TextBlock Text="Tonehøyde vises her under opptak" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap"
                            Foreground="{DynamicResource ShellFaintBrush}" IsVisible="{Binding !IsRecording}"/>
               </Panel>
             </Border>
@@ -107,17 +111,17 @@
       </Border>
 
       <!-- Professional tools placeholders (navigation moved to the shell top bar) -->
-      <Border Grid.Row="4" Grid.ColumnSpan="2" Classes="card">
+      <Border Classes="card">
         <StackPanel Spacing="8">
-          <TextBlock Text="Profesjonelle verktøy (placeholder — senere slices)" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}"/>
+          <TextBlock Text="Profesjonelle verktøy (placeholder — senere slices)" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}"/>
           <WrapPanel>
-            <Button Content="Kliniker" IsEnabled="False" Margin="0,0,8,0"/>
-            <Button Content="Coach" IsEnabled="False" Margin="0,0,8,0"/>
-            <Button Content="Rapporteksport" IsEnabled="False" Margin="0,0,8,0"/>
+            <Button Content="Kliniker" IsEnabled="False" Margin="0,0,8,8"/>
+            <Button Content="Coach" IsEnabled="False" Margin="0,0,8,8"/>
+            <Button Content="Rapporteksport" IsEnabled="False" Margin="0,0,8,8"/>
           </WrapPanel>
         </StackPanel>
       </Border>
 
-    </Grid>
+    </StackPanel>
   </ScrollViewer>
 </UserControl>
