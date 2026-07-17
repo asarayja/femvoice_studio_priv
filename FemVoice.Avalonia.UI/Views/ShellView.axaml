@@ -80,6 +80,7 @@
             <DataTemplate DataType="vm:SmartCoachViewModel"><views:SmartCoachView/></DataTemplate>
             <DataTemplate DataType="vm:ProgressionViewModel"><views:ProgressionView/></DataTemplate>
             <DataTemplate DataType="vm:StatisticsViewModel"><views:StatisticsView/></DataTemplate>
+            <DataTemplate DataType="vm:CalendarViewModel"><views:CalendarView/></DataTemplate>
             <!-- Static deferred placeholder (no services, no side effects) -->
             <DataTemplate DataType="vm:DeferredSurfaceViewModel">
               <ScrollViewer>

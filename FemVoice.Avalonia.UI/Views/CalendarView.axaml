@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
+             x:Class="FemVoice.Avalonia.Views.CalendarView">
+  <ScrollViewer>
+    <StackPanel Margin="20" Spacing="14" MaxWidth="900" HorizontalAlignment="Center">
+      <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+      <Border Classes="card" IsVisible="{Binding !EngineAvailable}" BorderBrush="{DynamicResource ShellWarningBrush}">
+        <TextBlock Text="{Binding UnavailableNote}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+      </Border>
+      <Border Classes="card" IsVisible="{Binding EngineAvailable}">
+        <StackPanel Spacing="6">
+          <ItemsControl ItemsSource="{Binding Days}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:AnalysisSummaryMetric">
+                <Grid ColumnDefinitions="Auto,*" Margin="0,3,0,0">
+                  <TextBlock Grid.Column="0" Text="{Binding Label}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}" MinWidth="120"/>
+                  <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}" TextWrapping="Wrap"/>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock Text="{Binding DataNote}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
