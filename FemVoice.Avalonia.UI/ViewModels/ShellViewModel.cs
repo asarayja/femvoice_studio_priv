@@ -195,5 +195,5 @@ public partial class ShellViewModel : ObservableObject
     // WPF parity: the exercise guide opens the exercise page DIRECTLY (one page, one Start) — there is no
     // separate detail page and no second Start. Back returns to the guide.
     private void OpenExercise(EnhancedExercise exercise)
-        => CurrentPage = new ExerciseRuntimeViewModel(exercise, _ui, ShowGuide);
+        => CurrentPage = new ExerciseRuntimeViewModel(exercise, _ui, ShowGuide, new History.SessionHistoryStore());
 }
