@@ -24,8 +24,13 @@ data) · ❌ not ported.
 | MicrophoneCalibrationWindow | ❌ | Deferred card in Settings/Diagnostics. |
 | FirstTimeSetupWindow | ❌ | Deferred card in Settings. |
 
+## Persistence (updated 2026-07-18)
+🟡 **Partial** — Avalonia-LOCAL, display-only: UI prefs (theme/language/reduce-motion) + **session history**
+(dashboard + exercise sessions log to `<ApplicationData>/FemVoiceAvalonia/`, shown in "Siste økter (lokalt)"). This
+is deliberately NOT the WPF SQLite DB and feeds no clinical/progression engine — a safe foundation, not full DB parity.
+
 ## Cross-cutting Core systems NOT wired into Avalonia yet
-SQLite `DatabaseService` (all persistence), `SmartCoach*`, `ProgressionOrchestrator`, `MasteryEvaluator`,
+SQLite `DatabaseService` (full/clinical persistence), `SmartCoach*`, `ProgressionOrchestrator`, `MasteryEvaluator`,
 `RecoveryScorer`, `VocalHealthSupervisor`, report assembler/export, research anonymization, RC-0 diagnostics, mic
 calibration, `SessionAnalyticsStore`, subjective-report → progression. (The Avalonia UI deliberately references
 **only** `FemVoice.Core` + `FemVoice.Audio.Abstractions` and touches no DB/engine — enforced by the packaging
