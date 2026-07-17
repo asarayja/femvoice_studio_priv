@@ -69,11 +69,17 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     private double _holdRaw;   // unrounded hold accumulator (display value is rounded separately)
     private double _peakHoldPercent;   // best hold % this session (for the display-only session-ended summary)
 
-    public ExerciseRuntimeViewModel(EnhancedExercise exercise, IUiDispatcher ui, Action back)
+    // Optional Avalonia-local, display-only history (no clinical scoring, no WPF DB). Null in tests/smokes so they
+    // never touch the real file; the production shell passes a real store so finished exercises are logged locally.
+    private readonly History.SessionHistoryStore? _history;
+
+    public ExerciseRuntimeViewModel(EnhancedExercise exercise, IUiDispatcher ui, Action back,
+        History.SessionHistoryStore? history = null)
     {
         Exercise = exercise;
         _ui = ui;
         _back = back;
+        _history = history;
 
         TargetPitchMin = exercise.TargetPitchMin;
         TargetPitchMax = exercise.TargetPitchMax;
@@ -308,6 +314,18 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
             // Build the display-only session-ended summary from the last live values BEFORE clearing them.
             SessionEndedSummary =
                 $"Økt fullført (kun visning) · varighet {ElapsedText} · beste hold {_peakHoldPercent:F0} %. {NotSavedNote}";
+
+            // Log a display-only local record (no clinical scoring, no progression, no WPF DB). Skips trivial (<2 s).
+            if (_history is not null && ElapsedSeconds >= 2)
+            {
+                _history.Append(new History.SessionRecord
+                {
+                    WhenUtcTicks = DateTime.UtcNow.Ticks,
+                    Source = SelectedExerciseName,
+                    DurationSeconds = ElapsedSeconds,
+                    Note = "Øvelse · kun visning · lokal historikk",
+                });
+            }
             IsRunning = false;
             Phase = RuntimePhase.Stopped;
             PitchStatus = "Stoppet";
