@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using FemVoice.Avalonia.Localization;   // Localized (safe read-only localization resolver)
+using FemVoiceStudio.Data;
+using FemVoice.Avalonia.Localization;
 
 namespace FemVoice.Avalonia.ViewModels;
 
@@ -23,7 +24,7 @@ public sealed class AnalysisSeries
     public string Summary { get; }
 }
 
-/// <summary>One display-only summary metric row (static placeholder; sample data).</summary>
+/// <summary>One summary metric row (label + value).</summary>
 public sealed class AnalysisSummaryMetric
 {
     public AnalysisSummaryMetric(string label, string value)
@@ -37,44 +38,57 @@ public sealed class AnalysisSummaryMetric
 }
 
 /// <summary>
-/// DISPLAY-ONLY Analysis / Resonance scaffold. A purely static page: it holds NO services, NO commands,
-/// is NOT IDisposable, starts no timers/subscriptions/capture/background work, and reads/writes NOTHING
-/// (no database, no session history, no report export). It renders converter-free mini-charts from
-/// SYNTHETIC, in-memory, deterministic sample data and static summary placeholders. No third-party charting, no clinical
-/// scoring, no SmartCoach/progression, no Voice-Health/recovery. Labels resolve through the safe read-only
-/// localization adapter (namespaced Analysis_* keys with Norwegian fallback).
+/// Analysis / Resonance. When the real database is injected (production), it charts the user's REAL saved sessions
+/// (pitch trend + score trend) and REAL summary stats from the DB — no demo data. With no database (headless/tests)
+/// it falls back to the deterministic SYNTHETIC sample series. Read-only; no clinical logic changed.
 /// </summary>
 public sealed class AnalysisViewModel
 {
-    /// <summary>Fixed mini-chart height in px (bars are 0..this); the view binds Canvas/bar heights to it.</summary>
+    /// <summary>Fixed mini-chart height in px (bars are 0..this); the view binds bar heights to it.</summary>
     public const double ChartHeightPx = 120;
 
-    public AnalysisViewModel()
+    public IReadOnlyList<AnalysisSeries> Series { get; }
+    public IReadOnlyList<AnalysisSummaryMetric> SummaryMetrics { get; }
+    public string Title { get; }
+    public string SampleDataNotice { get; }
+
+    /// <summary>True when the charts/metrics are computed from real saved sessions (vs synthetic sample data).</summary>
+    public bool HasRealData { get; }
+
+    /// <summary>Always <c>true</c>: this page has no interactive analysis actions wired (import/export deferred).</summary>
+    public bool AllActionsDeferred => true;
+
+    public AnalysisViewModel() : this(null) { }
+
+    public AnalysisViewModel(IDatabaseService? database)
     {
-        // Deterministic synthetic sample series (no random, no real audio) — purely illustrative.
+        Title = Localized.Get("Analysis_ScaffoldTitle", "Analyse / resonans");
+
+        if (database is not null && TryBuildFromDatabase(database, out var series, out var metrics, out var notice))
+        {
+            Series = series;
+            SummaryMetrics = metrics;
+            SampleDataNotice = notice;
+            HasRealData = true;
+            return;
+        }
+
+        // Fallback: deterministic synthetic sample series (no random, no real audio) — purely illustrative.
         Series = new List<AnalysisSeries>
         {
             new(Localized.Get("Analysis_PitchTrend", "Tonehøyde-trend"),
                 Localized.Get("Analysis_PitchTrendDesc", "Eksempel på tonehøyde over tid (syntetisk)."),
-                Wave(amplitude: 42, mid: 70, freq: 0.55, phase: 0.0),
-                Localized.Get("Analysis_PitchTrendSummary", "Snitt ~165 Hz · eksempeldata")),
-
+                Wave(42, 70, 0.55, 0.0), Localized.Get("Analysis_PitchTrendSummary", "Snitt ~165 Hz · eksempeldata")),
             new(Localized.Get("Analysis_Resonance", "Resonans"),
                 Localized.Get("Analysis_ResonanceDesc", "Eksempel på resonans-indikator (syntetisk)."),
-                Wave(amplitude: 30, mid: 75, freq: 0.32, phase: 1.1),
-                Localized.Get("Analysis_ResonanceSummary", "Middels framre resonans · eksempeldata")),
-
+                Wave(30, 75, 0.32, 1.1), Localized.Get("Analysis_ResonanceSummary", "Middels framre resonans · eksempeldata")),
             new(Localized.Get("Analysis_Stability", "Stabilitet"),
                 Localized.Get("Analysis_StabilityDesc", "Eksempel på stabilitet over tid (syntetisk)."),
-                Wave(amplitude: 22, mid: 88, freq: 0.9, phase: 0.4),
-                Localized.Get("Analysis_StabilitySummary", "Stort sett stabil · eksempeldata")),
-
+                Wave(22, 88, 0.9, 0.4), Localized.Get("Analysis_StabilitySummary", "Stort sett stabil · eksempeldata")),
             new(Localized.Get("Analysis_Formant", "Formant / resonans-plassholder"),
                 Localized.Get("Analysis_FormantDesc", "Plassholder for formant-/resonansvisning (syntetisk)."),
-                Wave(amplitude: 35, mid: 60, freq: 0.22, phase: 2.0),
-                Localized.Get("Analysis_FormantSummary", "F1/F2-visning kommer senere · eksempeldata")),
+                Wave(35, 60, 0.22, 2.0), Localized.Get("Analysis_FormantSummary", "F1/F2-visning kommer senere · eksempeldata")),
         };
-
         SummaryMetrics = new List<AnalysisSummaryMetric>
         {
             new(Localized.Get("Analysis_Metric_AvgPitch", "Snitt tonehøyde"), "≈ 165 Hz (eksempel)"),
@@ -82,22 +96,64 @@ public sealed class AnalysisViewModel
             new(Localized.Get("Analysis_Metric_Stability", "Stabilitet"), Localized.Get("Analysis_Metric_StabilityVal", "God (eksempel)")),
             new(Localized.Get("Analysis_Metric_Sessions", "Økter analysert"), Localized.Get("Analysis_Metric_SessionsVal", "— (ingen lagring)")),
         };
-
-        // Use a scaffold-specific key (NOT the pre-existing clinical "Analysis_Title" RESX key, whose value
-        // is the WPF window title "Analyse - FemVoice Studio") so the page header shows the intended text.
-        Title = Localized.Get("Analysis_ScaffoldTitle", "Analyse / resonans");
         SampleDataNotice = Localized.Get("Analysis_ScaffoldNotice",
-            "Visning-bare analyse: alle grafer og tall er SYNTETISKE eksempeldata. Ingenting leses fra eller " +
-            "lagres i historikk/database, ingen rapporteksport, ingen klinisk scoring — ekte analyse kommer senere.");
+            "Visning-bare analyse: alle grafer og tall er SYNTETISKE eksempeldata. Ekte analyse vises når du har lagrede økter.");
     }
 
-    public IReadOnlyList<AnalysisSeries> Series { get; }
-    public IReadOnlyList<AnalysisSummaryMetric> SummaryMetrics { get; }
-    public string Title { get; }
-    public string SampleDataNotice { get; }
+    private static bool TryBuildFromDatabase(IDatabaseService database,
+        out IReadOnlyList<AnalysisSeries> series, out IReadOnlyList<AnalysisSummaryMetric> metrics, out string notice)
+    {
+        series = Array.Empty<AnalysisSeries>();
+        metrics = Array.Empty<AnalysisSummaryMetric>();
+        notice = "";
+        try
+        {
+            // GetRecentSessions is newest-first; reverse to oldest→newest for a left-to-right trend.
+            var ordered = database.GetRecentSessions(30).AsEnumerable().Reverse().ToList();
+            if (ordered.Count == 0)
+            {
+                metrics = new List<AnalysisSummaryMetric> { new("Økter analysert", "0 — ingen lagrede økter ennå") };
+                notice = "Ingen lagrede økter ennå. Fullfør en økt på dashbordet, så vises ekte analyse her.";
+                return true;
+            }
 
-    /// <summary>Always <c>true</c>: this scaffold has no interactive analysis actions wired.</summary>
-    public bool AllActionsDeferred => true;
+            var pitches = ordered.Select(s => s.AveragePitch).Where(p => p > 0).ToList();
+            var scores = ordered.Select(s => s.OverallScore).ToList();
+            double avgPitch = pitches.Count > 0 ? pitches.Average() : 0;
+            double avgScore = scores.Average();
+            double bestScore = scores.Max();
+
+            series = new List<AnalysisSeries>
+            {
+                new("Tonehøyde-trend", "Snitt tonehøyde per lagret økt (eldst → nyest).",
+                    ordered.Select(s => PitchToPx(s.AveragePitch)).ToList(),
+                    avgPitch > 0 ? $"Snitt {avgPitch:F0} Hz over {ordered.Count} økter" : "Ingen stemme registrert"),
+                new("Score-trend", "FemVoice-score per lagret økt (komfortsone-treff).",
+                    scores.Select(ScoreToPx).ToList(),
+                    $"Snitt {avgScore:F0} · beste {bestScore:F0}"),
+            };
+            metrics = new List<AnalysisSummaryMetric>
+            {
+                new("Økter analysert", ordered.Count.ToString()),
+                new("Snitt tonehøyde", avgPitch > 0 ? $"{avgPitch:F0} Hz" : "—"),
+                new("Snitt score", $"{avgScore:F0} / 100"),
+                new("Beste økt", $"{bestScore:F0} / 100"),
+            };
+            notice = "Ekte analyse beregnet fra dine faktiske lagrede økter.";
+            return true;
+        }
+        catch { return false; }   // fall back to synthetic on any DB error
+    }
+
+    // Map a pitch (Hz) into the chart's px range (≈100–300 Hz → 4..ChartHeightPx), and a 0–100 score to px.
+    private static double PitchToPx(double pitchHz)
+    {
+        if (pitchHz <= 0) return 4;
+        double norm = (pitchHz - 100.0) / (300.0 - 100.0);
+        return Math.Clamp(norm, 0, 1) * (ChartHeightPx - 4) + 4;
+    }
+
+    private static double ScoreToPx(double score) => Math.Clamp(score, 0, 100) / 100.0 * (ChartHeightPx - 4) + 4;
 
     // Deterministic sine-shaped bar heights in px within [4, ChartHeightPx] — synthetic, no random, no audio.
     private static IReadOnlyList<double> Wave(double amplitude, double mid, double freq, double phase)
@@ -107,9 +163,7 @@ public sealed class AnalysisViewModel
         for (int i = 0; i < count; i++)
         {
             double v = mid + amplitude * Math.Sin(i * freq + phase);
-            if (v < 4) v = 4;
-            else if (v > ChartHeightPx) v = ChartHeightPx;
-            bars[i] = Math.Round(v, 1);
+            bars[i] = Math.Clamp(v, 4, ChartHeightPx);
         }
         return bars;
     }

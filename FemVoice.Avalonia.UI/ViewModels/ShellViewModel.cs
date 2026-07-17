@@ -81,7 +81,7 @@ public partial class ShellViewModel : ObservableObject
     {
         _guide = new ExerciseGuideViewModel(_exercises, OpenExercise);
         _settings = new SettingsViewModel();
-        _analysis = new AnalysisViewModel();
+        _analysis = new AnalysisViewModel(_database);   // engine-backed: real session trends when a DB is present
         _reports = new ReportsViewModel();
         _diagnostics = new DiagnosticsViewModel();
         _progression = new ProgressionScaffoldViewModel();
@@ -190,7 +190,8 @@ public partial class ShellViewModel : ObservableObject
     [RelayCommand] private void ShowDashboard() => CurrentPage = _dashboard;
     [RelayCommand] private void ShowGuide() => CurrentPage = _guide;
     [RelayCommand] private void ShowSettings() => CurrentPage = _settings;          // inert display-only page
-    [RelayCommand] private void ShowAnalysis() => CurrentPage = _analysis;          // inert display-only page
+    // Engine-backed: real pitch/score trends from the saved sessions (fresh each open; null-safe → synthetic).
+    [RelayCommand] private void ShowAnalysis() => CurrentPage = new AnalysisViewModel(_database);
     [RelayCommand] private void ShowReports() => CurrentPage = _reports;            // inert display-only page
     [RelayCommand] private void ShowDiagnostics() => CurrentPage = _diagnostics;    // inert display-only page
     // Engine-backed: real training level + FemVoice score + ProgressionService summary on the real DB (null-safe).

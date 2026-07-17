@@ -13,7 +13,7 @@
       <Border Classes="card" Padding="20,16">
         <StackPanel Spacing="4">
           <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-          <TextBlock Text="Visning-bare analyse med syntetiske eksempeldata — ingen historikk, lagring eller eksport."
+          <TextBlock Text="Trender og statistikk fra dine lagrede økter."
                      FontSize="14" Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
         </StackPanel>
       </Border>
@@ -81,7 +81,7 @@
         <Button Content="Eksporter analyse (senere)" IsEnabled="False" Padding="10,4"/>
       </StackPanel>
 
-      <TextBlock Text="Analyse/resonans er en visning-bare plassholder med eksempeldata — ingen ekte analyse, lagring eller eksport."
+      <TextBlock Text="Trender beregnes fra dine lagrede økter. Import/eksport av analyse kommer senere."
                  Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
 
     </StackPanel>
