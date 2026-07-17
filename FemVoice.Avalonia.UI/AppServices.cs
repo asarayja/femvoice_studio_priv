@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using FemVoiceStudio.Audio.Abstractions;
 using FemVoiceStudio.Core.Platform;
+using FemVoiceStudio.Data;
 using FemVoiceStudio.Services;
 using FemVoice.Avalonia.Platform;
 using FemVoice.Avalonia.ViewModels;
@@ -40,6 +41,14 @@ public static class AppServices
 
         // ── Shared, UI-free core ─────────────────────────────────────────────────
         services.AddSingleton<ILocalizationService>(_ => LocalizationService.Instance);
+
+        // ── Real SQLite database (Core DatabaseService) ───────────────────────────
+        // The SAME store the WPF app uses (<MyDocuments>/FemVoiceStudio/femvoice.db) so Avalonia works on REAL data,
+        // not demo data. Cross-platform via SQLitePCLRaw (fresh DB on Linux/macOS; shared with WPF on Windows). Lazy
+        // singleton — the DB is only created/opened on first resolve, so the headless smokes that don't need it never
+        // touch it. Schema is created idempotently (CREATE TABLE IF NOT EXISTS); no clinical logic is changed.
+        services.AddSingleton<DatabaseService>();
+        services.AddSingleton<IDatabaseService>(sp => sp.GetRequiredService<DatabaseService>());
 
         // ── Shared exercise catalog (read-only; pure, no DB/WPF) ───────────────────
         services.AddSingleton<VoiceFeminizationExerciseService>();

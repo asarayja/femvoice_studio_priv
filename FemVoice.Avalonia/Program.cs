@@ -78,6 +78,7 @@ internal static class Program
         if (args.Contains("--runtime-real-audio-activation-smoke")) return RuntimeRealAudioActivationSmoke().GetAwaiter().GetResult();
         if (args.Contains("--snapshot-smoke")) return SnapshotSmoke();
         if (args.Contains("--session-history-persistence-smoke")) return SessionHistoryPersistenceSmoke();
+        if (args.Contains("--database-service-smoke")) return DatabaseServiceSmoke();
         return null;
     }
 
@@ -179,6 +180,47 @@ internal static class Program
     // Verifies the offscreen snapshot capability renders a real, non-trivial PNG of the shell (headless Skia; no
     // display needed). Guards the dev screenshot tool against regressions. A blank render is ~3 KB; the real
     // dashboard is ~110 KB, so a >20 KB valid-PNG threshold cleanly separates rendered-content from blank/failed.
+    // Real Core SQLite DatabaseService, cross-platform: on this Linux box it creates the schema (CREATE TABLE IF
+    // NOT EXISTS), reads seeded settings, and round-trips a real TrainingSession (save → GetRecentSessions). Uses a
+    // unique test DB file under <MyDocuments>/FemVoiceStudio/ and deletes it (+ WAL/SHM sidecars) after. Proves the
+    // WPF database works in the Avalonia head with REAL data (no demo data), so engines can be wired on it next.
+    private static int DatabaseServiceSmoke()
+    {
+        string fileName = $"femvoice-dbsmoke-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+        string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio");
+        string full = System.IO.Path.Combine(dir, fileName);
+        void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+        Cleanup();
+        try
+        {
+            var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+            bool created = System.IO.File.Exists(full);                       // schema init created the file
+            bool settingsOk = db.GetUserSettings() is not null;               // schema + seed present
+            var before = db.GetRecentSessions(10);
+            bool readOk = before is not null;
+            int id = db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
+            {
+                UserId = 1,
+                StartTime = DateTime.UtcNow.AddMinutes(-3),
+                EndTime = DateTime.UtcNow,
+                AveragePitch = 182,
+                OverallScore = 70,
+                Feedback = "db-smoke",
+            });
+            bool saveOk = id > 0;
+            var after = db.GetRecentSessions(10);
+            bool roundTrip = after.Any(s => s.Id == id && System.Math.Abs(s.AveragePitch - 182) < 0.5);
+
+            Console.WriteLine($"[db] created={created} settingsOk={settingsOk} readOk={readOk} saveOk={saveOk}(id={id}) roundTrip={roundTrip}");
+            Console.WriteLine($"[db] db path = {full}");
+            bool ok = created && settingsOk && readOk && saveOk && roundTrip;
+            Console.WriteLine(ok ? "[db] Database service smoke OK" : "[db] Database service smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[db] Database service smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
+        finally { Cleanup(); }
+    }
+
     // Avalonia-local session-history persistence: round-trips display-only records through a JSON store, degrades
     // gracefully on missing/corrupt files, caps + newest-first, and defaults to the Avalonia-local path (NOT the WPF
     // DB). Uses a TEMP path so it is deterministic and never touches the real history file. No clinical scoring.
