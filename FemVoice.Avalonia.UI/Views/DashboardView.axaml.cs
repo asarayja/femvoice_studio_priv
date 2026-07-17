@@ -22,7 +22,13 @@ public partial class DashboardView : UserControl
         var live = this.FindControl<Border>("LiveCard");
         if (session is null || live is null) return;
 
-        if (width < 560)   // stacked (phone): each card full-width, one above the other
+        bool compact = width < 560;
+        // Mobile-only Stop bar (after the graph). The inner button additionally gates on IsRecording, so it only
+        // appears on phone widths WHILE a session is running.
+        var mobileStop = this.FindControl<Border>("MobileStopBar");
+        if (mobileStop is not null) mobileStop.IsVisible = compact;
+
+        if (compact)   // stacked (phone): each card full-width, one above the other
         {
             Grid.SetRow(session, 0); Grid.SetColumn(session, 0); Grid.SetColumnSpan(session, 2);
             Grid.SetRow(live, 1); Grid.SetColumn(live, 0); Grid.SetColumnSpan(live, 2);

@@ -146,7 +146,22 @@ internal static class Program
             window.Show();
             global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();   // run layout + a render pass
 
+            // Optional: start a dashboard session so the snapshot shows the live/recording UI (chart + mobile Stop bar).
+            MainDashboardViewModel? recordingDash = null;
+            if (args.Contains("--recording"))
+            {
+                try
+                {
+                    recordingDash = Services.GetRequiredService<MainDashboardViewModel>();
+                    recordingDash.StartCommand.Execute(null);
+                    System.Threading.Thread.Sleep(400);                       // let a few frames populate the chart
+                    global::Avalonia.Threading.Dispatcher.UIThread.RunJobs(); // re-run layout with IsRecording=true
+                }
+                catch (Exception ex) { Console.WriteLine($"[snapshot] --recording start failed: {ex.GetType().Name}"); }
+            }
+
             var frame = global::Avalonia.Headless.HeadlessWindowExtensions.CaptureRenderedFrame(window);
+            if (recordingDash is not null) { try { recordingDash.StopCommand.Execute(null); } catch { /* ignore */ } }
             if (frame is null) { Console.WriteLine("[snapshot] CaptureRenderedFrame returned null"); return 1; }
             using (var fs = System.IO.File.Create(outPath)) frame.Save(fs);
             window.Close();

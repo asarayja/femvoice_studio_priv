@@ -4,12 +4,12 @@
   <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="16" Spacing="12">
 
-      <!-- Header -->
+      <!-- Header (concise — the long developer note lives in docs, not the UI) -->
       <StackPanel Spacing="2">
-        <TextBlock Text="FemVoice Studio — Hoveddashboard (Avalonia)" FontSize="22" FontWeight="Bold" TextWrapping="Wrap"
+        <TextBlock Text="Hoveddashboard" FontSize="22" FontWeight="Bold" TextWrapping="Wrap"
                    Foreground="{DynamicResource ShellHeadingBrush}"/>
         <TextBlock Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"
-                   Text="Pitch/stabilitet/helse drives av delte tjenester (FemVoice.Core) fra ekte mikrofon når en er tilgjengelig, ellers syntetisk testlyd. Full feedback-pipeline, SmartCoach og rapporter kommer senere — se docs/AVALONIA_MAIN_DASHBOARD_PLACEHOLDERS.md."/>
+                   Text="Trykk Start for live tonehøyde, stabilitet og helse fra mikrofonen."/>
       </StackPanel>
 
       <!-- Top cards: side-by-side on wide, stacked on narrow (responsive in code-behind). -->
@@ -108,6 +108,14 @@
             </Border>
           </Grid>
         </Grid>
+      </Border>
+
+      <!-- Mobile-only Stop bar: on phone widths, while recording, a clear full-width Stop button placed AFTER the
+           graph so it never overlaps other controls (the top Start/Stop stay for desktop). Shown only when the layout
+           is compact (code-behind) AND recording. -->
+      <Border x:Name="MobileStopBar" IsVisible="False" Background="Transparent">
+        <Button Content="Stopp økt" Classes="primary" Command="{Binding StopCommand}" IsVisible="{Binding IsRecording}"
+                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="16,12" FontSize="16"/>
       </Border>
 
       <!-- Professional tools placeholders (navigation moved to the shell top bar) -->
