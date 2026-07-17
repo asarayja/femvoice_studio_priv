@@ -118,6 +118,22 @@
                 HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="16,12" FontSize="16"/>
       </Border>
 
+      <!-- Recent local sessions (Avalonia-local, display-only history; no clinical scoring / no WPF DB). -->
+      <Border Classes="card" IsVisible="{Binding HasRecentSessions}">
+        <StackPanel Spacing="6">
+          <TextBlock Text="Siste økter (lokalt)" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <ItemsControl ItemsSource="{Binding RecentSessions}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding Display}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="13" Margin="0,2,0,0" TextWrapping="Wrap"/>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock Text="Lagres lokalt på denne maskinen — ingen klinisk beregning, ingen database."
+                     Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
       <!-- Professional tools placeholders (navigation moved to the shell top bar) -->
       <Border Classes="card">
         <StackPanel Spacing="8">

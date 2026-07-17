@@ -77,6 +77,7 @@ internal static class Program
         if (args.Contains("--android-readiness-smoke")) return AndroidReadinessSmoke();
         if (args.Contains("--runtime-real-audio-activation-smoke")) return RuntimeRealAudioActivationSmoke().GetAwaiter().GetResult();
         if (args.Contains("--snapshot-smoke")) return SnapshotSmoke();
+        if (args.Contains("--session-history-persistence-smoke")) return SessionHistoryPersistenceSmoke();
         return null;
     }
 
@@ -178,6 +179,46 @@ internal static class Program
     // Verifies the offscreen snapshot capability renders a real, non-trivial PNG of the shell (headless Skia; no
     // display needed). Guards the dev screenshot tool against regressions. A blank render is ~3 KB; the real
     // dashboard is ~110 KB, so a >20 KB valid-PNG threshold cleanly separates rendered-content from blank/failed.
+    // Avalonia-local session-history persistence: round-trips display-only records through a JSON store, degrades
+    // gracefully on missing/corrupt files, caps + newest-first, and defaults to the Avalonia-local path (NOT the WPF
+    // DB). Uses a TEMP path so it is deterministic and never touches the real history file. No clinical scoring.
+    private static int SessionHistoryPersistenceSmoke()
+    {
+        string tmp = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"femvoice_history_smoke_{System.Diagnostics.Process.GetCurrentProcess().Id}.json");
+        try { System.IO.File.Delete(tmp); } catch { }
+        try
+        {
+            var store = new global::FemVoice.Avalonia.History.SessionHistoryStore(tmp);
+
+            bool emptyOk = store.Load().Count == 0 && store.Count == 0;                 // missing file → empty
+            store.Append(new global::FemVoice.Avalonia.History.SessionRecord { WhenUtcTicks = 1000, Source = "Dashbord", DurationSeconds = 5, Note = "n1" });
+            store.Append(new global::FemVoice.Avalonia.History.SessionRecord { WhenUtcTicks = 2000, Source = "Dashbord", DurationSeconds = 75, Note = "n2" });
+            var all = store.Load();
+            bool roundTrip = all.Count == 2 && all[0].WhenUtcTicks == 1000 && all[1].DurationSeconds == 75;
+
+            var recent = store.Recent(1);
+            bool newestFirst = recent.Count == 1 && recent[0].WhenUtcTicks == 2000;      // newest first
+            bool displayOk = recent[0].DurationText.Contains("min") && !string.IsNullOrWhiteSpace(recent[0].Display);
+
+            // Corrupt file → graceful empty (never throws).
+            System.IO.File.WriteAllText(tmp, "{ not json ]");
+            bool corruptSafe = new global::FemVoice.Avalonia.History.SessionHistoryStore(tmp).Load().Count == 0;
+
+            store.Clear();
+            bool clearOk = !System.IO.File.Exists(tmp);
+
+            // Default path is Avalonia-local (own folder), NOT the WPF DB.
+            string def = global::FemVoice.Avalonia.History.SessionHistoryStore.DefaultPath;
+            bool avaloniaLocal = def.Contains("FemVoiceAvalonia") && def.EndsWith("session-history.json");
+
+            Console.WriteLine($"[history] emptyOk={emptyOk} roundTrip={roundTrip} newestFirst={newestFirst} displayOk={displayOk} corruptSafe={corruptSafe} clearOk={clearOk} avaloniaLocal={avaloniaLocal}");
+            bool ok = emptyOk && roundTrip && newestFirst && displayOk && corruptSafe && clearOk && avaloniaLocal;
+            Console.WriteLine(ok ? "[history] Session history persistence smoke OK" : "[history] Session history persistence smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        finally { try { System.IO.File.Delete(tmp); } catch { } }
+    }
+
     private static int SnapshotSmoke()
     {
         string tmp = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "femvoice_snapshot_smoke.png");
