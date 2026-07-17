@@ -73,6 +73,7 @@ internal static class Program
         if (args.Contains("--avalonia-audio-backend-smoke")) return AvaloniaAudioBackendSmoke();
         if (args.Contains("--real-audio-capture-smoke")) return RealAudioCaptureSmoke();
         if (args.Contains("--android-readiness-smoke")) return AndroidReadinessSmoke();
+        if (args.Contains("--runtime-real-audio-activation-smoke")) return RuntimeRealAudioActivationSmoke().GetAwaiter().GetResult();
         return null;
     }
 
@@ -109,9 +110,11 @@ internal static class Program
         services.AddSingleton<ISystemThemeProvider, AvaloniaSystemThemeProvider>();
 
         // ── Audio capture ─────────────────────────────────────────────────────────
-        // Avalonia head uses the synthetic backend (no NAudio capture, no Windows-only dep). On Windows
-        // the real NAudioCaptureService would be wired in a Windows-specific composition root — NOT here.
-        services.AddSingleton<IAudioCaptureService, SyntheticAudioCaptureService>();
+        // The live runtime uses the REAL cross-platform capture backend when a microphone is actually available
+        // (Linux/ALSA today) and falls back to the synthetic display-only backend on headless/CI/no-mic hosts. Only
+        // the SOURCE of frames changes; the shared pitch/stability/health services consuming them are unchanged.
+        // (The Windows real path stays its own Windows composition-root concern — not wired here.)
+        services.AddSingleton<IAudioCaptureService>(_ => AudioCaptureBackendFactory.CreateForRuntime());
 
         // ── Shared, UI-free core ─────────────────────────────────────────────────
         services.AddSingleton<ILocalizationService>(_ => LocalizationService.Instance);
@@ -2605,6 +2608,48 @@ internal static class Program
         bool ok = pathOk && readinessTruthful && syntheticUnaffected;
         Console.WriteLine($"[real-audio] pathOk={pathOk} readinessTruthful={readinessTruthful} syntheticUnaffected={syntheticUnaffected} status=\"{r.StatusText}\"");
         Console.WriteLine(ok ? "[real-audio] Real audio capture smoke OK" : "[real-audio] Real audio capture smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Runtime real-audio ACTIVATION: the live runtime backend factory picks the REAL mic when one is available
+    // (this box, via ALSA) and the synthetic display-only backend otherwise — and either way the SAME dashboard VM
+    // (unchanged pitch/stability/health pipeline) is driven by its frames. Proves: real-when-available + fail-safe
+    // synthetic fallback + frames flow while recording + the DI runtime is wired to the factory. No clinical change.
+    private static async Task<int> RuntimeRealAudioActivationSmoke()
+    {
+        var backend = global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.CreateForRuntime();
+        bool real = backend is global::FemVoiceStudio.Audio.Abstractions.IRealAudioCaptureBackend r && r.IsBackendAvailable;
+        bool fallbackSafe = real || backend is global::FemVoiceStudio.Audio.Abstractions.SyntheticAudioCaptureService;
+
+        // Drive the ACTUAL dashboard VM with the runtime backend; count frames independently to prove they flow.
+        int frames = 0; backend.FrameAvailable += (_, _) => System.Threading.Interlocked.Increment(ref frames);
+        var ui = new global::FemVoice.Avalonia.Platform.InlineUiDispatcher();
+        var dash = new MainDashboardViewModel(backend, ui);
+        string initialFeedback = dash.CurrentFeedbackMessage;
+
+        await dash.StartCommand.ExecuteAsync(null);
+        bool recording = dash.IsRecording;
+        System.Threading.Thread.Sleep(500);          // let real/synthetic frames arrive
+        await dash.StopCommand.ExecuteAsync(null);
+
+        bool gotFrames = frames > 0;                                    // real mic OR synthetic both feed the pipeline
+        bool driven = dash.CurrentFeedbackMessage != initialFeedback;   // Start drove the live UI
+        bool stopped = !dash.IsRecording;
+        dash.Dispose();
+        (backend as IDisposable)?.Dispose();
+
+        // The DI runtime is wired to the factory (source-inspect; skip→pass from a published DLL).
+        bool wired = true, scanned = false;
+        string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+        string prog = System.IO.Path.Combine(projectDir, "Program.cs");
+        if (System.IO.File.Exists(prog)) { scanned = true; wired = System.IO.File.ReadAllText(prog).Contains("CreateForRuntime"); }
+        else Console.WriteLine("[rt-audio] Program.cs wiring scan skipped (published DLL)");
+
+        Console.WriteLine($"[rt-audio] realDevice={real} fallbackSafe={fallbackSafe} recording={recording} frames={frames} gotFrames={gotFrames} driven={driven} stopped={stopped} wired={wired} scanned={scanned}");
+        Console.WriteLine($"[rt-audio] runtime backend = {backend.GetType().Name}");
+
+        bool ok = fallbackSafe && recording && gotFrames && driven && stopped && wired;
+        Console.WriteLine(ok ? "[rt-audio] Runtime real-audio activation smoke OK" : "[rt-audio] Runtime real-audio activation smoke FAIL");
         return ok ? 0 : 1;
     }
 

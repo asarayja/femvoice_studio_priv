@@ -91,7 +91,25 @@ public static class AudioCaptureBackendFactory
     /// to "unavailable" where no native binding is wired. Does NOT start capture.</summary>
     public static IRealAudioCaptureBackend CreateReal() => new CrossPlatformAudioCaptureService();
 
-    /// <summary>The synthetic, display-only backend used by the current Avalonia runtime (deterministic frames, no
-    /// hardware). Unchanged by this slice — real capture is not yet routed into the clinical runtime.</summary>
+    /// <summary>The synthetic, display-only backend (deterministic frames, no hardware). Used as the fail-safe
+    /// fallback for the runtime and for headless/CI hosts.</summary>
     public static IAudioCaptureService CreateSynthetic() => new SyntheticAudioCaptureService();
+
+    /// <summary>The backend the live runtime should use: the REAL cross-platform capture backend when a microphone
+    /// is actually available on this OS (Linux/ALSA today), otherwise the synthetic display-only backend. Only the
+    /// SOURCE of audio frames differs — the shared DSP/pitch/scoring services consuming them are unchanged. Never
+    /// throws; the availability probe is cheap (open+close of the default capture device) and the real backend is
+    /// disposed when we fall back.</summary>
+    public static IAudioCaptureService CreateForRuntime()
+    {
+        var real = CreateReal();
+        if (real.IsBackendAvailable)
+        {
+            System.Diagnostics.Debug.WriteLine("AudioCaptureBackendFactory: real capture backend selected for runtime.");
+            return real;
+        }
+        (real as IDisposable)?.Dispose();
+        System.Diagnostics.Debug.WriteLine("AudioCaptureBackendFactory: no real device; synthetic display-only backend selected for runtime.");
+        return CreateSynthetic();
+    }
 }
