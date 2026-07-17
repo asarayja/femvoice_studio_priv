@@ -17,7 +17,17 @@
         </StackPanel>
       </Border>
 
-      <!-- Deferred / not-saved banner -->
+      <!-- Real progress-summary report preview (from the real database) -->
+      <Border Classes="card" IsVisible="{Binding HasPreview}" BorderBrush="{DynamicResource ShellSuccessBrush}">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding PreviewTitle}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <TextBlock Text="{Binding PreviewBody}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" FontFamily="monospace"/>
+          <TextBlock Text="Ekte sammendrag fra dine lagrede økter. Fullstendig rapportgenerering og eksport (PDF/CSV) kommer senere."
+                     Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Deferred / not-saved banner (professional tools + export remain deferred) -->
       <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
         <TextBlock Text="{Binding ScaffoldNotice}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
       </Border>
