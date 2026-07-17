@@ -2,11 +2,20 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
              x:Class="FemVoice.Avalonia.Views.DiagnosticsView">
-  <!-- Display-only diagnostics scaffold: static placeholder cards with disabled actions. Shell theme brushes; no converters. -->
+  <!-- Diagnostics / export / backup — WPF-style hub layout (header band + 2-column card grid + status chips),
+       DISPLAY-ONLY: static placeholder cards + disabled actions. No support-package, export, backup/restore,
+       database/history, RC-0/research-anonymization change. Real behaviour deferred (Phase 12). -->
   <ScrollViewer>
-    <StackPanel Margin="24" Spacing="14" MaxWidth="960" HorizontalAlignment="Center">
+    <StackPanel Margin="20" Spacing="16" MaxWidth="1040" HorizontalAlignment="Center">
 
-      <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold"/>
+      <!-- Header band -->
+      <Border Classes="card" Padding="20,16">
+        <StackPanel Spacing="4">
+          <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <TextBlock Text="Visning-bare diagnostikk og eksport — ingen støttepakke, sikkerhetskopi eller filer skrives."
+                     FontSize="14" Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
 
       <!-- Deferred / not-saved banner -->
       <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
@@ -22,15 +31,21 @@
         <Button Content="Åpne diagnostikkmappe (senere)" IsEnabled="False" Padding="10,4" Margin="0,0,8,8"/>
       </WrapPanel>
 
-      <!-- One card per diagnostics/export/backup placeholder -->
+      <!-- 2-column grid of diagnostics / export / backup cards -->
       <ItemsControl ItemsSource="{Binding Cards}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="vm:DiagnosticsCard">
-            <Border Classes="card" Margin="0,0,0,10">
+            <Border Classes="card" Margin="4">
               <StackPanel Spacing="6">
                 <Grid ColumnDefinitions="*,Auto">
-                  <TextBlock Grid.Column="0" Text="{Binding Title}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}"/>
-                  <TextBlock Grid.Column="1" Text="{Binding Status}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" VerticalAlignment="Center"/>
+                  <TextBlock Grid.Column="0" Text="{Binding Title}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}"
+                             TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                  <Border Grid.Column="1" Background="{DynamicResource ShellChipBackgroundBrush}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Status}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11"/>
+                  </Border>
                 </Grid>
                 <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
                 <!-- Inert per-card action: disabled, bound to the row's false flag, no command -->
