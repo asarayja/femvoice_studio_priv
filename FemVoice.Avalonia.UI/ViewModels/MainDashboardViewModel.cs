@@ -33,23 +33,26 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     private double _chartMin;                    // fixed axis range derived from the comfort zone (display-only)
     private double _chartMax;
 
-    // Avalonia-LOCAL, display-only session history (no WPF DB, no clinical scoring — see SessionHistoryStore).
+    // Session history. When the real database is injected (production/DI), completed sessions are saved as real
+    // TrainingSessions (so SmartCoach/Progression see real data). With no DB (headless/tests), a display-only local
+    // JSON store is used instead. No clinical logic is changed — the dashboard writes a session row exactly as WPF.
     private readonly History.SessionHistoryStore _history;
+    private readonly FemVoiceStudio.Data.IDatabaseService? _database;
     private System.DateTime _sessionStart;
 
-    /// <summary>Recent local sessions (newest first, display-only). Populated from the Avalonia-local history store.</summary>
+    /// <summary>Recent sessions (newest first, display-only): from the real DB when available, else the local store.</summary>
     public ObservableCollection<History.SessionRecord> RecentSessions { get; } = new();
 
     [ObservableProperty] private bool _hasRecentSessions;
 
-    public MainDashboardViewModel(IAudioCaptureService capture, IUiDispatcher ui)
-        : this(capture, ui, null) { }
-
-    /// <summary>Test/opt-in ctor: inject a history store (e.g. a temp path) so smokes don't touch the real file.</summary>
-    public MainDashboardViewModel(IAudioCaptureService capture, IUiDispatcher ui, History.SessionHistoryStore? history)
+    // DI resolves this (capture + database injected). Smokes call the 2-arg form (database/history default null →
+    // no DB save, local-store path). `history` is a test hook (inject a temp store).
+    public MainDashboardViewModel(IAudioCaptureService capture, IUiDispatcher ui,
+        FemVoiceStudio.Data.IDatabaseService? database = null, History.SessionHistoryStore? history = null)
     {
         _capture = capture;
         _ui = ui;
+        _database = database;
         _history = history ?? new History.SessionHistoryStore();
         _pitch = new PitchDetectionService(SampleRate);
         _capture.FrameAvailable += OnFrameAvailable;
@@ -61,7 +64,25 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     private void RefreshRecentSessions()
     {
         RecentSessions.Clear();
-        foreach (var r in _history.Recent(5)) RecentSessions.Add(r);
+        if (_database is not null)
+        {
+            try
+            {
+                foreach (var s in _database.GetRecentSessions(5))
+                    RecentSessions.Add(new History.SessionRecord
+                    {
+                        WhenUtcTicks = s.StartTime.ToUniversalTime().Ticks,
+                        Source = "Dashbord",
+                        DurationSeconds = s.DurationSeconds,
+                        Note = "Lagret økt",
+                    });
+            }
+            catch { /* display-only list: never surface a DB read error */ }
+        }
+        else
+        {
+            foreach (var r in _history.Recent(5)) RecentSessions.Add(r);
+        }
         HasRecentSessions = RecentSessions.Count > 0;
     }
 
@@ -129,17 +150,43 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         CurrentSignalStatus = "Ingen stemme";
         CurrentFeedbackMessage = "Økt stoppet.";
 
-        // Record a display-only local session (no clinical scoring, no WPF DB). Skip trivial (<2 s) sessions.
+        // Record the session. Skip trivial (<2 s) sessions.
         int durationSeconds = (int)System.Math.Round((System.DateTime.Now - _sessionStart).TotalSeconds);
         if (durationSeconds >= 2)
         {
-            _history.Append(new History.SessionRecord
+            if (_database is not null)
             {
-                WhenUtcTicks = System.DateTime.UtcNow.Ticks,
-                Source = "Dashbord",
-                DurationSeconds = durationSeconds,
-                Note = "Kun visning · lokal historikk",
-            });
+                try
+                {
+                    var voiced = PitchSamples.Where(p => p > 0).ToList();
+                    double avg = voiced.Count > 0 ? voiced.Average() : 0;
+                    double inZone = voiced.Count > 0
+                        ? 100.0 * voiced.Count(p => p >= ComfortZoneLow && p <= ComfortZoneHigh) / voiced.Count : 0;
+                    _database.SaveTrainingSession(new FemVoiceStudio.Models.TrainingSession
+                    {
+                        UserId = 1,
+                        StartTime = _sessionStart.ToUniversalTime(),
+                        EndTime = System.DateTime.UtcNow,
+                        AveragePitch = System.Math.Round(avg, 1),
+                        MinPitch = voiced.Count > 0 ? System.Math.Round(voiced.Min(), 1) : 0,
+                        MaxPitch = voiced.Count > 0 ? System.Math.Round(voiced.Max(), 1) : 0,
+                        OverallScore = System.Math.Round(inZone),   // comfort-zone adherence (display-only score)
+                        DifficultyLevel = SelectedDifficulty,
+                        Feedback = "Avalonia dashboard-økt",
+                    });
+                }
+                catch { /* never surface a session-save error to the app */ }
+            }
+            else
+            {
+                _history.Append(new History.SessionRecord
+                {
+                    WhenUtcTicks = System.DateTime.UtcNow.Ticks,
+                    Source = "Dashbord",
+                    DurationSeconds = durationSeconds,
+                    Note = "Kun visning · lokal historikk",
+                });
+            }
             _ui.Post(RefreshRecentSessions);   // update the bound collection on the UI thread
         }
     }
