@@ -101,6 +101,7 @@ public partial class ShellViewModel : ObservableObject
             new(Localized.Get("Shell_Nav_Reports", "Rapporter"), true, ShowReportsCommand),
             new(Localized.Get("Shell_Nav_Diagnostics", "Diagnostikk"), true, ShowDiagnosticsCommand),
             new(Localized.Get("Shell_Nav_Statistics", "Statistikk"), true, ShowStatisticsCommand),   // real DB stats
+            new(Localized.Get("Shell_Nav_Calendar", "Kalender"), true, ShowCalendarCommand),         // real DB history
             new(Localized.Get("Shell_Nav_Progresjon", "Progresjon"), true, ShowProgressionCommand),   // engine-backed
             new(Localized.Get("Shell_Nav_SmartCoach", "SmartCoach"), true, ShowSmartCoachCommand),   // engine-backed
             new(DeferredLabel("Mikrofonkalibrering"), false, _showMicCalibrationCommand),
@@ -180,6 +181,7 @@ public partial class ShellViewModel : ObservableObject
             ReportsViewModel => Localized.Get("Shell_Nav_Reports", "Rapporter"),
             DiagnosticsViewModel => Localized.Get("Shell_Nav_Diagnostics", "Diagnostikk"),
             StatisticsViewModel => Localized.Get("Statistics_Title", "Statistikk"),
+            CalendarViewModel => Localized.Get("Calendar_Title", "Kalender / historikk"),
             ProgressionViewModel => Localized.Get("Shell_Nav_Progresjon", "Progresjon"),
             ProgressionScaffoldViewModel => $"{Localized.Get("Shell_Nav_Progresjon", "Progresjon")} (utsatt)",
             SmartCoachViewModel => Localized.Get("SmartCoach_Scaffold_Title", "SmartCoach"),
@@ -199,6 +201,8 @@ public partial class ShellViewModel : ObservableObject
     [RelayCommand] private void ShowDiagnostics() => CurrentPage = _diagnostics;    // inert display-only page
     // Real training statistics from the saved sessions (fresh each open; null-safe).
     [RelayCommand] private void ShowStatistics() => CurrentPage = new StatisticsViewModel(_database);
+    // Real training history (last 90 days) from the saved sessions (fresh each open; null-safe).
+    [RelayCommand] private void ShowCalendar() => CurrentPage = new CalendarViewModel(_database);
     // Engine-backed: real training level + FemVoice score + ProgressionService summary on the real DB (null-safe).
     [RelayCommand] private void ShowProgression() => CurrentPage = new ProgressionViewModel(_database);
     // Engine-backed: run the REAL SmartCoachEngine on the REAL database (falls back to a truthful "unavailable"
