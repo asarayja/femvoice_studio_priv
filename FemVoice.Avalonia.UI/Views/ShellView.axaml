@@ -5,16 +5,18 @@
              xmlns:loc="clr-namespace:FemVoice.Avalonia.Localization"
              x:Class="FemVoice.Avalonia.Views.ShellView"
              Background="{DynamicResource ShellWindowBackgroundBrush}">
-  <!-- Shared shell, hosted by the desktop MainWindow (Window) and the Android head (single-view MainView):
-       header (top) · status strip (bottom) · [nav rail | content | info sidebar]. Shell colours use named theme
-       brushes (Themes/ShellTheme.axaml, Dark/Light). Static labels use the safe {loc:Tr} localization adapter with
-       a readable fallback. Display-only; no clinical/WPF change. -->
+  <!-- Shared shell for the desktop MainWindow (Window) AND the Android single-view MainView. RESPONSIVE:
+       a SplitView nav pane (inline on wide/tablet, overlay+hamburger on phone widths) + content + an info
+       sidebar that hides below ~900px. Adaptivity is driven by ShellView.axaml.cs (SizeChanged). Shell colours
+       use named theme brushes (Themes/ShellTheme.axaml, Dark/Light). Display-only; no clinical/WPF change. -->
   <DockPanel>
 
-    <!-- Header -->
+    <!-- Header (hamburger appears only on narrow/phone widths) -->
     <Border DockPanel.Dock="Top" Background="{DynamicResource ShellHeaderBackgroundBrush}" Padding="14,10"
             BorderBrush="{DynamicResource ShellBorderBrush}" BorderThickness="0,0,0,1">
       <StackPanel Orientation="Horizontal" Spacing="10">
+        <Button x:Name="HamburgerButton" Content="☰" Classes="nav" Width="42" MinWidth="42" Padding="0"
+                HorizontalContentAlignment="Center" IsVisible="False" Click="OnHamburgerClick" VerticalAlignment="Center"/>
         <TextBlock Text="FemVoice Studio" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"
                    Foreground="{DynamicResource ShellHeadingBrush}"/>
         <TextBlock Text="{loc:Tr Key=Shell_HeaderSubtitle, Fallback='Avalonia desktop · kun visning'}"
@@ -22,7 +24,7 @@
       </StackPanel>
     </Border>
 
-    <!-- Bottom status strip (display-only; no real mic, no persistence) -->
+    <!-- Bottom status strip (display-only; no persistence) -->
     <Border DockPanel.Dock="Bottom" Background="{DynamicResource ShellStatusBackgroundBrush}" Padding="12,6"
             BorderBrush="{DynamicResource ShellBorderBrush}" BorderThickness="0,1,0,0">
       <DockPanel>
@@ -33,80 +35,82 @@
       </DockPanel>
     </Border>
 
-    <!-- Body: nav rail | content | info sidebar -->
-    <Grid ColumnDefinitions="220,*,260">
-
-      <!-- Left navigation rail (implemented destinations + deferred placeholders) -->
-      <Border Grid.Column="0" Background="{DynamicResource ShellPanelBackgroundBrush}"
-              BorderBrush="{DynamicResource ShellBorderBrush}" BorderThickness="0,0,1,0" Padding="10">
-        <ScrollViewer>
-          <StackPanel Spacing="4">
-            <TextBlock Text="{loc:Tr Key=Shell_NavHeading, Fallback='Navigasjon'}"
-                       FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}" Margin="2,0,0,6"/>
-            <ItemsControl ItemsSource="{Binding NavItems}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate DataType="vm:ShellNavItem">
-                  <Button Content="{Binding Label}" Command="{Binding Command}"
-                          Classes="nav" Classes.deferred="{Binding !IsImplemented}"
-                          Margin="0,1"/>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <TextBlock Text="{loc:Tr Key=Shell_NavDeferredHint, Fallback='Flater merket «senere» er visning-bare plassholdere.'}"
-                       TextWrapping="Wrap" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" Margin="2,10,0,0"/>
-          </StackPanel>
-        </ScrollViewer>
-      </Border>
-
-      <!-- Central content -->
-      <ContentControl Grid.Column="1" Content="{Binding CurrentPage}">
-        <ContentControl.DataTemplates>
-          <DataTemplate DataType="vm:MainDashboardViewModel"><views:DashboardView/></DataTemplate>
-          <DataTemplate DataType="vm:ExerciseGuideViewModel"><views:ExerciseGuideView/></DataTemplate>
-          <!-- The exercise guide opens the exercise page (runtime) directly — no separate detail page (WPF parity). -->
-          <DataTemplate DataType="vm:ExerciseRuntimeViewModel"><views:ExerciseRuntimeView/></DataTemplate>
-          <DataTemplate DataType="vm:SettingsViewModel"><views:SettingsView/></DataTemplate>
-          <DataTemplate DataType="vm:AnalysisViewModel"><views:AnalysisView/></DataTemplate>
-          <DataTemplate DataType="vm:ReportsViewModel"><views:ReportsView/></DataTemplate>
-          <DataTemplate DataType="vm:DiagnosticsViewModel"><views:DiagnosticsView/></DataTemplate>
-          <!-- Deferred, display-only scaffolds (no services, no engines, no side effects) -->
-          <DataTemplate DataType="vm:ProgressionScaffoldViewModel"><views:ProgressionScaffoldView/></DataTemplate>
-          <DataTemplate DataType="vm:SmartCoachScaffoldViewModel"><views:SmartCoachScaffoldView/></DataTemplate>
-          <!-- Static deferred placeholder (no services, no side effects) -->
-          <DataTemplate DataType="vm:DeferredSurfaceViewModel">
-            <ScrollViewer>
-              <StackPanel Margin="24" Spacing="10" MaxWidth="640" HorizontalAlignment="Left">
-                <TextBlock Text="{Binding Title}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource ShellDeferredTitleBrush}"/>
-                <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="14">
-                  <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-                </Border>
-                <!-- Footnote bound from the VM (non-subscribing Localized.Get) since this template is transient. -->
-                <TextBlock Text="{Binding Footnote}"
-                           Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
-              </StackPanel>
-            </ScrollViewer>
-          </DataTemplate>
-        </ContentControl.DataTemplates>
-      </ContentControl>
-
-      <!-- Right info sidebar (static, display-only placeholder) -->
-      <Border Grid.Column="2" Background="{DynamicResource ShellPanelBackgroundBrush}"
-              BorderBrush="{DynamicResource ShellBorderBrush}" BorderThickness="1,0,0,0" Padding="12">
-        <StackPanel Spacing="8">
-          <TextBlock Text="{loc:Tr Key=Shell_InfoHeading, Fallback='Info'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-          <Border BorderBrush="{DynamicResource ShellOkBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10">
+    <!-- Body: responsive nav pane (SplitView) + [content | info sidebar] -->
+    <SplitView x:Name="NavSplit" DisplayMode="Inline" IsPaneOpen="True" OpenPaneLength="220"
+               PaneBackground="{DynamicResource ShellPanelBackgroundBrush}">
+      <SplitView.Pane>
+        <!-- Left navigation rail (implemented destinations + deferred placeholders) -->
+        <Border BorderBrush="{DynamicResource ShellBorderBrush}" BorderThickness="0,0,1,0" Padding="10">
+          <ScrollViewer>
             <StackPanel Spacing="4">
-              <TextBlock Text="{loc:Tr Key=Shell_DisplayOnlyMode, Fallback='Visning-bare modus'}"
-                         FontWeight="SemiBold" Foreground="{DynamicResource ShellOkBrush}" FontSize="13"/>
-              <TextBlock Text="{loc:Tr Key=Shell_DisplayOnlyDetail, Fallback='Ekte mikrofon når tilgjengelig · ingen lagring · ingen klinisk endring.'}"
-                         TextWrapping="Wrap" Foreground="{DynamicResource ShellSubtleTextBrush}" FontSize="12"/>
+              <TextBlock Text="{loc:Tr Key=Shell_NavHeading, Fallback='Navigasjon'}"
+                         FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}" Margin="2,0,0,6"/>
+              <ItemsControl ItemsSource="{Binding NavItems}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="vm:ShellNavItem">
+                    <Button Content="{Binding Label}" Command="{Binding Command}"
+                            Classes="nav" Classes.deferred="{Binding !IsImplemented}"
+                            Click="OnNavItemClick" Margin="0,1"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Text="{loc:Tr Key=Shell_NavDeferredHint, Fallback='Flater merket «senere» er visning-bare plassholdere.'}"
+                         TextWrapping="Wrap" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" Margin="2,10,0,0"/>
             </StackPanel>
-          </Border>
-          <TextBlock Text="{loc:Tr Key=Shell_ProToolsLater, Fallback='Profesjonelle verktøy, rapporter, analyse og innstillinger kommer i senere faser.'}"
-                     TextWrapping="Wrap" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12"/>
-        </StackPanel>
-      </Border>
+          </ScrollViewer>
+        </Border>
+      </SplitView.Pane>
 
-    </Grid>
+      <!-- Content + right info sidebar -->
+      <Grid ColumnDefinitions="*,Auto">
+        <ContentControl Grid.Column="0" Content="{Binding CurrentPage}">
+          <ContentControl.DataTemplates>
+            <DataTemplate DataType="vm:MainDashboardViewModel"><views:DashboardView/></DataTemplate>
+            <DataTemplate DataType="vm:ExerciseGuideViewModel"><views:ExerciseGuideView/></DataTemplate>
+            <!-- The exercise guide opens the exercise page (runtime) directly — no separate detail page (WPF parity). -->
+            <DataTemplate DataType="vm:ExerciseRuntimeViewModel"><views:ExerciseRuntimeView/></DataTemplate>
+            <DataTemplate DataType="vm:SettingsViewModel"><views:SettingsView/></DataTemplate>
+            <DataTemplate DataType="vm:AnalysisViewModel"><views:AnalysisView/></DataTemplate>
+            <DataTemplate DataType="vm:ReportsViewModel"><views:ReportsView/></DataTemplate>
+            <DataTemplate DataType="vm:DiagnosticsViewModel"><views:DiagnosticsView/></DataTemplate>
+            <!-- Deferred, display-only scaffolds (no services, no engines, no side effects) -->
+            <DataTemplate DataType="vm:ProgressionScaffoldViewModel"><views:ProgressionScaffoldView/></DataTemplate>
+            <DataTemplate DataType="vm:SmartCoachScaffoldViewModel"><views:SmartCoachScaffoldView/></DataTemplate>
+            <!-- Static deferred placeholder (no services, no side effects) -->
+            <DataTemplate DataType="vm:DeferredSurfaceViewModel">
+              <ScrollViewer>
+                <StackPanel Margin="24" Spacing="10" MaxWidth="640" HorizontalAlignment="Left">
+                  <TextBlock Text="{Binding Title}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource ShellDeferredTitleBrush}"/>
+                  <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="14">
+                    <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                  </Border>
+                  <!-- Footnote bound from the VM (non-subscribing Localized.Get) since this template is transient. -->
+                  <TextBlock Text="{Binding Footnote}"
+                             Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
+                </StackPanel>
+              </ScrollViewer>
+            </DataTemplate>
+          </ContentControl.DataTemplates>
+        </ContentControl>
+
+        <!-- Right info sidebar (static, display-only placeholder; hidden below ~900px) -->
+        <Border x:Name="InfoSidebar" Grid.Column="1" Width="260" Background="{DynamicResource ShellPanelBackgroundBrush}"
+                BorderBrush="{DynamicResource ShellBorderBrush}" BorderThickness="1,0,0,0" Padding="12">
+          <StackPanel Spacing="8">
+            <TextBlock Text="{loc:Tr Key=Shell_InfoHeading, Fallback='Info'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+            <Border BorderBrush="{DynamicResource ShellOkBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10">
+              <StackPanel Spacing="4">
+                <TextBlock Text="{loc:Tr Key=Shell_DisplayOnlyMode, Fallback='Visning-bare modus'}"
+                           FontWeight="SemiBold" Foreground="{DynamicResource ShellOkBrush}" FontSize="13"/>
+                <TextBlock Text="{loc:Tr Key=Shell_DisplayOnlyDetail, Fallback='Ekte mikrofon når tilgjengelig · ingen lagring · ingen klinisk endring.'}"
+                           TextWrapping="Wrap" Foreground="{DynamicResource ShellSubtleTextBrush}" FontSize="12"/>
+              </StackPanel>
+            </Border>
+            <TextBlock Text="{loc:Tr Key=Shell_ProToolsLater, Fallback='Profesjonelle verktøy, rapporter, analyse og innstillinger kommer i senere faser.'}"
+                       TextWrapping="Wrap" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12"/>
+          </StackPanel>
+        </Border>
+      </Grid>
+    </SplitView>
   </DockPanel>
 </UserControl>

@@ -112,6 +112,13 @@ internal static class Program
         int pi = Array.IndexOf(args, "--page");
         string page = (pi >= 0 && pi + 1 < args.Length) ? args[pi + 1].ToLowerInvariant() : "shell";
         int width = 1100, height = 760;
+        int si = Array.IndexOf(args, "--size");   // e.g. --size 400x820 to preview a phone width
+        if (si >= 0 && si + 1 < args.Length)
+        {
+            var wh = args[si + 1].Split('x', 'X');
+            if (wh.Length == 2 && int.TryParse(wh[0], out int w) && int.TryParse(wh[1], out int h) && w > 0 && h > 0)
+            { width = w; height = h; }
+        }
 
         // Headless Skia platform (real render pass → theme/styles applied), NOT the desktop platform. Must be the
         // only Avalonia setup on this path (the GUI's BuildAvaloniaApp is not called when --snapshot is handled).
