@@ -31,6 +31,10 @@
     <PackageReference Include="Avalonia" Version="11.2.1" />
     <PackageReference Include="Avalonia.Desktop" Version="11.2.1" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.1" />
+    <!-- Offscreen UI snapshots (the snapshot dev utility): renders pages to PNG with no visible window, so UI
+         work can be visually verified when the screen is locked / headless / in CI. Managed-only; not used by the
+         normal GUI or the smokes. -->
+    <PackageReference Include="Avalonia.Headless" Version="11.2.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <!-- Security: pin the transitive Tmds.DBus.Protocol (pulled by Avalonia.FreeDesktop 11.2.1 = 0.20.0)
          to the lowest patched version that resolves NU1903 / GHSA-xrw6-gwf8-vvr9. Avalonia 11.2.x

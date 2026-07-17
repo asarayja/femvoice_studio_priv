@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Headless;
 using Microsoft.Extensions.DependencyInjection;
 using FemVoiceStudio.Audio.Abstractions;
 using FemVoiceStudio.Core.Platform;
@@ -22,6 +23,10 @@ internal static class Program
     public static int Main(string[] args)
     {
         _ = Services;   // build the container up front on the desktop head
+
+        // Offscreen UI snapshot: render a page to a PNG without a visible window (works headless / when the
+        // screen is locked / in CI). Utility, not a smoke.
+        if (args.Contains("--snapshot")) return ExitAfterSmoke(Snapshot(args));
 
         // Headless verification paths — used by scripts/linux-portable-gate.sh. A matched smoke returns via
         // ExitAfterSmoke() to dodge an intermittent native GL atexit-teardown segfault on exit (see note there).
@@ -74,6 +79,7 @@ internal static class Program
         if (args.Contains("--real-audio-capture-smoke")) return RealAudioCaptureSmoke();
         if (args.Contains("--android-readiness-smoke")) return AndroidReadinessSmoke();
         if (args.Contains("--runtime-real-audio-activation-smoke")) return RuntimeRealAudioActivationSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--snapshot-smoke")) return SnapshotSmoke();
         return null;
     }
 
@@ -127,6 +133,101 @@ internal static class Program
         services.AddSingleton<ShellViewModel>();
 
         return services.BuildServiceProvider();
+    }
+
+    // Render a page of the shared Avalonia UI to a PNG OFFSCREEN (no visible window needed — works when the
+    // session is locked, headless, or in CI). Usage: --snapshot [outPath] [--page dashboard|guide|settings|
+    // analysis|reports|diagnostics|smartcoach|progression]. Defaults: shell (dashboard) → snapshot.png.
+    private static int Snapshot(string[] args)
+    {
+        int i = Array.IndexOf(args, "--snapshot");
+        string outPath = (i >= 0 && i + 1 < args.Length && !args[i + 1].StartsWith("--")) ? args[i + 1] : "snapshot.png";
+        int pi = Array.IndexOf(args, "--page");
+        string page = (pi >= 0 && pi + 1 < args.Length) ? args[pi + 1].ToLowerInvariant() : "shell";
+        int width = 1100, height = 760;
+
+        // Headless Skia platform (real render pass → theme/styles applied), NOT the desktop platform. Must be the
+        // only Avalonia setup on this path (the GUI's BuildAvaloniaApp is not called when --snapshot is handled).
+        try
+        {
+            AppBuilder.Configure<App>()
+                .UseSkia()
+                .UseHeadless(new global::Avalonia.Headless.AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false })
+                .SetupWithoutStarting();
+        }
+        catch (Exception ex) { Console.WriteLine($"[snapshot] headless platform init failed: {ex.Message}"); return 1; }
+
+        try
+        {
+            var shell = Services.GetRequiredService<ShellViewModel>();
+            NavigateShell(shell, page);   // default keeps the dashboard
+
+            var window = new global::Avalonia.Controls.Window
+            {
+                SystemDecorations = global::Avalonia.Controls.SystemDecorations.None,
+                Width = width,
+                Height = height,
+                Content = new Views.ShellView { DataContext = shell },
+            };
+            window.Show();
+            global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();   // run layout + a render pass
+
+            var frame = global::Avalonia.Headless.HeadlessWindowExtensions.CaptureRenderedFrame(window);
+            if (frame is null) { Console.WriteLine("[snapshot] CaptureRenderedFrame returned null"); return 1; }
+            using (var fs = System.IO.File.Create(outPath)) frame.Save(fs);
+            window.Close();
+            Console.WriteLine($"[snapshot] wrote {outPath} ({width}x{height}, page={page})");
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[snapshot] render failed: {ex.GetType().Name}: {ex.Message}");
+            return 1;
+        }
+    }
+
+    // Verifies the offscreen snapshot capability renders a real, non-trivial PNG of the shell (headless Skia; no
+    // display needed). Guards the dev screenshot tool against regressions. A blank render is ~3 KB; the real
+    // dashboard is ~110 KB, so a >20 KB valid-PNG threshold cleanly separates rendered-content from blank/failed.
+    private static int SnapshotSmoke()
+    {
+        string tmp = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "femvoice_snapshot_smoke.png");
+        try { System.IO.File.Delete(tmp); } catch { /* ignore */ }
+
+        int code = Snapshot(new[] { "--snapshot", tmp });
+        bool rendered = code == 0 && System.IO.File.Exists(tmp);
+        long size = rendered ? new System.IO.FileInfo(tmp).Length : 0;
+        bool pngHeader = false, nonTrivial = false;
+        if (rendered)
+        {
+            var b = System.IO.File.ReadAllBytes(tmp);
+            pngHeader = b.Length > 8 && b[0] == 0x89 && b[1] == 0x50 && b[2] == 0x4E && b[3] == 0x47;   // ‰PNG
+            nonTrivial = size > 20_000;
+        }
+        try { System.IO.File.Delete(tmp); } catch { /* ignore */ }
+
+        Console.WriteLine($"[snapshot] rendered={rendered} pngHeader={pngHeader} size={size} nonTrivial={nonTrivial}");
+        bool ok = rendered && pngHeader && nonTrivial;
+        Console.WriteLine(ok ? "[snapshot] UI snapshot smoke OK" : "[snapshot] UI snapshot smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    private static void NavigateShell(ShellViewModel shell, string page)
+    {
+        string needle = page switch
+        {
+            "guide" or "exercises" or "øvelser" => "guide",
+            "settings" or "innstillinger" => "innstillinger",
+            "analysis" or "analyse" => "analyse",
+            "reports" or "rapporter" => "rapporter",
+            "diagnostics" or "diagnostikk" => "diagnostikk",
+            "smartcoach" => "smartcoach",
+            "progression" or "progresjon" => "progresjon",
+            _ => "",
+        };
+        if (needle.Length == 0) return;   // "shell" / default keeps the dashboard
+        var item = shell.NavItems.FirstOrDefault(n => n.Label.ToLowerInvariant().Contains(needle));
+        item?.Command?.Execute(null);
     }
 
     private static int Smoke()
