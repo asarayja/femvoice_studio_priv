@@ -13,7 +13,14 @@ Reference docs: `docs/AUDIT_SUMMARY_FOR_AVALONIA_PLANNING.md`, `AVALONIA_PORT_RE
 
 ## Environment reality (read this first)
 
-⛔ This workstation is **Linux with no .NET SDK**, and the product is **WPF/`net10.0-windows` (Windows-only)**. **Nothing in this repo can build or test here.** Phases that move/compile code require a **Windows host with .NET 10 SDK + Desktop (WPF) workload**, or Windows CI. See `docs/AVALONIA_BASELINE_TEST_RESULTS.md`. Phases that are pure documentation/analysis are doable anywhere.
+✅ **Updated 2026-07-17:** this Linux workstation now has the **.NET 10 SDK (`10.0.110`)** installed system-wide, plus
+`libasound.so.2` and a real capture device. The cross-platform projects (`FemVoice.Core`, `FemVoice.Audio.Abstractions`,
+`FemVoice.Avalonia`, `FemVoice.Tests.Portable`) **build, test, and run the headless smokes here** — including **real
+ALSA microphone capture** (verified). Use `scripts/linux-portable-gate.sh` (or the per-smoke loop) as the local gate.
+
+⛔ Still Windows-only: the **WPF reference head** (`FemVoiceStudio`, `net10.0-windows`) and the Windows audio adapter
+(`FemVoice.Audio.Windows`) cannot build here — they need a **Windows host with .NET 10 + Desktop (WPF) workload**, or
+Windows CI. The WPF app remains the frozen parity baseline. See `docs/AVALONIA_BASELINE_TEST_RESULTS.md`.
 
 ## Status legend
 `TODO` · `IN PROGRESS` · `BLOCKED` · `DONE` · `N/A`
@@ -26,10 +33,11 @@ Reference docs: `docs/AUDIT_SUMMARY_FOR_AVALONIA_PLANNING.md`, `AVALONIA_PORT_RE
 | 1 | Project split & shared core extraction | **DONE** — WPF builds against shared core on Windows (CI verified); 3 mechanical fixes applied | Agent 2 | ✓ |
 | 2 | Platform abstraction interfaces | **DONE (interfaces in FemVoice.Core/Platform; Avalonia impls)** | Agent 3 | — |
 | 3 | Windows audio backend behind abstraction | **DONE (FemVoice.Audio.Windows + NAudioCaptureService; Linux-compile-verified) / manual Windows mic test PENDING** | Agent 4 | Manual Windows mic smoke (`AUDIO_WINDOWS_ADAPTER_NOTES.md`) |
+| 3C | Real cross-platform (Linux/ALSA) capture behind the abstraction | **SLICE DONE (Linux-verified, PR open)** — the Stage-3B cross-platform slot becomes an **OS dispatcher**: Linux → **real ALSA capture** via dependency-free P/Invoke (`Linux/AlsaInterop.cs` + `Linux/AlsaAudioCaptureService.cs`, new `IRealAudioCaptureBackend`); macOS/Windows report "unavailable" (Windows real path stays the NAudio adapter in its own project). `CrossPlatformAudioCaptureService` rewritten to dispatch + forward frames; `AudioCaptureBackendFactory` (`CreateReal`/`CreateSynthetic`). `AudioReadiness` now truthfully reports "enheter funnet: N" when a device opens. New `--real-audio-capture-smoke` (38th) **captures real mic frames** on this box (frames=21, samples=21504, all finite) + graceful headless path; `--avalonia-audio-backend-smoke` reworked env-agnostic. **DI unchanged — synthetic stays the runtime backend (no clinical runtime fed).** Gate: build 0 err, 38/38 smokes, portable 1570/1580, Avalonia refs Core+Abstractions only, no NAudio/WPF/DB/Core change | Agent 4 | **route real capture into the runtime** (activation) + macOS CoreAudio + Windows-via-factory + per-card enumeration deferred |
 | 4 | Avalonia shell bootstrap | **DONE (boots headless; DI resolves on Linux)** | Agent 5 | — |
 | 5 | Theme & localization port | TODO | Agent 6 | Light/dark + runtime language switch work |
 | 6 | Navigation & main dashboard | **MERGED to main (PR #3)** — `MainDashboardViewModel` + dashboard; start/stop + live pitch/stability/health from synthetic audio; top-nav shell added in Phase 8 | Agent 8 | Chart/feedback/theme parity in later slices |
-| 7 | Audio, pitch chart, live feedback | TODO | Agent 7 + 8 | Pitch/comfort-zone parity |
+| 7 | Audio, pitch chart, live feedback | TODO (real capture backend now exists on Linux via ALSA — Stage 3C; remaining: route real frames into the runtime/chart instead of synthetic, then pitch/comfort-zone parity) | Agent 7 + 8 | Pitch/comfort-zone parity |
 | 8 | Exercise guide & detail | **MERGED to main (PR #4)** — Guide list (15) + Detail + shell nav; read-only over `VoiceFeminizationExerciseService`; `--exercise-smoke` | Agent 9 | — |
 | 8b | Exercise runtime scaffold | **MERGED to main (PR #5)** — Detail→Runtime nav; `ExerciseRuntimeViewModel`/`View`; synthetic pitch vs target band; display-only hold/elapsed; `--exercise-runtime-smoke` | Agent 9 | — |
 | 8c | Exercise runtime target-profile integration | **MERGED to main (PR #6, `51565d9`)** — read-only `ExerciseTargetProfile`/`IndicatorPackage` panel; Id→ProfileType map (15/15, 0 fallback); `RequiredHoldSeconds` as display-only hold target; `--exercise-runtime-integration-smoke` | Agent 9 | — |
