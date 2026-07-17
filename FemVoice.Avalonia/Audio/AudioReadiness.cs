@@ -40,15 +40,36 @@ public sealed class AudioReadiness
         get { try { return _capture?.GetInputDevices().Count ?? 0; } catch (Exception) { return 0; } }
     }
 
-    /// <summary>Real microphone capture is available only with a real (non-synthetic, non-noop) backend that has
-    /// at least one device. False for the synthetic/display-only backend used today.</summary>
-    public bool IsRealCaptureAvailable => BackendKind == AudioBackendKind.Real && DeviceCount > 0;
+    /// <summary>Whether the backend is a working capture backend. The synthetic backend "works" (display-only);
+    /// the cross-platform skeleton reports its own availability (false until a native binding exists); noop/none
+    /// are unavailable.</summary>
+    public bool IsBackendAvailable => _capture switch
+    {
+        null or NoopAudioCaptureService => false,
+        SyntheticAudioCaptureService => true,
+        CrossPlatformAudioCaptureService cp => cp.IsBackendAvailable,
+        _ => true,
+    };
+
+    /// <summary>Real microphone capture is available only with a real (non-synthetic) backend that is available and
+    /// has at least one device. False for the synthetic/display-only backend and the not-yet-implemented skeleton.</summary>
+    public bool IsRealCaptureAvailable => BackendKind == AudioBackendKind.Real && IsBackendAvailable && DeviceCount > 0;
 
     /// <summary>Truthful, localized status line for the UI. Never implies real capture when it is not available.</summary>
-    public string StatusText => BackendKind switch
+    public string StatusText
     {
-        AudioBackendKind.Synthetic => Localized.Get("Shell_MicStatus", "Mikrofon: syntetisk (kun visning)"),
-        AudioBackendKind.Real => $"{Localized.Get("Audio_DevicesFound", "Mikrofon: enheter funnet")}: {DeviceCount}",
-        _ => Localized.Get("Audio_Backend_NotConfigured", "Mikrofon: lydbackend ikke konfigurert ennå"),
-    };
+        get
+        {
+            if (BackendKind == AudioBackendKind.Synthetic)
+                return Localized.Get("Shell_MicStatus", "Mikrofon: syntetisk (kun visning)");
+            if (BackendKind == AudioBackendKind.NotConfigured)
+                return Localized.Get("Audio_Backend_NotConfigured", "Mikrofon: lydbackend ikke konfigurert ennå");
+            // Real backend:
+            if (!IsBackendAvailable)
+                return Localized.Get("Audio_Backend_Unavailable", "Mikrofon: lydbackend utilgjengelig");
+            if (DeviceCount == 0)
+                return Localized.Get("Audio_NoDevices", "Mikrofon: ingen enheter funnet");
+            return $"{Localized.Get("Audio_DevicesFound", "Mikrofon: enheter funnet")}: {DeviceCount}";
+        }
+    }
 }
