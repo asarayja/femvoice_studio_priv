@@ -988,7 +988,7 @@ internal static class Program
         bool csprojFound = System.IO.File.Exists(csprojPath);
         string csproj = csprojFound ? System.IO.File.ReadAllText(csprojPath) : "";
 
-        string[] rids = { "linux-x64", "linux-arm64", "osx-x64", "osx-arm64" };
+        string[] rids = { "linux-x64", "linux-arm64", "osx-x64", "osx-arm64", "win-x64", "win-arm64" };
         bool ridsOk = csprojFound && csproj.Contains("<RuntimeIdentifiers>") && rids.All(csproj.Contains);
         bool tmdsPinned = csproj.Contains("Tmds.DBus.Protocol\" Version=\"0.21.3\"");
         bool noTrim = csproj.Contains("<PublishTrimmed>false");
@@ -1005,7 +1005,7 @@ internal static class Program
         bool refAbstractions = refs.Contains("FemVoice.Audio.Abstractions");
         bool noOtherFemVoiceAudio = refs.Where(n => n!.StartsWith("FemVoice.Audio.")).All(n => n == "FemVoice.Audio.Abstractions");
 
-        Console.WriteLine($"[pkg] csproj: found={csprojFound} RIDs(linux-x64;linux-arm64;osx-x64;osx-arm64)={ridsOk} Tmds-pin-0.21.3={tmdsPinned} no-trim={noTrim}");
+        Console.WriteLine($"[pkg] csproj: found={csprojFound} RIDs(linux/osx/win x64+arm64)={ridsOk} Tmds-pin-0.21.3={tmdsPinned} no-trim={noTrim}");
         Console.WriteLine($"[pkg] project refs: count={projRefCount} core+abstractions-only={refsOk}");
         Console.WriteLine($"[pkg] templates: macos/Info.plist={plistOk} linux/.desktop={desktopOk}");
         Console.WriteLine($"[pkg] runtime refs: Core={refCore} Abstractions={refAbstractions} no-other-FemVoice.Audio={noOtherFemVoiceAudio}");

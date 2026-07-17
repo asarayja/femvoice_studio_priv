@@ -16,9 +16,12 @@
        the default `dotnet build` / `dotnet run` (which stay portable, unchanged). Trimming is explicitly
        DISABLED because the Avalonia head uses reflection bindings (AvaloniaUseCompiledBindingsByDefault=false),
        so a trimmed publish would break bindings. SelfContained is left unset — the publish command chooses it
-       via the self-contained publish flag. No Windows-only target; no mobile. See FemVoice.Avalonia/Packaging/README.md. -->
+       via the self-contained publish flag. Windows RIDs are included so the Avalonia head can also produce a
+       Windows build (the WPF app remains the frozen Windows reference; this makes Avalonia the cross-platform
+       Windows path). No mobile RID here — Android has its own head (FemVoice.Android). See
+       FemVoice.Avalonia/Packaging/README.md. -->
   <PropertyGroup>
-    <RuntimeIdentifiers>linux-x64;linux-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>linux-x64;linux-arm64;osx-x64;osx-arm64;win-x64;win-arm64</RuntimeIdentifiers>
     <UseAppHost>true</UseAppHost>
     <PublishTrimmed>false</PublishTrimmed>
     <Product>FemVoice Studio</Product>

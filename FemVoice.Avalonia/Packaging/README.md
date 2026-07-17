@@ -7,10 +7,20 @@ build/publish.
 
 ## Supported runtime identifiers (csproj `RuntimeIdentifiers`)
 ```
-linux-x64 ; linux-arm64 ; osx-x64 ; osx-arm64
+linux-x64 ; linux-arm64 ; osx-x64 ; osx-arm64 ; win-x64 ; win-arm64
 ```
 `RuntimeIdentifiers` is plural, so `dotnet build` / `dotnet run` stay portable and unchanged; only
-`dotnet publish -r <rid>` targets a specific platform.
+`dotnet publish -r <rid>` targets a specific platform. The **Windows** RIDs make the Avalonia head the
+cross-platform Windows path — a `win-x64` publish produces `FemVoice.Avalonia.exe` (`Avalonia.Win32`), and it
+cross-compiles from Linux. The WPF app (`FemVoiceStudio`) remains the frozen Windows *reference* baseline.
+
+Windows publish:
+```
+dotnet publish FemVoice.Avalonia/FemVoice.Avalonia.csproj -c Release -r win-x64  --self-contained false -o out/win-x64
+dotnet publish FemVoice.Avalonia/FemVoice.Avalonia.csproj -c Release -r win-arm64 --self-contained false -o out/win-arm64
+```
+> Follow-up: set `<OutputType>WinExe</OutputType>` (with console reattach for the `--*-smoke` paths) so the
+> Windows GUI launch does not open a console window. The current `Exe` output builds a console-subsystem `.exe`.
 
 ## Publish commands (documented; run as needed)
 Framework-dependent (smallest; needs a matching .NET 10 runtime on the target):
