@@ -15,29 +15,42 @@ renders the same navigation, pages, and theme as the desktop head — no UI or d
 - **APK build is blocked here on toolchain provisioning only** (not on this project):
   1. **Android SDK** not installed (`error XA5300`).
   2. The installed Java is a **JRE without full JDK tools** (`jar`/`javac` missing); a full JDK is required.
-  Both need machine-level setup (root / large downloads) not available in the current sandbox.
+## Build investigation (2026-07-17) — toolchain provisions WITHOUT root; one architectural blocker remains
 
-## Provision + build/run (on a machine with root / Android tooling)
+The toolchain was provisioned entirely to **user-local directories, no root**, and the APK build was driven until
+it hit a single, well-understood architectural blocker (below). Steps that worked here:
+
 ```bash
-# 1. .NET Android workload (already installed on the dev box):
+# 1. .NET Android workload (user-local under ~/.dotnet):
 dotnet workload install android
 
-# 2. A full JDK (provides jar/javac). E.g. on Debian/Ubuntu:
-sudo apt-get install -y openjdk-21-jdk
+# 2. A FULL JDK to a user dir (JRE-only Java lacks jar/javac). No root — just extract a tarball:
+curl -sL -o jdk.tgz "https://api.adoptium.net/v3/binary/latest/21/ga/linux/x64/jdk/hotspot/normal/eclipse?project=jdk"
+tar -xzf jdk.tgz -C "$HOME/femvoice-toolchain"      # -> $HOME/femvoice-toolchain/jdk-21.x
+export JAVA_HOME="$HOME/femvoice-toolchain/jdk-21.0.11+10"
 
-# 3. Android SDK — let the .NET Android SDK fetch it + accept licenses:
-dotnet build FemVoice.Android/FemVoice.Android.csproj -t:InstallAndroidDependencies \
-  -p:AcceptAndroidSDKLicenses=True \
-  -p:AndroidSdkDirectory="$HOME/android-sdk" -p:JavaSdkDirectory="$JAVA_HOME"
+# 3. Android SDK to a user dir via Google cmdline-tools + sdkmanager (no root):
+#    download commandlinetools-linux zip -> $SDK/cmdline-tools/latest, then:
+export SDK="$HOME/femvoice-toolchain/android-sdk"
+yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK" --licenses
+"$SDK/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-# 4. Build the APK:
-dotnet build FemVoice.Android/FemVoice.Android.csproj -c Debug \
-  -p:AndroidSdkDirectory="$HOME/android-sdk" -p:JavaSdkDirectory="$JAVA_HOME"
-
-# 5. Run on an emulator/device:
-dotnet run --project FemVoice.Android/FemVoice.Android.csproj \
-  -p:AndroidSdkDirectory="$HOME/android-sdk" -p:JavaSdkDirectory="$JAVA_HOME"
+# 4. Build the APK (reaches the blocker below):
+dotnet build FemVoice.Android/FemVoice.Android.csproj -c Release \
+  -p:AndroidSdkDirectory="$SDK" -p:JavaSdkDirectory="$JAVA_HOME"
 ```
+
+**Blocker (NETSDK1150 → NETSDK1047):** this head references `FemVoice.Avalonia`, which is a **net10.0 desktop Exe**
+that pulls in `Avalonia.Desktop`. A self-contained Android app cannot consume a non-self-contained desktop Exe, and
+that Exe cannot be re-targeted to an `android-*` RID (its restore has no android target, and `Avalonia.Desktop` is
+desktop-only). Suppressing the self-contained check + disabling the apphost for android RIDs only surfaces the next
+symptom — the real fix is structural:
+
+**Required next step — extract the shared UI into a platform-neutral LIBRARY** (`FemVoice.Avalonia.UI`, net10.0,
+references `Avalonia` + `Avalonia.Themes.Fluent` but **not** `Avalonia.Desktop`; holds `App`, `ShellView`, all
+views/VMs, themes, localization, and the DI composition). Both heads then reference the library: the desktop Exe
+(`Program.cs` + `Avalonia.Desktop`) and this Android head (`Avalonia.Android`). Only after that will the APK build.
+Note the App↔`Program.Services` coupling must move into the library's DI as part of the extraction.
 
 ## Deliberately deferred (follow-up slices)
 - **Extract the shared UI into a library** (`FemVoice.Avalonia` currently references `Avalonia.Desktop`, which the
