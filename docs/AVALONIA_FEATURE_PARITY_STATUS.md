@@ -26,22 +26,26 @@ data) · ❌ not ported.
 | FirstTimeSetupWindow | ❌ | Deferred card in Settings. |
 
 ## Persistence (updated 2026-07-18)
-🟡 **Partial** — Avalonia-LOCAL, display-only: UI prefs (theme/language/reduce-motion) + **session history**
-(dashboard + exercise sessions log to `<ApplicationData>/FemVoiceAvalonia/`, shown in "Siste økter (lokalt)"). This
-is deliberately NOT the WPF SQLite DB and feeds no clinical/progression engine — a safe foundation, not full DB parity.
+✅ **Real DB wired** — the real Core `DatabaseService` (SQLite, the SAME store WPF uses,
+`<MyDocuments>/FemVoiceStudio/femvoice.db`) is in the Avalonia DI (PR #52). The dashboard **saves real
+`TrainingSession`s** on Stop (PR #55), so the engines fill with real data. (An earlier Avalonia-local JSON store
+remains only as the headless/no-DB fallback for tests.)
 
-## Cross-cutting Core systems NOT wired into Avalonia yet
-SQLite `DatabaseService` (full/clinical persistence), `SmartCoach*`, `ProgressionOrchestrator`, `MasteryEvaluator`,
-`RecoveryScorer`, `VocalHealthSupervisor`, report assembler/export, research anonymization, RC-0 diagnostics, mic
-calibration, `SessionAnalyticsStore`, subjective-report → progression. (The Avalonia UI deliberately references
-**only** `FemVoice.Core` + `FemVoice.Audio.Abstractions` and touches no DB/engine — enforced by the packaging
-leak-guard smoke.)
+## Cross-cutting Core systems — status
+**Wired (read-only, real):** `DatabaseService` (SQLite), `SmartCoachEngine`, `ProgressionService` +
+`LevelClassificationSystem`, session save/read, real Analysis/Statistics/Calendar aggregates.
+**Still NOT wired:** `ReportAssembler` full 4×3 export (needs OutcomeProfile/notes/audit + file dialogs + QuestPDF),
+`SessionAnalyticsStore` (per-dimension resonance/intonation rings), `MasteryEvaluator`/`RecoveryScorer`/
+`VocalHealthSupervisor` (deeper feedback), research anonymization + RC-0 diagnostics + support package, mic
+calibration, subjective-report → progression, exercise-runtime real mic.
 
 ## Honest bottom line
-- **Platform + shell + all screens' visual structure:** done (4 heads build; desktop runs; APK builds).
-- **Functional parity:** roughly the **daily-use loop is real** (dashboard live mic, exercise browsing, local
-  settings); the **professional/clinical half is scaffold or missing** (analysis-with-data, reports, SmartCoach/
-  progression engines, persistence, calibration, clinician/coach/case tools, manual-override safety clamp).
-- Each of those is a **future slice**, and most are **clinical-adjacent** (touch frozen engines / DB / safety), so
-  they are approval-gated and must be ported one careful screen at a time — not changing the frozen clinical logic,
-  only presenting/wiring it read-only where safe.
+- **Platform + shell + all screens' visual structure:** done (4 heads build; desktop runs; **APK builds**).
+- **Real-data functional parity:** the **daily loop is real** (dashboard live mic → real sessions saved to the DB)
+  and **6 professional screens are engine/DB-backed with real data** (SmartCoach, Progression, Analysis, Reports
+  preview, Statistics, Calendar).
+- **Remaining:** full Reports export, exercise-runtime real mic, Diagnostics real, per-dimension Analysis, and the
+  not-yet-ported screens (Resonance, Clinician/Coach/CaseReview, ManualOverride safety clamp, MicCalibration,
+  FirstTimeSetup). These are more clinical-adjacent/complex — ported carefully, one at a time, no clinical change.
+- **Cannot be verified on this box:** RUNNING the Android APK (device/emulator) or the macOS/Windows builds (those
+  OS hosts). The builds all pass on Linux.
