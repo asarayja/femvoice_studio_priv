@@ -24,7 +24,7 @@
           <TextBlock Text="{Binding LanguageLabel}" FontWeight="SemiBold" FontSize="16" Foreground="{DynamicResource ShellHeadingBrush}"/>
           <TextBlock Text="{Binding LanguageDesc}" FontSize="12" Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
           <ComboBox MinWidth="220" HorizontalAlignment="Left" Margin="0,4,0,0"
-                    ItemsSource="{Binding LanguageOptions}" SelectedItem="{Binding Language, Mode=TwoWay}"/>
+                    ItemsSource="{Binding LanguageOptions}" SelectedItem="{Binding SelectedLanguageOption, Mode=TwoWay}" DisplayMemberBinding="{Binding Name}"/>
         </StackPanel>
       </Border>
 
@@ -34,7 +34,7 @@
           <TextBlock Text="{Binding ThemeLabel}" FontWeight="SemiBold" FontSize="16" Foreground="{DynamicResource ShellHeadingBrush}"/>
           <TextBlock Text="{Binding ThemeDesc}" FontSize="12" Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
           <ComboBox MinWidth="220" HorizontalAlignment="Left" Margin="0,4,0,0"
-                    ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding Theme, Mode=TwoWay}"/>
+                    ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedThemeOption, Mode=TwoWay}" DisplayMemberBinding="{Binding Label}"/>
         </StackPanel>
       </Border>
 
