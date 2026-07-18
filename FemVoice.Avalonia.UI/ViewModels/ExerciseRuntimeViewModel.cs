@@ -1,3 +1,4 @@
+using FemVoice.Avalonia.Localization;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -112,6 +113,26 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         if (_coordinatorEnabled)
             _coordinator.ExerciseUpdated += OnCoordinatorState;
 
+        // Exercise Guidance panel (WPF ExerciseWindow): the 4 guidance items (purpose/focus/mistakes/safety) + the
+        // feedback-mode badge, resolved from the exercise's profile keys via the shared RESX. Display-only.
+        var g = new List<GuidanceItem>();
+        if (_coordinatorProfile is not null)
+        {
+            void Add(string headKey, string? bodyKey)
+            {
+                if (string.IsNullOrWhiteSpace(bodyKey)) return;
+                var body = Localized.Get(bodyKey!, "");
+                if (body.Length > 0) g.Add(new GuidanceItem(Localized.Get(headKey, headKey), body));
+            }
+            Add("Guidance_ClinicalPurpose", _coordinatorProfile.ClinicalPurposeKey);
+            Add("Guidance_PhysicalFocus", _coordinatorProfile.PhysicalFocusKey);
+            Add("Guidance_CommonMistakes", _coordinatorProfile.CommonMistakesKey);
+            Add("Guidance_SafetyInfo", _coordinatorProfile.SafetyInfoKey);
+            FeedbackModeText = string.IsNullOrWhiteSpace(_coordinatorProfile.FeedbackModeKey)
+                ? "" : Localized.Get(_coordinatorProfile.FeedbackModeKey!, "");
+        }
+        GuidanceItems = g;
+
         // Fixed chart axis range for the session (pure, portable PitchChartAxisRangeCalculator over the
         // target band). Keeping it stable means the target band stays put and the trace scrolls under it.
         var axis = PitchChartAxisRangeCalculator.Calculate(Array.Empty<double>(), TargetPitchMin, TargetPitchMax);
@@ -150,6 +171,16 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
 
     /// <summary>Read-only target-profile metadata for the "Mål-profil" panel (display only).</summary>
     public ExerciseRuntimeTargetProfileDisplay TargetProfile { get; }
+
+    // ── Exercise Guidance panel (WPF ExerciseWindow) ─────────────────────────────────────────────────────────────
+    /// <summary>One guidance card: a localized heading + body (from the exercise's profile guidance keys).</summary>
+    public sealed record GuidanceItem(string Heading, string Body);
+    public IReadOnlyList<GuidanceItem> GuidanceItems { get; } = System.Array.Empty<GuidanceItem>();
+    public bool HasGuidance => GuidanceItems.Count > 0;
+    public string GuidanceHeading => Localized.Get("Guidance_PanelTitle", "Veiledning");
+    /// <summary>The feedback-mode badge text (e.g. resonance/pitch feedback), from the profile's FeedbackModeKey.</summary>
+    public string FeedbackModeText { get; } = "";
+    public bool HasFeedbackMode => FeedbackModeText.Length > 0;
 
     /// <summary>Display-only hold target (from the profile's RequiredHoldSeconds when available).</summary>
     public string HoldTargetDescription => $"Mål: hold i {_holdTargetSeconds:F0} s (visning)";

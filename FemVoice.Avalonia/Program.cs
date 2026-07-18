@@ -1350,8 +1350,15 @@ internal static class Program
         bool backToGuide = shell.CurrentPage is ExerciseGuideViewModel;
         Console.WriteLine($"[runtime] Navigation: runtime={onRuntime} back-to-guide={backToGuide}");
 
+        // Exercise Guidance panel (WPF ExerciseWindow): a mapped exercise surfaces guidance cards + a feedback-mode
+        // badge, all resolved from the shared RESX (heading + body non-empty).
+        bool guidanceOk = rt.HasGuidance && rt.GuidanceItems.Count >= 1
+                          && rt.GuidanceItems.All(gi => gi.Heading.Length > 0 && gi.Body.Length > 0)
+                          && rt.GuidanceHeading.Length > 0;
+        Console.WriteLine($"[runtime] Guidance: items={rt.GuidanceItems.Count} feedbackMode='{rt.FeedbackModeText}' ok={guidanceOk}");
+
         bool ok = running && stopped && pitch > 0 && rt.TargetPitchMax > 0
-                  && status == "Innenfor målområde" && hold > 0 && onRuntime && backToGuide && resonanceLive;
+                  && status == "Innenfor målområde" && hold > 0 && onRuntime && backToGuide && resonanceLive && guidanceOk;
         Console.WriteLine(ok ? "[runtime] Exercise runtime smoke OK" : "[runtime] Exercise runtime smoke FAIL");
         return ok ? 0 : 1;
     }
