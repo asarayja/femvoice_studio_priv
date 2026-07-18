@@ -2,32 +2,60 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
              x:Class="FemVoice.Avalonia.Views.CalendarView">
+  <!-- Month-grid calendar (WPF CalendarWindow parity): weekday headers + prev/next/today + day cells that
+       highlight today and training days (session marks); click a day with sessions to open its details. -->
   <ScrollViewer>
-    <StackPanel Margin="20" Spacing="14" MaxWidth="900" HorizontalAlignment="Center">
+    <StackPanel Margin="20" Spacing="14" MaxWidth="760" HorizontalAlignment="Center">
       <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+
       <Border Classes="card" IsVisible="{Binding !EngineAvailable}" BorderBrush="{DynamicResource ShellWarningBrush}">
         <TextBlock Text="{Binding UnavailableNote}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
       </Border>
+
       <Border Classes="card" IsVisible="{Binding EngineAvailable}">
-        <StackPanel Spacing="6">
-          <TextBlock Text="Ingen registrerte økter siste 90 dager." IsVisible="{Binding !HasDays}"
-                     Foreground="{DynamicResource ShellMutedBrush}"/>
-          <ItemsControl ItemsSource="{Binding Days}">
+        <StackPanel Spacing="10">
+          <!-- Month navigation -->
+          <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+            <Button Grid.Column="0" Content="‹" Classes="nav" Width="40" Command="{Binding PrevMonthCommand}"/>
+            <TextBlock Grid.Column="1" Text="{Binding MonthLabel}" FontSize="17" FontWeight="SemiBold"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <Button Grid.Column="2" Content="{Binding TodayLabel}" Classes="secondary" Command="{Binding GoTodayCommand}" Margin="0,0,6,0"/>
+            <Button Grid.Column="3" Content="›" Classes="nav" Width="40" Command="{Binding NextMonthCommand}"/>
+          </Grid>
+
+          <!-- Weekday headers -->
+          <ItemsControl ItemsSource="{Binding WeekdayHeaders}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="7"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
-              <DataTemplate DataType="vm:CalendarDayItem">
-                <!-- Each day is a clickable button opening that day's details -->
-                <Button Command="{Binding Open}" Classes="nav" HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Left" Padding="8,6" Margin="0,2">
-                  <Grid ColumnDefinitions="Auto,*,Auto">
-                    <TextBlock Grid.Column="0" Text="{Binding Label}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}" MinWidth="120"/>
-                    <TextBlock Grid.Column="1" Text="{Binding Summary}" Foreground="{DynamicResource ShellBodyTextBrush}" TextWrapping="Wrap"/>
-                    <TextBlock Grid.Column="2" Text="›" Foreground="{DynamicResource ShellMutedBrush}" FontSize="16" Margin="8,0,0,0"/>
+              <DataTemplate>
+                <TextBlock Text="{Binding}" HorizontalAlignment="Center" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12" FontWeight="SemiBold"/>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <!-- Day cells (6×7) -->
+          <ItemsControl ItemsSource="{Binding Days}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="7"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:CalendarDayCell">
+                <Button Command="{Binding Open}" Classes="nav" Margin="2" Padding="0" Height="52"
+                        HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                  <Grid Margin="2">
+                    <!-- Today highlight ring (converter-free: bound to IsToday) -->
+                    <Border IsVisible="{Binding IsToday}" BorderBrush="{DynamicResource ShellAccentBrush}" BorderThickness="1.5" CornerRadius="4"/>
+                    <Grid RowDefinitions="*,Auto" Margin="4">
+                      <TextBlock Grid.Row="0" Text="{Binding DayNumber}" FontSize="13"
+                                 Opacity="{Binding NumberOpacity}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                      <TextBlock Grid.Row="1" Text="{Binding SessionMark}" FontSize="12" HorizontalAlignment="Right"
+                                 Foreground="{DynamicResource ShellAccentBrush}" FontWeight="Bold"/>
+                    </Grid>
                   </Grid>
                 </Button>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
-          <TextBlock Text="{Binding DataNote}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/>
+
+          <TextBlock Text="{Binding DataNote}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"/>
         </StackPanel>
       </Border>
     </StackPanel>

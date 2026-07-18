@@ -730,12 +730,13 @@ internal static class Program
             Save(today.AddHours(18), 190, 72, 61);
             Save(today.AddDays(-3).AddHours(10), 170, 50, 0);
 
-            // Calendar exposes clickable days; clicking today fires openDay(today).
+            // Calendar is a MONTH GRID (42 cells); today's cell carries the real session count, and clicking a day
+            // with sessions fires openDay(date).
             DateTime? opened = null;
             var cal = new CalendarViewModel(db, d => opened = d);
-            bool hasDays = cal.HasDays && cal.Days.Count >= 2;
+            bool hasDays = cal.EngineAvailable && cal.Days.Count == 42 && cal.Days.Any(c => c.HasSessions);
             var todayItem = cal.Days.FirstOrDefault(x => x.Date == today);
-            bool todayFound = todayItem is not null;
+            bool todayFound = todayItem is not null && todayItem.IsToday && todayItem.Sessions == 2;
             todayItem?.Open.Execute(null);
             bool openedToday = opened == today;
 
