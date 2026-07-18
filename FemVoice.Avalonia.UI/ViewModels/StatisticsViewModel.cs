@@ -1,10 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using FemVoiceStudio.Data;
+using FemVoiceStudio.Services;   // ProgressionService, LevelClassificationSystem
 using FemVoice.Avalonia.Localization;
 
 namespace FemVoice.Avalonia.ViewModels;
+
+/// <summary>One recent-session row for the statistics list (date / difficulty / duration / score). Read-only.</summary>
+public sealed record StatSessionRow(string Date, string Difficulty, string Duration, string Score);
 
 /// <summary>
 /// Statistics page (ported from the WPF StatisticsWindow). Shows REAL training statistics from the real database —
@@ -19,6 +24,16 @@ public sealed class StatisticsViewModel
     public string UnavailableNote { get; } = "";
     public IReadOnlyList<AnalysisSummaryMetric> Tiles { get; } = Array.Empty<AnalysisSummaryMetric>();
     public string DataNote => Localized.Get("Statistics_RealDataNote", "Ekte statistikk fra dine lagrede økter.");
+
+    // ── Current-level card + recent-sessions list (ported from WPF StatisticsWindow) ──────────────────────────
+    public bool HasLevel { get; private set; }
+    public string LevelName { get; private set; } = "—";
+    public double LevelProgressPercent { get; private set; }
+    public string LevelProgressText { get; private set; } = "";
+    public string CurrentLevelHeading => Localized.Get("Statistics_CurrentLevel", "Nåværende nivå");
+    public IReadOnlyList<StatSessionRow> RecentSessions { get; private set; } = Array.Empty<StatSessionRow>();
+    public bool HasRecentSessions => RecentSessions.Count > 0;
+    public string RecentHeading => Localized.Get("Statistics_RecentSessions", "Siste økter");
 
     public StatisticsViewModel(IDatabaseService? database)
     {
@@ -45,6 +60,32 @@ public sealed class StatisticsViewModel
                 new("Konsistens", $"{consistency:F0} %"),
                 new("Snitt score", $"{avgScore:F0} / 100"),
             };
+
+            // Current-level card (real level + progress toward promotion).
+            try
+            {
+                var status = new ProgressionService(database, LocalizationService.Instance).GetProgressionStatus();
+                var level = LevelClassificationSystem.FromDifficultyLevel(status.CurrentLevel);
+                LevelName = LevelClassificationSystem.GetLevelName(level);
+                if (status.SessionsRequiredForPromotion > 0)
+                {
+                    LevelProgressPercent = Math.Round(Math.Clamp(100.0 * status.SessionsAtCurrentLevel / status.SessionsRequiredForPromotion, 0, 100));
+                    LevelProgressText = $"{status.SessionsAtCurrentLevel} / {status.SessionsRequiredForPromotion} økter på dette nivået";
+                }
+                HasLevel = true;
+            }
+            catch { HasLevel = false; }
+
+            // Recent-sessions list (newest first): date / difficulty / duration / score.
+            RecentSessions = sessions
+                .OrderByDescending(s => s.StartTime).Take(10)
+                .Select(s => new StatSessionRow(
+                    s.StartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
+                    s.DifficultyLevel.ToString(),
+                    $"{(int)Math.Round(s.DurationSeconds / 60.0)} min",
+                    $"{s.OverallScore:F0} / 100"))
+                .ToList();
+
             EngineAvailable = true;
         }
         catch (Exception ex)
