@@ -39,6 +39,71 @@
           </Border>
         </Grid>
 
+        <!-- Progress to next level -->
+        <Border Classes="card" IsVisible="{Binding HasProgress}">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding ProgressHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+            <ProgressBar Minimum="0" Maximum="100" Value="{Binding ProgressPercent}" Height="18" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <TextBlock Text="{Binding ProgressToNextText}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Real stat metrics -->
+        <Border Classes="card">
+          <ItemsControl ItemsSource="{Binding StatMetrics}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Grid ColumnDefinitions="200,*" Margin="0,2">
+                  <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                  <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </Border>
+
+        <!-- Target parameters for the current level -->
+        <Border Classes="card">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding ParametersHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <ItemsControl ItemsSource="{Binding Parameters}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid ColumnDefinitions="200,*" Margin="0,1">
+                    <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}" TextWrapping="Wrap"/>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <!-- FemVoice-score history (bars, oldest→newest) -->
+        <Border Classes="card" IsVisible="{Binding HasScoreHistory}">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding ScoreHistoryHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <ItemsControl ItemsSource="{Binding ScoreHistoryBars}" Height="90">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Bottom"/></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Width="10" Height="{Binding}" VerticalAlignment="Bottom" CornerRadius="2" Background="{DynamicResource ShellAccentBrush}"/>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <!-- Weekly summary -->
+        <Border Classes="card">
+          <StackPanel Spacing="4">
+            <TextBlock Text="{Binding WeeklyHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <TextBlock Text="{Binding WeeklySummary}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+          </StackPanel>
+        </Border>
+
         <!-- Progression summary (real engine) -->
         <Border Classes="card">
           <StackPanel Spacing="6">

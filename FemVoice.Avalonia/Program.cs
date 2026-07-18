@@ -241,9 +241,14 @@ internal static class Program
             string summary1 = ps.GetProgressionSummary();
             bool dataOk = recent.Count == 6 && avgScore > 0 && avgPitch > 0 && !string.IsNullOrWhiteSpace(summary1);
 
-            Console.WriteLine($"[prog] levelOk={levelOk}('{levelName}') emptyOk={emptyOk} dataOk={dataOk} avgScore={avgScore:F0} avgPitch={avgPitch:F0}Hz");
+            // Richer detail (ported from WPF ProgressionDashboard): the VM surfaces stat metrics + target parameters
+            // + a score-history chart + weekly summary from the real DB.
+            var vm = new ProgressionViewModel(db);
+            bool detailOk = vm.EngineAvailable && vm.StatMetrics.Count >= 4 && vm.Parameters.Count >= 3
+                            && vm.ScoreHistoryBars.Count == 6 && vm.WeeklySummary.Contains("økter");
+            Console.WriteLine($"[prog] levelOk={levelOk}('{levelName}') emptyOk={emptyOk} dataOk={dataOk} detailOk={detailOk} stats={vm.StatMetrics.Count} params={vm.Parameters.Count} hist={vm.ScoreHistoryBars.Count} weekly='{vm.WeeklySummary}'");
             Console.WriteLine($"[prog] summary: {summary1}");
-            bool ok = levelOk && emptyOk && dataOk;
+            bool ok = levelOk && emptyOk && dataOk && detailOk;
             Console.WriteLine(ok ? "[prog] Progression engine smoke OK" : "[prog] Progression engine smoke FAIL");
             return ok ? 0 : 1;
         }
