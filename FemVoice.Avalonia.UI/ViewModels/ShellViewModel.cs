@@ -113,6 +113,7 @@ public partial class ShellViewModel : ObservableObject
             new(Localized.Get("Shell_Nav_SmartCoach", "SmartCoach"), true, ShowSmartCoachCommand),   // engine-backed
             new(Localized.Get("Shell_Nav_FirstSetup", "Førstegangsoppsett"), true, ShowFirstTimeSetupCommand),   // real onboarding
             new(Localized.Get("Shell_Nav_Resonance", "Resonans"), true, ShowResonanceCommand),   // real-time resonance + contrast demo
+            new(Localized.Get("Shell_Nav_Analyzer", "Analysator"), true, ShowAnalyzerCommand),   // real-time pitch/resonance analyzer
             new(Localized.Get("Shell_Nav_MicCalibration", "Mikrofonkalibrering"), true, _showMicCalibrationCommand),
             new(Localized.Get("Shell_Nav_ManualOverride", "Manuell overstyring"), true, ShowManualOverrideCommand),   // safety-clamp preview
         };
@@ -242,6 +243,7 @@ public partial class ShellViewModel : ObservableObject
             CaseReviewPanelViewModel => Localized.Get("CaseReview_Panel_Title", "Saksgjennomgang"),
             ManualOverridePanelViewModel => Localized.Get("Shell_Nav_ManualOverride", "Manuell overstyring"),
             ResonanceViewModel => Localized.Get("Shell_Nav_Resonance", "Resonans"),
+            AnalyzerViewModel => Localized.Get("Shell_Nav_Analyzer", "Analysator"),
             DeferredSurfaceViewModel d => $"{d.SurfaceName} (utsatt)",
             _ => "—",
         };
@@ -268,6 +270,9 @@ public partial class ShellViewModel : ObservableObject
     // Real-time resonance screen (Core ResonanceProxyEngine) + contrast demo; fresh disposable page (own capture
     // backend, stopped on navigate-away). null → creates its own real-when-available backend (synthetic in tests).
     [RelayCommand] private void ShowResonance() => CurrentPage = new ResonanceViewModel(null, _ui);
+
+    // Real-time analyzer (live pitch + resonance + running stats); fresh disposable page (own capture backend).
+    [RelayCommand] private void ShowAnalyzer() => CurrentPage = new AnalyzerViewModel(null, _ui);
     // Real system status (runtime + DB facts) fresh each open; export/support-package/backup stay deferred.
     [RelayCommand] private void ShowDiagnostics() => CurrentPage = new DiagnosticsViewModel(_database);
     // Real training statistics from the saved sessions (fresh each open; null-safe).

@@ -90,6 +90,7 @@
             <DataTemplate DataType="vm:CaseReviewPanelViewModel"><views:CaseReviewPanelView/></DataTemplate>
             <DataTemplate DataType="vm:ManualOverridePanelViewModel"><views:ManualOverridePanelView/></DataTemplate>
             <DataTemplate DataType="vm:ResonanceViewModel"><views:ResonanceView/></DataTemplate>
+            <DataTemplate DataType="vm:AnalyzerViewModel"><views:AnalyzerView/></DataTemplate>
             <!-- Static deferred placeholder (no services, no side effects) -->
             <DataTemplate DataType="vm:DeferredSurfaceViewModel">
               <ScrollViewer>
