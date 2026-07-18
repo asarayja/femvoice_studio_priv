@@ -9,7 +9,7 @@ data) · ❌ not ported.
 
 | WPF window/feature | Avalonia | Notes |
 | --- | --- | --- |
-| MainWindow — start/stop, live pitch chart, comfort zone, stability/health, difficulty | 🟡 Dashboard | **Real live mic → pitch/stability/health + chart** (Linux). Simplified feedback string — full FeedbackConsistencyGuard / FemVoiceScore / VocalHealthSupervisor / Hydration NOT wired. |
+| MainWindow — start/stop, live pitch chart, comfort zone, stability/health, difficulty | 🟡 Dashboard | **Real live mic → pitch/stability/health/RESONANCE + chart** (Linux). Real resonance via the Core `ResonanceProxyEngine` (PR #69), shown live + saved to `TrainingSession.ResonanceScore`. Simplified feedback string — full FeedbackConsistencyGuard / FemVoiceScore / VocalHealthSupervisor / Hydration NOT wired. |
 | ExerciseWindow — list, filters/search, guidance, live feedback, hold, subjective report, save | 🟡 Exercise Guide + Runtime | List (15) + filters/search + guidance + hold/target UI real. **Exercise runtime still uses target-tuned SYNTHETIC audio (not the real mic); no subjective report, no save→progression, no persistence.** |
 | SettingsWindow — theme, language, audio, voice-goal, backup/restore/clear, accessibility, privacy | 🟡 Settings | Theme/language/reduce-motion persist + apply (Avalonia-local). **No DB settings, mic calibration, backup/restore/clear, voice-goal profile, or privacy export/delete.** |
 | AnalysisWindow — OxyPlot resonance/pitch/prosody/health over real session data | 🟡 Analysis | **REAL** pitch/score trends + summary stats from the DB (PR #56). OxyPlot + per-dimension resonance/intonation rings (WPF sources from `SessionAnalyticsStore`) deferred. |

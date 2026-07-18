@@ -27,6 +27,11 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     private readonly PitchDetectionService _pitch;
     private readonly PitchTraceStabilizer _stabilizer = new();
     private readonly LiveMetricsService _metrics = new();
+    // Real cross-platform resonance DSP (frozen Core engine) — same as WPF. Emits a 0–1 resonance score per frame
+    // via ResonanceScoreUpdated; we surface it live and persist the session average. Read-only use of the engine.
+    private readonly FemVoiceStudio.Audio.ResonanceProxyEngine _resonanceEngine;
+    private volatile int _latestResonancePercent;   // 0–100, latest real resonance (volatile: written on capture thread)
+    private readonly List<double> _sessionResonance = new();   // per-session samples → saved average
     private const int SampleRate = 44100;
     private const int MaxTracePoints = 200;
     private const double ChartHeightPx = 200;   // fixed chart surface height; px == "distance from bottom"
@@ -55,6 +60,8 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         _database = database;
         _history = history ?? new History.SessionHistoryStore();
         _pitch = new PitchDetectionService(SampleRate);
+        _resonanceEngine = new FemVoiceStudio.Audio.ResonanceProxyEngine(SampleRate);
+        _resonanceEngine.ResonanceScoreUpdated += OnResonanceScore;
         _capture.FrameAvailable += OnFrameAvailable;
         _capture.DeviceLost += OnDeviceLost;
         UpdateComfortZone();
@@ -93,6 +100,8 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _currentSignalStatus = "Ingen stemme";
     [ObservableProperty] private string _currentFeedbackMessage = "Trykk Start for å begynne.";
     [ObservableProperty] private string _healthStatusDisplay = "—";
+    /// <summary>Live real resonance readout (from the Core ResonanceProxyEngine), e.g. "Lys (72)". "—" when no voice.</summary>
+    [ObservableProperty] private string _resonanceDisplay = "—";
     [ObservableProperty] private double _comfortZoneLow = 150;
     [ObservableProperty] private double _comfortZoneHigh = 220;
 
@@ -131,6 +140,9 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         if (IsRecording) return;
         _stabilizer.Reset();
         _metrics.Reset();
+        _resonanceEngine.Start();          // real resonance DSP (Reset()s internally)
+        _sessionResonance.Clear();
+        _latestResonancePercent = 0;
         PitchSamples.Clear();
         PitchTracePx.Clear();
         DashboardChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, ComfortZoneLow, ComfortZoneHigh);
@@ -146,9 +158,11 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     {
         if (!IsRecording) return;
         await _capture.StopAsync().ConfigureAwait(false);
+        _resonanceEngine.Stop();
         IsRecording = false;
         CurrentSignalStatus = "Ingen stemme";
         CurrentFeedbackMessage = "Økt stoppet.";
+        ResonanceDisplay = "—";
 
         // Record the session. Skip trivial (<2 s) sessions.
         int durationSeconds = (int)System.Math.Round((System.DateTime.Now - _sessionStart).TotalSeconds);
@@ -162,6 +176,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
                     double avg = voiced.Count > 0 ? voiced.Average() : 0;
                     double inZone = voiced.Count > 0
                         ? 100.0 * voiced.Count(p => p >= ComfortZoneLow && p <= ComfortZoneHigh) / voiced.Count : 0;
+                    double avgResonance = _sessionResonance.Count > 0 ? _sessionResonance.Average() : 0;
                     _database.SaveTrainingSession(new FemVoiceStudio.Models.TrainingSession
                     {
                         UserId = 1,
@@ -171,6 +186,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
                         MinPitch = voiced.Count > 0 ? System.Math.Round(voiced.Min(), 1) : 0,
                         MaxPitch = voiced.Count > 0 ? System.Math.Round(voiced.Max(), 1) : 0,
                         OverallScore = System.Math.Round(inZone),   // comfort-zone adherence (display-only score)
+                        ResonanceScore = System.Math.Round(avgResonance, 1),   // real resonance from the Core DSP engine
                         DifficultyLevel = SelectedDifficulty,
                         Feedback = "Avalonia dashboard-økt",
                     });
@@ -192,9 +208,19 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     }
 
     // ── Analysis (shared services, read-only) ──────────────────────────────────
+    // Real resonance score (0–1 from the Core engine) → 0–100. Fires on the capture thread; store into a volatile
+    // field read by the next UI post. When voiced this feeds the live readout + the per-session average.
+    private void OnResonanceScore(double score0to1)
+    {
+        int pct = (int)Math.Round(Math.Clamp(score0to1, 0, 1) * 100);
+        _latestResonancePercent = pct;
+        if (IsRecording) _sessionResonance.Add(pct);
+    }
+
     private void OnFrameAvailable(object? sender, AudioFrameAvailableEventArgs e)
     {
         PitchAnalysisResult result = _pitch.DetectPitch(e.Samples);
+        _resonanceEngine.ProcessSamples(e.Samples);   // real resonance DSP (emits ResonanceScoreUpdated → _latestResonancePercent)
         double smoothed = _metrics.CalculateSmoothedPitch(result.Pitch, result.IsVoiced);
         double stabilized = result.IsVoiced ? _stabilizer.Filter(smoothed, DateTime.Now) : 0;
         StabilityState stability = _metrics.CalculateStability();
@@ -209,6 +235,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
                 : "Ingen stemme";
             PitchStability = StabilityText(stability);
             HealthStatusDisplay = HealthText(health);
+            ResonanceDisplay = result.IsVoiced ? ResonanceText(_latestResonancePercent) : "—";
             CurrentFeedbackMessage = DeriveFeedback(result.IsVoiced, stability, health, stabilized);
 
             bool voiced = result.IsVoiced && stabilized > 0;
@@ -247,6 +274,14 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         DashboardChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, ComfortZoneLow, ComfortZoneHigh);
     }
 
+    // Qualitative label + value for the live resonance readout (0–100). Mirrors WPF's bright/neutral/dark buckets.
+    private static string ResonanceText(int pct) => pct switch
+    {
+        >= 67 => $"Lys ({pct})",
+        >= 34 => $"Nøytral ({pct})",
+        _ => $"Mørk ({pct})",
+    };
+
     private static string StabilityText(StabilityState s) => s switch
     {
         StabilityState.NoVoice => "Ingen stemme",
@@ -283,5 +318,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     {
         _capture.FrameAvailable -= OnFrameAvailable;
         _capture.DeviceLost -= OnDeviceLost;
+        _resonanceEngine.ResonanceScoreUpdated -= OnResonanceScore;
+        _resonanceEngine.Dispose();
     }
 }
