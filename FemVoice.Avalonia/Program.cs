@@ -3868,12 +3868,37 @@ internal static class Program
 
         bool noForbidden = BackendSourcesFreeOfForbiddenRefs(out bool scanned);
 
-        Console.WriteLine($"[audio-be] enumerationSafe={enumerationSafe} available={available} consistent={consistent} noAutoCapture={noAutoCapture} probeSafe={probeSafe} readinessTruthful={readinessTruthful} syntheticUnaffected={syntheticUnaffected} scanned={scanned} noForbidden={noForbidden}");
+        // Windows winmm/waveIn backend: constructing + probing + a fail-safe Start must never throw regardless of OS.
+        // On this Linux CI host winmm.dll is absent → it must report unavailable, enumerate empty, and start no loop
+        // (no frames, DeviceLost raised). On Windows the same object would report the real device(s); that path is
+        // verified on the user's machine, but the fail-safe contract is asserted here on every platform.
+        bool winMmFailSafe;
+        try
+        {
+            var win = new global::FemVoiceStudio.Audio.Abstractions.Windows.WinMmAudioCaptureService();
+            int winFrames = 0; win.FrameAvailable += (_, _) => winFrames++;
+            bool winAvail = win.IsBackendAvailable;                       // no throw
+            var winDevices = win.GetInputDevices();                       // no throw
+            bool winConsistent = winAvail ? winDevices.Count >= 1 : winDevices.Count == 0;
+            bool lost = false; win.DeviceLost += (_, _) => lost = true;
+            if (!winAvail)
+            {
+                win.StartAsync(new global::FemVoiceStudio.Audio.Abstractions.AudioCaptureOptions()).GetAwaiter().GetResult();
+                win.StopAsync().GetAwaiter().GetResult();
+            }
+            // Off Windows: unavailable, empty, no frames, and a Start attempt signalled device-lost.
+            bool offWindowsOk = winAvail || (winDevices.Count == 0 && winFrames == 0 && lost);
+            winMmFailSafe = winConsistent && winFrames == 0 && (winAvail || offWindowsOk);
+            (win as IDisposable)?.Dispose();
+        }
+        catch (Exception ex) { winMmFailSafe = false; Console.WriteLine($"[audio-be] winmm backend threw: {ex.GetType().Name}"); }
+
+        Console.WriteLine($"[audio-be] enumerationSafe={enumerationSafe} available={available} consistent={consistent} noAutoCapture={noAutoCapture} probeSafe={probeSafe} readinessTruthful={readinessTruthful} syntheticUnaffected={syntheticUnaffected} scanned={scanned} noForbidden={noForbidden} winMmFailSafe={winMmFailSafe}");
         Console.WriteLine($"[audio-be] backend={backend.SelectedBackendDescription} status=\"{r.StatusText}\" devices={r.DeviceCount}");
 
         (backend as IDisposable)?.Dispose();
 
-        bool ok = enumerationSafe && consistent && noAutoCapture && probeSafe && readinessTruthful && syntheticUnaffected && noForbidden;
+        bool ok = enumerationSafe && consistent && noAutoCapture && probeSafe && readinessTruthful && syntheticUnaffected && noForbidden && winMmFailSafe;
         Console.WriteLine(ok ? "[audio-be] Avalonia audio backend smoke OK" : "[audio-be] Avalonia audio backend smoke FAIL");
         return ok ? 0 : 1;
     }
@@ -4052,7 +4077,10 @@ internal static class Program
             System.IO.Path.Combine(absDir, "CrossPlatformAudioCaptureService.cs"),
             System.IO.Path.Combine(absDir, "Linux", "AlsaAudioCaptureService.cs"),
             System.IO.Path.Combine(absDir, "Linux", "AlsaInterop.cs"),
+            System.IO.Path.Combine(absDir, "Windows", "WinMmAudioCaptureService.cs"),
+            System.IO.Path.Combine(absDir, "Windows", "WinMmInterop.cs"),
         };
+        // The Windows backend must stay dependency-free P/Invoke (winmm, lowercase) — no NAudio/WASAPI/COM, no WPF.
         string[] forbidden = { "Audio.Windows", "NAudio", "WaveIn", "Wasapi", "atabaseService", "ystem.Windows", "hemeManager" };
         bool noForbidden = true;
         foreach (var f in files)

@@ -15,10 +15,10 @@ public enum AudioBackendKind { NotConfigured, Synthetic, Real }
 /// capture: it only calls <c>GetInputDevices()</c> and NEVER <c>StartAsync</c>. No WPF, no Windows-only audio, no
 /// DB, no clinical/scoring/SmartCoach/progression behaviour.
 ///
-/// The Avalonia runtime still uses the synthetic backend (display-only). A real cross-platform backend now exists
-/// behind the same abstraction (<see cref="CrossPlatformAudioCaptureService"/> — real ALSA capture on Linux; other
-/// OSes report "unavailable" pending their own bindings); this surfaces its true state honestly. Whether real
-/// capture is wired into the clinical runtime is a separate, later step.
+/// The Avalonia runtime selects a REAL cross-platform backend when a microphone is available on this OS
+/// (<see cref="CrossPlatformAudioCaptureService"/> — real ALSA capture on Linux, real winmm/waveIn capture on
+/// Windows; macOS reports "unavailable" pending its own binding) and falls back to the synthetic display-only source
+/// otherwise. This surfaces the true state honestly.
 /// </summary>
 public sealed class AudioReadiness
 {
