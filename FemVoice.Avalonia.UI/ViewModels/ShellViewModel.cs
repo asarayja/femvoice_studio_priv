@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FemVoice.Avalonia.Localization;   // Localized (safe read-only localization resolver)
@@ -72,6 +73,7 @@ public partial class ShellViewModel : ObservableObject
         BuildPages();
         BuildNav();
         _currentPage = dashboard;
+        RefreshInfoStats();   // real sidebar quick-stats from saved sessions (null-safe)
 
         // Stage 2B: live language refresh. When the Avalonia-local culture changes (startup or Save), rebuild the
         // localized nav rail + the current localized page + chrome so the UI re-renders in the new language without
@@ -151,8 +153,42 @@ public partial class ShellViewModel : ObservableObject
     // ── Display-only status strip (no real mic, no persistence, no clinical change) ──
     /// <summary>Display-only microphone/signal status: the Avalonia head uses synthetic audio only.</summary>
     public string MicStatusText => _audioReadiness.StatusText;   // truthful, abstraction-backed (Stage 3A)
-    /// <summary>Display-only mode banner stating the safety posture of the Avalonia head.</summary>
-    public string ModeText => Localized.Get("Shell_Mode", "Kun visning · ingen lagring · ingen klinisk endring");
+    /// <summary>Mode banner stating the safety posture of the Avalonia head. The app now stores real sessions and
+    /// reads real data, but changes NO clinical logic — the banner says exactly that.</summary>
+    public string ModeText => Localized.Get("Shell_Mode", "Ekte data lokalt · ingen klinisk endring");
+
+    // ── Right info sidebar: real quick-stats from the saved sessions (null-safe; empty with no DB) ──────────────
+    /// <summary>True when real quick-stats were read from the DB (drives the sidebar's stats block vs the hint).</summary>
+    [ObservableProperty] private bool _hasInfoStats;
+    [ObservableProperty] private string _infoSessionsLine = string.Empty;
+    [ObservableProperty] private string _infoStreakLine = string.Empty;
+    [ObservableProperty] private string _infoLastScoreLine = string.Empty;
+
+    /// <summary>Heading for the sidebar's real quick-stats block.</summary>
+    public string InfoStatsHeading => Localized.Get("Shell_Info_YourProgress", "Din fremgang");
+    /// <summary>Sidebar hint shown when there is no data yet (no DB / no sessions).</summary>
+    public string InfoNoStatsHint => Localized.Get("Shell_Info_NoStats",
+        "Fullfør en økt på dashbordet for å se fremgangen din her.");
+
+    // Recompute the sidebar quick-stats from the real DB (total sessions, current streak, last score). Read-only,
+    // null-safe, never throws. Called on construction and whenever the current page changes (so it reflects a
+    // session just saved on the dashboard). No clinical calculation — plain aggregates over saved sessions.
+    private void RefreshInfoStats()
+    {
+        if (_database is null) { HasInfoStats = false; return; }
+        try
+        {
+            var sessions = _database.GetRecentSessions(1000);
+            if (sessions.Count == 0) { HasInfoStats = false; return; }
+            var (_, _, streak) = _database.GetProgressionStats();
+            double lastScore = sessions.OrderByDescending(s => s.StartTime).First().OverallScore;
+            InfoSessionsLine = Localized.Get("Shell_Info_Sessions", "Økter") + $": {sessions.Count}";
+            InfoStreakLine = Localized.Get("Shell_Info_Streak", "Streak") + $": {streak} " + Localized.Get("Shell_Info_Days", "dager");
+            InfoLastScoreLine = Localized.Get("Shell_Info_LastScore", "Siste score") + $": {lastScore:F0} / 100";
+            HasInfoStats = true;
+        }
+        catch { HasInfoStats = false; }
+    }
 
     // Deferred nav label: "<Surface> — senere", localization-ready with the current text as fallback.
     private static string DeferredLabel(string surface)
@@ -179,6 +215,7 @@ public partial class ShellViewModel : ObservableObject
 
     partial void OnCurrentPageChanged(object value)
     {
+        RefreshInfoStats();   // keep the sidebar quick-stats fresh (e.g. after a session saved on the dashboard)
         CurrentDestinationLabel = value switch
         {
             MainDashboardViewModel => "Dashbord",
