@@ -37,11 +37,11 @@ public sealed class StatisticsViewModel
 
             Tiles = new List<AnalysisSummaryMetric>
             {
-                new("Totalt økter", sessions.Count.ToString()),
-                new("Streak", $"{streak} dager"),
+                new(Localized.Get("Statistics_TotalSessions", "Totalt antall økter"), sessions.Count.ToString()),
+                new(Localized.Get("Statistics_CurrentStreak", "Nåværende streak"), $"{streak} dager"),
                 new("Dager trent", daysTrained.ToString()),
                 new("Total tid", $"{totalMinutes} min"),
-                new("Snitt tonehøyde", avgPitch > 0 ? $"{avgPitch:F0} Hz" : "—"),
+                new(Localized.Get("Statistics_AveragePitch", "Gjennomsnittlig pitch"), avgPitch > 0 ? $"{avgPitch:F0} Hz" : "—"),
                 new("Konsistens", $"{consistency:F0} %"),
                 new("Snitt score", $"{avgScore:F0} / 100"),
             };

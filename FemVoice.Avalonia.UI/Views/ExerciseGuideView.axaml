@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:FemVoice.Avalonia.Localization"
              x:Class="FemVoice.Avalonia.Views.ExerciseGuideView">
   <!-- WPF-parity Exercise Guide list. Per row, WPF shows: icon · name · goal chip + difficulty • duration ·
        frequency chip · trimmed description · per-exercise session count ("N økter") + chevron. It does NOT show
@@ -17,7 +18,7 @@
     <!-- Today's progress summary (WPF parity) — display-only; this preview does not track/save progress -->
     <Border Grid.Row="1" Classes="card" Margin="0,0,0,12">
       <StackPanel Spacing="4">
-        <TextBlock Text="Dagens fremgang" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+        <TextBlock Text="{loc:Tr Key=Exercise_TodaysProgress, Fallback='Dagens progresjon'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
         <TextBlock Text="{Binding TodaysProgressText}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource ShellAccentBrush}"/>
         <TextBlock Text="{Binding ProgressNote}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
       </StackPanel>

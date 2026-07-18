@@ -88,7 +88,7 @@ public sealed class ClinicianPanelViewModel
                 new(Localized.Get("Clinician_Composite", "Samlet stemmescore"),
                     report.CompositeVoiceScore > 0 ? report.CompositeVoiceScore.ToString("F0", CultureInfo.InvariantCulture) + " / 100"
                                                    : Localized.Get("Clinician_Insufficient", "Ikke nok data ennå")),
-                new(Localized.Get("Clinician_Recovery", "Restitusjon"),
+                new(Localized.Get("Clinician_RecoveryStatus", "Restitusjonsstatus"),
                     (string.IsNullOrWhiteSpace(report.RecoveryStatus) ? "—" : report.RecoveryStatus)
                     + $" ({report.RecoveryScore:F0}/100)"),
                 new(Localized.Get("Clinician_DataSufficiency", "Datagrunnlag"),

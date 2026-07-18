@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:FemVoice.Avalonia.Localization"
              x:Class="FemVoice.Avalonia.Views.ExerciseRuntimeView">
   <!-- WPF parity: the exercise guide opens THIS page directly (one page, one Start — no separate detail page,
        no second Start). Pre-start info (focus/purpose/instructions) is shown alongside the session controls;
@@ -54,7 +55,7 @@
           <!-- Instructions / steps -->
           <Border Classes="card">
             <StackPanel Spacing="4">
-              <TextBlock Text="Instruksjoner" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+              <TextBlock Text="{loc:Tr Key=Exercise_StepsTitle, Fallback='Steg for steg'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
               <ItemsControl ItemsSource="{Binding Steps}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
@@ -102,7 +103,7 @@
           <!-- Live feedback (local, display-only — NOT FeedbackConsistencyGuard/SmartCoach) -->
           <Border Classes="card" BorderBrush="{DynamicResource ShellSuccessBrush}" IsVisible="{Binding IsRunning}">
             <StackPanel Spacing="2">
-              <TextBlock Text="Sanntids-tilbakemelding (kun visning)" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}"/>
+              <TextBlock Text="{loc:Tr Key=LiveFeedback_Title, Fallback='Live-tilbakemelding'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}"/>
               <TextBlock Text="{Binding LiveFeedbackMessage}" TextWrapping="Wrap" FontSize="16" Foreground="{DynamicResource ShellBodyTextBrush}"/>
               <TextBlock Text="{Binding RuntimeStatusMessage}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
             </StackPanel>
@@ -123,7 +124,7 @@
                 <TextBlock Text="{Binding RecommendedDurationText}" Foreground="{DynamicResource ShellMutedBrush}"/>
               </WrapPanel>
               <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                <Button Content="Start" Classes="primary" Command="{Binding BeginCommand}" IsEnabled="{Binding !IsRunning}" Width="110"/>
+                <Button Content="{loc:Tr Key=UI_StartExercise, Fallback='Start øvelse'}" Classes="primary" Command="{Binding BeginCommand}" IsEnabled="{Binding !IsRunning}" Width="110"/>
                 <Button Content="Stopp" Classes="secondary" Command="{Binding StopCommand}" IsEnabled="{Binding IsRunning}" Width="110"/>
               </StackPanel>
 

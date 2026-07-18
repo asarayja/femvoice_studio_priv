@@ -15,7 +15,7 @@ namespace FemVoice.Avalonia.ViewModels;
 /// </summary>
 public sealed class SmartCoachViewModel
 {
-    public string Title => Localized.Get("SmartCoach_Scaffold_Title", "SmartCoach");
+    public string Title => Localized.Get("SmartCoach_Title", "Smart Coach");
 
     public bool EngineAvailable { get; }
     public string UnavailableNote { get; } = "";
@@ -37,6 +37,8 @@ public sealed class SmartCoachViewModel
     public IReadOnlyList<AnalysisSummaryMetric> WeeklyHistory { get; private set; } = Array.Empty<AnalysisSummaryMetric>();
     public bool HasDetail => DetailMetrics.Count > 0;
     public string DetailHeading => Localized.Get("SmartCoach_Detail", "Detaljer");
+    /// <summary>Today's-focus card heading — the real WPF key (WPF shows "Dagens fokus").</summary>
+    public string TodaysFocusHeading => Localized.Get("SmartCoach_TodaysFocus", "Dagens fokus");
     public string WeeklyHistoryHeading => Localized.Get("SmartCoach_WeeklyHistory", "Ukeshistorikk");
 
     public SmartCoachViewModel(IDatabaseService? database, ILocalizationService? localization = null)

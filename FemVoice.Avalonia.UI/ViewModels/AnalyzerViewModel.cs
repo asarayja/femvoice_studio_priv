@@ -60,7 +60,7 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
     public string DeviceLabel => Localized.Get("MicCal_Device", "Enhet");
     public string TargetLabel => Localized.Get("Analyzer_TargetFrequency", "Målfrekvens (Hz)");
     public string MainFreqLabel => Localized.Get("Analyzer_MainFrequency", "Hovedfrekvens");
-    public string ResonanceLabel => Localized.Get("Dashboard_Resonance", "Resonans");
+    public string ResonanceLabel => Localized.Get("Analyzer_ResonanceFocus", "Resonansfokus");
     public string StatsLabel => Localized.Get("Analyzer_BasicStats", "Statistikk");
     public string StartLabel => Localized.Get("MicCal_Start", "Start");
     public string StopLabel => Localized.Get("MicCal_Stop", "Stopp");
