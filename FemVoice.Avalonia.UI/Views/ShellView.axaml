@@ -23,8 +23,9 @@
       </StackPanel>
     </Border>
 
-    <!-- Bottom status strip (display-only; no persistence) -->
+    <!-- Bottom status strip (display-only; no persistence). Hidden during first-run onboarding. -->
     <Border DockPanel.Dock="Bottom" Background="{DynamicResource ShellStatusBackgroundBrush}" Padding="12,6"
+            IsVisible="{Binding IsChromeVisible}"
             BorderBrush="{DynamicResource ShellBorderBrush}" BorderThickness="0,1,0,0">
       <DockPanel>
         <TextBlock DockPanel.Dock="Left" Text="{Binding MicStatusText}" Foreground="{DynamicResource ShellAccentBrush}" FontSize="12"/>

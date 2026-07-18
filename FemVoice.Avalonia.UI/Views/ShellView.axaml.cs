@@ -1,6 +1,8 @@
+using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using FemVoice.Avalonia.ViewModels;
 
 namespace FemVoice.Avalonia.Views;
 
@@ -13,10 +15,31 @@ namespace FemVoice.Avalonia.Views;
 /// </summary>
 public partial class ShellView : UserControl
 {
+    private double _lastWidth = 1000;
+
     public ShellView()
     {
         AvaloniaXamlLoader.Load(this);
-        SizeChanged += (_, e) => ApplyResponsive(e.NewSize.Width);
+        SizeChanged += (_, e) => { _lastWidth = e.NewSize.Width; ApplyResponsive(_lastWidth); };
+        // Re-apply chrome visibility when the shell enters/leaves first-run onboarding (CurrentPage change).
+        DataContextChanged += (_, _) => HookOnboarding();
+        HookOnboarding();
+    }
+
+    private ShellViewModel? _hooked;
+
+    private void HookOnboarding()
+    {
+        if (_hooked is not null) _hooked.PropertyChanged -= OnShellPropertyChanged;
+        _hooked = DataContext as ShellViewModel;
+        if (_hooked is not null) _hooked.PropertyChanged += OnShellPropertyChanged;
+        ApplyResponsive(_lastWidth);
+    }
+
+    private void OnShellPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(ShellViewModel.CurrentPage) or nameof(ShellViewModel.IsOnboarding))
+            ApplyResponsive(_lastWidth);
     }
 
     private void ApplyResponsive(double width)
@@ -25,6 +48,17 @@ public partial class ShellView : UserControl
         var info = this.FindControl<Border>("InfoSidebar");
         var burger = this.FindControl<Button>("HamburgerButton");
         if (split is null) return;
+
+        // During first-run onboarding the rest of the app is unreachable: hide the nav pane, info sidebar and
+        // hamburger entirely until setup has been chosen and saved (or skipped). The status strip hides via binding.
+        if (_hooked?.IsOnboarding == true)
+        {
+            split.DisplayMode = SplitViewDisplayMode.Overlay;   // Overlay + closed = pane takes no layout width
+            split.IsPaneOpen = false;
+            if (burger is not null) burger.IsVisible = false;
+            if (info is not null) info.IsVisible = false;
+            return;
+        }
 
         bool phone = width < 620;
         bool wide = width >= 900;

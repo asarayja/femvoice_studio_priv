@@ -1070,6 +1070,11 @@ internal static class Program
             (shell.CurrentPage as ReportsViewModel)?.OpenCaseReviewCommand.Execute(null);
             return;
         }
+        if (page is "firstsetup" or "firsttimesetup" or "onboarding" or "førstegangsoppsett")
+        {
+            shell.ForceShowOnboarding();   // deterministic (independent of the saved completed flag)
+            return;
+        }
         if (needle.Length == 0) return;   // "shell" / default keeps the dashboard
         var item = shell.NavItems.FirstOrDefault(n => n.Label.ToLowerInvariant().Contains(needle));
         item?.Command?.Execute(null);
@@ -1906,11 +1911,23 @@ internal static class Program
         bool notInNav = shell.NavItems.All(n => !n.Label.Contains("Førstegang"));
         bool landsOnDashboard = shell.CurrentPage is MainDashboardViewModel;
 
+        // Chrome-gating: while onboarding is the page, the rest of the app (nav rail / info sidebar / status strip)
+        // must be hidden — the shell exposes IsChromeVisible=false — and it must return once onboarding is left
+        // (its onDone callback navigates to the dashboard). Default (not onboarding) shows the chrome.
+        bool chromeShownByDefault = shell.IsChromeVisible && !shell.IsOnboarding;
+        shell.ForceShowOnboarding();
+        bool chromeHiddenInOnboarding = shell.IsOnboarding && !shell.IsChromeVisible;
+        // Leaving onboarding (what the FirstTimeSetup onDone callback does) restores the chrome.
+        shell.ShowDashboardCommand.Execute(null);
+        bool chromeRestoredOnLeave = !shell.IsOnboarding && shell.IsChromeVisible;
+
         try { System.IO.File.Delete(tmp); System.IO.File.Delete(tmp2); } catch { }
 
         Console.WriteLine($"[firstsetup] startsIncomplete={startsIncomplete} persisted={persisted} vmCompleted={vmCompleted} remembers={remembers}");
         Console.WriteLine($"[firstsetup] skipCompletes={skipCompletes} notInNav={notInNav} landsOnDashboard={landsOnDashboard}");
-        bool ok = startsIncomplete && persisted && vmCompleted && remembers && skipCompletes && notInNav && landsOnDashboard;
+        Console.WriteLine($"[firstsetup] chromeShownByDefault={chromeShownByDefault} chromeHiddenInOnboarding={chromeHiddenInOnboarding} chromeRestoredOnLeave={chromeRestoredOnLeave}");
+        bool ok = startsIncomplete && persisted && vmCompleted && remembers && skipCompletes && notInNav && landsOnDashboard
+                  && chromeShownByDefault && chromeHiddenInOnboarding && chromeRestoredOnLeave;
         Console.WriteLine(ok ? "[firstsetup] First-time setup smoke OK" : "[firstsetup] First-time setup smoke FAIL");
         return ok ? 0 : 1;
     }

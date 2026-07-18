@@ -153,7 +153,16 @@ public partial class ShellViewModel : ObservableObject
     /// <summary>Navigation entries for the shell rail (implemented destinations + deferred placeholders).</summary>
     [ObservableProperty] private IReadOnlyList<ShellNavItem> _navItems = new List<ShellNavItem>();
 
-    [ObservableProperty] private object _currentPage;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsOnboarding))]
+    [NotifyPropertyChangedFor(nameof(IsChromeVisible))]
+    private object _currentPage;
+
+    /// <summary>True while the first-run onboarding is the active page. Drives hiding the nav rail / info sidebar /
+    /// status strip so nothing else in the app is reachable until setup has been chosen and saved (or skipped).</summary>
+    public bool IsOnboarding => CurrentPage is FirstTimeSetupViewModel;
+    /// <summary>Inverse of <see cref="IsOnboarding"/> — the normal app chrome (nav + sidebar + status) is shown.</summary>
+    public bool IsChromeVisible => !IsOnboarding;
 
     // ── Display-only status strip (no real mic, no persistence, no clinical change) ──
     /// <summary>Display-only microphone/signal status: the Avalonia head uses synthetic audio only.</summary>
@@ -263,6 +272,10 @@ public partial class ShellViewModel : ObservableObject
         }
         catch { /* prefs unreadable → skip onboarding, land on dashboard */ }
     }
+
+    /// <summary>Force the onboarding page to be the current page regardless of the saved completed flag. Used by the
+    /// offscreen snapshot / smokes to exercise the first-run chrome-gating deterministically.</summary>
+    public void ForceShowOnboarding() => CurrentPage = _firstTimeSetup;
 
     [RelayCommand] private void ShowDashboard() => CurrentPage = _dashboard;
     [RelayCommand] private void ShowGuide() => CurrentPage = _guide;
