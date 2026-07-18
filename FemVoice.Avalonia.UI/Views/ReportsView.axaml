@@ -28,6 +28,8 @@
                     IsEnabled="{Binding CanExport}" Click="OnExportCsvClick"/>
             <Button x:Name="ExportTextButton" Content="{Binding ExportTextLabel}" Classes="secondary"
                     IsEnabled="{Binding CanExport}" Click="OnExportTextClick"/>
+            <Button Content="{Binding OpenCoachLabel}" Classes="secondary"
+                    IsVisible="{Binding CanOpenCoachPanel}" Command="{Binding OpenCoachCommand}"/>
           </StackPanel>
           <TextBlock x:Name="ExportStatus" IsVisible="False"
                      Foreground="{DynamicResource ShellSuccessBrush}" FontSize="12" TextWrapping="Wrap"/>

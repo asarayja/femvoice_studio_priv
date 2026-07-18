@@ -1,0 +1,70 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
+             x:Class="FemVoice.Avalonia.Views.CoachPanelView">
+  <!-- REAL coach panel: focus areas + recommendations + detected development state, assembled read-only from the
+       saved sessions via the frozen Core report pipeline. Truthful "not enough data" state when sparse. No writes. -->
+  <ScrollViewer>
+    <StackPanel Margin="24" Spacing="16" MaxWidth="820" HorizontalAlignment="Center">
+
+      <!-- Header + back -->
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Grid.Column="0" Text="{Binding Title}" FontSize="24" FontWeight="Bold"
+                   Foreground="{DynamicResource ShellHeadingBrush}" VerticalAlignment="Center"/>
+        <Button Grid.Column="1" Content="{Binding BackLabel}" Classes="secondary" Command="{Binding BackCommand}"/>
+      </Grid>
+
+      <!-- Not-enough-data state -->
+      <Border Classes="card" IsVisible="{Binding !HasReport}">
+        <TextBlock Text="{Binding EmptyMessage}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}"/>
+      </Border>
+
+      <!-- Real report -->
+      <StackPanel Spacing="16" IsVisible="{Binding HasReport}">
+        <Border Classes="card" BorderBrush="{DynamicResource ShellSuccessBrush}">
+          <StackPanel Spacing="4">
+            <TextBlock Text="{Binding ReportTitle}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellHeadingBrush}"/>
+            <TextBlock IsVisible="{Binding HasDevelopment}" Text="{Binding DevelopmentHeading}"
+                       FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}" Margin="0,6,0,0"/>
+            <TextBlock IsVisible="{Binding HasDevelopment}" Text="{Binding DevelopmentSummary}"
+                       TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Focus areas -->
+        <Border Classes="card" IsVisible="{Binding HasFocus}">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding FocusHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <ItemsControl ItemsSource="{Binding FocusAreas}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Margin="0,1"/>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <!-- Recommendations -->
+        <Border Classes="card" IsVisible="{Binding HasRecommendations}">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding RecommendationsHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <ItemsControl ItemsSource="{Binding Recommendations}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Margin="0,1"/>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+
+      <!-- Disclaimer -->
+      <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
+        <TextBlock Text="{Binding Disclaimer}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

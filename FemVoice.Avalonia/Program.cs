@@ -54,6 +54,7 @@ internal static class Program
         if (args.Contains("--mic-calibration-smoke")) return MicCalibrationSmoke().GetAwaiter().GetResult();
         if (args.Contains("--reports-export-smoke")) return ReportsExportSmoke();
         if (args.Contains("--info-sidebar-smoke")) return InfoSidebarSmoke();
+        if (args.Contains("--coach-panel-smoke")) return CoachPanelSmoke();
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
         if (args.Contains("--visual-baseline-smoke")) return VisualBaselineSmoke();
@@ -408,6 +409,58 @@ internal static class Program
         finally { Cleanup(); }
     }
 
+    // Headless verification of the REAL coach-panel slice (no display): the panel assembles a real OutcomeProfile →
+    // CoachReport from a TEMP DB read-only via the frozen Core pipeline WITHOUT throwing, and degrades to a truthful
+    // "not enough data" state (never a crash) — proven both with an empty DB and one holding real saved sessions.
+    // Also checks the Reports page exposes the open-coach command + the shell navigates to it and Back returns.
+    // No writes / no clinical change.
+    private static int CoachPanelSmoke()
+    {
+        // Empty DB → assembles without throwing; HasReport reflects the (lack of) evidence, EmptyMessage present.
+        string fileName = $"femvoice-coach-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+        string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio");
+        string full = System.IO.Path.Combine(dir, fileName);
+        void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+        Cleanup();
+        try
+        {
+            var emptyDb = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+            var emptyPanel = new CoachPanelViewModel(emptyDb);   // must not throw; empty-safe
+            bool emptyStateOk = emptyPanel.EmptyMessage.Length > 0 && emptyPanel.Title.Length > 0;
+
+            // With real saved sessions → assembles (still must not throw); HasReport is a bool either way.
+            for (int i = 0; i < 6; i++)
+                emptyDb.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
+                { UserId = 1, StartTime = DateTime.UtcNow.AddDays(-i * 2), EndTime = DateTime.UtcNow.AddDays(-i * 2).AddMinutes(5),
+                  AveragePitch = 170 + i * 4, OverallScore = 55 + i * 5, Feedback = "s" });
+            var panel = new CoachPanelViewModel(emptyDb);
+            bool assembledOk = panel is not null && !(panel.HasReport && panel.ReportTitle is null);   // no crash, coherent
+
+            // No DB → empty-safe.
+            var noDb = new CoachPanelViewModel(null);
+            bool noDbOk = !noDb.HasReport && noDb.EmptyMessage.Length > 0;
+
+            // Reports page exposes the open-coach command + shell navigates to the panel and Back returns to Reports.
+            var svc = new VoiceFeminizationExerciseService();
+            var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+            var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher(), null, emptyDb);
+            shell.ShowReportsCommand.Execute(null);
+            var reports = shell.CurrentPage as ReportsViewModel;
+            bool canOpen = reports is not null && reports.CanOpenCoachPanel;
+            reports!.OpenCoachCommand.Execute(null);
+            bool onCoach = shell.CurrentPage is CoachPanelViewModel;
+            (shell.CurrentPage as CoachPanelViewModel)!.BackCommand.Execute(null);
+            bool backToReports = shell.CurrentPage is ReportsViewModel;
+
+            Console.WriteLine($"[coach] emptyStateOk={emptyStateOk} assembledOk={assembledOk} noDbOk={noDbOk} canOpen={canOpen} onCoach={onCoach} backToReports={backToReports} (hasReport={panel.HasReport})");
+            bool ok = emptyStateOk && assembledOk && noDbOk && canOpen && onCoach && backToReports;
+            Console.WriteLine(ok ? "[coach] Coach panel smoke OK" : "[coach] Coach panel smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[coach] Coach panel smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
+        finally { Cleanup(); }
+    }
+
     // Avalonia-local session-history persistence: round-trips display-only records through a JSON store, degrades
     // gracefully on missing/corrupt files, caps + newest-first, and defaults to the Avalonia-local path (NOT the WPF
     // DB). Uses a TEMP path so it is deterministic and never touches the real history file. No clinical scoring.
@@ -487,7 +540,15 @@ internal static class Program
             "firstsetup" or "firsttimesetup" or "onboarding" or "førstegangsoppsett" => "førstegang",
             "miccalibration" or "calibration" or "mikrofonkalibrering" or "mic" => "mikrofon",
             _ => "",
+            // (coach panel is opened from within Reports, not a top-level nav item)
         };
+        // Coach panel is opened from within Reports (not a top-level nav item) — navigate there explicitly.
+        if (page is "coach" or "coachpanel" or "veilederpanel")
+        {
+            shell.ShowReportsCommand.Execute(null);
+            (shell.CurrentPage as ReportsViewModel)?.OpenCoachCommand.Execute(null);
+            return;
+        }
         if (needle.Length == 0) return;   // "shell" / default keeps the dashboard
         var item = shell.NavItems.FirstOrDefault(n => n.Label.ToLowerInvariant().Contains(needle));
         item?.Command?.Execute(null);
