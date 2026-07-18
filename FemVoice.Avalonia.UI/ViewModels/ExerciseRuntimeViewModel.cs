@@ -361,7 +361,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         Phase = RuntimePhase.Active;
         RuntimeStatusMessage = "Øvelse i gang — hold tonen i målområdet.";
         StartCoordinatorReadout();
-        _ = _capture.StartAsync(new AudioCaptureOptions(SampleRate));
+        _ = _capture.StartAsync(new AudioCaptureOptions(SampleRate, DeviceId: FemVoice.Avalonia.Preferences.CapturePreferences.SelectedMicDeviceId()));
     }
 
     /// <summary>

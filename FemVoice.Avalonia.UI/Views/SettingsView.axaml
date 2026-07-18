@@ -2,115 +2,132 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
              x:Class="FemVoice.Avalonia.Views.SettingsView">
-  <!-- Display-only Settings scaffold mirroring WPF SettingsWindow sections. Each row renders a DISABLED control
-       of its kind (combo/toggle/button) plus an "Utsatt" chip — every control is IsEnabled=False, bound to
-       nothing, with no command (no side effects). Dark baseline via shell theme brushes; no value converters. -->
+  <!-- FUNCTIONAL Settings. Every control below is live and persisted (theme/language/motion apply immediately;
+       the rest are stored and read by their consumers). No disabled "Utsatt" placeholders. The page DataContext is
+       the SettingsViewModel; the working cards bind to its Preferences editor. -->
   <ScrollViewer>
-    <!-- Layout polish: a centered, wider content column (was narrow + left-aligned) so a wide desktop window is
-         used better/balanced; section cards flow into a responsive 1-/2-column WrapPanel. Visual only. -->
-    <StackPanel Margin="24" Spacing="12" MaxWidth="1000" HorizontalAlignment="Center">
+    <StackPanel Margin="24" Spacing="14" MaxWidth="1000" HorizontalAlignment="Center">
 
-      <!-- Header: title + deferred badge -->
-      <StackPanel Orientation="Horizontal" Spacing="10">
-        <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold" VerticalAlignment="Center"
-                   Foreground="{DynamicResource ShellHeadingBrush}"/>
-        <Border Classes="chip" VerticalAlignment="Center">
-          <TextBlock Text="{Binding DeferredBadge}" Foreground="{DynamicResource ShellChipTextBrush}" FontSize="11"/>
-        </Border>
-      </StackPanel>
+      <!-- Header -->
+      <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>
 
-      <!-- Deferred banner -->
-      <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
-        <TextBlock Text="{Binding DeferredBanner}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-      </Border>
-
-      <!-- Stage 1: the ONLY interactive section — harmless local UI preferences (theme/language/reduce-motion),
-           persisted to an Avalonia-local file. PERSISTENCE ONLY: Save/Reload round-trip the file; nothing is
-           applied to the running app (no theme switch, no culture change). The behaviour-heavy sections below
-           remain disabled/inert. -->
+      <!-- Local preferences (theme/language/style/focus/frequency/motion) -->
       <Border Classes="card">
         <StackPanel Spacing="8" DataContext="{Binding Preferences}">
           <TextBlock Text="{Binding Heading}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}"/>
           <TextBlock Text="{Binding Note}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
 
-          <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" Margin="0,4,0,0">
+          <Grid ColumnDefinitions="150,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" Margin="0,4,0,0">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding ThemeLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <ComboBox Grid.Row="0" Grid.Column="1" MinWidth="180" HorizontalAlignment="Left" Margin="0,3"
+            <ComboBox Grid.Row="0" Grid.Column="1" MinWidth="200" HorizontalAlignment="Left" Margin="0,3"
                       ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding Theme, Mode=TwoWay}"/>
             <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding LanguageLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <ComboBox Grid.Row="1" Grid.Column="1" MinWidth="180" HorizontalAlignment="Left" Margin="0,3"
+            <ComboBox Grid.Row="1" Grid.Column="1" MinWidth="200" HorizontalAlignment="Left" Margin="0,3"
                       ItemsSource="{Binding LanguageOptions}" SelectedItem="{Binding Language, Mode=TwoWay}"/>
             <TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding StyleLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <ComboBox Grid.Row="2" Grid.Column="1" MinWidth="180" HorizontalAlignment="Left" Margin="0,3"
+            <ComboBox Grid.Row="2" Grid.Column="1" MinWidth="200" HorizontalAlignment="Left" Margin="0,3"
                       ItemsSource="{Binding StyleOptions}" SelectedItem="{Binding SelectedStyle, Mode=TwoWay}"/>
-            <TextBlock Grid.Row="3" Grid.Column="0" Text="{Binding FrequencyLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <ComboBox Grid.Row="3" Grid.Column="1" MinWidth="180" HorizontalAlignment="Left" Margin="0,3"
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="{Binding FocusLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <ComboBox Grid.Row="3" Grid.Column="1" MinWidth="200" HorizontalAlignment="Left" Margin="0,3"
+                      ItemsSource="{Binding FocusOptions}" SelectedItem="{Binding SelectedFocus, Mode=TwoWay}"/>
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="{Binding FrequencyLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <ComboBox Grid.Row="4" Grid.Column="1" MinWidth="200" HorizontalAlignment="Left" Margin="0,3"
                       ItemsSource="{Binding FrequencyOptions}" SelectedItem="{Binding SelectedFrequency, Mode=TwoWay}"/>
-            <TextBlock Grid.Row="4" Grid.Column="0" Text="{Binding ReduceMotionLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <CheckBox Grid.Row="4" Grid.Column="1" Margin="0,3" IsChecked="{Binding ReduceMotion, Mode=TwoWay}"/>
+            <TextBlock Grid.Row="5" Grid.Column="0" Text="{Binding ReduceMotionLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <CheckBox Grid.Row="5" Grid.Column="1" Margin="0,3" IsChecked="{Binding ReduceMotion, Mode=TwoWay}"/>
           </Grid>
 
           <StackPanel Orientation="Horizontal" Spacing="8">
             <Button Classes="primary" Content="{Binding SaveLabel}" Command="{Binding SaveCommand}"/>
             <Button Classes="secondary" Content="{Binding ReloadLabel}" Command="{Binding ReloadCommand}"/>
           </StackPanel>
-
-          <!-- Working action buttons (WPF Settings): re-run onboarding + open mic calibration -->
           <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasActions}" Margin="0,4,0,0">
             <Button Classes="secondary" Content="{Binding RerunSetupLabel}" Command="{Binding RerunSetupCommand}"/>
             <Button Classes="secondary" Content="{Binding OpenMicCalLabel}" Command="{Binding OpenMicCalibrationCommand}"/>
           </StackPanel>
           <TextBlock Text="{Binding Status}" IsVisible="{Binding HasStatus}"
-                     Foreground="{DynamicResource ShellSuccessBrush}" FontSize="12"/>
+                     Foreground="{DynamicResource ShellSuccessBrush}" FontSize="12" TextWrapping="Wrap"/>
           <TextBlock Text="{Binding FilePath}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" TextWrapping="Wrap"/>
         </StackPanel>
       </Border>
 
-      <!-- One card per settings section — responsive WrapPanel: cards are ~340px so 2 columns engage at normal
-           desktop widths (two cards + spacing fit ~700px of content region), and fall back to 1 column when narrow. -->
-      <ItemsControl ItemsSource="{Binding Sections}">
-        <ItemsControl.ItemsPanel>
-          <ItemsPanelTemplate>
-            <WrapPanel Orientation="Horizontal"/>
-          </ItemsPanelTemplate>
-        </ItemsControl.ItemsPanel>
-        <ItemsControl.ItemTemplate>
-          <DataTemplate DataType="vm:SettingsSection">
-            <Border Classes="card" Width="340" Margin="0,0,10,10" VerticalAlignment="Top">
-              <StackPanel Spacing="6">
-                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}"/>
-                <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-                <ItemsControl ItemsSource="{Binding Rows}">
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate DataType="vm:SettingsRow">
-                      <!-- Label-above-control so rows stay readable inside the narrower (340px) card. -->
-                      <StackPanel Margin="0,6,0,0" Spacing="3">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                          <TextBlock Text="{Binding Label}" Foreground="{DynamicResource ShellBodyTextBrush}" VerticalAlignment="Center"/>
-                          <!-- Compact "Utsatt" chip on actionable rows -->
-                          <Border Classes="chip" VerticalAlignment="Center" IsVisible="{Binding ShowDeferredChip}">
-                            <TextBlock Text="{Binding DeferredChip}" Foreground="{DynamicResource ShellChipTextBrush}" FontSize="10"/>
-                          </Border>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                          <!-- Info: read-only value text -->
-                          <TextBlock Text="{Binding Value}" IsVisible="{Binding IsInfo}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" VerticalAlignment="Center"/>
-                          <!-- Disabled control matching the WPF control kind (all inert) -->
-                          <ComboBox IsVisible="{Binding IsCombo}" IsEnabled="False" MinWidth="180" HorizontalAlignment="Left" PlaceholderText="{Binding ControlText}"/>
-                          <CheckBox IsVisible="{Binding IsToggle}" IsEnabled="False" Content="{Binding ControlText}"/>
-                          <Button IsVisible="{Binding IsButton}" IsEnabled="False" Content="{Binding ControlText}" Padding="12,3"/>
-                        </StackPanel>
-                      </StackPanel>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
-              </StackPanel>
-            </Border>
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
+      <!-- Audio and microphone -->
+      <Border Classes="card">
+        <StackPanel Spacing="8" DataContext="{Binding Preferences}">
+          <TextBlock Text="{Binding AudioHeading}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}"/>
+          <Grid ColumnDefinitions="150,*" RowDefinitions="Auto,Auto" Margin="0,2,0,0">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding MicDeviceLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <ComboBox Grid.Row="0" Grid.Column="1" MinWidth="240" HorizontalAlignment="Left" Margin="0,3"
+                      ItemsSource="{Binding MicDeviceOptions}" SelectedItem="{Binding SelectedMicDevice, Mode=TwoWay}"/>
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding HearOwnVoiceLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <CheckBox Grid.Row="1" Grid.Column="1" Margin="0,3" IsChecked="{Binding HearOwnVoice, Mode=TwoWay}"/>
+          </Grid>
+          <TextBlock Text="{Binding HearOwnVoiceNote}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
+        </StackPanel>
+      </Border>
 
-      <!-- Privacy consent paragraphs (WPF): informational text block, not toggle-row labels -->
+      <!-- Accessibility + privacy consent toggles -->
+      <Border Classes="card">
+        <StackPanel Spacing="8" DataContext="{Binding Preferences}">
+          <TextBlock Text="{Binding AccessibilityHeading}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}"/>
+          <CheckBox Content="{Binding StressSensitiveLabel}" IsChecked="{Binding StressSensitive, Mode=TwoWay}"/>
+          <CheckBox Content="{Binding ReducedVisualLabel}" IsChecked="{Binding ReducedVisualFeedback, Mode=TwoWay}"/>
+          <TextBlock Text="{Binding PrivacyHeading}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}" Margin="0,6,0,0"/>
+          <CheckBox Content="{Binding DiagnosticsConsentLabel}" IsChecked="{Binding DiagnosticsConsent, Mode=TwoWay}"/>
+          <CheckBox Content="{Binding ResearchConsentLabel}" IsChecked="{Binding ResearchConsent, Mode=TwoWay}"/>
+          <TextBlock Text="Endringene lagres når du trykker «Lagre» øverst." Foreground="{DynamicResource ShellFaintBrush}" FontSize="11"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Data: real backup / restore / clear -->
+      <Border Classes="card">
+        <StackPanel Spacing="8" DataContext="{Binding Preferences}">
+          <TextBlock Text="{Binding DataHeading}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}"/>
+          <TextBlock Text="{Binding DataNote}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+
+          <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <Button Classes="secondary" Content="{Binding BackupLabel}" Command="{Binding BackupCommand}"/>
+            <ComboBox MinWidth="220" ItemsSource="{Binding Backups}" SelectedItem="{Binding SelectedBackup, Mode=TwoWay}"
+                      IsVisible="{Binding HasBackups}" DisplayMemberBinding="{Binding DisplayName}"/>
+            <TextBlock Text="{Binding NoBackupsLabel}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12"
+                       VerticalAlignment="Center" IsVisible="{Binding !HasBackups}"/>
+          </StackPanel>
+
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Classes="secondary" Content="{Binding RestoreLabel}" Command="{Binding RestoreCommand}" IsVisible="{Binding HasBackups}"/>
+            <Button Classes="secondary" Content="{Binding ClearLabel}" Command="{Binding ClearCommand}"/>
+          </StackPanel>
+
+          <!-- Inline confirmation for the destructive actions -->
+          <Border BorderBrush="{DynamicResource ShellWarningBrush}" BorderThickness="1" CornerRadius="6" Padding="10"
+                  IsVisible="{Binding ConfirmRestore}">
+            <StackPanel Spacing="6">
+              <TextBlock Text="Gjenopprett fra valgt sikkerhetskopi? Nåværende data erstattes (en sikkerhetskopi tas først)."
+                         TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Classes="primary" Content="{Binding ConfirmLabel}" Command="{Binding ConfirmRestoreActionCommand}"/>
+                <Button Classes="secondary" Content="{Binding CancelLabel}" Command="{Binding CancelConfirmCommand}"/>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+          <Border BorderBrush="{DynamicResource ShellWarningBrush}" BorderThickness="1" CornerRadius="6" Padding="10"
+                  IsVisible="{Binding ConfirmClear}">
+            <StackPanel Spacing="6">
+              <TextBlock Text="Tømme hele databasen? All lokal treningshistorikk slettes. Dette kan ikke angres (men du kan gjenopprette fra en sikkerhetskopi)."
+                         TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Classes="primary" Content="{Binding ConfirmLabel}" Command="{Binding ConfirmClearActionCommand}"/>
+                <Button Classes="secondary" Content="{Binding CancelLabel}" Command="{Binding CancelConfirmCommand}"/>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <TextBlock Text="{Binding DataStatus}" IsVisible="{Binding HasDataStatus}"
+                     Foreground="{DynamicResource ShellSuccessBrush}" FontSize="12" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Privacy consent paragraphs (informational; SettingsViewModel context) -->
       <Border Classes="card">
         <StackPanel Spacing="6">
           <TextBlock Text="{Binding ConsentHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
@@ -124,8 +141,20 @@
         </StackPanel>
       </Border>
 
-      <TextBlock Text="{Binding SafetyNote}"
-                 Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
+      <!-- About (real) -->
+      <Border Classes="card">
+        <StackPanel Spacing="4">
+          <TextBlock Text="{Binding AboutHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <TextBlock Text="{Binding AppName}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="{Binding VersionLabel}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+            <TextBlock Text="{Binding VersionValue}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
+          </StackPanel>
+          <TextBlock Text="{Binding PlatformValue}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11"/>
+        </StackPanel>
+      </Border>
+
+      <TextBlock Text="{Binding SafetyNote}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
 
     </StackPanel>
   </ScrollViewer>

@@ -1,200 +1,56 @@
 using System.Collections.Generic;
-using System.Linq;
 using FemVoice.Avalonia.Localization;   // Localized (safe read-only localization resolver)
 
 namespace FemVoice.Avalonia.ViewModels;
 
-/// <summary>The kind of (disabled) control a settings row visually represents — mirrors the WPF control type
-/// (combo box / checkbox-toggle / button) so the scaffold looks like the real Settings page. Always inert.</summary>
-public enum SettingsControlKind { Info, Toggle, Combo, Button }
-
-/// <summary>One display-only settings row: a label + a deferred status, rendered as a DISABLED control of
-/// <see cref="Kind"/>. Always inert in this scaffold (no command, no binding target, no side effect).</summary>
-public sealed class SettingsRow
-{
-    public SettingsRow(string label, string status, SettingsControlKind kind = SettingsControlKind.Info, string controlText = "")
-    {
-        Label = label;
-        Value = status;
-        Kind = kind;
-        ControlText = controlText;
-    }
-
-    public string Label { get; }
-    /// <summary>Deferred status text (e.g. "Utsatt — kommer senere") or, for Info rows, the read-only value.</summary>
-    public string Value { get; }
-    public SettingsControlKind Kind { get; }
-    /// <summary>Text shown inside the disabled control (combo placeholder / button caption / toggle caption).</summary>
-    public string ControlText { get; }
-
-    /// <summary>Always <c>false</c> — every settings action is deferred/inert in this scaffold.</summary>
-    public bool IsEnabled => false;
-
-    // Converter-free visibility switches for the view (render the matching disabled control kind).
-    public bool IsInfo => Kind == SettingsControlKind.Info;
-    public bool IsToggle => Kind == SettingsControlKind.Toggle;
-    public bool IsCombo => Kind == SettingsControlKind.Combo;
-    public bool IsButton => Kind == SettingsControlKind.Button;
-    /// <summary>Compact "deferred" chip shown on actionable (non-Info) rows.</summary>
-    public bool ShowDeferredChip => Kind != SettingsControlKind.Info;
-    public string DeferredChip => Localized.Get("Scaffold_Pending", "Utsatt");
-}
-
-/// <summary>A display-only settings card: title + description + inert rows.</summary>
-public sealed class SettingsSection
-{
-    public SettingsSection(string title, string description, IReadOnlyList<SettingsRow> rows)
-    {
-        Title = title;
-        Description = description;
-        Rows = rows;
-    }
-
-    public string Title { get; }
-    public string Description { get; }
-    public IReadOnlyList<SettingsRow> Rows { get; }
-}
-
 /// <summary>
-/// DISPLAY-ONLY Settings / Preferences scaffold. A purely static page: it holds NO services, NO commands,
-/// is NOT IDisposable, starts no timers/subscriptions/capture, and performs NO side effects. Every control
-/// is a DISABLED representation (combo/toggle/button) of the WPF Settings control — nothing persists, no
-/// SetLanguage/culture change, no theme-switch, no audio-device selection, no voice-goal/profile write, no
-/// database/backup/restore/clear, no privacy export/delete, no diagnostics export, no clinical behaviour.
-/// Labels resolve through the safe read-only localization adapter (real WPF Settings_*/Privacy_* keys where
-/// available; fallback otherwise). Sections/controls mirror WPF `SettingsWindow.xaml` for visual parity.
+/// FUNCTIONAL Settings page. It is a thin host around <see cref="UiPreferencesViewModel"/>, which holds every
+/// working control — theme / language / reduce-motion (applied live), voice-goal style + focus, training frequency,
+/// microphone selection (routed to capture), hear-own-voice, accessibility toggles, privacy consent, and REAL
+/// database backup / restore / clear — all persisted locally. There are no disabled "deferred" placeholders. This
+/// host adds only the page title, the About block (real version), the privacy consent paragraphs, and a safety note.
 /// </summary>
 public sealed class SettingsViewModel
 {
     private readonly System.Action? _openOnboarding;
     private readonly System.Action? _openMicCalibration;
+    private readonly FemVoiceStudio.Data.IDatabaseService? _database;
 
-    public SettingsViewModel(System.Action? openOnboarding = null, System.Action? openMicCalibration = null)
+    public SettingsViewModel(System.Action? openOnboarding = null, System.Action? openMicCalibration = null,
+        FemVoiceStudio.Data.IDatabaseService? database = null)
     {
         _openOnboarding = openOnboarding;
         _openMicCalibration = openMicCalibration;
-        string deferred = Localized.Get("Settings_DeferredStatus", "Utsatt — kommer senere");
-
-        Sections = new List<SettingsSection>
-        {
-            new(Localized.Get("Settings_General", "Generelt"),
-                Localized.Get("Settings_GeneralDesc", "Generelle appinnstillinger (kun visning)."),
-                new List<SettingsRow>
-                {
-                    new(Localized.Get("Settings_FirstRun", "Førstegangsoppsett"), deferred, SettingsControlKind.Button, Localized.Get("Scaffold_ComingSoon", "Kommer senere")),
-                }),
-
-            // Theme — WPF: RadioButtons (System/Light/Dark). Shown as a disabled combo with the current value.
-            new(Localized.Get("Settings_Theme", "Utseende / tema"),
-                Localized.Get("Settings_ThemeDescription", "Lyst/mørkt tema følger systemet (bytte er utsatt)."),
-                new List<SettingsRow>
-                {
-                    new(Localized.Get("Settings_ThemePreference", "Tema"), deferred, SettingsControlKind.Combo, Localized.Get("Settings_ThemeSystem", "System")),
-                }),
-
-            // Language — WPF: ComboBox (20 languages). Disabled combo showing the current language.
-            new(Localized.Get("Settings_Language", "Språk"),
-                Localized.Get("Settings_SelectLanguage", "Velg språk (bytte er utsatt)."),
-                new List<SettingsRow>
-                {
-                    new(Localized.Get("Settings_LanguageRow", "Språk"), deferred, SettingsControlKind.Combo, "Norsk"),
-                }),
-
-            // Audio — WPF: CheckBox "hear own voice" + Button "open mic calibration".
-            // Scaffold key: the Core Settings_AudioSettings resolves to the English "Audio settings".
-            new(Localized.Get("Settings_Scaffold_Audio", "Lydinnstillinger"),
-                Localized.Get("Settings_HearOwnVoiceDesc", "Mikrofon og «hør egen stemme» (utsatt)."),
-                new List<SettingsRow>
-                {
-                    new(Localized.Get("Settings_Microphone", "Mikrofon"), deferred, SettingsControlKind.Combo, Localized.Get("Shell_MicStatus", "Syntetisk (kun visning)")),
-                    new(Localized.Get("Settings_HearOwnVoice", "Hør egen stemme"), deferred, SettingsControlKind.Toggle, Localized.Get("Settings_HearOwnVoice", "Hør egen stemme")),
-                    new(Localized.Get("MicCalibration_Open", "Mikrofonkalibrering"), deferred, SettingsControlKind.Button, Localized.Get("Scaffold_ComingSoon", "Kommer senere")),
-                }),
-
-            // Voice goal — WPF: two ComboBoxes (focus / style).
-            new(Localized.Get("Settings_VoiceGoalTitle", "Øvelsespreferanser"),
-                Localized.Get("Settings_VoiceGoalDesc", "Stemmemål og fokus (utsatt — ingen profilskriving)."),
-                new List<SettingsRow>
-                {
-                    new(Localized.Get("Settings_VoiceGoalFocus", "Fokus"), deferred, SettingsControlKind.Combo, Localized.Get("VoiceGoalFocus_Balanced", "Balansert")),
-                    new(Localized.Get("Settings_VoiceGoalStyle", "Stil"), deferred, SettingsControlKind.Combo, Localized.Get("VoiceGoalStyle_SoftFeminine", "Myk feminin")),
-                }),
-
-            // Accessibility — WPF: CheckBox(es), e.g. stress-sensitive mode.
-            new(Localized.Get("Settings_Accessibility_Title", "Tilgjengelighet"),
-                Localized.Get("Settings_Accessibility_Desc", "Tilgjengelighetsvalg (utsatt)."),
-                new List<SettingsRow>
-                {
-                    new(Localized.Get("Settings_Accessibility_StressSensitive", "Stressømfintlig modus"), deferred, SettingsControlKind.Toggle, Localized.Get("Settings_Accessibility_StressSensitive", "Stressømfintlig modus")),
-                    // WPF Accessibility parity: reduced-visual-feedback + training-frequency.
-                    new(Localized.Get("Settings_ReducedVisualFeedback", "Redusert visuell tilbakemelding"), deferred, SettingsControlKind.Toggle, Localized.Get("Settings_ReducedVisualFeedback", "Redusert visuell tilbakemelding")),
-                    new(Localized.Get("Settings_TrainingFrequency", "Treningsfrekvens"), deferred, SettingsControlKind.Combo, Localized.Get("Settings_TrainingFrequency", "Treningsfrekvens")),
-                }),
-
-            // Data / backup — WPF: Buttons (clear / backup / restore).
-            new(Localized.Get("Settings_Database", "Data / sikkerhetskopi"),
-                Localized.Get("Settings_DatabaseDesc", "Sikkerhetskopi, gjenoppretting og databasehandlinger (utsatt)."),
-                new List<SettingsRow>
-                {
-                    new(Localized.Get("Settings_Sikkerhetskopi", "Sikkerhetskopi"), deferred, SettingsControlKind.Button, Localized.Get("Settings_CreateBackup", "Lag sikkerhetskopi")),
-                    new(Localized.Get("Settings_Gjenopprett", "Gjenopprett"), deferred, SettingsControlKind.Button, Localized.Get("Settings_RestoreBackup", "Gjenopprett")),
-                    new(Localized.Get("Settings_TomDatabase", "Tøm database"), deferred, SettingsControlKind.Button, Localized.Get("UI_ClearDatabase", "Tøm database")),
-                }),
-
-            // Privacy / diagnostics — WPF: consent toggles.
-            new(Localized.Get("Privacy_Title", "Personvern / diagnostikk"),
-                Localized.Get("Privacy_LocalStorage", "Data lagres lokalt. Diagnostikk og forskning (utsatt)."),
-                new List<SettingsRow>
-                {
-                    // Scaffold keys: the Core Privacy_* keys resolve to long consent paragraphs (unsuitable as a row
-                    // label / toggle caption); use short Norwegian labels here.
-                    new(Localized.Get("Settings_Scaffold_PrivacyDiagnostics", "Diagnostikk-samtykke"), deferred, SettingsControlKind.Toggle, Localized.Get("Settings_Scaffold_PrivacyDiagnostics", "Diagnostikk-samtykke")),
-                    new(Localized.Get("Settings_Scaffold_PrivacyResearch", "Forskningsdeling"), deferred, SettingsControlKind.Toggle, Localized.Get("Settings_Scaffold_PrivacyResearch", "Forskningsdeling")),
-                }),
-
-            // About — read-only info.
-            new(Localized.Get("Settings_About", "Om"),
-                Localized.Get("Settings_AboutDesc", "Om FemVoice Studio."),
-                new List<SettingsRow>
-                {
-                    new("FemVoice Studio", Localized.Get("Settings_AboutMode", "Avalonia · kun visning")),
-                    new(Localized.Get("Settings_Version", "Versjon"), "dev"),
-                }),
-        };
+        _database = database;
 
         Title = Localized.Get("Settings_Title", "Innstillinger");
-        DeferredBadge = Localized.Get("Scaffold_DeferredBadge", "Utsatt · kun visning");
-        DeferredBanner = Localized.Get("Settings_ScaffoldNotice2",
-            "Tema, språk, redusert bevegelse, stemme-stil og treningsfrekvens er aktive og lagres lokalt (tema/språk/" +
-            "bevegelse brukes umiddelbart). Noen avanserte valg (per-enhet mikrofonruting, hør egen stemme, " +
-            "sikkerhetskopi/gjenoppretting) er fortsatt under arbeid og vises som deaktivert.");
-        SafetyNote = Localized.Get("Settings_ScaffoldSafety2",
-            "Lokale valg lagres på denne maskinen · ingen klinisk endring.");
+        SafetyNote = Localized.Get("Settings_ScaffoldSafety3",
+            "Alle valg lagres lokalt på denne maskinen · ingen klinisk endring.");
     }
 
     private UiPreferencesViewModel? _preferences;
-    /// <summary>Stage-1 interactive harmless UI preferences (theme / language / reduce-motion), persisted to an
-    /// Avalonia-local file. LAZILY constructed so no file I/O occurs until the Settings page is shown — the shell
-    /// retains this VM from startup, but the preferences file is only read on first access. The behaviour-heavy
-    /// sections (audio/privacy/database/voice-goal/about) remain inert/deferred and are unaffected.</summary>
-    public UiPreferencesViewModel Preferences => _preferences ??= new UiPreferencesViewModel(null, _openOnboarding, _openMicCalibration);
+    /// <summary>The functional preferences editor (lazily constructed so no file I/O or device enumeration happens
+    /// until the Settings page is actually shown).</summary>
+    public UiPreferencesViewModel Preferences =>
+        _preferences ??= new UiPreferencesViewModel(null, _openOnboarding, _openMicCalibration, _database);
 
     public string Title { get; }
-    public string DeferredBadge { get; }
-    public string DeferredBanner { get; }
     public string SafetyNote { get; }
-    public IReadOnlyList<SettingsSection> Sections { get; }
 
-    /// <summary>WPF Privacy consent paragraphs (informational, real shared Privacy_* keys) — rendered as a text block,
-    /// NOT as short toggle-row labels.</summary>
+    // ── About (real, read-only) ───────────────────────────────────────────────────────────────────────────────────
+    public string AboutHeading => Localized.Get("Settings_About", "Om");
+    public string AppName => "FemVoice Studio";
+    public string VersionLabel => Localized.Get("Settings_Version", "Versjon");
+    public string VersionValue =>
+        typeof(SettingsViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
+    public string PlatformValue => "Avalonia · Windows / macOS / Linux / Android / iOS";
+
+    // ── Privacy consent paragraphs (informational; real shared Privacy_* keys) ────────────────────────────────────
+    public string ConsentHeading => Localized.Get("Privacy_Title", "Personvern");
     public IReadOnlyList<string> ConsentParagraphs { get; } = new[]
     {
         Localized.Get("Privacy_DiagnosticsConsent", "Diagnostikk eksporteres bare når du selv aktiverer det."),
         Localized.Get("Privacy_ResearchWarning", "Forskningsdata anonymiseres som standard."),
         Localized.Get("Privacy_ProfessionalNotesWarning", "Profesjonelle notater kan inneholde sensitiv fritekst."),
     };
-    public string ConsentHeading => Localized.Get("Privacy_Title", "Personvern / diagnostikk");
-
-    /// <summary>Always <c>true</c>: every row/control in the scaffold is deferred/inert.</summary>
-    public bool AllControlsDeferred => Sections.All(s => s.Rows.All(r => !r.IsEnabled));
 }

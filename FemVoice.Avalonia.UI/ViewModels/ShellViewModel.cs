@@ -87,7 +87,7 @@ public partial class ShellViewModel : ObservableObject
     private void BuildPages()
     {
         _guide = new ExerciseGuideViewModel(_exercises, OpenExercise, _database);
-        _settings = new SettingsViewModel(ForceShowOnboarding, () => _showMicCalibrationCommand.Execute(null));
+        _settings = new SettingsViewModel(ForceShowOnboarding, () => _showMicCalibrationCommand.Execute(null), _database);
         _analysis = new AnalysisViewModel(_database);   // engine-backed: real session trends when a DB is present
         _reports = new ReportsViewModel(_database, OpenCoachPanel, OpenClinicianPanel, OpenTimelinePanel, OpenCaseReviewPanel);   // real preview/export + coach/clinician/timeline
         _diagnostics = new DiagnosticsViewModel(_database);   // real system status when a DB is present

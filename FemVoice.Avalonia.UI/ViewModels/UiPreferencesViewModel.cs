@@ -3,42 +3,61 @@ using System.Collections.Generic;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using FemVoice.Avalonia.Localization;   // ScaffoldStrings.Cultures (Avalonia-owned culture list; no WPF)
+using FemVoiceStudio.Audio.Abstractions;   // AudioCaptureBackendFactory, AudioInputDevice
+using FemVoice.Avalonia.Data;              // SettingsDataService (real backup/restore/clear)
+using FemVoice.Avalonia.Localization;      // ScaffoldStrings.Cultures (Avalonia-owned culture list; no WPF)
 using FemVoice.Avalonia.Preferences;
 
 namespace FemVoice.Avalonia.ViewModels;
 
 /// <summary>
-/// Stage 1 — INTERACTIVE but display-only UI-preference editor. Binds the three harmless preferences (theme,
-/// language, reduce-motion) and persists them to the Avalonia-local <see cref="UiPreferencesStore"/>. It is
-/// PERSISTENCE-ONLY: Save/Reload round-trip the file; nothing is applied to the running app — no theme switch, no
-/// culture change, no audio/database/clinical/WPF interaction (runtime activation is a future Stage 2). Holds no
-/// WPF/Core service; not IDisposable. Loads current values on construction (only when the Settings page hosts it).
+/// FUNCTIONAL local settings editor. Binds every preference the Settings page shows and persists it to the
+/// Avalonia-local <see cref="UiPreferencesStore"/>: theme, language and reduce-motion (applied LIVE on Save),
+/// voice-goal style + focus, training frequency, the chosen microphone (routed to capture via
+/// <see cref="UiPreferences.MicDeviceId"/>), hear-own-voice, accessibility toggles, and privacy consent. It also
+/// drives the REAL database backup / restore / clear via <see cref="SettingsDataService"/> (with inline
+/// confirmation), and exposes working action buttons (re-run onboarding, open mic calibration). Nothing here is a
+/// disabled placeholder.
 /// </summary>
 public partial class UiPreferencesViewModel : ObservableObject
 {
     private readonly UiPreferencesStore _store;
+    private readonly SettingsDataService _data;
 
     private readonly Action? _openOnboarding;
     private readonly Action? _openMicCalibration;
 
     public UiPreferencesViewModel(UiPreferencesStore? store = null,
-        Action? openOnboarding = null, Action? openMicCalibration = null)
+        Action? openOnboarding = null, Action? openMicCalibration = null,
+        FemVoiceStudio.Data.IDatabaseService? database = null, SettingsDataService? dataService = null)
     {
         _store = store ?? new UiPreferencesStore();
+        _data = dataService ?? new SettingsDataService(database);
         _openOnboarding = openOnboarding;
         _openMicCalibration = openMicCalibration;
+
+        MicDeviceOptions = EnumerateMicDevices();
+        RefreshBackups();
+
         var p = _store.Load();
         _theme = p.Theme;
         _language = p.Language;
         _reduceMotion = p.ReduceMotion;
         _setupCompleted = p.FirstTimeSetupCompleted;   // preserved verbatim on Save (not edited here)
         _selectedStyle = StyleOptions.FirstOrDefault(s => s.Token == p.VoiceGoalStyle) ?? StyleOptions[0];
+        _selectedFocus = FocusOptions.FirstOrDefault(f => f.Token == p.VoiceGoalFocus) ?? FocusOptions[0];
         _selectedFrequency = FrequencyOptions.FirstOrDefault(f => f.Value == p.TrainingFrequency) ?? FrequencyOptions[1];
+        _selectedMicDevice = MicDeviceOptions.FirstOrDefault(d => d.Id == p.MicDeviceId) ?? MicDeviceOptions[0];
+        _hearOwnVoice = p.HearOwnVoice;
+        _stressSensitive = p.StressSensitiveMode;
+        _reducedVisualFeedback = p.ReducedVisualFeedback;
+        _diagnosticsConsent = p.DiagnosticsConsent;
+        _researchConsent = p.ResearchSharingConsent;
     }
 
-    // ── Voice-goal style + training frequency (real persisted prefs, WPF Settings parity) ─────────────────────────
+    // ── Voice-goal style + focus + training frequency (real persisted prefs, WPF Settings parity) ──────────────────
     public sealed record StyleOption(string Token, string Label) { public override string ToString() => Label; }
+    public sealed record FocusOption(string Token, string Label) { public override string ToString() => Label; }
     public sealed record FrequencyOption(int Value, string Label) { public override string ToString() => Label; }
     public IReadOnlyList<StyleOption> StyleOptions { get; } = new[]
     {
@@ -46,6 +65,13 @@ public partial class UiPreferencesViewModel : ObservableObject
         new StyleOption("bright_neutral", Localized.Get("VoiceGoalStyle_BrightNeutral", "Lys nøytral")),
         new StyleOption("androgynous", Localized.Get("VoiceGoalStyle_Androgynous", "Androgyn")),
         new StyleOption("custom", Localized.Get("VoiceGoalStyle_Custom", "Egendefinert")),
+    };
+    public IReadOnlyList<FocusOption> FocusOptions { get; } = new[]
+    {
+        new FocusOption("balanced", Localized.Get("VoiceGoalFocus_Balanced", "Balansert")),
+        new FocusOption("pitch", Localized.Get("Goal_Pitch", "Tonehøyde")),
+        new FocusOption("resonance", Localized.Get("Goal_Resonance", "Resonans")),
+        new FocusOption("intonation", Localized.Get("Goal_Intonation", "Intonasjon")),
     };
     public IReadOnlyList<FrequencyOption> FrequencyOptions { get; } = new[]
     {
@@ -55,9 +81,44 @@ public partial class UiPreferencesViewModel : ObservableObject
         new FrequencyOption(5, Localized.Get("Settings_Accessibility_Frequency5", "5 eller flere dager")),
     };
     [ObservableProperty] private StyleOption _selectedStyle;
+    [ObservableProperty] private FocusOption _selectedFocus;
     [ObservableProperty] private FrequencyOption _selectedFrequency;
     public string StyleLabel => Localized.Get("Settings_VoiceGoalStyle", "Stil");
+    public string FocusLabel => Localized.Get("Settings_VoiceGoalFocus", "Fokus");
     public string FrequencyLabel => Localized.Get("Settings_TrainingFrequency", "Treningsfrekvens");
+
+    // ── Microphone device (real enumeration + persisted routing) ──────────────────────────────────────────────────
+    public sealed record MicDeviceOption(string? Id, string Label) { public override string ToString() => Label; }
+    public IReadOnlyList<MicDeviceOption> MicDeviceOptions { get; }
+    [ObservableProperty] private MicDeviceOption _selectedMicDevice;
+    public string MicDeviceLabel => Localized.Get("Settings_Microphone", "Mikrofon");
+
+    private static IReadOnlyList<MicDeviceOption> EnumerateMicDevices()
+    {
+        var list = new List<MicDeviceOption> { new(null, Localized.Get("Settings_MicDefault", "Systemstandard")) };
+        try
+        {
+            var probe = AudioCaptureBackendFactory.CreateReal();
+            foreach (var d in probe.GetInputDevices())
+                if (!string.IsNullOrWhiteSpace(d.Id) && d.Id != "default")
+                    list.Add(new MicDeviceOption(d.Id, d.Name));
+            (probe as IDisposable)?.Dispose();
+        }
+        catch { /* enumeration is best-effort; the default entry always remains */ }
+        return list;
+    }
+
+    // ── Hear own voice + accessibility + privacy (persisted prefs) ────────────────────────────────────────────────
+    [ObservableProperty] private bool _hearOwnVoice;
+    [ObservableProperty] private bool _stressSensitive;
+    [ObservableProperty] private bool _reducedVisualFeedback;
+    [ObservableProperty] private bool _diagnosticsConsent;
+    [ObservableProperty] private bool _researchConsent;
+    public string HearOwnVoiceLabel => Localized.Get("Settings_HearOwnVoice", "Hør egen stemme");
+    public string StressSensitiveLabel => Localized.Get("Settings_Accessibility_StressSensitive", "Stressømfintlig modus");
+    public string ReducedVisualLabel => Localized.Get("Settings_ReducedVisualFeedback", "Redusert visuell tilbakemelding");
+    public string DiagnosticsConsentLabel => Localized.Get("Settings_Scaffold_PrivacyDiagnostics", "Diagnostikk-samtykke");
+    public string ResearchConsentLabel => Localized.Get("Settings_Scaffold_PrivacyResearch", "Forskningsdeling (anonymisert)");
 
     // Working action buttons (WPF Settings has these; the Avalonia placeholders did nothing).
     public string RerunSetupLabel => Localized.Get("Settings_FirstRun", "Kjør førstegangsoppsett på nytt");
@@ -85,10 +146,10 @@ public partial class UiPreferencesViewModel : ObservableObject
     /// <summary>Converter-free visibility flag for the status line.</summary>
     public bool HasStatus => !string.IsNullOrEmpty(Status);
 
-    public string Heading => Localized.Get("Settings_LocalPrefs_Title", "Lokale UI-innstillinger");
-    public string Note => Localized.Get("Settings_LocalPrefs_Note",
-        "Lagres lokalt på denne maskinen. Tema og språk brukes med en gang " +
-        "(kun oversatt tekst følger språket; resten vises på norsk inntil videre). Reduser bevegelse er aktiv og respekteres av appens bevegelseseffekter.");
+    public string Heading => Localized.Get("Settings_LocalPrefs_Title", "Lokale innstillinger");
+    public string Note => Localized.Get("Settings_LocalPrefs_Note2",
+        "Alle valg lagres lokalt på denne maskinen. Tema, språk og bevegelse brukes med en gang " +
+        "(kun oversatt tekst følger språket). Mikrofonvalget brukes neste gang du starter en økt.");
     public string SaveLabel => Localized.Get("Settings_LocalPrefs_Save", "Lagre");
     public string ReloadLabel => Localized.Get("Settings_LocalPrefs_Reload", "Last på nytt");
     public string ThemeLabel => Localized.Get("Settings_ThemePreference", "Tema");
@@ -98,17 +159,30 @@ public partial class UiPreferencesViewModel : ObservableObject
     /// <summary>The Avalonia-local file these preferences persist to (shown for transparency).</summary>
     public string FilePath => _store.FilePath;
 
+    // ── Section headings (functional cards) ───────────────────────────────────────────────────────────────────────
+    public string AudioHeading => Localized.Get("Settings_Scaffold_Audio", "Lyd og mikrofon");
+    public string GoalHeading => Localized.Get("Settings_VoiceGoalTitle", "Øvelsespreferanser");
+    public string AccessibilityHeading => Localized.Get("Settings_Accessibility_Title", "Tilgjengelighet");
+    public string PrivacyHeading => Localized.Get("Privacy_Title", "Personvern");
+    public string HearOwnVoiceNote => Localized.Get("Settings_HearOwnVoiceNote",
+        "Valget lagres. Sanntidsavspilling («hør egen stemme») aktiveres der lydutgang er tilgjengelig.");
+
     /// <summary>Current edited values as a model (no I/O).</summary>
     public UiPreferences Current() => new()
     {
         Theme = Theme, Language = Language, ReduceMotion = ReduceMotion, FirstTimeSetupCompleted = _setupCompleted,
         VoiceGoalStyle = SelectedStyle?.Token ?? "soft_feminine", TrainingFrequency = SelectedFrequency?.Value ?? 3,
+        VoiceGoalFocus = SelectedFocus?.Token ?? "balanced",
+        MicDeviceId = SelectedMicDevice?.Id,
+        HearOwnVoice = HearOwnVoice,
+        StressSensitiveMode = StressSensitive,
+        ReducedVisualFeedback = ReducedVisualFeedback,
+        DiagnosticsConsent = DiagnosticsConsent,
+        ResearchSharingConsent = ResearchConsent,
     };
 
-    // Persist, then apply THEME (Stage 2A) and LANGUAGE (Stage 2B) LIVE — both take effect immediately. Language
-    // activation raises Localized.LanguageChanged, which makes the shell re-render its localized text in the new
-    // culture without a restart. Only TRANSLATED text changes; strings with no translation stay Norwegian (the
-    // status says so). Reduce-motion remains persisted-only. Fail-safe: a failed write surfaces a status message.
+    // Persist, then apply THEME + LANGUAGE + reduce-motion LIVE. Other prefs (mic device, focus, hear-own-voice,
+    // accessibility, consent) are stored and read by their consumers (capture pipeline / live visuals). Fail-safe.
     [RelayCommand]
     private void Save()
     {
@@ -120,8 +194,8 @@ public partial class UiPreferencesViewModel : ObservableObject
             FemVoice.Avalonia.Accessibility.MotionActivation.Apply(ReduceMotion);    // reduce-motion — live (Avalonia motion state)
         }
         Status = ok
-            ? Localized.Get("Settings_LocalPrefs_Saved",
-                "Lagret. Tema, språk og bevegelsesvalg er oppdatert (kun oversatt tekst endres; resten vises på norsk inntil videre).")
+            ? Localized.Get("Settings_LocalPrefs_Saved2",
+                "Lagret. Tema, språk og bevegelse er oppdatert; mikrofon og øvrige valg brukes videre.")
             : Localized.Get("Settings_LocalPrefs_SaveFailed", "Kunne ikke lagre innstillingene lokalt.");
     }
 
@@ -134,7 +208,75 @@ public partial class UiPreferencesViewModel : ObservableObject
         Language = p.Language;
         ReduceMotion = p.ReduceMotion;
         SelectedStyle = StyleOptions.FirstOrDefault(s => s.Token == p.VoiceGoalStyle) ?? StyleOptions[0];
+        SelectedFocus = FocusOptions.FirstOrDefault(f => f.Token == p.VoiceGoalFocus) ?? FocusOptions[0];
         SelectedFrequency = FrequencyOptions.FirstOrDefault(f => f.Value == p.TrainingFrequency) ?? FrequencyOptions[1];
+        SelectedMicDevice = MicDeviceOptions.FirstOrDefault(d => d.Id == p.MicDeviceId) ?? MicDeviceOptions[0];
+        HearOwnVoice = p.HearOwnVoice;
+        StressSensitive = p.StressSensitiveMode;
+        ReducedVisualFeedback = p.ReducedVisualFeedback;
+        DiagnosticsConsent = p.DiagnosticsConsent;
+        ResearchConsent = p.ResearchSharingConsent;
         Status = Localized.Get("Settings_LocalPrefs_Reloaded", "Lastet fra lagret fil.");
+    }
+
+    // ── Data: real backup / restore / clear (inline confirmation) ─────────────────────────────────────────────────
+    public string DataHeading => Localized.Get("Settings_Database", "Data og sikkerhetskopi");
+    public string DataNote => Localized.Get("Settings_DatabaseNote",
+        "Ekte handlinger på den lokale databasen. Sikkerhetskopi er trygt; gjenoppretting og tømming endrer dataene dine.");
+    public string BackupLabel => Localized.Get("Settings_CreateBackup", "Lag sikkerhetskopi");
+    public string RestoreLabel => Localized.Get("Settings_RestoreBackup", "Gjenopprett valgt");
+    public string ClearLabel => Localized.Get("UI_ClearDatabase", "Tøm database");
+    public string ConfirmLabel => Localized.Get("Common_Confirm", "Bekreft");
+    public string CancelLabel => Localized.Get("Common_Cancel", "Avbryt");
+    public string NoBackupsLabel => Localized.Get("Settings_NoBackups", "Ingen sikkerhetskopier ennå.");
+
+    public System.Collections.ObjectModel.ObservableCollection<BackupEntry> Backups { get; } = new();
+    [ObservableProperty] private BackupEntry? _selectedBackup;
+    public bool HasBackups => Backups.Count > 0;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasDataStatus))]
+    private string _dataStatus = string.Empty;
+    public bool HasDataStatus => !string.IsNullOrEmpty(DataStatus);
+
+    // Inline confirmation flags (converter-free visibility for the destructive actions).
+    [ObservableProperty] private bool _confirmRestore;
+    [ObservableProperty] private bool _confirmClear;
+
+    private void RefreshBackups()
+    {
+        Backups.Clear();
+        foreach (var b in _data.ListBackups()) Backups.Add(b);
+        SelectedBackup = Backups.Count > 0 ? Backups[0] : null;
+        OnPropertyChanged(nameof(HasBackups));
+    }
+
+    [RelayCommand]
+    private void Backup()
+    {
+        var r = _data.Backup(DateTime.Now);
+        DataStatus = r.Message;
+        if (r.Ok) RefreshBackups();
+    }
+
+    [RelayCommand] private void Restore() { if (SelectedBackup is not null) { ConfirmClear = false; ConfirmRestore = true; } }
+    [RelayCommand] private void Clear() { ConfirmRestore = false; ConfirmClear = true; }
+    [RelayCommand] private void CancelConfirm() { ConfirmRestore = false; ConfirmClear = false; }
+
+    [RelayCommand]
+    private void ConfirmRestoreAction()
+    {
+        ConfirmRestore = false;
+        if (SelectedBackup is null) { DataStatus = NoBackupsLabel; return; }
+        DataStatus = _data.Restore(SelectedBackup.FilePath, DateTime.Now).Message;
+        RefreshBackups();
+    }
+
+    [RelayCommand]
+    private void ConfirmClearAction()
+    {
+        ConfirmClear = false;
+        DataStatus = _data.Clear().Message;
+        RefreshBackups();
     }
 }
