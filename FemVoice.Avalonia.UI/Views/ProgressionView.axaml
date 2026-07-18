@@ -1,9 +1,11 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="FemVoice.Avalonia.Views.ProgressionView">
-  <!-- Engine-backed Progression: real level + FemVoice score + summary from the real database. -->
+  <!-- Engine-backed Progression: real level + FemVoice score + summary from the real database. RESPONSIVE: the many
+       cards flow into TWO columns on desktop widths (uses the full content width, far less scrolling) and collapse to
+       a single column on narrow/phone widths (see code-behind reflow). -->
   <ScrollViewer>
-    <StackPanel Margin="20" Spacing="14" MaxWidth="960" HorizontalAlignment="Center">
+    <StackPanel Margin="20" Spacing="14" MaxWidth="1400" HorizontalAlignment="Stretch">
 
       <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>
 
@@ -14,7 +16,7 @@
 
       <StackPanel Spacing="14" IsVisible="{Binding EngineAvailable}">
 
-        <!-- Today's focus + Start exercise (WPF ProgressionDashboard parity) -->
+        <!-- Today's focus + Start exercise (WPF ProgressionDashboard parity) — full width -->
         <Border Classes="card" IsVisible="{Binding HasTodaysFocus}" BorderBrush="{DynamicResource ShellAccentBrush}">
           <Grid ColumnDefinitions="*,Auto">
             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
@@ -26,140 +28,150 @@
           </Grid>
         </Border>
 
-        <!-- Level + FemVoice score -->
-        <Grid ColumnDefinitions="*,*">
-          <Border Grid.Column="0" Classes="card" Margin="0,0,6,0">
-            <StackPanel Spacing="4">
-              <TextBlock Text="Nivå" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+        <!-- Two-column masonry. Cards are split between LeftCol/RightCol; the code-behind reflows them into a single
+             column on narrow widths. Each column is a star so they share the full width evenly. -->
+        <Grid x:Name="CardsGrid" ColumnDefinitions="*,*">
+          <StackPanel x:Name="LeftCol" Grid.Column="0" Spacing="14" Margin="0,0,7,0">
+
+            <!-- Level -->
+            <Border Classes="card">
+              <StackPanel Spacing="4">
+                <TextBlock Text="Nivå" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <TextBlock Text="{Binding LevelEmoji}" FontSize="26"/>
+                  <TextBlock Text="{Binding LevelName}" FontSize="22" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource ShellAccentBrush}"/>
+                </StackPanel>
+                <TextBlock Text="{Binding LevelDescription}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              </StackPanel>
+            </Border>
+
+            <!-- Progress to next level -->
+            <Border Classes="card" IsVisible="{Binding HasProgress}">
+              <StackPanel Spacing="6">
+                <TextBlock Text="{Binding ProgressHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+                <ProgressBar Minimum="0" Maximum="100" Value="{Binding ProgressPercent}" Height="18" Foreground="{DynamicResource ShellAccentBrush}"/>
+                <TextBlock Text="{Binding ProgressToNextText}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              </StackPanel>
+            </Border>
+
+            <!-- Per-dimension parameter graph — real VoiceIntelligence scores per session -->
+            <Border Classes="card" IsVisible="{Binding HasParameterGraph}">
+              <StackPanel Spacing="8">
+                <TextBlock Text="{Binding ParameterGraphHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+                <ItemsControl ItemsSource="{Binding ParameterGraph}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Grid ColumnDefinitions="120,*,20,52" Margin="0,3">
+                        <TextBlock Grid.Column="0" Text="{Binding Label}" VerticalAlignment="Center" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+                        <Border Grid.Column="1" Height="14" VerticalAlignment="Center" Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="3" ClipToBounds="True">
+                          <Border HorizontalAlignment="Left" Width="{Binding Score}" MaxWidth="10000" Background="{DynamicResource ShellAccentBrush}" CornerRadius="3"
+                                  IsVisible="{Binding HasData}"/>
+                        </Border>
+                        <TextBlock Grid.Column="2" Text="{Binding Direction}" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="13"
+                                   Foreground="{DynamicResource ShellAccentBrush}" IsVisible="{Binding HasData}"/>
+                        <TextBlock Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="12"
+                                   Foreground="{DynamicResource ShellBodyTextBrush}"
+                                   Text="{Binding Score, StringFormat='{}{0:F0}'}" IsVisible="{Binding HasData}"/>
+                        <TextBlock Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="11"
+                                   Foreground="{DynamicResource ShellFaintBrush}" Text="—" IsVisible="{Binding !HasData}"/>
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
+
+            <!-- Target parameters for the current level -->
+            <Border Classes="card">
+              <StackPanel Spacing="6">
+                <TextBlock Text="{Binding ParametersHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+                <ItemsControl ItemsSource="{Binding Parameters}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Grid ColumnDefinitions="150,*" Margin="0,1">
+                        <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}" TextWrapping="Wrap"/>
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
+
+            <!-- Weekly summary -->
+            <Border Classes="card">
+              <StackPanel Spacing="4">
+                <TextBlock Text="{Binding WeeklyHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+                <TextBlock Text="{Binding WeeklySummary}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              </StackPanel>
+            </Border>
+
+          </StackPanel>
+          <StackPanel x:Name="RightCol" Grid.Column="1" Spacing="14" Margin="7,0,0,0">
+
+            <!-- FemVoice score -->
+            <Border Classes="card">
+              <StackPanel Spacing="4">
+                <TextBlock Text="FemVoice-score" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <TextBlock Text="{Binding FemVoiceScoreText}" FontSize="34" FontWeight="Bold" Foreground="{DynamicResource ShellAccentBrush}"/>
+                  <TextBlock Text="/ 100" VerticalAlignment="Bottom" Margin="0,0,0,6" Foreground="{DynamicResource ShellMutedBrush}"/>
+                </StackPanel>
+                <TextBlock Text="{Binding SessionCountText}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+                <TextBlock Text="{Binding AveragePitchText, StringFormat='Snitt tonehøyde: {0}'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              </StackPanel>
+            </Border>
+
+            <!-- Real stat metrics -->
+            <Border Classes="card">
+              <ItemsControl ItemsSource="{Binding StatMetrics}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Grid ColumnDefinitions="150,*" Margin="0,2">
+                      <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                      <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Border>
+
+            <!-- Quickest improvement -->
+            <Border Classes="card" IsVisible="{Binding HasQuickestImprovement}" BorderBrush="{DynamicResource ShellSuccessBrush}">
               <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock Text="{Binding LevelEmoji}" FontSize="26"/>
-                <TextBlock Text="{Binding LevelName}" FontSize="22" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource ShellAccentBrush}"/>
+                <TextBlock Text="{Binding QuickestImprovementHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}"/>
+                <TextBlock Text="{Binding QuickestImprovement}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
               </StackPanel>
-              <TextBlock Text="{Binding LevelDescription}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-            </StackPanel>
-          </Border>
-          <Border Grid.Column="1" Classes="card" Margin="6,0,0,0">
-            <StackPanel Spacing="4">
-              <TextBlock Text="FemVoice-score" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-              <StackPanel Orientation="Horizontal" Spacing="6">
-                <TextBlock Text="{Binding FemVoiceScoreText}" FontSize="34" FontWeight="Bold" Foreground="{DynamicResource ShellAccentBrush}"/>
-                <TextBlock Text="/ 100" VerticalAlignment="Bottom" Margin="0,0,0,6" Foreground="{DynamicResource ShellMutedBrush}"/>
+            </Border>
+
+            <!-- FemVoice-score history (bars, oldest→newest) -->
+            <Border Classes="card" IsVisible="{Binding HasScoreHistory}">
+              <StackPanel Spacing="6">
+                <TextBlock Text="{Binding ScoreHistoryHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+                <ItemsControl ItemsSource="{Binding ScoreHistoryBars}" Height="90">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Bottom"/></ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Border Width="10" Height="{Binding}" VerticalAlignment="Bottom" CornerRadius="2" Background="{DynamicResource ShellAccentBrush}"/>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
               </StackPanel>
-              <TextBlock Text="{Binding SessionCountText}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-              <TextBlock Text="{Binding AveragePitchText, StringFormat='Snitt tonehøyde: {0}'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-            </StackPanel>
-          </Border>
+            </Border>
+
+            <!-- Progression summary (real engine) -->
+            <Border Classes="card">
+              <StackPanel Spacing="6">
+                <TextBlock Text="Progresjonssammendrag" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+                <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                <TextBlock Text="{Binding RecommendedDifficultyText}" Foreground="{DynamicResource ShellMutedBrush}"/>
+              </StackPanel>
+            </Border>
+
+          </StackPanel>
         </Grid>
-
-        <!-- Progress to next level -->
-        <Border Classes="card" IsVisible="{Binding HasProgress}">
-          <StackPanel Spacing="6">
-            <TextBlock Text="{Binding ProgressHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-            <ProgressBar Minimum="0" Maximum="100" Value="{Binding ProgressPercent}" Height="18" Foreground="{DynamicResource ShellAccentBrush}"/>
-            <TextBlock Text="{Binding ProgressToNextText}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-          </StackPanel>
-        </Border>
-
-        <!-- Real stat metrics -->
-        <Border Classes="card">
-          <ItemsControl ItemsSource="{Binding StatMetrics}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <Grid ColumnDefinitions="200,*" Margin="0,2">
-                  <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}"/>
-                  <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-                </Grid>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </Border>
-
-        <!-- Per-dimension parameter graph (WPF ProgressionDashboard) — real VoiceIntelligence scores per session -->
-        <Border Classes="card" IsVisible="{Binding HasParameterGraph}">
-          <StackPanel Spacing="8">
-            <TextBlock Text="{Binding ParameterGraphHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
-            <ItemsControl ItemsSource="{Binding ParameterGraph}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <Grid ColumnDefinitions="120,*,20,52" Margin="0,3">
-                    <TextBlock Grid.Column="0" Text="{Binding Label}" VerticalAlignment="Center" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-                    <Border Grid.Column="1" Height="14" VerticalAlignment="Center" Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="3" ClipToBounds="True">
-                      <Border HorizontalAlignment="Left" Width="{Binding Score}" MaxWidth="10000" Background="{DynamicResource ShellAccentBrush}" CornerRadius="3"
-                              IsVisible="{Binding HasData}"/>
-                    </Border>
-                    <!-- Per-parameter trend direction arrow (WPF DirectionToArrow) -->
-                    <TextBlock Grid.Column="2" Text="{Binding Direction}" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="13"
-                               Foreground="{DynamicResource ShellAccentBrush}" IsVisible="{Binding HasData}"/>
-                    <TextBlock Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="12"
-                               Foreground="{DynamicResource ShellBodyTextBrush}"
-                               Text="{Binding Score, StringFormat='{}{0:F0}'}" IsVisible="{Binding HasData}"/>
-                    <TextBlock Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="11"
-                               Foreground="{DynamicResource ShellFaintBrush}" Text="—" IsVisible="{Binding !HasData}"/>
-                  </Grid>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </StackPanel>
-        </Border>
-
-        <!-- Quickest improvement (WPF ProgressionDashboard) -->
-        <Border Classes="card" IsVisible="{Binding HasQuickestImprovement}" BorderBrush="{DynamicResource ShellSuccessBrush}">
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <TextBlock Text="{Binding QuickestImprovementHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}"/>
-            <TextBlock Text="{Binding QuickestImprovement}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          </StackPanel>
-        </Border>
-
-        <!-- Target parameters for the current level -->
-        <Border Classes="card">
-          <StackPanel Spacing="6">
-            <TextBlock Text="{Binding ParametersHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
-            <ItemsControl ItemsSource="{Binding Parameters}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <Grid ColumnDefinitions="200,*" Margin="0,1">
-                    <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}"/>
-                    <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}" TextWrapping="Wrap"/>
-                  </Grid>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </StackPanel>
-        </Border>
-
-        <!-- FemVoice-score history (bars, oldest→newest) -->
-        <Border Classes="card" IsVisible="{Binding HasScoreHistory}">
-          <StackPanel Spacing="6">
-            <TextBlock Text="{Binding ScoreHistoryHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
-            <ItemsControl ItemsSource="{Binding ScoreHistoryBars}" Height="90">
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Bottom"/></ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <Border Width="10" Height="{Binding}" VerticalAlignment="Bottom" CornerRadius="2" Background="{DynamicResource ShellAccentBrush}"/>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </StackPanel>
-        </Border>
-
-        <!-- Weekly summary -->
-        <Border Classes="card">
-          <StackPanel Spacing="4">
-            <TextBlock Text="{Binding WeeklyHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
-            <TextBlock Text="{Binding WeeklySummary}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          </StackPanel>
-        </Border>
-
-        <!-- Progression summary (real engine) -->
-        <Border Classes="card">
-          <StackPanel Spacing="6">
-            <TextBlock Text="Progresjonssammendrag" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-            <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <TextBlock Text="{Binding RecommendedDifficultyText}" Foreground="{DynamicResource ShellMutedBrush}"/>
-          </StackPanel>
-        </Border>
 
         <TextBlock Text="{Binding DataNote}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
       </StackPanel>
