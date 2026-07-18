@@ -143,7 +143,7 @@
         </StackPanel>
       </Border>
 
-      <!-- Recent local sessions (Avalonia-local, display-only history; no clinical scoring / no WPF DB). -->
+      <!-- Recent local sessions (real saved TrainingSessions from the local database; display-only, no clinical change). -->
       <Border Classes="card" IsVisible="{Binding HasRecentSessions}">
         <StackPanel Spacing="6">
           <TextBlock Text="Siste økter (lokalt)" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
@@ -154,20 +154,8 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
-          <TextBlock Text="Lagres lokalt på denne maskinen — ingen klinisk beregning, ingen database."
+          <TextBlock Text="Lagres lokalt i din database på denne maskinen — ingen klinisk endring."
                      Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" TextWrapping="Wrap"/>
-        </StackPanel>
-      </Border>
-
-      <!-- Professional tools placeholders (navigation moved to the shell top bar) -->
-      <Border Classes="card">
-        <StackPanel Spacing="8">
-          <TextBlock Text="Profesjonelle verktøy (placeholder — senere slices)" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}"/>
-          <WrapPanel>
-            <Button Content="Kliniker" IsEnabled="False" Margin="0,0,8,8"/>
-            <Button Content="Coach" IsEnabled="False" Margin="0,0,8,8"/>
-            <Button Content="Rapporteksport" IsEnabled="False" Margin="0,0,8,8"/>
-          </WrapPanel>
         </StackPanel>
       </Border>
 
