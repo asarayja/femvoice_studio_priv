@@ -60,6 +60,7 @@ internal static class Program
         if (args.Contains("--timeline-panel-smoke")) return TimelinePanelSmoke();
         if (args.Contains("--manual-override-smoke")) return ManualOverrideSmoke();
         if (args.Contains("--resonance-screen-smoke")) return ResonanceScreenSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--day-details-smoke")) return DayDetailsSmoke();
         if (args.Contains("--dashboard-resonance-smoke")) return DashboardResonanceSmoke().GetAwaiter().GetResult();
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
@@ -646,6 +647,57 @@ internal static class Program
             return ok ? 0 : 1;
         }
         catch (Exception ex) { Console.WriteLine($"[timeline] Timeline panel smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
+        finally { Cleanup(); }
+    }
+
+    // Headless verification of the REAL day-details slice (no display): with a TEMP DB holding sessions on a given
+    // day, the Calendar exposes clickable day items whose command fires openDay(date); the DayDetails VM then loads
+    // exactly that day's sessions with real detail (time/duration/pitch/resonance/score). No writes / no clinical change.
+    private static int DayDetailsSmoke()
+    {
+        string fileName = $"femvoice-daydet-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+        string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio");
+        string full = System.IO.Path.Combine(dir, fileName);
+        void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+        Cleanup();
+        try
+        {
+            var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+            // Two sessions today, one three days ago.
+            var today = DateTime.Now.Date;
+            void Save(DateTime start, double pitch, double score, double res)
+            {
+                var s = new global::FemVoiceStudio.Models.TrainingSession
+                { UserId = 1, StartTime = start.ToUniversalTime(), EndTime = start.AddMinutes(5).ToUniversalTime(),
+                  AveragePitch = pitch, MinPitch = pitch - 10, MaxPitch = pitch + 10, OverallScore = score, ResonanceScore = res, Feedback = "d" };
+                s.Id = db.SaveTrainingSession(s);
+                if (res > 0) db.UpdateTrainingSession(s);
+            }
+            Save(today.AddHours(9), 180, 66, 55);
+            Save(today.AddHours(18), 190, 72, 61);
+            Save(today.AddDays(-3).AddHours(10), 170, 50, 0);
+
+            // Calendar exposes clickable days; clicking today fires openDay(today).
+            DateTime? opened = null;
+            var cal = new CalendarViewModel(db, d => opened = d);
+            bool hasDays = cal.HasDays && cal.Days.Count >= 2;
+            var todayItem = cal.Days.FirstOrDefault(x => x.Date == today);
+            bool todayFound = todayItem is not null;
+            todayItem?.Open.Execute(null);
+            bool openedToday = opened == today;
+
+            // DayDetails loads exactly today's two sessions with real detail.
+            var det = new DayDetailsViewModel(db, today, null);
+            bool twoSessions = det.HasSessions && det.Sessions.Count == 2;
+            bool detailOk = det.Sessions.All(r => r.Score.Contains("/ 100")) && det.Sessions.Any(r => r.Resonance.Contains("55"));
+            bool summaryOk = det.Summary.Contains("2 økter");
+
+            Console.WriteLine($"[daydet] hasDays={hasDays} todayFound={todayFound} openedToday={openedToday} twoSessions={twoSessions} detailOk={detailOk} summaryOk={summaryOk}");
+            bool ok = hasDays && todayFound && openedToday && twoSessions && detailOk && summaryOk;
+            Console.WriteLine(ok ? "[daydet] Day details smoke OK" : "[daydet] Day details smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[daydet] Day details smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
         finally { Cleanup(); }
     }
 

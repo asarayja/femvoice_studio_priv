@@ -81,6 +81,7 @@
             <DataTemplate DataType="vm:ProgressionViewModel"><views:ProgressionView/></DataTemplate>
             <DataTemplate DataType="vm:StatisticsViewModel"><views:StatisticsView/></DataTemplate>
             <DataTemplate DataType="vm:CalendarViewModel"><views:CalendarView/></DataTemplate>
+            <DataTemplate DataType="vm:DayDetailsViewModel"><views:DayDetailsView/></DataTemplate>
             <DataTemplate DataType="vm:FirstTimeSetupViewModel"><views:FirstTimeSetupView/></DataTemplate>
             <DataTemplate DataType="vm:MicCalibrationViewModel"><views:MicCalibrationView/></DataTemplate>
             <DataTemplate DataType="vm:CoachPanelViewModel"><views:CoachPanelView/></DataTemplate>
