@@ -21,12 +21,11 @@ public sealed record ClinicianRow(string Label, string Value);
 /// Everything is read-only + totally guarded — any gap in the (frozen) analytics pipeline degrades to a truthful
 /// "not enough data" state instead of throwing. Nothing is written; no clinical logic is changed. Not IDisposable.
 ///
-/// NOTE on the WPF Clinician "Voice Metrics" (7 per-dimension 0–100 scores), "Learning Path" (stage/strengths/
-/// weaknesses/focus), and "Dimension Trends": these are all driven by the Voice-Intelligence trend read from
-/// <c>SessionAnalyticsStore</c> (via VoiceIntelligenceService / SmartCoachEngine.TryBuildDevelopmentProfile). The
-/// Avalonia capture path produces real PITCH + RESONANCE only and does NOT write per-dimension VI snapshots, so those
-/// sections would be empty or fabricated — they are intentionally omitted (no demo data) pending real per-dimension
-/// DSP + snapshot persistence. The insights + exercise-concerns below ARE assembled by the pipeline and are rendered.
+/// The WPF Clinician "Voice Metrics" (7 per-dimension 0–100 scores) are now REAL: the dashboard writes per-dimension
+/// VoiceIntelligence records to <c>SessionAnalyticsStore</c> each session, and they are averaged + rendered here.
+/// The "Learning Path" (stage/strengths/weaknesses/focus) and per-window "Dimension Trends" additionally require the
+/// VoiceIntelligenceService trend engine to be wired into the SmartCoachEngine; those remain a follow-up. The
+/// insights + exercise-concerns below are assembled by the pipeline and rendered.
 /// </summary>
 public sealed class ClinicianPanelViewModel
 {
@@ -72,6 +71,12 @@ public sealed class ClinicianPanelViewModel
     public IReadOnlyList<string> ExerciseConcerns { get; private set; } = Array.Empty<string>();
     public bool HasExerciseConcerns => ExerciseConcerns.Count > 0;
     public string ExerciseConcernsHeading => Localized.Get("Clinician_ExerciseConcerns", "Øvelsesmerknader");
+
+    // ── Voice metrics: per-dimension 0–100 scores (WPF Clinician), now REAL from the VoiceIntelligence records the
+    //    dashboard writes per session. Rendered as label + score rows; dimensions with no data show "—". ────────────
+    public IReadOnlyList<ClinicianRow> VoiceMetrics { get; private set; } = Array.Empty<ClinicianRow>();
+    public bool HasVoiceMetrics => VoiceMetrics.Count > 0;
+    public string VoiceMetricsHeading => Localized.Get("Clinician_VoiceMetrics", "Stemmemålinger");
 
     public string OverviewHeading => Localized.Get("Clinician_Panel_Overview", "Utfallsoversikt");
     public string GoalsHeading => Localized.Get("Clinician_GoalProgress", "Målfremdrift");
@@ -170,8 +175,36 @@ public sealed class ClinicianPanelViewModel
             }
             catch { ExerciseConcerns = Array.Empty<string>(); }
 
+            // Voice metrics (per-dimension 0–100) — real, averaged over the VoiceIntelligence records the dashboard
+            // writes per session. A dimension with no data shows "—" (no fabrication).
+            try
+            {
+                var records = analytics.GetSessionsAsync(now.AddDays(-90), now.AddDays(1), 1).GetAwaiter().GetResult();
+                if (records.Count > 0)
+                {
+                    ClinicianRow Metric(string label, System.Func<FemVoiceStudio.Services.SessionAnalyticsRecord, double> sel)
+                    {
+                        var vals = records.Select(sel).Where(v => v > 0).ToList();
+                        return new ClinicianRow(label, vals.Count > 0
+                            ? $"{System.Math.Round(vals.Average())} / 100"
+                            : Localized.Get("Clinician_NoDimData", "—"));
+                    }
+                    VoiceMetrics = new List<ClinicianRow>
+                    {
+                        Metric(Localized.Get("Dashboard_Resonance", "Resonans"), r => r.ResonanceScore100),
+                        Metric(Localized.Get("Dashboard_Pitch", "Tonehøyde"), r => r.PitchScore100),
+                        Metric(Localized.Get("Dashboard_Intonation", "Intonasjon"), r => r.IntonationScore100),
+                        Metric(Localized.Get("Dashboard_VoiceHealth", "Stemmehelse"), r => r.AverageHealthScore),
+                        Metric(Localized.Get("Dashboard_Comfort", "Komfort"), r => r.ComfortScore100),
+                        Metric(Localized.Get("Dashboard_Recovery", "Restitusjon"), r => r.RecoveryScore100),
+                        Metric(Localized.Get("Dashboard_Consistency", "Jevnhet"), r => r.ConsistencyScore100),
+                    };
+                }
+            }
+            catch { VoiceMetrics = Array.Empty<ClinicianRow>(); }
+
             HasReport = report.HasEnoughData || Goals.Count > 0 || TopExercises.Count > 0 || RecoveryDetail.Count > 0
-                        || Insights.Count > 0 || ExerciseConcerns.Count > 0;
+                        || Insights.Count > 0 || ExerciseConcerns.Count > 0 || VoiceMetrics.Count > 0;
         }
         catch
         {

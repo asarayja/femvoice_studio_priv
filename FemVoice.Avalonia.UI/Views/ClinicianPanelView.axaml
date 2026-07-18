@@ -45,6 +45,23 @@
           </StackPanel>
         </Border>
 
+        <!-- Voice metrics (per-dimension 0–100) — real VoiceIntelligence scores -->
+        <Border Classes="card" IsVisible="{Binding HasVoiceMetrics}">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding VoiceMetricsHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <ItemsControl ItemsSource="{Binding VoiceMetrics}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid ColumnDefinitions="200,*" Margin="0,1">
+                    <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
         <!-- Goal progress -->
         <Border Classes="card" IsVisible="{Binding HasGoals}">
           <StackPanel Spacing="6">
