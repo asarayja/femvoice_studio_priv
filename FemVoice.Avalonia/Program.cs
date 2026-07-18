@@ -53,6 +53,7 @@ internal static class Program
         if (args.Contains("--first-time-setup-smoke")) return FirstTimeSetupSmoke();
         if (args.Contains("--mic-calibration-smoke")) return MicCalibrationSmoke().GetAwaiter().GetResult();
         if (args.Contains("--reports-export-smoke")) return ReportsExportSmoke();
+        if (args.Contains("--info-sidebar-smoke")) return InfoSidebarSmoke();
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
         if (args.Contains("--visual-baseline-smoke")) return VisualBaselineSmoke();
@@ -358,6 +359,52 @@ internal static class Program
             return ok ? 0 : 1;
         }
         catch (Exception ex) { Console.WriteLine($"[rpt-export] Reports export smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
+        finally { Cleanup(); }
+    }
+
+    // Headless verification of the info-sidebar REAL quick-stats slice (no display): with no DB the shell reports
+    // HasInfoStats=false + a truthful no-data hint; with a TEMP DB holding real saved sessions it reports
+    // HasInfoStats=true and the sessions/streak/last-score lines reflect the real data; and ModeText no longer
+    // claims "ingen lagring" (the app stores real sessions now). No clinical logic touched.
+    private static int InfoSidebarSmoke()
+    {
+        var svc = new VoiceFeminizationExerciseService();
+
+        // No DB → no stats, truthful hint, accurate mode text.
+        var dashA = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shellNoDb = new ShellViewModel(dashA, svc, new InlineUiDispatcher());
+        bool noDbOk = !shellNoDb.HasInfoStats && shellNoDb.InfoNoStatsHint.Length > 0
+                      && shellNoDb.ModeText.Contains("ingen klinisk endring")
+                      && !shellNoDb.ModeText.Contains("ingen lagring");
+
+        // Real DB with sessions → real stats.
+        string fileName = $"femvoice-infosb-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+        string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio");
+        string full = System.IO.Path.Combine(dir, fileName);
+        void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+        Cleanup();
+        try
+        {
+            var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+            db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
+            { UserId = 1, StartTime = DateTime.UtcNow.AddMinutes(-10), EndTime = DateTime.UtcNow.AddMinutes(-6), AveragePitch = 180, OverallScore = 65, Feedback = "a" });
+            db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
+            { UserId = 1, StartTime = DateTime.UtcNow.AddMinutes(-4), EndTime = DateTime.UtcNow, AveragePitch = 195, OverallScore = 81, Feedback = "b" });
+
+            var dashB = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+            var shell = new ShellViewModel(dashB, svc, new InlineUiDispatcher(), null, db);
+            bool hasStats = shell.HasInfoStats;
+            bool sessionsOk = shell.InfoSessionsLine.Contains("2");
+            bool lastScoreOk = shell.InfoLastScoreLine.Contains("81");   // newest session's score
+            bool streakLineOk = shell.InfoStreakLine.Length > 0;
+
+            Console.WriteLine($"[info-sb] noDbOk={noDbOk} hasStats={hasStats} sessionsOk={sessionsOk} lastScoreOk={lastScoreOk} streakLineOk={streakLineOk}");
+            Console.WriteLine($"[info-sb] lines: '{shell.InfoSessionsLine}' | '{shell.InfoStreakLine}' | '{shell.InfoLastScoreLine}'");
+            bool ok = noDbOk && hasStats && sessionsOk && lastScoreOk && streakLineOk;
+            Console.WriteLine(ok ? "[info-sb] Info sidebar smoke OK" : "[info-sb] Info sidebar smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[info-sb] Info sidebar smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
         finally { Cleanup(); }
     }
 
@@ -874,7 +921,7 @@ internal static class Program
             && shell.NavItems[2].Label == "Innstillinger"   // Settings implemented
             && shell.NavItems[3].Label == "Analyse"          // Analysis implemented
             && shell.NavItems[4].Label == "Rapporter";       // Reports implemented
-        bool statusOk = shell.MicStatusText.Contains("syntetisk") && shell.ModeText.Contains("Kun visning");
+        bool statusOk = shell.MicStatusText.Contains("syntetisk") && shell.ModeText.Contains("ingen klinisk endring");
         var def = new DeferredSurfaceViewModel("Innstillinger");
         bool deferredOk = def.Title.Contains("Innstillinger") && !string.IsNullOrWhiteSpace(def.Message);
         Console.WriteLine($"[theme-loc] Shell labels: nav[0]='{shell.NavItems[0].Label}' nav[2]='{shell.NavItems[2].Label}' " +

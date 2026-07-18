@@ -105,16 +105,25 @@
                 BorderBrush="{DynamicResource ShellBorderBrush}" BorderThickness="1,0,0,0" Padding="12">
           <StackPanel Spacing="8">
             <TextBlock Text="{loc:Tr Key=Shell_InfoHeading, Fallback='Info'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-            <Border BorderBrush="{DynamicResource ShellOkBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10">
-              <StackPanel Spacing="4">
-                <TextBlock Text="{loc:Tr Key=Shell_DisplayOnlyMode, Fallback='Visning-bare modus'}"
-                           FontWeight="SemiBold" Foreground="{DynamicResource ShellOkBrush}" FontSize="13"/>
-                <TextBlock Text="{loc:Tr Key=Shell_DisplayOnlyDetail, Fallback='Ekte mikrofon når tilgjengelig · ingen lagring · ingen klinisk endring.'}"
-                           TextWrapping="Wrap" Foreground="{DynamicResource ShellSubtleTextBrush}" FontSize="12"/>
+
+            <!-- Real quick-stats from the saved sessions (shown when there is data) -->
+            <Border IsVisible="{Binding HasInfoStats}" BorderBrush="{DynamicResource ShellOkBorderBrush}"
+                    BorderThickness="1" CornerRadius="6" Padding="10">
+              <StackPanel Spacing="3">
+                <TextBlock Text="{Binding InfoStatsHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellOkBrush}" FontSize="13"/>
+                <TextBlock Text="{Binding InfoSessionsLine}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
+                <TextBlock Text="{Binding InfoStreakLine}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
+                <TextBlock Text="{Binding InfoLastScoreLine}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
               </StackPanel>
             </Border>
-            <TextBlock Text="{loc:Tr Key=Shell_ProToolsLater, Fallback='Profesjonelle verktøy, rapporter, analyse og innstillinger kommer i senere faser.'}"
+            <!-- Hint shown when there is no data yet -->
+            <TextBlock IsVisible="{Binding !HasInfoStats}" Text="{Binding InfoNoStatsHint}"
                        TextWrapping="Wrap" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12"/>
+
+            <!-- Mode/safety posture (accurate: real local data, no clinical change) -->
+            <Border BorderBrush="{DynamicResource ShellBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10">
+              <TextBlock Text="{Binding ModeText}" TextWrapping="Wrap" Foreground="{DynamicResource ShellSubtleTextBrush}" FontSize="12"/>
+            </Border>
           </StackPanel>
         </Border>
       </Grid>
