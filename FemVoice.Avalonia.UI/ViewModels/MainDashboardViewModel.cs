@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FemVoiceStudio.Audio;                 // PitchDetectionService
@@ -140,10 +142,38 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     [ObservableProperty] private double _comfortZoneLow = 150;
     [ObservableProperty] private double _comfortZoneHigh = 220;
 
-    public Array DifficultyOptions { get; } = Enum.GetValues(typeof(DifficultyLevel));
+    // Comfort-zone COMPLIANCE (WPF principle A7: the UI exposes NO raw Hz — the zone is communicated as
+    // in-zone/below/above compliance, not a number to hit). Replaces the raw current-pitch Hz readout.
+    [ObservableProperty] private string _comfortZoneStatus = "—";
+    [ObservableProperty] private bool _inComfortZone;
+
+    // Localized section headings (shared RESX keys WPF uses) so the dashboard text matches WPF and relocalizes.
+    public string ComfortZoneLabel => Localized.Get("Main_ComfortZone", "Komfortsone");
+    public string FeedbackHeading => Localized.Get("Main_Feedback", "Tilbakemelding");
+    public string PitchGraphHeading => Localized.Get("Main_PitchGraph", "Pitch-graf");
+
+    /// <summary>One difficulty choice + its localized label (shared Difficulty_* keys, like WPF's buttons).</summary>
+    public sealed record DifficultyOption(DifficultyLevel Value, string Label);
+    public IReadOnlyList<DifficultyOption> DifficultyOptions { get; } = new[]
+    {
+        new DifficultyOption(DifficultyLevel.Nybegynner, Localized.Get("Difficulty_Beginner", "Nybegynner")),
+        new DifficultyOption(DifficultyLevel.Middels, Localized.Get("Difficulty_Intermediate", "Middels")),
+        new DifficultyOption(DifficultyLevel.Avansert, Localized.Get("Difficulty_Advanced", "Avansert")),
+    };
 
     [ObservableProperty] private DifficultyLevel _selectedDifficulty = DifficultyLevel.Nybegynner;
-    partial void OnSelectedDifficultyChanged(DifficultyLevel value) => UpdateComfortZone();
+    partial void OnSelectedDifficultyChanged(DifficultyLevel value)
+    {
+        UpdateComfortZone();
+        OnPropertyChanged(nameof(SelectedDifficultyOption));
+    }
+
+    /// <summary>Selected difficulty as its display option (two-way bound by the ComboBox; keeps SelectedDifficulty in sync).</summary>
+    public DifficultyOption SelectedDifficultyOption
+    {
+        get => DifficultyOptions.FirstOrDefault(o => o.Value == SelectedDifficulty) ?? DifficultyOptions[0];
+        set { if (value is not null && value.Value != SelectedDifficulty) SelectedDifficulty = value.Value; }
+    }
 
     /// <summary>True when the active capture backend is the synthetic display-only source (no real microphone).
     /// Drives visibility of the synthetic test-tone selector — it is hidden when a real mic drives the dashboard.</summary>
@@ -286,6 +316,17 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
             CurrentSignalStatus = result.IsVoiced
                 ? $"Stemme ({result.Confidence:P0} sikkerhet)"
                 : "Ingen stemme";
+            // Comfort-zone COMPLIANCE (no raw Hz exposed — WPF principle A7): in-zone / below / above.
+            if (result.IsVoiced && stabilized > 0)
+            {
+                InComfortZone = stabilized >= ComfortZoneLow && stabilized <= ComfortZoneHigh;
+                ComfortZoneStatus = InComfortZone
+                    ? Localized.Get("Main_InComfortZone", "I komfortsonen")
+                    : stabilized < ComfortZoneLow
+                        ? Localized.Get("Main_BelowComfortZone", "Under komfortsonen")
+                        : Localized.Get("Main_AboveComfortZone", "Over komfortsonen");
+            }
+            else { InComfortZone = false; ComfortZoneStatus = "—"; }
             PitchStability = StabilityText(stability);
             HealthStatusDisplay = HealthText(health);
             ResonanceDisplay = result.IsVoiced ? ResonanceText(_latestResonancePercent) : "—";
@@ -335,13 +376,15 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         _ => $"Mørk ({pct})",
     };
 
+    // Stability / health labels resolve the SAME shared RESX keys WPF uses ({loc:Loc Stability_*/Health_*}) so the
+    // text matches WPF and relocalizes with the culture.
     private static string StabilityText(StabilityState s) => s switch
     {
-        StabilityState.NoVoice => "Ingen stemme",
-        StabilityState.Unstable => "Ustabil",
-        StabilityState.Developing => "Bygger stabilitet",
-        StabilityState.Stable => "Stabil",
-        StabilityState.VeryStable => "Veldig stabil",
+        StabilityState.NoVoice => Localized.Get("Stability_NoVoice", "Ingen stemme"),
+        StabilityState.Unstable => Localized.Get("Stability_Unstable", "Ustabil"),
+        StabilityState.Developing => Localized.Get("Stability_Developing", "Utvikler seg"),
+        StabilityState.Stable => Localized.Get("Stability_Stable", "Stabil"),
+        StabilityState.VeryStable => Localized.Get("Stability_VeryStable", "Veldig stabil"),
         _ => "—",
     };
 
@@ -349,9 +392,9 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     {
         HealthState.NoVoice => "—",
         HealthState.Safe => Localized.Get("Health_Safe", "Trygt"),
-        HealthState.Monitor => "Følg med",
-        HealthState.Warning => "Advarsel",
-        HealthState.Danger => "Stopp og hvil",
+        HealthState.Monitor => Localized.Get("Health_Monitor", "Observer"),
+        HealthState.Warning => Localized.Get("Health_Warning", "Advarsel"),
+        HealthState.Danger => Localized.Get("Health_Danger", "Fare"),
         _ => "—",
     };
 
