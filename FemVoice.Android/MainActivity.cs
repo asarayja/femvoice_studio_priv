@@ -13,7 +13,8 @@ namespace FemVoice.Android;
 /// </summary>
 [Activity(
     Label = "FemVoice Studio",
-    Theme = "@android:style/Theme.Material.Light.NoActionBar",
+    Icon = "@mipmap/appicon",
+    Theme = "@style/FemVoiceSplash",   // brand splash (logo on dark bg) shown while the app loads
     MainLauncher = true,
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode)]
 public class MainActivity : AvaloniaMainActivity<App>
