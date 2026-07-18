@@ -13,7 +13,7 @@
       <Border Classes="card" Padding="20,16">
         <StackPanel Spacing="4">
           <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-          <TextBlock Text="Trender og statistikk fra dine lagrede økter."
+          <TextBlock Text="{Binding Subtitle}"
                      FontSize="14" Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
         </StackPanel>
       </Border>

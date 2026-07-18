@@ -63,8 +63,8 @@ public sealed partial class ResonanceViewModel : ObservableObject, IDisposable
     public string FormantsHeading => Localized.Get("ResonanceWindow_Formants", "Formanter");
     public string CategoryLabel => Localized.Get("ResonanceWindow_Category", "Kategori");
     public string DeviceLabel => Localized.Get("MicCal_Device", "Enhet");
-    public string StartLabel => Localized.Get("MicCal_Start", "Start");
-    public string StopLabel => Localized.Get("MicCal_Stop", "Stopp");
+    public string StartLabel => Localized.Get("ResonanceWindow_StartAnalysis", "Start analyse");
+    public string StopLabel => Localized.Get("Exercise_Stop", "Stopp");
     public string ResetLabel => Localized.Get("MicCalibration_Restart", "Nullstill");
 
     // ── F1/F2 scatter + formant timeline (WPF ResonanceWindow charts) — real formant data from the Core engine ────

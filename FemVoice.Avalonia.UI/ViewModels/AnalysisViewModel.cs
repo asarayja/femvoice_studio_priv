@@ -54,6 +54,8 @@ public sealed class AnalysisViewModel
     public bool HasScoreComponents => ScoreComponents.Count > 0;
     public string ScoreComponentsHeading => Localized.Get("Analysis_ScoreComponents", "Score-komponenter");
     public string Title { get; }
+    /// <summary>Header subtitle — shared WPF key (Analysis_Subtitle).</summary>
+    public string Subtitle => Localized.Get("Analysis_Subtitle", "Resonans, pitch, intonasjon og helsetrender");
     public string SampleDataNotice { get; }
 
     /// <summary>True when the charts/metrics are computed from real saved sessions (vs synthetic sample data).</summary>

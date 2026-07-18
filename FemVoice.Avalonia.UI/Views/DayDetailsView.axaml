@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:FemVoice.Avalonia.Localization"
              xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
              x:Class="FemVoice.Avalonia.Views.DayDetailsView">
   <!-- Day-details: every real training session recorded on the chosen day (from the DB). Read-only. -->
@@ -40,8 +41,8 @@
               <TextBlock Grid.Column="0" Text="Tid" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
               <TextBlock Grid.Column="1" Text="Nivå" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
               <TextBlock Grid.Column="2" Text="Varighet" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-              <TextBlock Grid.Column="3" Text="Tonehøyde" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-              <TextBlock Grid.Column="4" Text="Resonans" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Grid.Column="3" Text="{loc:Tr Key=Dashboard_Pitch, Fallback=Tonehøyde}" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Grid.Column="4" Text="{loc:Tr Key=Dashboard_Resonance, Fallback=Resonans}" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
               <TextBlock Grid.Column="5" Text="Formant" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
               <TextBlock Grid.Column="6" Text="Score" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
             </Grid>
