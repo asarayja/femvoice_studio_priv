@@ -15,6 +15,9 @@
           <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>
           <TextBlock Text="{Binding Subtitle}"
                      FontSize="14" Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
+          <!-- Per-session summary (WPF Analysis "Økt-sammendrag") -->
+          <TextBlock IsVisible="{Binding HasSessionSummary}" Text="{Binding SessionSummary}" Margin="0,4,0,0"
+                     FontSize="13" Foreground="{DynamicResource ShellBodyTextBrush}" TextWrapping="Wrap"/>
         </StackPanel>
       </Border>
 

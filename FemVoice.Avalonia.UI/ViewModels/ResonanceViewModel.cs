@@ -87,6 +87,8 @@ public sealed partial class ResonanceViewModel : ObservableObject, IDisposable
 
     // ── Optional resonance-contrast awareness demo (content only — non-scored) ────────────────────────────────
     public string ContrastTitle => Localized.Get("ResonanceContrast_Title", "Resonanskontrast (valgfri øvelse)");
+    public string ContrastSubtitle => Localized.Get("ResonanceContrast_Subtitle", "Kjenn forskjellen på større og mindre resonansrom.");
+    public string ContrastDescription => Localized.Get("ResonanceContrast_Description", "Prøv en kort og rolig demo for å kjenne forskjellen i klang.");
     public IReadOnlyList<string> ContrastSteps { get; } = new[]
     {
         Localized.Get("ResonanceContrast_StepLarge", "Forestill deg et stort, åpent rom bak i munnen — en «mørk» klang."),

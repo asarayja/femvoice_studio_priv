@@ -103,6 +103,8 @@
       <Border Classes="card">
         <StackPanel Spacing="8">
           <TextBlock Text="{Binding ContrastTitle}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+          <TextBlock Text="{Binding ContrastSubtitle}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="13"/>
+          <TextBlock Text="{Binding ContrastDescription}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12" Margin="0,0,0,4"/>
           <ItemsControl ItemsSource="{Binding ContrastSteps}">
             <ItemsControl.ItemTemplate>
               <DataTemplate>
