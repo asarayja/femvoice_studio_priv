@@ -40,10 +40,12 @@ public sealed class ReportsViewModel
 {
     public ReportsViewModel() : this(null) { }
 
-    public ReportsViewModel(IDatabaseService? database, System.Action? openCoachPanel = null)
+    public ReportsViewModel(IDatabaseService? database, System.Action? openCoachPanel = null, System.Action? openClinicianPanel = null)
     {
         OpenCoachCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(() => openCoachPanel?.Invoke());
         CanOpenCoachPanel = openCoachPanel is not null;
+        OpenClinicianCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(() => openClinicianPanel?.Invoke());
+        CanOpenClinicianPanel = openClinicianPanel is not null;
         BuildPreview(database);
         string deferred = Localized.Get("Reports_DeferredStatus", "Utsatt — kommer senere");
         string sample = Localized.Get("Reports_SampleStatus", "Eksempel (ikke lagret)");
@@ -91,6 +93,11 @@ public sealed class ReportsViewModel
     /// <summary>True when a coach-panel navigation callback was supplied (drives the button's visibility).</summary>
     public bool CanOpenCoachPanel { get; }
     public string OpenCoachLabel => Localized.Get("Reports_OpenCoachPanel", "Åpne veilederpanel");
+
+    /// <summary>Opens the real read-only clinician outcome panel (assembled from saved sessions). Wired by the shell.</summary>
+    public CommunityToolkit.Mvvm.Input.IRelayCommand OpenClinicianCommand { get; }
+    public bool CanOpenClinicianPanel { get; }
+    public string OpenClinicianLabel => Localized.Get("Reports_OpenClinicianPanel", "Åpne klinikerpanel");
 
     /// <summary>Always <c>true</c>: every card/action in the scaffold is deferred/inert.</summary>
     public bool AllActionsDeferred => Cards.All(c => !c.IsEnabled);
