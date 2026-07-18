@@ -20,6 +20,13 @@ public sealed record ClinicianRow(string Label, string Value);
 /// exercises. DESCRIPTIVE/REPORTING only (the Core report itself is explicitly "never a safety or training gate").
 /// Everything is read-only + totally guarded — any gap in the (frozen) analytics pipeline degrades to a truthful
 /// "not enough data" state instead of throwing. Nothing is written; no clinical logic is changed. Not IDisposable.
+///
+/// NOTE on the WPF Clinician "Voice Metrics" (7 per-dimension 0–100 scores), "Learning Path" (stage/strengths/
+/// weaknesses/focus), and "Dimension Trends": these are all driven by the Voice-Intelligence trend read from
+/// <c>SessionAnalyticsStore</c> (via VoiceIntelligenceService / SmartCoachEngine.TryBuildDevelopmentProfile). The
+/// Avalonia capture path produces real PITCH + RESONANCE only and does NOT write per-dimension VI snapshots, so those
+/// sections would be empty or fabricated — they are intentionally omitted (no demo data) pending real per-dimension
+/// DSP + snapshot persistence. The insights + exercise-concerns below ARE assembled by the pipeline and are rendered.
 /// </summary>
 public sealed class ClinicianPanelViewModel
 {
@@ -56,6 +63,15 @@ public sealed class ClinicianPanelViewModel
     public IReadOnlyList<ClinicianRow> RecoveryDetail { get; private set; } = Array.Empty<ClinicianRow>();
     public bool HasRecoveryDetail => RecoveryDetail.Count > 0;
     public string RecoveryHeading => Localized.Get("Clinician_RecoveryStatus", "Restitusjonsstatus");
+
+    // ── Longitudinal insights (assembled by the pipeline's LongitudinalInsightEngine — WPF renders these; Avalonia
+    //    did not) + exercise de-prioritisation concerns. Real data when present; the sections hide when empty. ──────
+    public IReadOnlyList<string> Insights { get; private set; } = Array.Empty<string>();
+    public bool HasInsights => Insights.Count > 0;
+    public string InsightsHeading => Localized.Get("Clinician_LongitudinalInsights", "Langtidsinnsikt");
+    public IReadOnlyList<string> ExerciseConcerns { get; private set; } = Array.Empty<string>();
+    public bool HasExerciseConcerns => ExerciseConcerns.Count > 0;
+    public string ExerciseConcernsHeading => Localized.Get("Clinician_ExerciseConcerns", "Øvelsesmerknader");
 
     public string OverviewHeading => Localized.Get("Clinician_Panel_Overview", "Utfallsoversikt");
     public string GoalsHeading => Localized.Get("Clinician_GoalProgress", "Målfremdrift");
@@ -133,7 +149,29 @@ public sealed class ClinicianPanelViewModel
                 RecoveryDetail = rows;
             }
 
-            HasReport = report.HasEnoughData || Goals.Count > 0 || TopExercises.Count > 0 || RecoveryDetail.Count > 0;
+            // Longitudinal insights (WPF Clinician renders these; the pipeline assembles them via LongitudinalInsightEngine).
+            // Each carries a localized "What happened" + "Why it matters"; render "What — Why". Guarded, real-data-only.
+            try
+            {
+                Insights = (outcome.LongTermDevelopment?.Insights ?? Array.Empty<LongitudinalInsight>())
+                    .Where(i => !string.IsNullOrWhiteSpace(i.What))
+                    .Select(i => string.IsNullOrWhiteSpace(i.Why) ? i.What : $"{i.What} — {i.Why}")
+                    .ToList();
+            }
+            catch { Insights = Array.Empty<string>(); }
+
+            // Exercise de-prioritisation concerns (taxing / comfort-eroding) — WPF shows these warnings; Avalonia did not.
+            try
+            {
+                ExerciseConcerns = (outcome.ExerciseEffectiveness?.Concerns ?? Array.Empty<ExerciseEffectivenessFlag>())
+                    .Where(c => !string.IsNullOrWhiteSpace(c.Explanation))
+                    .Select(c => c.Explanation)
+                    .ToList();
+            }
+            catch { ExerciseConcerns = Array.Empty<string>(); }
+
+            HasReport = report.HasEnoughData || Goals.Count > 0 || TopExercises.Count > 0 || RecoveryDetail.Count > 0
+                        || Insights.Count > 0 || ExerciseConcerns.Count > 0;
         }
         catch
         {
