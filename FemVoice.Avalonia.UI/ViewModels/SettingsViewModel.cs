@@ -66,8 +66,13 @@ public sealed class SettingsSection
 /// </summary>
 public sealed class SettingsViewModel
 {
-    public SettingsViewModel()
+    private readonly System.Action? _openOnboarding;
+    private readonly System.Action? _openMicCalibration;
+
+    public SettingsViewModel(System.Action? openOnboarding = null, System.Action? openMicCalibration = null)
     {
+        _openOnboarding = openOnboarding;
+        _openMicCalibration = openMicCalibration;
         string deferred = Localized.Get("Settings_DeferredStatus", "Utsatt — kommer senere");
 
         Sections = new List<SettingsSection>
@@ -159,12 +164,12 @@ public sealed class SettingsViewModel
 
         Title = Localized.Get("Settings_Title", "Innstillinger");
         DeferredBadge = Localized.Get("Scaffold_DeferredBadge", "Utsatt · kun visning");
-        DeferredBanner = Localized.Get("Settings_ScaffoldNotice",
-            "De fleste innstillingene er utsatt (kun visning). Lokale UI-valg (tema/språk/bevegelse) lagres " +
-            "lokalt på maskinen, men aktiveres ikke ennå — ingen språk-/tema-bytte i appen, ingen profilendring, " +
-            "ingen sikkerhetskopi. Det kommer i en senere fase.");
-        SafetyNote = Localized.Get("Settings_ScaffoldSafety",
-            "Kun visning · ingen lagring · ingen klinisk endring.");
+        DeferredBanner = Localized.Get("Settings_ScaffoldNotice2",
+            "Tema, språk, redusert bevegelse, stemme-stil og treningsfrekvens er aktive og lagres lokalt (tema/språk/" +
+            "bevegelse brukes umiddelbart). Noen avanserte valg (per-enhet mikrofonruting, hør egen stemme, " +
+            "sikkerhetskopi/gjenoppretting) er fortsatt under arbeid og vises som deaktivert.");
+        SafetyNote = Localized.Get("Settings_ScaffoldSafety2",
+            "Lokale valg lagres på denne maskinen · ingen klinisk endring.");
     }
 
     private UiPreferencesViewModel? _preferences;
@@ -172,7 +177,7 @@ public sealed class SettingsViewModel
     /// Avalonia-local file. LAZILY constructed so no file I/O occurs until the Settings page is shown — the shell
     /// retains this VM from startup, but the preferences file is only read on first access. The behaviour-heavy
     /// sections (audio/privacy/database/voice-goal/about) remain inert/deferred and are unaffected.</summary>
-    public UiPreferencesViewModel Preferences => _preferences ??= new UiPreferencesViewModel();
+    public UiPreferencesViewModel Preferences => _preferences ??= new UiPreferencesViewModel(null, _openOnboarding, _openMicCalibration);
 
     public string Title { get; }
     public string DeferredBadge { get; }
