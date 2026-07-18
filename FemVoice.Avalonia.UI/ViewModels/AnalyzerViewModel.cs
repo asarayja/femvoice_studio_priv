@@ -65,6 +65,26 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
     public string StartLabel => Localized.Get("MicCal_Start", "Start");
     public string StopLabel => Localized.Get("MicCal_Stop", "Stopp");
 
+    // ── Live spectrum (real FFT of the mic frames) — the WPF Analyzer's spectrogram, as a live frequency spectrum ──
+    private const int FftSize = 2048;
+    private readonly float[] _fftBuffer = new float[FftSize];
+    private int _fftFill;
+    private const int SpectrumBarCount = 40;          // bars spanning ~80–1000 Hz (the vocal range)
+    private const double SpectrumMinHz = 80, SpectrumMaxHz = 1000, SpectrumHeightPx = 90;
+    /// <summary>Live spectrum bar heights (px) — magnitude per frequency band from the FFT.</summary>
+    [ObservableProperty] private IReadOnlyList<double> _spectrumBars = System.Array.Empty<double>();
+    public string SpectrumHeading => Localized.Get("Analyzer_Spectrogram", "Spektrum");
+
+    /// <summary>One musical-note target choice (name + frequency) for the note picker.</summary>
+    public sealed record NoteOption(string Label, double Frequency);
+    public IReadOnlyList<NoteOption> NoteOptions { get; } = new[]
+    {
+        new NoteOption("E3", 165), new NoteOption("G3", 196), new NoteOption("A3", 220),
+        new NoteOption("C4", 262), new NoteOption("E4", 330), new NoteOption("G4", 392),
+    };
+    public string SelectFrequencyLabel => Localized.Get("Analyzer_SelectTargetFrequency", "Velg målfrekvens");
+    [RelayCommand] private void SelectNote(NoteOption note) { if (note is not null) TargetFrequency = note.Frequency; }
+
     public IReadOnlyList<string> Devices { get; }
     [ObservableProperty] private string? _selectedDevice;
     [ObservableProperty] private bool _isAvailable;
@@ -93,6 +113,77 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
 
     private void OnResonance(double s) => _resonancePct = (int)Math.Round(Math.Clamp(s, 0, 1) * 100);
 
+    // Real magnitude spectrum via an in-place radix-2 FFT, folded into SpectrumBarCount log-spaced bands over
+    // [SpectrumMinHz, SpectrumMaxHz], scaled to px. A Hann window reduces spectral leakage.
+    private static IReadOnlyList<double> ComputeSpectrumBars(float[] frame, int sampleRate)
+    {
+        int nfft = frame.Length;
+        var re = new double[nfft];
+        var im = new double[nfft];
+        for (int i = 0; i < nfft; i++)
+        {
+            double w = 0.5 - 0.5 * Math.Cos(2 * Math.PI * i / (nfft - 1));   // Hann window
+            re[i] = frame[i] * w;
+        }
+        Fft(re, im);
+
+        double hzPerBin = (double)sampleRate / nfft;
+        var bars = new double[SpectrumBarCount];
+        double maxMag = 1e-9;
+        for (int b = 0; b < SpectrumBarCount; b++)
+        {
+            // Log-spaced band edges.
+            double f0 = SpectrumMinHz * Math.Pow(SpectrumMaxHz / SpectrumMinHz, (double)b / SpectrumBarCount);
+            double f1 = SpectrumMinHz * Math.Pow(SpectrumMaxHz / SpectrumMinHz, (double)(b + 1) / SpectrumBarCount);
+            int k0 = Math.Max(1, (int)(f0 / hzPerBin));
+            int k1 = Math.Max(k0 + 1, (int)(f1 / hzPerBin));
+            double sum = 0; int cnt = 0;
+            for (int k = k0; k < k1 && k < nfft / 2; k++) { sum += Math.Sqrt(re[k] * re[k] + im[k] * im[k]); cnt++; }
+            double mag = cnt > 0 ? sum / cnt : 0;
+            bars[b] = mag;
+            if (mag > maxMag) maxMag = mag;
+        }
+        // Normalize to px (log scale for a natural spectrum look).
+        for (int b = 0; b < SpectrumBarCount; b++)
+        {
+            double norm = Math.Log10(1 + 9 * bars[b] / maxMag);   // 0..1
+            bars[b] = Math.Clamp(norm, 0, 1) * (SpectrumHeightPx - 2) + 2;
+        }
+        return bars;
+    }
+
+    // In-place iterative radix-2 Cooley–Tukey FFT (length must be a power of two).
+    private static void Fft(double[] re, double[] im)
+    {
+        int n = re.Length;
+        for (int i = 1, j = 0; i < n; i++)
+        {
+            int bit = n >> 1;
+            for (; (j & bit) != 0; bit >>= 1) j ^= bit;
+            j ^= bit;
+            if (i < j) { (re[i], re[j]) = (re[j], re[i]); (im[i], im[j]) = (im[j], im[i]); }
+        }
+        for (int len = 2; len <= n; len <<= 1)
+        {
+            double ang = -2 * Math.PI / len;
+            double wRe = Math.Cos(ang), wIm = Math.Sin(ang);
+            for (int i = 0; i < n; i += len)
+            {
+                double curRe = 1, curIm = 0;
+                for (int k = 0; k < len / 2; k++)
+                {
+                    int a = i + k, b = i + k + len / 2;
+                    double tRe = re[b] * curRe - im[b] * curIm;
+                    double tIm = re[b] * curIm + im[b] * curRe;
+                    re[b] = re[a] - tRe; im[b] = im[a] - tIm;
+                    re[a] += tRe; im[a] += tIm;
+                    double nRe = curRe * wRe - curIm * wIm;
+                    curIm = curRe * wIm + curIm * wRe; curRe = nRe;
+                }
+            }
+        }
+    }
+
     [RelayCommand]
     private void Start()
     {
@@ -100,6 +191,7 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
         _backend ??= AudioCaptureBackendFactory.CreateForRuntime();
         _capture = _backend;
         _pitches.Clear();
+        _fftFill = 0; SpectrumBars = System.Array.Empty<double>();
         AveragePitch = MinPitch = MaxPitch = 0;
         SampleCount = 0;
         _resonancePct = 0;
@@ -119,6 +211,8 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
         _ = _capture.StopAsync();
         _resonance.Stop();
         Running = false;
+        _fftFill = 0;
+        SpectrumBars = System.Array.Empty<double>();
         StatusMessage = Localized.Get("Analyzer_Done", "Ferdig. Statistikken viser hele opptaket.");
         ComputeDistribution();   // quantiles + range distribution over the full recording
     }
@@ -157,6 +251,19 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
         _resonance.ProcessSamples(e.Samples);
         double pitch = r.IsVoiced ? r.Pitch : 0;
         if (r.IsVoiced && pitch > 0) _pitches.Add(pitch);
+
+        // Accumulate into the FFT buffer; when full, compute a live magnitude spectrum → bars (80–1000 Hz).
+        var samples = e.Samples;
+        for (int i = 0; i < samples.Length; i++)
+        {
+            _fftBuffer[_fftFill++] = samples[i];
+            if (_fftFill >= FftSize)
+            {
+                _fftFill = 0;
+                var bars = ComputeSpectrumBars(_fftBuffer, SampleRate);
+                _ui.Post(() => { if (!_disposed && Running) SpectrumBars = bars; });
+            }
+        }
 
         double avg = _pitches.Count > 0 ? _pitches.Average() : 0;
         double min = _pitches.Count > 0 ? _pitches.Min() : 0;
