@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using FemVoiceStudio.Data;
 using FemVoiceStudio.Services;
 using FemVoice.Avalonia.Localization;
@@ -9,12 +11,16 @@ namespace FemVoice.Avalonia.ViewModels;
 
 /// <summary>
 /// Engine-backed SmartCoach page. Runs the REAL Core <see cref="SmartCoachEngine"/> (read-only) on the REAL database
-/// to produce the daily recommendation, weekly session target, and status summary — the exact WPF logic, presented
-/// in Avalonia. No clinical logic is changed. Fails safe: with no database (headless/tests) or an engine error it
-/// shows a truthful "unavailable" state instead of throwing.
+/// to produce the daily recommendation, weekly session target, status summary, PROGRESS-TO-GOAL bars + baseline
+/// confidence (WPF SmartCoachViewModel parity), and lets the user mark the day's recommendation COMPLETE (persisted
+/// via SaveDailyRecommendation, exactly like WPF). No clinical logic is changed. Fails safe: with no database
+/// (headless/tests) or an engine error it shows a truthful "unavailable" state instead of throwing.
 /// </summary>
-public sealed class SmartCoachViewModel
+public sealed partial class SmartCoachViewModel : ObservableObject
 {
+    private readonly IDatabaseService? _database;
+    private const int UserId = 1;
+
     public string Title => Localized.Get("SmartCoach_Title", "Smart Coach");
 
     public bool EngineAvailable { get; }
@@ -27,8 +33,34 @@ public sealed class SmartCoachViewModel
     public string StatusSummary { get; } = "";
     public bool HasHealthWarning { get; }
     public string HealthWarningText { get; } = "";
+    public string HealthWarningHeading => Localized.Get("SmartCoach_HealthWarning", "Stemmehelse-varsel");
     public string DataNote => Localized.Get("SmartCoach_RealDataNote",
         "Beregnet av den ekte SmartCoach-motoren på dine lagrede økter.");
+
+    // ── Complete today's recommendation (WPF parity: persisted via SaveDailyRecommendation) ───────────────────────
+    /// <summary>True once today's recommendation is marked completed (read from the DB / set by CompleteRecommendation).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanComplete))]
+    private bool _isRecommendationCompleted;
+    /// <summary>The Complete button is usable when the engine is available, a recommendation exists, and it is not yet done.</summary>
+    public bool CanComplete => EngineAvailable && _hasRecommendation && !IsRecommendationCompleted;
+    private readonly bool _hasRecommendation;
+    public string CompleteLabel => Localized.Get("SmartCoach_MarkComplete", "Fullfør");
+    public string CompletedLabel => Localized.Get("SmartCoach_Completed", "Fullført ✓");
+
+    // ── Progress toward goals (WPF parity) ────────────────────────────────────────────────────────────────────
+    /// <summary>Progress 0–100 toward the pitch / resonance / intonation goals (current ÷ target).</summary>
+    public double PitchProgress { get; private set; }
+    public double ResonanceProgress { get; private set; }
+    public double IntonationProgress { get; private set; }
+    public bool HasProgressToGoal { get; private set; }
+    public string BaselineConfidence { get; private set; } = "";
+    public string ProgressToGoalHeading => Localized.Get("SmartCoach_ProgressToGoal", "Progresjon mot mål");
+    public string BaselineConfidenceLabel => Localized.Get("SmartCoach_BaselineConfidence", "Baseline-tillit");
+    public string BaselineConfidenceDisplay => $"{BaselineConfidenceLabel}: {BaselineConfidence}";
+    public string PitchProgressLabel => Localized.Get("Dashboard_Pitch", "Tonehøyde");
+    public string ResonanceProgressLabel => Localized.Get("Dashboard_Resonance", "Resonans");
+    public string IntonationProgressLabel => Localized.Get("Dashboard_Intonation", "Intonasjon");
 
     // ── Detail metrics (ported from the WPF SmartCoachDetailView) ─────────────────────────────────────────────
     /// <summary>Detail rows: day streak, sessions this week, total time this week, consistency (real DB stats).</summary>
@@ -43,6 +75,7 @@ public sealed class SmartCoachViewModel
 
     public SmartCoachViewModel(IDatabaseService? database, ILocalizationService? localization = null)
     {
+        _database = database;
         if (database is null)
         {
             EngineAvailable = false;
@@ -53,14 +86,17 @@ public sealed class SmartCoachViewModel
         try
         {
             var engine = new SmartCoachEngine(database, localization ?? LocalizationService.Instance);
-            var rec = engine.GenerateDailyRecommendation(1);
+            var rec = engine.GenerateDailyRecommendation(UserId);
+            _hasRecommendation = rec is not null;
             FocusLabel = FocusText(rec.FocusArea);
             RecommendationText = rec.RecommendationText;
             DurationText = $"{rec.RecommendedDurationMinutes} min";
             HasHealthWarning = rec.HealthWarning;
             HealthWarningText = rec.HealthWarningText ?? "";
-            WeeklyTargetText = $"{engine.GetWeeklySessionTarget(1)} økter/uke (mål)";
-            StatusSummary = engine.GetStatusSummary(1);
+            IsRecommendationCompleted = rec.IsCompleted;
+            WeeklyTargetText = $"{engine.GetWeeklySessionTarget(UserId)} økter/uke (mål)";
+            StatusSummary = engine.GetStatusSummary(UserId);
+            BuildProgressToGoal(database, engine);
             BuildDetail(database);
             EngineAvailable = true;
         }
@@ -69,6 +105,70 @@ public sealed class SmartCoachViewModel
             EngineAvailable = false;
             UnavailableNote = Localized.Get("SmartCoach_Error", "SmartCoach er midlertidig utilgjengelig.") + $" ({ex.GetType().Name})";
         }
+    }
+
+    /// <summary>Mark today's recommendation completed and PERSIST it (WPF parity: SaveDailyRecommendation writes back
+    /// IsCompleted/CompletedAt so the state survives). Guarded; no clinical logic changed.</summary>
+    [RelayCommand]
+    private void CompleteRecommendation()
+    {
+        if (_database is null || IsRecommendationCompleted) return;
+        try
+        {
+            var rec = _database.GetDailyRecommendation(DateTime.Today, UserId);
+            if (rec is null) return;
+            rec.IsCompleted = true;
+            rec.CompletedAt = DateTime.Now;
+            _database.SaveDailyRecommendation(rec);
+            IsRecommendationCompleted = true;
+        }
+        catch { /* best-effort; leave state unchanged on failure */ }
+    }
+
+    // Progress toward the active pitch/resonance/intonation goals + baseline confidence — the WPF SmartCoach
+    // "Progress to goal" section, read-only (goal current-values recomputed in-memory from recent sessions; not persisted).
+    private void BuildProgressToGoal(IDatabaseService database, SmartCoachEngine engine)
+    {
+        try
+        {
+            var baseline = engine.GetOrCalculateBaseline(UserId);
+            if (baseline is null) return;
+            BaselineConfidence = baseline.ConfidenceLevel switch
+            {
+                "high" => Localized.Get("SmartCoach_ConfidenceHigh", "Høy"),
+                "medium" => Localized.Get("SmartCoach_ConfidenceMedium", "Medium"),
+                _ => Localized.Get("SmartCoach_ConfidenceLow", "Lav"),
+            };
+
+            var goals = database.GetSmartCoachGoals(UserId, true);
+            if (goals.Count == 0) goals = engine.GenerateGoals(UserId);
+
+            var recent = database.GetRecentSessions(10, UserId);
+            double recentPitch = recent.Where(s => s.AveragePitch > 0).Select(s => s.AveragePitch).DefaultIfEmpty(baseline.BaselinePitch).Average();
+            double recentReson = recent.Where(s => s.ResonanceScore > 0).Select(s => s.ResonanceScore).DefaultIfEmpty(baseline.BaselineResonanceScore).Average();
+            double recentInton = recent.Where(s => s.IntonationScore > 0).Select(s => s.IntonationScore).DefaultIfEmpty(baseline.BaselineIntonation).Average();
+
+            foreach (var goal in goals.Where(g => !g.IsAchieved).Take(3))
+            {
+                double current = goal.GoalType switch
+                {
+                    "pitch" => recentPitch,
+                    "resonance" => recentReson,
+                    "intonation" => recentInton,
+                    _ => goal.CurrentValue,
+                };
+                double progress = goal.TargetValue > 0 ? Math.Clamp(current / goal.TargetValue * 100, 0, 100) : 0;
+                switch (goal.GoalType)
+                {
+                    case "pitch": PitchProgress = progress; break;
+                    case "resonance": ResonanceProgress = progress; break;
+                    case "intonation": IntonationProgress = progress; break;
+                }
+            }
+            HasProgressToGoal = baseline.ConfidenceLevel != "low"
+                                && (PitchProgress > 0 || ResonanceProgress > 0 || IntonationProgress > 0);
+        }
+        catch { HasProgressToGoal = false; }
     }
 
     // Real detail metrics + weekly history from the DB (day streak, sessions/time this week, consistency). Guarded.

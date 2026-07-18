@@ -18,7 +18,7 @@
         <!-- Health warning (safety first) -->
         <Border Classes="card" IsVisible="{Binding HasHealthWarning}" BorderBrush="{DynamicResource ShellDangerBrush}">
           <StackPanel Spacing="4">
-            <TextBlock Text="Helsevarsel" FontWeight="SemiBold" Foreground="{DynamicResource ShellDangerBrush}"/>
+            <TextBlock Text="{Binding HealthWarningHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellDangerBrush}"/>
             <TextBlock Text="{Binding HealthWarningText}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
           </StackPanel>
         </Border>
@@ -36,6 +36,31 @@
               </Border>
             </StackPanel>
             <TextBlock Text="{Binding RecommendationText}" TextWrapping="Wrap" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <!-- Complete today's recommendation (persisted via SaveDailyRecommendation, WPF parity) -->
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <Button Classes="primary" Content="{Binding CompleteLabel}" Command="{Binding CompleteRecommendationCommand}"
+                      IsEnabled="{Binding CanComplete}" IsVisible="{Binding !IsRecommendationCompleted}"/>
+              <Border Background="{DynamicResource ShellChipBackgroundBrush}" CornerRadius="6" Padding="10,4"
+                      IsVisible="{Binding IsRecommendationCompleted}">
+                <TextBlock Text="{Binding CompletedLabel}" Foreground="{DynamicResource ShellSuccessBrush}" FontWeight="SemiBold"/>
+              </Border>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- Progress toward goals (WPF parity): pitch/resonance/intonation bars + baseline confidence -->
+        <Border Classes="card" IsVisible="{Binding HasProgressToGoal}">
+          <StackPanel Spacing="8">
+            <TextBlock Text="{Binding ProgressToGoalHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+            <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto" >
+              <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding PitchProgressLabel}" Foreground="{DynamicResource ShellMutedBrush}" VerticalAlignment="Center"/>
+              <ProgressBar Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="100" Value="{Binding PitchProgress}" Height="12" Margin="0,3" Foreground="{DynamicResource ShellAccentBrush}"/>
+              <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding ResonanceProgressLabel}" Foreground="{DynamicResource ShellMutedBrush}" VerticalAlignment="Center"/>
+              <ProgressBar Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="100" Value="{Binding ResonanceProgress}" Height="12" Margin="0,3" Foreground="{DynamicResource ShellAccentBrush}"/>
+              <TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding IntonationProgressLabel}" Foreground="{DynamicResource ShellMutedBrush}" VerticalAlignment="Center"/>
+              <ProgressBar Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="100" Value="{Binding IntonationProgress}" Height="12" Margin="0,3" Foreground="{DynamicResource ShellAccentBrush}"/>
+            </Grid>
+            <TextBlock Foreground="{DynamicResource ShellMutedBrush}" FontSize="12" Text="{Binding BaselineConfidenceDisplay}"/>
           </StackPanel>
         </Border>
 
