@@ -60,6 +60,7 @@ internal static class Program
         if (args.Contains("--timeline-panel-smoke")) return TimelinePanelSmoke();
         if (args.Contains("--manual-override-smoke")) return ManualOverrideSmoke();
         if (args.Contains("--resonance-screen-smoke")) return ResonanceScreenSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--analyzer-smoke")) return AnalyzerSmoke().GetAwaiter().GetResult();
         if (args.Contains("--day-details-smoke")) return DayDetailsSmoke();
         if (args.Contains("--case-review-smoke")) return CaseReviewSmoke();
         if (args.Contains("--dashboard-resonance-smoke")) return DashboardResonanceSmoke().GetAwaiter().GetResult();
@@ -757,6 +758,40 @@ internal static class Program
         finally { Cleanup(); }
     }
 
+    // Headless verification of the REAL analyzer (no display): nav item implemented + opens a disposable
+    // AnalyzerViewModel; a synthetic tone drives the live main frequency + running pitch stats (avg/min/max/samples/
+    // duration); Stop halts; navigate-away disposes it. Synthetic backend (real mic would be silent). No persistence.
+    private static async Task<int> AnalyzerSmoke()
+    {
+        var svc = new VoiceFeminizationExerciseService();
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+        var nav = shell.NavItems.FirstOrDefault(n => n.Label.Contains("Analysator"));
+        bool navImpl = nav is not null && nav.IsImplemented;
+        nav?.Command.Execute(null);
+        bool onPage = shell.CurrentPage is AnalyzerViewModel && shell.CurrentPage is IDisposable;
+        shell.ShowDashboardCommand.Execute(null);
+        await Task.Delay(80);
+        bool disposedOnLeave = shell.CurrentPage is MainDashboardViewModel;
+
+        // A synthetic StablePitch tone (200 Hz) → live main frequency + running stats accumulate.
+        using var vm = new AnalyzerViewModel(new SyntheticAudioCaptureService { BaseFrequency = 200, Mode = SyntheticAudioMode.StablePitch }, new InlineUiDispatcher());
+        bool available = vm.IsAvailable;
+        vm.TargetFrequency = 220;
+        vm.StartCommand.Execute(null);
+        bool running = vm.IsRunning;
+        await Task.Delay(700);
+        bool liveFreq = vm.MainFrequency > 150 && vm.MainFrequency < 260;   // ~200 Hz synthetic
+        bool stats = vm.SampleCount > 0 && vm.AveragePitch > 0 && vm.MaxPitch >= vm.MinPitch;
+        vm.StopCommand.Execute(null);
+        bool stopped = !vm.IsRunning;
+
+        Console.WriteLine($"[analyzer] navImpl={navImpl} onPage={onPage} disposedOnLeave={disposedOnLeave} available={available} running={running} liveFreq={liveFreq}({vm.MainFrequency:F0}Hz) stats={stats}(n={vm.SampleCount},avg={vm.AveragePitch:F0}) stopped={stopped}");
+        bool ok = navImpl && onPage && disposedOnLeave && available && running && liveFreq && stats && stopped;
+        Console.WriteLine(ok ? "[analyzer] Analyzer smoke OK" : "[analyzer] Analyzer smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
     // Headless verification of the REAL resonance screen (no display): nav item implemented + opens a disposable
     // ResonanceViewModel; the contrast-demo content is present; a synthetic tone fed through the Core resonance
     // engine drives the live level; Stop halts; navigate-away disposes it. Synthetic backend only (this box's real
@@ -911,6 +946,7 @@ internal static class Program
             "miccalibration" or "calibration" or "mikrofonkalibrering" or "mic" => "mikrofon",
             "manualoverride" or "override" or "overstyring" => "overstyring",
             "resonance" or "resonans" => "resonans",
+            "analyzer" or "analysator" => "analysator",
             _ => "",
             // (coach/clinician/timeline panels are opened from within Reports, not top-level nav items)
         };
@@ -1334,7 +1370,7 @@ internal static class Program
                           $"no-orphan-frames={noOrphanFrames} fresh-instance={distinctInstance} " +
                           $"second-running={secondRunning} no-orphan={firstStillStopped}");
 
-        bool ok = landsOnDashboard && shell.NavItems.Count == 14 && implemented == 14 && deferred == 0
+        bool ok = landsOnDashboard && shell.NavItems.Count == 15 && implemented == 15 && deferred == 0
                   && onGuide && backToDash && onDeferred && deferredInert && onProgScaffold && onCoachScaffold
                   && runtimeRunning && firstDisposedOnNav && noOrphanFrames
                   && distinctInstance && secondRunning && firstStillStopped;
@@ -1371,7 +1407,7 @@ internal static class Program
         var svc = new VoiceFeminizationExerciseService();
         var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
         var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
-        bool navLabelsOk = shell.NavItems.Count == 14
+        bool navLabelsOk = shell.NavItems.Count == 15
             && shell.NavItems.All(n => !string.IsNullOrWhiteSpace(n.Label))
             && shell.NavItems[0].Label == "Dashbord"
             && shell.NavItems[2].Label == "Innstillinger"   // Settings implemented
@@ -2051,7 +2087,7 @@ internal static class Program
         var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
         int implemented = shell.NavItems.Count(n => n.IsImplemented);
         int deferred = shell.NavItems.Count(n => !n.IsImplemented);
-        bool navOk = shell.NavItems.Count == 14 && implemented == 14 && deferred == 0;   // deferred surfaces stay deferred
+        bool navOk = shell.NavItems.Count == 15 && implemented == 15 && deferred == 0;   // deferred surfaces stay deferred
 
         // Settings stays display-only/inert: not IDisposable, exposes no IRelayCommand (no actions/persistence wired).
         bool settingsInert = !typeof(System.IDisposable).IsAssignableFrom(typeof(SettingsViewModel))
@@ -2670,7 +2706,7 @@ internal static class Program
                         && !coach.EngineAvailable && !string.IsNullOrWhiteSpace(coach.UnavailableNote);
 
         // Sidebar intact (9 items; both now implemented → 1 deferred = Mikrofonkalibrering) and dashboard nav works.
-        bool navIntact = shell.NavItems.Count == 14 && shell.NavItems.Count(n => !n.IsImplemented) == 0
+        bool navIntact = shell.NavItems.Count == 15 && shell.NavItems.Count(n => !n.IsImplemented) == 0
                          && shell.NavItems.First(n => n.Label.Contains("SmartCoach")).IsImplemented
                          && shell.NavItems.First(n => n.Label.Contains("Progresjon")).IsImplemented;
         shell.ShowDashboardCommand.Execute(null);
@@ -2724,7 +2760,7 @@ internal static class Program
         bool deferredWording = settings.DeferredBadge.Contains("Utsatt") && settings.DeferredBanner.Length > 0;
 
         // Sidebar intact.
-        bool navIntact = shell.NavItems.Count == 14 && shell.NavItems.Count(n => n.IsImplemented) == 14;
+        bool navIntact = shell.NavItems.Count == 15 && shell.NavItems.Count(n => n.IsImplemented) == 15;
 
         Console.WriteLine($"[settings-vis] onSettings={onSettings} navOk={navOk} sections={settings.Sections.Count} controls(combo/toggle/button)={hasCombo}/{hasToggle}/{hasButton}");
         Console.WriteLine($"[settings-vis] allInert={allInert} chipsOnActionable={chipsOnActionable} deferredWording={deferredWording} notDisposable={notDisposable} noCommands={noCommands} noServiceDeps={noServiceDeps} navIntact={navIntact}");
@@ -2783,7 +2819,7 @@ internal static class Program
         bool guideFilterIntact = guideVm.CategoryChips.Count >= 2 && guideVm.FilteredExercises.Count == guideVm.Exercises.Count;
         guideVm.SearchText = "zzqx-none"; bool searchWorks = guideVm.FilteredCount == 0; guideVm.SearchText = "";
         bool dashboardChartIntact = dash.DashboardChart is not null;   // chart model unchanged
-        bool navIntact = shell.NavItems.Count == 14 && shell.NavItems.Count(n => n.IsImplemented) == 14;
+        bool navIntact = shell.NavItems.Count == 15 && shell.NavItems.Count(n => n.IsImplemented) == 15;
 
         Console.WriteLine($"[layout] source={(SourcePresent ? "present" : "skipped")} settingsResponsive={settingsResponsive} scaffoldsCentered={scaffoldsCentered} guideCentered={guideCentered}");
         Console.WriteLine($"[layout] settingsInert={settingsInert} scaffoldsDeferred={scaffoldsDeferred} guideFilterIntact={guideFilterIntact}&searchWorks={searchWorks} dashboardChartIntact={dashboardChartIntact} navIntact={navIntact}");
