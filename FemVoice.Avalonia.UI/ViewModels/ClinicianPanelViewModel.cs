@@ -42,6 +42,8 @@ public sealed class ClinicianPanelViewModel
     public IRelayCommand BackCommand { get; }
 
     public bool HasReport { get; private set; }
+    /// <summary>The assembled OutcomeReport (or null) — used by the View to export via the Core ExportWriter.</summary>
+    public object? Report { get; private set; }
     public string EmptyMessage { get; private set; } =
         Localized.Get("Clinician_Panel_Empty", "Ikke nok data ennå. Fullfør noen økter på dashbordet for å bygge en utfallsoversikt.");
 
@@ -77,6 +79,7 @@ public sealed class ClinicianPanelViewModel
                 .GetAwaiter().GetResult();
 
             OutcomeReport report = new ReportAssembler().BuildOutcomeReport(outcome, now.AddDays(-90), now, now);
+            Report = report;
             ReportTitle = report.Title ?? "";
 
             var overview = new List<ClinicianRow>

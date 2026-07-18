@@ -18,6 +18,15 @@
       </Border>
 
       <StackPanel Spacing="16" IsVisible="{Binding HasReport}">
+        <!-- Real export of the assembled outcome report via the Core ExportWriter (PDF/CSV/JSON) -->
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <TextBlock Text="Eksporter:" VerticalAlignment="Center" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+          <Button Content="PDF" Classes="secondary" Click="OnExportPdf"/>
+          <Button Content="CSV" Classes="secondary" Click="OnExportCsv"/>
+          <Button Content="JSON" Classes="secondary" Click="OnExportJson"/>
+          <TextBlock x:Name="ExportStatus" VerticalAlignment="Center" IsVisible="False"
+                     Foreground="{DynamicResource ShellSuccessBrush}" FontSize="12" TextWrapping="Wrap"/>
+        </StackPanel>
         <!-- Outcome overview -->
         <Border Classes="card" BorderBrush="{DynamicResource ShellSuccessBrush}">
           <StackPanel Spacing="6">
