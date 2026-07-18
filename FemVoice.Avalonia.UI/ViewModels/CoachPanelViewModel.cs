@@ -23,7 +23,7 @@ public sealed class CoachPanelViewModel
 
     public CoachPanelViewModel(IDatabaseService? database, Action? onBack = null)
     {
-        Title = Localized.Get("Coach_Panel_Title", "Veilederpanel");
+        Title = Localized.Get("Coach_Title", "Coach-oversikt");
         BackLabel = Localized.Get("Common_Back", "Tilbake");
         Disclaimer = Localized.Get("Coach_Panel_Disclaimer",
             "Sammenstilt fra dine lagrede økter (kun lesing). Ingen klinisk endring, ingenting lagres. " +
@@ -52,9 +52,9 @@ public sealed class CoachPanelViewModel
     /// <summary>Short line summarising detected long-term development (breakthrough / plateau / regression).</summary>
     public string DevelopmentSummary { get; private set; } = "";
 
-    public string FocusHeading => Localized.Get("Coach_Panel_Focus", "Fokusområder");
-    public string RecommendationsHeading => Localized.Get("Coach_Panel_Recommendations", "Anbefalinger");
-    public string DevelopmentHeading => Localized.Get("Coach_Panel_Development", "Utvikling");
+    public string FocusHeading => Localized.Get("Coach_FocusAreas", "Fokusområder");
+    public string RecommendationsHeading => Localized.Get("Coach_Recommendations", "Anbefalinger");
+    public string DevelopmentHeading => Localized.Get("Coach_Breakthroughs", "Gjennombrudd");
     public bool HasFocus => FocusAreas.Count > 0;
     public bool HasRecommendations => Recommendations.Count > 0;
     public bool HasDevelopment => DevelopmentSummary.Length > 0;
@@ -85,7 +85,7 @@ public sealed class CoachPanelViewModel
                 .GetAwaiter().GetResult();
 
             var assembler = new ReportAssembler();
-            CoachReport report = assembler.BuildCoachReport(outcome, now.AddDays(-90), now, now);
+            CoachReport report = assembler.BuildCoachReport(outcome, now.AddDays(-30), now, now);   // WPF canonical 30-day window
             Report = report;
 
             ReportTitle = report.Title ?? "";
