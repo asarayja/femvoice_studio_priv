@@ -17,7 +17,24 @@
         </StackPanel>
       </Border>
 
-      <!-- Deferred / not-saved banner -->
+      <!-- Real system status (runtime + database facts) -->
+      <Border Classes="card" IsVisible="{Binding HasStatus}" BorderBrush="{DynamicResource ShellSuccessBrush}">
+        <StackPanel Spacing="6">
+          <TextBlock Text="Systemstatus" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <ItemsControl ItemsSource="{Binding Status}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Grid ColumnDefinitions="180,*" Margin="0,2,0,0">
+                  <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                  <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}" TextWrapping="Wrap"/>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <!-- Deferred / not-saved banner (support package / backup / export remain deferred) -->
       <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
         <TextBlock Text="{Binding ScaffoldNotice}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
       </Border>
