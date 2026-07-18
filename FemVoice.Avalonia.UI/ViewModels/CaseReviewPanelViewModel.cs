@@ -55,8 +55,24 @@ public sealed partial class CaseReviewPanelViewModel : ObservableObject
     [ObservableProperty] private DateTime _periodStart;
     [ObservableProperty] private DateTime _periodEnd;
 
+    // Editable period via DatePickers (WPF parity). DatePicker.SelectedDate is DateTimeOffset?; these proxy to the
+    // DateTime period bounds. Setting them re-runs Build() for the new window (via OnPeriodStart/EndChanged).
+    public DateTimeOffset? PeriodStartOffset
+    {
+        get => new DateTimeOffset(DateTime.SpecifyKind(PeriodStart, DateTimeKind.Utc));
+        set { if (value.HasValue) PeriodStart = value.Value.Date; }
+    }
+    public DateTimeOffset? PeriodEndOffset
+    {
+        get => new DateTimeOffset(DateTime.SpecifyKind(PeriodEnd, DateTimeKind.Utc));
+        set { if (value.HasValue) PeriodEnd = value.Value.Date; }
+    }
+
     public string ReviewTypeLabel => Localized.Get("CaseReview_Type", "Gjennomgangstype");
-    public string PeriodDisplay => $"{PeriodStart:yyyy-MM-dd} – {PeriodEnd:yyyy-MM-dd} (inneværende måned)";
+    public string PeriodLabel => Localized.Get("CaseReview_Period", "Periode");
+    public string PeriodStartLabel => Localized.Get("CaseReview_PeriodStart", "Fra");
+    public string PeriodEndLabel => Localized.Get("CaseReview_PeriodEnd", "Til");
+    public string PeriodDisplay => $"{PeriodStart:yyyy-MM-dd} – {PeriodEnd:yyyy-MM-dd}";
 
     public bool HasReport { get; private set; }
     public string EmptyMessage { get; private set; } =
@@ -73,6 +89,13 @@ public sealed partial class CaseReviewPanelViewModel : ObservableObject
     [ObservableProperty] private IReadOnlyList<string> _savedReviews = Array.Empty<string>();
     public string SavedHeading => Localized.Get("CaseReview_SavedReviews", "Lagrede gjennomganger");
     public bool HasSaved => SavedReviews.Count > 0;
+    public string RefreshLabel => Localized.Get("Common_Refresh", "Oppdater");
+
+    // ── Complete a saved draft review (WPF: Draft → Completed sign-off) ───────────────────────────────────────────
+    private CaseReview? _lastSaved;
+    public string CompleteLabel => Localized.Get("CaseReview_Complete", "Fullfør gjennomgang");
+    /// <summary>The Complete button is usable when a review has been saved this session and is still a draft.</summary>
+    public bool CanComplete => _lastSaved is { Status: ReviewStatus.Draft } && _database is DatabaseService;
 
     private CaseReviewsStore? BuildStore()
         => _database is DatabaseService concrete
@@ -97,12 +120,38 @@ public sealed partial class CaseReviewPanelViewModel : ObservableObject
             DateTime end = DateTime.SpecifyKind(PeriodEnd, DateTimeKind.Utc);
             CaseReview review = new CaseReviewAssembler().Build(_lastOutcome, start, end, SelectedType(), now);
             store.SaveAsync(review).GetAwaiter().GetResult();
+            _lastSaved = review;   // a fresh draft, eligible to be completed
             SaveStatus = Localized.Get("CaseReview_Saved2", "Gjennomgang lagret.");
             LoadSaved(store);
             OnPropertyChanged(nameof(HasSaved));
+            OnPropertyChanged(nameof(CanComplete));
         }
         catch (Exception ex) { SaveStatus = Localized.Get("CaseReview_SaveFailed", "Kunne ikke lagre: ") + ex.Message; }
     }
+
+    /// <summary>Transition the just-saved draft review to Completed (WPF sign-off) and upsert it via the store.</summary>
+    [RelayCommand]
+    private void Complete()
+    {
+        if (_lastSaved is not { Status: ReviewStatus.Draft }) return;
+        var store = BuildStore();
+        if (store is null) { SaveStatus = Localized.Get("CaseReview_NoDb2", "Databasen er ikke tilgjengelig i denne visningen."); return; }
+        try
+        {
+            var completed = _lastSaved with { Status = ReviewStatus.Completed, CompletedAt = DateTime.UtcNow };
+            store.SaveAsync(completed).GetAwaiter().GetResult();
+            _lastSaved = completed;
+            SaveStatus = Localized.Get("CaseReview_CompletedMsg", "Gjennomgang fullført.");
+            LoadSaved(store);
+            OnPropertyChanged(nameof(HasSaved));
+            OnPropertyChanged(nameof(CanComplete));
+        }
+        catch (Exception ex) { SaveStatus = Localized.Get("CaseReview_SaveFailed", "Kunne ikke lagre: ") + ex.Message; }
+    }
+
+    /// <summary>Reload the saved-reviews list from the store (WPF's manual Load/refresh).</summary>
+    [RelayCommand]
+    private void Refresh() { LoadSaved(); OnPropertyChanged(nameof(HasSaved)); }
 
     private void LoadSaved(CaseReviewsStore? store = null)
     {
@@ -119,8 +168,8 @@ public sealed partial class CaseReviewPanelViewModel : ObservableObject
     }
 
     partial void OnSelectedReviewTypeChanged(string value) => Build();
-    partial void OnPeriodStartChanged(DateTime value) => Build();
-    partial void OnPeriodEndChanged(DateTime value) => Build();
+    partial void OnPeriodStartChanged(DateTime value) { OnPropertyChanged(nameof(PeriodStartOffset)); OnPropertyChanged(nameof(PeriodDisplay)); Build(); }
+    partial void OnPeriodEndChanged(DateTime value) { OnPropertyChanged(nameof(PeriodEndOffset)); OnPropertyChanged(nameof(PeriodDisplay)); Build(); }
 
     [RelayCommand]
     private void Build()

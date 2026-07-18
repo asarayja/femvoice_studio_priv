@@ -19,9 +19,14 @@
             <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding ReviewTypeLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
             <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,3" MinWidth="200" HorizontalAlignment="Left"
                       ItemsSource="{Binding ReviewTypes}" SelectedItem="{Binding SelectedReviewType, Mode=TwoWay}"/>
-            <TextBlock Grid.Row="1" Grid.Column="0" Text="Periode" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,3" VerticalAlignment="Center" Foreground="{DynamicResource ShellMutedBrush}"
-                       Text="{Binding PeriodDisplay}"/>
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding PeriodLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <!-- Editable period (WPF parity): two DatePickers -->
+            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="8" Margin="0,3">
+              <TextBlock Text="{Binding PeriodStartLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <DatePicker SelectedDate="{Binding PeriodStartOffset, Mode=TwoWay}"/>
+              <TextBlock Text="{Binding PeriodEndLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <DatePicker SelectedDate="{Binding PeriodEndOffset, Mode=TwoWay}"/>
+            </StackPanel>
           </Grid>
           <Button Content="{Binding EvaluateLabel}" Classes="primary" Command="{Binding BuildCommand}" HorizontalAlignment="Left"/>
         </StackPanel>
@@ -53,10 +58,14 @@
         <StackPanel Spacing="8">
           <StackPanel Orientation="Horizontal" Spacing="10">
             <Button Content="{Binding SaveLabel}" Classes="secondary" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}"/>
+            <Button Content="{Binding CompleteLabel}" Classes="primary" Command="{Binding CompleteCommand}" IsEnabled="{Binding CanComplete}"/>
             <TextBlock Text="{Binding SaveStatus}" VerticalAlignment="Center" Foreground="{DynamicResource ShellSuccessBrush}" FontSize="12" TextWrapping="Wrap"/>
           </StackPanel>
           <StackPanel IsVisible="{Binding HasSaved}" Spacing="2">
-            <TextBlock Text="{Binding SavedHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}" FontSize="13" Margin="0,4,0,0"/>
+            <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+              <TextBlock Grid.Column="0" Text="{Binding SavedHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}" FontSize="13"/>
+              <Button Grid.Column="1" Content="{Binding RefreshLabel}" Classes="secondary" Command="{Binding RefreshCommand}" Padding="8,2" FontSize="11"/>
+            </Grid>
             <ItemsControl ItemsSource="{Binding SavedReviews}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
