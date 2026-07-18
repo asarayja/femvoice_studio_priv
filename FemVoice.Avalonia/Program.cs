@@ -546,7 +546,17 @@ internal static class Program
                 db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
                 { UserId = 1, StartTime = DateTime.UtcNow.AddDays(-i * 2), EndTime = DateTime.UtcNow.AddDays(-i * 2).AddMinutes(5),
                   AveragePitch = 172 + i * 3, OverallScore = 58 + i * 4, Feedback = "s" });
+            // Seed a per-dimension VoiceIntelligence record so the voice-metrics section has real data.
+            new global::FemVoiceStudio.Services.SessionAnalyticsStore(
+                new global::FemVoiceStudio.Services.SqliteSessionAnalyticsRepository(db.ConnectionString))
+                .RecordSessionCompletedAsync(new global::FemVoiceStudio.Services.SessionAnalyticsRecord
+                { SessionId = 7001, UserId = 1, StartedAt = DateTime.UtcNow.AddMinutes(-8), EndedAt = DateTime.UtcNow.AddMinutes(-3),
+                  ExerciseCount = 1, AverageHealthScore = 85, ResonanceScore100 = 66, PitchScore100 = 74,
+                  IntonationScore100 = 60, ComfortScore100 = 72, ConsistencyScore100 = 81, RecoveryScore100 = 88, CompositeVoiceScore = 72 })
+                .GetAwaiter().GetResult();
             var panel = new ClinicianPanelViewModel(db);
+            bool voiceMetricsOk = panel.HasVoiceMetrics && panel.VoiceMetrics.Count == 7
+                                  && panel.VoiceMetrics.Any(m => m.Value.Contains("/ 100"));
             bool assembledOk = panel is not null && (!panel.HasReport || panel.Overview.Count >= 3);   // no crash; overview coherent when real
             // Recovery detail (WPF parity): debt / overtraining / workload rows present when a report assembled.
             bool recoveryOk = !panel.HasReport || (panel.HasRecoveryDetail && panel.RecoveryDetail.Count >= 3);
@@ -571,8 +581,8 @@ internal static class Program
             (shell.CurrentPage as ClinicianPanelViewModel)!.BackCommand.Execute(null);
             bool backToReports = shell.CurrentPage is ReportsViewModel;
 
-            Console.WriteLine($"[clin] emptyStateOk={emptyStateOk} assembledOk={assembledOk} recoveryOk={recoveryOk} sectionsWired={sectionsWired} noDbOk={noDbOk} canOpen={canOpen} onClin={onClin} backToReports={backToReports} (hasReport={panel.HasReport} insights={panel.Insights.Count} concerns={panel.ExerciseConcerns.Count})");
-            bool ok = emptyStateOk && assembledOk && recoveryOk && sectionsWired && noDbOk && canOpen && onClin && backToReports;
+            Console.WriteLine($"[clin] emptyStateOk={emptyStateOk} assembledOk={assembledOk} recoveryOk={recoveryOk} sectionsWired={sectionsWired} voiceMetricsOk={voiceMetricsOk} noDbOk={noDbOk} canOpen={canOpen} onClin={onClin} backToReports={backToReports} (hasReport={panel.HasReport} vmetrics={panel.VoiceMetrics.Count})");
+            bool ok = emptyStateOk && assembledOk && recoveryOk && sectionsWired && voiceMetricsOk && noDbOk && canOpen && onClin && backToReports;
             Console.WriteLine(ok ? "[clin] Clinician panel smoke OK" : "[clin] Clinician panel smoke FAIL");
             return ok ? 0 : 1;
         }
