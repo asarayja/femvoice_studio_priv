@@ -1932,11 +1932,13 @@ internal static class Program
         return ok ? 0 : 1;
     }
 
-    // Headless verification of the REAL mic-check slice (no display): the MicCalibration nav item is IMPLEMENTED
-    // (0 deferred now) and opens a disposable MicCalibrationViewModel; Start subscribes + runs the capture backend
-    // (synthetic in headless) producing a live level; the "signal detected" indicator + peak track it; Stop stops
-    // cleanly; and navigating away disposes the page (stopping capture, no orphan frames). Verifies NO clinical
-    // calibration profile type is touched. Synthetic backend only (headless) — no real device needed.
+    // Headless verification of the REAL mic-CALIBRATION wizard (no display): the MicCalibration nav item is
+    // IMPLEMENTED (0 deferred) and opens a disposable MicCalibrationViewModel; navigating away disposes it. Then the
+    // full two-phase wizard is driven with a DETERMINISTIC synthetic source (Silence for the background phase, a
+    // stable tone for the voice phase) against a TEMP profile directory: step 1 measures the silence and advances,
+    // step 2 measures the voice, the FROZEN MicrophoneCalibrationService assesses it as usable, and a real adaptive
+    // profile is BUILT + SAVED (a profile file appears on disk). Verifies the frozen service is used as-is (no
+    // threshold change) and the temp dir keeps the real user profile untouched.
     private static async Task<int> MicCalibrationSmoke()
     {
         var svc = new VoiceFeminizationExerciseService();
@@ -1955,27 +1957,45 @@ internal static class Program
         await Task.Delay(120);
         bool disposedOnLeave = shell.CurrentPage is MainDashboardViewModel;
 
-        // Behaviour with a DETERMINISTIC synthetic tone injected (this box has a REAL mic, so the shell's default
-        // CreateForRuntime backend would capture silence → no signal; inject a synthetic source instead). Start →
-        // frames flow → level rises + signal detected; Stop halts it.
-        using var mic = new MicCalibrationViewModel(new SyntheticAudioCaptureService(), new InlineUiDispatcher());
+        // Drive the two-phase wizard with a synthetic source, into a TEMP profile directory (never the real user path).
+        string profileDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "femvoice-miccal-smoke-" + System.Diagnostics.Process.GetCurrentProcess().Id);
+        try { if (System.IO.Directory.Exists(profileDir)) System.IO.Directory.Delete(profileDir, true); } catch { }
+
+        var source = new SyntheticAudioCaptureService();   // Mode flipped between phases below
+        using var mic = new MicCalibrationViewModel(source, new InlineUiDispatcher(), profileDir) { PhaseSeconds = 0.6 };
         bool available = mic.IsAvailable && mic.Devices.Count > 0;
-        mic.StartCommand.Execute(null);
-        bool running = mic.IsRunning;
-        await Task.Delay(200);
-        bool leveled = mic.Level > 0 && mic.PeakLevel > 0 && mic.SignalDetected;
-        mic.StopCommand.Execute(null);
-        bool stopped = !mic.IsRunning;
-        Console.WriteLine($"[miccal] navImpl={navImpl} zeroDeferred={zeroDeferred} onPage={onPage} available={available} running={running} leveled={leveled} stopped={stopped}");
 
-        // Safety: the VM must not reference the clinical calibration profile/service types.
-        bool noClinicalType = !typeof(MicCalibrationViewModel).GetProperties()
-            .Any(p => p.PropertyType.FullName?.Contains("MicrophoneCalibration") == true);
-        Console.WriteLine($"[miccal] disposedOnLeave={disposedOnLeave} noClinicalProfileType={noClinicalType}");
+        // Step 1: background/silence → measured, wizard advances to the voice phase.
+        source.Mode = SyntheticAudioMode.Silence;
+        await mic.NextCommand.ExecuteAsync(null);
+        bool silenceCaptured = mic.NoiseSummary.Length > 0 && !mic.IsComplete && !mic.Capturing
+                               && mic.PrimaryActionLabel.Contains("stemme", StringComparison.OrdinalIgnoreCase);
 
-        bool ok = navImpl && zeroDeferred && onPage && available && running && leveled && stopped
-                  && disposedOnLeave && noClinicalType;
-        Console.WriteLine(ok ? "[miccal] Mic calibration smoke OK" : "[miccal] Mic calibration smoke FAIL");
+        // Step 2: comfortable voice (stable tone, well above the silent floor) → assess + build + SAVE the profile.
+        source.Mode = SyntheticAudioMode.StablePitch;
+        await mic.NextCommand.ExecuteAsync(null);
+        bool completed = mic.IsComplete && !mic.Capturing;
+        bool savedMsg = mic.ResultText.Length > 0;
+
+        // A real profile file must now exist on disk (SHA-256 of the device name → <hex>.json).
+        bool profileOnDisk = System.IO.Directory.Exists(profileDir)
+                             && System.IO.Directory.GetFiles(profileDir, "*.json").Length > 0;
+
+        // The saved profile reflects the frozen service's math (usable-quality thresholds derived, not zero).
+        var reload = new global::FemVoiceStudio.Audio.MicrophoneCalibrationService(profileDir)
+            .Load(mic.SelectedDevice ?? "default-input");
+        bool profileSane = reload is not null && reload.NoiseGateThreshold > 0 && reload.VoicedRmsThreshold > 0
+                           && reload.CalibrationCount >= 1;
+
+        try { System.IO.Directory.Delete(profileDir, true); } catch { }
+
+        Console.WriteLine($"[miccal] navImpl={navImpl} zeroDeferred={zeroDeferred} onPage={onPage} disposedOnLeave={disposedOnLeave} available={available}");
+        Console.WriteLine($"[miccal] silenceCaptured={silenceCaptured} completed={completed} savedMsg={savedMsg} profileOnDisk={profileOnDisk} profileSane={profileSane}");
+
+        bool ok = navImpl && zeroDeferred && onPage && disposedOnLeave && available
+                  && silenceCaptured && completed && savedMsg && profileOnDisk && profileSane;
+        Console.WriteLine(ok ? "[miccal] Mic calibration wizard smoke OK" : "[miccal] Mic calibration wizard smoke FAIL");
         return ok ? 0 : 1;
     }
 

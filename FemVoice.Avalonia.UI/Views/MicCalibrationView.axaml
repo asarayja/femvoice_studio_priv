@@ -2,9 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
              x:Class="FemVoice.Avalonia.Views.MicCalibrationView">
-  <!-- REAL microphone check (safe subset of WPF MicrophoneCalibrationWindow): device list + live RMS level meter
-       + signal-detected indicator, driven by the audio abstraction. No clinical calibration profile / DSP
-       threshold is computed or saved (deferred). Stops capture on navigate-away (IDisposable). -->
+  <!-- REAL microphone CALIBRATION wizard (ports the WPF MicrophoneCalibrationWindow): device list + a two-phase
+       guided flow (measure silence → measure comfortable voice), then the FROZEN Core MicrophoneCalibrationService
+       assesses quality and, when usable, builds + SAVES the adaptive profile. Live RMS/dBFS meter + progress during
+       each phase. Stops capture on navigate-away (IDisposable). No threshold math here — all in the frozen service. -->
   <ScrollViewer>
     <StackPanel Margin="24" Spacing="16" MaxWidth="720" HorizontalAlignment="Center">
 
@@ -16,7 +17,7 @@
         </StackPanel>
       </Border>
 
-      <!-- Device + controls -->
+      <!-- Device + guided controls -->
       <Border Classes="card">
         <StackPanel Spacing="12">
           <Grid ColumnDefinitions="90,*" VerticalAlignment="Center">
@@ -26,24 +27,27 @@
                       IsEnabled="{Binding IsAvailable}"/>
           </Grid>
 
+          <!-- Current-step instruction -->
+          <TextBlock Text="{Binding Instruction}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+
+          <!-- Primary action (label changes per step) + restart once complete -->
           <StackPanel Orientation="Horizontal" Spacing="10">
-            <Button Classes="primary" Content="{Binding StartLabel}" Command="{Binding StartCommand}"
-                    IsVisible="{Binding !IsRunning}" IsEnabled="{Binding IsAvailable}"/>
-            <Button Classes="secondary" Content="{Binding StopLabel}" Command="{Binding StopCommand}"
-                    IsVisible="{Binding IsRunning}"/>
-            <TextBlock Text="{Binding ElapsedSeconds, StringFormat='{}{0} s'}" VerticalAlignment="Center"
-                       IsVisible="{Binding IsRunning}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12"/>
+            <Button Classes="primary" Content="{Binding PrimaryActionLabel}" Command="{Binding NextCommand}"
+                    IsEnabled="{Binding CanRecord}" IsVisible="{Binding !IsComplete}"/>
+            <Button Classes="secondary" Content="{Binding RestartLabel}" Command="{Binding RestartCommand}"
+                    IsVisible="{Binding IsComplete}"/>
           </StackPanel>
 
-          <!-- Live level meter -->
-          <StackPanel Spacing="6">
+          <!-- Capture progress -->
+          <ProgressBar Minimum="0" Maximum="100" Value="{Binding Progress}" Height="6"
+                       IsVisible="{Binding Capturing}" Foreground="{DynamicResource ShellAccentBrush}"/>
+
+          <!-- Live level meter (during a phase) -->
+          <StackPanel Spacing="6" IsVisible="{Binding Capturing}">
             <TextBlock Text="{Binding LevelLabel}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
             <Border Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="4" Height="24" ClipToBounds="True">
-              <Grid>
-                <!-- Current level fill (0–100 → fraction via Width binding through a Grid star trick) -->
-                <ProgressBar Minimum="0" Maximum="100" Value="{Binding Level}" Height="24"
-                             Foreground="{DynamicResource ShellAccentBrush}" Background="Transparent"/>
-              </Grid>
+              <ProgressBar Minimum="0" Maximum="100" Value="{Binding Level}" Height="24"
+                           Foreground="{DynamicResource ShellAccentBrush}" Background="Transparent"/>
             </Border>
             <Grid ColumnDefinitions="*,Auto">
               <TextBlock Grid.Column="0" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11"
@@ -51,20 +55,22 @@
               <TextBlock Grid.Column="1" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11"
                          Text="{Binding PeakLevel, StringFormat='Topp: {0:F0}'}"/>
             </Grid>
-            <Border CornerRadius="4" Padding="8,4" HorizontalAlignment="Left"
-                    IsVisible="{Binding SignalDetected}" BorderThickness="1"
-                    BorderBrush="{DynamicResource ShellOkBorderBrush}">
-              <TextBlock Text="● Signal registrert" Foreground="{DynamicResource ShellOkBrush}" FontSize="12"/>
-            </Border>
+            <TextBlock Text="{Binding LiveLevelText}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" TextWrapping="Wrap"/>
           </StackPanel>
+
+          <!-- Measured-silence summary (after step 1) -->
+          <TextBlock Text="{Binding NoiseSummary}" IsVisible="{Binding NoiseSummary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                     Foreground="{DynamicResource ShellSubtleTextBrush}" FontSize="12" TextWrapping="Wrap"/>
+
+          <!-- Result / quality / saved-profile message -->
+          <Border IsVisible="{Binding ResultText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                  BorderBrush="{DynamicResource ShellOkBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10">
+            <TextBlock Text="{Binding ResultText}" TextWrapping="Wrap"
+                       Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
+          </Border>
 
           <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource ShellSuccessBrush}" FontSize="13" TextWrapping="Wrap"/>
         </StackPanel>
-      </Border>
-
-      <!-- Deferred note (full clinical calibration profile not saved yet) -->
-      <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
-        <TextBlock Text="{Binding DeferredNote}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
       </Border>
 
     </StackPanel>
