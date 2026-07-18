@@ -177,6 +177,14 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
                     double inZone = voiced.Count > 0
                         ? 100.0 * voiced.Count(p => p >= ComfortZoneLow && p <= ComfortZoneHigh) / voiced.Count : 0;
                     double avgResonance = _sessionResonance.Count > 0 ? _sessionResonance.Average() : 0;
+                    // Real pitch variation (prosody): population std-dev of the voiced pitch samples (Hz). A genuine
+                    // measurement of the real pitch — persisted via the INSERT (PitchVariation column). No fabrication.
+                    double pitchVariation = 0;
+                    if (voiced.Count > 1)
+                    {
+                        double mean = voiced.Average();
+                        pitchVariation = System.Math.Sqrt(voiced.Sum(p => (p - mean) * (p - mean)) / voiced.Count);
+                    }
                     var session = new FemVoiceStudio.Models.TrainingSession
                     {
                         UserId = 1,
@@ -185,6 +193,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
                         AveragePitch = System.Math.Round(avg, 1),
                         MinPitch = voiced.Count > 0 ? System.Math.Round(voiced.Min(), 1) : 0,
                         MaxPitch = voiced.Count > 0 ? System.Math.Round(voiced.Max(), 1) : 0,
+                        PitchVariation = System.Math.Round(pitchVariation, 1),   // real prosody metric (std-dev of pitch)
                         OverallScore = System.Math.Round(inZone),   // comfort-zone adherence (display-only score)
                         ResonanceScore = System.Math.Round(avgResonance, 1),   // real resonance from the Core DSP engine
                         DifficultyLevel = SelectedDifficulty,

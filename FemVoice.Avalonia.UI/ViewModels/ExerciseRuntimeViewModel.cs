@@ -371,6 +371,10 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
 
     private void OnFrameAvailable(object? sender, AudioFrameAvailableEventArgs e)
     {
+        // Bail on any in-flight frame once the session has stopped / the VM is being disposed (IsRunning is cleared
+        // first in Stop/Dispose). Prevents an orphan pitch sample being posted after navigate-away — the per-frame
+        // work (pitch + resonance DSP) widened that race, so guard explicitly.
+        if (!IsRunning) return;
         var now = DateTime.UtcNow;
         double delta = (now - _lastFrameUtc).TotalSeconds;
         _lastFrameUtc = now;
@@ -414,6 +418,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         int resonancePct = _latestResonancePercent;
         _ui.Post(() =>
         {
+            if (!IsRunning) return;   // VM stopped/disposed between capture and dispatch → don't apply orphan updates
             CurrentPitch = result.IsVoiced ? Math.Round(pitch, 1) : 0;
             CurrentResonance = result.IsVoiced ? ResonanceText(resonancePct) : "—";
             PitchStatus = status;
