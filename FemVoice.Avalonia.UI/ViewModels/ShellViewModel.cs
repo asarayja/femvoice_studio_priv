@@ -265,7 +265,7 @@ public partial class ShellViewModel : ObservableObject
 
     // SAFETY-CRITICAL: manual-override clamp PREVIEW. Runs the frozen two-stage clamp read-only and shows only the
     // clamped outcome; no persistence, no application. Fresh each open; Back returns to the dashboard.
-    [RelayCommand] private void ShowManualOverride() => CurrentPage = new ManualOverridePanelViewModel(ShowDashboard);
+    [RelayCommand] private void ShowManualOverride() => CurrentPage = new ManualOverridePanelViewModel(_database, ShowDashboard);
 
     // Real-time resonance screen (Core ResonanceProxyEngine) + contrast demo; fresh disposable page (own capture
     // backend, stopped on navigate-away). null → creates its own real-when-available backend (synthetic in tests).

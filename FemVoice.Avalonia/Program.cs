@@ -837,7 +837,15 @@ internal static class Program
         var factory = new global::FemVoiceStudio.Services.ExerciseProfileFactory();
         var baseline = factory.CreateProfile(global::FemVoiceStudio.Models.ExerciseProfileType.ResonanceHumming);
 
-        var vm = new ManualOverridePanelViewModel();
+        // Temp DB so the persist (audit-log) round-trip can be verified.
+        string fileName = $"femvoice-override-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+        string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio");
+        string full = System.IO.Path.Combine(dir, fileName);
+        void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+        Cleanup();
+        var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+
+        var vm = new ManualOverridePanelViewModel(db, null);
         // Aggressive intent: push the resonance ceiling well ABOVE the baseline, relax stability, shorten hold —
         // then blockade the safety gate and mark severe recovery so the clamp must engage.
         double rawIntendedMax = baseline.TargetResonanceMax + 400;
@@ -861,7 +869,26 @@ internal static class Program
         Console.WriteLine($"[override] rawIntendedMax={rawIntendedMax:F0} baselineMax={baseline.TargetResonanceMax:F0} shownMax={shownMax:F0}");
         Console.WriteLine($"[override] applied={applied} clamped={clamped} neverEchoesRawIntent={neverEchoesRawIntent} moreConservative={moreConservative} outcome='{vm.OutcomeText}'");
 
-        bool ok = applied && clamped && neverEchoesRawIntent && moreConservative;
+        // Persist the clamped RESULT to the override audit log, then verify it round-trips (the log stores the
+        // outcome flags + metadata, NEVER the raw profile — the safety invariant carries through to persistence).
+        bool persistOk;
+        try
+        {
+            bool canPersist = vm.CanPersist;
+            vm.PersistCommand.Execute(null);
+            bool recentShows = vm.RecentOverrides.Count >= 1 && vm.HasRecent;
+            // Independently confirm the row is in the store (WasApplied + WasClamped preserved).
+            var store = new global::FemVoiceStudio.Services.ManualOverridesStore(
+                new global::FemVoiceStudio.Services.SqliteManualOverridesRepository(db.ConnectionString));
+            var rows = store.GetOverridesAsync(1, DateTime.UtcNow.AddDays(-1), DateTime.UtcNow.AddDays(1)).GetAwaiter().GetResult();
+            bool logged = rows.Count >= 1 && rows.Any(r => r.WasApplied && r.WasClamped);
+            persistOk = canPersist && recentShows && logged;
+            Console.WriteLine($"[override] persist: canPersist={canPersist} recentShows={recentShows} logged={logged} rows={rows.Count} status='{vm.PersistStatus}'");
+        }
+        catch (Exception ex) { persistOk = false; Console.WriteLine($"[override] persist FAIL: {ex.Message}"); }
+        finally { Cleanup(); }
+
+        bool ok = applied && clamped && neverEchoesRawIntent && moreConservative && persistOk;
         Console.WriteLine(ok ? "[override] Manual override smoke OK" : "[override] Manual override smoke FAIL");
         return ok ? 0 : 1;
     }
