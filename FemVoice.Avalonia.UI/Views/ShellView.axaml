@@ -19,8 +19,6 @@
                 HorizontalContentAlignment="Center" IsVisible="False" Click="OnHamburgerClick" VerticalAlignment="Center"/>
         <TextBlock Text="FemVoice Studio" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"
                    Foreground="{DynamicResource ShellHeadingBrush}"/>
-        <TextBlock Text="{loc:Tr Key=Shell_HeaderSubtitle, Fallback='Avalonia desktop · kun visning'}"
-                   FontSize="12" Foreground="{DynamicResource ShellMutedBrush}" VerticalAlignment="Center"/>
       </StackPanel>
     </Border>
 
@@ -29,7 +27,6 @@
             BorderBrush="{DynamicResource ShellBorderBrush}" BorderThickness="0,1,0,0">
       <DockPanel>
         <TextBlock DockPanel.Dock="Left" Text="{Binding MicStatusText}" Foreground="{DynamicResource ShellAccentBrush}" FontSize="12"/>
-        <TextBlock DockPanel.Dock="Right" Text="{Binding ModeText}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
         <TextBlock Text="{Binding CurrentDestinationLabel, StringFormat='Side: {0}'}"
                    HorizontalAlignment="Center" Foreground="{DynamicResource ShellSubtleTextBrush}" FontSize="12"/>
       </DockPanel>
@@ -54,8 +51,6 @@
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
-              <TextBlock Text="{loc:Tr Key=Shell_NavDeferredHint, Fallback='Flater merket «senere» er visning-bare plassholdere.'}"
-                         TextWrapping="Wrap" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" Margin="2,10,0,0"/>
             </StackPanel>
           </ScrollViewer>
         </Border>
@@ -127,11 +122,6 @@
             <!-- Hint shown when there is no data yet -->
             <TextBlock IsVisible="{Binding !HasInfoStats}" Text="{Binding InfoNoStatsHint}"
                        TextWrapping="Wrap" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12"/>
-
-            <!-- Mode/safety posture (accurate: real local data, no clinical change) -->
-            <Border BorderBrush="{DynamicResource ShellBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10">
-              <TextBlock Text="{Binding ModeText}" TextWrapping="Wrap" Foreground="{DynamicResource ShellSubtleTextBrush}" FontSize="12"/>
-            </Border>
           </StackPanel>
         </Border>
       </Grid>
