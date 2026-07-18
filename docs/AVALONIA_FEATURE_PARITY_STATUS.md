@@ -17,7 +17,8 @@ data) · ❌ not ported.
 | Diagnostics / SupportPackage / backup / RC-0 / research anonymization | 🟦 Diagnostics | Card hub only. **No support package, backup/restore, RC-0 export.** |
 | SmartCoachDashboard/Detail — engine-backed daily recommendation, streak, health | 🟡 SmartCoach | **REAL** engine: `SmartCoachEngine.GenerateDailyRecommendation` on the real DB (PR #53). |
 | ProgressionDashboard/Window — level, progress bar, FemVoice score, parameter rows | 🟡 Progression | **REAL** level + FemVoice score + `ProgressionService` summary on the real DB (PR #54). Per-dimension rings deferred. |
-| ResonanceWindow · ResonanceContrastDemoWindow · AnalyzerWindow | ❌ | No dedicated Avalonia screen (resonance appears only as a synthetic mini-chart in the Analysis scaffold). |
+| ResonanceWindow · ResonanceContrastDemoWindow | 🟡 Resonans | **REAL** dedicated resonance screen (PR #75): live real-time resonance meter (Core `ResonanceProxyEngine`) + the non-scored resonance-contrast awareness demo. Nav item. AnalyzerWindow still ❌ (see below). |
+| AnalyzerWindow | ❌ | Real-time spectrum/formant analyzer — not yet ported. |
 | StatisticsWindow | 🟡 Statistikk | **REAL** stats (total/streak/days/time/avg pitch/consistency/score) from the DB (PR #58). |
 | CalendarWindow | 🟡 Kalender | **REAL** training-day history (last 90 days) from the DB (PR #59). DayDetails view deferred. |
 | ClinicianDashboard · CoachDashboard · CaseReviewWindow | 🟡 Veileder + Kliniker | **REAL** Coach panel (PR #66) + **Clinician outcome panel** (PR #67): both assemble a real `OutcomeProfile` from saved sessions via the frozen Core pipeline (read-only) — Coach shows focus/recommendations/development; Clinician shows the `OutcomeReport` overview (composite score, recovery, goal progress, top exercises). Both opened from the Reports page; both degrade to a truthful "not enough data" state. **CaseReview** still deferred; per-dimension resonance/intonation fill in once sessions record them. |

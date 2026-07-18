@@ -112,6 +112,7 @@ public partial class ShellViewModel : ObservableObject
             new(Localized.Get("Shell_Nav_Progresjon", "Progresjon"), true, ShowProgressionCommand),   // engine-backed
             new(Localized.Get("Shell_Nav_SmartCoach", "SmartCoach"), true, ShowSmartCoachCommand),   // engine-backed
             new(Localized.Get("Shell_Nav_FirstSetup", "Førstegangsoppsett"), true, ShowFirstTimeSetupCommand),   // real onboarding
+            new(Localized.Get("Shell_Nav_Resonance", "Resonans"), true, ShowResonanceCommand),   // real-time resonance + contrast demo
             new(Localized.Get("Shell_Nav_MicCalibration", "Mikrofonkalibrering"), true, _showMicCalibrationCommand),
             new(Localized.Get("Shell_Nav_ManualOverride", "Manuell overstyring"), true, ShowManualOverrideCommand),   // safety-clamp preview
         };
@@ -238,6 +239,7 @@ public partial class ShellViewModel : ObservableObject
             ClinicianPanelViewModel => Localized.Get("Clinician_Panel_Title", "Klinikerpanel"),
             TimelinePanelViewModel => Localized.Get("Timeline_Panel_Title", "Utviklingstidslinje"),
             ManualOverridePanelViewModel => Localized.Get("Shell_Nav_ManualOverride", "Manuell overstyring"),
+            ResonanceViewModel => Localized.Get("Shell_Nav_Resonance", "Resonans"),
             DeferredSurfaceViewModel d => $"{d.SurfaceName} (utsatt)",
             _ => "—",
         };
@@ -259,6 +261,10 @@ public partial class ShellViewModel : ObservableObject
     // SAFETY-CRITICAL: manual-override clamp PREVIEW. Runs the frozen two-stage clamp read-only and shows only the
     // clamped outcome; no persistence, no application. Fresh each open; Back returns to the dashboard.
     [RelayCommand] private void ShowManualOverride() => CurrentPage = new ManualOverridePanelViewModel(ShowDashboard);
+
+    // Real-time resonance screen (Core ResonanceProxyEngine) + contrast demo; fresh disposable page (own capture
+    // backend, stopped on navigate-away). null → creates its own real-when-available backend (synthetic in tests).
+    [RelayCommand] private void ShowResonance() => CurrentPage = new ResonanceViewModel(null, _ui);
     // Real system status (runtime + DB facts) fresh each open; export/support-package/backup stay deferred.
     [RelayCommand] private void ShowDiagnostics() => CurrentPage = new DiagnosticsViewModel(_database);
     // Real training statistics from the saved sessions (fresh each open; null-safe).

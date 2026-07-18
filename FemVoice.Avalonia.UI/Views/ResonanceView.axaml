@@ -1,0 +1,59 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
+             x:Class="FemVoice.Avalonia.Views.ResonanceView">
+  <!-- REAL resonance screen: live resonance meter (Core ResonanceProxyEngine) + optional non-scored resonance-
+       contrast awareness demo. Stops capture on navigate-away (IDisposable). No scoring/persistence. -->
+  <ScrollViewer>
+    <StackPanel Margin="24" Spacing="16" MaxWidth="720" HorizontalAlignment="Center">
+
+      <Border Classes="card" Padding="20,16">
+        <StackPanel Spacing="4">
+          <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <TextBlock Text="{Binding Intro}" FontSize="13" Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Live resonance meter -->
+      <Border Classes="card">
+        <StackPanel Spacing="12">
+          <Grid ColumnDefinitions="90,*" VerticalAlignment="Center">
+            <TextBlock Grid.Column="0" Text="{Binding DeviceLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <ComboBox Grid.Column="1" MinWidth="240" HorizontalAlignment="Left"
+                      ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice, Mode=TwoWay}" IsEnabled="{Binding IsAvailable}"/>
+          </Grid>
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <Button Classes="primary" Content="{Binding StartLabel}" Command="{Binding StartCommand}"
+                    IsVisible="{Binding !IsRunning}" IsEnabled="{Binding IsAvailable}"/>
+            <Button Classes="secondary" Content="{Binding StopLabel}" Command="{Binding StopCommand}" IsVisible="{Binding IsRunning}"/>
+          </StackPanel>
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding LevelLabel}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
+            <Border Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="4" Height="24" ClipToBounds="True">
+              <ProgressBar Minimum="0" Maximum="100" Value="{Binding Level}" Height="24"
+                           Foreground="{DynamicResource ShellAccentBrush}" Background="Transparent"/>
+            </Border>
+            <TextBlock Text="{Binding LevelLabelText}" Foreground="{DynamicResource ShellAccentBrush}" FontSize="13"/>
+          </StackPanel>
+          <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource ShellSuccessBrush}" FontSize="13" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Optional resonance-contrast awareness demo (content only) -->
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <TextBlock Text="{Binding ContrastTitle}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+          <ItemsControl ItemsSource="{Binding ContrastSteps}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Margin="0,2"/>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock Text="{Binding ContrastNote}" TextWrapping="Wrap" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12"/>
+        </StackPanel>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
