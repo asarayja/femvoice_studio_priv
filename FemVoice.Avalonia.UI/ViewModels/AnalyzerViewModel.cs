@@ -78,6 +78,13 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
     [ObservableProperty] private double _maxPitch;
     [ObservableProperty] private int _sampleCount;
     [ObservableProperty] private string _durationText = "0 s";
+    /// <summary>Pitch quantiles (5/10/25/50/75/90/95 %) — WPF Analyzer parity. Updated on Stop / when samples exist.</summary>
+    [ObservableProperty] private IReadOnlyList<AnalysisSummaryMetric> _quantiles = System.Array.Empty<AnalysisSummaryMetric>();
+    /// <summary>Range distribution (very-low … very-high buckets, % of voiced samples) — WPF Analyzer parity.</summary>
+    [ObservableProperty] private IReadOnlyList<AnalysisSummaryMetric> _rangeDistribution = System.Array.Empty<AnalysisSummaryMetric>();
+    [ObservableProperty] private bool _hasDistribution;
+    public string QuantilesHeading => Localized.Get("Analyzer_Quantiles", "Kvantiler");
+    public string RangeHeading => Localized.Get("Analyzer_RangeDistribution", "Områdefordeling");
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsRunning))]
     private bool _running;
@@ -113,6 +120,34 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
         _resonance.Stop();
         Running = false;
         StatusMessage = Localized.Get("Analyzer_Done", "Ferdig. Statistikken viser hele opptaket.");
+        ComputeDistribution();   // quantiles + range distribution over the full recording
+    }
+
+    // Pitch quantiles + range distribution over all voiced samples this recording (WPF Analyzer parity). Real data.
+    private void ComputeDistribution()
+    {
+        var sorted = _pitches.Where(p => p > 0).OrderBy(p => p).ToList();
+        if (sorted.Count == 0) { Quantiles = System.Array.Empty<AnalysisSummaryMetric>(); RangeDistribution = System.Array.Empty<AnalysisSummaryMetric>(); HasDistribution = false; return; }
+
+        double Q(double f) { int i = (int)Math.Round(f * (sorted.Count - 1)); return sorted[Math.Clamp(i, 0, sorted.Count - 1)]; }
+        Quantiles = new List<AnalysisSummaryMetric>
+        {
+            new("5 %", $"{Q(0.05):F0} Hz"), new("10 %", $"{Q(0.10):F0} Hz"), new("25 %", $"{Q(0.25):F0} Hz"),
+            new("50 % (median)", $"{Q(0.50):F0} Hz"), new("75 %", $"{Q(0.75):F0} Hz"), new("90 %", $"{Q(0.90):F0} Hz"), new("95 %", $"{Q(0.95):F0} Hz"),
+        };
+
+        // Range buckets (Hz), roughly the WPF very-low … very-high bands.
+        int n = sorted.Count;
+        string Pct(System.Func<double, bool> inBand) => $"{100.0 * sorted.Count(inBand) / n:F0} %";
+        RangeDistribution = new List<AnalysisSummaryMetric>
+        {
+            new(Localized.Get("Analyzer_RangeVeryLow", "Svært lav (< 145 Hz)"), Pct(p => p < 145)),
+            new(Localized.Get("Analyzer_RangeLow", "Lav (145–165 Hz)"), Pct(p => p is >= 145 and < 165)),
+            new(Localized.Get("Analyzer_RangeMiddle", "Midtre (165–196 Hz)"), Pct(p => p is >= 165 and < 196)),
+            new(Localized.Get("Analyzer_RangeUpper", "Øvre (196–220 Hz)"), Pct(p => p is >= 196 and < 220)),
+            new(Localized.Get("Analyzer_RangeVeryHigh", "Svært høy (≥ 220 Hz)"), Pct(p => p >= 220)),
+        };
+        HasDistribution = true;
     }
 
     private void OnFrame(object? sender, AudioFrameAvailableEventArgs e)
