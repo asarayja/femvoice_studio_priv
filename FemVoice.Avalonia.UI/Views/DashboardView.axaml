@@ -47,6 +47,7 @@
             </StackPanel>
             <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding CurrentSignalStatus, StringFormat='Signal: {0}'}"/>
             <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding PitchStability, StringFormat='Stabilitet: {0}'}"/>
+            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding ResonanceDisplay, StringFormat='Resonans: {0}'}"/>
             <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding HealthStatusDisplay, StringFormat='Helse: {0}'}"/>
             <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellSuccessBrush}" Text="{Binding ComfortZoneLow, StringFormat='Komfortsone: {0:F0}–'}"/>
             <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellSuccessBrush}" Text="{Binding ComfortZoneHigh, StringFormat='… {0:F0} Hz'}" Margin="0,-6,0,0"/>
