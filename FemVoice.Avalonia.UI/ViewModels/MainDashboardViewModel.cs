@@ -177,7 +177,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
                     double inZone = voiced.Count > 0
                         ? 100.0 * voiced.Count(p => p >= ComfortZoneLow && p <= ComfortZoneHigh) / voiced.Count : 0;
                     double avgResonance = _sessionResonance.Count > 0 ? _sessionResonance.Average() : 0;
-                    _database.SaveTrainingSession(new FemVoiceStudio.Models.TrainingSession
+                    var session = new FemVoiceStudio.Models.TrainingSession
                     {
                         UserId = 1,
                         StartTime = _sessionStart.ToUniversalTime(),
@@ -189,7 +189,16 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
                         ResonanceScore = System.Math.Round(avgResonance, 1),   // real resonance from the Core DSP engine
                         DifficultyLevel = SelectedDifficulty,
                         Feedback = "Avalonia dashboard-økt",
-                    });
+                    };
+                    // Core's INSERT (SaveTrainingSession) persists the base columns; ResonanceScore is only written by
+                    // UpdateTrainingSession (the intended create-then-enrich two-step). Save to get the Id, then update
+                    // with the real resonance so it round-trips. Both are existing Core APIs — no Core change.
+                    int savedId = _database.SaveTrainingSession(session);
+                    if (savedId > 0 && avgResonance > 0)
+                    {
+                        session.Id = savedId;
+                        _database.UpdateTrainingSession(session);
+                    }
                 }
                 catch { /* never surface a session-save error to the app */ }
             }

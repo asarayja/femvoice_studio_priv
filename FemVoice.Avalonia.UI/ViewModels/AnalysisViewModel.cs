@@ -123,19 +123,32 @@ public sealed class AnalysisViewModel
             double avgScore = scores.Average();
             double bestScore = scores.Max();
 
-            series = new List<AnalysisSeries>
+            // Real resonance trend (now saved per session by the dashboard's ResonanceProxyEngine). Sessions recorded
+            // before that feature carry 0; report the average over sessions that actually have resonance data.
+            var resonances = ordered.Select(s => s.ResonanceScore).ToList();
+            var withResonance = resonances.Where(r => r > 0).ToList();
+            double avgResonance = withResonance.Count > 0 ? withResonance.Average() : 0;
+
+            var seriesList = new List<AnalysisSeries>
             {
                 new("Tonehøyde-trend", "Snitt tonehøyde per lagret økt (eldst → nyest).",
                     ordered.Select(s => PitchToPx(s.AveragePitch)).ToList(),
                     avgPitch > 0 ? $"Snitt {avgPitch:F0} Hz over {ordered.Count} økter" : "Ingen stemme registrert"),
+                new("Resonans-trend", "Resonans-score per lagret økt (ekte, fra resonansmotoren).",
+                    resonances.Select(ScoreToPx).ToList(),
+                    withResonance.Count > 0
+                        ? $"Snitt {avgResonance:F0} / 100 over {withResonance.Count} økter med resonansdata"
+                        : "Ingen resonansdata ennå — fullfør en økt for å registrere resonans"),
                 new("Score-trend", "FemVoice-score per lagret økt (komfortsone-treff).",
                     scores.Select(ScoreToPx).ToList(),
                     $"Snitt {avgScore:F0} · beste {bestScore:F0}"),
             };
+            series = seriesList;
             metrics = new List<AnalysisSummaryMetric>
             {
                 new("Økter analysert", ordered.Count.ToString()),
                 new("Snitt tonehøyde", avgPitch > 0 ? $"{avgPitch:F0} Hz" : "—"),
+                new("Snitt resonans", withResonance.Count > 0 ? $"{avgResonance:F0} / 100" : "— (ingen data ennå)"),
                 new("Snitt score", $"{avgScore:F0} / 100"),
                 new("Beste økt", $"{bestScore:F0} / 100"),
             };
