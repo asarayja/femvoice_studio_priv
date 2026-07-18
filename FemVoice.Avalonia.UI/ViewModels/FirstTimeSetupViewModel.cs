@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FemVoice.Avalonia.Localization;   // ScaffoldStrings.Cultures + Localized
@@ -37,9 +38,41 @@ public partial class FirstTimeSetupViewModel : ObservableObject
     /// <summary>One training-frequency choice (days + localized label).</summary>
     public sealed record FrequencyOption(int Value, string Label) { public override string ToString() => Label; }
 
-    public IReadOnlyList<ThemePreference> ThemeOptions { get; } =
-        new[] { ThemePreference.System, ThemePreference.Light, ThemePreference.Dark };
-    public IReadOnlyList<string> LanguageOptions { get; } = ScaffoldStrings.Cultures;
+    // Theme choices with LOCALIZED labels (shared FirstSetup_* keys), not raw enum names (WPF parity).
+    public sealed record ThemeOption(ThemePreference Value, string Label);
+    public IReadOnlyList<ThemeOption> ThemeOptions { get; } = new[]
+    {
+        new ThemeOption(ThemePreference.System, Localized.Get("FirstSetup_SystemDefault", "Systemstandard")),
+        new ThemeOption(ThemePreference.Light, Localized.Get("FirstSetup_LightMode", "Lys modus")),
+        new ThemeOption(ThemePreference.Dark, Localized.Get("FirstSetup_DarkMode", "Mørk modus")),
+    };
+    public ThemeOption SelectedThemeOption
+    {
+        get => ThemeOptions.FirstOrDefault(o => o.Value == Theme) ?? ThemeOptions[0];
+        set { if (value is not null && value.Value != Theme) Theme = value.Value; }
+    }
+
+    // Language choices with HUMAN-READABLE names (the culture's own native name), not raw culture codes (WPF parity).
+    public sealed record LanguageOption(string Code, string Name);
+    public IReadOnlyList<LanguageOption> LanguageOptions { get; } = ScaffoldStrings.Cultures
+        .Select(c => new LanguageOption(c, NativeLanguageName(c))).ToList();
+    public LanguageOption SelectedLanguageOption
+    {
+        get => LanguageOptions.FirstOrDefault(o => o.Code == Language) ?? LanguageOptions[0];
+        set { if (value is not null && value.Code != Language) Language = value.Code; }
+    }
+
+    // The culture's own native language name (e.g. nb-NO → "Norsk (bokmål)"), title-cased. Falls back to the code.
+    private static string NativeLanguageName(string code)
+    {
+        try
+        {
+            var name = System.Globalization.CultureInfo.GetCultureInfo(code).NativeName;
+            if (string.IsNullOrWhiteSpace(name)) return code;
+            return char.ToUpper(name[0]) + name.Substring(1);
+        }
+        catch { return code; }
+    }
     // WPF FirstTimeSetup captures voice-goal-style + training-frequency too (real shared-RESX labels).
     public IReadOnlyList<StyleOption> StyleOptions { get; } = new[]
     {
@@ -58,6 +91,8 @@ public partial class FirstTimeSetupViewModel : ObservableObject
 
     [ObservableProperty] private string _language;
     [ObservableProperty] private ThemePreference _theme;
+    partial void OnThemeChanged(ThemePreference value) => OnPropertyChanged(nameof(SelectedThemeOption));
+    partial void OnLanguageChanged(string value) => OnPropertyChanged(nameof(SelectedLanguageOption));
     [ObservableProperty] private StyleOption _selectedStyle;
     [ObservableProperty] private FrequencyOption _selectedFrequency;
 
