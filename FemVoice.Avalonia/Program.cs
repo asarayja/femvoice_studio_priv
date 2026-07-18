@@ -506,6 +506,8 @@ internal static class Program
                   AveragePitch = 172 + i * 3, OverallScore = 58 + i * 4, Feedback = "s" });
             var panel = new ClinicianPanelViewModel(db);
             bool assembledOk = panel is not null && (!panel.HasReport || panel.Overview.Count >= 3);   // no crash; overview coherent when real
+            // Recovery detail (WPF parity): debt / overtraining / workload rows present when a report assembled.
+            bool recoveryOk = !panel.HasReport || (panel.HasRecoveryDetail && panel.RecoveryDetail.Count >= 3);
 
             var noDb = new ClinicianPanelViewModel(null);
             bool noDbOk = !noDb.HasReport && noDb.EmptyMessage.Length > 0;
@@ -521,8 +523,8 @@ internal static class Program
             (shell.CurrentPage as ClinicianPanelViewModel)!.BackCommand.Execute(null);
             bool backToReports = shell.CurrentPage is ReportsViewModel;
 
-            Console.WriteLine($"[clin] emptyStateOk={emptyStateOk} assembledOk={assembledOk} noDbOk={noDbOk} canOpen={canOpen} onClin={onClin} backToReports={backToReports} (hasReport={panel.HasReport} overview={panel.Overview.Count})");
-            bool ok = emptyStateOk && assembledOk && noDbOk && canOpen && onClin && backToReports;
+            Console.WriteLine($"[clin] emptyStateOk={emptyStateOk} assembledOk={assembledOk} recoveryOk={recoveryOk} noDbOk={noDbOk} canOpen={canOpen} onClin={onClin} backToReports={backToReports} (hasReport={panel.HasReport} overview={panel.Overview.Count} recovery={panel.RecoveryDetail.Count})");
+            bool ok = emptyStateOk && assembledOk && recoveryOk && noDbOk && canOpen && onClin && backToReports;
             Console.WriteLine(ok ? "[clin] Clinician panel smoke OK" : "[clin] Clinician panel smoke FAIL");
             return ok ? 0 : 1;
         }
