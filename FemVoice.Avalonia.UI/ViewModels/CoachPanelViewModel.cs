@@ -44,13 +44,25 @@ public sealed class CoachPanelViewModel
     public object? Report { get; private set; }
     /// <summary>Truthful message shown when there is not enough data (no DB / no sessions / pipeline unavailable).</summary>
     public string EmptyMessage { get; private set; } =
-        Localized.Get("Coach_Panel_Empty", "Ikke nok data ennå. Fullfør noen økter på dashbordet for å bygge et veiledersammendrag.");
+        Localized.Get("SmartCoach_NoData", "Ingen data ennå");
 
     public string ReportTitle { get; private set; } = "";
     public IReadOnlyList<string> FocusAreas { get; private set; } = Array.Empty<string>();
     public IReadOnlyList<string> Recommendations { get; private set; } = Array.Empty<string>();
-    /// <summary>Short line summarising detected long-term development (breakthrough / plateau / regression).</summary>
+    /// <summary>Short line summarising a detected breakthrough (positive long-term development). Empty when none.</summary>
     public string DevelopmentSummary { get; private set; } = "";
+
+    // ── Recovery needs (WPF CoachDashboard: shown FIRST, per the Health > Development priority) ──────────────────
+    /// <summary>Recovery guidance from the outcome profile's RecoveryProgress (status + debt + safe recommendation).</summary>
+    public string RecoveryNeedsText { get; private set; } = "";
+    public bool HasRecoveryNeeds => RecoveryNeedsText.Length > 0;
+    public string RecoveryNeedsHeading => Localized.Get("Coach_RecoveryNeeds", "Restitusjonsbehov");
+
+    // ── Plateau warnings (WPF CoachDashboard: dedicated card; also surfaces regressions) ────────────────────────
+    /// <summary>Detected plateau/regression lines (per-dimension, severity-aware). Empty when none.</summary>
+    public IReadOnlyList<string> PlateauWarnings { get; private set; } = Array.Empty<string>();
+    public bool HasPlateauWarnings => PlateauWarnings.Count > 0;
+    public string PlateauWarningsHeading => Localized.Get("Coach_PlateauWarnings", "Platåvarsler");
 
     public string FocusHeading => Localized.Get("Coach_FocusAreas", "Fokusområder");
     public string RecommendationsHeading => Localized.Get("Coach_Recommendations", "Anbefalinger");
@@ -91,10 +103,13 @@ public sealed class CoachPanelViewModel
             ReportTitle = report.Title ?? "";
             FocusAreas = (report.FocusAreas ?? Array.Empty<string>()).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
             Recommendations = (report.Recommendations ?? Array.Empty<string>()).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
-            DevelopmentSummary = BuildDevelopmentSummary(report);
+            DevelopmentSummary = BuildBreakthroughSummary(report);
+            RecoveryNeedsText = BuildRecoveryNeeds(outcome);
+            PlateauWarnings = BuildPlateauWarnings(report);
 
             // "Real" only when the profile actually has evidence; otherwise keep the truthful empty state.
-            HasReport = outcome.HasEnoughData || FocusAreas.Count > 0 || Recommendations.Count > 0 || DevelopmentSummary.Length > 0;
+            HasReport = outcome.HasEnoughData || FocusAreas.Count > 0 || Recommendations.Count > 0
+                        || DevelopmentSummary.Length > 0 || RecoveryNeedsText.Length > 0 || PlateauWarnings.Count > 0;
         }
         catch
         {
@@ -102,18 +117,56 @@ public sealed class CoachPanelViewModel
         }
     }
 
-    // Compose a short, human-readable development line from the detected states (guarded — the state objects and
-    // their fields are optional across pipeline versions, so failures collapse to an empty line).
-    private static string BuildDevelopmentSummary(CoachReport report)
+    // Breakthrough line only (positive development). Guarded — the state object/fields are optional across versions.
+    private static string BuildBreakthroughSummary(CoachReport report)
     {
-        var parts = new List<string>();
         try
         {
-            if (report.Breakthrough is not null) parts.Add(Localized.Get("Coach_Panel_Breakthrough", "Gjennombrudd registrert"));
-            if (report.Plateau is not null) parts.Add(Localized.Get("Coach_Panel_Plateau", "Platå registrert"));
-            if (report.Regression is not null) parts.Add(Localized.Get("Coach_Panel_Regression", "Tilbakegang registrert"));
+            if (report.Breakthrough is null) return "";
+            var dim = report.Breakthrough.Dimension.ToString();
+            return $"{dim}: {Localized.Get("Coach_Panel_Breakthrough", "gjennombrudd registrert")}";
         }
         catch { return ""; }
-        return string.Join(" · ", parts);
+    }
+
+    // Recovery guidance from the outcome profile's RecoveryProgress — shown FIRST in the panel (Health > Development).
+    // Only surfaced when recovery actually wants to be heard (severity above None / overtraining / real debt).
+    private static string BuildRecoveryNeeds(OutcomeProfile outcome)
+    {
+        try
+        {
+            var r = outcome.RecoveryProgress;
+            if (r is null) return "";
+            bool wantsHeard = r.OvertrainingPredicted || r.RecoveryDebt >= 1.0
+                              || (!string.IsNullOrWhiteSpace(r.Severity) && !r.Severity.Equals("None", StringComparison.OrdinalIgnoreCase));
+            if (!wantsHeard) return "";
+            var text = !string.IsNullOrWhiteSpace(r.RecommendationText)
+                ? r.RecommendationText
+                : $"{r.Status} · restitusjonsgjeld {r.RecoveryDebt:F0}";
+            return text;
+        }
+        catch { return ""; }
+    }
+
+    // Plateau + regression warnings, per-dimension and severity-aware (WPF's Plateau-Warnings card). Guarded.
+    private static IReadOnlyList<string> BuildPlateauWarnings(CoachReport report)
+    {
+        var lines = new List<string>();
+        try
+        {
+            if (report.Plateau is not null)
+            {
+                var p = report.Plateau;
+                lines.Add($"{p.Dimension}: {Localized.Get("Coach_Panel_Plateau", "platå")} " +
+                          $"({p.PlateauDurationDays} d, styrke {p.SeverityScore:F0})");
+            }
+            if (report.Regression is not null)
+            {
+                var g = report.Regression;
+                lines.Add($"{g.Dimension}: {Localized.Get("Coach_Panel_Regression", "tilbakegang")} (styrke {g.SeverityScore:F0})");
+            }
+        }
+        catch { return Array.Empty<string>(); }
+        return lines;
     }
 }
