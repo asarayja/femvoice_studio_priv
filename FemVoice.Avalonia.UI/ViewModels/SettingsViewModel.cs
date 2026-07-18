@@ -121,6 +121,9 @@ public sealed class SettingsViewModel
                 new List<SettingsRow>
                 {
                     new(Localized.Get("Settings_Accessibility_StressSensitive", "Stressømfintlig modus"), deferred, SettingsControlKind.Toggle, Localized.Get("Settings_Accessibility_StressSensitive", "Stressømfintlig modus")),
+                    // WPF Accessibility parity: reduced-visual-feedback + training-frequency.
+                    new(Localized.Get("Settings_ReducedVisualFeedback", "Redusert visuell tilbakemelding"), deferred, SettingsControlKind.Toggle, Localized.Get("Settings_ReducedVisualFeedback", "Redusert visuell tilbakemelding")),
+                    new(Localized.Get("Settings_TrainingFrequency", "Treningsfrekvens"), deferred, SettingsControlKind.Combo, Localized.Get("Settings_TrainingFrequency", "Treningsfrekvens")),
                 }),
 
             // Data / backup — WPF: Buttons (clear / backup / restore).
@@ -142,6 +145,10 @@ public sealed class SettingsViewModel
                     // label / toggle caption); use short Norwegian labels here.
                     new(Localized.Get("Settings_Scaffold_PrivacyDiagnostics", "Diagnostikk-samtykke"), deferred, SettingsControlKind.Toggle, Localized.Get("Settings_Scaffold_PrivacyDiagnostics", "Diagnostikk-samtykke")),
                     new(Localized.Get("Settings_Scaffold_PrivacyResearch", "Forskningsdeling"), deferred, SettingsControlKind.Toggle, Localized.Get("Settings_Scaffold_PrivacyResearch", "Forskningsdeling")),
+                    // WPF Privacy parity: the informational consent paragraphs (real shared Privacy_* keys), as info rows.
+                    new(Localized.Get("Privacy_DiagnosticsConsent", "Diagnostikk eksporteres bare når du selv aktiverer det."), "", SettingsControlKind.Info),
+                    new(Localized.Get("Privacy_ResearchWarning", "Forskningsdata anonymiseres som standard."), "", SettingsControlKind.Info),
+                    new(Localized.Get("Privacy_ProfessionalNotesWarning", "Profesjonelle notater kan inneholde sensitiv fritekst."), "", SettingsControlKind.Info),
                 }),
 
             // About — read-only info.
