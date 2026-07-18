@@ -27,7 +27,8 @@
             </WrapPanel>
             <WrapPanel>
               <TextBlock VerticalAlignment="Center" Margin="0,0,8,6" Foreground="{DynamicResource ShellBodyTextBrush}" Text="Vanskelighetsgrad:"/>
-              <ComboBox ItemsSource="{Binding DifficultyOptions}" SelectedItem="{Binding SelectedDifficulty}" MinWidth="140" MaxWidth="220" Margin="0,0,0,6"/>
+              <ComboBox ItemsSource="{Binding DifficultyOptions}" SelectedItem="{Binding SelectedDifficultyOption}" MinWidth="140" MaxWidth="220" Margin="0,0,0,6"
+                        DisplayMemberBinding="{Binding Label}"/>
             </WrapPanel>
             <!-- Synthetic test-tone selector: only relevant when no real microphone is available (hidden otherwise). -->
             <WrapPanel IsVisible="{Binding IsSyntheticBackend}">
@@ -41,17 +42,18 @@
         <Border x:Name="LiveCard" Grid.Row="0" Grid.Column="1" Classes="card" Margin="6,0,0,0">
           <StackPanel Spacing="6">
             <TextBlock Text="Sanntid" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-            <StackPanel Orientation="Horizontal" Spacing="6">
-              <TextBlock Text="{Binding CurrentPitch, StringFormat='{}{0:F1}'}" FontSize="34" FontWeight="Bold"
+            <!-- Comfort-zone COMPLIANCE (no raw Hz — WPF principle A7). The green highlight = in the comfort zone. -->
+            <Border CornerRadius="4" Padding="10,6" HorizontalAlignment="Left"
+                    Background="{DynamicResource ShellChartBackgroundBrush}">
+              <TextBlock Text="{Binding ComfortZoneStatus}" FontSize="20" FontWeight="Bold"
                          Foreground="{DynamicResource ShellAccentBrush}"/>
-              <TextBlock Text="Hz" VerticalAlignment="Bottom" Margin="0,0,0,6" Foreground="{DynamicResource ShellMutedBrush}"/>
-            </StackPanel>
+            </Border>
             <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding CurrentSignalStatus, StringFormat='Signal: {0}'}"/>
             <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding PitchStability, StringFormat='Stabilitet: {0}'}"/>
             <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding ResonanceDisplay, StringFormat='Resonans: {0}'}"/>
             <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding HealthStatusDisplay, StringFormat='Helse: {0}'}"/>
-            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellSuccessBrush}" Text="{Binding ComfortZoneLow, StringFormat='Komfortsone: {0:F0}–'}"/>
-            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellSuccessBrush}" Text="{Binding ComfortZoneHigh, StringFormat='… {0:F0} Hz'}" Margin="0,-6,0,0"/>
+            <!-- The comfort zone is shown as a band in the graph below (not a numeric Hz target). -->
+            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellSuccessBrush}" Text="{Binding ComfortZoneLabel}"/>
           </StackPanel>
         </Border>
       </Grid>
@@ -59,7 +61,7 @@
       <!-- Feedback -->
       <Border Classes="card" BorderBrush="{DynamicResource ShellSuccessBrush}">
         <StackPanel Spacing="2">
-          <TextBlock Text="Tilbakemelding" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}"/>
+          <TextBlock Text="{Binding FeedbackHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}"/>
           <TextBlock Text="{Binding CurrentFeedbackMessage}" TextWrapping="Wrap" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
         </StackPanel>
       </Border>
@@ -68,12 +70,13 @@
            y-axis labels). px == "distance from bottom" via the shared RuntimeChartDisplay geometry. No third-party charting lib. -->
       <Border Classes="card" MinHeight="260">
         <Grid RowDefinitions="Auto,*">
-          <TextBlock Grid.Row="0" Text="Tonehøyde (Hz, nyeste til høyre)" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <!-- No raw Hz (WPF principle A7): title + axis communicate direction, not numeric frequency. -->
+          <TextBlock Grid.Row="0" Text="Tonehøyde (nyeste til høyre)" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{DynamicResource ShellHeadingBrush}"/>
           <Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,8,0,0">
-            <!-- Y-axis frequency labels: max at top, min at bottom -->
+            <!-- Y-axis direction labels: higher at top, lower at bottom (qualitative, no Hz numerals) -->
             <Grid Grid.Column="0" Width="46" Height="{Binding DashboardChart.ChartHeightPx}" RowDefinitions="Auto,*,Auto" Margin="0,0,6,0">
-              <TextBlock Grid.Row="0" Text="{Binding DashboardChart.ChartMaxPitch, StringFormat='{}{0:F0} Hz'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
-              <TextBlock Grid.Row="2" Text="{Binding DashboardChart.ChartMinPitch, StringFormat='{}{0:F0} Hz'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
+              <TextBlock Grid.Row="0" Text="Høyere" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
+              <TextBlock Grid.Row="2" Text="Lavere" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
             </Grid>
             <!-- Plot surface -->
             <Border Grid.Column="1" Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="6" ClipToBounds="True">
