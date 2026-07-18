@@ -8,9 +8,20 @@ Self-contained Windows build of the Avalonia desktop head (`FemVoice.Avalonia`),
 
 ---
 
+## 0. Get the source
+
+```bash
+git clone https://github.com/asarayja/femvoice_studio_priv.git
+cd femvoice_studio_priv
+git checkout main          # the default branch; all platform heads live here
+```
+
+Prerequisite: the **.NET 10 SDK** (`dotnet --version` → 10.x). No Windows-specific workload is needed just to
+*publish* the desktop `.exe`.
+
 ## 1. Publish the Windows executable
 
-From the repo root, on any OS with the .NET 10 SDK:
+From the repo root:
 
 ```bash
 # x64 (Intel/AMD). For ARM devices use -r win-arm64.
