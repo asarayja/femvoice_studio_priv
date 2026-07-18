@@ -35,7 +35,7 @@
     </Border>
 
     <!-- Body: responsive nav pane (SplitView) + [content | info sidebar] -->
-    <SplitView x:Name="NavSplit" DisplayMode="Inline" IsPaneOpen="True" OpenPaneLength="220"
+    <SplitView x:Name="NavSplit" DisplayMode="Inline" IsPaneOpen="True" OpenPaneLength="220" CompactPaneLength="0"
                PaneBackground="{DynamicResource ShellPanelBackgroundBrush}">
       <SplitView.Pane>
         <!-- Left navigation rail (implemented destinations + deferred placeholders) -->

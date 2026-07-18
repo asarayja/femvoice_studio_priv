@@ -1507,16 +1507,18 @@ internal static class Program
         var svc = new VoiceFeminizationExerciseService();
         var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
         var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+        // Nav order mirrors the WPF main-page buttons (Dashbord first; Kalender/Statistikk/Øvelsesguide… then tools),
+        // with Innstillinger ALWAYS last (user requirement).
         bool navLabelsOk = shell.NavItems.Count == 14
             && shell.NavItems.All(n => !string.IsNullOrWhiteSpace(n.Label))
             && shell.NavItems[0].Label == "Dashbord"
-            && shell.NavItems[2].Label == "Innstillinger"   // Settings implemented
-            && shell.NavItems[3].Label == "Analyse"          // Analysis implemented
-            && shell.NavItems[4].Label == "Rapporter";       // Reports implemented
+            && shell.NavItems[1].Label == "Kalender"
+            && shell.NavItems[2].Label == "Statistikk"
+            && shell.NavItems[^1].Label == "Innstillinger";   // Settings pinned to the bottom
         bool statusOk = shell.MicStatusText.Contains("syntetisk") && shell.ModeText.Contains("ingen klinisk endring");
         var def = new DeferredSurfaceViewModel("Innstillinger");
         bool deferredOk = def.Title.Contains("Innstillinger") && !string.IsNullOrWhiteSpace(def.Message);
-        Console.WriteLine($"[theme-loc] Shell labels: nav[0]='{shell.NavItems[0].Label}' nav[2]='{shell.NavItems[2].Label}' " +
+        Console.WriteLine($"[theme-loc] Shell labels: nav[0]='{shell.NavItems[0].Label}' nav[^1]='{shell.NavItems[^1].Label}' " +
                           $"mic='{shell.MicStatusText}'");
         Console.WriteLine($"[theme-loc] Deferred page: title='{def.Title}'");
 
