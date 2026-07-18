@@ -105,11 +105,19 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
 
     /// <summary>One musical-note target choice (name + frequency) for the note picker.</summary>
     public sealed record NoteOption(string Label, double Frequency);
-    public IReadOnlyList<NoteOption> NoteOptions { get; } = new[]
+    // Full chromatic keyboard across the vocal range (C3…C5), with octave labels — WPF Analyzer note picker parity.
+    public IReadOnlyList<NoteOption> NoteOptions { get; } = BuildChromatic();
+    private static IReadOnlyList<NoteOption> BuildChromatic()
     {
-        new NoteOption("E3", 165), new NoteOption("G3", 196), new NoteOption("A3", 220),
-        new NoteOption("C4", 262), new NoteOption("E4", 330), new NoteOption("G4", 392),
-    };
+        string[] names = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+        var list = new List<NoteOption>();
+        for (int midi = 48; midi <= 72; midi++)   // C3 (48) … C5 (72)
+        {
+            double freq = 440.0 * Math.Pow(2, (midi - 69) / 12.0);
+            list.Add(new NoteOption($"{names[midi % 12]}{midi / 12 - 1}", Math.Round(freq, 1)));
+        }
+        return list;
+    }
     public string SelectFrequencyLabel => Localized.Get("Analyzer_SelectTargetFrequency", "Velg målfrekvens");
     [RelayCommand] private void SelectNote(NoteOption note) { if (note is not null) TargetFrequency = note.Frequency; }
 
@@ -129,7 +137,10 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
     /// <summary>Pitch quantiles (5/10/25/50/75/90/95 %) — WPF Analyzer parity. Updated on Stop / when samples exist.</summary>
     [ObservableProperty] private IReadOnlyList<AnalysisSummaryMetric> _quantiles = System.Array.Empty<AnalysisSummaryMetric>();
     /// <summary>Range distribution (very-low … very-high buckets, % of voiced samples) — WPF Analyzer parity.</summary>
-    [ObservableProperty] private IReadOnlyList<AnalysisSummaryMetric> _rangeDistribution = System.Array.Empty<AnalysisSummaryMetric>();
+    /// <summary>One range-distribution bucket: label + % text + a bar width px (WPF Analyzer shows the bars).</summary>
+    public sealed record RangeBucket(string Label, string Value, double BarPx);
+    public const double RangeBarMaxPx = 160;
+    [ObservableProperty] private IReadOnlyList<RangeBucket> _rangeDistribution = System.Array.Empty<RangeBucket>();
     [ObservableProperty] private bool _hasDistribution;
     public string QuantilesHeading => Localized.Get("Analyzer_Quantiles", "Kvantiler");
     public string RangeHeading => Localized.Get("Analyzer_RangeDistribution", "Områdefordeling");
@@ -253,7 +264,7 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
     private void ComputeDistribution()
     {
         var sorted = _pitches.Where(p => p > 0).OrderBy(p => p).ToList();
-        if (sorted.Count == 0) { Quantiles = System.Array.Empty<AnalysisSummaryMetric>(); RangeDistribution = System.Array.Empty<AnalysisSummaryMetric>(); HasDistribution = false; return; }
+        if (sorted.Count == 0) { Quantiles = System.Array.Empty<AnalysisSummaryMetric>(); RangeDistribution = System.Array.Empty<RangeBucket>(); HasDistribution = false; return; }
 
         double Q(double f) { int i = (int)Math.Round(f * (sorted.Count - 1)); return sorted[Math.Clamp(i, 0, sorted.Count - 1)]; }
         Quantiles = new List<AnalysisSummaryMetric>
@@ -262,16 +273,20 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
             new("50 % (median)", $"{Q(0.50):F0} Hz"), new("75 %", $"{Q(0.75):F0} Hz"), new("90 %", $"{Q(0.90):F0} Hz"), new("95 %", $"{Q(0.95):F0} Hz"),
         };
 
-        // Range buckets (Hz), roughly the WPF very-low … very-high bands.
+        // Range buckets (Hz), roughly the WPF very-low … very-high bands — now with a visual bar per bucket.
         int n = sorted.Count;
-        string Pct(System.Func<double, bool> inBand) => $"{100.0 * sorted.Count(inBand) / n:F0} %";
-        RangeDistribution = new List<AnalysisSummaryMetric>
+        RangeBucket Bucket(string label, System.Func<double, bool> inBand)
         {
-            new(Localized.Get("Analyzer_RangeVeryLow", "Svært lav (< 145 Hz)"), Pct(p => p < 145)),
-            new(Localized.Get("Analyzer_RangeLow", "Lav (145–165 Hz)"), Pct(p => p is >= 145 and < 165)),
-            new(Localized.Get("Analyzer_RangeMiddle", "Midtre (165–196 Hz)"), Pct(p => p is >= 165 and < 196)),
-            new(Localized.Get("Analyzer_RangeUpper", "Øvre (196–220 Hz)"), Pct(p => p is >= 196 and < 220)),
-            new(Localized.Get("Analyzer_RangeVeryHigh", "Svært høy (≥ 220 Hz)"), Pct(p => p >= 220)),
+            double pct = 100.0 * sorted.Count(inBand) / n;
+            return new RangeBucket(label, $"{pct:F0} %", pct / 100.0 * RangeBarMaxPx);
+        }
+        RangeDistribution = new List<RangeBucket>
+        {
+            Bucket(Localized.Get("Analyzer_RangeVeryLow", "Svært lav (< 145 Hz)"), p => p < 145),
+            Bucket(Localized.Get("Analyzer_RangeLow", "Lav (145–165 Hz)"), p => p is >= 145 and < 165),
+            Bucket(Localized.Get("Analyzer_RangeMiddle", "Midtre (165–196 Hz)"), p => p is >= 165 and < 196),
+            Bucket(Localized.Get("Analyzer_RangeUpper", "Øvre (196–220 Hz)"), p => p is >= 196 and < 220),
+            Bucket(Localized.Get("Analyzer_RangeVeryHigh", "Svært høy (≥ 220 Hz)"), p => p >= 220),
         };
         HasDistribution = true;
     }
