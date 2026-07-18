@@ -120,6 +120,29 @@
                 HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="16,12" FontSize="16"/>
       </Border>
 
+      <!-- "Din progresjon" block (WPF parity) — real level/streak/totals from the DB when available -->
+      <Border Classes="card" IsVisible="{Binding HasProgression}">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding ProgressionHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <Grid ColumnDefinitions="*,*,*">
+            <StackPanel Grid.Column="0" Spacing="2">
+              <TextBlock Text="{Binding ProgTotalLabel}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Text="{Binding ProgTotalSessions}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="2">
+              <TextBlock Text="{Binding ProgStreakLabel}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Text="{Binding ProgStreak}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            </StackPanel>
+            <StackPanel Grid.Column="2" Spacing="2">
+              <TextBlock Text="{Binding ProgLevelLabel}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Text="{Binding ProgLevelName}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource ShellAccentBrush}" TextWrapping="Wrap"/>
+            </StackPanel>
+          </Grid>
+          <ProgressBar Minimum="0" Maximum="100" Value="{Binding ProgPercent}" Height="14" Foreground="{DynamicResource ShellAccentBrush}"/>
+          <TextBlock Text="{Binding ProgToNext}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+        </StackPanel>
+      </Border>
+
       <!-- Recent local sessions (Avalonia-local, display-only history; no clinical scoring / no WPF DB). -->
       <Border Classes="card" IsVisible="{Binding HasRecentSessions}">
         <StackPanel Spacing="6">
