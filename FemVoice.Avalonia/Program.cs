@@ -1862,13 +1862,16 @@ internal static class Program
         var vm = new FirstTimeSetupViewModel(store);
         bool startsIncomplete = !vm.Completed && vm.NotCompleted;
 
-        // Choose a non-default language + theme and Complete → persisted + flag set.
+        // Choose a non-default language + theme + voice-goal-style + frequency and Complete → all persisted.
         vm.Language = "en-US";
         vm.Theme = FemVoice.Avalonia.Preferences.ThemePreference.Dark;
+        vm.SelectedStyle = vm.StyleOptions.First(s => s.Token == "androgynous");
+        vm.SelectedFrequency = vm.FrequencyOptions.First(f => f.Value == 5);
         vm.CompleteCommand.Execute(null);
         var saved = store.Load();
         bool persisted = saved.FirstTimeSetupCompleted && saved.Language == "en-US"
-                         && saved.Theme == FemVoice.Avalonia.Preferences.ThemePreference.Dark;
+                         && saved.Theme == FemVoice.Avalonia.Preferences.ThemePreference.Dark
+                         && saved.VoiceGoalStyle == "androgynous" && saved.TrainingFrequency == 5;
         bool vmCompleted = vm.Completed && !vm.NotCompleted && vm.HasStatus;
 
         // A fresh VM over the same store sees the completed flag (onboarding won't re-prompt).

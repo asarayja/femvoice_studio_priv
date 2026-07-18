@@ -26,14 +26,43 @@ public partial class FirstTimeSetupViewModel : ObservableObject
         _language = p.Language;
         _theme = p.Theme;
         _completed = p.FirstTimeSetupCompleted;
+        _selectedStyle = StyleOptions.FirstOrDefault(s => s.Token == p.VoiceGoalStyle) ?? StyleOptions[0];
+        _selectedFrequency = FrequencyOptions.FirstOrDefault(f => f.Value == p.TrainingFrequency) ?? FrequencyOptions[1];
     }
+
+    /// <summary>One voice-goal-style choice (token + localized label). ToString → label for the combo.</summary>
+    public sealed record StyleOption(string Token, string Label) { public override string ToString() => Label; }
+    /// <summary>One training-frequency choice (days + localized label).</summary>
+    public sealed record FrequencyOption(int Value, string Label) { public override string ToString() => Label; }
 
     public IReadOnlyList<ThemePreference> ThemeOptions { get; } =
         new[] { ThemePreference.System, ThemePreference.Light, ThemePreference.Dark };
     public IReadOnlyList<string> LanguageOptions { get; } = ScaffoldStrings.Cultures;
+    // WPF FirstTimeSetup captures voice-goal-style + training-frequency too (real shared-RESX labels).
+    public IReadOnlyList<StyleOption> StyleOptions { get; } = new[]
+    {
+        new StyleOption("soft_feminine", Localized.Get("VoiceGoalStyle_SoftFeminine", "Myk feminin")),
+        new StyleOption("bright_neutral", Localized.Get("VoiceGoalStyle_BrightNeutral", "Lys nøytral")),
+        new StyleOption("androgynous", Localized.Get("VoiceGoalStyle_Androgynous", "Androgyn")),
+        new StyleOption("custom", Localized.Get("VoiceGoalStyle_Custom", "Egendefinert")),
+    };
+    public IReadOnlyList<FrequencyOption> FrequencyOptions { get; } = new[]
+    {
+        new FrequencyOption(2, Localized.Get("Settings_Accessibility_Frequency2", "2 dager")),
+        new FrequencyOption(3, Localized.Get("Settings_Accessibility_Frequency3", "3 dager (anbefalt)")),
+        new FrequencyOption(4, Localized.Get("Settings_Accessibility_Frequency4", "4 dager")),
+        new FrequencyOption(5, Localized.Get("Settings_Accessibility_Frequency5", "5 eller flere dager")),
+    };
 
     [ObservableProperty] private string _language;
     [ObservableProperty] private ThemePreference _theme;
+    [ObservableProperty] private StyleOption _selectedStyle;
+    [ObservableProperty] private FrequencyOption _selectedFrequency;
+
+    public string StyleLabel => Localized.Get("FirstSetup_StyleGoalLabel", "Velg målstil");
+    public string StyleDesc => Localized.Get("FirstSetup_StyleGoalDesc", "Hvilken klang ønsker du å utforske?");
+    public string FrequencyLabel => Localized.Get("FirstSetup_FrequencyLabel", "Treningsdager per uke");
+    public string FrequencyDesc => Localized.Get("FirstSetup_FrequencyDesc", "Hvor ofte ønsker du å trene?");
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasStatus))]
@@ -79,6 +108,8 @@ public partial class FirstTimeSetupViewModel : ObservableObject
         {
             prefs.Language = Language;
             prefs.Theme = Theme;
+            prefs.VoiceGoalStyle = SelectedStyle.Token;
+            prefs.TrainingFrequency = SelectedFrequency.Value;
         }
         prefs.FirstTimeSetupCompleted = true;
 
