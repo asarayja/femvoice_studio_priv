@@ -1,0 +1,57 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
+             x:Class="FemVoice.Avalonia.Views.FirstTimeSetupView">
+  <!-- REAL first-time onboarding (ported from WPF FirstTimeSetupWindow). Welcome header + language + theme choices
+       that persist to the Avalonia-local prefs file and apply LIVE. Fullfør/Hopp over record the completed flag so
+       onboarding shows only once. No database/clinical/WPF interaction. -->
+  <ScrollViewer>
+    <StackPanel Margin="24" Spacing="16" MaxWidth="640" HorizontalAlignment="Center">
+
+      <!-- Welcome header -->
+      <Border Classes="card" Padding="24,20" BorderBrush="{DynamicResource ShellAccentBrush}">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center"
+                     Foreground="{DynamicResource ShellHeadingBrush}" TextWrapping="Wrap"/>
+          <TextBlock Text="{Binding Welcome}" FontSize="14" HorizontalAlignment="Center" TextAlignment="Center"
+                     Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Language -->
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding LanguageLabel}" FontWeight="SemiBold" FontSize="16" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <TextBlock Text="{Binding LanguageDesc}" FontSize="12" Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
+          <ComboBox MinWidth="220" HorizontalAlignment="Left" Margin="0,4,0,0"
+                    ItemsSource="{Binding LanguageOptions}" SelectedItem="{Binding Language, Mode=TwoWay}"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Theme -->
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding ThemeLabel}" FontWeight="SemiBold" FontSize="16" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <TextBlock Text="{Binding ThemeDesc}" FontSize="12" Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
+          <ComboBox MinWidth="220" HorizontalAlignment="Left" Margin="0,4,0,0"
+                    ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding Theme, Mode=TwoWay}"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Actions -->
+      <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+        <Button Classes="secondary" Content="{Binding SkipLabel}" Command="{Binding SkipCommand}"/>
+        <Button Classes="primary" Content="{Binding ContinueLabel}" Command="{Binding CompleteCommand}"/>
+      </StackPanel>
+
+      <!-- Status line + completion state -->
+      <TextBlock Text="{Binding Status}" IsVisible="{Binding HasStatus}"
+                 Foreground="{DynamicResource ShellSuccessBrush}" FontSize="13" TextWrapping="Wrap"/>
+      <TextBlock Text="{Binding CompletedLabel}" IsVisible="{Binding Completed}"
+                 Foreground="{DynamicResource ShellSuccessBrush}" FontSize="12"/>
+      <TextBlock Text="{Binding NotCompletedLabel}" IsVisible="{Binding NotCompleted}"
+                 Foreground="{DynamicResource ShellFaintBrush}" FontSize="12"/>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

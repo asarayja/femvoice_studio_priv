@@ -50,6 +50,7 @@ internal static class Program
         if (args.Contains("--analysis-scaffold-smoke")) return AnalysisScaffoldSmoke().GetAwaiter().GetResult();
         if (args.Contains("--reports-scaffold-smoke")) return ReportsScaffoldSmoke().GetAwaiter().GetResult();
         if (args.Contains("--diagnostics-scaffold-smoke")) return DiagnosticsScaffoldSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--first-time-setup-smoke")) return FirstTimeSetupSmoke();
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
         if (args.Contains("--visual-baseline-smoke")) return VisualBaselineSmoke();
@@ -388,6 +389,7 @@ internal static class Program
             "calendar" or "kalender" => "kalender",
             "smartcoach" => "smartcoach",
             "progression" or "progresjon" => "progresjon",
+            "firstsetup" or "firsttimesetup" or "onboarding" or "førstegangsoppsett" => "førstegang",
             _ => "",
         };
         if (needle.Length == 0) return;   // "shell" / default keeps the dashboard
@@ -778,7 +780,7 @@ internal static class Program
                           $"no-orphan-frames={noOrphanFrames} fresh-instance={distinctInstance} " +
                           $"second-running={secondRunning} no-orphan={firstStillStopped}");
 
-        bool ok = landsOnDashboard && shell.NavItems.Count == 11 && implemented == 10 && deferred == 1
+        bool ok = landsOnDashboard && shell.NavItems.Count == 12 && implemented == 11 && deferred == 1
                   && onGuide && backToDash && onDeferred && deferredInert && onProgScaffold && onCoachScaffold
                   && runtimeRunning && firstDisposedOnNav && noOrphanFrames
                   && distinctInstance && secondRunning && firstStillStopped;
@@ -815,7 +817,7 @@ internal static class Program
         var svc = new VoiceFeminizationExerciseService();
         var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
         var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
-        bool navLabelsOk = shell.NavItems.Count == 11
+        bool navLabelsOk = shell.NavItems.Count == 12
             && shell.NavItems.All(n => !string.IsNullOrWhiteSpace(n.Label))
             && shell.NavItems[0].Label == "Dashbord"
             && shell.NavItems[2].Label == "Innstillinger"   // Settings implemented
@@ -1139,6 +1141,59 @@ internal static class Program
         return ok ? 0 : 1;
     }
 
+    // Headless verification of the REAL first-time onboarding slice (no display): the nav item is implemented and
+    // navigates to FirstTimeSetupViewModel; Complete persists the chosen language + theme + the completed flag to a
+    // TEMP Avalonia-local prefs file (never the user's real file); Skip records completion without changing choices;
+    // and the flag survives a reload. Uses a temp store path so nothing touches user data / DB / clinical code.
+    private static int FirstTimeSetupSmoke()
+    {
+        string tmp = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "femvoice-firstsetup-smoke-" + System.Diagnostics.Process.GetCurrentProcess().Id + ".json");
+        try { if (System.IO.File.Exists(tmp)) System.IO.File.Delete(tmp); } catch { }
+        var store = new FemVoice.Avalonia.Preferences.UiPreferencesStore(tmp);
+
+        // Fresh install: onboarding not yet completed.
+        var vm = new FirstTimeSetupViewModel(store);
+        bool startsIncomplete = !vm.Completed && vm.NotCompleted;
+
+        // Choose a non-default language + theme and Complete → persisted + flag set.
+        vm.Language = "en-US";
+        vm.Theme = FemVoice.Avalonia.Preferences.ThemePreference.Dark;
+        vm.CompleteCommand.Execute(null);
+        var saved = store.Load();
+        bool persisted = saved.FirstTimeSetupCompleted && saved.Language == "en-US"
+                         && saved.Theme == FemVoice.Avalonia.Preferences.ThemePreference.Dark;
+        bool vmCompleted = vm.Completed && !vm.NotCompleted && vm.HasStatus;
+
+        // A fresh VM over the same store sees the completed flag (onboarding won't re-prompt).
+        var vm2 = new FirstTimeSetupViewModel(store);
+        bool remembers = vm2.Completed;
+
+        // Skip on a fresh store completes without forcing choices to change.
+        string tmp2 = tmp + ".skip";
+        try { if (System.IO.File.Exists(tmp2)) System.IO.File.Delete(tmp2); } catch { }
+        var skipStore = new FemVoice.Avalonia.Preferences.UiPreferencesStore(tmp2);
+        var vm3 = new FirstTimeSetupViewModel(skipStore);
+        vm3.SkipCommand.Execute(null);
+        bool skipCompletes = skipStore.Load().FirstTimeSetupCompleted && vm3.Completed;
+
+        // Nav integration: item implemented + navigates to the real VM (retained, not disposable).
+        var svc = new VoiceFeminizationExerciseService();
+        var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+        var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+        var nav = shell.NavItems.FirstOrDefault(n => n.Label.Contains("Førstegang"));
+        bool navImpl = nav is not null && nav.IsImplemented;
+        nav?.Command.Execute(null);
+        bool onSetup = shell.CurrentPage is FirstTimeSetupViewModel && shell.CurrentPage is not IDisposable;
+
+        try { System.IO.File.Delete(tmp); System.IO.File.Delete(tmp2); } catch { }
+
+        Console.WriteLine($"[firstsetup] startsIncomplete={startsIncomplete} persisted={persisted} vmCompleted={vmCompleted} remembers={remembers}");
+        Console.WriteLine($"[firstsetup] skipCompletes={skipCompletes} navImpl={navImpl} onSetup={onSetup}");
+        bool ok = startsIncomplete && persisted && vmCompleted && remembers && skipCompletes && navImpl && onSetup;
+        Console.WriteLine(ok ? "[firstsetup] First-time setup smoke OK" : "[firstsetup] First-time setup smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
     // Behavior-neutral verification of the desktop packaging-readiness slice (no display, no publish): inspect
     // the FemVoice.Avalonia project metadata (RuntimeIdentifiers for Linux/macOS, Tmds.DBus.Protocol pin,
     // trimming disabled, exactly Core + Audio.Abstractions project refs), confirm the inert packaging templates
@@ -1363,7 +1418,7 @@ internal static class Program
         var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
         int implemented = shell.NavItems.Count(n => n.IsImplemented);
         int deferred = shell.NavItems.Count(n => !n.IsImplemented);
-        bool navOk = shell.NavItems.Count == 11 && implemented == 10 && deferred == 1;   // deferred surfaces stay deferred
+        bool navOk = shell.NavItems.Count == 12 && implemented == 11 && deferred == 1;   // deferred surfaces stay deferred
 
         // Settings stays display-only/inert: not IDisposable, exposes no IRelayCommand (no actions/persistence wired).
         bool settingsInert = !typeof(System.IDisposable).IsAssignableFrom(typeof(SettingsViewModel))
@@ -1982,7 +2037,7 @@ internal static class Program
                         && !coach.EngineAvailable && !string.IsNullOrWhiteSpace(coach.UnavailableNote);
 
         // Sidebar intact (9 items; both now implemented → 1 deferred = Mikrofonkalibrering) and dashboard nav works.
-        bool navIntact = shell.NavItems.Count == 11 && shell.NavItems.Count(n => !n.IsImplemented) == 1
+        bool navIntact = shell.NavItems.Count == 12 && shell.NavItems.Count(n => !n.IsImplemented) == 1
                          && shell.NavItems.First(n => n.Label.Contains("SmartCoach")).IsImplemented
                          && shell.NavItems.First(n => n.Label.Contains("Progresjon")).IsImplemented;
         shell.ShowDashboardCommand.Execute(null);
@@ -2036,7 +2091,7 @@ internal static class Program
         bool deferredWording = settings.DeferredBadge.Contains("Utsatt") && settings.DeferredBanner.Length > 0;
 
         // Sidebar intact.
-        bool navIntact = shell.NavItems.Count == 11 && shell.NavItems.Count(n => n.IsImplemented) == 10;
+        bool navIntact = shell.NavItems.Count == 12 && shell.NavItems.Count(n => n.IsImplemented) == 11;
 
         Console.WriteLine($"[settings-vis] onSettings={onSettings} navOk={navOk} sections={settings.Sections.Count} controls(combo/toggle/button)={hasCombo}/{hasToggle}/{hasButton}");
         Console.WriteLine($"[settings-vis] allInert={allInert} chipsOnActionable={chipsOnActionable} deferredWording={deferredWording} notDisposable={notDisposable} noCommands={noCommands} noServiceDeps={noServiceDeps} navIntact={navIntact}");
@@ -2095,7 +2150,7 @@ internal static class Program
         bool guideFilterIntact = guideVm.CategoryChips.Count >= 2 && guideVm.FilteredExercises.Count == guideVm.Exercises.Count;
         guideVm.SearchText = "zzqx-none"; bool searchWorks = guideVm.FilteredCount == 0; guideVm.SearchText = "";
         bool dashboardChartIntact = dash.DashboardChart is not null;   // chart model unchanged
-        bool navIntact = shell.NavItems.Count == 11 && shell.NavItems.Count(n => n.IsImplemented) == 10;
+        bool navIntact = shell.NavItems.Count == 12 && shell.NavItems.Count(n => n.IsImplemented) == 11;
 
         Console.WriteLine($"[layout] source={(SourcePresent ? "present" : "skipped")} settingsResponsive={settingsResponsive} scaffoldsCentered={scaffoldsCentered} guideCentered={guideCentered}");
         Console.WriteLine($"[layout] settingsInert={settingsInert} scaffoldsDeferred={scaffoldsDeferred} guideFilterIntact={guideFilterIntact}&searchWorks={searchWorks} dashboardChartIntact={dashboardChartIntact} navIntact={navIntact}");

@@ -24,6 +24,11 @@ public sealed class UiPreferences
     /// <summary>Accessibility/display preference: reduce motion/animation (default: off). Display-only.</summary>
     public bool ReduceMotion { get; set; }
 
+    /// <summary>Whether the Avalonia first-time onboarding has been completed (or skipped). Default: false, so a
+    /// fresh install shows onboarding once. Persisted locally; mirrors the WPF <c>FirstTimeSetupCompleted</c> flag
+    /// but in the Avalonia-owned prefs file — no WPF settings/DB/clinical interaction.</summary>
+    public bool FirstTimeSetupCompleted { get; set; }
+
     /// <summary>Schema version for forward-compatible parsing of the local file.</summary>
     public int Version { get; set; } = 1;
 
@@ -43,6 +48,7 @@ public sealed class UiPreferences
             Theme = Enum.IsDefined(typeof(ThemePreference), Theme) ? Theme : ThemePreference.System,
             Language = lang,
             ReduceMotion = ReduceMotion,
+            FirstTimeSetupCompleted = FirstTimeSetupCompleted,
             Version = Version <= 0 ? 1 : Version,
         };
     }
