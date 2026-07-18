@@ -78,31 +78,15 @@ public sealed class AnalysisViewModel
             return;
         }
 
-        // Fallback: deterministic synthetic sample series (no random, no real audio) — purely illustrative.
-        Series = new List<AnalysisSeries>
-        {
-            new(Localized.Get("Analysis_PitchTrend", "Tonehøyde-trend"),
-                Localized.Get("Analysis_PitchTrendDesc", "Eksempel på tonehøyde over tid (syntetisk)."),
-                Wave(42, 70, 0.55, 0.0), Localized.Get("Analysis_PitchTrendSummary", "Snitt ~165 Hz · eksempeldata")),
-            new(Localized.Get("Analysis_Resonance", "Resonans"),
-                Localized.Get("Analysis_ResonanceDesc", "Eksempel på resonans-indikator (syntetisk)."),
-                Wave(30, 75, 0.32, 1.1), Localized.Get("Analysis_ResonanceSummary", "Middels framre resonans · eksempeldata")),
-            new(Localized.Get("Analysis_Stability", "Stabilitet"),
-                Localized.Get("Analysis_StabilityDesc", "Eksempel på stabilitet over tid (syntetisk)."),
-                Wave(22, 88, 0.9, 0.4), Localized.Get("Analysis_StabilitySummary", "Stort sett stabil · eksempeldata")),
-            new(Localized.Get("Analysis_Formant", "Formant / resonans-plassholder"),
-                Localized.Get("Analysis_FormantDesc", "Plassholder for formant-/resonansvisning (syntetisk)."),
-                Wave(35, 60, 0.22, 2.0), Localized.Get("Analysis_FormantSummary", "F1/F2-visning kommer senere · eksempeldata")),
-        };
-        SummaryMetrics = new List<AnalysisSummaryMetric>
-        {
-            new(Localized.Get("Analysis_Metric_AvgPitch", "Snitt tonehøyde"), "≈ 165 Hz (eksempel)"),
-            new(Localized.Get("Analysis_Metric_Resonance", "Resonans"), Localized.Get("Analysis_Metric_ResonanceVal", "Middels (eksempel)")),
-            new(Localized.Get("Analysis_Metric_Stability", "Stabilitet"), Localized.Get("Analysis_Metric_StabilityVal", "God (eksempel)")),
-            new(Localized.Get("Analysis_Metric_Sessions", "Økter analysert"), Localized.Get("Analysis_Metric_SessionsVal", "— (ingen lagring)")),
-        };
-        SampleDataNotice = Localized.Get("Analysis_ScaffoldNotice",
-            "Visning-bare analyse: alle grafer og tall er SYNTETISKE eksempeldata. Ekte analyse vises når du har lagrede økter.");
+        // No real analysis to show: with no database (headless/tests) or a DB read error, show a truthful empty
+        // state — NEVER fabricated example charts. Real analysis appears once there is a database with saved sessions.
+        Series = Array.Empty<AnalysisSeries>();
+        SummaryMetrics = Array.Empty<AnalysisSummaryMetric>();
+        ScoreComponents = Array.Empty<AnalysisSummaryMetric>();
+        SampleDataNotice = database is null
+            ? Localized.Get("Analysis_NoDb", "Analyse krever databasen, som ikke er tilgjengelig i denne visningen.")
+            : Localized.Get("Analysis_ReadError", "Kunne ikke lese analyse fra databasen.");
+        HasRealData = false;
     }
 
     private static bool TryBuildFromDatabase(IDatabaseService database,
@@ -201,17 +185,4 @@ public sealed class AnalysisViewModel
 
     // Map a pitch-variation (Hz std-dev, typically ~0–60 Hz) into the chart px range.
     private static double VariationToPx(double hz) => Math.Clamp(hz / 60.0, 0, 1) * (ChartHeightPx - 4) + 4;
-
-    // Deterministic sine-shaped bar heights in px within [4, ChartHeightPx] — synthetic, no random, no audio.
-    private static IReadOnlyList<double> Wave(double amplitude, double mid, double freq, double phase)
-    {
-        const int count = 32;
-        var bars = new double[count];
-        for (int i = 0; i < count; i++)
-        {
-            double v = mid + amplitude * Math.Sin(i * freq + phase);
-            bars[i] = Math.Clamp(v, 4, ChartHeightPx);
-        }
-        return bars;
-    }
 }

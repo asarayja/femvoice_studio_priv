@@ -1699,11 +1699,14 @@ internal static class Program
         bool notDisposable = analysis is not null && !typeof(System.IDisposable).IsAssignableFrom(typeof(AnalysisViewModel));
         bool noCommands = analysis is not null && analysis.GetType().GetProperties()
             .All(p => !typeof(global::CommunityToolkit.Mvvm.Input.IRelayCommand).IsAssignableFrom(p.PropertyType));
-        int seriesCount = analysis?.Series.Count ?? 0;
-        bool seriesOk = seriesCount >= 3 && analysis!.Series.All(s => s.Bars.Count > 0 && !string.IsNullOrWhiteSpace(s.Title));
-        bool summaryOk = (analysis?.SummaryMetrics.Count ?? 0) > 0 && analysis!.AllActionsDeferred;
-        Console.WriteLine($"[analysis] nav-implemented={navExists} onAnalysis={onAnalysis} series={seriesCount} summary={analysis?.SummaryMetrics.Count}");
-        Console.WriteLine($"[analysis] inert: notDisposable={notDisposable} noCommands={noCommands} seriesOk={seriesOk} summaryOk={summaryOk}");
+        // No database in this smoke → the page shows a TRUTHFUL empty state (no fabricated example charts): no
+        // series, HasRealData=false, and an honest notice. NO demo data.
+        int seriesCount = analysis?.Series.Count ?? -1;
+        bool honestEmpty = analysis is not null && seriesCount == 0 && !analysis.HasRealData
+                           && !string.IsNullOrWhiteSpace(analysis.SampleDataNotice);
+        bool summaryOk = analysis is not null && analysis.AllActionsDeferred;
+        Console.WriteLine($"[analysis] nav-implemented={navExists} onAnalysis={onAnalysis} series={seriesCount} honestEmpty={honestEmpty}");
+        Console.WriteLine($"[analysis] inert: notDisposable={notDisposable} noCommands={noCommands} honestEmpty={honestEmpty} summaryOk={summaryOk}");
 
         // Navigating to Analysis from a RUNNING runtime disposes the runtime safely (no orphaned capture).
         shell.ShowGuideCommand.Execute(null);
@@ -1754,7 +1757,7 @@ internal static class Program
             finally { Cleanup(); }
         }
 
-        bool ok = navExists && onAnalysis && notDisposable && noCommands && seriesOk && summaryOk
+        bool ok = navExists && onAnalysis && notDisposable && noCommands && honestEmpty && summaryOk
                   && runtimeRan && runtimeDisposed && noOrphanFrames && resonanceRealOk;
         Console.WriteLine(ok ? "[analysis] Analysis scaffold smoke OK" : "[analysis] Analysis scaffold smoke FAIL");
         return ok ? 0 : 1;
