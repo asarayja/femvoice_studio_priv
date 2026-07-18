@@ -63,29 +63,37 @@ public partial class ShellView : UserControl
         bool phone = width < 620;
         bool wide = width >= 900;
 
+        // The hamburger is ALWAYS available so the nav menu can be hidden/shown on every width (user request).
+        if (burger is not null) burger.IsVisible = true;
+
         if (phone)
         {
             // Phone: nav pane overlays the content and is toggled by the hamburger (closed by default).
             split.DisplayMode = SplitViewDisplayMode.Overlay;
             split.IsPaneOpen = false;
-            if (burger is not null) burger.IsVisible = true;
         }
         else
         {
-            // Tablet/desktop: nav rail is always visible inline.
+            // Tablet/desktop: nav rail is inline and open by default, but collapsible via the hamburger. Preserve the
+            // user's open/closed choice across resizes within the non-phone range (don't force it back open).
             split.DisplayMode = SplitViewDisplayMode.Inline;
-            split.IsPaneOpen = true;
-            if (burger is not null) burger.IsVisible = false;
+            if (!_userToggledPane) split.IsPaneOpen = true;
         }
 
         // The static info sidebar only fits on wide (desktop) widths.
         if (info is not null) info.IsVisible = wide;
     }
 
+    // Remembers that the user explicitly collapsed/expanded the pane so a later resize won't override their choice.
+    private bool _userToggledPane;
+
     private void OnHamburgerClick(object? sender, RoutedEventArgs e)
     {
         var split = this.FindControl<SplitView>("NavSplit");
-        if (split is not null) split.IsPaneOpen = !split.IsPaneOpen;
+        if (split is null) return;
+        split.IsPaneOpen = !split.IsPaneOpen;
+        // On desktop (inline) treat an explicit toggle as a sticky preference; on phone (overlay) it's transient.
+        if (split.DisplayMode == SplitViewDisplayMode.Inline) _userToggledPane = true;
     }
 
     // On phone (overlay pane), tapping a nav item closes the pane so the chosen page is visible.

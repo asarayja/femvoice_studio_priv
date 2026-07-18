@@ -101,23 +101,27 @@ public partial class ShellViewModel : ObservableObject
     // Avalonia culture; missing keys fall back to Norwegian.
     private void BuildNav()
     {
+        // Order mirrors the WPF main page's navigation buttons (Kalender, Statistikk, Øvelsesguide, Analysator,
+        // SmartCoach, Resonans, Progresjon, Analyse — then the professional/report tools), with Dashbord first as the
+        // way back to the front page and Innstillinger ALWAYS last (per user request). Kliniker/Coach/Timeline/
+        // CaseReview are opened from within Rapporter (WPF's professional group), not as separate rail items.
         NavItems = new List<ShellNavItem>
         {
             new(Localized.Get("Shell_Nav_Dashboard", "Dashbord"), true, ShowDashboardCommand),
-            new(Localized.Get("Shell_Nav_Guide", "Øvelsesguide"), true, ShowGuideCommand),
-            new(Localized.Get("Shell_Nav_Settings", "Innstillinger"), true, ShowSettingsCommand),
-            new(Localized.Get("Shell_Nav_Analysis", "Analyse"), true, ShowAnalysisCommand),
-            new(Localized.Get("Shell_Nav_Reports", "Rapporter"), true, ShowReportsCommand),
-            new(Localized.Get("Shell_Nav_Diagnostics", "Diagnostikk"), true, ShowDiagnosticsCommand),
-            new(Localized.Get("Shell_Nav_Statistics", "Statistikk"), true, ShowStatisticsCommand),   // real DB stats
             new(Localized.Get("Shell_Nav_Calendar", "Kalender"), true, ShowCalendarCommand),         // real DB history
-            new(Localized.Get("Shell_Nav_Progresjon", "Progresjon"), true, ShowProgressionCommand),   // engine-backed
-            new(Localized.Get("Shell_Nav_SmartCoach", "SmartCoach"), true, ShowSmartCoachCommand),   // engine-backed
-            // NOTE: Førstegangsoppsett is intentionally NOT a nav item — it is onboarding, shown once on first run only.
-            new(Localized.Get("Shell_Nav_Resonance", "Resonans"), true, ShowResonanceCommand),   // real-time resonance + contrast demo
+            new(Localized.Get("Shell_Nav_Statistics", "Statistikk"), true, ShowStatisticsCommand),   // real DB stats
+            new(Localized.Get("Shell_Nav_Guide", "Øvelsesguide"), true, ShowGuideCommand),
             new(Localized.Get("Shell_Nav_Analyzer", "Analysator"), true, ShowAnalyzerCommand),   // real-time pitch/resonance analyzer
-            new(Localized.Get("Shell_Nav_MicCalibration", "Mikrofonkalibrering"), true, _showMicCalibrationCommand),
+            new(Localized.Get("Shell_Nav_SmartCoach", "SmartCoach"), true, ShowSmartCoachCommand),   // engine-backed
+            new(Localized.Get("Shell_Nav_Resonance", "Resonans"), true, ShowResonanceCommand),   // real-time resonance + contrast demo
+            new(Localized.Get("Shell_Nav_Progresjon", "Progresjon"), true, ShowProgressionCommand),   // engine-backed
+            new(Localized.Get("Shell_Nav_Analysis", "Analyse"), true, ShowAnalysisCommand),
+            new(Localized.Get("Shell_Nav_Reports", "Rapporter"), true, ShowReportsCommand),      // holds Kliniker/Coach/Timeline/CaseReview
             new(Localized.Get("Shell_Nav_ManualOverride", "Manuell overstyring"), true, ShowManualOverrideCommand),   // safety-clamp preview
+            new(Localized.Get("Shell_Nav_Diagnostics", "Diagnostikk"), true, ShowDiagnosticsCommand),
+            new(Localized.Get("Shell_Nav_MicCalibration", "Mikrofonkalibrering"), true, _showMicCalibrationCommand),
+            new(Localized.Get("Shell_Nav_Settings", "Innstillinger"), true, ShowSettingsCommand),   // ALWAYS last
+            // NOTE: Førstegangsoppsett is intentionally NOT a nav item — it is onboarding, shown once on first run only.
         };
     }
 
