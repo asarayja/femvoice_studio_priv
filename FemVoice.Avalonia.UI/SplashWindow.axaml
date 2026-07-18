@@ -1,0 +1,17 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="FemVoice.Avalonia.SplashWindow"
+        Width="560" Height="420"
+        SystemDecorations="None" CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        Background="#0B0E1A"
+        ShowInTaskbar="False" Topmost="True">
+  <!-- Startup splash: the FemVoice Studio brand logo (carried over from the WPF version). Shown briefly before the
+       main window opens; closed automatically by App. Display-only. -->
+  <Border Padding="24">
+    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="16">
+      <Image Source="avares://FemVoice.Avalonia.UI/Assets/logo.png" Width="420" Stretch="Uniform"/>
+      <TextBlock Text="Laster …" HorizontalAlignment="Center" Foreground="#9AA3B2" FontSize="13"/>
+    </StackPanel>
+  </Border>
+</Window>

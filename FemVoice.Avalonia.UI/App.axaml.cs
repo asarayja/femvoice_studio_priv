@@ -25,7 +25,25 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Desktop head (Windows/macOS/Linux): the shell lives in a Window that hosts the shared ShellView.
-            desktop.MainWindow = new MainWindow();
+            var main = new MainWindow();
+            desktop.MainWindow = main;
+
+            // Brand splash (WPF-parity branding): show the logo briefly, then reveal the main window. Wrapped so a
+            // splash failure can NEVER block startup — on any error we just show the main window immediately.
+            try
+            {
+                var splash = new SplashWindow();
+                splash.Show();
+                global::Avalonia.Threading.DispatcherTimer.RunOnce(() =>
+                {
+                    try { main.Show(); } catch { }
+                    try { splash.Close(); } catch { }
+                }, System.TimeSpan.FromSeconds(1.6));
+            }
+            catch
+            {
+                main.Show();
+            }
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
         {

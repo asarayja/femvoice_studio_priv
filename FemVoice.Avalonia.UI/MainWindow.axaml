@@ -6,7 +6,8 @@
         MinWidth="900" MinHeight="620"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource ShellWindowBackgroundBrush}"
-        Title="FemVoice Studio — Avalonia">
+        Icon="avares://FemVoice.Avalonia.UI/Assets/logo.ico"
+        Title="FemVoice Studio">
   <!-- Desktop window chrome only; the shell itself is the shared ShellView (also used by the Android single-view
        head). Keeps the window Background on a named theme brush. Display-only; no clinical/WPF change. -->
   <views:ShellView/>

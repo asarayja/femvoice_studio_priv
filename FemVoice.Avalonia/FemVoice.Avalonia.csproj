@@ -9,6 +9,7 @@
     <!-- Reflection bindings for this first slice (WPF-like, robust). Tighten to compiled bindings
          with x:DataType in a later slice. -->
     <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <ApplicationIcon>..\logo.ico</ApplicationIcon>
   </PropertyGroup>
 
   <!-- Cross-platform desktop packaging readiness (behavior-neutral; affects `dotnet publish` only).
