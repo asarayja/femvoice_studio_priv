@@ -62,8 +62,9 @@ public partial class ShellViewModel : ObservableObject
         _exercises = exercises;
         _ui = ui;
         _database = database;
-        // Stage 3A: truthful audio status via the approved capture abstraction (read-only; never starts capture).
-        // The Avalonia app's default backend is synthetic; fall back to it when no service is injected (headless).
+        // Truthful audio status via the approved capture abstraction (read-only; never starts capture). The injected
+        // backend is the real-when-available cross-platform one (ALSA/winmm); fall back to synthetic only when no
+        // service is injected (headless/tests).
         _audioReadiness = new FemVoice.Avalonia.Audio.AudioReadiness(
             capture ?? new FemVoiceStudio.Audio.Abstractions.SyntheticAudioCaptureService());
         // Real mic-check page: a fresh, disposable MicCalibrationViewModel per open (its own capture backend,

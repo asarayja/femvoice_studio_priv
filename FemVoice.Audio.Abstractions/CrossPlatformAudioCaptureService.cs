@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using FemVoiceStudio.Audio.Abstractions.Linux;
+using FemVoiceStudio.Audio.Abstractions.Windows;
 
 namespace FemVoiceStudio.Audio.Abstractions;
 
@@ -14,8 +15,8 @@ namespace FemVoiceStudio.Audio.Abstractions;
 /// Platform coverage in this slice:
 /// <list type="bullet">
 ///   <item>Linux → real ALSA capture (verified end-to-end).</item>
-///   <item>Windows → reported "unavailable" here; the real Windows path lives in its own Windows-specific audio
-///         adapter project and is wired only in the Windows composition root, never referenced from here.</item>
+///   <item>Windows → real capture via the multimedia <c>waveIn</c> API (<see cref="WinMmAudioCaptureService"/>),
+///         also dependency-free P/Invoke — no NuGet, no COM.</item>
 ///   <item>macOS → reported "unavailable" here; a CoreAudio/AVFoundation binding is a follow-up slice.</item>
 /// </list>
 /// When no native binding is wired for the current OS (or the device can't be opened), it degrades GRACEFULLY:
@@ -45,9 +46,10 @@ public sealed class CrossPlatformAudioCaptureService : IRealAudioCaptureBackend,
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             return new AlsaAudioCaptureService();
-        // Windows real capture lives in its own Windows-specific audio adapter project, wired only in the Windows
-        // composition root — not here. macOS native capture is a follow-up slice. Both fall through to
-        // "unavailable" via a null native backend on this dispatcher.
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            return new WinMmAudioCaptureService();   // dependency-free winmm/waveIn capture (no NuGet, no COM)
+        // macOS native capture is a follow-up slice; it falls through to "unavailable" via a null native backend on
+        // this dispatcher (graceful degradation to the synthetic display-only source).
         return null;
     }
 
