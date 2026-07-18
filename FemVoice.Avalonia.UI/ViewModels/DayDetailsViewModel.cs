@@ -36,6 +36,8 @@ public sealed class DayDetailsViewModel
     public string Title => Localized.Get("DayDetails_Title", "Øktdetaljer");
 
     public IReadOnlyList<DaySessionRow> Sessions { get; private set; } = Array.Empty<DaySessionRow>();
+    /// <summary>Heading above the per-session table (WPF DayDetails "Øktdetaljer").</summary>
+    public string SessionDetailsHeading => Localized.Get("DayDetails_SessionDetails", "Øktdetaljer");
     public bool HasSessions => Sessions.Count > 0;
     public string EmptyMessage => Localized.Get("DayDetails_NoSessions", "Ingen økter denne dagen.");
     public string Summary { get; private set; } = "";
@@ -62,7 +64,8 @@ public sealed class DayDetailsViewModel
                 $"{(int)Math.Round(s.DurationSeconds / 60.0)} min",
                 s.AveragePitch > 0 ? $"{s.AveragePitch:F0} Hz ({s.MinPitch:F0}–{s.MaxPitch:F0})" : "—",
                 s.ResonanceScore > 0 ? $"{s.ResonanceScore:F0}" : "—",
-                s.AverageF1 > 0 || s.AverageF2 > 0 ? $"F1 {s.AverageF1:F0} · F2 {s.AverageF2:F0}" : "—",
+                s.AverageF1 > 0 || s.AverageF2 > 0 || s.AverageF3 > 0
+                    ? $"F1 {s.AverageF1:F0} · F2 {s.AverageF2:F0} · F3 {s.AverageF3:F0}" : "—",
                 $"{s.OverallScore:F0} / 100")).ToList();
 
             if (sessions.Count > 0)

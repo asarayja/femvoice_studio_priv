@@ -36,6 +36,7 @@
         </ItemsControl>
         <Border Classes="card">
           <StackPanel Spacing="2">
+            <TextBlock Text="{Binding SessionDetailsHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}" Margin="0,0,0,6"/>
             <!-- Header row -->
             <Grid ColumnDefinitions="60,90,70,*,70,120,70">
               <TextBlock Grid.Column="0" Text="Tid" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>

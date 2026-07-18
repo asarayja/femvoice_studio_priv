@@ -1933,7 +1933,8 @@ internal static class Program
                 var prosodySeries = real.Series.FirstOrDefault(s => s.Title.Contains("prosodi") || s.Title.Contains("Tonevariasjon"));
                 bool prosodyOk = prosodySeries is not null && prosodySeries.Summary.Contains("18");
                 bool componentsOk = real.HasScoreComponents && real.ScoreComponents.Count == 7   // real 7-dimension rings
-                                    && real.ScoreComponents.Any(c => c.Value.Contains("/ 100"));
+                                    && real.ScoreComponents.Any(c => c.Value.Contains("/ 100"))
+                                    && real.HasSessionSummary && real.SessionSummary.Contains("økter analysert");   // WPF session summary
                 resonanceRealOk = real.HasRealData && resSeries is not null && resSeries.Summary.Contains("64")
                                   && resMetric is not null && resMetric.Value.Contains("64") && prosodyOk && componentsOk;
                 Console.WriteLine($"[analysis] real-resonance: res='{resSeries?.Summary}' prosody='{prosodySeries?.Summary}' components={real.ScoreComponents.Count} ok={resonanceRealOk}");

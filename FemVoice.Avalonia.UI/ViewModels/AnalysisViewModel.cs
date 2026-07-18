@@ -57,6 +57,10 @@ public sealed class AnalysisViewModel
     /// <summary>Header subtitle — shared WPF key (Analysis_Subtitle).</summary>
     public string Subtitle => Localized.Get("Analysis_Subtitle", "Resonans, pitch, intonasjon og helsetrender");
     public string SampleDataNotice { get; }
+    /// <summary>Human-readable per-session summary (WPF Analysis "Økt-sammendrag"), generated from the real stats.</summary>
+    public string SessionSummary { get; } = "";
+    public bool HasSessionSummary => SessionSummary.Length > 0;
+    public string SessionSummaryHeading => Localized.Get("Analysis_SessionSummary", "Økt-sammendrag");
 
     /// <summary>True when the charts/metrics are computed from real saved sessions (vs synthetic sample data).</summary>
     public bool HasRealData { get; }
@@ -70,12 +74,13 @@ public sealed class AnalysisViewModel
     {
         Title = Localized.Get("Analysis_Heading", "Dybdeanalyse");
 
-        if (database is not null && TryBuildFromDatabase(database, out var series, out var metrics, out var components, out var notice))
+        if (database is not null && TryBuildFromDatabase(database, out var series, out var metrics, out var components, out var notice, out var summary))
         {
             Series = series;
             SummaryMetrics = metrics;
             ScoreComponents = components;
             SampleDataNotice = notice;
+            SessionSummary = summary;
             HasRealData = true;
             return;
         }
@@ -93,12 +98,13 @@ public sealed class AnalysisViewModel
 
     private static bool TryBuildFromDatabase(IDatabaseService database,
         out IReadOnlyList<AnalysisSeries> series, out IReadOnlyList<AnalysisSummaryMetric> metrics,
-        out IReadOnlyList<AnalysisSummaryMetric> components, out string notice)
+        out IReadOnlyList<AnalysisSummaryMetric> components, out string notice, out string sessionSummary)
     {
         series = Array.Empty<AnalysisSeries>();
         metrics = Array.Empty<AnalysisSummaryMetric>();
         components = Array.Empty<AnalysisSummaryMetric>();
         notice = "";
+        sessionSummary = "";
         try
         {
             // GetRecentSessions is newest-first; reverse to oldest→newest for a left-to-right trend.
@@ -162,6 +168,10 @@ public sealed class AnalysisViewModel
             components = BuildScoreComponents(database, avgPitch, avgResonance, withResonance.Count > 0);
 
             notice = "Ekte analyse beregnet fra dine faktiske lagrede økter.";
+            // Human-readable per-session summary (WPF Analysis "Økt-sammendrag") from the real aggregates.
+            sessionSummary = avgPitch > 0
+                ? $"{ordered.Count} økter analysert · snitt tonehøyde {avgPitch:F0} Hz · snitt score {avgScore:F0} · beste {bestScore:F0}."
+                : $"{ordered.Count} økter analysert · snitt score {avgScore:F0} · beste {bestScore:F0} (ingen stemme registrert).";
             return true;
         }
         catch { return false; }   // fall back to synthetic on any DB error
