@@ -190,6 +190,16 @@ public partial class MicCalibrationViewModel : ObservableObject, IDisposable
         var profile = _calibration.BuildAdaptiveProfile(deviceName, _background, _voice);
         _calibration.Save(profile);
 
+        // Calibration-completed telemetry line (WPF parity) — device + measured floor/speech + derived thresholds.
+        try
+        {
+            FemVoiceStudio.Services.Rc0RuntimeLog.Write("Calibration",
+                $"CalibrationCompleted; Device=\"{deviceName}\"; NoiseFloorRms={profile.NoiseFloorRms:F5}; " +
+                $"SpeechRms={profile.SpeechRms:F5}; NoiseGateThreshold={profile.NoiseGateThreshold:F5}; " +
+                $"VoicedRmsThreshold={profile.VoicedRmsThreshold:F5}; SnrDb={profile.SignalToNoiseDb:F1}");
+        }
+        catch { /* telemetry is best-effort; never affects calibration */ }
+
         _step = Step.Completed;
         IsComplete = true;
         Progress = 100;
@@ -241,6 +251,8 @@ public partial class MicCalibrationViewModel : ObservableObject, IDisposable
 
         _backend ??= AudioCaptureBackendFactory.CreateForRuntime();
         _backend.FrameAvailable += OnPhaseFrame;
+        // Calibration wants RAW input (WPF disables ApplyInputProcessing on Windows). The Avalonia capture path is
+        // already raw PCM (ALSA/synthetic apply no AGC/noise-suppression), so no processing flag is needed here.
         await _backend.StartAsync(new AudioCaptureOptions());
 
         var startUtc = DateTime.UtcNow;
