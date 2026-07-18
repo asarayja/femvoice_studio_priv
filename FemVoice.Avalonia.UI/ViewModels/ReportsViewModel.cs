@@ -40,8 +40,10 @@ public sealed class ReportsViewModel
 {
     public ReportsViewModel() : this(null) { }
 
-    public ReportsViewModel(IDatabaseService? database)
+    public ReportsViewModel(IDatabaseService? database, System.Action? openCoachPanel = null)
     {
+        OpenCoachCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(() => openCoachPanel?.Invoke());
+        CanOpenCoachPanel = openCoachPanel is not null;
         BuildPreview(database);
         string deferred = Localized.Get("Reports_DeferredStatus", "Utsatt — kommer senere");
         string sample = Localized.Get("Reports_SampleStatus", "Eksempel (ikke lagret)");
@@ -83,6 +85,12 @@ public sealed class ReportsViewModel
     public IReadOnlyList<ReportsCard> Cards { get; }
     public string Title { get; }
     public string ScaffoldNotice { get; }
+
+    /// <summary>Opens the real read-only coach panel (assembled from saved sessions). Wired by the shell.</summary>
+    public CommunityToolkit.Mvvm.Input.IRelayCommand OpenCoachCommand { get; }
+    /// <summary>True when a coach-panel navigation callback was supplied (drives the button's visibility).</summary>
+    public bool CanOpenCoachPanel { get; }
+    public string OpenCoachLabel => Localized.Get("Reports_OpenCoachPanel", "Åpne veilederpanel");
 
     /// <summary>Always <c>true</c>: every card/action in the scaffold is deferred/inert.</summary>
     public bool AllActionsDeferred => Cards.All(c => !c.IsEnabled);
