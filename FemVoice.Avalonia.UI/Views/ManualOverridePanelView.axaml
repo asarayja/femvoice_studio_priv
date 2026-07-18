@@ -21,7 +21,7 @@
       <Border Classes="card">
         <StackPanel Spacing="10">
           <TextBlock Text="Ønsket profil (forespørsel)" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
-          <Grid ColumnDefinitions="180,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+          <Grid ColumnDefinitions="180,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Baseline-profil" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
             <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,3" MinWidth="220" HorizontalAlignment="Left"
                       ItemsSource="{Binding ProfileTypes}" SelectedItem="{Binding BaselineProfileType, Mode=TwoWay}"/>
@@ -42,12 +42,25 @@
             <NumericUpDown Grid.Row="4" Grid.Column="1" Margin="0,3" MinWidth="180" HorizontalAlignment="Left" Increment="0.05" Minimum="0" Maximum="1"
                            Value="{Binding IntendedStabilityThreshold, Mode=TwoWay}"/>
 
-            <TextBlock Grid.Row="5" Grid.Column="0" Text="Sikkerhetsgate blokkert" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <CheckBox Grid.Row="5" Grid.Column="1" Margin="0,3" IsChecked="{Binding SimulateGateBlocked, Mode=TwoWay}"/>
+            <TextBlock Grid.Row="5" Grid.Column="0" Text="{Binding OverrideKindLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <ComboBox Grid.Row="5" Grid.Column="1" Margin="0,3" MinWidth="220" HorizontalAlignment="Left"
+                      ItemsSource="{Binding OverrideKinds}" SelectedItem="{Binding SelectedKind, Mode=TwoWay}"/>
 
-            <TextBlock Grid.Row="6" Grid.Column="0" Text="Restitusjonsgrad" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <ComboBox Grid.Row="6" Grid.Column="1" Margin="0,3" MinWidth="180" HorizontalAlignment="Left"
-                      ItemsSource="{Binding RecoverySeverities}" SelectedItem="{Binding RecoverySeverity, Mode=TwoWay}"/>
+            <TextBlock Grid.Row="6" Grid.Column="0" Text="{Binding ReasonCodeLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <TextBox Grid.Row="6" Grid.Column="1" Margin="0,3" MinWidth="220" HorizontalAlignment="Left"
+                     Text="{Binding ReasonCode, Mode=TwoWay}"/>
+
+            <TextBlock Grid.Row="7" Grid.Column="0" Text="{Binding HoldLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <NumericUpDown Grid.Row="7" Grid.Column="1" Margin="0,3" MinWidth="180" HorizontalAlignment="Left" Increment="1" Minimum="0" Maximum="30"
+                           Value="{Binding IntendedRequiredHoldSeconds, Mode=TwoWay}"/>
+          </Grid>
+
+          <!-- Live safety/recovery signals actually driving the clamp (read-only; WPF shows the observed state) -->
+          <Grid ColumnDefinitions="180,*" RowDefinitions="Auto,Auto">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding ObservedGateLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ObservedGateText}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding ObservedSeverityLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ObservedSeverityText}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
           </Grid>
           <Button Content="{Binding EvaluateLabel}" Classes="primary" Command="{Binding EvaluateCommand}" HorizontalAlignment="Left"/>
         </StackPanel>

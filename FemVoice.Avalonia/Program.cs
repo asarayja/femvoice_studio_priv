@@ -987,8 +987,9 @@ internal static class Program
         vm.IntendedResonanceMax = rawIntendedMax;
         vm.IntendedStabilityThreshold = 0.1;
         vm.IntendedRequiredHoldSeconds = 0;
-        vm.SimulateGateBlocked = true;
-        vm.RecoverySeverity = global::FemVoiceStudio.Services.RecoverySeverity.Urgent;   // triggers Evaluate()
+        // Force the LIVE gate/recovery signals (the clamp now reads real state, not a manual toggle) so the frozen
+        // two-stage clamp must engage — mirrors WPF's forced-state test path.
+        vm.ForceLiveStateForTest(true, global::FemVoiceStudio.Services.RecoverySeverity.Urgent);
 
         // Parse the shown clamped ceiling ("min–max").
         double shownMax = -1;
@@ -1015,8 +1016,20 @@ internal static class Program
                 new global::FemVoiceStudio.Services.SqliteManualOverridesRepository(db.ConnectionString));
             var rows = store.GetOverridesAsync(1, DateTime.UtcNow.AddDays(-1), DateTime.UtcNow.AddDays(1)).GetAwaiter().GetResult();
             bool logged = rows.Count >= 1 && rows.Any(r => r.WasApplied && r.WasClamped);
-            persistOk = canPersist && recentShows && logged;
-            Console.WriteLine($"[override] persist: canPersist={canPersist} recentShows={recentShows} logged={logged} rows={rows.Count} status='{vm.PersistStatus}'");
+            // WPF-parity full port: the persist ALSO wrote (b) an immutable audit event (EntityType=Override) and
+            // (c) a MANUAL_OVERRIDE health event. Verify both landed in the real stores.
+            var auditStore = new global::FemVoiceStudio.Services.AuditTrailStore(
+                new global::FemVoiceStudio.Services.SqliteAuditTrailRepository(db.ConnectionString));
+            var audits = auditStore.QueryAsync(1, global::FemVoiceStudio.Models.AuditEntityType.Override,
+                DateTime.UtcNow.AddDays(-1), DateTime.UtcNow.AddDays(1)).GetAwaiter().GetResult();
+            bool auditWritten = audits.Any(a => a.EntityType == global::FemVoiceStudio.Models.AuditEntityType.Override
+                                                && a.ReasonCode.Length > 0 && !string.IsNullOrEmpty(a.AfterJson));
+            var analytics = new global::FemVoiceStudio.Services.SessionAnalyticsStore(
+                new global::FemVoiceStudio.Services.SqliteSessionAnalyticsRepository(db.ConnectionString));
+            var health = analytics.GetHealthEventsAsync(DateTime.UtcNow.AddDays(-1), DateTime.UtcNow.AddDays(1), 1).GetAwaiter().GetResult();
+            bool healthWritten = health.Any(h => h.ReasonCode == "MANUAL_OVERRIDE");
+            persistOk = canPersist && recentShows && logged && auditWritten && healthWritten;
+            Console.WriteLine($"[override] persist: canPersist={canPersist} recentShows={recentShows} logged={logged} auditWritten={auditWritten} healthWritten={healthWritten} rows={rows.Count} status='{vm.PersistStatus}'");
         }
         catch (Exception ex) { persistOk = false; Console.WriteLine($"[override] persist FAIL: {ex.Message}"); }
         finally { Cleanup(); }
