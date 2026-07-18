@@ -94,6 +94,34 @@
             </ItemsControl>
           </StackPanel>
         </Border>
+
+        <!-- Exercise de-prioritisation concerns (taxing / comfort-eroding) — WPF warnings -->
+        <Border Classes="card" IsVisible="{Binding HasExerciseConcerns}" BorderBrush="{DynamicResource ShellWarningBrush}">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding ExerciseConcernsHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellWarningBrush}"/>
+            <ItemsControl ItemsSource="{Binding ExerciseConcerns}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Margin="0,1"/>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <!-- Longitudinal insights (assembled by the pipeline's LongitudinalInsightEngine) -->
+        <Border Classes="card" IsVisible="{Binding HasInsights}">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding InsightsHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <ItemsControl ItemsSource="{Binding Insights}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Margin="0,2"/>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
       </StackPanel>
 
       <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">

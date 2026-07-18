@@ -533,6 +533,12 @@ internal static class Program
             bool assembledOk = panel is not null && (!panel.HasReport || panel.Overview.Count >= 3);   // no crash; overview coherent when real
             // Recovery detail (WPF parity): debt / overtraining / workload rows present when a report assembled.
             bool recoveryOk = !panel.HasReport || (panel.HasRecoveryDetail && panel.RecoveryDetail.Count >= 3);
+            // Longitudinal-insights + exercise-concerns sections are wired + coherent (populated only when the pipeline
+            // yields them — the per-dimension VI data is not written by Avalonia, so absence is valid, never a crash).
+            bool sectionsWired = panel.InsightsHeading.Length > 0 && panel.ExerciseConcernsHeading.Length > 0
+                                 && panel.Insights is not null && panel.ExerciseConcerns is not null
+                                 && (!panel.HasInsights || panel.Insights.Count > 0)
+                                 && (!panel.HasExerciseConcerns || panel.ExerciseConcerns.Count > 0);
 
             var noDb = new ClinicianPanelViewModel(null);
             bool noDbOk = !noDb.HasReport && noDb.EmptyMessage.Length > 0;
@@ -548,8 +554,8 @@ internal static class Program
             (shell.CurrentPage as ClinicianPanelViewModel)!.BackCommand.Execute(null);
             bool backToReports = shell.CurrentPage is ReportsViewModel;
 
-            Console.WriteLine($"[clin] emptyStateOk={emptyStateOk} assembledOk={assembledOk} recoveryOk={recoveryOk} noDbOk={noDbOk} canOpen={canOpen} onClin={onClin} backToReports={backToReports} (hasReport={panel.HasReport} overview={panel.Overview.Count} recovery={panel.RecoveryDetail.Count})");
-            bool ok = emptyStateOk && assembledOk && recoveryOk && noDbOk && canOpen && onClin && backToReports;
+            Console.WriteLine($"[clin] emptyStateOk={emptyStateOk} assembledOk={assembledOk} recoveryOk={recoveryOk} sectionsWired={sectionsWired} noDbOk={noDbOk} canOpen={canOpen} onClin={onClin} backToReports={backToReports} (hasReport={panel.HasReport} insights={panel.Insights.Count} concerns={panel.ExerciseConcerns.Count})");
+            bool ok = emptyStateOk && assembledOk && recoveryOk && sectionsWired && noDbOk && canOpen && onClin && backToReports;
             Console.WriteLine(ok ? "[clin] Clinician panel smoke OK" : "[clin] Clinician panel smoke FAIL");
             return ok ? 0 : 1;
         }
