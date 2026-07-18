@@ -1355,15 +1355,17 @@ internal static class Program
                 // the dashboard does — Save to get the Id, then Update with the real resonance.
                 var seed = new global::FemVoiceStudio.Models.TrainingSession
                 { UserId = 1, StartTime = DateTime.UtcNow.AddMinutes(-6), EndTime = DateTime.UtcNow.AddMinutes(-1),
-                  AveragePitch = 185, OverallScore = 70, ResonanceScore = 64, Feedback = "r" };
-                seed.Id = db.SaveTrainingSession(seed);
-                db.UpdateTrainingSession(seed);
+                  AveragePitch = 185, PitchVariation = 18, OverallScore = 70, ResonanceScore = 64, Feedback = "r" };
+                seed.Id = db.SaveTrainingSession(seed);   // PitchVariation persists via the INSERT
+                db.UpdateTrainingSession(seed);           // ResonanceScore persists via the UPDATE
                 var real = new AnalysisViewModel(db);
                 var resSeries = real.Series.FirstOrDefault(s => s.Title.Contains("Resonans"));
                 var resMetric = real.SummaryMetrics.FirstOrDefault(m => m.Label.Contains("resonans") || m.Label.Contains("Resonans"));
+                var prosodySeries = real.Series.FirstOrDefault(s => s.Title.Contains("prosodi") || s.Title.Contains("Tonevariasjon"));
+                bool prosodyOk = prosodySeries is not null && prosodySeries.Summary.Contains("18");
                 resonanceRealOk = real.HasRealData && resSeries is not null && resSeries.Summary.Contains("64")
-                                  && resMetric is not null && resMetric.Value.Contains("64");
-                Console.WriteLine($"[analysis] real-resonance: series='{resSeries?.Summary}' metric='{resMetric?.Value}' ok={resonanceRealOk}");
+                                  && resMetric is not null && resMetric.Value.Contains("64") && prosodyOk;
+                Console.WriteLine($"[analysis] real-resonance: res='{resSeries?.Summary}' prosody='{prosodySeries?.Summary}' ok={resonanceRealOk}");
             }
             catch (Exception ex) { Console.WriteLine($"[analysis] real-resonance FAIL: {ex.Message}"); resonanceRealOk = false; }
             finally { Cleanup(); }

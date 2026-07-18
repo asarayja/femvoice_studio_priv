@@ -129,6 +129,11 @@ public sealed class AnalysisViewModel
             var withResonance = resonances.Where(r => r > 0).ToList();
             double avgResonance = withResonance.Count > 0 ? withResonance.Average() : 0;
 
+            // Real prosody: pitch variation (Hz std-dev) per session — a genuine measurement of the real pitch.
+            var variations = ordered.Select(s => s.PitchVariation).ToList();
+            var withVariation = variations.Where(v => v > 0).ToList();
+            double avgVariation = withVariation.Count > 0 ? withVariation.Average() : 0;
+
             var seriesList = new List<AnalysisSeries>
             {
                 new("Tonehøyde-trend", "Snitt tonehøyde per lagret økt (eldst → nyest).",
@@ -139,6 +144,11 @@ public sealed class AnalysisViewModel
                     withResonance.Count > 0
                         ? $"Snitt {avgResonance:F0} / 100 over {withResonance.Count} økter med resonansdata"
                         : "Ingen resonansdata ennå — fullfør en økt for å registrere resonans"),
+                new("Tonevariasjon (prosodi)", "Tonehøyde-variasjon (Hz std-avvik) per lagret økt — ekte måling.",
+                    variations.Select(VariationToPx).ToList(),
+                    withVariation.Count > 0
+                        ? $"Snitt ± {avgVariation:F0} Hz over {withVariation.Count} økter"
+                        : "Ingen prosodidata ennå — fullfør en økt for å måle tonevariasjon"),
                 new("Score-trend", "FemVoice-score per lagret økt (komfortsone-treff).",
                     scores.Select(ScoreToPx).ToList(),
                     $"Snitt {avgScore:F0} · beste {bestScore:F0}"),
@@ -149,6 +159,7 @@ public sealed class AnalysisViewModel
                 new("Økter analysert", ordered.Count.ToString()),
                 new("Snitt tonehøyde", avgPitch > 0 ? $"{avgPitch:F0} Hz" : "—"),
                 new("Snitt resonans", withResonance.Count > 0 ? $"{avgResonance:F0} / 100" : "— (ingen data ennå)"),
+                new("Snitt tonevariasjon", withVariation.Count > 0 ? $"± {avgVariation:F0} Hz" : "— (ingen data ennå)"),
                 new("Snitt score", $"{avgScore:F0} / 100"),
                 new("Beste økt", $"{bestScore:F0} / 100"),
             };
@@ -167,6 +178,9 @@ public sealed class AnalysisViewModel
     }
 
     private static double ScoreToPx(double score) => Math.Clamp(score, 0, 100) / 100.0 * (ChartHeightPx - 4) + 4;
+
+    // Map a pitch-variation (Hz std-dev, typically ~0–60 Hz) into the chart px range.
+    private static double VariationToPx(double hz) => Math.Clamp(hz / 60.0, 0, 1) * (ChartHeightPx - 4) + 4;
 
     // Deterministic sine-shaped bar heights in px within [4, ChartHeightPx] — synthetic, no random, no audio.
     private static IReadOnlyList<double> Wave(double amplitude, double mid, double freq, double phase)
