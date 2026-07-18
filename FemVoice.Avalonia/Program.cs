@@ -1334,8 +1334,38 @@ internal static class Program
         bool noOrphanFrames = runtime is not null && runtime.RuntimePitchSamples.Count == framesAfter;
         Console.WriteLine($"[analysis] Runtime->Analysis: ran={runtimeRan} disposed={runtimeDisposed} no-orphan-frames={noOrphanFrames}");
 
+        // Real-data resonance trend: a temp DB with a session carrying a real ResonanceScore → the Analysis VM
+        // surfaces a "Resonans-trend" series + a real average resonance metric (not the synthetic placeholder).
+        bool resonanceRealOk;
+        {
+            string fileName = $"femvoice-analysisres-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+            string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio");
+            string full = System.IO.Path.Combine(dir, fileName);
+            void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+            Cleanup();
+            try
+            {
+                var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+                // Resonance is only persisted by UpdateTrainingSession (Core's create-then-enrich two-step), same as
+                // the dashboard does — Save to get the Id, then Update with the real resonance.
+                var seed = new global::FemVoiceStudio.Models.TrainingSession
+                { UserId = 1, StartTime = DateTime.UtcNow.AddMinutes(-6), EndTime = DateTime.UtcNow.AddMinutes(-1),
+                  AveragePitch = 185, OverallScore = 70, ResonanceScore = 64, Feedback = "r" };
+                seed.Id = db.SaveTrainingSession(seed);
+                db.UpdateTrainingSession(seed);
+                var real = new AnalysisViewModel(db);
+                var resSeries = real.Series.FirstOrDefault(s => s.Title.Contains("Resonans"));
+                var resMetric = real.SummaryMetrics.FirstOrDefault(m => m.Label.Contains("resonans") || m.Label.Contains("Resonans"));
+                resonanceRealOk = real.HasRealData && resSeries is not null && resSeries.Summary.Contains("64")
+                                  && resMetric is not null && resMetric.Value.Contains("64");
+                Console.WriteLine($"[analysis] real-resonance: series='{resSeries?.Summary}' metric='{resMetric?.Value}' ok={resonanceRealOk}");
+            }
+            catch (Exception ex) { Console.WriteLine($"[analysis] real-resonance FAIL: {ex.Message}"); resonanceRealOk = false; }
+            finally { Cleanup(); }
+        }
+
         bool ok = navExists && onAnalysis && notDisposable && noCommands && seriesOk && summaryOk
-                  && runtimeRan && runtimeDisposed && noOrphanFrames;
+                  && runtimeRan && runtimeDisposed && noOrphanFrames && resonanceRealOk;
         Console.WriteLine(ok ? "[analysis] Analysis scaffold smoke OK" : "[analysis] Analysis scaffold smoke FAIL");
         return ok ? 0 : 1;
     }
