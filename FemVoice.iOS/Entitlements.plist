@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- No special capabilities required. Add entitlements here (e.g. push, associated domains) if the app grows
+	     to need them; each also has to be enabled on the App ID in the Apple Developer portal. -->
+</dict>
+</plist>

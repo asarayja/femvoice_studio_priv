@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Avalonia iOS head for FemVoice Studio (the 5th platform head). Like the Android head, it reuses the SAME shared
+    UI library (FemVoice.Avalonia.UI): it bootstraps the shared `App`, whose ISingleViewApplicationLifetime branch
+    sets the shared `ShellView` as the root MainView — so iPhone/iPad show the same navigation/pages/theme/onboarding
+    as the desktop and Android heads. No clinical/domain logic lives here — thin platform host only.
+
+    BUILDING REQUIRES A MAC with Xcode + the iOS workload (`dotnet workload install ios`). It is therefore NOT part
+    of FemVoiceStudio.slnx or scripts/linux-portable-gate.sh (the Linux gate stays green without the iOS toolchain).
+    See README.md for the create-on-Mac + build/sign steps, and docs/BUILD_MACOS_IOS.md for the full guide.
+
+    Audio: iOS has no ALSA; the app uses the synthetic backend until a real iOS capture backend is added behind
+    IAudioCaptureService in FemVoice.Audio.Abstractions (same pattern as the Linux ALSA backend).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-ios</TargetFramework>
+    <SupportedOSPlatformVersion>13.0</SupportedOSPlatformVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>Exe</OutputType>
+
+    <ApplicationId>com.femvoice.studio</ApplicationId>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
+    <ApplicationTitle>FemVoice Studio</ApplicationTitle>
+
+    <!-- Reflection bindings (matches the desktop/Android heads; AvaloniaUseCompiledBindingsByDefault=false).
+         Disabling the managed linker keeps the reflection-based Avalonia XAML bindings intact. -->
+    <MtouchLink>None</MtouchLink>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.iOS" Version="11.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Shared UI library (App, ShellView, all views + view-models, DI). Platform-neutral net10.0 library with NO
+         Avalonia.Desktop, so the iOS app can consume it — exactly like the Android head does. -->
+    <ProjectReference Include="..\FemVoice.Avalonia.UI\FemVoice.Avalonia.UI.csproj" />
+  </ItemGroup>
+
+</Project>
