@@ -476,6 +476,12 @@ internal static class Program
                   AveragePitch = 170 + i * 4, OverallScore = 55 + i * 5, Feedback = "s" });
             var panel = new CoachPanelViewModel(emptyDb);
             bool assembledOk = panel is not null && !(panel.HasReport && panel.ReportTitle is null);   // no crash, coherent
+            // Recovery-needs (shown first) + plateau-warnings sections are wired (headings present; the data-driven
+            // population depends on the profile, so only coherence is asserted here — never throws).
+            bool sectionsWired = panel!.RecoveryNeedsHeading.Length > 0 && panel.PlateauWarningsHeading.Length > 0
+                                 && panel.PlateauWarnings is not null
+                                 && (!panel.HasRecoveryNeeds || panel.RecoveryNeedsText.Length > 0)
+                                 && (!panel.HasPlateauWarnings || panel.PlateauWarnings.Count > 0);
 
             // No DB → empty-safe.
             var noDb = new CoachPanelViewModel(null);
@@ -493,8 +499,8 @@ internal static class Program
             (shell.CurrentPage as CoachPanelViewModel)!.BackCommand.Execute(null);
             bool backToReports = shell.CurrentPage is ReportsViewModel;
 
-            Console.WriteLine($"[coach] emptyStateOk={emptyStateOk} assembledOk={assembledOk} noDbOk={noDbOk} canOpen={canOpen} onCoach={onCoach} backToReports={backToReports} (hasReport={panel.HasReport})");
-            bool ok = emptyStateOk && assembledOk && noDbOk && canOpen && onCoach && backToReports;
+            Console.WriteLine($"[coach] emptyStateOk={emptyStateOk} assembledOk={assembledOk} sectionsWired={sectionsWired} noDbOk={noDbOk} canOpen={canOpen} onCoach={onCoach} backToReports={backToReports} (hasReport={panel.HasReport} recovery={panel.HasRecoveryNeeds} plateau={panel.HasPlateauWarnings})");
+            bool ok = emptyStateOk && assembledOk && sectionsWired && noDbOk && canOpen && onCoach && backToReports;
             Console.WriteLine(ok ? "[coach] Coach panel smoke OK" : "[coach] Coach panel smoke FAIL");
             return ok ? 0 : 1;
         }

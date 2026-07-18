@@ -30,6 +30,14 @@
           <TextBlock x:Name="ExportStatus" VerticalAlignment="Center" IsVisible="False"
                      Foreground="{DynamicResource ShellSuccessBrush}" FontSize="12" TextWrapping="Wrap"/>
         </StackPanel>
+        <!-- Recovery needs FIRST (Health > Development priority, WPF CoachDashboard) — warning-coloured -->
+        <Border Classes="card" IsVisible="{Binding HasRecoveryNeeds}" BorderBrush="{DynamicResource ShellWarningBrush}">
+          <StackPanel Spacing="4">
+            <TextBlock Text="{Binding RecoveryNeedsHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellWarningBrush}"/>
+            <TextBlock Text="{Binding RecoveryNeedsText}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+          </StackPanel>
+        </Border>
+
         <Border Classes="card" BorderBrush="{DynamicResource ShellSuccessBrush}">
           <StackPanel Spacing="4">
             <TextBlock Text="{Binding ReportTitle}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellHeadingBrush}"/>
@@ -37,6 +45,20 @@
                        FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}" Margin="0,6,0,0"/>
             <TextBlock IsVisible="{Binding HasDevelopment}" Text="{Binding DevelopmentSummary}"
                        TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Plateau warnings (also surfaces regressions) -->
+        <Border Classes="card" IsVisible="{Binding HasPlateauWarnings}" BorderBrush="{DynamicResource ShellWarningBrush}">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding PlateauWarningsHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellWarningBrush}"/>
+            <ItemsControl ItemsSource="{Binding PlateauWarnings}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Margin="0,1"/>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
           </StackPanel>
         </Border>
 
