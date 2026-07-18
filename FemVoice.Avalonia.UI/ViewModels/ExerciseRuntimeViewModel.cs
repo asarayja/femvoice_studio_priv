@@ -65,6 +65,10 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     private readonly PitchDetectionService _pitch = new(SampleRate);
     private readonly PitchTraceStabilizer _stabilizer = new();
     private readonly LiveMetricsService _metrics = new();
+    // Real cross-platform resonance DSP (frozen Core engine, same as WPF/dashboard). Emits 0–1 per frame; feeds the
+    // live readout + the coordinator's resonance input (replacing the old neutral placeholder). Read-only use.
+    private readonly FemVoiceStudio.Audio.ResonanceProxyEngine _resonanceEngine = new(SampleRate);
+    private volatile int _latestResonancePercent;   // 0–100 latest real resonance (volatile: written on capture thread)
 
     private DateTime _startUtc;
     private DateTime _lastFrameUtc;
@@ -134,6 +138,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
             IsSyntheticSource = true;
         }
         _capture.FrameAvailable += OnFrameAvailable;
+        _resonanceEngine.ResonanceScoreUpdated += OnResonanceScore;
 
         // Explicit lifecycle: start Inactive (no auto-start). The user presses Start (BeginCommand) to run
         // the synthetic session; the FrameAvailable handler is subscribed once here and only fires while the
@@ -183,6 +188,8 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
 
     [ObservableProperty] private bool _isRunning;
     [ObservableProperty] private double _currentPitch;
+    /// <summary>Live real resonance readout (from the Core ResonanceProxyEngine), e.g. "Lys (72)". "—" when no voice.</summary>
+    [ObservableProperty] private string _currentResonance = "—";
     [ObservableProperty] private string _pitchStatus = "—";
     [ObservableProperty] private int _elapsedSeconds;
     public string ElapsedText => $"{ElapsedSeconds / 60}:{ElapsedSeconds % 60:00}";
@@ -275,6 +282,8 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         if (IsRunning) return;
         _stabilizer.Reset();
         _metrics.Reset();
+        _resonanceEngine.Start();          // real resonance DSP (Reset()s internally)
+        _latestResonancePercent = 0;
         _holdRaw = 0;
         _peakHoldPercent = 0;
         HoldSeconds = 0;
@@ -321,6 +330,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     {
         if (!IsRunning) return;
         await _capture.StopAsync().ConfigureAwait(false);
+        _resonanceEngine.Stop();
         // Clear the VM-local coordinator's in-memory state (safe no-op when inactive; persists nothing).
         if (_coordinatorEnabled) _coordinator.StopExercise();
         _ui.Post(() =>
@@ -366,6 +376,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         _lastFrameUtc = now;
 
         PitchAnalysisResult result = _pitch.DetectPitch(e.Samples);
+        _resonanceEngine.ProcessSamples(e.Samples);   // real resonance DSP → _latestResonancePercent (display-only readout)
         double smoothed = _metrics.CalculateSmoothedPitch(result.Pitch, result.IsVoiced);
         double pitch = result.IsVoiced ? _stabilizer.Filter(smoothed, now) : 0;
 
@@ -400,9 +411,11 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         (string fbMsg, string fbSev) = DeriveLiveFeedback(result.IsVoiced, pitch,
             _coordinatorEnabled ? _latestLiveState : null);
 
+        int resonancePct = _latestResonancePercent;
         _ui.Post(() =>
         {
             CurrentPitch = result.IsVoiced ? Math.Round(pitch, 1) : 0;
+            CurrentResonance = result.IsVoiced ? ResonanceText(resonancePct) : "—";
             PitchStatus = status;
             HoldSeconds = Math.Round(hold, 1);
             HoldProgressPercent = Math.Round(hold / _holdTargetSeconds * 100.0, 0);
@@ -423,12 +436,26 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         });
     }
 
+    // Real resonance score (0–1 from the Core engine) → 0–100. Fires on the capture thread; stored volatile.
+    private void OnResonanceScore(double score0to1)
+        => _latestResonancePercent = (int)Math.Round(Math.Clamp(score0to1, 0, 1) * 100);
+
+    // Qualitative label + value for the live resonance readout (0–100). Mirrors WPF's bright/neutral/dark buckets.
+    private static string ResonanceText(int pct) => pct switch
+    {
+        >= 67 => $"Lys ({pct})",
+        >= 34 => $"Nøytral ({pct})",
+        _ => $"Mørk ({pct})",
+    };
+
     public void Dispose()
     {
         IsRunning = false;                       // mark stopped (also when navigated away via top nav)
         _capture.FrameAvailable -= OnFrameAvailable;
         _ = _capture.StopAsync();                // stops the capture loop (synthetic or real) — no more frames
         (_capture as IDisposable)?.Dispose();    // release a real capture backend (e.g. ALSA) if used
+        _resonanceEngine.ResonanceScoreUpdated -= OnResonanceScore;
+        _resonanceEngine.Dispose();
         if (_coordinatorEnabled) _coordinator.ExerciseUpdated -= OnCoordinatorState;
         _coordinator.StopExercise();             // in-memory clear; no persistence
         _coordinator.Dispose();
