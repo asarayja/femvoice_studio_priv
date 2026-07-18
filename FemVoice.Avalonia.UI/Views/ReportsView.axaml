@@ -12,7 +12,7 @@
       <Border Classes="card" Padding="20,16">
         <StackPanel Spacing="4">
           <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-          <TextBlock Text="Visning-bare rapporter og fagverktøy — ingen generering, eksport eller historikk."
+          <TextBlock Text="Ekte fremgangssammendrag og CSV/tekst-eksport fra dine lagrede økter. Kliniske fagpaneler (kliniker/veileder) og PDF kommer senere."
                      FontSize="14" Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
         </StackPanel>
       </Border>
@@ -22,21 +22,24 @@
         <StackPanel Spacing="6">
           <TextBlock Text="{Binding PreviewTitle}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
           <TextBlock Text="{Binding PreviewBody}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" FontFamily="monospace"/>
-          <TextBlock Text="Ekte sammendrag fra dine lagrede økter. Fullstendig rapportgenerering og eksport (PDF/CSV) kommer senere."
+          <!-- REAL export of the saved-session data (CSV / text) via a native save dialog (code-behind). -->
+          <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+            <Button x:Name="ExportCsvButton" Content="{Binding ExportLabel}" Classes="primary"
+                    IsEnabled="{Binding CanExport}" Click="OnExportCsvClick"/>
+            <Button x:Name="ExportTextButton" Content="{Binding ExportTextLabel}" Classes="secondary"
+                    IsEnabled="{Binding CanExport}" Click="OnExportTextClick"/>
+          </StackPanel>
+          <TextBlock x:Name="ExportStatus" IsVisible="False"
+                     Foreground="{DynamicResource ShellSuccessBrush}" FontSize="12" TextWrapping="Wrap"/>
+          <TextBlock Text="Ekte sammendrag + CSV/tekst-eksport fra dine lagrede økter. Fullstendig klinisk rapportgenerering (PDF, kliniker/veileder) kommer senere."
                      Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" TextWrapping="Wrap"/>
         </StackPanel>
       </Border>
 
-      <!-- Deferred / not-saved banner (professional tools + export remain deferred) -->
+      <!-- Deferred banner (clinical professional panels + PDF remain deferred; preview + export are real) -->
       <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
         <TextBlock Text="{Binding ScaffoldNotice}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
       </Border>
-
-      <!-- Disabled, inert global actions (no command, no file dialog) -->
-      <StackPanel Orientation="Horizontal" Spacing="8">
-        <Button Content="Eksporter (senere)" IsEnabled="False" Padding="10,4"/>
-        <Button Content="Åpne rapport (senere)" IsEnabled="False" Padding="10,4"/>
-      </StackPanel>
 
       <!-- 2-column grid of report / professional-tool cards -->
       <ItemsControl ItemsSource="{Binding Cards}">

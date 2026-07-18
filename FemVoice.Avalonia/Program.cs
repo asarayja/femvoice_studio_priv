@@ -52,6 +52,7 @@ internal static class Program
         if (args.Contains("--diagnostics-scaffold-smoke")) return DiagnosticsScaffoldSmoke().GetAwaiter().GetResult();
         if (args.Contains("--first-time-setup-smoke")) return FirstTimeSetupSmoke();
         if (args.Contains("--mic-calibration-smoke")) return MicCalibrationSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--reports-export-smoke")) return ReportsExportSmoke();
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
         if (args.Contains("--visual-baseline-smoke")) return VisualBaselineSmoke();
@@ -311,6 +312,52 @@ internal static class Program
             return ok ? 0 : 1;
         }
         catch (Exception ex) { Console.WriteLine($"[db] Database service smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
+        finally { Cleanup(); }
+    }
+
+    // Headless verification of the REAL Reports EXPORT slice (no display, no file dialog): with a TEMP DB holding
+    // real saved sessions, the ReportsViewModel exposes CanExport + builds CSV/text whose content reflects the real
+    // rows; with no DB it cannot export. The file-picker itself is UI-only (code-behind) and out of scope here — this
+    // proves the exported CONTENT is real. No clinical logic touched.
+    private static int ReportsExportSmoke()
+    {
+        string fileName = $"femvoice-reptexport-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+        string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio");
+        string full = System.IO.Path.Combine(dir, fileName);
+        void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+        Cleanup();
+        try
+        {
+            // No DB → export disabled, content empty of rows.
+            var empty = new ReportsViewModel(null);
+            bool emptyNoExport = !empty.CanExport && empty.ExportRows.Count == 0;
+
+            var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+            db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
+            { UserId = 1, StartTime = DateTime.UtcNow.AddMinutes(-20), EndTime = DateTime.UtcNow.AddMinutes(-15), AveragePitch = 175, OverallScore = 62, Feedback = "x" });
+            db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
+            { UserId = 1, StartTime = DateTime.UtcNow.AddMinutes(-8), EndTime = DateTime.UtcNow.AddMinutes(-3), AveragePitch = 190, OverallScore = 78, Feedback = "y" });
+
+            var vm = new ReportsViewModel(db);
+            bool canExport = vm.CanExport && vm.ExportRows.Count == 2;
+
+            string csv = vm.BuildCsv();
+            var csvLines = csv.Replace("\r\n", "\n").TrimEnd('\n').Split('\n');
+            bool csvOk = csvLines.Length == 3                                   // header + 2 rows
+                         && csvLines[0].StartsWith("Dato,")
+                         && csvLines[1].Contains("175") && csvLines[1].Contains("62")
+                         && csvLines[2].Contains("190") && csvLines[2].Contains("78");
+
+            string text = vm.BuildText();
+            bool textOk = text.Contains(vm.PreviewTitle) && text.Contains("Økter:")
+                          && text.Contains("175") && text.Contains("190");
+
+            Console.WriteLine($"[rpt-export] emptyNoExport={emptyNoExport} canExport={canExport} csvOk={csvOk} textOk={textOk} rows={vm.ExportRows.Count}");
+            bool ok = emptyNoExport && canExport && csvOk && textOk;
+            Console.WriteLine(ok ? "[rpt-export] Reports export smoke OK" : "[rpt-export] Reports export smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[rpt-export] Reports export smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
         finally { Cleanup(); }
     }
 
