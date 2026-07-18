@@ -278,9 +278,16 @@ internal static class Program
             bool dataOk = rec1 is not null && !string.IsNullOrWhiteSpace(rec1.RecommendationText)
                           && !string.IsNullOrWhiteSpace(rec1.FocusArea) && weekly > 0 && !string.IsNullOrWhiteSpace(status);
 
-            Console.WriteLine($"[smartcoach] emptyOk={emptyOk} dataOk={dataOk} focus='{rec1?.FocusArea}' dur={rec1?.RecommendedDurationMinutes}min weekly={weekly}");
+            // Detail metrics (ported from WPF SmartCoachDetailView): the VM surfaces streak/sessions-this-week/
+            // total-time/consistency + a 7-day weekly history from the real DB.
+            var vm = new SmartCoachViewModel(db);
+            bool detailOk = vm.EngineAvailable && vm.HasDetail && vm.DetailMetrics.Count >= 4
+                            && vm.WeeklyHistory.Count == 7
+                            && vm.DetailMetrics.All(m => m.Label.Length > 0 && m.Value.Length > 0);
+
+            Console.WriteLine($"[smartcoach] emptyOk={emptyOk} dataOk={dataOk} detailOk={detailOk} detailRows={vm.DetailMetrics.Count} weekHist={vm.WeeklyHistory.Count} focus='{rec1?.FocusArea}' weekly={weekly}");
             Console.WriteLine($"[smartcoach] rec: {rec1?.RecommendationText}");
-            bool ok = emptyOk && dataOk;
+            bool ok = emptyOk && dataOk && detailOk;
             Console.WriteLine(ok ? "[smartcoach] SmartCoach engine smoke OK" : "[smartcoach] SmartCoach engine smoke FAIL");
             return ok ? 0 : 1;
         }
