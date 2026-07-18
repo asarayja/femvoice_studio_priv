@@ -57,6 +57,7 @@ internal static class Program
         if (args.Contains("--coach-panel-smoke")) return CoachPanelSmoke();
         if (args.Contains("--clinician-panel-smoke")) return ClinicianPanelSmoke();
         if (args.Contains("--professional-export-smoke")) return ProfessionalExportSmoke();
+        if (args.Contains("--timeline-panel-smoke")) return TimelinePanelSmoke();
         if (args.Contains("--dashboard-resonance-smoke")) return DashboardResonanceSmoke().GetAwaiter().GetResult();
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
@@ -599,6 +600,53 @@ internal static class Program
         finally { Cleanup(); }
     }
 
+    // Headless verification of the REAL timeline-panel slice (no display): assembles a real OutcomeProfile →
+    // TimelineReport from a TEMP DB read-only via the frozen Core pipeline WITHOUT throwing, degrades to a truthful
+    // "not enough data" state, and exposes the report for export. Also checks Reports exposes the open-timeline
+    // command + shell navigates + Back returns. No writes / no clinical change.
+    private static int TimelinePanelSmoke()
+    {
+        string fileName = $"femvoice-timeline-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+        string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio");
+        string full = System.IO.Path.Combine(dir, fileName);
+        void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+        Cleanup();
+        try
+        {
+            var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+            var emptyPanel = new TimelinePanelViewModel(db);   // must not throw; empty-safe
+            bool emptyStateOk = emptyPanel.EmptyMessage.Length > 0 && emptyPanel.Title.Length > 0;
+
+            for (int i = 0; i < 12; i++)
+                db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
+                { UserId = 1, StartTime = DateTime.UtcNow.AddDays(-i * 4), EndTime = DateTime.UtcNow.AddDays(-i * 4).AddMinutes(5),
+                  AveragePitch = 170 + i * 2, OverallScore = 55 + i * 3, Feedback = "s" });
+            var panel = new TimelinePanelViewModel(db);
+            bool assembledOk = panel is not null && (!panel.HasReport || panel.Entries.Count > 0);   // no crash; coherent
+
+            var noDb = new TimelinePanelViewModel(null);
+            bool noDbOk = !noDb.HasReport && noDb.EmptyMessage.Length > 0;
+
+            var svc = new VoiceFeminizationExerciseService();
+            var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+            var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher(), null, db);
+            shell.ShowReportsCommand.Execute(null);
+            var reports = shell.CurrentPage as ReportsViewModel;
+            bool canOpen = reports is not null && reports.CanOpenTimelinePanel;
+            reports!.OpenTimelineCommand.Execute(null);
+            bool onTimeline = shell.CurrentPage is TimelinePanelViewModel;
+            (shell.CurrentPage as TimelinePanelViewModel)!.BackCommand.Execute(null);
+            bool backToReports = shell.CurrentPage is ReportsViewModel;
+
+            Console.WriteLine($"[timeline] emptyStateOk={emptyStateOk} assembledOk={assembledOk} noDbOk={noDbOk} canOpen={canOpen} onTimeline={onTimeline} backToReports={backToReports} (hasReport={panel.HasReport} entries={panel.Entries.Count})");
+            bool ok = emptyStateOk && assembledOk && noDbOk && canOpen && onTimeline && backToReports;
+            Console.WriteLine(ok ? "[timeline] Timeline panel smoke OK" : "[timeline] Timeline panel smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[timeline] Timeline panel smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
+        finally { Cleanup(); }
+    }
+
     // Avalonia-local session-history persistence: round-trips display-only records through a JSON store, degrades
     // gracefully on missing/corrupt files, caps + newest-first, and defaults to the Avalonia-local path (NOT the WPF
     // DB). Uses a TEMP path so it is deterministic and never touches the real history file. No clinical scoring.
@@ -691,6 +739,12 @@ internal static class Program
         {
             shell.ShowReportsCommand.Execute(null);
             (shell.CurrentPage as ReportsViewModel)?.OpenClinicianCommand.Execute(null);
+            return;
+        }
+        if (page is "timeline" or "timelinepanel" or "utviklingstidslinje")
+        {
+            shell.ShowReportsCommand.Execute(null);
+            (shell.CurrentPage as ReportsViewModel)?.OpenTimelineCommand.Execute(null);
             return;
         }
         if (needle.Length == 0) return;   // "shell" / default keeps the dashboard
