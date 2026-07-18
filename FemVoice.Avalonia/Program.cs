@@ -768,6 +768,11 @@ internal static class Program
             bool hasDays = cal.EngineAvailable && cal.Days.Count == 42 && cal.Days.Any(c => c.HasSessions);
             var todayItem = cal.Days.FirstOrDefault(x => x.Date == today);
             bool todayFound = todayItem is not null && todayItem.IsToday && todayItem.Sessions == 2;
+            // Intensity heat-map + tooltip (WPF parity): a day with sessions carries real minutes/score + a colour
+            // + a tooltip; the legend is present.
+            bool heatmapOk = todayItem is not null && todayItem.IntensityBrush is not null
+                             && todayItem.Score > 0 && todayItem.Tooltip.Contains("økter")
+                             && cal.Legend.Count == 4;
             todayItem?.Open.Execute(null);
             bool openedToday = opened == today;
 
@@ -778,8 +783,8 @@ internal static class Program
             bool summaryOk = det.Summary.Contains("2 økter");
             bool cardsOk = det.SummaryCards.Count == 4 && det.SummaryCards.All(c => c.Value.Length > 0);   // WPF 4 summary cards
 
-            Console.WriteLine($"[daydet] hasDays={hasDays} todayFound={todayFound} openedToday={openedToday} twoSessions={twoSessions} detailOk={detailOk} summaryOk={summaryOk} cardsOk={cardsOk}");
-            bool ok = hasDays && todayFound && openedToday && twoSessions && detailOk && summaryOk && cardsOk;
+            Console.WriteLine($"[daydet] hasDays={hasDays} todayFound={todayFound} heatmapOk={heatmapOk} openedToday={openedToday} twoSessions={twoSessions} detailOk={detailOk} summaryOk={summaryOk} cardsOk={cardsOk}");
+            bool ok = hasDays && todayFound && heatmapOk && openedToday && twoSessions && detailOk && summaryOk && cardsOk;
             Console.WriteLine(ok ? "[daydet] Day details smoke OK" : "[daydet] Day details smoke FAIL");
             return ok ? 0 : 1;
         }

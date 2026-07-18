@@ -39,8 +39,11 @@
             <ItemsControl.ItemTemplate>
               <DataTemplate DataType="vm:CalendarDayCell">
                 <Button Command="{Binding Open}" Classes="nav" Margin="2" Padding="0" Height="52"
-                        HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                        HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                        ToolTip.Tip="{Binding Tooltip}">
                   <Grid Margin="2">
+                    <!-- Intensity heat-map fill (WPF CalendarDay.IntensityColor) -->
+                    <Border Background="{Binding IntensityBrush}" CornerRadius="4"/>
                     <!-- Today highlight ring (converter-free: bound to IsToday) -->
                     <Border IsVisible="{Binding IsToday}" BorderBrush="{DynamicResource ShellAccentBrush}" BorderThickness="1.5" CornerRadius="4"/>
                     <Grid RowDefinitions="*,Auto" Margin="4">
@@ -54,6 +57,22 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
+
+          <!-- Intensity legend (WPF parity): the session-intensity colour scale -->
+          <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,6,0,0">
+            <TextBlock Text="{Binding LegendHeading, StringFormat='{}{0}:'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11" VerticalAlignment="Center"/>
+            <ItemsControl ItemsSource="{Binding Legend}">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="10"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Orientation="Horizontal" Spacing="4">
+                    <Border Width="12" Height="12" CornerRadius="2" Background="{Binding Swatch}" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11" VerticalAlignment="Center"/>
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
 
           <TextBlock Text="{Binding DataNote}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"/>
         </StackPanel>
