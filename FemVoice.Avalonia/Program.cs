@@ -244,12 +244,19 @@ internal static class Program
 
             // Richer detail (ported from WPF ProgressionDashboard): the VM surfaces stat metrics + target parameters
             // + a score-history chart + weekly summary from the real DB.
-            var vm = new ProgressionViewModel(db);
+            // Today's-focus + Start-exercise wiring (WPF ProgressionDashboard parity): the VM surfaces the level's
+            // focus area and the Start-exercise command invokes the injected navigate callback.
+            bool navigated = false;
+            var vm = new ProgressionViewModel(db, null, () => navigated = true);
             bool detailOk = vm.EngineAvailable && vm.StatMetrics.Count >= 4 && vm.Parameters.Count >= 3
                             && vm.ScoreHistoryBars.Count == 6 && vm.WeeklySummary.Contains("økter");
+            bool focusOk = vm.HasTodaysFocus && vm.TodaysFocusText.Length > 0;
+            vm.StartExerciseCommand.Execute(null);
+            bool startOk = navigated;
             Console.WriteLine($"[prog] levelOk={levelOk}('{levelName}') emptyOk={emptyOk} dataOk={dataOk} detailOk={detailOk} stats={vm.StatMetrics.Count} params={vm.Parameters.Count} hist={vm.ScoreHistoryBars.Count} weekly='{vm.WeeklySummary}'");
+            Console.WriteLine($"[prog] focusOk={focusOk}('{vm.TodaysFocusText}') startExerciseNavigates={startOk}");
             Console.WriteLine($"[prog] summary: {summary1}");
-            bool ok = levelOk && emptyOk && dataOk && detailOk;
+            bool ok = levelOk && emptyOk && dataOk && detailOk && focusOk && startOk;
             Console.WriteLine(ok ? "[prog] Progression engine smoke OK" : "[prog] Progression engine smoke FAIL");
             return ok ? 0 : 1;
         }

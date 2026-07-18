@@ -14,6 +14,18 @@
 
       <StackPanel Spacing="14" IsVisible="{Binding EngineAvailable}">
 
+        <!-- Today's focus + Start exercise (WPF ProgressionDashboard parity) -->
+        <Border Classes="card" IsVisible="{Binding HasTodaysFocus}" BorderBrush="{DynamicResource ShellAccentBrush}">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+              <TextBlock Text="{Binding TodaysFocusHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+              <TextBlock Text="{Binding TodaysFocusText}" FontSize="18" FontWeight="Bold" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            </StackPanel>
+            <Button Grid.Column="1" Classes="primary" VerticalAlignment="Center"
+                    Content="{Binding StartExerciseLabel}" Command="{Binding StartExerciseCommand}"/>
+          </Grid>
+        </Border>
+
         <!-- Level + FemVoice score -->
         <Grid ColumnDefinitions="*,*">
           <Border Grid.Column="0" Classes="card" Margin="0,0,6,0">
