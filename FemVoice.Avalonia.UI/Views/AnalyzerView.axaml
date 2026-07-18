@@ -68,6 +68,38 @@
         </StackPanel>
       </Border>
 
+      <!-- Quantiles + range distribution (WPF Analyzer parity) — computed over the full recording on Stop -->
+      <Border Classes="card" IsVisible="{Binding HasDistribution}">
+        <StackPanel Spacing="10">
+          <StackPanel Spacing="4">
+            <TextBlock Text="{Binding QuantilesHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <ItemsControl ItemsSource="{Binding Quantiles}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid ColumnDefinitions="140,*" Margin="0,1">
+                    <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+          <StackPanel Spacing="4">
+            <TextBlock Text="{Binding RangeHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <ItemsControl ItemsSource="{Binding RangeDistribution}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid ColumnDefinitions="200,*" Margin="0,1">
+                    <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
     </StackPanel>
   </ScrollViewer>
 </UserControl>

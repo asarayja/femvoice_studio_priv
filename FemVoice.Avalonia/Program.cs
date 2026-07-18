@@ -844,9 +844,12 @@ internal static class Program
         bool stats = vm.SampleCount > 0 && vm.AveragePitch > 0 && vm.MaxPitch >= vm.MinPitch;
         vm.StopCommand.Execute(null);
         bool stopped = !vm.IsRunning;
+        // Quantiles + range distribution (WPF parity) computed over the full recording on Stop.
+        bool distOk = vm.HasDistribution && vm.Quantiles.Count == 7 && vm.RangeDistribution.Count == 5
+                      && vm.RangeDistribution.All(r => r.Value.Contains("%"));
 
-        Console.WriteLine($"[analyzer] navImpl={navImpl} onPage={onPage} disposedOnLeave={disposedOnLeave} available={available} running={running} liveFreq={liveFreq}({vm.MainFrequency:F0}Hz) stats={stats}(n={vm.SampleCount},avg={vm.AveragePitch:F0}) stopped={stopped}");
-        bool ok = navImpl && onPage && disposedOnLeave && available && running && liveFreq && stats && stopped;
+        Console.WriteLine($"[analyzer] navImpl={navImpl} onPage={onPage} disposedOnLeave={disposedOnLeave} available={available} running={running} liveFreq={liveFreq}({vm.MainFrequency:F0}Hz) stats={stats}(n={vm.SampleCount},avg={vm.AveragePitch:F0}) stopped={stopped} distOk={distOk}(q={vm.Quantiles.Count},r={vm.RangeDistribution.Count})");
+        bool ok = navImpl && onPage && disposedOnLeave && available && running && liveFreq && stats && stopped && distOk;
         Console.WriteLine(ok ? "[analyzer] Analyzer smoke OK" : "[analyzer] Analyzer smoke FAIL");
         return ok ? 0 : 1;
     }
