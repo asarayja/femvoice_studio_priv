@@ -14,7 +14,7 @@ namespace FemVoice.Avalonia.ViewModels;
 /// </summary>
 public sealed class ProgressionViewModel
 {
-    public string Title => Localized.Get("Shell_Nav_Progresjon", "Progresjon");
+    public string Title => Localized.Get("Main_Progression", "Progresjon");
 
     public bool EngineAvailable { get; }
     public string UnavailableNote { get; } = "";

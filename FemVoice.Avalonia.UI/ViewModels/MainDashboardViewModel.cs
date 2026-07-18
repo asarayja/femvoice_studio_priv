@@ -6,6 +6,7 @@ using FemVoiceStudio.Audio.Abstractions;    // IAudioCaptureService, SyntheticAu
 using FemVoiceStudio.Core.Platform;         // IUiDispatcher
 using FemVoiceStudio.Models;                // PitchAnalysisResult, StabilityState, HealthState
 using FemVoiceStudio.Services;              // PitchTraceStabilizer, LiveMetricsService, PitchTargetZonePolicy
+using FemVoice.Avalonia.Localization;       // Localized (WPF-parity strings from the shared RESX)
 
 namespace FemVoice.Avalonia.ViewModels;
 
@@ -313,7 +314,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     private static string HealthText(HealthState h) => h switch
     {
         HealthState.NoVoice => "—",
-        HealthState.Safe => "Trygg",
+        HealthState.Safe => Localized.Get("Health_Safe", "Trygt"),
         HealthState.Monitor => "Følg med",
         HealthState.Warning => "Advarsel",
         HealthState.Danger => "Stopp og hvil",

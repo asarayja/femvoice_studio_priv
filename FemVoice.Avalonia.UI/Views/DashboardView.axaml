@@ -1,12 +1,13 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:FemVoice.Avalonia.Localization"
              x:Class="FemVoice.Avalonia.Views.DashboardView">
   <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="16" Spacing="12">
 
       <!-- Header (concise — the long developer note lives in docs, not the UI) -->
       <StackPanel Spacing="2">
-        <TextBlock Text="Hoveddashboard" FontSize="22" FontWeight="Bold" TextWrapping="Wrap"
+        <TextBlock Text="{loc:Tr Key=Main_TrainingForFeminineVoice, Fallback='Trening for feminin stemme'}" FontSize="22" FontWeight="Bold" TextWrapping="Wrap"
                    Foreground="{DynamicResource ShellHeadingBrush}"/>
         <TextBlock Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"
                    Text="Trykk Start for live tonehøyde, stabilitet og helse fra mikrofonen."/>
@@ -20,8 +21,8 @@
           <StackPanel Spacing="10">
             <TextBlock Text="Økt" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
             <WrapPanel>
-              <Button Content="Start" Classes="primary" Command="{Binding StartCommand}" IsEnabled="{Binding !IsRecording}" Width="100" Margin="0,0,8,6"/>
-              <Button Content="Stopp" Command="{Binding StopCommand}" IsEnabled="{Binding IsRecording}" Width="90" Margin="0,0,8,6"/>
+              <Button Content="{loc:Tr Key=UI_StartSession, Fallback='Start Økt'}" Classes="primary" Command="{Binding StartCommand}" IsEnabled="{Binding !IsRecording}" MinWidth="100" Margin="0,0,8,6"/>
+              <Button Content="{loc:Tr Key=UI_StopSession, Fallback='Stopp Økt'}" Command="{Binding StopCommand}" IsEnabled="{Binding IsRecording}" MinWidth="90" Margin="0,0,8,6"/>
               <TextBlock VerticalAlignment="Center" Margin="0,0,0,6" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding IsRecording, StringFormat='Tar opp: {0}'}"/>
             </WrapPanel>
             <StackPanel Orientation="Horizontal" Spacing="8">

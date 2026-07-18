@@ -26,7 +26,7 @@
         <!-- Today's recommendation -->
         <Border Classes="card">
           <StackPanel Spacing="8">
-            <TextBlock Text="Dagens anbefaling" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+            <TextBlock Text="{Binding TodaysFocusHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
             <StackPanel Orientation="Horizontal" Spacing="8">
               <Border Background="{DynamicResource ShellChipBackgroundBrush}" CornerRadius="6" Padding="8,3">
                 <TextBlock Text="{Binding FocusLabel, StringFormat='Fokus: {0}'}" Foreground="{DynamicResource ShellAccentBrush}" FontWeight="SemiBold"/>
