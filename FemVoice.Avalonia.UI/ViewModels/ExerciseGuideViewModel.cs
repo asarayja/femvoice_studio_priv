@@ -1,3 +1,4 @@
+using FemVoice.Avalonia.Localization;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -67,7 +68,9 @@ public partial class ExerciseGuideViewModel : ObservableObject
     public int FilteredCount => FilteredExercises.Count;
     public bool HasResults => FilteredExercises.Count > 0;
     public bool IsEmpty => FilteredExercises.Count == 0;
-    public string Heading => $"Øvelsesguide — {Count} øvelser";
+    // Heading uses the shared WPF keys (Exercise_Title + Exercise_Subtitle) with the live count appended.
+    public string Heading => $"{Localized.Get("Exercise_Title", "Øvelsesguide")} — {Count} {Localized.Get("Exercise_ItemsSuffix", "øvelser")}";
+    public string Subtitle => Localized.Get("Exercise_Subtitle", "steg for steg");
     public string SearchPlaceholder => "Søk i øvelser …";
     public string EmptyText => "Ingen øvelser matcher søket.";
 

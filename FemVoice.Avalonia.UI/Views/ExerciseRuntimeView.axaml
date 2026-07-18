@@ -35,6 +35,31 @@
         </StackPanel>
       </Border>
 
+      <!-- Exercise Guidance panel (WPF ExerciseWindow): purpose/focus/mistakes/safety cards + feedback-mode badge -->
+      <Border Classes="card" IsVisible="{Binding HasGuidance}">
+        <StackPanel Spacing="8">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <TextBlock Text="{Binding GuidanceHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}" VerticalAlignment="Center"/>
+            <Border Background="{DynamicResource ShellChipBackgroundBrush}" CornerRadius="6" Padding="8,2" IsVisible="{Binding HasFeedbackMode}">
+              <TextBlock Text="{Binding FeedbackModeText}" Foreground="{DynamicResource ShellAccentBrush}" FontSize="12"/>
+            </Border>
+          </StackPanel>
+          <ItemsControl ItemsSource="{Binding GuidanceItems}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border BorderBrush="{DynamicResource ShellBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,8,8">
+                  <StackPanel Spacing="2">
+                    <TextBlock Text="{Binding Heading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}" FontSize="13"/>
+                    <TextBlock Text="{Binding Body}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
       <!-- Two-column grid: info/guidance (left) · session controls + live readouts (right) -->
       <Grid ColumnDefinitions="1.2*,0.8*">
 
