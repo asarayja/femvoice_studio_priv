@@ -74,6 +74,31 @@
           </ItemsControl>
         </Border>
 
+        <!-- Per-dimension parameter graph (WPF ProgressionDashboard) — real VoiceIntelligence scores per session -->
+        <Border Classes="card" IsVisible="{Binding HasParameterGraph}">
+          <StackPanel Spacing="8">
+            <TextBlock Text="{Binding ParameterGraphHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <ItemsControl ItemsSource="{Binding ParameterGraph}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid ColumnDefinitions="120,*,64" Margin="0,3">
+                    <TextBlock Grid.Column="0" Text="{Binding Label}" VerticalAlignment="Center" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+                    <Border Grid.Column="1" Height="14" VerticalAlignment="Center" Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="3" ClipToBounds="True">
+                      <Border HorizontalAlignment="Left" Width="{Binding Score}" MaxWidth="10000" Background="{DynamicResource ShellAccentBrush}" CornerRadius="3"
+                              IsVisible="{Binding HasData}"/>
+                    </Border>
+                    <TextBlock Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="12"
+                               Foreground="{DynamicResource ShellBodyTextBrush}"
+                               Text="{Binding Score, StringFormat='{}{0:F0}'}" IsVisible="{Binding HasData}"/>
+                    <TextBlock Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="11"
+                               Foreground="{DynamicResource ShellFaintBrush}" Text="—" IsVisible="{Binding !HasData}"/>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
         <!-- Target parameters for the current level -->
         <Border Classes="card">
           <StackPanel Spacing="6">

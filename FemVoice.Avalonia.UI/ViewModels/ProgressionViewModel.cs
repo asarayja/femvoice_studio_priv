@@ -68,6 +68,15 @@ public sealed partial class ProgressionViewModel : ObservableObject
     public bool HasTodaysFocus { get; private set; }
     public string TodaysFocusHeading => Localized.Get("Dashboard_TodaysFocus", "Dagens fokusområde");
     public string StartExerciseLabel => Localized.Get("Dashboard_StartExercise", "Start øvelse");
+
+    // ── Per-dimension parameter graph (WPF ProgressionDashboard) — now REAL, from the VoiceIntelligence records the
+    //    dashboard writes on each session (SessionAnalyticsStore). Dimensions with no data show honestly as "—". ─────
+    public const double ParamBarHeightPx = 100;
+    /// <summary>One parameter row: dimension label + 0–100 score + bar px + whether real data exists.</summary>
+    public sealed record DimensionBar(string Label, double Score, double BarPx, bool HasData);
+    public IReadOnlyList<DimensionBar> ParameterGraph { get; private set; } = Array.Empty<DimensionBar>();
+    public bool HasParameterGraph => ParameterGraph.Count > 0;
+    public string ParameterGraphHeading => Localized.Get("Dashboard_Parameters", "Parametere");
     /// <summary>Opens the exercise guide to begin training (WPF's "Start Exercise" action). No-op if not wired.</summary>
     [RelayCommand] private void StartExercise() => _startExercise?.Invoke();
 
@@ -141,6 +150,8 @@ public sealed partial class ProgressionViewModel : ObservableObject
             double weekAvg = week.Count > 0 ? week.Average(s => s.OverallScore) : 0;
             WeeklySummary = $"{week.Count} økter · {weekMin} min · snitt score {weekAvg:F0}";
 
+            BuildParameterGraph(database);
+
             EngineAvailable = true;
         }
         catch (Exception ex)
@@ -148,5 +159,40 @@ public sealed partial class ProgressionViewModel : ObservableObject
             EngineAvailable = false;
             UnavailableNote = Localized.Get("Progression_Error", "Progresjon er midlertidig utilgjengelig.") + $" ({ex.GetType().Name})";
         }
+    }
+
+    // Real per-dimension parameter graph: average each dimension over the recent VoiceIntelligence records the
+    // dashboard writes per session. A dimension with no records carrying a value shows honestly as "no data".
+    private void BuildParameterGraph(IDatabaseService database)
+    {
+        try
+        {
+            if (database is not DatabaseService concrete) return;
+            var analytics = new FemVoiceStudio.Services.SessionAnalyticsStore(
+                new FemVoiceStudio.Services.SqliteSessionAnalyticsRepository(concrete.ConnectionString));
+            var records = analytics.GetSessionsAsync(DateTime.UtcNow.AddDays(-90), DateTime.UtcNow.AddDays(1), 1)
+                .GetAwaiter().GetResult();
+            if (records.Count == 0) return;
+
+            DimensionBar Bar(string label, System.Func<FemVoiceStudio.Services.SessionAnalyticsRecord, double> sel)
+            {
+                var vals = records.Select(sel).Where(v => v > 0).ToList();
+                bool has = vals.Count > 0;
+                double score = has ? Math.Clamp(vals.Average(), 0, 100) : 0;
+                return new DimensionBar(label, Math.Round(score), score / 100.0 * (ParamBarHeightPx - 4) + 4, has);
+            }
+
+            ParameterGraph = new List<DimensionBar>
+            {
+                Bar(Localized.Get("Dashboard_Resonance", "Resonans"), r => r.ResonanceScore100),
+                Bar(Localized.Get("Dashboard_Pitch", "Tonehøyde"), r => r.PitchScore100),
+                Bar(Localized.Get("Dashboard_Intonation", "Intonasjon"), r => r.IntonationScore100),
+                Bar(Localized.Get("Dashboard_VoiceHealth", "Stemmehelse"), r => r.AverageHealthScore),
+                Bar(Localized.Get("Dashboard_Comfort", "Komfort"), r => r.ComfortScore100),
+                Bar(Localized.Get("Dashboard_Recovery", "Restitusjon"), r => r.RecoveryScore100),
+                Bar(Localized.Get("Dashboard_Consistency", "Jevnhet"), r => r.ConsistencyScore100),
+            };
+        }
+        catch { ParameterGraph = Array.Empty<DimensionBar>(); }
     }
 }
