@@ -139,9 +139,13 @@
             <ItemsControl ItemsSource="{Binding RangeDistribution}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                  <Grid ColumnDefinitions="200,*" Margin="0,1">
-                    <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}"/>
-                    <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                  <Grid ColumnDefinitions="180,*,48" Margin="0,2">
+                    <TextBlock Grid.Column="0" Text="{Binding Label}" VerticalAlignment="Center" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+                    <!-- Visual bar (WPF Analyzer range distribution shows bars) -->
+                    <Border Grid.Column="1" HorizontalAlignment="Left" Height="12" VerticalAlignment="Center"
+                            Width="{Binding BarPx}" Background="{DynamicResource ShellAccentBrush}" CornerRadius="2"/>
+                    <TextBlock Grid.Column="2" Text="{Binding Value}" VerticalAlignment="Center" HorizontalAlignment="Right"
+                               Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
                   </Grid>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
