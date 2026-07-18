@@ -786,6 +786,11 @@ internal static class Program
         string status = rt.PitchStatus;
         double hold = rt.HoldSeconds;
         bool running = rt.IsRunning;
+        // Real resonance readout is live (from the Core ResonanceProxyEngine); voiced → a real "Lys/Nøytral/Mørk (N)"
+        // label, not the "—" placeholder (a formant-less synthetic tone legitimately reads "Mørk (0)").
+        string resonance = rt.CurrentResonance;
+        bool resonanceLive = resonance != "—" && resonance.Length > 0;
+        Console.WriteLine($"[runtime] Resonans: {resonance} (live={resonanceLive})");
         Console.WriteLine($"[runtime] Exercise: {rt.SelectedExerciseName}");
         Console.WriteLine($"[runtime] Target: {rt.TargetPitchMin:F0}-{rt.TargetPitchMax:F0} Hz");
         Console.WriteLine($"[runtime] Pitch: {pitch:F1} Hz");
@@ -808,7 +813,7 @@ internal static class Program
         Console.WriteLine($"[runtime] Navigation: runtime={onRuntime} back-to-guide={backToGuide}");
 
         bool ok = running && stopped && pitch > 0 && rt.TargetPitchMax > 0
-                  && status == "Innenfor målområde" && hold > 0 && onRuntime && backToGuide;
+                  && status == "Innenfor målområde" && hold > 0 && onRuntime && backToGuide && resonanceLive;
         Console.WriteLine(ok ? "[runtime] Exercise runtime smoke OK" : "[runtime] Exercise runtime smoke FAIL");
         return ok ? 0 : 1;
     }

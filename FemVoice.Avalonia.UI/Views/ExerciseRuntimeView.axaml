@@ -95,6 +95,7 @@
                 <TextBlock Text="Hz" VerticalAlignment="Bottom" Margin="0,0,0,6" Foreground="{DynamicResource ShellMutedBrush}"/>
               </StackPanel>
               <TextBlock Text="{Binding PitchStatus, StringFormat='Status: {0}'}" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text="{Binding CurrentResonance, StringFormat='Resonans: {0}'}" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
             </StackPanel>
           </Border>
 
