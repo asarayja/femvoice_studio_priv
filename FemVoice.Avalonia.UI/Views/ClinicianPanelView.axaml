@@ -62,6 +62,34 @@
           </StackPanel>
         </Border>
 
+        <!-- Learning path (strengths / weaknesses / focus) — from the VI records -->
+        <Border Classes="card" IsVisible="{Binding HasLearningPath}">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding LearningPathHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <TextBlock Text="{Binding StrengthsLabel}" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}" FontSize="12"/>
+            <ItemsControl ItemsSource="{Binding Strengths}"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12" Margin="8,0,0,0"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+            <TextBlock Text="{Binding WeaknessesLabel}" FontWeight="SemiBold" Foreground="{DynamicResource ShellWarningBrush}" FontSize="12" Margin="0,4,0,0"/>
+            <ItemsControl ItemsSource="{Binding Weaknesses}"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12" Margin="8,0,0,0"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <!-- Dimension trends (per-window direction) -->
+        <Border Classes="card" IsVisible="{Binding HasDimensionTrends}">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding DimensionTrendsHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <ItemsControl ItemsSource="{Binding DimensionTrends}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid ColumnDefinitions="200,*" Margin="0,1">
+                    <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
         <!-- Goal progress -->
         <Border Classes="card" IsVisible="{Binding HasGoals}">
           <StackPanel Spacing="6">
