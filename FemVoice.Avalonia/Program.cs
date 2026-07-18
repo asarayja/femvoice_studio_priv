@@ -916,13 +916,19 @@ internal static class Program
         bool running = vm.IsRunning;
         await Task.Delay(300);   // frames flow through the engine (no crash); a pure sine has no formants, so the
                                  // Core engine legitimately emits no resonance score — a live level needs real voice.
+        // F1/F2 scatter + formant timeline + category + reset are wired (a synthetic sine has no formants, so the
+        // charts legitimately stay empty; assert the collections/command exist and Reset is safe — no crash).
+        bool chartsWired = vm.FormantScatter is not null && vm.FormantTimelinePx is not null
+                           && vm.CategoryText is not null && vm.ScatterHeading.Length > 0 && vm.TimelineHeading.Length > 0;
+        vm.ResetCommand.Execute(null);
+        bool resetOk = vm.FormantScatter.Count == 0 && vm.FormantTimelinePx.Count == 0 && vm.CategoryText == "—";
         vm.StopCommand.Execute(null);
         bool stopped = !vm.IsRunning;
 
-        Console.WriteLine($"[resonance] navImpl={navImpl} onPage={onPage} disposedOnLeave={disposedOnLeave} available={available} contentOk={contentOk} running={running} stopped={stopped} label='{vm.LevelLabelText}'");
-        // Verify the WIRING (nav/open/dispose/content/start/stop). The live resonance value requires a formant-bearing
-        // signal (real voice) that a synthetic sine cannot provide, so it is intentionally not asserted here.
-        bool ok = navImpl && onPage && disposedOnLeave && available && contentOk && running && stopped;
+        Console.WriteLine($"[resonance] navImpl={navImpl} onPage={onPage} disposedOnLeave={disposedOnLeave} available={available} contentOk={contentOk} running={running} chartsWired={chartsWired} resetOk={resetOk} stopped={stopped} label='{vm.LevelLabelText}'");
+        // Verify the WIRING (nav/open/dispose/content/start/charts/reset/stop). The live resonance value requires a
+        // formant-bearing signal (real voice) that a synthetic sine cannot provide, so it is intentionally not asserted.
+        bool ok = navImpl && onPage && disposedOnLeave && available && contentOk && running && chartsWired && resetOk && stopped;
         Console.WriteLine(ok ? "[resonance] Resonance screen smoke OK" : "[resonance] Resonance screen smoke FAIL");
         return ok ? 0 : 1;
     }
