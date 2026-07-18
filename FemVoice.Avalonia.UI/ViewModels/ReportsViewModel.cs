@@ -1,10 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 using FemVoiceStudio.Data;
 using FemVoice.Avalonia.Localization;   // Localized (safe read-only localization resolver)
 
 namespace FemVoice.Avalonia.ViewModels;
+
+/// <summary>One real exported session row (read from saved TrainingSessions). Display/export only.</summary>
+public sealed record ReportExportRow(DateTime Date, int DurationMinutes, double AveragePitch, double OverallScore);
 
 /// <summary>One display-only reports/professional card: title + description + a deferred status. Always inert.</summary>
 public sealed class ReportsCard
@@ -70,9 +75,9 @@ public sealed class ReportsViewModel
 
         Title = Localized.Get("Reports_ScaffoldTitle", "Rapporter og profesjonelle verktøy");
         ScaffoldNotice = Localized.Get("Reports_ScaffoldNotice",
-            "Visning-bare rapporter/profesjonelle verktøy: alt er statiske plassholdere. Ingen rapport genereres, " +
-            "ingen filer eksporteres, ingen historikk/database leses eller skrives, ingen klinisk beregning — " +
-            "ekte rapporter og fagverktøy kommer i en senere fase.");
+            "Fremgangssammendraget og CSV/tekst-eksporten over er ekte (leser dine lagrede økter). De kliniske " +
+            "fagpanelene (kliniker/veileder/saksgjennomgang), PDF-generering og full 4×3-rapporteksport er " +
+            "fortsatt utsatt — de krever klinisk rapportsammenstilling og kommer i en senere fase.");
     }
 
     public IReadOnlyList<ReportsCard> Cards { get; }
@@ -87,6 +92,48 @@ public sealed class ReportsViewModel
     public bool HasPreview { get; private set; }
     public string PreviewTitle { get; private set; } = "Fremgangssammendrag";
     public string PreviewBody { get; private set; } = "";
+
+    // ── Real report EXPORT (CSV / text of the saved sessions) ──────────────────────────────────────────────────
+    /// <summary>Real per-session rows read from the DB, oldest→newest (empty with no DB / no sessions).</summary>
+    public IReadOnlyList<ReportExportRow> ExportRows { get; private set; } = Array.Empty<ReportExportRow>();
+    /// <summary>True when there is real session data to export (drives the enabled Export buttons).</summary>
+    public bool CanExport => ExportRows.Count > 0;
+    public string ExportLabel => Localized.Get("Reports_ExportCsv", "Eksporter CSV");
+    public string ExportTextLabel => Localized.Get("Reports_ExportText", "Eksporter tekst");
+    public string SuggestedCsvName => "femvoice-rapport.csv";
+    public string SuggestedTextName => "femvoice-rapport.txt";
+
+    /// <summary>Build the real CSV export (header + one row per saved session). Invariant culture, RFC-4180 quoting
+    /// via <see cref="Csv"/>. Pure — no I/O; the View writes the returned text to a user-picked file.</summary>
+    public string BuildCsv()
+    {
+        var sb = new StringBuilder();
+        sb.Append("Dato,Varighet (min),Snitt tonehøyde (Hz),FemVoice-score\r\n");
+        foreach (var r in ExportRows)
+            sb.Append(Csv(r.Date.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture))).Append(',')
+              .Append(r.DurationMinutes.ToString(CultureInfo.InvariantCulture)).Append(',')
+              .Append(r.AveragePitch.ToString("F0", CultureInfo.InvariantCulture)).Append(',')
+              .Append(r.OverallScore.ToString("F0", CultureInfo.InvariantCulture)).Append("\r\n");
+        return sb.ToString();
+    }
+
+    /// <summary>Build the real plain-text report (the same summary shown in the preview + a per-session list).</summary>
+    public string BuildText()
+    {
+        var sb = new StringBuilder();
+        sb.Append(PreviewTitle).Append("\r\n\r\n").Append(PreviewBody).Append("\r\n\r\n");
+        sb.Append("Økter:\r\n");
+        foreach (var r in ExportRows)
+            sb.Append("  ").Append(r.Date.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture))
+              .Append("  ·  ").Append(r.DurationMinutes).Append(" min")
+              .Append(r.AveragePitch > 0 ? $"  ·  {r.AveragePitch:F0} Hz" : "")
+              .Append($"  ·  score {r.OverallScore:F0}\r\n");
+        return sb.ToString();
+    }
+
+    // Minimal RFC-4180 CSV cell quoting (quote when the cell contains a comma/quote/newline; double embedded quotes).
+    private static string Csv(string cell)
+        => cell.IndexOfAny(new[] { ',', '"', '\n', '\r' }) >= 0 ? "\"" + cell.Replace("\"", "\"\"") + "\"" : cell;
 
     // Build a real, read-only progress-summary report preview from the user's saved sessions. NO file export, NO
     // clinical report assembler (that needs the OutcomeProfile/notes/audit pipeline + file dialogs — a follow-up);
@@ -104,6 +151,11 @@ public sealed class ReportsViewModel
                 return;
             }
             var ordered = sessions.OrderBy(s => s.StartTime).ToList();
+            ExportRows = ordered.Select(s => new ReportExportRow(
+                s.StartTime.ToLocalTime(),
+                (int)Math.Round(s.DurationSeconds / 60.0),
+                s.AveragePitch,
+                s.OverallScore)).ToList();
             var pitches = ordered.Select(s => s.AveragePitch).Where(p => p > 0).ToList();
             double avgPitch = pitches.Count > 0 ? pitches.Average() : 0;
             double avgScore = ordered.Average(s => s.OverallScore);
