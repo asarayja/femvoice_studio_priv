@@ -56,6 +56,7 @@ internal static class Program
         if (args.Contains("--info-sidebar-smoke")) return InfoSidebarSmoke();
         if (args.Contains("--coach-panel-smoke")) return CoachPanelSmoke();
         if (args.Contains("--clinician-panel-smoke")) return ClinicianPanelSmoke();
+        if (args.Contains("--professional-export-smoke")) return ProfessionalExportSmoke();
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
         if (args.Contains("--visual-baseline-smoke")) return VisualBaselineSmoke();
@@ -506,6 +507,55 @@ internal static class Program
             return ok ? 0 : 1;
         }
         catch (Exception ex) { Console.WriteLine($"[clin] Clinician panel smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
+        finally { Cleanup(); }
+    }
+
+    // Headless feasibility + verification of REAL professional-report EXPORT via the Core ExportWriter: assemble a
+    // real CoachReport + OutcomeReport from a TEMP DB and render each to CSV / JSON / PDF byte streams, asserting
+    // non-empty output and a valid PDF header ("%PDF"). Proves QuestPDF works headless on Linux. No file dialog (UI).
+    private static int ProfessionalExportSmoke()
+    {
+        string fileName = $"femvoice-profexp-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+        string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio");
+        string full = System.IO.Path.Combine(dir, fileName);
+        void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+        Cleanup();
+        try
+        {
+            var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+            for (int i = 0; i < 6; i++)
+                db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
+                { UserId = 1, StartTime = DateTime.UtcNow.AddDays(-i * 2), EndTime = DateTime.UtcNow.AddDays(-i * 2).AddMinutes(5),
+                  AveragePitch = 175 + i * 3, OverallScore = 60 + i * 4, Feedback = "s" });
+
+            var coach = new CoachPanelViewModel(db);
+            var clin = new ClinicianPanelViewModel(db);
+            object? coachReport = coach.Report;
+            object? clinReport = clin.Report;
+            bool haveReports = coachReport is not null && clinReport is not null;
+
+            var writer = new global::FemVoiceStudio.Services.ExportWriter();
+            byte[] Render(object report, global::FemVoiceStudio.Services.ExportFormat fmt)
+            {
+                using var ms = new System.IO.MemoryStream();
+                writer.Write(report, fmt, ms);
+                return ms.ToArray();
+            }
+
+            var csv = Render(coachReport!, global::FemVoiceStudio.Services.ExportFormat.Csv);
+            var json = Render(clinReport!, global::FemVoiceStudio.Services.ExportFormat.Json);
+            var pdf = Render(coachReport!, global::FemVoiceStudio.Services.ExportFormat.Pdf);
+
+            bool csvOk = csv.Length > 0;
+            bool jsonOk = json.Length > 0 && System.Text.Encoding.UTF8.GetString(json).TrimStart().StartsWith("{");
+            bool pdfOk = pdf.Length > 400 && pdf[0] == (byte)'%' && pdf[1] == (byte)'P' && pdf[2] == (byte)'D' && pdf[3] == (byte)'F';
+
+            Console.WriteLine($"[prof-export] haveReports={haveReports} csv={csv.Length}B({csvOk}) json={json.Length}B({jsonOk}) pdf={pdf.Length}B({pdfOk})");
+            bool ok = haveReports && csvOk && jsonOk && pdfOk;
+            Console.WriteLine(ok ? "[prof-export] Professional export smoke OK" : "[prof-export] Professional export smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[prof-export] Professional export smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
         finally { Cleanup(); }
     }
 

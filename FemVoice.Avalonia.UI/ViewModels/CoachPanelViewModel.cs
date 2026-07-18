@@ -40,6 +40,8 @@ public sealed class CoachPanelViewModel
 
     /// <summary>True when a real coach report was assembled from saved sessions.</summary>
     public bool HasReport { get; private set; }
+    /// <summary>The assembled CoachReport (or null) — used by the View to export via the Core ExportWriter.</summary>
+    public object? Report { get; private set; }
     /// <summary>Truthful message shown when there is not enough data (no DB / no sessions / pipeline unavailable).</summary>
     public string EmptyMessage { get; private set; } =
         Localized.Get("Coach_Panel_Empty", "Ikke nok data ennå. Fullfør noen økter på dashbordet for å bygge et veiledersammendrag.");
@@ -84,6 +86,7 @@ public sealed class CoachPanelViewModel
 
             var assembler = new ReportAssembler();
             CoachReport report = assembler.BuildCoachReport(outcome, now.AddDays(-90), now, now);
+            Report = report;
 
             ReportTitle = report.Title ?? "";
             FocusAreas = (report.FocusAreas ?? Array.Empty<string>()).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
