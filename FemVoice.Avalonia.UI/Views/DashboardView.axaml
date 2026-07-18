@@ -66,6 +66,31 @@
         </StackPanel>
       </Border>
 
+      <!-- Exercise text (WPF front-page parity): a sentence to READ at the current difficulty + a difficulty badge.
+           Sentences come from the shared Core ExerciseTextService; "Neste tekst" cycles them. -->
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <TextBlock Text="{Binding ExerciseTextHeading}" FontWeight="SemiBold" VerticalAlignment="Center"
+                       Foreground="{DynamicResource ShellHeadingBrush}"/>
+            <Border Classes="chip" VerticalAlignment="Center">
+              <TextBlock Text="{Binding ExerciseDifficultyBadge}" Foreground="{DynamicResource ShellChipTextBrush}" FontSize="11"/>
+            </Border>
+            <TextBlock Text="{Binding CurrentExerciseCategory}" VerticalAlignment="Center"
+                       Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+          </StackPanel>
+          <TextBlock Text="{Binding CurrentExerciseTitle}" FontWeight="SemiBold" TextWrapping="Wrap"
+                     Foreground="{DynamicResource ShellAccentBrush}"/>
+          <!-- The sentence to read aloud -->
+          <Border Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="6" Padding="12">
+            <TextBlock Text="{Binding CurrentExerciseText}" TextWrapping="Wrap" FontSize="16" LineHeight="24"
+                       Foreground="{DynamicResource ShellBodyTextBrush}"/>
+          </Border>
+          <Button Content="{Binding NextExerciseLabel}" Classes="secondary" Command="{Binding NextExerciseCommand}"
+                  HorizontalAlignment="Left"/>
+        </StackPanel>
+      </Border>
+
       <!-- Pitch trace: converter-free Canvas chart (comfort-zone band + grid + scaled trace + current marker +
            y-axis labels). px == "distance from bottom" via the shared RuntimeChartDisplay geometry. No third-party charting lib. -->
       <Border Classes="card" MinHeight="260">

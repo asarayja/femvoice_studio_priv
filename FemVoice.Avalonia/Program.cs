@@ -1270,6 +1270,20 @@ internal static class Program
         var synth = new SyntheticAudioCaptureService();
         using var vm = new MainDashboardViewModel(synth, new InlineUiDispatcher());
         Console.WriteLine($"[dash] comfort zone ({vm.SelectedDifficulty}): {vm.ComfortZoneLow:F0}-{vm.ComfortZoneHigh:F0} Hz");
+
+        // Exercise-text panel (WPF front-page parity): a sentence loads for the default difficulty, the badge tracks
+        // difficulty, "Neste tekst" cycles to another sentence, and switching difficulty loads a matching one.
+        string first = vm.CurrentExerciseText;
+        bool exSeeded = !string.IsNullOrWhiteSpace(first) && vm.ExerciseDifficultyBadge == vm.SelectedDifficultyOption.Label;
+        vm.NextExerciseCommand.Execute(null);
+        bool exCycles = !string.IsNullOrWhiteSpace(vm.CurrentExerciseText);   // stays populated after advancing
+        vm.SelectedDifficulty = global::FemVoiceStudio.Models.DifficultyLevel.Avansert;
+        bool exDifficulty = !string.IsNullOrWhiteSpace(vm.CurrentExerciseText)
+            && vm.ExerciseDifficultyBadge == vm.SelectedDifficultyOption.Label;
+        vm.SelectedDifficulty = global::FemVoiceStudio.Models.DifficultyLevel.Nybegynner;
+        bool exerciseTextOk = exSeeded && exCycles && exDifficulty;
+        string exPreview = vm.CurrentExerciseText.Length > 48 ? vm.CurrentExerciseText[..48] : vm.CurrentExerciseText;
+        Console.WriteLine($"[dash] exercise-text: seeded={exSeeded} cycles={exCycles} difficulty={exDifficulty} badge=\"{vm.ExerciseDifficultyBadge}\" text=\"{exPreview}\"");
         await vm.StartCommand.ExecuteAsync(null);
         foreach (var mode in new[]
                  {
@@ -1286,7 +1300,8 @@ internal static class Program
         }
         await vm.StopCommand.ExecuteAsync(null);
         Console.WriteLine($"[dash] stopped. IsRecording={vm.IsRecording}");
-        Console.WriteLine("[dash] OK: MainDashboardViewModel drives real pitch/stability/health from synthetic audio on Linux.");
+        if (!exerciseTextOk) { Console.WriteLine("[dash] Dashboard smoke FAIL: exercise-text panel not populated."); return 1; }
+        Console.WriteLine("[dash] OK: MainDashboardViewModel drives real pitch/stability/health + exercise-text panel from shared Core on Linux.");
         return 0;
     }
 

@@ -71,6 +71,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         _capture.FrameAvailable += OnFrameAvailable;
         _capture.DeviceLost += OnDeviceLost;
         UpdateComfortZone();
+        LoadExercise();   // seed the exercise-text panel with the first sentence for the default difficulty
         RefreshRecentSessions();
     }
 
@@ -169,6 +170,9 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     {
         UpdateComfortZone();
         OnPropertyChanged(nameof(SelectedDifficultyOption));
+        OnPropertyChanged(nameof(ExerciseDifficultyBadge));
+        _exerciseIndex = 0;   // first matching sentence for the newly chosen difficulty
+        LoadExercise();
     }
 
     /// <summary>Selected difficulty as its display option (two-way bound by the ComboBox; keeps SelectedDifficulty in sync).</summary>
@@ -177,6 +181,46 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         get => DifficultyOptions.FirstOrDefault(o => o.Value == SelectedDifficulty) ?? DifficultyOptions[0];
         set { if (value is not null && value.Value != SelectedDifficulty) SelectedDifficulty = value.Value; }
     }
+
+    // ── Exercise-text panel (WPF front-page parity) ───────────────────────────────────────────────────────────────
+    // WPF's dashboard shows a sentence to READ at the current difficulty plus a difficulty badge (MainWindow.xaml
+    // "Exercise Text at Bottom"). Sentences come from the SHARED Core ExerciseTextService — the same catalogue WPF
+    // uses — with localized content and the model's Norwegian seed as fallback. Changing difficulty or pressing
+    // "Neste tekst" loads a matching sentence. Read-only; no clinical/scoring behaviour.
+    private readonly FemVoiceStudio.Services.ExerciseTextService _exercise = new();
+    private int _exerciseIndex;   // deterministic cycle index (not random) so the panel + smokes are stable
+
+    public string ExerciseTextHeading => Localized.Get("Main_ExerciseText", "Øvelsestekst");
+    public string NextExerciseLabel => Localized.Get("Main_NextText", "Neste tekst");
+    public string ExerciseCategoryLabel => Localized.Get("Main_Category", "Kategori");
+    /// <summary>Difficulty label shown as a badge beside the exercise text (mirrors WPF's difficulty chip).</summary>
+    public string ExerciseDifficultyBadge => SelectedDifficultyOption.Label;
+
+    [ObservableProperty] private string _currentExerciseText = string.Empty;
+    [ObservableProperty] private string _currentExerciseTitle = string.Empty;
+    [ObservableProperty] private string _currentExerciseCategory = string.Empty;
+
+    /// <summary>Advance to the next sentence for the current difficulty (deterministic cycle).</summary>
+    [RelayCommand]
+    private void NextExercise() { _exerciseIndex++; LoadExercise(); }
+
+    /// <summary>Load the exercise sentence at the current cycle index for the selected difficulty. Prefers localized
+    /// content/title/category; falls back to the model's Norwegian seed when a resource key is absent.</summary>
+    private void LoadExercise()
+    {
+        var texts = _exercise.GetTextsByDifficulty(SelectedDifficulty);
+        var ex = texts.Count > 0
+            ? texts[((_exerciseIndex % texts.Count) + texts.Count) % texts.Count]
+            : _exercise.GetRandomText(SelectedDifficulty);   // GetDefaultText fallback when the catalogue is empty
+        CurrentExerciseText = LocalizedOrSeed(_exercise.GetLocalizedContent(ex.Id), $"Exercise_{ex.Id}_Content", ex.Content);
+        CurrentExerciseTitle = LocalizedOrSeed(_exercise.GetLocalizedTitle(ex.Id), $"Exercise_{ex.Id}_Title", ex.Title);
+        CurrentExerciseCategory = LocalizedOrSeed(_exercise.GetLocalizedCategory(ex.Id), $"Exercise_{ex.Id}_Category", ex.Category);
+    }
+
+    // The Core localization indexer echoes the key back when a string is missing; treat that (or empty) as "no
+    // translation" and use the model's seed text so a real sentence always shows.
+    private static string LocalizedOrSeed(string localized, string key, string seed)
+        => string.IsNullOrWhiteSpace(localized) || localized == key ? seed : localized;
 
     /// <summary>True when the active capture backend is the synthetic display-only source (no real microphone).
     /// Drives visibility of the synthetic test-tone selector — it is hidden when a real mic drives the dashboard.</summary>
