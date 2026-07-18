@@ -49,6 +49,10 @@ public sealed class AnalysisViewModel
 
     public IReadOnlyList<AnalysisSeries> Series { get; }
     public IReadOnlyList<AnalysisSummaryMetric> SummaryMetrics { get; }
+    /// <summary>Score-components breakdown (per-dimension averages) — WPF Analysis "Score components" parity.</summary>
+    public IReadOnlyList<AnalysisSummaryMetric> ScoreComponents { get; private set; } = Array.Empty<AnalysisSummaryMetric>();
+    public bool HasScoreComponents => ScoreComponents.Count > 0;
+    public string ScoreComponentsHeading => Localized.Get("Analysis_ScoreComponents", "Score-komponenter");
     public string Title { get; }
     public string SampleDataNotice { get; }
 
@@ -62,12 +66,13 @@ public sealed class AnalysisViewModel
 
     public AnalysisViewModel(IDatabaseService? database)
     {
-        Title = Localized.Get("Analysis_ScaffoldTitle", "Analyse / resonans");
+        Title = Localized.Get("Analysis_Heading", "Dybdeanalyse");
 
-        if (database is not null && TryBuildFromDatabase(database, out var series, out var metrics, out var notice))
+        if (database is not null && TryBuildFromDatabase(database, out var series, out var metrics, out var components, out var notice))
         {
             Series = series;
             SummaryMetrics = metrics;
+            ScoreComponents = components;
             SampleDataNotice = notice;
             HasRealData = true;
             return;
@@ -101,10 +106,12 @@ public sealed class AnalysisViewModel
     }
 
     private static bool TryBuildFromDatabase(IDatabaseService database,
-        out IReadOnlyList<AnalysisSeries> series, out IReadOnlyList<AnalysisSummaryMetric> metrics, out string notice)
+        out IReadOnlyList<AnalysisSeries> series, out IReadOnlyList<AnalysisSummaryMetric> metrics,
+        out IReadOnlyList<AnalysisSummaryMetric> components, out string notice)
     {
         series = Array.Empty<AnalysisSeries>();
         metrics = Array.Empty<AnalysisSummaryMetric>();
+        components = Array.Empty<AnalysisSummaryMetric>();
         notice = "";
         try
         {
@@ -163,6 +170,19 @@ public sealed class AnalysisViewModel
                 new("Snitt score", $"{avgScore:F0} / 100"),
                 new("Beste økt", $"{bestScore:F0} / 100"),
             };
+
+            // Score-components breakdown (per-dimension averages) — WPF Analysis parity. Intonation/health are 0 for
+            // dashboard sessions (not yet computed there), so shown as "—" honestly.
+            var intonations = ordered.Select(s => s.IntonationScore).Where(v => v > 0).ToList();
+            var healths = ordered.Select(s => s.VoiceHealthScore).Where(v => v > 0).ToList();
+            components = new List<AnalysisSummaryMetric>
+            {
+                new(Localized.Get("Dashboard_Pitch", "Tonehøyde"), avgPitch > 0 ? $"{avgPitch:F0} Hz" : "—"),
+                new(Localized.Get("Dashboard_Resonance", "Resonans"), withResonance.Count > 0 ? $"{avgResonance:F0} / 100" : "—"),
+                new(Localized.Get("Dashboard_Intonation", "Intonasjon"), intonations.Count > 0 ? $"{intonations.Average():F0} / 100" : "—"),
+                new(Localized.Get("Dashboard_VoiceHealth", "Stemmehelse"), healths.Count > 0 ? $"{healths.Average():F0} / 100" : "—"),
+            };
+
             notice = "Ekte analyse beregnet fra dine faktiske lagrede økter.";
             return true;
         }

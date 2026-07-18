@@ -1728,9 +1728,10 @@ internal static class Program
                 var resMetric = real.SummaryMetrics.FirstOrDefault(m => m.Label.Contains("resonans") || m.Label.Contains("Resonans"));
                 var prosodySeries = real.Series.FirstOrDefault(s => s.Title.Contains("prosodi") || s.Title.Contains("Tonevariasjon"));
                 bool prosodyOk = prosodySeries is not null && prosodySeries.Summary.Contains("18");
+                bool componentsOk = real.HasScoreComponents && real.ScoreComponents.Count == 4;   // WPF score-components section
                 resonanceRealOk = real.HasRealData && resSeries is not null && resSeries.Summary.Contains("64")
-                                  && resMetric is not null && resMetric.Value.Contains("64") && prosodyOk;
-                Console.WriteLine($"[analysis] real-resonance: res='{resSeries?.Summary}' prosody='{prosodySeries?.Summary}' ok={resonanceRealOk}");
+                                  && resMetric is not null && resMetric.Value.Contains("64") && prosodyOk && componentsOk;
+                Console.WriteLine($"[analysis] real-resonance: res='{resSeries?.Summary}' prosody='{prosodySeries?.Summary}' components={real.ScoreComponents.Count} ok={resonanceRealOk}");
             }
             catch (Exception ex) { Console.WriteLine($"[analysis] real-resonance FAIL: {ex.Message}"); resonanceRealOk = false; }
             finally { Cleanup(); }

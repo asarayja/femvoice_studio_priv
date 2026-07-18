@@ -37,6 +37,23 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
 
+      <!-- Score components (WPF parity): per-dimension averages -->
+      <Border Classes="card" IsVisible="{Binding HasScoreComponents}">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding ScoreComponentsHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+          <ItemsControl ItemsSource="{Binding ScoreComponents}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:AnalysisSummaryMetric">
+                <Grid ColumnDefinitions="160,*" Margin="0,2">
+                  <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                  <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
       <!-- Sample-data / not-persisted banner -->
       <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
         <TextBlock Text="{Binding SampleDataNotice}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
