@@ -35,6 +35,9 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     private readonly FemVoiceStudio.Audio.ResonanceProxyEngine _resonanceEngine;
     private volatile int _latestResonancePercent;   // 0–100, latest real resonance (volatile: written on capture thread)
     private readonly List<double> _sessionResonance = new();   // per-session samples → saved average
+    // Per-frame health/stability states mapped to 0–100, accumulated during a recording → per-dimension VI scores.
+    private readonly List<double> _sessionHealth = new();
+    private readonly List<double> _sessionStability = new();
     private const int SampleRate = 44100;
     private const int MaxTracePoints = 200;
     private const double ChartHeightPx = 200;   // fixed chart surface height; px == "distance from bottom"
@@ -207,6 +210,8 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         _metrics.Reset();
         _resonanceEngine.Start();          // real resonance DSP (Reset()s internally)
         _sessionResonance.Clear();
+        _sessionHealth.Clear();
+        _sessionStability.Clear();
         _latestResonancePercent = 0;
         PitchSamples.Clear();
         PitchTracePx.Clear();
@@ -273,6 +278,10 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
                         session.Id = savedId;
                         _database.UpdateTrainingSession(session);
                     }
+
+                    // Per-dimension Voice-Intelligence record (the write the Avalonia head used to skip) so the WPF-parity
+                    // per-dimension screens light up with REAL data. Best-effort, never blocks the session save.
+                    WriteSessionAnalytics(savedId, session.StartTime, System.DateTime.UtcNow, inZone, avgResonance, pitchVariation);
                 }
                 catch { /* never surface a session-save error to the app */ }
             }
@@ -307,8 +316,17 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         double smoothed = _metrics.CalculateSmoothedPitch(result.Pitch, result.IsVoiced);
         double stabilized = result.IsVoiced ? _stabilizer.Filter(smoothed, DateTime.Now) : 0;
         StabilityState stability = _metrics.CalculateStability();
-        // strainLevel placeholder = 0 (full VocalHealthSupervisor wiring is deferred — see placeholders doc).
+        // Strain is treated as ABSENT (Avalonia has no strain sensor) — a truthful state, not a fabricated value;
+        // CalculateHealth still reflects real pitch/intensity extremity.
         HealthState health = _metrics.CalculateHealth(0, smoothed, result.Intensity);
+
+        // Accumulate the REAL per-frame health/stability (voiced frames only) → averaged into the per-dimension VI
+        // scores written on Stop. No UI-thread dependency; plain numeric aggregation.
+        if (IsRecording && result.IsVoiced && stabilized > 0)
+        {
+            _sessionHealth.Add(HealthTo100(health));
+            _sessionStability.Add(StabilityTo100(stability));
+        }
 
         _ui.Post(() =>
         {
@@ -378,6 +396,69 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
 
     // Stability / health labels resolve the SAME shared RESX keys WPF uses ({loc:Loc Stability_*/Health_*}) so the
     // text matches WPF and relocalizes with the culture.
+    // Compute the 7 per-dimension VI scores from this session's REAL signals and persist a SessionAnalyticsRecord so
+    // the WPF-parity per-dimension screens (Progression parameter-graph, Clinician voice-metrics/trends, Analysis
+    // rings) read real data. Concrete DB only; fully guarded — never blocks or fails the session save.
+    private void WriteSessionAnalytics(int sessionId, System.DateTime startUtc, System.DateTime endUtc,
+        double pitchComfortPercent, double avgResonance, double pitchVariation)
+    {
+        if (_database is not FemVoiceStudio.Data.DatabaseService concrete) return;
+        try
+        {
+            var analytics = new FemVoiceStudio.Services.SessionAnalyticsStore(
+                new FemVoiceStudio.Services.SqliteSessionAnalyticsRepository(concrete.ConnectionString));
+
+            double avgHealth = _sessionHealth.Count > 0 ? _sessionHealth.Average() : 0;
+            double avgStability = _sessionStability.Count > 0 ? _sessionStability.Average() : 0;
+
+            // Recovery from the real cross-session history (100 − debt). Empty history → rested; guarded.
+            double recovery100 = 100;
+            try
+            {
+                var forecast = new FemVoiceStudio.Services.RecoveryIntelligenceService()
+                    .ForecastFromHistoryAsync(analytics, System.DateTime.UtcNow, 1).GetAwaiter().GetResult();
+                recovery100 = System.Math.Clamp(100 - forecast.RecoveryDebt, 0, 100);
+            }
+            catch { /* no history yet → rested default */ }
+
+            var d = FemVoice.Avalonia.Audio.SessionAnalyticsScorer.Compute(
+                pitchComfortPercent, avgResonance, pitchVariation, avgStability, avgHealth, recovery100);
+
+            analytics.RecordSessionCompletedAsync(new FemVoiceStudio.Services.SessionAnalyticsRecord
+            {
+                SessionId = sessionId,
+                UserId = 1,
+                StartedAt = startUtc,
+                EndedAt = endUtc,
+                ExerciseCount = 1,
+                AverageResonance = d.ResonanceScore100,
+                AverageStability = d.ConsistencyScore100,
+                AveragePitchComfort = d.ComfortScore100,
+                AverageHealthScore = d.HealthScore100,
+                ResonanceScore100 = d.ResonanceScore100,
+                ComfortScore100 = d.ComfortScore100,
+                ConsistencyScore100 = d.ConsistencyScore100,
+                IntonationScore100 = d.IntonationScore100,
+                VocalWeightScore100 = d.VocalWeightScore100,
+                RecoveryScore100 = d.RecoveryScore100,
+                PitchScore100 = d.PitchScore100,
+                CompositeVoiceScore = d.CompositeVoiceScore,
+            }).GetAwaiter().GetResult();
+        }
+        catch { /* analytics write is best-effort — never affects the session save */ }
+    }
+
+    // Map the Core health/stability enums to 0–100 for the per-dimension VI scores (real state → numeric).
+    private static double HealthTo100(HealthState h) => h switch
+    {
+        HealthState.Safe => 100, HealthState.Monitor => 70, HealthState.Warning => 45, HealthState.Danger => 20, _ => 0,
+    };
+    private static double StabilityTo100(StabilityState s) => s switch
+    {
+        StabilityState.VeryStable => 100, StabilityState.Stable => 80, StabilityState.Developing => 55,
+        StabilityState.Unstable => 30, _ => 0,
+    };
+
     private static string StabilityText(StabilityState s) => s switch
     {
         StabilityState.NoVoice => Localized.Get("Stability_NoVoice", "Ingen stemme"),
