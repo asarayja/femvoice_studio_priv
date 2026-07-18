@@ -58,6 +58,18 @@ public sealed partial class SmartCoachViewModel : ObservableObject
     public string ProgressToGoalHeading => Localized.Get("SmartCoach_ProgressToGoal", "Progresjon mot mål");
     public string BaselineConfidenceLabel => Localized.Get("SmartCoach_BaselineConfidence", "Baseline-tillit");
     public string BaselineConfidenceDisplay => $"{BaselineConfidenceLabel}: {BaselineConfidence}";
+
+    // ── Messages panel (WPF SmartCoach) + building-baseline state ─────────────────────────────────────────────────
+    /// <summary>One coach message: title + body.</summary>
+    public sealed record CoachMessage(string Title, string Body);
+    public IReadOnlyList<CoachMessage> Messages { get; private set; } = Array.Empty<CoachMessage>();
+    public bool HasMessages => Messages.Count > 0;
+    public string MessagesHeading => Localized.Get("SmartCoach_Messages", "Meldinger");
+    public string NoMessagesText => Localized.Get("SmartCoach_NoMessages", "Ingen nye meldinger.");
+    /// <summary>True while there isn't enough data to establish a baseline (WPF's "building baseline" state).</summary>
+    public bool IsBuildingBaseline { get; private set; }
+    public string BuildingBaselineText => Localized.Get("SmartCoach_BuildingBaseline",
+        "Bygger baseline — fullfør noen økter så tilpasser Smart Coach seg til stemmen din.");
     public string PitchProgressLabel => Localized.Get("Dashboard_Pitch", "Tonehøyde");
     public string ResonanceProgressLabel => Localized.Get("Dashboard_Resonance", "Resonans");
     public string IntonationProgressLabel => Localized.Get("Dashboard_Intonation", "Intonasjon");
@@ -98,6 +110,7 @@ public sealed partial class SmartCoachViewModel : ObservableObject
             StatusSummary = engine.GetStatusSummary(UserId);
             BuildProgressToGoal(database, engine);
             BuildDetail(database);
+            BuildMessages(database, engine);
             EngineAvailable = true;
         }
         catch (Exception ex)
@@ -169,6 +182,26 @@ public sealed partial class SmartCoachViewModel : ObservableObject
                                 && (PitchProgress > 0 || ResonanceProgress > 0 || IntonationProgress > 0);
         }
         catch { HasProgressToGoal = false; }
+    }
+
+    // Coach messages (WPF SmartCoach): generate real motivational messages from the real data, then read the unread
+    // ones. Also derive the building-baseline state (low baseline confidence). Guarded, best-effort.
+    private void BuildMessages(IDatabaseService database, SmartCoachEngine engine)
+    {
+        try
+        {
+            try { engine.GenerateMotivationalMessages(UserId); } catch { /* generation is best-effort */ }
+            var unread = database.GetUnreadMessages(UserId);
+            Messages = unread
+                .OrderByDescending(m => m.CreatedAt ?? m.Date)
+                .Take(5)
+                .Select(m => new CoachMessage(string.IsNullOrWhiteSpace(m.Title) ? m.MessageType : m.Title, m.Message))
+                .ToList();
+        }
+        catch { Messages = Array.Empty<CoachMessage>(); }
+
+        try { IsBuildingBaseline = engine.GetOrCalculateBaseline(UserId)?.ConfidenceLevel == "low"; }
+        catch { IsBuildingBaseline = false; }
     }
 
     // Real detail metrics + weekly history from the DB (day streak, sessions/time this week, consistency). Guarded.

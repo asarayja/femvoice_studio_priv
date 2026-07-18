@@ -48,6 +48,29 @@
           </StackPanel>
         </Border>
 
+        <!-- Building-baseline state (WPF): shown while confidence is low -->
+        <Border Classes="card" IsVisible="{Binding IsBuildingBaseline}" BorderBrush="{DynamicResource ShellAccentBrush}">
+          <TextBlock Text="{Binding BuildingBaselineText}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+        </Border>
+
+        <!-- Messages panel (WPF SmartCoach): unread coach messages + empty state -->
+        <Border Classes="card">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding MessagesHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+            <ItemsControl ItemsSource="{Binding Messages}" IsVisible="{Binding HasMessages}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Spacing="1" Margin="0,3">
+                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}" FontSize="13"/>
+                    <TextBlock Text="{Binding Body}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock Text="{Binding NoMessagesText}" IsVisible="{Binding !HasMessages}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12"/>
+          </StackPanel>
+        </Border>
+
         <!-- Progress toward goals (WPF parity): pitch/resonance/intonation bars + baseline confidence -->
         <Border Classes="card" IsVisible="{Binding HasProgressToGoal}">
           <StackPanel Spacing="8">
