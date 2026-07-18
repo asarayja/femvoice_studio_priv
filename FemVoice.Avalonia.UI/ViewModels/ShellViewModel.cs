@@ -46,6 +46,7 @@ public partial class ShellViewModel : ObservableObject
     private DiagnosticsViewModel _diagnostics = null!;
     private ProgressionScaffoldViewModel _progression = null!;
     private SmartCoachScaffoldViewModel _smartCoach = null!;
+    private FirstTimeSetupViewModel _firstTimeSetup = null!;
     private readonly RelayCommand _showMicCalibrationCommand;
     private readonly FemVoice.Avalonia.Audio.AudioReadiness _audioReadiness;
     // Real Core database (injected by DI in production; null in headless/tests → engine-backed pages fall back to a
@@ -86,6 +87,7 @@ public partial class ShellViewModel : ObservableObject
         _diagnostics = new DiagnosticsViewModel(_database);   // real system status when a DB is present
         _progression = new ProgressionScaffoldViewModel();
         _smartCoach = new SmartCoachScaffoldViewModel();
+        _firstTimeSetup = new FirstTimeSetupViewModel();   // real onboarding — persists language/theme + completed flag
     }
 
     // (Re)build the navigation rail. Labels resolve through the read-only localization adapter for the current
@@ -104,6 +106,7 @@ public partial class ShellViewModel : ObservableObject
             new(Localized.Get("Shell_Nav_Calendar", "Kalender"), true, ShowCalendarCommand),         // real DB history
             new(Localized.Get("Shell_Nav_Progresjon", "Progresjon"), true, ShowProgressionCommand),   // engine-backed
             new(Localized.Get("Shell_Nav_SmartCoach", "SmartCoach"), true, ShowSmartCoachCommand),   // engine-backed
+            new(Localized.Get("Shell_Nav_FirstSetup", "Førstegangsoppsett"), true, ShowFirstTimeSetupCommand),   // real onboarding
             new(DeferredLabel("Mikrofonkalibrering"), false, _showMicCalibrationCommand),
         };
     }
@@ -129,6 +132,7 @@ public partial class ShellViewModel : ObservableObject
                 DiagnosticsViewModel => _diagnostics,
                 ProgressionScaffoldViewModel => _progression,
                 SmartCoachScaffoldViewModel => _smartCoach,
+                FirstTimeSetupViewModel => _firstTimeSetup,
                 DeferredSurfaceViewModel d => new DeferredSurfaceViewModel(d.SurfaceName),
                 _ => current,   // dashboard / running exercise: leave in place
             };
@@ -165,6 +169,7 @@ public partial class ShellViewModel : ObservableObject
             && !ReferenceEquals(oldValue, _settings) && !ReferenceEquals(oldValue, _analysis)
             && !ReferenceEquals(oldValue, _reports) && !ReferenceEquals(oldValue, _diagnostics)
             && !ReferenceEquals(oldValue, _progression) && !ReferenceEquals(oldValue, _smartCoach)
+            && !ReferenceEquals(oldValue, _firstTimeSetup)
             && oldValue is System.IDisposable disposable)
             disposable.Dispose();
     }
@@ -186,6 +191,7 @@ public partial class ShellViewModel : ObservableObject
             ProgressionScaffoldViewModel => $"{Localized.Get("Shell_Nav_Progresjon", "Progresjon")} (utsatt)",
             SmartCoachViewModel => Localized.Get("SmartCoach_Scaffold_Title", "SmartCoach"),
             SmartCoachScaffoldViewModel => $"{Localized.Get("SmartCoach_Title", "SmartCoach")} (utsatt)",
+            FirstTimeSetupViewModel => Localized.Get("Shell_Nav_FirstSetup", "Førstegangsoppsett"),
             DeferredSurfaceViewModel d => $"{d.SurfaceName} (utsatt)",
             _ => "—",
         };
@@ -209,6 +215,9 @@ public partial class ShellViewModel : ObservableObject
     // Engine-backed: run the REAL SmartCoachEngine on the REAL database (falls back to a truthful "unavailable"
     // state when no DB is injected, e.g. headless/tests). Fresh each open so it reflects the latest saved sessions.
     [RelayCommand] private void ShowSmartCoach() => CurrentPage = new SmartCoachViewModel(_database);
+
+    // Real onboarding: retained VM so its persisted state (completed flag) survives re-navigation within a session.
+    [RelayCommand] private void ShowFirstTimeSetup() => CurrentPage = _firstTimeSetup;
 
     // Deferred destinations open a purely static placeholder — no services, no side effects.
     private void ShowDeferred(string surface) => CurrentPage = new DeferredSurfaceViewModel(surface);

@@ -24,7 +24,12 @@ public partial class UiPreferencesViewModel : ObservableObject
         _theme = p.Theme;
         _language = p.Language;
         _reduceMotion = p.ReduceMotion;
+        _setupCompleted = p.FirstTimeSetupCompleted;   // preserved verbatim on Save (not edited here)
     }
+
+    // Onboarding-completed flag is owned by FirstTimeSetup; this panel only round-trips it so a later Save here
+    // does not wipe it.
+    private readonly bool _setupCompleted;
 
     // Display-only option lists (Avalonia-owned; no WPF LocalizationService).
     public IReadOnlyList<ThemePreference> ThemeOptions { get; } =
@@ -55,7 +60,7 @@ public partial class UiPreferencesViewModel : ObservableObject
     public string FilePath => _store.FilePath;
 
     /// <summary>Current edited values as a model (no I/O).</summary>
-    public UiPreferences Current() => new() { Theme = Theme, Language = Language, ReduceMotion = ReduceMotion };
+    public UiPreferences Current() => new() { Theme = Theme, Language = Language, ReduceMotion = ReduceMotion, FirstTimeSetupCompleted = _setupCompleted };
 
     // Persist, then apply THEME (Stage 2A) and LANGUAGE (Stage 2B) LIVE — both take effect immediately. Language
     // activation raises Localized.LanguageChanged, which makes the shell re-render its localized text in the new

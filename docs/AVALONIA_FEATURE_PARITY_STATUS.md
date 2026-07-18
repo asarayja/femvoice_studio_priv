@@ -23,7 +23,7 @@ data) · ❌ not ported.
 | ClinicianDashboard · CoachDashboard · CaseReviewWindow | ❌ | Deferred cards in Reports; no real panels. |
 | ManualOverrideWindow (safety clamp) | ❌ | Not ported. |
 | MicrophoneCalibrationWindow | ❌ | Deferred card in Settings/Diagnostics. |
-| FirstTimeSetupWindow | ❌ | Deferred card in Settings. |
+| FirstTimeSetupWindow | 🟡 Førstegangsoppsett | **REAL** onboarding: welcome + language + theme, persisted to the Avalonia-local prefs file and applied live; records a completed flag so it shows once (PR #62). Voice-goal-style / training-frequency (clinical-adjacent profile, no Avalonia consumer yet) deferred to a profile slice. |
 
 ## Persistence (updated 2026-07-18)
 ✅ **Real DB wired** — the real Core `DatabaseService` (SQLite, the SAME store WPF uses,
