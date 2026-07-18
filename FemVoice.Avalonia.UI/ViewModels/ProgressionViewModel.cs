@@ -32,6 +32,26 @@ public sealed class ProgressionViewModel
     public string DataNote => Localized.Get("Progression_RealDataNote",
         "Nivå, poeng og sammendrag fra dine faktiske lagrede økter (ekte progresjonsmotor).");
 
+    // ── Richer detail (ported from WPF ProgressionDashboard) ──────────────────────────────────────────────────
+    /// <summary>Progress toward the next level, 0–100 (sessions-at-level / sessions-required).</summary>
+    public double ProgressPercent { get; private set; }
+    public string ProgressToNextText { get; private set; } = "";
+    public bool HasProgress { get; private set; }
+    public string ProgressHeading => Localized.Get("Dashboard_Progress", "Fremgang til neste nivå");
+    /// <summary>Real stat rows (total sessions, streak, avg pitch vs goal, consistency).</summary>
+    public IReadOnlyList<AnalysisSummaryMetric> StatMetrics { get; private set; } = Array.Empty<AnalysisSummaryMetric>();
+    /// <summary>Real target parameters for the current level (pitch range, resonance minimum, focus area).</summary>
+    public IReadOnlyList<AnalysisSummaryMetric> Parameters { get; private set; } = Array.Empty<AnalysisSummaryMetric>();
+    public string ParametersHeading => Localized.Get("Dashboard_Parameters", "Parametere");
+    /// <summary>FemVoice-score history bars (px 0–100) from the saved sessions, oldest→newest.</summary>
+    public IReadOnlyList<double> ScoreHistoryBars { get; private set; } = Array.Empty<double>();
+    public bool HasScoreHistory => ScoreHistoryBars.Count > 0;
+    public string ScoreHistoryHeading => Localized.Get("Dashboard_ScoreHistory", "Score-historikk");
+    /// <summary>Weekly summary (sessions / minutes / average score this week).</summary>
+    public string WeeklySummary { get; private set; } = "";
+    public string WeeklyHeading => Localized.Get("Dashboard_WeeklySummary", "Denne uken");
+    public const double HistoryHeightPx = 90;
+
     public ProgressionViewModel(IDatabaseService? database, ILocalizationService? localization = null)
     {
         if (database is null)
@@ -62,6 +82,42 @@ public sealed class ProgressionViewModel
             var ps = new ProgressionService(database, localization ?? LocalizationService.Instance);
             Summary = ps.GetProgressionSummary();
             RecommendedDifficultyText = $"Anbefalt nivå: {ps.GetRecommendedDifficulty()}";
+
+            // Progress toward the next level + real stat rows (from the real ProgressionStatus).
+            var status = ps.GetProgressionStatus();
+            if (status.SessionsRequiredForPromotion > 0)
+            {
+                ProgressPercent = Math.Round(Math.Clamp(100.0 * status.SessionsAtCurrentLevel / status.SessionsRequiredForPromotion, 0, 100));
+                ProgressToNextText = $"{status.SessionsAtCurrentLevel} / {status.SessionsRequiredForPromotion} økter på dette nivået";
+                HasProgress = true;
+            }
+            StatMetrics = new List<AnalysisSummaryMetric>
+            {
+                new(Localized.Get("Main_TotalSessions", "Totalt antall økter"), status.TotalSessions.ToString()),
+                new(Localized.Get("Main_Streak", "Dager på rad"), status.CurrentStreak.ToString()),
+                new(Localized.Get("Dashboard_AveragePitch", "Snitt tonehøyde"),
+                    status.AveragePitch > 0 ? $"{status.AveragePitch:F0} Hz (mål {status.AveragePitchGoal:F0} Hz)" : "—"),
+                new(Localized.Get("Dashboard_Consistency", "Jevnhet"), $"{status.Consistency:F0} %"),
+            };
+
+            // Real target parameters for the current level.
+            var (pMin, pMax) = LevelClassificationSystem.GetPitchRange(level);
+            Parameters = new List<AnalysisSummaryMetric>
+            {
+                new(Localized.Get("Dashboard_TargetPitch", "Målområde tonehøyde"), $"{pMin:F0}–{pMax:F0} Hz"),
+                new(Localized.Get("Dashboard_ResonanceMin", "Minste resonans"), $"{LevelClassificationSystem.GetResonanceMinimum(level):F0}"),
+                new(Localized.Get("SmartCoach_TodaysFocus", "Dagens fokus"), LevelClassificationSystem.GetFocusArea(level)),
+            };
+
+            // FemVoice-score history (oldest→newest) as bar heights in px.
+            var ordered = recent.AsEnumerable().Reverse().ToList();   // GetRecentSessions is newest-first
+            ScoreHistoryBars = ordered.Select(s => Math.Clamp(s.OverallScore, 0, 100) / 100.0 * (HistoryHeightPx - 4) + 4).ToList();
+
+            // Weekly summary (this week).
+            var week = database.GetTrainingSessions(DateTime.UtcNow.Date.AddDays(-7), DateTime.UtcNow);
+            int weekMin = (int)Math.Round(week.Sum(s => s.DurationSeconds) / 60.0);
+            double weekAvg = week.Count > 0 ? week.Average(s => s.OverallScore) : 0;
+            WeeklySummary = $"{week.Count} økter · {weekMin} min · snitt score {weekAvg:F0}";
 
             EngineAvailable = true;
         }
