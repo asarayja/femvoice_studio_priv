@@ -101,7 +101,7 @@ public sealed class CoachPanelViewModel
 
             DateTime now = DateTime.UtcNow;
             OutcomeProfile outcome = builder
-                .AssembleFromStoreAsync(database, null, recovery, analytics, now, userId: 1)
+                .AssembleFromStoreAsync(database, new LocalVoiceGoalProfileStore(), recovery, analytics, now, userId: 1)
                 .GetAwaiter().GetResult();
 
             var assembler = new ReportAssembler();

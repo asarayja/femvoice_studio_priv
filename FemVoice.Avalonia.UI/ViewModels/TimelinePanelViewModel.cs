@@ -65,7 +65,7 @@ public sealed class TimelinePanelViewModel
 
             DateTime now = DateTime.UtcNow;
             OutcomeProfile outcome = builder
-                .AssembleFromStoreAsync(database, null, new RecoveryIntelligenceService(), analytics, now, userId: 1)
+                .AssembleFromStoreAsync(database, new LocalVoiceGoalProfileStore(), new RecoveryIntelligenceService(), analytics, now, userId: 1)
                 .GetAwaiter().GetResult();
 
             TimelineReport report = new ReportAssembler().BuildTimelineReport(outcome, now.AddDays(-30), now, now);   // WPF canonical 30-day window
