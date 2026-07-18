@@ -292,9 +292,21 @@ internal static class Program
                             && vm.WeeklyHistory.Count == 7
                             && vm.DetailMetrics.All(m => m.Label.Length > 0 && m.Value.Length > 0);
 
+            // Complete-recommendation persistence (WPF parity): the button marks today's recommendation completed and
+            // SaveDailyRecommendation writes it back so a fresh read sees IsCompleted=true.
+            bool completeBefore = !vm.IsRecommendationCompleted && vm.CanComplete;
+            vm.CompleteRecommendationCommand.Execute(null);
+            bool completedNow = vm.IsRecommendationCompleted && !vm.CanComplete;
+            var reread = db.GetDailyRecommendation(DateTime.Today, 1);
+            bool persistedComplete = reread is not null && reread.IsCompleted && reread.CompletedAt is not null;
+            // A fresh VM reflects the persisted completed state.
+            bool reflectsPersisted = new SmartCoachViewModel(db).IsRecommendationCompleted;
+            bool completeOk = completeBefore && completedNow && persistedComplete && reflectsPersisted;
+
             Console.WriteLine($"[smartcoach] emptyOk={emptyOk} dataOk={dataOk} detailOk={detailOk} detailRows={vm.DetailMetrics.Count} weekHist={vm.WeeklyHistory.Count} focus='{rec1?.FocusArea}' weekly={weekly}");
+            Console.WriteLine($"[smartcoach] completeOk={completeOk} (before={completeBefore} now={completedNow} persisted={persistedComplete} reflects={reflectsPersisted}) progressToGoal={vm.HasProgressToGoal} baseline='{vm.BaselineConfidence}'");
             Console.WriteLine($"[smartcoach] rec: {rec1?.RecommendationText}");
-            bool ok = emptyOk && dataOk && detailOk;
+            bool ok = emptyOk && dataOk && detailOk && completeOk;
             Console.WriteLine(ok ? "[smartcoach] SmartCoach engine smoke OK" : "[smartcoach] SmartCoach engine smoke FAIL");
             return ok ? 0 : 1;
         }
