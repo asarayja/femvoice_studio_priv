@@ -64,6 +64,7 @@ internal static class Program
         if (args.Contains("--day-details-smoke")) return DayDetailsSmoke();
         if (args.Contains("--case-review-smoke")) return CaseReviewSmoke();
         if (args.Contains("--dashboard-resonance-smoke")) return DashboardResonanceSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--session-analytics-smoke")) return SessionAnalyticsSmoke().GetAwaiter().GetResult();
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
         if (args.Contains("--visual-baseline-smoke")) return VisualBaselineSmoke();
@@ -651,6 +652,57 @@ internal static class Program
             return ok ? 0 : 1;
         }
         catch (Exception ex) { Console.WriteLine($"[dash-res] Dashboard resonance smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
+        finally { Cleanup(); }
+    }
+
+    // Per-dimension VoiceIntelligence write-path (DSP foundation): a synthetic dashboard session must persist a
+    // SessionAnalyticsRecord with REAL per-dimension scores (the write the Avalonia head used to skip), and the pure
+    // scorer must map its inputs deterministically. This is what unblocks the WPF-parity per-dimension screens.
+    private static async Task<int> SessionAnalyticsSmoke()
+    {
+        // (1) Pure scorer: deterministic mapping, composite within bounds, VocalWeight honestly 0.
+        var d = global::FemVoice.Avalonia.Audio.SessionAnalyticsScorer.Compute(
+            pitchComfortPercent: 80, averageResonance100: 70, pitchVariationHz: 20,
+            averageStability100: 75, averageHealth100: 90, recovery100: 100);
+        bool scorerOk = d.PitchScore100 == 80 && d.ResonanceScore100 == 70 && d.ConsistencyScore100 == 75
+                        && d.HealthScore100 == 90 && d.RecoveryScore100 == 100 && d.VocalWeightScore100 == 0
+                        && d.IntonationScore100 > 0 && d.CompositeVoiceScore > 0 && d.CompositeVoiceScore <= 100;
+
+        // (2) Drive a synthetic dashboard session end-to-end → a real SessionAnalyticsRecord is written.
+        string fileName = $"femvoice-vianalytics-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+        string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio");
+        string full = System.IO.Path.Combine(dir, fileName);
+        void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+        Cleanup();
+        try
+        {
+            var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+            var synth = new SyntheticAudioCaptureService();
+            using (var vm = new MainDashboardViewModel(synth, new InlineUiDispatcher(), db))
+            {
+                await vm.StartCommand.ExecuteAsync(null);
+                vm.SyntheticAudioMode = SyntheticAudioMode.StablePitch;
+                await Task.Delay(2600);   // > 2 s so the session is saved + frames accumulate
+                await vm.StopCommand.ExecuteAsync(null);
+                await Task.Delay(150);
+            }
+
+            var analytics = new global::FemVoiceStudio.Services.SessionAnalyticsStore(
+                new global::FemVoiceStudio.Services.SqliteSessionAnalyticsRepository(db.ConnectionString));
+            var records = analytics.GetSessionsAsync(DateTime.UtcNow.AddDays(-1), DateTime.UtcNow.AddDays(1), 1).GetAwaiter().GetResult();
+            bool written = records.Count >= 1;
+            var r = records.OrderByDescending(x => x.StartedAt).FirstOrDefault();
+            // Real per-dimension data present (a stable 200 Hz synthetic tone → in-zone pitch/comfort + a composite).
+            bool dimsReal = r is not null && r.CompositeVoiceScore > 0 && r.PitchScore100 >= 0 && r.ComfortScore100 >= 0
+                            && r.ConsistencyScore100 >= 0 && r.IntonationScore100 > 0 && r.AverageHealthScore >= 0;
+
+            Console.WriteLine($"[vianalytics] scorerOk={scorerOk}(comp={d.CompositeVoiceScore:F0}) written={written} rows={records.Count} " +
+                              $"dimsReal={dimsReal}" + (r is not null ? $"(pitch={r.PitchScore100:F0} reson={r.ResonanceScore100:F0} inton={r.IntonationScore100:F0} cons={r.ConsistencyScore100:F0} health={r.AverageHealthScore:F0} comp={r.CompositeVoiceScore:F0})" : ""));
+            bool ok = scorerOk && written && dimsReal;
+            Console.WriteLine(ok ? "[vianalytics] Session analytics smoke OK" : "[vianalytics] Session analytics smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[vianalytics] Session analytics smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
         finally { Cleanup(); }
     }
 
