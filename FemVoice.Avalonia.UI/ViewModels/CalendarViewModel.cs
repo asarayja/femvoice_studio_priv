@@ -1,10 +1,24 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using CommunityToolkit.Mvvm.Input;
 using FemVoiceStudio.Data;
 using FemVoice.Avalonia.Localization;
 
 namespace FemVoice.Avalonia.ViewModels;
+
+/// <summary>One clickable training-day row: date + summary + a command to open that day's details.</summary>
+public sealed class CalendarDayItem
+{
+    public CalendarDayItem(DateTime date, string label, string summary, IRelayCommand open)
+    {
+        Date = date; Label = label; Summary = summary; Open = open;
+    }
+    public DateTime Date { get; }
+    public string Label { get; }
+    public string Summary { get; }
+    public IRelayCommand Open { get; }
+}
 
 /// <summary>
 /// Calendar / history page (ported from the WPF CalendarWindow). Lists the user's REAL training days from the real
@@ -17,10 +31,11 @@ public sealed class CalendarViewModel
 
     public bool EngineAvailable { get; }
     public string UnavailableNote { get; } = "";
-    public IReadOnlyList<AnalysisSummaryMetric> Days { get; } = Array.Empty<AnalysisSummaryMetric>();
-    public string DataNote => Localized.Get("Calendar_RealDataNote", "Ekte treningshistorikk fra dine lagrede økter (siste 90 dager).");
+    public IReadOnlyList<CalendarDayItem> Days { get; } = Array.Empty<CalendarDayItem>();
+    public bool HasDays => Days.Count > 0;
+    public string DataNote => Localized.Get("Calendar_RealDataNote", "Ekte treningshistorikk fra dine lagrede økter (siste 90 dager). Klikk en dag for detaljer.");
 
-    public CalendarViewModel(IDatabaseService? database)
+    public CalendarViewModel(IDatabaseService? database, Action<DateTime>? openDay = null)
     {
         if (database is null)
         {
@@ -30,16 +45,15 @@ public sealed class CalendarViewModel
         try
         {
             var sessions = database.GetTrainingSessions(DateTime.UtcNow.AddDays(-90), DateTime.UtcNow);
-            var byDay = sessions
+            Days = sessions
                 .GroupBy(s => s.StartTime.ToLocalTime().Date)
                 .OrderByDescending(g => g.Key)
-                .Select(g => new AnalysisSummaryMetric(
+                .Select(g => new CalendarDayItem(
+                    g.Key,
                     g.Key.ToString("yyyy-MM-dd"),
-                    $"{g.Count()} økter · snitt score {g.Average(s => s.OverallScore):F0}"))
+                    $"{g.Count()} økter · snitt score {g.Average(s => s.OverallScore):F0}",
+                    new RelayCommand(() => openDay?.Invoke(g.Key))))
                 .ToList();
-            Days = byDay.Count > 0
-                ? byDay
-                : new List<AnalysisSummaryMetric> { new("Ingen økter", "Ingen registrerte økter siste 90 dager.") };
             EngineAvailable = true;
         }
         catch (Exception ex)

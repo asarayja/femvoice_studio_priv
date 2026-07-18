@@ -10,13 +10,20 @@
       </Border>
       <Border Classes="card" IsVisible="{Binding EngineAvailable}">
         <StackPanel Spacing="6">
+          <TextBlock Text="Ingen registrerte økter siste 90 dager." IsVisible="{Binding !HasDays}"
+                     Foreground="{DynamicResource ShellMutedBrush}"/>
           <ItemsControl ItemsSource="{Binding Days}">
             <ItemsControl.ItemTemplate>
-              <DataTemplate DataType="vm:AnalysisSummaryMetric">
-                <Grid ColumnDefinitions="Auto,*" Margin="0,3,0,0">
-                  <TextBlock Grid.Column="0" Text="{Binding Label}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}" MinWidth="120"/>
-                  <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}" TextWrapping="Wrap"/>
-                </Grid>
+              <DataTemplate DataType="vm:CalendarDayItem">
+                <!-- Each day is a clickable button opening that day's details -->
+                <Button Command="{Binding Open}" Classes="nav" HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left" Padding="8,6" Margin="0,2">
+                  <Grid ColumnDefinitions="Auto,*,Auto">
+                    <TextBlock Grid.Column="0" Text="{Binding Label}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}" MinWidth="120"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Summary}" Foreground="{DynamicResource ShellBodyTextBrush}" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Column="2" Text="›" Foreground="{DynamicResource ShellMutedBrush}" FontSize="16" Margin="8,0,0,0"/>
+                  </Grid>
+                </Button>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
