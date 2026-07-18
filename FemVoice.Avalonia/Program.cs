@@ -315,6 +315,10 @@ internal static class Program
             bool detailOk = vm.EngineAvailable && vm.HasDetail && vm.DetailMetrics.Count >= 4
                             && vm.WeeklyHistory.Count == 7
                             && vm.DetailMetrics.All(m => m.Label.Length > 0 && m.Value.Length > 0);
+            // Messages panel + building-baseline state (WPF SmartCoach): sections wired; with only 5 seeded sessions
+            // the baseline confidence is low → building-baseline is active. Messages are best-effort (may be empty).
+            bool messagesWired = vm.MessagesHeading.Length > 0 && vm.Messages is not null && vm.NoMessagesText.Length > 0
+                                 && vm.IsBuildingBaseline;
 
             // Complete-recommendation persistence (WPF parity): the button marks today's recommendation completed and
             // SaveDailyRecommendation writes it back so a fresh read sees IsCompleted=true.
@@ -330,7 +334,7 @@ internal static class Program
             Console.WriteLine($"[smartcoach] emptyOk={emptyOk} dataOk={dataOk} detailOk={detailOk} detailRows={vm.DetailMetrics.Count} weekHist={vm.WeeklyHistory.Count} focus='{rec1?.FocusArea}' weekly={weekly}");
             Console.WriteLine($"[smartcoach] completeOk={completeOk} (before={completeBefore} now={completedNow} persisted={persistedComplete} reflects={reflectsPersisted}) progressToGoal={vm.HasProgressToGoal} baseline='{vm.BaselineConfidence}'");
             Console.WriteLine($"[smartcoach] rec: {rec1?.RecommendationText}");
-            bool ok = emptyOk && dataOk && detailOk && completeOk;
+            bool ok = emptyOk && dataOk && detailOk && completeOk && messagesWired;
             Console.WriteLine(ok ? "[smartcoach] SmartCoach engine smoke OK" : "[smartcoach] SmartCoach engine smoke FAIL");
             return ok ? 0 : 1;
         }
