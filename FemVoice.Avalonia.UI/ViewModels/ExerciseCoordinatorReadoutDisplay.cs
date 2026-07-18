@@ -15,13 +15,13 @@ public sealed class ExerciseCoordinatorReadoutDisplay
     public double CoordinatorHoldProgressPercent { get; init; }
     public double CoordinatorHoldSeconds { get; init; }
     public string CoordinatorStatusText { get; init; } = "—";
-    public string CoordinatorSafetyLockDisplay { get; init; } = "Sikkerhetslås: — (kun visning, ikke håndhevet)";
+    public string CoordinatorSafetyLockDisplay { get; init; } = "Sikkerhetslås: — (veiledende)";
     public string CoordinatorGuidanceText { get; init; } = "";
     public string CoordinatorRawStateSummary { get; init; } = "";
     public double DerivedHoldProgressPercent { get; init; }
     public double DerivedHoldSeconds { get; init; }
     public string HoldDifferenceDisplay { get; init; } = "—";
-    public string ReadoutMode { get; init; } = "Visning-bare koordinator-readout (ikke håndhevet)";
+    public string ReadoutMode { get; init; } = "Koordinator-readout (veiledende)";
 
     public static ExerciseCoordinatorReadoutDisplay Inactive() =>
         new() { IsCoordinatorActive = false, CoordinatorStatusText = "Inaktiv" };
@@ -51,7 +51,7 @@ public sealed class ExerciseCoordinatorReadoutDisplay
             CoordinatorHoldProgressPercent = Math.Round(coordHoldFraction * 100.0, 0),
             CoordinatorHoldSeconds = Math.Round(coordSeconds, 1),
             CoordinatorStatusText = status,
-            CoordinatorSafetyLockDisplay = $"Sikkerhetslås: {(locked ? "PÅ" : "AV")} (kun visning, ikke håndhevet)",
+            CoordinatorSafetyLockDisplay = $"Sikkerhetslås: {(locked ? "PÅ" : "AV")} (veiledende)",
             CoordinatorGuidanceText = live is null
                 ? "Koordinator starter …"
                 : live.IsHoldingCorrectly ? "Koordinator: god holdetilstand." : "Koordinator: juster mot målet.",
@@ -62,7 +62,7 @@ public sealed class ExerciseCoordinatorReadoutDisplay
             DerivedHoldProgressPercent = Math.Round(derivedPct, 0),
             DerivedHoldSeconds = Math.Round(derivedHoldSeconds, 1),
             HoldDifferenceDisplay = $"{coordSeconds - derivedHoldSeconds:+0.0;-0.0;0.0} s (koordinator − avledet)",
-            ReadoutMode = "Visning-bare koordinator-readout (ikke håndhevet)",
+            ReadoutMode = "Koordinator-readout (veiledende)",
         };
     }
 }

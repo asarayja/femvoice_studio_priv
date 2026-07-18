@@ -26,12 +26,15 @@ public partial class ExerciseGuideViewModel : ObservableObject
     private readonly List<ExerciseCardViewModel> _all;
     public const string AllCategory = "Alle";
 
-    public ExerciseGuideViewModel(VoiceFeminizationExerciseService service, Action<EnhancedExercise> openDetail)
+    public ExerciseGuideViewModel(VoiceFeminizationExerciseService service, Action<EnhancedExercise> openDetail,
+        FemVoiceStudio.Data.IDatabaseService? database = null)
     {
         _openDetail = openDetail;
         _all = service.GetAllEnhancedExercises()
             .Select(e => new ExerciseCardViewModel(e))
             .ToList();
+
+        ComputeTodaysProgress(database);
 
         // Freeform catalog categories (unchanged; surfaced for diagnostics/back-compat).
         Categories = _all
@@ -74,11 +77,39 @@ public partial class ExerciseGuideViewModel : ObservableObject
     public string SearchPlaceholder => "Søk i øvelser …";
     public string EmptyText => "Ingen øvelser matcher søket.";
 
-    // WPF parity: the list has a "today's progress" summary (minutes + session count). This preview has NO session
-    // persistence, so these are a clearly-labelled display-only placeholder (0) — no analytics/DB read, no invented
-    // numbers. The ProgressNote states the preview does not track progress.
-    public string TodaysProgressText => "0 min · 0 økter";
-    public string ProgressNote => "Visning — fremgang lagres ikke i denne forhåndsvisningen (ingen lagring).";
+    // WPF parity: the list has a "today's progress" summary (minutes + session count) — now REAL, read from the
+    // database (the sessions completed today), or a neutral placeholder when no DB is present (headless/tests).
+    [ObservableProperty] private string _todaysProgressText = "— · 0 økter";
+    [ObservableProperty] private string _progressNote =
+        "Fullførte øvelser lagres og teller mot progresjonen din.";
+
+    /// <summary>Real today's minutes + completed-session count from the database (local day). Null-safe: with no DB
+    /// the note stays neutral and the counts show a placeholder. Never throws.</summary>
+    private void ComputeTodaysProgress(FemVoiceStudio.Data.IDatabaseService? database)
+    {
+        if (database is null)
+        {
+            TodaysProgressText = "— · 0 økter";
+            ProgressNote = "Fullførte øvelser lagres og teller mot progresjonen din.";
+            return;
+        }
+        try
+        {
+            var today = DateTime.Now.Date;
+            var todays = database.GetRecentSessions(1000)
+                .Where(s => s.StartTime.ToLocalTime().Date == today)
+                .ToList();
+            int minutes = (int)Math.Round(todays.Sum(s => Math.Max(0, ((s.EndTime ?? s.StartTime) - s.StartTime).TotalMinutes)));
+            TodaysProgressText = $"{minutes} min · {todays.Count} økter";
+            ProgressNote = todays.Count > 0
+                ? "Dagens fullførte øvelser er lagret og teller mot progresjonen din."
+                : "Fullførte øvelser lagres og teller mot progresjonen din.";
+        }
+        catch
+        {
+            TodaysProgressText = "— · 0 økter";
+        }
+    }
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
 

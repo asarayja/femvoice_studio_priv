@@ -39,6 +39,7 @@ internal static class Program
         if (args.Contains("--smoke")) return Smoke();
         if (args.Contains("--dashboard-smoke")) return DashboardSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-smoke")) return ExerciseSmoke();
+        if (args.Contains("--exercise-save-truthful-smoke")) return ExerciseSaveTruthfulSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-runtime-smoke")) return ExerciseRuntimeSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-runtime-integration-smoke")) return ExerciseRuntimeIntegrationSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-coordinator-smoke")) return ExerciseCoordinatorSmoke().GetAwaiter().GetResult();
@@ -1307,6 +1308,64 @@ internal static class Program
 
     // Headless verification of the Exercise Guide + Detail slice (no display): catalog loads, detail
     // opens, and shell navigation dashboard -> guide -> detail -> guide works.
+    // Exercises now SAVE real sessions (real mic + DB) and the labels tell the truth. Deterministic checks (no real
+    // audio needed): (1) the guide shows REAL today's progress from a seeded DB and a truthful note; (2) the
+    // SavesRealSession gate == (!synthetic && db!=null); (3) a SYNTHETIC run never writes a real DB row; (4) the
+    // truthful label strings. The real-microphone insert path is verified on the user's device.
+    private static async System.Threading.Tasks.Task<int> ExerciseSaveTruthfulSmoke()
+    {
+        string fileName = $"femvoice-exsave-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+        string full = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio", fileName);
+        void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+        Cleanup();
+        try
+        {
+            var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+            var svc = new global::FemVoiceStudio.Services.VoiceFeminizationExerciseService();
+            var exercise = svc.GetAllEnhancedExercises()[0];
+
+            // (1) Guide reflects REAL today's progress from the DB.
+            db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
+            {
+                UserId = 1, StartTime = DateTime.Now.AddMinutes(-6), EndTime = DateTime.Now, AveragePitch = 190,
+                OverallScore = 70, Feedback = "Øvelse: seed",
+            });
+            var guide = new ExerciseGuideViewModel(svc, _ => { }, db);
+            bool guideReal = guide.TodaysProgressText.Contains("1 økter") && guide.ProgressNote.Contains("lagret");
+
+            // (2)+(4) Synthetic run: honest labels + does NOT save a real session.
+            int before = db.GetRecentSessions(1000).Count;
+            using (var synth = new ExerciseRuntimeViewModel(exercise, new InlineUiDispatcher(), () => { }, history: null,
+                       useRealMic: false, database: db))
+            {
+                bool synthLabels = synth.IsSyntheticSource && !synth.SavesRealSession
+                    && synth.NotSavedNote.Contains("lagres ikke") && synth.LiveHeading.Contains("syntetisk");
+                synth.BeginCommand.Execute(null);
+                await System.Threading.Tasks.Task.Delay(150);
+                await synth.StopCommand.ExecuteAsync(null);
+                int after = db.GetRecentSessions(1000).Count;
+                bool synthNoSave = after == before;   // synthetic test-tone never writes a real session
+                Console.WriteLine($"[ex-save] synthLabels={synthLabels} synthNoSave={synthNoSave} (before={before} after={after})");
+                if (!synthLabels || !synthNoSave) { Cleanup(); Console.WriteLine("[ex-save] Exercise save-truthful smoke FAIL"); return 1; }
+            }
+
+            // (3) SavesRealSession gate holds for a real-mic ctor: == (!synthetic && db!=null), host-independent.
+            using var realVm = new ExerciseRuntimeViewModel(exercise, new InlineUiDispatcher(), () => { }, history: null,
+                useRealMic: true, database: db);
+            bool gateOk = realVm.SavesRealSession == !realVm.IsSyntheticSource;   // db is non-null here
+            bool realLabel = realVm.SavesRealSession
+                ? realVm.NotSavedNote.Contains("teller mot progresjonen")
+                : realVm.NotSavedNote.Contains("lagres");
+
+            Console.WriteLine($"[ex-save] guideReal={guideReal} realSource={!realVm.IsSyntheticSource} gateOk={gateOk} realLabel={realLabel}");
+            bool ok = guideReal && gateOk && realLabel;
+            Console.WriteLine(ok ? "[ex-save] Exercise save-truthful smoke OK" : "[ex-save] Exercise save-truthful smoke FAIL");
+            Cleanup();
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Cleanup(); Console.WriteLine($"[ex-save] FAIL: {ex.Message}"); return 1; }
+    }
+
     private static int ExerciseSmoke()
     {
         var svc = new VoiceFeminizationExerciseService();
@@ -1466,8 +1525,8 @@ internal static class Program
         bool active = readout.IsCoordinatorActive;
         // Coordinator either produced a readout (live-state received) or is documented unavailable.
         bool liveStateReceived = !readout.CoordinatorRawStateSummary.StartsWith("(ingen");
-        bool readoutMode = readout.ReadoutMode.Contains("ikke håndhevet"); // display-only / NOT enforced
-        bool safetyDisplayOnly = readout.CoordinatorSafetyLockDisplay.Contains("kun visning"); // non-enforced label
+        bool readoutMode = readout.ReadoutMode.Contains("veiledende"); // advisory / NOT enforced
+        bool safetyDisplayOnly = readout.CoordinatorSafetyLockDisplay.Contains("veiledende"); // advisory label
 
         Console.WriteLine($"[coord] Exercise: {rt.SelectedExerciseName}");
         Console.WriteLine($"[coord] Coordinator active: {active}");
@@ -1828,7 +1887,8 @@ internal static class Program
         await rt.StopCommand.ExecuteAsync(null);
         bool stoppedState = rt.Phase == RuntimePhase.Stopped && !rt.IsRunning && rt.IsStopped && !rt.IsInactive;
         bool streamCleared = rt.RuntimePitchSamples.Count == 0;
-        bool notSaved = rt.SessionEndedSummary.Contains("lagres ikke");
+        // Synthetic runtime (no DB): the truthful summary says the test-tone run was not saved as real data.
+        bool notSaved = rt.SessionEndedSummary.Contains("ikke lagret");
         Console.WriteLine($"[lifecycle] phases: inactive={initialInactive} active={startedActive} stopped={stoppedState}");
         Console.WriteLine($"[lifecycle] stream: active-samples={activeSamples} cleared-on-stop={streamCleared}");
         Console.WriteLine($"[lifecycle] summary: '{rt.SessionEndedSummary}'");

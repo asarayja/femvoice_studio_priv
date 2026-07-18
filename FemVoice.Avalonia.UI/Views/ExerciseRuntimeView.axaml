@@ -115,7 +115,7 @@
           <!-- Live status (text readout; no graph — WPF parity) — visible while running -->
           <Border Classes="card" IsVisible="{Binding IsRunning}">
             <StackPanel Spacing="6">
-              <TextBlock Text="Sanntid (syntetisk lyd)" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+              <TextBlock Text="{Binding LiveHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
               <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsPitchFocused}">
                 <TextBlock Text="{Binding CurrentPitch, StringFormat='{}{0:F1}'}" FontSize="34" FontWeight="Bold" Foreground="{DynamicResource ShellAccentBrush}"/>
                 <TextBlock Text="Hz" VerticalAlignment="Bottom" Margin="0,0,0,6" Foreground="{DynamicResource ShellMutedBrush}"/>
@@ -155,7 +155,7 @@
 
               <!-- Inactive: before first Start -->
               <Border IsVisible="{Binding IsInactive}" BorderBrush="{DynamicResource ShellAccentBrush}" BorderThickness="1" CornerRadius="6" Padding="10">
-                <TextBlock Text="Klar til å starte — trykk Start for en syntetisk, visning-bare kjøring."
+                <TextBlock Text="{Binding ReadyToStartText}"
                            TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
               </Border>
 
@@ -178,7 +178,7 @@
               <TextBlock Text="Avledet hold" Foreground="{DynamicResource ShellSecondaryBrush}" FontSize="12"/>
               <ProgressBar Minimum="0" Maximum="100" Value="{Binding DerivedHoldVisualPercent}" Height="16"/>
               <TextBlock Text="{Binding HoldSeconds, StringFormat='Holdt: {0:F1} s'}" FontSize="12" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-              <TextBlock Text="Koordinator-hold (kun visning, ikke håndhevet)" Foreground="{DynamicResource ShellDeferredTitleBrush}" FontSize="12" Margin="0,6,0,0"/>
+              <TextBlock Text="Koordinator-hold (veiledende)" Foreground="{DynamicResource ShellDeferredTitleBrush}" FontSize="12" Margin="0,6,0,0"/>
               <ProgressBar Minimum="0" Maximum="100" Value="{Binding CoordinatorHoldVisualPercent}" Height="16"/>
               <TextBlock Text="{Binding HoldComparisonText, StringFormat='Differanse: {0}'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
             </StackPanel>
