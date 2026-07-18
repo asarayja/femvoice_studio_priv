@@ -18,10 +18,12 @@ namespace FemVoice.Avalonia.ViewModels;
 public partial class FirstTimeSetupViewModel : ObservableObject
 {
     private readonly UiPreferencesStore _store;
+    private readonly System.Action? _onDone;
 
-    public FirstTimeSetupViewModel(UiPreferencesStore? store = null)
+    public FirstTimeSetupViewModel(UiPreferencesStore? store = null, System.Action? onDone = null)
     {
         _store = store ?? new UiPreferencesStore();
+        _onDone = onDone;
         var p = _store.Load();
         _language = p.Language;
         _theme = p.Theme;
@@ -125,6 +127,7 @@ public partial class FirstTimeSetupViewModel : ObservableObject
             Status = applyChoices
                 ? Localized.Get("FirstSetup_Saved", "Oppsett lagret. Språk og tema er oppdatert.")
                 : Localized.Get("FirstSetup_Skipped", "Oppsett hoppet over. Du kan endre alt under Innstillinger.");
+            _onDone?.Invoke();   // leave onboarding → the shell moves to the dashboard (shown only on first run)
         }
         else
         {

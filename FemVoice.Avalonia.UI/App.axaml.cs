@@ -31,10 +31,9 @@ public partial class App : Application
         {
             // Mobile/single-view head (Android): no Window — set the SAME shared ShellView as the root MainView,
             // with the same ShellViewModel from the shared DI container. Design/behaviour reuse the desktop shell.
-            singleView.MainView = new Views.ShellView
-            {
-                DataContext = AppServices.Services.GetRequiredService<ShellViewModel>(),
-            };
+            var shell = AppServices.Services.GetRequiredService<ShellViewModel>();
+            singleView.MainView = new Views.ShellView { DataContext = shell };
+            shell.ShowOnboardingIfFirstRun();   // first-run onboarding (never a nav item; shown once)
         }
 
         base.OnFrameworkInitializationCompleted();

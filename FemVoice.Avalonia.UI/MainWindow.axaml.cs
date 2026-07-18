@@ -11,6 +11,8 @@ public partial class MainWindow : Window
     {
         AvaloniaXamlLoader.Load(this);
         // Shell hosts the dashboard + exercise guide/detail via ContentControl + DataTemplates.
-        DataContext = AppServices.Services.GetRequiredService<ShellViewModel>();
+        var shell = AppServices.Services.GetRequiredService<ShellViewModel>();
+        DataContext = shell;
+        shell.ShowOnboardingIfFirstRun();   // first-run onboarding (never a nav item; shown once)
     }
 }
