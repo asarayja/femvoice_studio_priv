@@ -842,14 +842,20 @@ internal static class Program
         await Task.Delay(700);
         bool liveFreq = vm.MainFrequency > 150 && vm.MainFrequency < 260;   // ~200 Hz synthetic
         bool stats = vm.SampleCount > 0 && vm.AveragePitch > 0 && vm.MaxPitch >= vm.MinPitch;
+        // Live FFT spectrum: bars accumulate from the mic frames, with a peak in a band inside the vocal range.
+        int spectrumBarCount = vm.SpectrumBars.Count;
+        bool spectrumOk = spectrumBarCount > 0 && vm.SpectrumBars.Any(b => b > 0);
         vm.StopCommand.Execute(null);
         bool stopped = !vm.IsRunning;
+        // Note picker (WPF parity): selecting a musical note sets the target frequency to that note's Hz.
+        vm.SelectNoteCommand.Execute(vm.NoteOptions.First(n => n.Label == "C4"));
+        bool noteOk = Math.Abs(vm.TargetFrequency - 262) < 0.5;
         // Quantiles + range distribution (WPF parity) computed over the full recording on Stop.
         bool distOk = vm.HasDistribution && vm.Quantiles.Count == 7 && vm.RangeDistribution.Count == 5
                       && vm.RangeDistribution.All(r => r.Value.Contains("%"));
 
-        Console.WriteLine($"[analyzer] navImpl={navImpl} onPage={onPage} disposedOnLeave={disposedOnLeave} available={available} running={running} liveFreq={liveFreq}({vm.MainFrequency:F0}Hz) stats={stats}(n={vm.SampleCount},avg={vm.AveragePitch:F0}) stopped={stopped} distOk={distOk}(q={vm.Quantiles.Count},r={vm.RangeDistribution.Count})");
-        bool ok = navImpl && onPage && disposedOnLeave && available && running && liveFreq && stats && stopped && distOk;
+        Console.WriteLine($"[analyzer] navImpl={navImpl} onPage={onPage} disposedOnLeave={disposedOnLeave} available={available} running={running} liveFreq={liveFreq}({vm.MainFrequency:F0}Hz) stats={stats}(n={vm.SampleCount},avg={vm.AveragePitch:F0}) spectrumOk={spectrumOk}(bars={spectrumBarCount}) noteOk={noteOk}({vm.TargetFrequency:F0}Hz) stopped={stopped} distOk={distOk}(q={vm.Quantiles.Count},r={vm.RangeDistribution.Count})");
+        bool ok = navImpl && onPage && disposedOnLeave && available && running && liveFreq && stats && spectrumOk && noteOk && stopped && distOk;
         Console.WriteLine(ok ? "[analyzer] Analyzer smoke OK" : "[analyzer] Analyzer smoke FAIL");
         return ok ? 0 : 1;
     }
