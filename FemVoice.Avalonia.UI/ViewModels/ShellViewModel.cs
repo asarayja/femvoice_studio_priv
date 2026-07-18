@@ -86,7 +86,7 @@ public partial class ShellViewModel : ObservableObject
     // except the dashboard (which is not rebuilt here).
     private void BuildPages()
     {
-        _guide = new ExerciseGuideViewModel(_exercises, OpenExercise);
+        _guide = new ExerciseGuideViewModel(_exercises, OpenExercise, _database);
         _settings = new SettingsViewModel(ForceShowOnboarding, () => _showMicCalibrationCommand.Execute(null));
         _analysis = new AnalysisViewModel(_database);   // engine-backed: real session trends when a DB is present
         _reports = new ReportsViewModel(_database, OpenCoachPanel, OpenClinicianPanel, OpenTimelinePanel, OpenCaseReviewPanel);   // real preview/export + coach/clinician/timeline
@@ -337,5 +337,5 @@ public partial class ShellViewModel : ObservableObject
         // backend; false in headless/tests → the exercise keeps its target-tuned synthetic source, so the exercise
         // smokes stay deterministic). Only the frame SOURCE differs — no clinical change.
         => CurrentPage = new ExerciseRuntimeViewModel(exercise, _ui, ShowGuide, new History.SessionHistoryStore(),
-            useRealMic: _audioReadiness.IsRealCaptureAvailable);
+            useRealMic: _audioReadiness.IsRealCaptureAvailable, database: _database);
 }

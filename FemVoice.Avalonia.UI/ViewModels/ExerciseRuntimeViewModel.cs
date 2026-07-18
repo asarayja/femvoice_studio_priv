@@ -13,24 +13,26 @@ using FemVoiceStudio.Services;              // PitchTraceStabilizer, LiveMetrics
 
 namespace FemVoice.Avalonia.ViewModels;
 
-/// <summary>Display-only runtime lifecycle phase (synthetic; no persistence/clinical meaning).</summary>
+/// <summary>Runtime lifecycle phase.</summary>
 public enum RuntimePhase
 {
     /// <summary>Before the first Start (or after a fresh navigation) — nothing is running.</summary>
     Inactive,
-    /// <summary>A synthetic session is running.</summary>
+    /// <summary>A session is running.</summary>
     Active,
-    /// <summary>The session was stopped — a display-only session-ended summary is shown.</summary>
+    /// <summary>The session was stopped — a session-ended summary is shown.</summary>
     Stopped,
 }
 
 /// <summary>
-/// Safe Avalonia exercise-runtime scaffold. Drives the SHARED, UI-free DSP services
-/// (PitchDetectionService + PitchTraceStabilizer + LiveMetricsService) from a dedicated SYNTHETIC
-/// capture (Linux/headless — no real mic, no Windows-only dep). It compares the synthetic pitch to the
-/// exercise's own target band and shows a DISPLAY-ONLY hold/progress and elapsed time. It does NOT
-/// persist sessions, update SmartCoach/progression, or make any clinical safety/health/recovery
-/// decision. See docs/AVALONIA_EXERCISE_RUNTIME_PLACEHOLDERS.md.
+/// Avalonia exercise runtime. Drives the SHARED, UI-free DSP services (PitchDetectionService +
+/// PitchTraceStabilizer + LiveMetricsService + the Core ResonanceProxyEngine) from the REAL microphone when one is
+/// available (falling back to a target-tuned synthetic source only in headless/no-mic contexts). It compares the
+/// live pitch to the exercise's own target band and shows a live hold/progress + elapsed time. When a real
+/// microphone drives the session AND a database is present, the finished exercise is SAVED as a real
+/// <see cref="FemVoiceStudio.Models.TrainingSession"/> (so it counts toward progression), exactly like the
+/// dashboard. A synthetic (test-tone) run is honestly labelled and NOT saved as real data. It makes no clinical
+/// safety/health/recovery decision — the coordinator readout is advisory only.
 /// </summary>
 public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
 {
@@ -76,17 +78,29 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     private double _holdRaw;   // unrounded hold accumulator (display value is rounded separately)
     private double _peakHoldPercent;   // best hold % this session (for the display-only session-ended summary)
 
-    // Optional Avalonia-local, display-only history (no clinical scoring, no WPF DB). Null in tests/smokes so they
-    // never touch the real file; the production shell passes a real store so finished exercises are logged locally.
+    // Optional Avalonia-local history (used as the fallback when no real DB is present — e.g. tests/smokes, or a
+    // synthetic test-tone run). Null in smokes so they never touch the real file.
     private readonly History.SessionHistoryStore? _history;
 
+    // Real database (production, via the shell). When present AND the source is a real microphone, the finished
+    // exercise is saved as a real TrainingSession so it counts toward progression — same as the dashboard.
+    private readonly FemVoiceStudio.Data.IDatabaseService? _database;
+    // Per-session real samples accumulated during the run → session stats on Stop (voiced pitch Hz; resonance 0–100).
+    private readonly List<double> _sessionPitch = new();
+    private readonly List<double> _sessionResonance = new();
+
+    /// <summary>True when this run will be saved as a real session: a real microphone drives it AND a DB is present.</summary>
+    public bool SavesRealSession => !IsSyntheticSource && _database is not null;
+
     public ExerciseRuntimeViewModel(EnhancedExercise exercise, IUiDispatcher ui, Action back,
-        History.SessionHistoryStore? history = null, bool useRealMic = false)
+        History.SessionHistoryStore? history = null, bool useRealMic = false,
+        FemVoiceStudio.Data.IDatabaseService? database = null)
     {
         Exercise = exercise;
         _ui = ui;
         _back = back;
         _history = history;
+        _database = database;
 
         TargetPitchMin = exercise.TargetPitchMin;
         TargetPitchMax = exercise.TargetPitchMax;
@@ -164,7 +178,9 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         // Explicit lifecycle: start Inactive (no auto-start). The user presses Start (BeginCommand) to run
         // the synthetic session; the FrameAvailable handler is subscribed once here and only fires while the
         // capture is started (in Begin) — re-Start does not re-subscribe.
-        RuntimeStatusMessage = "Klar — trykk Start for å begynne (syntetisk, kun visning).";
+        RuntimeStatusMessage = IsSyntheticSource
+            ? "Klar — trykk Start (syntetisk testlyd — ingen mikrofon funnet, økten lagres ikke)."
+            : "Klar — trykk Start for å begynne.";
     }
 
     public EnhancedExercise Exercise { get; }
@@ -241,7 +257,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     public string PhaseText => Phase switch
     {
         RuntimePhase.Inactive => "Klar",
-        RuntimePhase.Active => "Aktiv (syntetisk)",
+        RuntimePhase.Active => IsSyntheticSource ? "Aktiv (syntetisk testlyd)" : "Aktiv",
         RuntimePhase.Stopped => "Stoppet",
         _ => "—",
     };
@@ -249,8 +265,20 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     public string RecommendedDurationText => Exercise.DurationMinutes > 0
         ? $"Anbefalt varighet: {Exercise.DurationMinutes} min (veiledende)"
         : "Anbefalt varighet: —";
-    /// <summary>Static note: the synthetic session is never saved.</summary>
-    public string NotSavedNote => "Økten lagres ikke — visning-bare syntetisk kjøring.";
+    /// <summary>Truthful save note: real runs are saved and count toward progression; synthetic test-tone runs are not.</summary>
+    public string NotSavedNote => SavesRealSession
+        ? "Økten lagres og teller mot progresjonen din."
+        : IsSyntheticSource
+            ? "Syntetisk testlyd — økten lagres ikke."
+            : "Økten lagres lokalt.";
+
+    // ── Truthful live-panel headings (bound by the view; conditional on real vs synthetic source) ─────────────────
+    /// <summary>Live-readout heading — notes the synthetic test-tone only when there is no real mic.</summary>
+    public string LiveHeading => IsSyntheticSource ? "Sanntid (syntetisk testlyd)" : "Sanntid";
+    /// <summary>Pre-start hint — truthful about the source and whether the run saves.</summary>
+    public string ReadyToStartText => IsSyntheticSource
+        ? "Ingen mikrofon funnet — Start kjører en syntetisk testlyd (lagres ikke)."
+        : "Klar til å starte — trykk Start for å øve med mikrofonen din.";
 
     partial void OnPhaseChanged(RuntimePhase value)
     {
@@ -299,7 +327,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     private (string message, string severity) DeriveLiveFeedback(bool voiced, double pitch, ExerciseLiveState? live)
     {
         if (live?.IsSafetyLocked == true)
-            return ("Koordinator varsler lås — kun visning, ikke håndhevet", "Lås (visning)");
+            return ("Koordinator anbefaler en pause (veiledende)", "Pause anbefalt");
         if (!voiced || pitch <= 0)
             return ("Ingen stabil stemme registrert", "Ingen stemme");
         if (pitch < TargetPitchMin) return ("Litt under målområdet", "Juster");
@@ -315,6 +343,8 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         _metrics.Reset();
         _resonanceEngine.Start();          // real resonance DSP (Reset()s internally)
         _latestResonancePercent = 0;
+        _sessionPitch.Clear();
+        _sessionResonance.Clear();
         _holdRaw = 0;
         _peakHoldPercent = 0;
         HoldSeconds = 0;
@@ -364,23 +394,19 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         _resonanceEngine.Stop();
         // Clear the VM-local coordinator's in-memory state (safe no-op when inactive; persists nothing).
         if (_coordinatorEnabled) _coordinator.StopExercise();
+        // Persist the finished exercise (off the UI thread) BEFORE clearing live values. A real microphone run with a
+        // DB saves a real TrainingSession that counts toward progression; otherwise a local history record is kept.
+        bool saved = SaveFinishedSession();
+
         _ui.Post(() =>
         {
-            // Build the display-only session-ended summary from the last live values BEFORE clearing them.
+            // Build the truthful session-ended summary from the last live values BEFORE clearing them.
+            string tail = saved
+                ? "Lagret — teller mot progresjonen din."
+                : IsSyntheticSource ? "Syntetisk testlyd — ikke lagret." : "Lagret lokalt.";
             SessionEndedSummary =
-                $"Økt fullført (kun visning) · varighet {ElapsedText} · beste hold {_peakHoldPercent:F0} %. {NotSavedNote}";
+                $"Økt fullført · varighet {ElapsedText} · beste hold {_peakHoldPercent:F0} %. {tail}";
 
-            // Log a display-only local record (no clinical scoring, no progression, no WPF DB). Skips trivial (<2 s).
-            if (_history is not null && ElapsedSeconds >= 2)
-            {
-                _history.Append(new History.SessionRecord
-                {
-                    WhenUtcTicks = DateTime.UtcNow.Ticks,
-                    Source = SelectedExerciseName,
-                    DurationSeconds = ElapsedSeconds,
-                    Note = "Øvelse · kun visning · lokal historikk",
-                });
-            }
             IsRunning = false;
             Phase = RuntimePhase.Stopped;
             PitchStatus = "Stoppet";
@@ -414,6 +440,8 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         _resonanceEngine.ProcessSamples(e.Samples);   // real resonance DSP → _latestResonancePercent (display-only readout)
         double smoothed = _metrics.CalculateSmoothedPitch(result.Pitch, result.IsVoiced);
         double pitch = result.IsVoiced ? _stabilizer.Filter(smoothed, now) : 0;
+
+        if (result.IsVoiced && pitch > 0) _sessionPitch.Add(pitch);   // real per-session sample → saved session stats
 
         bool inRange = result.IsVoiced && pitch >= TargetPitchMin && pitch <= TargetPitchMax;
         string status;
@@ -474,7 +502,11 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
 
     // Real resonance score (0–1 from the Core engine) → 0–100. Fires on the capture thread; stored volatile.
     private void OnResonanceScore(double score0to1)
-        => _latestResonancePercent = (int)Math.Round(Math.Clamp(score0to1, 0, 1) * 100);
+    {
+        int pct = (int)Math.Round(Math.Clamp(score0to1, 0, 1) * 100);
+        _latestResonancePercent = pct;
+        if (IsRunning) _sessionResonance.Add(pct);   // real per-session resonance → saved session average
+    }
 
     // Qualitative label + value for the live resonance readout (0–100). Mirrors WPF's bright/neutral/dark buckets.
     private static string ResonanceText(int pct) => pct switch
@@ -483,6 +515,71 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         >= 34 => $"Nøytral ({pct})",
         _ => $"Mørk ({pct})",
     };
+
+    /// <summary>Persist the finished exercise. A real-microphone run with a DB saves a real TrainingSession (so it
+    /// counts toward progression, streak and recent sessions — exactly like a dashboard session); otherwise it keeps a
+    /// local history record. Returns true only when a real DB session was saved. Never throws to the app.</summary>
+    private bool SaveFinishedSession()
+    {
+        int elapsed = ElapsedSeconds;
+        if (elapsed < 2) return false;   // skip trivial runs (matches the dashboard threshold)
+
+        if (SavesRealSession)
+        {
+            try
+            {
+                var voiced = _sessionPitch.Where(p => p > 0).ToList();
+                double avg = voiced.Count > 0 ? voiced.Average() : 0;
+                double inZone = voiced.Count > 0
+                    ? 100.0 * voiced.Count(p => p >= TargetPitchMin && p <= TargetPitchMax) / voiced.Count : 0;
+                double avgResonance = _sessionResonance.Count > 0 ? _sessionResonance.Average() : 0;
+                double pitchVariation = 0;
+                if (voiced.Count > 1)
+                {
+                    double mean = voiced.Average();
+                    pitchVariation = Math.Sqrt(voiced.Sum(p => (p - mean) * (p - mean)) / voiced.Count);
+                }
+                var session = new FemVoiceStudio.Models.TrainingSession
+                {
+                    UserId = 1,
+                    StartTime = _startUtc,
+                    EndTime = DateTime.UtcNow,
+                    AveragePitch = Math.Round(avg, 1),
+                    MinPitch = voiced.Count > 0 ? Math.Round(voiced.Min(), 1) : 0,
+                    MaxPitch = voiced.Count > 0 ? Math.Round(voiced.Max(), 1) : 0,
+                    PitchVariation = Math.Round(pitchVariation, 1),          // real prosody metric (std-dev of pitch)
+                    OverallScore = Math.Round(inZone),                       // adherence to THIS exercise's target band
+                    ResonanceScore = Math.Round(avgResonance, 1),            // real resonance from the Core DSP engine
+                    DifficultyLevel = Exercise.Difficulty,
+                    Feedback = $"Øvelse: {SelectedExerciseName}",
+                };
+                // Create-then-enrich two-step (ResonanceScore is only written by UpdateTrainingSession), same as the
+                // dashboard. Both are existing Core APIs — no Core change.
+                int savedId = _database!.SaveTrainingSession(session);
+                if (savedId > 0 && avgResonance > 0)
+                {
+                    session.Id = savedId;
+                    _database.UpdateTrainingSession(session);
+                }
+                return savedId > 0;
+            }
+            catch { return false; }   // never surface a session-save error to the app
+        }
+
+        // Fallback: local display history (no DB, or a synthetic test-tone run — not real training data).
+        try
+        {
+            _history?.Append(new History.SessionRecord
+            {
+                WhenUtcTicks = DateTime.UtcNow.Ticks,
+                Source = SelectedExerciseName,
+                DurationSeconds = elapsed,
+                Note = IsSyntheticSource ? "Øvelse · syntetisk testlyd · lokal historikk" : "Øvelse · lokal historikk",
+            });
+        }
+        catch { /* best effort */ }
+        return false;
+    }
 
     public void Dispose()
     {
