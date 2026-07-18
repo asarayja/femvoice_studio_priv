@@ -1507,13 +1507,13 @@ internal static class Program
         var svc = new VoiceFeminizationExerciseService();
         var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
         var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
-        // Nav order mirrors the WPF main-page buttons (Dashbord first; Kalender/Statistikk/Øvelsesguide… then tools),
-        // with Innstillinger ALWAYS last (user requirement).
+        // Nav order: Dashbord first, then the TRAINING/EXERCISE screens (Øvelsesguide, Analysator, Resonans…), then
+        // progress/history and tools, with Innstillinger ALWAYS last (user requirement).
         bool navLabelsOk = shell.NavItems.Count == 14
             && shell.NavItems.All(n => !string.IsNullOrWhiteSpace(n.Label))
             && shell.NavItems[0].Label == "Dashbord"
-            && shell.NavItems[1].Label == "Kalender"
-            && shell.NavItems[2].Label == "Statistikk"
+            && shell.NavItems[1].Label == "Øvelsesguide"      // training screens come first
+            && shell.NavItems[2].Label == "Analysator"
             && shell.NavItems[^1].Label == "Innstillinger";   // Settings pinned to the bottom
         bool statusOk = shell.MicStatusText.Contains("syntetisk") && shell.ModeText.Contains("ingen klinisk endring");
         var def = new DeferredSurfaceViewModel("Innstillinger");
