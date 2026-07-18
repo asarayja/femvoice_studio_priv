@@ -95,6 +95,7 @@ internal static class Program
         if (args.Contains("--database-service-smoke")) return DatabaseServiceSmoke();
         if (args.Contains("--smartcoach-engine-smoke")) return SmartCoachEngineSmoke();
         if (args.Contains("--progression-engine-smoke")) return ProgressionEngineSmoke();
+        if (args.Contains("--statistics-smoke")) return StatisticsSmoke();
         return null;
     }
 
@@ -664,6 +665,39 @@ internal static class Program
             return ok ? 0 : 1;
         }
         catch (Exception ex) { Console.WriteLine($"[timeline] Timeline panel smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
+        finally { Cleanup(); }
+    }
+
+    // Headless verification of the enriched Statistics screen (no display): with a TEMP DB holding sessions, the VM
+    // exposes the WPF-parity tiles PLUS the current-level card (level + progress) and the recent-sessions list
+    // (date/difficulty/duration/score). No writes / no clinical change.
+    private static int StatisticsSmoke()
+    {
+        string fileName = $"femvoice-stats-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+        string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio");
+        string full = System.IO.Path.Combine(dir, fileName);
+        void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+        Cleanup();
+        try
+        {
+            var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+            bool noDbOk = !new StatisticsViewModel(null).EngineAvailable;
+            for (int i = 0; i < 5; i++)
+                db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
+                { UserId = 1, StartTime = DateTime.UtcNow.AddDays(-i), EndTime = DateTime.UtcNow.AddDays(-i).AddMinutes(5),
+                  AveragePitch = 175 + i, OverallScore = 60 + i, Feedback = "s" });
+
+            var vm = new StatisticsViewModel(db);
+            bool tilesOk = vm.EngineAvailable && vm.Tiles.Count >= 5;
+            bool levelOk = vm.HasLevel && vm.LevelName.Length > 0;
+            bool recentOk = vm.HasRecentSessions && vm.RecentSessions.Count == 5
+                            && vm.RecentSessions.All(r => r.Score.Contains("/ 100") && r.Duration.Contains("min"));
+            Console.WriteLine($"[stats] noDbOk={noDbOk} tilesOk={tilesOk}({vm.Tiles.Count}) levelOk={levelOk}('{vm.LevelName}') recentOk={recentOk}({vm.RecentSessions.Count})");
+            bool ok = noDbOk && tilesOk && levelOk && recentOk;
+            Console.WriteLine(ok ? "[stats] Statistics smoke OK" : "[stats] Statistics smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[stats] Statistics smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
         finally { Cleanup(); }
     }
 
