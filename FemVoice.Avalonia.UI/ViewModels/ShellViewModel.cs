@@ -113,6 +113,7 @@ public partial class ShellViewModel : ObservableObject
             new(Localized.Get("Shell_Nav_SmartCoach", "SmartCoach"), true, ShowSmartCoachCommand),   // engine-backed
             new(Localized.Get("Shell_Nav_FirstSetup", "Førstegangsoppsett"), true, ShowFirstTimeSetupCommand),   // real onboarding
             new(Localized.Get("Shell_Nav_MicCalibration", "Mikrofonkalibrering"), true, _showMicCalibrationCommand),
+            new(Localized.Get("Shell_Nav_ManualOverride", "Manuell overstyring"), true, ShowManualOverrideCommand),   // safety-clamp preview
         };
     }
 
@@ -236,6 +237,7 @@ public partial class ShellViewModel : ObservableObject
             CoachPanelViewModel => Localized.Get("Coach_Panel_Title", "Veilederpanel"),
             ClinicianPanelViewModel => Localized.Get("Clinician_Panel_Title", "Klinikerpanel"),
             TimelinePanelViewModel => Localized.Get("Timeline_Panel_Title", "Utviklingstidslinje"),
+            ManualOverridePanelViewModel => Localized.Get("Shell_Nav_ManualOverride", "Manuell overstyring"),
             DeferredSurfaceViewModel d => $"{d.SurfaceName} (utsatt)",
             _ => "—",
         };
@@ -253,6 +255,10 @@ public partial class ShellViewModel : ObservableObject
     private void OpenCoachPanel() => CurrentPage = new CoachPanelViewModel(_database, ShowReports);
     private void OpenClinicianPanel() => CurrentPage = new ClinicianPanelViewModel(_database, ShowReports);
     private void OpenTimelinePanel() => CurrentPage = new TimelinePanelViewModel(_database, ShowReports);
+
+    // SAFETY-CRITICAL: manual-override clamp PREVIEW. Runs the frozen two-stage clamp read-only and shows only the
+    // clamped outcome; no persistence, no application. Fresh each open; Back returns to the dashboard.
+    [RelayCommand] private void ShowManualOverride() => CurrentPage = new ManualOverridePanelViewModel(ShowDashboard);
     // Real system status (runtime + DB facts) fresh each open; export/support-package/backup stay deferred.
     [RelayCommand] private void ShowDiagnostics() => CurrentPage = new DiagnosticsViewModel(_database);
     // Real training statistics from the saved sessions (fresh each open; null-safe).
