@@ -38,6 +38,26 @@
         </StackPanel>
       </Border>
 
+      <!-- Voice-goal style (WPF parity) -->
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding StyleLabel}" FontWeight="SemiBold" FontSize="16" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <TextBlock Text="{Binding StyleDesc}" FontSize="12" Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
+          <ComboBox MinWidth="220" HorizontalAlignment="Left" Margin="0,4,0,0"
+                    ItemsSource="{Binding StyleOptions}" SelectedItem="{Binding SelectedStyle, Mode=TwoWay}"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Training frequency (WPF parity) -->
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding FrequencyLabel}" FontWeight="SemiBold" FontSize="16" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <TextBlock Text="{Binding FrequencyDesc}" FontSize="12" Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
+          <ComboBox MinWidth="220" HorizontalAlignment="Left" Margin="0,4,0,0"
+                    ItemsSource="{Binding FrequencyOptions}" SelectedItem="{Binding SelectedFrequency, Mode=TwoWay}"/>
+        </StackPanel>
+      </Border>
+
       <!-- Actions -->
       <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
         <Button Classes="secondary" Content="{Binding SkipLabel}" Command="{Binding SkipCommand}"/>
