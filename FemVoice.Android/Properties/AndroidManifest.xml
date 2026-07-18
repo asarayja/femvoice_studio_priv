@@ -8,5 +8,5 @@
        follow-up slice, mirroring the Linux/ALSA path). Runtime permission is requested on first capture use. -->
   <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
-  <application android:label="FemVoice Studio" android:allowBackup="true" />
+  <application android:label="FemVoice Studio" android:icon="@mipmap/appicon" android:allowBackup="true" />
 </manifest>

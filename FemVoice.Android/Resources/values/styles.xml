@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Launch splash: the FemVoice Studio logo centered on the brand-dark background, shown while the app loads. -->
+  <style name="FemVoiceSplash" parent="@android:style/Theme.Material.Light.NoActionBar">
+    <item name="android:windowBackground">@drawable/splash_background</item>
+  </style>
+</resources>
