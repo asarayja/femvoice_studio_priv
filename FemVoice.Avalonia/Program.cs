@@ -749,8 +749,21 @@ internal static class Program
             (shell.CurrentPage as CaseReviewPanelViewModel)!.BackCommand.Execute(null);
             bool backToReports = shell.CurrentPage is ReportsViewModel;
 
-            Console.WriteLine($"[casereview] noDbOk={noDbOk} assembledOk={assembledOk} hasOverview={hasOverview} canOpen={canOpen} onPanel={onPanel} backToReports={backToReports} (hasReport={panel.HasReport} overview={panel.Overview.Count})");
-            bool ok = noDbOk && assembledOk && hasOverview && canOpen && onPanel && backToReports;
+            // Persist a review, then verify it round-trips via the CaseReviewsStore.
+            bool saveOk;
+            {
+                bool canSave = panel.CanSave;
+                panel.SaveCommand.Execute(null);
+                bool savedShows = panel.SavedReviews.Count >= 1 && panel.HasSaved;
+                var store = new global::FemVoiceStudio.Services.CaseReviewsStore(
+                    new global::FemVoiceStudio.Services.SqliteCaseReviewsRepository(db.ConnectionString));
+                var saved = store.GetByUserAsync(1).GetAwaiter().GetResult();
+                saveOk = canSave && savedShows && saved.Count >= 1;
+                Console.WriteLine($"[casereview] persist: canSave={canSave} savedShows={savedShows} stored={saved.Count} status='{panel.SaveStatus}'");
+            }
+
+            Console.WriteLine($"[casereview] noDbOk={noDbOk} assembledOk={assembledOk} hasOverview={hasOverview} canOpen={canOpen} onPanel={onPanel} backToReports={backToReports} saveOk={saveOk} (hasReport={panel.HasReport} overview={panel.Overview.Count})");
+            bool ok = noDbOk && assembledOk && hasOverview && canOpen && onPanel && backToReports && saveOk;
             Console.WriteLine(ok ? "[casereview] Case review smoke OK" : "[casereview] Case review smoke FAIL");
             return ok ? 0 : 1;
         }

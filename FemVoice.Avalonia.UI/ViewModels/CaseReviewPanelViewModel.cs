@@ -32,15 +32,17 @@ public sealed partial class CaseReviewPanelViewModel : ObservableObject
         _periodStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
         _periodEnd = DateTime.UtcNow.Date;
         Build();
+        LoadSaved();   // populate the saved-reviews list (best-effort)
     }
 
     public IRelayCommand BackCommand { get; }
     public string Title => Localized.Get("CaseReview_Panel_Title", "Saksgjennomgang");
     public string BackLabel => Localized.Get("Common_Back", "Tilbake");
     public string EvaluateLabel => Localized.Get("CaseReview_Evaluate", "Bygg gjennomgang");
-    public string Disclaimer => Localized.Get("CaseReview_Panel_Disclaimer",
-        "Saksgjennomgang sammenstilt fra dine lagrede økter for valgt periode (kun lesing). Beskrivende — aldri en " +
-        "sikkerhets- eller treningsport. Ingen klinisk endring; lagrede gjennomganger skrives ikke ennå.");
+    public string Disclaimer => Localized.Get("CaseReview_Panel_Disclaimer2",
+        "Saksgjennomgang sammenstilt fra dine lagrede økter for valgt periode. Beskrivende — aldri en sikkerhets- " +
+        "eller treningsport. «Lagre gjennomgang» skriver en gjennomgangsoppføring (utfallssnapshot) til " +
+        "gjennomgangsloggen. Ingen klinisk/sikkerhetslogikk er endret.");
 
     public IReadOnlyList<string> ReviewTypes { get; } = new[]
     {
@@ -63,6 +65,59 @@ public sealed partial class CaseReviewPanelViewModel : ObservableObject
     public IReadOnlyList<ClinicianRow> Overview { get; private set; } = Array.Empty<ClinicianRow>();
     public string OverviewHeading => Localized.Get("CaseReview_Overview", "Sammendrag for perioden");
 
+    // ── Persist the review (saved case-reviews store) ────────────────────────────────────────────────────────
+    private OutcomeProfile? _lastOutcome;
+    public string SaveLabel => Localized.Get("CaseReview_Save", "Lagre gjennomgang");
+    [ObservableProperty] private string _saveStatus = "";
+    public bool CanSave => HasReport && _lastOutcome is not null && _database is DatabaseService;
+    [ObservableProperty] private IReadOnlyList<string> _savedReviews = Array.Empty<string>();
+    public string SavedHeading => Localized.Get("CaseReview_Saved", "Lagrede gjennomganger");
+    public bool HasSaved => SavedReviews.Count > 0;
+
+    private CaseReviewsStore? BuildStore()
+        => _database is DatabaseService concrete
+            ? new CaseReviewsStore(new SqliteCaseReviewsRepository(concrete.ConnectionString))
+            : null;
+
+    private ReviewType SelectedType() => Array.IndexOf(ReviewTypes.ToArray(), SelectedReviewType) switch
+    {
+        1 => ReviewType.Goal, 2 => ReviewType.Progress, 3 => ReviewType.Recovery, _ => ReviewType.Monthly
+    };
+
+    [RelayCommand]
+    private void Save()
+    {
+        if (_lastOutcome is null) { SaveStatus = Localized.Get("CaseReview_NoData", "Ingen gjennomgang å lagre."); return; }
+        var store = BuildStore();
+        if (store is null) { SaveStatus = Localized.Get("CaseReview_NoDb2", "Databasen er ikke tilgjengelig i denne visningen."); return; }
+        try
+        {
+            DateTime now = DateTime.UtcNow;
+            DateTime start = DateTime.SpecifyKind(PeriodStart, DateTimeKind.Utc);
+            DateTime end = DateTime.SpecifyKind(PeriodEnd, DateTimeKind.Utc);
+            CaseReview review = new CaseReviewAssembler().Build(_lastOutcome, start, end, SelectedType(), now);
+            store.SaveAsync(review).GetAwaiter().GetResult();
+            SaveStatus = Localized.Get("CaseReview_Saved2", "Gjennomgang lagret.");
+            LoadSaved(store);
+            OnPropertyChanged(nameof(HasSaved));
+        }
+        catch (Exception ex) { SaveStatus = Localized.Get("CaseReview_SaveFailed", "Kunne ikke lagre: ") + ex.Message; }
+    }
+
+    private void LoadSaved(CaseReviewsStore? store = null)
+    {
+        store ??= BuildStore();
+        if (store is null) return;
+        try
+        {
+            SavedReviews = store.GetByUserAsync(1).GetAwaiter().GetResult()
+                .OrderByDescending(r => r.CreatedAt).Take(10)
+                .Select(r => $"{r.CreatedAt.ToLocalTime():yyyy-MM-dd HH:mm} · {r.ReviewType} · {r.PeriodStart:yyyy-MM-dd}–{r.PeriodEnd:yyyy-MM-dd} · {r.Status}")
+                .ToList();
+        }
+        catch { /* best-effort */ }
+    }
+
     partial void OnSelectedReviewTypeChanged(string value) => Build();
     partial void OnPeriodStartChanged(DateTime value) => Build();
     partial void OnPeriodEndChanged(DateTime value) => Build();
@@ -72,6 +127,8 @@ public sealed partial class CaseReviewPanelViewModel : ObservableObject
     {
         HasReport = false;
         Overview = Array.Empty<ClinicianRow>();
+        _lastOutcome = null;
+        OnPropertyChanged(nameof(CanSave));
         if (_database is null) return;
         try
         {
@@ -88,6 +145,7 @@ public sealed partial class CaseReviewPanelViewModel : ObservableObject
             OutcomeProfile outcome = builder
                 .AssembleFromStoreAsync(_database, null, new RecoveryIntelligenceService(), analytics, now, userId: 1)
                 .GetAwaiter().GetResult();
+            _lastOutcome = outcome;
 
             DateTime start = DateTime.SpecifyKind(PeriodStart, DateTimeKind.Utc);
             DateTime end = DateTime.SpecifyKind(PeriodEnd, DateTimeKind.Utc);
@@ -110,6 +168,7 @@ public sealed partial class CaseReviewPanelViewModel : ObservableObject
                     report.HasEnoughData ? Localized.Get("Clinician_Enough", "Tilstrekkelig") : Localized.Get("Clinician_NotEnough", "Utilstrekkelig")),
             };
             HasReport = sessionsInPeriod > 0 || report.HasEnoughData;
+            OnPropertyChanged(nameof(CanSave));
         }
         catch { HasReport = false; }
     }
