@@ -19,26 +19,43 @@
       </Border>
 
       <StackPanel Spacing="10" IsVisible="{Binding HasSessions}">
-        <TextBlock Text="{Binding Summary}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+        <!-- Four summary cards (WPF parity) -->
+        <ItemsControl ItemsSource="{Binding SummaryCards}">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border Classes="card" Width="180" Margin="0,0,10,10" Padding="12">
+                <StackPanel HorizontalAlignment="Center" Spacing="2">
+                  <TextBlock Text="{Binding Label}" FontSize="12" Foreground="{DynamicResource ShellMutedBrush}" HorizontalAlignment="Center"/>
+                  <TextBlock Text="{Binding Value}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource ShellAccentBrush}" HorizontalAlignment="Center"/>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
         <Border Classes="card">
           <StackPanel Spacing="2">
             <!-- Header row -->
-            <Grid ColumnDefinitions="70,80,*,90,90">
+            <Grid ColumnDefinitions="60,90,70,*,70,120,70">
               <TextBlock Grid.Column="0" Text="Tid" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-              <TextBlock Grid.Column="1" Text="Varighet" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-              <TextBlock Grid.Column="2" Text="Tonehøyde" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-              <TextBlock Grid.Column="3" Text="Resonans" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-              <TextBlock Grid.Column="4" Text="Score" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Grid.Column="1" Text="Nivå" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Grid.Column="2" Text="Varighet" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Grid.Column="3" Text="Tonehøyde" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Grid.Column="4" Text="Resonans" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Grid.Column="5" Text="Formant" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Grid.Column="6" Text="Score" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
             </Grid>
             <ItemsControl ItemsSource="{Binding Sessions}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                  <Grid ColumnDefinitions="70,80,*,90,90" Margin="0,3,0,0">
+                  <Grid ColumnDefinitions="60,90,70,*,70,120,70" Margin="0,3,0,0">
                     <TextBlock Grid.Column="0" Text="{Binding Time}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-                    <TextBlock Grid.Column="1" Text="{Binding Duration}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-                    <TextBlock Grid.Column="2" Text="{Binding Pitch}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-                    <TextBlock Grid.Column="3" Text="{Binding Resonance}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-                    <TextBlock Grid.Column="4" Text="{Binding Score}" Foreground="{DynamicResource ShellAccentBrush}"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Difficulty}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                    <TextBlock Grid.Column="2" Text="{Binding Duration}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                    <TextBlock Grid.Column="3" Text="{Binding Pitch}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                    <TextBlock Grid.Column="4" Text="{Binding Resonance}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                    <TextBlock Grid.Column="5" Text="{Binding Formant}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                    <TextBlock Grid.Column="6" Text="{Binding Score}" Foreground="{DynamicResource ShellAccentBrush}"/>
                   </Grid>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>

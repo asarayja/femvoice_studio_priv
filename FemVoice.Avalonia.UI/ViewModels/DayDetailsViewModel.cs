@@ -9,7 +9,7 @@ using FemVoice.Avalonia.Localization;
 namespace FemVoice.Avalonia.ViewModels;
 
 /// <summary>One session's detail row for the day view (real values from the saved session). Read-only.</summary>
-public sealed record DaySessionRow(string Time, string Duration, string Pitch, string Resonance, string Score);
+public sealed record DaySessionRow(string Time, string Difficulty, string Duration, string Pitch, string Resonance, string Formant, string Score);
 
 /// <summary>
 /// Day-details panel, ported from the WPF DayDetailsWindow: shows every REAL training session recorded on a chosen
@@ -37,8 +37,11 @@ public sealed class DayDetailsViewModel
 
     public IReadOnlyList<DaySessionRow> Sessions { get; private set; } = Array.Empty<DaySessionRow>();
     public bool HasSessions => Sessions.Count > 0;
-    public string EmptyMessage => Localized.Get("DayDetails_Empty", "Ingen økter registrert denne dagen.");
+    public string EmptyMessage => Localized.Get("DayDetails_NoSessions", "Ingen økter denne dagen.");
     public string Summary { get; private set; } = "";
+
+    /// <summary>The four WPF summary cards: sessions, total minutes, average score, average pitch.</summary>
+    public IReadOnlyList<AnalysisSummaryMetric> SummaryCards { get; private set; } = Array.Empty<AnalysisSummaryMetric>();
 
     private void Load(IDatabaseService? database, DateTime date)
     {
@@ -55,14 +58,28 @@ public sealed class DayDetailsViewModel
 
             Sessions = sessions.Select(s => new DaySessionRow(
                 s.StartTime.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture),
+                s.DifficultyLevel.ToString(),
                 $"{(int)Math.Round(s.DurationSeconds / 60.0)} min",
                 s.AveragePitch > 0 ? $"{s.AveragePitch:F0} Hz ({s.MinPitch:F0}–{s.MaxPitch:F0})" : "—",
                 s.ResonanceScore > 0 ? $"{s.ResonanceScore:F0}" : "—",
+                s.AverageF1 > 0 || s.AverageF2 > 0 ? $"F1 {s.AverageF1:F0} · F2 {s.AverageF2:F0}" : "—",
                 $"{s.OverallScore:F0} / 100")).ToList();
 
             if (sessions.Count > 0)
-                Summary = $"{sessions.Count} økter · snitt score {sessions.Average(s => s.OverallScore):F0} · "
-                        + $"total {(int)Math.Round(sessions.Sum(s => s.DurationSeconds) / 60.0)} min";
+            {
+                int totalMin = (int)Math.Round(sessions.Sum(s => s.DurationSeconds) / 60.0);
+                double avgScore = sessions.Average(s => s.OverallScore);
+                var pitches = sessions.Select(s => s.AveragePitch).Where(p => p > 0).ToList();
+                double avgPitch = pitches.Count > 0 ? pitches.Average() : 0;
+                Summary = $"{sessions.Count} økter · snitt score {avgScore:F0} · total {totalMin} min";
+                SummaryCards = new List<AnalysisSummaryMetric>
+                {
+                    new(Localized.Get("Main_TotalSessions", "Økter"), sessions.Count.ToString()),
+                    new(Localized.Get("Statistics_TotalTime", "Total tid"), $"{totalMin} min"),
+                    new(Localized.Get("DayDetails_AverageScore", "Gj. score"), $"{avgScore:F0} / 100"),
+                    new(Localized.Get("DayDetails_AverageHz", "Hz gj.snitt"), avgPitch > 0 ? $"{avgPitch:F0} Hz" : "—"),
+                };
+            }
         }
         catch { Sessions = Array.Empty<DaySessionRow>(); }
     }

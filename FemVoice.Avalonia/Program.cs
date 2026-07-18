@@ -742,9 +742,10 @@ internal static class Program
             bool twoSessions = det.HasSessions && det.Sessions.Count == 2;
             bool detailOk = det.Sessions.All(r => r.Score.Contains("/ 100")) && det.Sessions.Any(r => r.Resonance.Contains("55"));
             bool summaryOk = det.Summary.Contains("2 økter");
+            bool cardsOk = det.SummaryCards.Count == 4 && det.SummaryCards.All(c => c.Value.Length > 0);   // WPF 4 summary cards
 
-            Console.WriteLine($"[daydet] hasDays={hasDays} todayFound={todayFound} openedToday={openedToday} twoSessions={twoSessions} detailOk={detailOk} summaryOk={summaryOk}");
-            bool ok = hasDays && todayFound && openedToday && twoSessions && detailOk && summaryOk;
+            Console.WriteLine($"[daydet] hasDays={hasDays} todayFound={todayFound} openedToday={openedToday} twoSessions={twoSessions} detailOk={detailOk} summaryOk={summaryOk} cardsOk={cardsOk}");
+            bool ok = hasDays && todayFound && openedToday && twoSessions && detailOk && summaryOk && cardsOk;
             Console.WriteLine(ok ? "[daydet] Day details smoke OK" : "[daydet] Day details smoke FAIL");
             return ok ? 0 : 1;
         }
