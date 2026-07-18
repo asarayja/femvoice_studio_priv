@@ -43,19 +43,40 @@
             <Button Classes="secondary" Content="{Binding StopLabel}" Command="{Binding StopCommand}" IsVisible="{Binding IsRunning}"/>
           </StackPanel>
 
-          <!-- Live spectrum (real FFT) — the WPF spectrogram, as a live frequency spectrum -->
+          <!-- Live spectrum (real FFT) with the WPF spectrogram overlay: target line, main-freq line, F1/F2 markers -->
           <StackPanel Spacing="4" IsVisible="{Binding IsRunning}">
             <TextBlock Text="{Binding SpectrumHeading}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-            <Border Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="4" Padding="4" Height="98">
-              <ItemsControl ItemsSource="{Binding SpectrumBars}" VerticalAlignment="Bottom">
-                <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="1" VerticalAlignment="Bottom"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate>
-                    <Border Width="6" Height="{Binding}" VerticalAlignment="Bottom" Background="{DynamicResource ShellAccentBrush}" CornerRadius="1"/>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
+            <Border Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="4" Padding="4" Height="98"
+                    HorizontalAlignment="Left" ClipToBounds="True">
+              <Panel Width="{Binding SpectrumWidthPx}">
+                <ItemsControl ItemsSource="{Binding SpectrumBars}" VerticalAlignment="Bottom">
+                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="1" VerticalAlignment="Bottom"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Border Width="6" Height="{Binding}" VerticalAlignment="Bottom" Background="{DynamicResource ShellAccentBrush}" CornerRadius="1"/>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <!-- Overlay marker lines (positioned by frequency → px) -->
+                <Canvas>
+                  <Rectangle Canvas.Top="0" Width="2" Height="90" Fill="{DynamicResource ShellSuccessBrush}" Opacity="0.9"
+                             Canvas.Left="{Binding TargetMarkerPx}" IsVisible="{Binding HasTargetMarker}"/>
+                  <Rectangle Canvas.Top="0" Width="2" Height="90" Fill="{DynamicResource ShellMarkerBrush}"
+                             Canvas.Left="{Binding MainFreqMarkerPx}" IsVisible="{Binding HasMainFreqMarker}"/>
+                  <Rectangle Canvas.Top="0" Width="2" Height="90" Fill="{DynamicResource ShellWarningBrush}" Opacity="0.8"
+                             Canvas.Left="{Binding FormantF1MarkerPx}" IsVisible="{Binding HasF1Marker}"/>
+                  <Rectangle Canvas.Top="0" Width="2" Height="90" Fill="{DynamicResource ShellWarningBrush}" Opacity="0.55"
+                             Canvas.Left="{Binding FormantF2MarkerPx}" IsVisible="{Binding HasF2Marker}"/>
+                </Canvas>
+              </Panel>
             </Border>
+            <!-- Live formant readouts (F1/F2/F3) beside the spectrogram (WPF Analyzer) -->
+            <Grid ColumnDefinitions="Auto,*,*,*" IsVisible="{Binding IsRunning}">
+              <TextBlock Grid.Column="0" Text="{Binding FormantsHeading, StringFormat='{}{0}:'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0"/>
+              <TextBlock Grid.Column="1" Text="{Binding FormantF1, StringFormat='F1 {0}'}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
+              <TextBlock Grid.Column="2" Text="{Binding FormantF2, StringFormat='F2 {0}'}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
+              <TextBlock Grid.Column="3" Text="{Binding FormantF3, StringFormat='F3 {0}'}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
+            </Grid>
           </StackPanel>
 
           <!-- Live readouts -->
