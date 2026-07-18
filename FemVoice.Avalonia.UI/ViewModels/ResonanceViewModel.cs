@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -64,6 +65,25 @@ public sealed partial class ResonanceViewModel : ObservableObject, IDisposable
     public string DeviceLabel => Localized.Get("MicCal_Device", "Enhet");
     public string StartLabel => Localized.Get("MicCal_Start", "Start");
     public string StopLabel => Localized.Get("MicCal_Stop", "Stopp");
+    public string ResetLabel => Localized.Get("MicCalibration_Restart", "Nullstill");
+
+    // ── F1/F2 scatter + formant timeline (WPF ResonanceWindow charts) — real formant data from the Core engine ────
+    /// <summary>Logical scatter canvas + timeline sizes (px) and the formant Hz ranges they map into.</summary>
+    public const double ScatterWidthPx = 240, ScatterHeightPx = 160, TimelineHeightPx = 80;
+    private const double F1MinHz = 250, F1MaxHz = 1000;   // F1 → X (openness)
+    private const double F2MinHz = 700, F2MaxHz = 2800;   // F2 → Y (frontness / brightness)
+    private const int MaxFormantPoints = 60;
+
+    /// <summary>One plotted formant sample: X from F1 (openness), Y from F2 (frontness), both in scatter px.</summary>
+    public sealed record FormantPoint(double XPx, double YPx);
+    /// <summary>Live F1/F2 scatter (vowel-space) points — newest appended, bounded.</summary>
+    public ObservableCollection<FormantPoint> FormantScatter { get; } = new();
+    /// <summary>Formant timeline: F2 (the resonance-relevant formant) over time, as px-from-bottom heights.</summary>
+    public ObservableCollection<double> FormantTimelinePx { get; } = new();
+    public string ScatterHeading => Localized.Get("ResonanceWindow_FormantMap", "Formantkart (F1/F2)");
+    public string TimelineHeading => Localized.Get("ResonanceWindow_FormantTimeline", "Formant-tidslinje (F2)");
+    /// <summary>Live resonance category readout (Lys/Nøytral/Mørk) — WPF's bright/neutral/dark category.</summary>
+    [ObservableProperty] private string _categoryText = "—";
 
     // ── Optional resonance-contrast awareness demo (content only — non-scored) ────────────────────────────────
     public string ContrastTitle => Localized.Get("ResonanceContrast_Title", "Resonanskontrast (valgfri øvelse)");
@@ -99,11 +119,13 @@ public sealed partial class ResonanceViewModel : ObservableObject, IDisposable
         {
             if (_disposed || !Running) return;
             Level = pct;
-            LevelLabelText = pct >= 67 ? $"Lys ({pct})" : pct >= 34 ? $"Nøytral ({pct})" : $"Mørk ({pct})";
+            string cat = pct >= 67 ? "Lys" : pct >= 34 ? "Nøytral" : "Mørk";
+            LevelLabelText = $"{cat} ({pct})";
+            CategoryText = cat;
         });
     }
 
-    // Live formant snapshot (F1/F2/F3 in Hz) from the Core engine — display-only numeric readout.
+    // Live formant snapshot (F1/F2/F3 in Hz) from the Core engine — numeric readout + F1/F2 scatter + F2 timeline.
     private void OnFormants(FemVoiceStudio.Audio.FormantSnapshot f)
     {
         _ui.Post(() =>
@@ -112,7 +134,28 @@ public sealed partial class ResonanceViewModel : ObservableObject, IDisposable
             FormantF1 = f.F1 > 0 ? $"{f.F1:F0} Hz" : "—";
             FormantF2 = f.F2 > 0 ? $"{f.F2:F0} Hz" : "—";
             FormantF3 = f.F3 > 0 ? $"{f.F3:F0} Hz" : "—";
+
+            // Plot only real formant frames (a formant-less sine yields 0 — legitimately no point).
+            if (f.F1 > 0 && f.F2 > 0)
+            {
+                double x = Math.Clamp((f.F1 - F1MinHz) / (F1MaxHz - F1MinHz), 0, 1) * ScatterWidthPx;
+                double y = Math.Clamp((f.F2 - F2MinHz) / (F2MaxHz - F2MinHz), 0, 1) * ScatterHeightPx;
+                FormantScatter.Add(new FormantPoint(x, y));
+                while (FormantScatter.Count > MaxFormantPoints) FormantScatter.RemoveAt(0);
+                FormantTimelinePx.Add(y / ScatterHeightPx * TimelineHeightPx);
+                while (FormantTimelinePx.Count > MaxFormantPoints) FormantTimelinePx.RemoveAt(0);
+            }
         });
+    }
+
+    /// <summary>Clear the formant charts + readouts (WPF ResonanceWindow's Reset). Keeps capture running.</summary>
+    [RelayCommand]
+    private void Reset()
+    {
+        FormantScatter.Clear();
+        FormantTimelinePx.Clear();
+        FormantF1 = FormantF2 = FormantF3 = "—";
+        CategoryText = "—";
     }
 
     [RelayCommand]
@@ -138,7 +181,10 @@ public sealed partial class ResonanceViewModel : ObservableObject, IDisposable
         Running = false;
         Level = 0;
         LevelLabelText = "—";
+        CategoryText = "—";
         FormantF1 = FormantF2 = FormantF3 = "—";
+        FormantScatter.Clear();
+        FormantTimelinePx.Clear();
         StatusMessage = Localized.Get("Resonance_Stopped", "Stoppet.");
     }
 

@@ -26,6 +26,7 @@
             <Button Classes="primary" Content="{Binding StartLabel}" Command="{Binding StartCommand}"
                     IsVisible="{Binding !IsRunning}" IsEnabled="{Binding IsAvailable}"/>
             <Button Classes="secondary" Content="{Binding StopLabel}" Command="{Binding StopCommand}" IsVisible="{Binding IsRunning}"/>
+            <Button Classes="secondary" Content="{Binding ResetLabel}" Command="{Binding ResetCommand}" IsVisible="{Binding IsRunning}"/>
           </StackPanel>
           <StackPanel Spacing="6">
             <TextBlock Text="{Binding LevelLabel}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
@@ -52,6 +53,47 @@
                 <TextBlock Text="{Binding FormantF3}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="15" FontWeight="SemiBold"/>
               </StackPanel>
             </Grid>
+            <!-- Resonance category (Lys/Nøytral/Mørk) — WPF category readout -->
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="{Binding CategoryLabel, StringFormat='{}{0}:'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Text="{Binding CategoryText}" Foreground="{DynamicResource ShellAccentBrush}" FontSize="13" FontWeight="SemiBold"/>
+            </StackPanel>
+          </StackPanel>
+
+          <!-- F1/F2 scatter (vowel space) — WPF ResonanceWindow chart. Only real formant frames plot. -->
+          <StackPanel Spacing="4" IsVisible="{Binding IsRunning}">
+            <TextBlock Text="{Binding ScatterHeading}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+            <Border Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="4" Width="240" Height="160" HorizontalAlignment="Left" ClipToBounds="True">
+              <ItemsControl ItemsSource="{Binding FormantScatter}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><Canvas/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.Styles>
+                  <Style Selector="ContentPresenter">
+                    <Setter Property="Canvas.Left" Value="{Binding XPx}"/>
+                    <Setter Property="Canvas.Bottom" Value="{Binding YPx}"/>
+                  </Style>
+                </ItemsControl.Styles>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Ellipse Width="6" Height="6" Fill="{DynamicResource ShellAccentBrush}"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Border>
+          </StackPanel>
+
+          <!-- Formant timeline (F2 over time) — WPF ResonanceWindow chart -->
+          <StackPanel Spacing="4" IsVisible="{Binding IsRunning}">
+            <TextBlock Text="{Binding TimelineHeading}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+            <Border Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="4" Padding="4" Height="88">
+              <ItemsControl ItemsSource="{Binding FormantTimelinePx}" VerticalAlignment="Bottom">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="1" VerticalAlignment="Bottom"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Border Width="3" Height="{Binding}" VerticalAlignment="Bottom" Background="{DynamicResource ShellAccentBrush}" CornerRadius="1"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Border>
           </StackPanel>
           <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource ShellSuccessBrush}" FontSize="13" TextWrapping="Wrap"/>
         </StackPanel>
