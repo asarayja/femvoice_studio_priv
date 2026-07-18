@@ -245,19 +245,35 @@ internal static class Program
 
             // Richer detail (ported from WPF ProgressionDashboard): the VM surfaces stat metrics + target parameters
             // + a score-history chart + weekly summary from the real DB.
+            // Seed a per-dimension VoiceIntelligence record (the dashboard writes these per session) so the parameter
+            // graph has real data to average.
+            var analyticsW = new global::FemVoiceStudio.Services.SessionAnalyticsStore(
+                new global::FemVoiceStudio.Services.SqliteSessionAnalyticsRepository(db.ConnectionString));
+            analyticsW.RecordSessionCompletedAsync(new global::FemVoiceStudio.Services.SessionAnalyticsRecord
+            {
+                SessionId = 9001, UserId = 1, StartedAt = DateTime.UtcNow.AddMinutes(-10), EndedAt = DateTime.UtcNow.AddMinutes(-5),
+                ExerciseCount = 1, AverageHealthScore = 88,
+                ResonanceScore100 = 64, PitchScore100 = 72, IntonationScore100 = 58, ComfortScore100 = 70,
+                ConsistencyScore100 = 80, RecoveryScore100 = 90, CompositeVoiceScore = 71,
+            }).GetAwaiter().GetResult();
+
             // Today's-focus + Start-exercise wiring (WPF ProgressionDashboard parity): the VM surfaces the level's
             // focus area and the Start-exercise command invokes the injected navigate callback.
             bool navigated = false;
             var vm = new ProgressionViewModel(db, null, () => navigated = true);
+            // Parameter graph (WPF ProgressionDashboard) — now real, from the VI record just seeded.
+            bool paramGraphOk = vm.HasParameterGraph && vm.ParameterGraph.Count == 7
+                                && vm.ParameterGraph.Any(p => p.HasData && p.Score > 0)
+                                && vm.ParameterGraph.First(p => p.Label.Contains("Resonans")).Score == 64;
             bool detailOk = vm.EngineAvailable && vm.StatMetrics.Count >= 4 && vm.Parameters.Count >= 3
                             && vm.ScoreHistoryBars.Count == 6 && vm.WeeklySummary.Contains("økter");
             bool focusOk = vm.HasTodaysFocus && vm.TodaysFocusText.Length > 0;
             vm.StartExerciseCommand.Execute(null);
             bool startOk = navigated;
             Console.WriteLine($"[prog] levelOk={levelOk}('{levelName}') emptyOk={emptyOk} dataOk={dataOk} detailOk={detailOk} stats={vm.StatMetrics.Count} params={vm.Parameters.Count} hist={vm.ScoreHistoryBars.Count} weekly='{vm.WeeklySummary}'");
-            Console.WriteLine($"[prog] focusOk={focusOk}('{vm.TodaysFocusText}') startExerciseNavigates={startOk}");
+            Console.WriteLine($"[prog] focusOk={focusOk}('{vm.TodaysFocusText}') startExerciseNavigates={startOk} paramGraphOk={paramGraphOk}(dims={vm.ParameterGraph.Count})");
             Console.WriteLine($"[prog] summary: {summary1}");
-            bool ok = levelOk && emptyOk && dataOk && detailOk && focusOk && startOk;
+            bool ok = levelOk && emptyOk && dataOk && detailOk && focusOk && startOk && paramGraphOk;
             Console.WriteLine(ok ? "[prog] Progression engine smoke OK" : "[prog] Progression engine smoke FAIL");
             return ok ? 0 : 1;
         }
