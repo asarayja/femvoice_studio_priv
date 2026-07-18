@@ -17,6 +17,7 @@
       <StackPanel Orientation="Horizontal" Spacing="10">
         <Button x:Name="HamburgerButton" Content="☰" Classes="nav" Width="42" MinWidth="42" Padding="0"
                 HorizontalContentAlignment="Center" IsVisible="False" Click="OnHamburgerClick" VerticalAlignment="Center"/>
+        <Image Source="avares://FemVoice.Avalonia.UI/Assets/logo.png" Height="34" VerticalAlignment="Center" Stretch="Uniform"/>
         <TextBlock Text="FemVoice Studio" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"
                    Foreground="{DynamicResource ShellHeadingBrush}"/>
       </StackPanel>
