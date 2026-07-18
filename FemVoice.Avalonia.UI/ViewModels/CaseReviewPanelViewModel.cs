@@ -192,7 +192,7 @@ public sealed partial class CaseReviewPanelViewModel : ObservableObject
 
             DateTime now = DateTime.UtcNow;
             OutcomeProfile outcome = builder
-                .AssembleFromStoreAsync(_database, null, new RecoveryIntelligenceService(), analytics, now, userId: 1)
+                .AssembleFromStoreAsync(_database, new LocalVoiceGoalProfileStore(), new RecoveryIntelligenceService(), analytics, now, userId: 1)
                 .GetAwaiter().GetResult();
             _lastOutcome = outcome;
 

@@ -100,7 +100,7 @@ public sealed class ClinicianPanelViewModel
 
             DateTime now = DateTime.UtcNow;
             OutcomeProfile outcome = builder
-                .AssembleFromStoreAsync(database, null, new RecoveryIntelligenceService(), analytics, now, userId: 1)
+                .AssembleFromStoreAsync(database, new LocalVoiceGoalProfileStore(), new RecoveryIntelligenceService(), analytics, now, userId: 1)
                 .GetAwaiter().GetResult();
 
             OutcomeReport report = new ReportAssembler().BuildOutcomeReport(outcome, now.AddDays(-30), now, now);   // WPF canonical 30-day window
@@ -130,11 +130,17 @@ public sealed class ClinicianPanelViewModel
                     + (g.TargetValue > 0 ? $"  ({g.CurrentValue:F0} / {g.TargetValue:F0})" : "")))
                 .ToList();
 
+            // Effectiveness columns (WPF): composite + resonance gain / recovery cost / success-rate / session count.
             TopExercises = (report.TopExercises ?? Array.Empty<ExerciseEffectivenessProfile>())
                 .Take(5)
                 .Select(e => new ClinicianRow(
                     SafeExerciseName(e.ExerciseId),
-                    e.CompositeEffectiveness.ToString("F0", CultureInfo.InvariantCulture)))
+                    e.HasEnoughData
+                        ? $"{e.CompositeEffectiveness:F0} · " +
+                          $"{Localized.Get("Clinician_Gain", "gevinst")} {e.ResonanceGain:+0.0;-0.0;0} · " +
+                          $"{Localized.Get("Clinician_Cost", "kost")} {e.RecoveryCost:F0} · " +
+                          $"{Localized.Get("Clinician_Success", "suksess")} {e.UserSuccessRate:P0} · {e.SessionCount} økter"
+                        : e.CompositeEffectiveness.ToString("F0", CultureInfo.InvariantCulture)))
                 .ToList();
 
             // Recovery-intelligence detail from the assembled OutcomeProfile (WPF Clinician shows debt / overtraining

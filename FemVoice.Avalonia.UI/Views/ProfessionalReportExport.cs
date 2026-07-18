@@ -45,6 +45,9 @@ internal static class ProfessionalReportExport
             await using var stream = await file.OpenWriteAsync();
             // ExportWriter writes synchronously to the stream; the Core writer owns all formatting (incl. QuestPDF PDF).
             new ExportWriter().Write(report, format, stream);
+            // Report-generation telemetry (WPF logs the export) — best-effort, never affects the export.
+            try { FemVoiceStudio.Services.Rc0RuntimeLog.Write("ReportExport", $"Exported {report?.GetType().Name} as {format} -> {file.Name}"); }
+            catch { /* telemetry best-effort */ }
             status($"Lagret: {file.Name}");
         }
         catch (Exception ex)
