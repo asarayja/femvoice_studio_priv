@@ -80,23 +80,30 @@ public sealed class SmartCoachViewModel
             DateTime weekStart = DateTime.UtcNow.Date.AddDays(-7);
             var week = database.GetTrainingSessions(weekStart, DateTime.UtcNow).ToList();
             int totalMin = (int)Math.Round(week.Sum(s => s.DurationSeconds) / 60.0);
+            // Voice-health: average of the recorded VoiceHealthScore over the week's sessions (WPF's 4th quick-stat).
+            var health = week.Select(s => s.VoiceHealthScore).Where(h => h > 0).ToList();
+            double avgHealth = health.Count > 0 ? health.Average() : 0;
 
             DetailMetrics = new List<AnalysisSummaryMetric>
             {
                 new(Localized.Get("SmartCoach_DayStreak", "Dager på rad"), $"{streak}"),
                 new(Localized.Get("SmartCoach_SessionsThisWeek", "Økter denne uken"), $"{week.Count}"),
                 new(Localized.Get("SmartCoach_TotalTimeThisWeek", "Total tid denne uken"), $"{totalMin} min"),
+                new(Localized.Get("SmartCoach_VoiceHealth", "Stemmehelse"), health.Count > 0 ? $"{avgHealth:F0} / 100" : "—"),
                 new(Localized.Get("SmartCoach_Consistency", "Jevnhet"), $"{consistency:F0} %"),
             };
 
-            // Weekly history: sessions per local day for the last 7 days (newest first).
-            var byDay = week.GroupBy(s => s.StartTime.ToLocalTime().Date).ToDictionary(g => g.Key, g => g.Count());
+            // Weekly history: per local day for the last 7 days (newest first) — session count + average score.
+            var byDay = week.GroupBy(s => s.StartTime.ToLocalTime().Date).ToDictionary(g => g.Key, g => g.ToList());
             var hist = new List<AnalysisSummaryMetric>();
             for (int i = 0; i < 7; i++)
             {
                 var day = DateTime.Now.Date.AddDays(-i);
-                int count = byDay.TryGetValue(day, out var c) ? c : 0;
-                hist.Add(new AnalysisSummaryMetric(day.ToString("ddd dd.MM"), count > 0 ? $"{count} økter" : "—"));
+                if (byDay.TryGetValue(day, out var daySessions) && daySessions.Count > 0)
+                    hist.Add(new AnalysisSummaryMetric(day.ToString("ddd dd.MM"),
+                        $"{daySessions.Count} økter · snitt {daySessions.Average(s => s.OverallScore):F0}"));
+                else
+                    hist.Add(new AnalysisSummaryMetric(day.ToString("ddd dd.MM"), "—"));
             }
             WeeklyHistory = hist;
         }
