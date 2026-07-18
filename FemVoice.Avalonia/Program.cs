@@ -844,8 +844,28 @@ internal static class Program
                 Console.WriteLine($"[casereview] persist: canSave={canSave} savedShows={savedShows} stored={saved.Count} status='{panel.SaveStatus}'");
             }
 
-            Console.WriteLine($"[casereview] noDbOk={noDbOk} assembledOk={assembledOk} hasOverview={hasOverview} canOpen={canOpen} onPanel={onPanel} backToReports={backToReports} saveOk={saveOk} (hasReport={panel.HasReport} overview={panel.Overview.Count})");
-            bool ok = noDbOk && assembledOk && hasOverview && canOpen && onPanel && backToReports && saveOk;
+            // Complete (WPF sign-off): the saved draft transitions to Completed and persists (upsert by ReviewId).
+            bool completeOk;
+            {
+                bool canComplete = panel.CanComplete;   // a fresh draft was saved above
+                panel.CompleteCommand.Execute(null);
+                var store2 = new global::FemVoiceStudio.Services.CaseReviewsStore(
+                    new global::FemVoiceStudio.Services.SqliteCaseReviewsRepository(db.ConnectionString));
+                var all = store2.GetByUserAsync(1).GetAwaiter().GetResult();
+                bool nowCompleted = all.Any(r => r.Status == global::FemVoiceStudio.Models.ReviewStatus.Completed && r.CompletedAt is not null);
+                bool noDoubleComplete = !panel.CanComplete;   // already completed → can't complete again
+                completeOk = canComplete && nowCompleted && noDoubleComplete;
+                Console.WriteLine($"[casereview] complete: canComplete={canComplete} nowCompleted={nowCompleted} noDouble={noDoubleComplete} status='{panel.SaveStatus}'");
+            }
+
+            // Editable period (WPF parity): changing the period bounds re-runs the assembly (no crash) + updates display.
+            var midMonth = new DateTime(now.Year, now.Month, 15);
+            panel.PeriodStartOffset = new DateTimeOffset(new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc));
+            panel.PeriodEndOffset = new DateTimeOffset(DateTime.SpecifyKind(midMonth, DateTimeKind.Utc));
+            bool periodEditable = panel.PeriodEnd.Date == midMonth.Date && panel.PeriodDisplay.Contains(midMonth.ToString("yyyy-MM-dd"));
+
+            Console.WriteLine($"[casereview] noDbOk={noDbOk} assembledOk={assembledOk} hasOverview={hasOverview} canOpen={canOpen} onPanel={onPanel} backToReports={backToReports} saveOk={saveOk} completeOk={completeOk} periodEditable={periodEditable} (hasReport={panel.HasReport})");
+            bool ok = noDbOk && assembledOk && hasOverview && canOpen && onPanel && backToReports && saveOk && completeOk && periodEditable;
             Console.WriteLine(ok ? "[casereview] Case review smoke OK" : "[casereview] Case review smoke FAIL");
             return ok ? 0 : 1;
         }
