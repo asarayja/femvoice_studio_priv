@@ -145,10 +145,6 @@ public sealed class SettingsViewModel
                     // label / toggle caption); use short Norwegian labels here.
                     new(Localized.Get("Settings_Scaffold_PrivacyDiagnostics", "Diagnostikk-samtykke"), deferred, SettingsControlKind.Toggle, Localized.Get("Settings_Scaffold_PrivacyDiagnostics", "Diagnostikk-samtykke")),
                     new(Localized.Get("Settings_Scaffold_PrivacyResearch", "Forskningsdeling"), deferred, SettingsControlKind.Toggle, Localized.Get("Settings_Scaffold_PrivacyResearch", "Forskningsdeling")),
-                    // WPF Privacy parity: the informational consent paragraphs (real shared Privacy_* keys), as info rows.
-                    new(Localized.Get("Privacy_DiagnosticsConsent", "Diagnostikk eksporteres bare når du selv aktiverer det."), "", SettingsControlKind.Info),
-                    new(Localized.Get("Privacy_ResearchWarning", "Forskningsdata anonymiseres som standard."), "", SettingsControlKind.Info),
-                    new(Localized.Get("Privacy_ProfessionalNotesWarning", "Profesjonelle notater kan inneholde sensitiv fritekst."), "", SettingsControlKind.Info),
                 }),
 
             // About — read-only info.
@@ -183,6 +179,16 @@ public sealed class SettingsViewModel
     public string DeferredBanner { get; }
     public string SafetyNote { get; }
     public IReadOnlyList<SettingsSection> Sections { get; }
+
+    /// <summary>WPF Privacy consent paragraphs (informational, real shared Privacy_* keys) — rendered as a text block,
+    /// NOT as short toggle-row labels.</summary>
+    public IReadOnlyList<string> ConsentParagraphs { get; } = new[]
+    {
+        Localized.Get("Privacy_DiagnosticsConsent", "Diagnostikk eksporteres bare når du selv aktiverer det."),
+        Localized.Get("Privacy_ResearchWarning", "Forskningsdata anonymiseres som standard."),
+        Localized.Get("Privacy_ProfessionalNotesWarning", "Profesjonelle notater kan inneholde sensitiv fritekst."),
+    };
+    public string ConsentHeading => Localized.Get("Privacy_Title", "Personvern / diagnostikk");
 
     /// <summary>Always <c>true</c>: every row/control in the scaffold is deferred/inert.</summary>
     public bool AllControlsDeferred => Sections.All(s => s.Rows.All(r => !r.IsEnabled));

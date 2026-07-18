@@ -98,6 +98,20 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
 
+      <!-- Privacy consent paragraphs (WPF): informational text block, not toggle-row labels -->
+      <Border Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding ConsentHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <ItemsControl ItemsSource="{Binding ConsentParagraphs}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12" Margin="0,2"/>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
       <TextBlock Text="{Binding SafetyNote}"
                  Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
 
