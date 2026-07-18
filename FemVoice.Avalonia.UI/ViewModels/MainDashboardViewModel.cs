@@ -92,6 +92,40 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
             foreach (var r in _history.Recent(5)) RecentSessions.Add(r);
         }
         HasRecentSessions = RecentSessions.Count > 0;
+        RefreshProgression();
+    }
+
+    // ── "Din progresjon" block (ported from the WPF MainWindow) — real level/streak/totals from the DB ──────────
+    [ObservableProperty] private bool _hasProgression;
+    [ObservableProperty] private string _progLevelName = "—";
+    [ObservableProperty] private string _progTotalSessions = "0";
+    [ObservableProperty] private string _progStreak = "0";
+    [ObservableProperty] private string _progToNext = "";
+    [ObservableProperty] private double _progPercent;
+    public string ProgressionHeading => Localized.Get("Main_YourProgress", "Din progresjon");
+    public string ProgTotalLabel => Localized.Get("Main_TotalSessions", "Totalt antall økter");
+    public string ProgStreakLabel => Localized.Get("Main_Streak", "Dager på rad");
+    public string ProgLevelLabel => Localized.Get("Main_CurrentLevel", "Nåværende nivå");
+
+    private void RefreshProgression()
+    {
+        if (_database is null) { HasProgression = false; return; }
+        try
+        {
+            var status = new FemVoiceStudio.Services.ProgressionService(_database, LocalizationService.Instance).GetProgressionStatus();
+            var level = FemVoiceStudio.Services.LevelClassificationSystem.FromDifficultyLevel(status.CurrentLevel);
+            ProgLevelName = FemVoiceStudio.Services.LevelClassificationSystem.GetLevelName(level);
+            ProgTotalSessions = status.TotalSessions.ToString();
+            ProgStreak = status.CurrentStreak.ToString();
+            if (status.SessionsRequiredForPromotion > 0)
+            {
+                ProgPercent = System.Math.Round(System.Math.Clamp(100.0 * status.SessionsAtCurrentLevel / status.SessionsRequiredForPromotion, 0, 100));
+                ProgToNext = Localized.Get("Main_SessionsToNextLevel", "Økter til neste nivå") +
+                             $": {System.Math.Max(0, status.SessionsRequiredForPromotion - status.SessionsAtCurrentLevel)}";
+            }
+            HasProgression = true;
+        }
+        catch { HasProgression = false; }
     }
 
     // ── Live state (bound by the dashboard) ───────────────────────────────────

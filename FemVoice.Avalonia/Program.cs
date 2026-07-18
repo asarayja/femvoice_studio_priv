@@ -606,10 +606,13 @@ internal static class Program
             bool sessionSaved = saved.Count >= 1;
             double savedResonance = saved.Count > 0 ? saved.OrderByDescending(s => s.StartTime).First().ResonanceScore : -1;
 
-            Console.WriteLine($"[dash-res] liveReadout='{liveReadout}' liveReal={liveReal} sessionSaved={sessionSaved} savedResonance={savedResonance:F1}");
+            // "Din progresjon" block (WPF parity) — a DB-backed dashboard exposes the real progression summary.
+            bool progressionOk = vm.HasProgression && vm.ProgLevelName.Length > 0 && vm.ProgressionHeading.Length > 0;
+
+            Console.WriteLine($"[dash-res] liveReadout='{liveReadout}' liveReal={liveReal} sessionSaved={sessionSaved} savedResonance={savedResonance:F1} progression={progressionOk}(level='{vm.ProgLevelName}')");
             // The synthetic sine may or may not yield valid formants every run; require the pipeline to run without
             // error + a session saved with a resonance field present (>= 0). Live readout is reported for insight.
-            bool ok = sessionSaved && savedResonance >= 0;
+            bool ok = sessionSaved && savedResonance >= 0 && progressionOk;
             Console.WriteLine(ok ? "[dash-res] Dashboard resonance smoke OK" : "[dash-res] Dashboard resonance smoke FAIL");
             return ok ? 0 : 1;
         }
