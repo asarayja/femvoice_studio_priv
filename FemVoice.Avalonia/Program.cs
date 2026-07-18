@@ -58,6 +58,7 @@ internal static class Program
         if (args.Contains("--clinician-panel-smoke")) return ClinicianPanelSmoke();
         if (args.Contains("--professional-export-smoke")) return ProfessionalExportSmoke();
         if (args.Contains("--timeline-panel-smoke")) return TimelinePanelSmoke();
+        if (args.Contains("--manual-override-smoke")) return ManualOverrideSmoke();
         if (args.Contains("--dashboard-resonance-smoke")) return DashboardResonanceSmoke().GetAwaiter().GetResult();
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
@@ -647,6 +648,44 @@ internal static class Program
         finally { Cleanup(); }
     }
 
+    // SAFETY-CRITICAL verification of the Manual Override panel (no display): the FROZEN two-stage clamp is applied
+    // and the panel shows ONLY the clamped outcome — never the raw intent. With an aggressive intended profile +
+    // blocked gate + severe recovery, the clamp must engage (WasClamped) and the shown resonance ceiling must be
+    // pulled BELOW the raw intended ceiling (more conservative). Display-only: nothing is persisted or applied.
+    private static int ManualOverrideSmoke()
+    {
+        var factory = new global::FemVoiceStudio.Services.ExerciseProfileFactory();
+        var baseline = factory.CreateProfile(global::FemVoiceStudio.Models.ExerciseProfileType.ResonanceHumming);
+
+        var vm = new ManualOverridePanelViewModel();
+        // Aggressive intent: push the resonance ceiling well ABOVE the baseline, relax stability, shorten hold —
+        // then blockade the safety gate and mark severe recovery so the clamp must engage.
+        double rawIntendedMax = baseline.TargetResonanceMax + 400;
+        vm.BaselineProfileType = global::FemVoiceStudio.Models.ExerciseProfileType.ResonanceHumming;
+        vm.IntendedResonanceMin = baseline.TargetResonanceMin;
+        vm.IntendedResonanceMax = rawIntendedMax;
+        vm.IntendedStabilityThreshold = 0.1;
+        vm.IntendedRequiredHoldSeconds = 0;
+        vm.SimulateGateBlocked = true;
+        vm.RecoverySeverity = global::FemVoiceStudio.Services.RecoverySeverity.Urgent;   // triggers Evaluate()
+
+        // Parse the shown clamped ceiling ("min–max").
+        double shownMax = -1;
+        var parts = vm.AppliedResonance.Split('–', '-');
+        if (parts.Length == 2) double.TryParse(parts[1], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out shownMax);
+
+        bool applied = vm.WasApplied;
+        bool clamped = vm.WasClamped;
+        bool neverEchoesRawIntent = shownMax >= 0 && shownMax < rawIntendedMax;   // the raw ceiling is NOT shown
+        bool moreConservative = shownMax <= baseline.TargetResonanceMax + 0.5;    // clamped down toward/under baseline
+        Console.WriteLine($"[override] rawIntendedMax={rawIntendedMax:F0} baselineMax={baseline.TargetResonanceMax:F0} shownMax={shownMax:F0}");
+        Console.WriteLine($"[override] applied={applied} clamped={clamped} neverEchoesRawIntent={neverEchoesRawIntent} moreConservative={moreConservative} outcome='{vm.OutcomeText}'");
+
+        bool ok = applied && clamped && neverEchoesRawIntent && moreConservative;
+        Console.WriteLine(ok ? "[override] Manual override smoke OK" : "[override] Manual override smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
     // Avalonia-local session-history persistence: round-trips display-only records through a JSON store, degrades
     // gracefully on missing/corrupt files, caps + newest-first, and defaults to the Avalonia-local path (NOT the WPF
     // DB). Uses a TEMP path so it is deterministic and never touches the real history file. No clinical scoring.
@@ -725,8 +764,9 @@ internal static class Program
             "progression" or "progresjon" => "progresjon",
             "firstsetup" or "firsttimesetup" or "onboarding" or "førstegangsoppsett" => "førstegang",
             "miccalibration" or "calibration" or "mikrofonkalibrering" or "mic" => "mikrofon",
+            "manualoverride" or "override" or "overstyring" => "overstyring",
             _ => "",
-            // (coach panel is opened from within Reports, not a top-level nav item)
+            // (coach/clinician/timeline panels are opened from within Reports, not top-level nav items)
         };
         // Coach/Clinician panels are opened from within Reports (not top-level nav items) — navigate explicitly.
         if (page is "coach" or "coachpanel" or "veilederpanel")
@@ -1142,7 +1182,7 @@ internal static class Program
                           $"no-orphan-frames={noOrphanFrames} fresh-instance={distinctInstance} " +
                           $"second-running={secondRunning} no-orphan={firstStillStopped}");
 
-        bool ok = landsOnDashboard && shell.NavItems.Count == 12 && implemented == 12 && deferred == 0
+        bool ok = landsOnDashboard && shell.NavItems.Count == 13 && implemented == 13 && deferred == 0
                   && onGuide && backToDash && onDeferred && deferredInert && onProgScaffold && onCoachScaffold
                   && runtimeRunning && firstDisposedOnNav && noOrphanFrames
                   && distinctInstance && secondRunning && firstStillStopped;
@@ -1179,7 +1219,7 @@ internal static class Program
         var svc = new VoiceFeminizationExerciseService();
         var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
         var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
-        bool navLabelsOk = shell.NavItems.Count == 12
+        bool navLabelsOk = shell.NavItems.Count == 13
             && shell.NavItems.All(n => !string.IsNullOrWhiteSpace(n.Label))
             && shell.NavItems[0].Label == "Dashbord"
             && shell.NavItems[2].Label == "Innstillinger"   // Settings implemented
@@ -1859,7 +1899,7 @@ internal static class Program
         var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
         int implemented = shell.NavItems.Count(n => n.IsImplemented);
         int deferred = shell.NavItems.Count(n => !n.IsImplemented);
-        bool navOk = shell.NavItems.Count == 12 && implemented == 12 && deferred == 0;   // deferred surfaces stay deferred
+        bool navOk = shell.NavItems.Count == 13 && implemented == 13 && deferred == 0;   // deferred surfaces stay deferred
 
         // Settings stays display-only/inert: not IDisposable, exposes no IRelayCommand (no actions/persistence wired).
         bool settingsInert = !typeof(System.IDisposable).IsAssignableFrom(typeof(SettingsViewModel))
@@ -2478,7 +2518,7 @@ internal static class Program
                         && !coach.EngineAvailable && !string.IsNullOrWhiteSpace(coach.UnavailableNote);
 
         // Sidebar intact (9 items; both now implemented → 1 deferred = Mikrofonkalibrering) and dashboard nav works.
-        bool navIntact = shell.NavItems.Count == 12 && shell.NavItems.Count(n => !n.IsImplemented) == 0
+        bool navIntact = shell.NavItems.Count == 13 && shell.NavItems.Count(n => !n.IsImplemented) == 0
                          && shell.NavItems.First(n => n.Label.Contains("SmartCoach")).IsImplemented
                          && shell.NavItems.First(n => n.Label.Contains("Progresjon")).IsImplemented;
         shell.ShowDashboardCommand.Execute(null);
@@ -2532,7 +2572,7 @@ internal static class Program
         bool deferredWording = settings.DeferredBadge.Contains("Utsatt") && settings.DeferredBanner.Length > 0;
 
         // Sidebar intact.
-        bool navIntact = shell.NavItems.Count == 12 && shell.NavItems.Count(n => n.IsImplemented) == 12;
+        bool navIntact = shell.NavItems.Count == 13 && shell.NavItems.Count(n => n.IsImplemented) == 13;
 
         Console.WriteLine($"[settings-vis] onSettings={onSettings} navOk={navOk} sections={settings.Sections.Count} controls(combo/toggle/button)={hasCombo}/{hasToggle}/{hasButton}");
         Console.WriteLine($"[settings-vis] allInert={allInert} chipsOnActionable={chipsOnActionable} deferredWording={deferredWording} notDisposable={notDisposable} noCommands={noCommands} noServiceDeps={noServiceDeps} navIntact={navIntact}");
@@ -2591,7 +2631,7 @@ internal static class Program
         bool guideFilterIntact = guideVm.CategoryChips.Count >= 2 && guideVm.FilteredExercises.Count == guideVm.Exercises.Count;
         guideVm.SearchText = "zzqx-none"; bool searchWorks = guideVm.FilteredCount == 0; guideVm.SearchText = "";
         bool dashboardChartIntact = dash.DashboardChart is not null;   // chart model unchanged
-        bool navIntact = shell.NavItems.Count == 12 && shell.NavItems.Count(n => n.IsImplemented) == 12;
+        bool navIntact = shell.NavItems.Count == 13 && shell.NavItems.Count(n => n.IsImplemented) == 13;
 
         Console.WriteLine($"[layout] source={(SourcePresent ? "present" : "skipped")} settingsResponsive={settingsResponsive} scaffoldsCentered={scaffoldsCentered} guideCentered={guideCentered}");
         Console.WriteLine($"[layout] settingsInert={settingsInert} scaffoldsDeferred={scaffoldsDeferred} guideFilterIntact={guideFilterIntact}&searchWorks={searchWorks} dashboardChartIntact={dashboardChartIntact} navIntact={navIntact}");

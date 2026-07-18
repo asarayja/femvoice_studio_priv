@@ -86,6 +86,7 @@
             <DataTemplate DataType="vm:CoachPanelViewModel"><views:CoachPanelView/></DataTemplate>
             <DataTemplate DataType="vm:ClinicianPanelViewModel"><views:ClinicianPanelView/></DataTemplate>
             <DataTemplate DataType="vm:TimelinePanelViewModel"><views:TimelinePanelView/></DataTemplate>
+            <DataTemplate DataType="vm:ManualOverridePanelViewModel"><views:ManualOverridePanelView/></DataTemplate>
             <!-- Static deferred placeholder (no services, no side effects) -->
             <DataTemplate DataType="vm:DeferredSurfaceViewModel">
               <ScrollViewer>
