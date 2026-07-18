@@ -65,7 +65,10 @@ public partial class ShellViewModel : ObservableObject
         // The Avalonia app's default backend is synthetic; fall back to it when no service is injected (headless).
         _audioReadiness = new FemVoice.Avalonia.Audio.AudioReadiness(
             capture ?? new FemVoiceStudio.Audio.Abstractions.SyntheticAudioCaptureService());
-        _showMicCalibrationCommand = new RelayCommand(() => ShowDeferred("Mikrofonkalibrering"));
+        // Real mic-check page: a fresh, disposable MicCalibrationViewModel per open (its own capture backend,
+        // stopped on navigate-away by the transient-page dispose guard). Real backend in production, synthetic in
+        // headless/tests. No clinical calibration profile is computed/saved (deferred).
+        _showMicCalibrationCommand = new RelayCommand(() => CurrentPage = new MicCalibrationViewModel(null, _ui));
         BuildPages();
         BuildNav();
         _currentPage = dashboard;
@@ -107,7 +110,7 @@ public partial class ShellViewModel : ObservableObject
             new(Localized.Get("Shell_Nav_Progresjon", "Progresjon"), true, ShowProgressionCommand),   // engine-backed
             new(Localized.Get("Shell_Nav_SmartCoach", "SmartCoach"), true, ShowSmartCoachCommand),   // engine-backed
             new(Localized.Get("Shell_Nav_FirstSetup", "Førstegangsoppsett"), true, ShowFirstTimeSetupCommand),   // real onboarding
-            new(DeferredLabel("Mikrofonkalibrering"), false, _showMicCalibrationCommand),
+            new(Localized.Get("Shell_Nav_MicCalibration", "Mikrofonkalibrering"), true, _showMicCalibrationCommand),
         };
     }
 
@@ -192,6 +195,7 @@ public partial class ShellViewModel : ObservableObject
             SmartCoachViewModel => Localized.Get("SmartCoach_Scaffold_Title", "SmartCoach"),
             SmartCoachScaffoldViewModel => $"{Localized.Get("SmartCoach_Title", "SmartCoach")} (utsatt)",
             FirstTimeSetupViewModel => Localized.Get("Shell_Nav_FirstSetup", "Førstegangsoppsett"),
+            MicCalibrationViewModel => Localized.Get("Shell_Nav_MicCalibration", "Mikrofonkalibrering"),
             DeferredSurfaceViewModel d => $"{d.SurfaceName} (utsatt)",
             _ => "—",
         };
