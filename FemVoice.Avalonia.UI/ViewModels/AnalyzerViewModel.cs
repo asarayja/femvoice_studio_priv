@@ -39,6 +39,7 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
         _ui = ui ?? new InlineUiDispatcher();
         _capture = capture;
         _resonance.ResonanceScoreUpdated += OnResonance;
+        _resonance.FormantsUpdated += OnFormants;
         try
         {
             var probe = _capture ?? AudioCaptureBackendFactory.CreateForRuntime();
@@ -74,6 +75,33 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
     /// <summary>Live spectrum bar heights (px) — magnitude per frequency band from the FFT.</summary>
     [ObservableProperty] private IReadOnlyList<double> _spectrumBars = System.Array.Empty<double>();
     public string SpectrumHeading => Localized.Get("Analyzer_Spectrogram", "Spektrum");
+
+    // ── Spectrogram overlay (WPF Analyzer): main-freq line + target line + F1/F2 formant markers over the spectrum ──
+    private const double BarWidthPx = 6, BarSpacingPx = 1, SpectrumPadPx = 4;
+    /// <summary>Total logical spectrum width (px), matching the bar strip the markers overlay.</summary>
+    public double SpectrumWidthPx => SpectrumPadPx * 2 + SpectrumBarCount * (BarWidthPx + BarSpacingPx);
+    /// <summary>X px of the current main-frequency line over the spectrum (−1 = out of range / hidden).</summary>
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(HasMainFreqMarker))] private double _mainFreqMarkerPx = -1;
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(HasTargetMarker))] private double _targetMarkerPx = -1;
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(HasF1Marker))] private double _formantF1MarkerPx = -1;
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(HasF2Marker))] private double _formantF2MarkerPx = -1;
+    public bool HasMainFreqMarker => MainFreqMarkerPx >= 0;
+    public bool HasTargetMarker => TargetMarkerPx >= 0;
+    public bool HasF1Marker => FormantF1MarkerPx >= 0;
+    public bool HasF2Marker => FormantF2MarkerPx >= 0;
+    // Live formant readouts (WPF Analyzer shows F1/F2/F3 alongside the spectrogram).
+    [ObservableProperty] private string _formantF1 = "—";
+    [ObservableProperty] private string _formantF2 = "—";
+    [ObservableProperty] private string _formantF3 = "—";
+    public string FormantsHeading => Localized.Get("ResonanceWindow_Formants", "Formanter");
+
+    // Map a frequency (Hz) to an X px on the log-spaced spectrum strip; −1 when outside [SpectrumMinHz, SpectrumMaxHz].
+    private static double FreqToSpectrumPx(double freq)
+    {
+        if (freq < SpectrumMinHz || freq > SpectrumMaxHz) return -1;
+        double index = SpectrumBarCount * Math.Log(freq / SpectrumMinHz) / Math.Log(SpectrumMaxHz / SpectrumMinHz);
+        return SpectrumPadPx + index * (BarWidthPx + BarSpacingPx);
+    }
 
     /// <summary>One musical-note target choice (name + frequency) for the note picker.</summary>
     public sealed record NoteOption(string Label, double Frequency);
@@ -195,6 +223,8 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
         AveragePitch = MinPitch = MaxPitch = 0;
         SampleCount = 0;
         _resonancePct = 0;
+        TargetMarkerPx = FreqToSpectrumPx(TargetFrequency);   // target line over the spectrogram
+        MainFreqMarkerPx = FormantF1MarkerPx = FormantF2MarkerPx = -1;
         _startUtc = DateTime.UtcNow;
         _resonance.Start();
         _capture.FrameAvailable += OnFrame;
@@ -213,6 +243,8 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
         Running = false;
         _fftFill = 0;
         SpectrumBars = System.Array.Empty<double>();
+        MainFreqMarkerPx = TargetMarkerPx = FormantF1MarkerPx = FormantF2MarkerPx = -1;
+        FormantF1 = FormantF2 = FormantF3 = "—";
         StatusMessage = Localized.Get("Analyzer_Done", "Ferdig. Statistikken viser hele opptaket.");
         ComputeDistribution();   // quantiles + range distribution over the full recording
     }
@@ -276,6 +308,7 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
         {
             if (_disposed || !Running) return;
             MainFrequency = r.IsVoiced ? Math.Round(pitch, 1) : 0;
+            MainFreqMarkerPx = r.IsVoiced ? FreqToSpectrumPx(pitch) : -1;   // main-freq line over the spectrogram
             ResonanceText = r.IsVoiced ? (resPct >= 67 ? $"Lys ({resPct})" : resPct >= 34 ? $"Nøytral ({resPct})" : $"Mørk ({resPct})") : "—";
             TargetDeltaText = r.IsVoiced && TargetFrequency > 0 ? $"{(pitch - TargetFrequency):+0;-0;0} Hz fra mål" : "—";
             AveragePitch = Math.Round(avg, 1);
@@ -286,11 +319,29 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
         });
     }
 
+    // Live formant snapshot (F1/F2/F3) → readouts + F1/F2 markers over the spectrogram (WPF Analyzer overlay).
+    private void OnFormants(FemVoiceStudio.Audio.FormantSnapshot f)
+    {
+        _ui.Post(() =>
+        {
+            if (_disposed || !Running) return;
+            FormantF1 = f.F1 > 0 ? $"{f.F1:F0} Hz" : "—";
+            FormantF2 = f.F2 > 0 ? $"{f.F2:F0} Hz" : "—";
+            FormantF3 = f.F3 > 0 ? $"{f.F3:F0} Hz" : "—";
+            FormantF1MarkerPx = f.F1 > 0 ? FreqToSpectrumPx(f.F1) : -1;
+            FormantF2MarkerPx = f.F2 > 0 ? FreqToSpectrumPx(f.F2) : -1;
+        });
+    }
+
+    // Keep the target line positioned when the user changes the target frequency (note picker / spinner).
+    partial void OnTargetFrequencyChanged(double value) => TargetMarkerPx = FreqToSpectrumPx(value);
+
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
         _resonance.ResonanceScoreUpdated -= OnResonance;
+        _resonance.FormantsUpdated -= OnFormants;
         if (_capture is not null) { _capture.FrameAvailable -= OnFrame; _ = _capture.StopAsync(); }
         _resonance.Stop();
         _resonance.Dispose();

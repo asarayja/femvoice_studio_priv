@@ -876,8 +876,11 @@ internal static class Program
         // Live FFT spectrum: bars accumulate from the mic frames, with a peak in a band inside the vocal range.
         int spectrumBarCount = vm.SpectrumBars.Count;
         bool spectrumOk = spectrumBarCount > 0 && vm.SpectrumBars.Any(b => b > 0);
+        // Spectrogram overlay (WPF parity): the target line is positioned (220 Hz is in-range) and the ~200 Hz main-
+        // frequency line is positioned too. (Formant F1/F2 markers need real voice — a sine has none — so not asserted.)
+        bool overlayOk = vm.HasTargetMarker && vm.TargetMarkerPx > 0 && vm.HasMainFreqMarker && vm.MainFreqMarkerPx > 0;
         vm.StopCommand.Execute(null);
-        bool stopped = !vm.IsRunning;
+        bool stopped = !vm.IsRunning && !vm.HasMainFreqMarker;   // markers cleared on stop
         // Note picker (WPF parity): selecting a musical note sets the target frequency to that note's Hz.
         vm.SelectNoteCommand.Execute(vm.NoteOptions.First(n => n.Label == "C4"));
         bool noteOk = Math.Abs(vm.TargetFrequency - 262) < 0.5;
@@ -885,8 +888,8 @@ internal static class Program
         bool distOk = vm.HasDistribution && vm.Quantiles.Count == 7 && vm.RangeDistribution.Count == 5
                       && vm.RangeDistribution.All(r => r.Value.Contains("%"));
 
-        Console.WriteLine($"[analyzer] navImpl={navImpl} onPage={onPage} disposedOnLeave={disposedOnLeave} available={available} running={running} liveFreq={liveFreq}({vm.MainFrequency:F0}Hz) stats={stats}(n={vm.SampleCount},avg={vm.AveragePitch:F0}) spectrumOk={spectrumOk}(bars={spectrumBarCount}) noteOk={noteOk}({vm.TargetFrequency:F0}Hz) stopped={stopped} distOk={distOk}(q={vm.Quantiles.Count},r={vm.RangeDistribution.Count})");
-        bool ok = navImpl && onPage && disposedOnLeave && available && running && liveFreq && stats && spectrumOk && noteOk && stopped && distOk;
+        Console.WriteLine($"[analyzer] navImpl={navImpl} onPage={onPage} disposedOnLeave={disposedOnLeave} available={available} running={running} liveFreq={liveFreq}({vm.MainFrequency:F0}Hz) stats={stats}(n={vm.SampleCount},avg={vm.AveragePitch:F0}) spectrumOk={spectrumOk}(bars={spectrumBarCount}) overlayOk={overlayOk} noteOk={noteOk}({vm.TargetFrequency:F0}Hz) stopped={stopped} distOk={distOk}(q={vm.Quantiles.Count},r={vm.RangeDistribution.Count})");
+        bool ok = navImpl && onPage && disposedOnLeave && available && running && liveFreq && stats && spectrumOk && overlayOk && noteOk && stopped && distOk;
         Console.WriteLine(ok ? "[analyzer] Analyzer smoke OK" : "[analyzer] Analyzer smoke FAIL");
         return ok ? 0 : 1;
     }
