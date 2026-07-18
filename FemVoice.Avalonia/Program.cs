@@ -3071,7 +3071,9 @@ internal static class Program
         bool noCommands = typeof(SettingsViewModel).GetProperties()
             .All(p => !typeof(global::CommunityToolkit.Mvvm.Input.IRelayCommand).IsAssignableFrom(p.PropertyType));
         var ctors = typeof(SettingsViewModel).GetConstructors();
-        bool noServiceDeps = ctors.Length == 1 && ctors[0].GetParameters().Length == 0;
+        // No heavy service/DB/clinical deps: the only ctor params allowed are optional System.Action navigation
+        // callbacks (re-run onboarding / open mic calibration) — not services.
+        bool noServiceDeps = ctors.Length == 1 && ctors[0].GetParameters().All(p => p.ParameterType == typeof(System.Action));
 
         // WPF-like section set: 9 non-empty section cards (titles are localization-resolved, so we assert the
         // count + non-emptiness rather than brittle language-specific substrings).
@@ -3398,8 +3400,24 @@ internal static class Program
                 System.IO.Path.Combine(blockerFile, "ui-preferences.json"));   // parent is a file → CreateDirectory fails
             bool saveFailureGraceful = badStore.Save(new global::FemVoice.Avalonia.Preferences.UiPreferences()) == false;
 
-            Console.WriteLine($"[prefs] defaults={defaultsOk} saved={saved} reload={reloadOk} corruptFallback={corruptOk} normalizeLang={normOk} pathLocal={pathLocal} saveFailureGraceful={saveFailureGraceful}");
-            bool ok = defaultsOk && saved && reloadOk && corruptOk && normOk && pathLocal && saveFailureGraceful;
+            // 8) The interactive UiPreferencesViewModel now edits + persists voice-goal STYLE + training FREQUENCY too,
+            //    and exposes working re-run-onboarding / open-mic-calibration action commands (WPF Settings parity).
+            string tmp8 = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+                "femvoice-avalonia-prefs-smoke", System.Guid.NewGuid().ToString("N"), "ui-preferences.json");
+            var store8 = new global::FemVoice.Avalonia.Preferences.UiPreferencesStore(tmp8);
+            bool onboardingInvoked = false, micCalInvoked = false;
+            var pvm = new UiPreferencesViewModel(store8, () => onboardingInvoked = true, () => micCalInvoked = true);
+            pvm.SelectedStyle = pvm.StyleOptions.First(s => s.Token == "androgynous");
+            pvm.SelectedFrequency = pvm.FrequencyOptions.First(f => f.Value == 5);
+            pvm.SaveCommand.Execute(null);
+            var back = store8.Load();
+            bool prefsExtraOk = back.VoiceGoalStyle == "androgynous" && back.TrainingFrequency == 5;
+            pvm.RerunSetupCommand.Execute(null);
+            pvm.OpenMicCalibrationCommand.Execute(null);
+            bool actionsOk = onboardingInvoked && micCalInvoked && pvm.HasActions;
+
+            Console.WriteLine($"[prefs] defaults={defaultsOk} saved={saved} reload={reloadOk} corruptFallback={corruptOk} normalizeLang={normOk} pathLocal={pathLocal} saveFailureGraceful={saveFailureGraceful} prefsExtra={prefsExtraOk} actions={actionsOk}");
+            bool ok = defaultsOk && saved && reloadOk && corruptOk && normOk && pathLocal && saveFailureGraceful && prefsExtraOk && actionsOk;
             Console.WriteLine(ok ? "[prefs] Settings preferences persistence smoke OK" : "[prefs] Settings preferences persistence smoke FAIL");
             return ok ? 0 : 1;
         }
