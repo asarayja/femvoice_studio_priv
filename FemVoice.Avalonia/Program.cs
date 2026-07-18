@@ -264,7 +264,9 @@ internal static class Program
             // Parameter graph (WPF ProgressionDashboard) — now real, from the VI record just seeded.
             bool paramGraphOk = vm.HasParameterGraph && vm.ParameterGraph.Count == 7
                                 && vm.ParameterGraph.Any(p => p.HasData && p.Score > 0)
-                                && vm.ParameterGraph.First(p => p.Label.Contains("Resonans")).Score == 64;
+                                && vm.ParameterGraph.First(p => p.Label.Contains("Resonans")).Score == 64
+                                // Direction arrows (WPF DirectionToArrow) present per dimension.
+                                && vm.ParameterGraph.All(p => p.Direction.Length > 0);
             bool detailOk = vm.EngineAvailable && vm.StatMetrics.Count >= 4 && vm.Parameters.Count >= 3
                             && vm.ScoreHistoryBars.Count == 6 && vm.WeeklySummary.Contains("økter");
             bool focusOk = vm.HasTodaysFocus && vm.TodaysFocusText.Length > 0;
@@ -563,7 +565,9 @@ internal static class Program
                 .GetAwaiter().GetResult();
             var panel = new ClinicianPanelViewModel(db);
             bool voiceMetricsOk = panel.HasVoiceMetrics && panel.VoiceMetrics.Count == 7
-                                  && panel.VoiceMetrics.Any(m => m.Value.Contains("/ 100"));
+                                  && panel.VoiceMetrics.Any(m => m.Value.Contains("/ 100"))
+                                  // Learning path (strengths/weaknesses from the VI record) now real.
+                                  && panel.HasLearningPath && panel.Strengths.Count > 0 && panel.Weaknesses.Count > 0;
             bool assembledOk = panel is not null && (!panel.HasReport || panel.Overview.Count >= 3);   // no crash; overview coherent when real
             // Recovery detail (WPF parity): debt / overtraining / workload rows present when a report assembled.
             bool recoveryOk = !panel.HasReport || (panel.HasRecoveryDetail && panel.RecoveryDetail.Count >= 3);

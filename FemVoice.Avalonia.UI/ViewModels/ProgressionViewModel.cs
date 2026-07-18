@@ -72,11 +72,15 @@ public sealed partial class ProgressionViewModel : ObservableObject
     // ── Per-dimension parameter graph (WPF ProgressionDashboard) — now REAL, from the VoiceIntelligence records the
     //    dashboard writes on each session (SessionAnalyticsStore). Dimensions with no data show honestly as "—". ─────
     public const double ParamBarHeightPx = 100;
-    /// <summary>One parameter row: dimension label + 0–100 score + bar px + whether real data exists.</summary>
-    public sealed record DimensionBar(string Label, double Score, double BarPx, bool HasData);
+    /// <summary>One parameter row: dimension label + 0–100 score + bar px + a trend direction arrow (↑/↓/→).</summary>
+    public sealed record DimensionBar(string Label, double Score, double BarPx, bool HasData, string Direction);
     public IReadOnlyList<DimensionBar> ParameterGraph { get; private set; } = Array.Empty<DimensionBar>();
     public bool HasParameterGraph => ParameterGraph.Count > 0;
     public string ParameterGraphHeading => Localized.Get("Dashboard_Parameters", "Parametere");
+    /// <summary>The most-improved dimension this window + how many points it gained (WPF "Quickest Improvement").</summary>
+    public string QuickestImprovement { get; private set; } = "";
+    public bool HasQuickestImprovement => QuickestImprovement.Length > 0;
+    public string QuickestImprovementHeading => Localized.Get("Dashboard_QuickestImprovement", "Raskeste forbedring");
     /// <summary>Opens the exercise guide to begin training (WPF's "Start Exercise" action). No-op if not wired.</summary>
     [RelayCommand] private void StartExercise() => _startExercise?.Invoke();
 
@@ -174,12 +178,30 @@ public sealed partial class ProgressionViewModel : ObservableObject
                 .GetAwaiter().GetResult();
             if (records.Count == 0) return;
 
+            // Ordered oldest→newest for the trend (records come newest-first from the store).
+            var ordered = records.OrderBy(r => r.StartedAt).ToList();
+            int half = ordered.Count / 2;
+
+            // Direction arrow + improvement delta per dimension: compare the recent half's average to the earlier half's.
+            (string arrow, double delta) Trend(System.Func<FemVoiceStudio.Services.SessionAnalyticsRecord, double> sel)
+            {
+                if (ordered.Count < 2) return ("→", 0);
+                var early = ordered.Take(Math.Max(1, half)).Select(sel).Where(v => v > 0).ToList();
+                var late = ordered.Skip(half).Select(sel).Where(v => v > 0).ToList();
+                if (early.Count == 0 || late.Count == 0) return ("→", 0);
+                double d = late.Average() - early.Average();
+                return (d > 2 ? "↑" : d < -2 ? "↓" : "→", d);
+            }
+
+            string bestDim = ""; double bestGain = 0;
             DimensionBar Bar(string label, System.Func<FemVoiceStudio.Services.SessionAnalyticsRecord, double> sel)
             {
                 var vals = records.Select(sel).Where(v => v > 0).ToList();
                 bool has = vals.Count > 0;
                 double score = has ? Math.Clamp(vals.Average(), 0, 100) : 0;
-                return new DimensionBar(label, Math.Round(score), score / 100.0 * (ParamBarHeightPx - 4) + 4, has);
+                var (arrow, delta) = has ? Trend(sel) : ("→", 0);
+                if (has && delta > bestGain) { bestGain = delta; bestDim = label; }
+                return new DimensionBar(label, Math.Round(score), score / 100.0 * (ParamBarHeightPx - 4) + 4, has, arrow);
             }
 
             ParameterGraph = new List<DimensionBar>
@@ -192,6 +214,8 @@ public sealed partial class ProgressionViewModel : ObservableObject
                 Bar(Localized.Get("Dashboard_Recovery", "Restitusjon"), r => r.RecoveryScore100),
                 Bar(Localized.Get("Dashboard_Consistency", "Jevnhet"), r => r.ConsistencyScore100),
             };
+            if (bestDim.Length > 0 && bestGain > 2)
+                QuickestImprovement = $"{bestDim} (+{bestGain:F0})";
         }
         catch { ParameterGraph = Array.Empty<DimensionBar>(); }
     }

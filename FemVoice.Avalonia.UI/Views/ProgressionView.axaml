@@ -81,21 +81,32 @@
             <ItemsControl ItemsSource="{Binding ParameterGraph}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                  <Grid ColumnDefinitions="120,*,64" Margin="0,3">
+                  <Grid ColumnDefinitions="120,*,20,52" Margin="0,3">
                     <TextBlock Grid.Column="0" Text="{Binding Label}" VerticalAlignment="Center" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
                     <Border Grid.Column="1" Height="14" VerticalAlignment="Center" Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="3" ClipToBounds="True">
                       <Border HorizontalAlignment="Left" Width="{Binding Score}" MaxWidth="10000" Background="{DynamicResource ShellAccentBrush}" CornerRadius="3"
                               IsVisible="{Binding HasData}"/>
                     </Border>
-                    <TextBlock Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="12"
+                    <!-- Per-parameter trend direction arrow (WPF DirectionToArrow) -->
+                    <TextBlock Grid.Column="2" Text="{Binding Direction}" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="13"
+                               Foreground="{DynamicResource ShellAccentBrush}" IsVisible="{Binding HasData}"/>
+                    <TextBlock Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="12"
                                Foreground="{DynamicResource ShellBodyTextBrush}"
                                Text="{Binding Score, StringFormat='{}{0:F0}'}" IsVisible="{Binding HasData}"/>
-                    <TextBlock Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="11"
+                    <TextBlock Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="11"
                                Foreground="{DynamicResource ShellFaintBrush}" Text="—" IsVisible="{Binding !HasData}"/>
                   </Grid>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <!-- Quickest improvement (WPF ProgressionDashboard) -->
+        <Border Classes="card" IsVisible="{Binding HasQuickestImprovement}" BorderBrush="{DynamicResource ShellSuccessBrush}">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="{Binding QuickestImprovementHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}"/>
+            <TextBlock Text="{Binding QuickestImprovement}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
           </StackPanel>
         </Border>
 

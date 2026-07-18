@@ -21,11 +21,11 @@ public sealed record ClinicianRow(string Label, string Value);
 /// Everything is read-only + totally guarded — any gap in the (frozen) analytics pipeline degrades to a truthful
 /// "not enough data" state instead of throwing. Nothing is written; no clinical logic is changed. Not IDisposable.
 ///
-/// The WPF Clinician "Voice Metrics" (7 per-dimension 0–100 scores) are now REAL: the dashboard writes per-dimension
-/// VoiceIntelligence records to <c>SessionAnalyticsStore</c> each session, and they are averaged + rendered here.
-/// The "Learning Path" (stage/strengths/weaknesses/focus) and per-window "Dimension Trends" additionally require the
-/// VoiceIntelligenceService trend engine to be wired into the SmartCoachEngine; those remain a follow-up. The
-/// insights + exercise-concerns below are assembled by the pipeline and rendered.
+/// The WPF Clinician "Voice Metrics" (7 per-dimension 0–100 scores), "Learning Path" (strengths/weaknesses/focus) and
+/// per-window "Dimension Trends" are all REAL now: the dashboard writes per-dimension VoiceIntelligence records to
+/// <c>SessionAnalyticsStore</c> each session, and this panel averages them (metrics), derives strengths/weaknesses/
+/// focus from the latest record, and computes per-dimension direction (recent-half vs earlier-half). The insights +
+/// exercise-concerns are assembled by the pipeline and rendered.
 /// </summary>
 public sealed class ClinicianPanelViewModel
 {
@@ -77,6 +77,19 @@ public sealed class ClinicianPanelViewModel
     public IReadOnlyList<ClinicianRow> VoiceMetrics { get; private set; } = Array.Empty<ClinicianRow>();
     public bool HasVoiceMetrics => VoiceMetrics.Count > 0;
     public string VoiceMetricsHeading => Localized.Get("Clinician_VoiceMetrics", "Stemmemålinger");
+
+    // ── Learning path (strengths / weaknesses / focus) + per-dimension trends, from the VI records ─────────────────
+    public IReadOnlyList<string> Strengths { get; private set; } = Array.Empty<string>();
+    public IReadOnlyList<string> Weaknesses { get; private set; } = Array.Empty<string>();
+    public IReadOnlyList<string> FocusAreas { get; private set; } = Array.Empty<string>();
+    public bool HasLearningPath => Strengths.Count > 0 || Weaknesses.Count > 0;
+    public string LearningPathHeading => Localized.Get("Clinician_LearningPath", "Læringssti");
+    public string StrengthsLabel => Localized.Get("Clinician_Strengths", "Styrker");
+    public string WeaknessesLabel => Localized.Get("Clinician_Weaknesses", "Svakheter");
+    public string FocusLabel => Localized.Get("Clinician_FocusAreas", "Fokusområder");
+    public IReadOnlyList<ClinicianRow> DimensionTrends { get; private set; } = Array.Empty<ClinicianRow>();
+    public bool HasDimensionTrends => DimensionTrends.Count > 0;
+    public string DimensionTrendsHeading => Localized.Get("Clinician_DimensionTrends", "Dimensjonstrender");
 
     public string OverviewHeading => Localized.Get("Clinician_Panel_Overview", "Utfallsoversikt");
     public string GoalsHeading => Localized.Get("Clinician_GoalProgress", "Målfremdrift");
@@ -195,16 +208,42 @@ public sealed class ClinicianPanelViewModel
                             ? $"{System.Math.Round(vals.Average())} / 100"
                             : Localized.Get("Clinician_NoDimData", "—"));
                     }
-                    VoiceMetrics = new List<ClinicianRow>
+                    var dims = new (string Label, System.Func<FemVoiceStudio.Services.SessionAnalyticsRecord, double> Sel)[]
                     {
-                        Metric(Localized.Get("Dashboard_Resonance", "Resonans"), r => r.ResonanceScore100),
-                        Metric(Localized.Get("Dashboard_Pitch", "Tonehøyde"), r => r.PitchScore100),
-                        Metric(Localized.Get("Dashboard_Intonation", "Intonasjon"), r => r.IntonationScore100),
-                        Metric(Localized.Get("Dashboard_VoiceHealth", "Stemmehelse"), r => r.AverageHealthScore),
-                        Metric(Localized.Get("Dashboard_Comfort", "Komfort"), r => r.ComfortScore100),
-                        Metric(Localized.Get("Dashboard_Recovery", "Restitusjon"), r => r.RecoveryScore100),
-                        Metric(Localized.Get("Dashboard_Consistency", "Jevnhet"), r => r.ConsistencyScore100),
+                        (Localized.Get("Dashboard_Resonance", "Resonans"), r => r.ResonanceScore100),
+                        (Localized.Get("Dashboard_Pitch", "Tonehøyde"), r => r.PitchScore100),
+                        (Localized.Get("Dashboard_Intonation", "Intonasjon"), r => r.IntonationScore100),
+                        (Localized.Get("Dashboard_VoiceHealth", "Stemmehelse"), r => r.AverageHealthScore),
+                        (Localized.Get("Dashboard_Comfort", "Komfort"), r => r.ComfortScore100),
+                        (Localized.Get("Dashboard_Recovery", "Restitusjon"), r => r.RecoveryScore100),
+                        (Localized.Get("Dashboard_Consistency", "Jevnhet"), r => r.ConsistencyScore100),
                     };
+                    VoiceMetrics = dims.Select(d => Metric(d.Label, d.Sel)).ToList();
+
+                    // Learning-path strengths/weaknesses/focus from the latest record's dimension scores (WPF logic:
+                    // top dimensions = strengths, bottom = weaknesses, below 60 = focus). Real data.
+                    var latest = records.OrderBy(r => r.StartedAt).Last();
+                    var scored = dims.Select(d => (d.Label, Score: d.Sel(latest))).Where(x => x.Score > 0).ToList();
+                    if (scored.Count > 0)
+                    {
+                        Strengths = scored.OrderByDescending(x => x.Score).Take(3).Select(x => $"{x.Label} ({x.Score:F0})").ToList();
+                        Weaknesses = scored.OrderBy(x => x.Score).Take(3).Select(x => $"{x.Label} ({x.Score:F0})").ToList();
+                        FocusAreas = scored.Where(x => x.Score < 60).OrderBy(x => x.Score).Take(3).Select(x => x.Label).ToList();
+                    }
+
+                    // Per-dimension trends: recent-half vs earlier-half average → improving / declining / stable.
+                    var ordered = records.OrderBy(r => r.StartedAt).ToList();
+                    int half = ordered.Count / 2;
+                    ClinicianRow Trend(string label, System.Func<FemVoiceStudio.Services.SessionAnalyticsRecord, double> sel)
+                    {
+                        var early = ordered.Take(System.Math.Max(1, half)).Select(sel).Where(v => v > 0).ToList();
+                        var late = ordered.Skip(half).Select(sel).Where(v => v > 0).ToList();
+                        if (early.Count == 0 || late.Count == 0) return new ClinicianRow(label, "→");
+                        double d = late.Average() - early.Average();
+                        return new ClinicianRow(label, d > 2 ? $"↑ +{d:F0}" : d < -2 ? $"↓ {d:F0}" : "→ 0");
+                    }
+                    if (ordered.Count >= 2)
+                        DimensionTrends = dims.Select(d => Trend(d.Label, d.Sel)).ToList();
                 }
             }
             catch { VoiceMetrics = Array.Empty<ClinicianRow>(); }
