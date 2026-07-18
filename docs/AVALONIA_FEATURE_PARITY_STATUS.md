@@ -22,7 +22,7 @@ data) · ❌ not ported.
 | CalendarWindow | 🟡 Kalender | **REAL** training-day history (last 90 days) from the DB (PR #59). DayDetails view deferred. |
 | ClinicianDashboard · CoachDashboard · CaseReviewWindow | ❌ | Deferred cards in Reports; no real panels. |
 | ManualOverrideWindow (safety clamp) | ❌ | Not ported. |
-| MicrophoneCalibrationWindow | ❌ | Deferred card in Settings/Diagnostics. |
+| MicrophoneCalibrationWindow | 🟡 Mikrofonkalibrering | **REAL** mic check: device list + live RMS level meter + signal-detected indicator on the audio abstraction (real backend in production, synthetic in tests); own capture backend, stopped on navigate-away (PR #63). Full clinical calibration profile (noise-gate/SNR/clipping thresholds → frozen DSP) intentionally NOT computed/saved — deferred. |
 | FirstTimeSetupWindow | 🟡 Førstegangsoppsett | **REAL** onboarding: welcome + language + theme, persisted to the Avalonia-local prefs file and applied live; records a completed flag so it shows once (PR #62). Voice-goal-style / training-frequency (clinical-adjacent profile, no Avalonia consumer yet) deferred to a profile slice. |
 
 ## Persistence (updated 2026-07-18)

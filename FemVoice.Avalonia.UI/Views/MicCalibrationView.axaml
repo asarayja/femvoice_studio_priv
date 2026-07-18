@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
+             x:Class="FemVoice.Avalonia.Views.MicCalibrationView">
+  <!-- REAL microphone check (safe subset of WPF MicrophoneCalibrationWindow): device list + live RMS level meter
+       + signal-detected indicator, driven by the audio abstraction. No clinical calibration profile / DSP
+       threshold is computed or saved (deferred). Stops capture on navigate-away (IDisposable). -->
+  <ScrollViewer>
+    <StackPanel Margin="24" Spacing="16" MaxWidth="720" HorizontalAlignment="Center">
+
+      <!-- Header -->
+      <Border Classes="card" Padding="20,16">
+        <StackPanel Spacing="4">
+          <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <TextBlock Text="{Binding Intro}" FontSize="13" Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Device + controls -->
+      <Border Classes="card">
+        <StackPanel Spacing="12">
+          <Grid ColumnDefinitions="90,*" VerticalAlignment="Center">
+            <TextBlock Grid.Column="0" Text="{Binding DeviceLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <ComboBox Grid.Column="1" MinWidth="240" HorizontalAlignment="Left"
+                      ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
+                      IsEnabled="{Binding IsAvailable}"/>
+          </Grid>
+
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <Button Classes="primary" Content="{Binding StartLabel}" Command="{Binding StartCommand}"
+                    IsVisible="{Binding !IsRunning}" IsEnabled="{Binding IsAvailable}"/>
+            <Button Classes="secondary" Content="{Binding StopLabel}" Command="{Binding StopCommand}"
+                    IsVisible="{Binding IsRunning}"/>
+            <TextBlock Text="{Binding ElapsedSeconds, StringFormat='{}{0} s'}" VerticalAlignment="Center"
+                       IsVisible="{Binding IsRunning}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12"/>
+          </StackPanel>
+
+          <!-- Live level meter -->
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding LevelLabel}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
+            <Border Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="4" Height="24" ClipToBounds="True">
+              <Grid>
+                <!-- Current level fill (0–100 → fraction via Width binding through a Grid star trick) -->
+                <ProgressBar Minimum="0" Maximum="100" Value="{Binding Level}" Height="24"
+                             Foreground="{DynamicResource ShellAccentBrush}" Background="Transparent"/>
+              </Grid>
+            </Border>
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Column="0" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11"
+                         Text="{Binding Level, StringFormat='Nivå: {0:F0}'}"/>
+              <TextBlock Grid.Column="1" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11"
+                         Text="{Binding PeakLevel, StringFormat='Topp: {0:F0}'}"/>
+            </Grid>
+            <Border CornerRadius="4" Padding="8,4" HorizontalAlignment="Left"
+                    IsVisible="{Binding SignalDetected}" BorderThickness="1"
+                    BorderBrush="{DynamicResource ShellOkBorderBrush}">
+              <TextBlock Text="● Signal registrert" Foreground="{DynamicResource ShellOkBrush}" FontSize="12"/>
+            </Border>
+          </StackPanel>
+
+          <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource ShellSuccessBrush}" FontSize="13" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Deferred note (full clinical calibration profile not saved yet) -->
+      <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
+        <TextBlock Text="{Binding DeferredNote}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

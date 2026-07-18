@@ -82,6 +82,7 @@
             <DataTemplate DataType="vm:StatisticsViewModel"><views:StatisticsView/></DataTemplate>
             <DataTemplate DataType="vm:CalendarViewModel"><views:CalendarView/></DataTemplate>
             <DataTemplate DataType="vm:FirstTimeSetupViewModel"><views:FirstTimeSetupView/></DataTemplate>
+            <DataTemplate DataType="vm:MicCalibrationViewModel"><views:MicCalibrationView/></DataTemplate>
             <!-- Static deferred placeholder (no services, no side effects) -->
             <DataTemplate DataType="vm:DeferredSurfaceViewModel">
               <ScrollViewer>
