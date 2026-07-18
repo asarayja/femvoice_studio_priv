@@ -12,7 +12,10 @@
       <Grid ColumnDefinitions="*,Auto">
         <TextBlock Grid.Column="0" Text="{Binding Title}" FontSize="24" FontWeight="Bold"
                    Foreground="{DynamicResource ShellHeadingBrush}" VerticalAlignment="Center"/>
-        <Button Grid.Column="1" Content="{Binding BackLabel}" Classes="secondary" Command="{Binding BackCommand}"/>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+          <Button Content="{Binding RefreshLabel}" Classes="secondary" Command="{Binding RefreshCommand}"/>
+          <Button Content="{Binding BackLabel}" Classes="secondary" Command="{Binding BackCommand}"/>
+        </StackPanel>
       </Grid>
 
       <!-- Not-enough-data state -->
@@ -42,6 +45,9 @@
         <Border Classes="card" BorderBrush="{DynamicResource ShellSuccessBrush}">
           <StackPanel Spacing="4">
             <TextBlock Text="{Binding ReportTitle}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellHeadingBrush}"/>
+            <!-- Current learning-stage status line (WPF Coach StageSummary) -->
+            <TextBlock IsVisible="{Binding HasStageSummary}" Text="{Binding StageSummary}" TextWrapping="Wrap"
+                       Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
             <TextBlock IsVisible="{Binding HasDevelopment}" Text="{Binding DevelopmentHeading}"
                        FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}" Margin="0,6,0,0"/>
             <TextBlock IsVisible="{Binding HasDevelopment}" Text="{Binding DevelopmentSummary}"
