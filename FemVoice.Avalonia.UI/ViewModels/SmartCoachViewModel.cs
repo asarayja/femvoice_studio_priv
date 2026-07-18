@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using FemVoiceStudio.Data;
 using FemVoiceStudio.Services;
 using FemVoice.Avalonia.Localization;
@@ -28,6 +30,15 @@ public sealed class SmartCoachViewModel
     public string DataNote => Localized.Get("SmartCoach_RealDataNote",
         "Beregnet av den ekte SmartCoach-motoren på dine lagrede økter.");
 
+    // ── Detail metrics (ported from the WPF SmartCoachDetailView) ─────────────────────────────────────────────
+    /// <summary>Detail rows: day streak, sessions this week, total time this week, consistency (real DB stats).</summary>
+    public IReadOnlyList<AnalysisSummaryMetric> DetailMetrics { get; private set; } = Array.Empty<AnalysisSummaryMetric>();
+    /// <summary>Per-day session counts for the last 7 days (weekly history).</summary>
+    public IReadOnlyList<AnalysisSummaryMetric> WeeklyHistory { get; private set; } = Array.Empty<AnalysisSummaryMetric>();
+    public bool HasDetail => DetailMetrics.Count > 0;
+    public string DetailHeading => Localized.Get("SmartCoach_Detail", "Detaljer");
+    public string WeeklyHistoryHeading => Localized.Get("SmartCoach_WeeklyHistory", "Ukeshistorikk");
+
     public SmartCoachViewModel(IDatabaseService? database, ILocalizationService? localization = null)
     {
         if (database is null)
@@ -48,6 +59,7 @@ public sealed class SmartCoachViewModel
             HealthWarningText = rec.HealthWarningText ?? "";
             WeeklyTargetText = $"{engine.GetWeeklySessionTarget(1)} økter/uke (mål)";
             StatusSummary = engine.GetStatusSummary(1);
+            BuildDetail(database);
             EngineAvailable = true;
         }
         catch (Exception ex)
@@ -55,6 +67,38 @@ public sealed class SmartCoachViewModel
             EngineAvailable = false;
             UnavailableNote = Localized.Get("SmartCoach_Error", "SmartCoach er midlertidig utilgjengelig.") + $" ({ex.GetType().Name})";
         }
+    }
+
+    // Real detail metrics + weekly history from the DB (day streak, sessions/time this week, consistency). Guarded.
+    private void BuildDetail(IDatabaseService database)
+    {
+        try
+        {
+            var (_, consistency, streak) = database.GetProgressionStats();
+            DateTime weekStart = DateTime.UtcNow.Date.AddDays(-7);
+            var week = database.GetTrainingSessions(weekStart, DateTime.UtcNow).ToList();
+            int totalMin = (int)Math.Round(week.Sum(s => s.DurationSeconds) / 60.0);
+
+            DetailMetrics = new List<AnalysisSummaryMetric>
+            {
+                new(Localized.Get("SmartCoach_DayStreak", "Dager på rad"), $"{streak}"),
+                new(Localized.Get("SmartCoach_SessionsThisWeek", "Økter denne uken"), $"{week.Count}"),
+                new(Localized.Get("SmartCoach_TotalTimeThisWeek", "Total tid denne uken"), $"{totalMin} min"),
+                new(Localized.Get("SmartCoach_Consistency", "Jevnhet"), $"{consistency:F0} %"),
+            };
+
+            // Weekly history: sessions per local day for the last 7 days (newest first).
+            var byDay = week.GroupBy(s => s.StartTime.ToLocalTime().Date).ToDictionary(g => g.Key, g => g.Count());
+            var hist = new List<AnalysisSummaryMetric>();
+            for (int i = 0; i < 7; i++)
+            {
+                var day = DateTime.Now.Date.AddDays(-i);
+                int count = byDay.TryGetValue(day, out var c) ? c : 0;
+                hist.Add(new AnalysisSummaryMetric(day.ToString("ddd dd.MM"), count > 0 ? $"{count} økter" : "—"));
+            }
+            WeeklyHistory = hist;
+        }
+        catch { DetailMetrics = Array.Empty<AnalysisSummaryMetric>(); }
     }
 
     private static string FocusText(string? focusArea) => (focusArea ?? "").ToLowerInvariant() switch
