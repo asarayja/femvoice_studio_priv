@@ -40,12 +40,15 @@ public sealed class ReportsViewModel
 {
     public ReportsViewModel() : this(null) { }
 
-    public ReportsViewModel(IDatabaseService? database, System.Action? openCoachPanel = null, System.Action? openClinicianPanel = null)
+    public ReportsViewModel(IDatabaseService? database, System.Action? openCoachPanel = null,
+        System.Action? openClinicianPanel = null, System.Action? openTimelinePanel = null)
     {
         OpenCoachCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(() => openCoachPanel?.Invoke());
         CanOpenCoachPanel = openCoachPanel is not null;
         OpenClinicianCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(() => openClinicianPanel?.Invoke());
         CanOpenClinicianPanel = openClinicianPanel is not null;
+        OpenTimelineCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(() => openTimelinePanel?.Invoke());
+        CanOpenTimelinePanel = openTimelinePanel is not null;
         BuildPreview(database);
         string deferred = Localized.Get("Reports_DeferredStatus", "Utsatt — kommer senere");
         string sample = Localized.Get("Reports_SampleStatus", "Eksempel (ikke lagret)");
@@ -98,6 +101,11 @@ public sealed class ReportsViewModel
     public CommunityToolkit.Mvvm.Input.IRelayCommand OpenClinicianCommand { get; }
     public bool CanOpenClinicianPanel { get; }
     public string OpenClinicianLabel => Localized.Get("Reports_OpenClinicianPanel", "Åpne klinikerpanel");
+
+    /// <summary>Opens the real read-only development-timeline panel (assembled from saved sessions). Wired by the shell.</summary>
+    public CommunityToolkit.Mvvm.Input.IRelayCommand OpenTimelineCommand { get; }
+    public bool CanOpenTimelinePanel { get; }
+    public string OpenTimelineLabel => Localized.Get("Reports_OpenTimelinePanel", "Åpne utviklingstidslinje");
 
     /// <summary>Always <c>true</c>: every card/action in the scaffold is deferred/inert.</summary>
     public bool AllActionsDeferred => Cards.All(c => !c.IsEnabled);
