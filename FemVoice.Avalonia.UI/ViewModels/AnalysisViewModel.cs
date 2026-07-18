@@ -157,22 +157,58 @@ public sealed class AnalysisViewModel
                 new("Beste økt", $"{bestScore:F0} / 100"),
             };
 
-            // Score-components breakdown (per-dimension averages) — WPF Analysis parity. Intonation/health are 0 for
-            // dashboard sessions (not yet computed there), so shown as "—" honestly.
-            var intonations = ordered.Select(s => s.IntonationScore).Where(v => v > 0).ToList();
-            var healths = ordered.Select(s => s.VoiceHealthScore).Where(v => v > 0).ToList();
-            components = new List<AnalysisSummaryMetric>
-            {
-                new(Localized.Get("Dashboard_Pitch", "Tonehøyde"), avgPitch > 0 ? $"{avgPitch:F0} Hz" : "—"),
-                new(Localized.Get("Dashboard_Resonance", "Resonans"), withResonance.Count > 0 ? $"{avgResonance:F0} / 100" : "—"),
-                new(Localized.Get("Dashboard_Intonation", "Intonasjon"), intonations.Count > 0 ? $"{intonations.Average():F0} / 100" : "—"),
-                new(Localized.Get("Dashboard_VoiceHealth", "Stemmehelse"), healths.Count > 0 ? $"{healths.Average():F0} / 100" : "—"),
-            };
+            // Score-components (per-dimension) — WPF Analysis "rings". Prefer the REAL 7-dimension VoiceIntelligence
+            // records the dashboard writes; fall back to the pitch/resonance TrainingSession approximation when none.
+            components = BuildScoreComponents(database, avgPitch, avgResonance, withResonance.Count > 0);
 
             notice = "Ekte analyse beregnet fra dine faktiske lagrede økter.";
             return true;
         }
         catch { return false; }   // fall back to synthetic on any DB error
+    }
+
+    // Per-dimension score components. Real 7-dimension VoiceIntelligence records (written per session by the dashboard)
+    // are preferred; each dimension with a value is averaged. Falls back to the pitch/resonance approximation when no
+    // VI records exist yet. A dimension with no data shows "—" (no fabrication).
+    private static IReadOnlyList<AnalysisSummaryMetric> BuildScoreComponents(
+        IDatabaseService database, double avgPitch, double avgResonance, bool hasResonance)
+    {
+        try
+        {
+            if (database is FemVoiceStudio.Data.DatabaseService concrete)
+            {
+                var analytics = new FemVoiceStudio.Services.SessionAnalyticsStore(
+                    new FemVoiceStudio.Services.SqliteSessionAnalyticsRepository(concrete.ConnectionString));
+                var recs = analytics.GetSessionsAsync(DateTime.UtcNow.AddDays(-90), DateTime.UtcNow.AddDays(1), 1)
+                    .GetAwaiter().GetResult();
+                if (recs.Count > 0)
+                {
+                    string Avg(System.Func<FemVoiceStudio.Services.SessionAnalyticsRecord, double> sel)
+                    {
+                        var vals = recs.Select(sel).Where(v => v > 0).ToList();
+                        return vals.Count > 0 ? $"{Math.Round(vals.Average())} / 100" : "—";
+                    }
+                    return new List<AnalysisSummaryMetric>
+                    {
+                        new(Localized.Get("Dashboard_Resonance", "Resonans"), Avg(r => r.ResonanceScore100)),
+                        new(Localized.Get("Dashboard_Pitch", "Tonehøyde"), Avg(r => r.PitchScore100)),
+                        new(Localized.Get("Dashboard_Intonation", "Intonasjon"), Avg(r => r.IntonationScore100)),
+                        new(Localized.Get("Dashboard_VoiceHealth", "Stemmehelse"), Avg(r => r.AverageHealthScore)),
+                        new(Localized.Get("Dashboard_Comfort", "Komfort"), Avg(r => r.ComfortScore100)),
+                        new(Localized.Get("Dashboard_Recovery", "Restitusjon"), Avg(r => r.RecoveryScore100)),
+                        new(Localized.Get("Dashboard_Consistency", "Jevnhet"), Avg(r => r.ConsistencyScore100)),
+                    };
+                }
+            }
+        }
+        catch { /* fall through to the approximation */ }
+
+        // Fallback (no VI records): the pitch/resonance the TrainingSession round-trip carries.
+        return new List<AnalysisSummaryMetric>
+        {
+            new(Localized.Get("Dashboard_Pitch", "Tonehøyde"), avgPitch > 0 ? $"{avgPitch:F0} Hz" : "—"),
+            new(Localized.Get("Dashboard_Resonance", "Resonans"), hasResonance ? $"{avgResonance:F0} / 100" : "—"),
+        };
     }
 
     // Map a pitch (Hz) into the chart's px range (≈100–300 Hz → 4..ChartHeightPx), and a 0–100 score to px.

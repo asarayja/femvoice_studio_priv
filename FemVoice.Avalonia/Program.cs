@@ -1901,12 +1901,21 @@ internal static class Program
                   AveragePitch = 185, PitchVariation = 18, OverallScore = 70, ResonanceScore = 64, Feedback = "r" };
                 seed.Id = db.SaveTrainingSession(seed);   // PitchVariation persists via the INSERT
                 db.UpdateTrainingSession(seed);           // ResonanceScore persists via the UPDATE
+                // Seed a per-dimension VI record so the score-components show the real 7-dimension set (rings).
+                new global::FemVoiceStudio.Services.SessionAnalyticsStore(
+                    new global::FemVoiceStudio.Services.SqliteSessionAnalyticsRepository(db.ConnectionString))
+                    .RecordSessionCompletedAsync(new global::FemVoiceStudio.Services.SessionAnalyticsRecord
+                    { SessionId = 6001, UserId = 1, StartedAt = DateTime.UtcNow.AddMinutes(-6), EndedAt = DateTime.UtcNow.AddMinutes(-1),
+                      ExerciseCount = 1, AverageHealthScore = 84, ResonanceScore100 = 64, PitchScore100 = 70,
+                      IntonationScore100 = 55, ComfortScore100 = 68, ConsistencyScore100 = 78, RecoveryScore100 = 86, CompositeVoiceScore = 70 })
+                    .GetAwaiter().GetResult();
                 var real = new AnalysisViewModel(db);
                 var resSeries = real.Series.FirstOrDefault(s => s.Title.Contains("Resonans"));
                 var resMetric = real.SummaryMetrics.FirstOrDefault(m => m.Label.Contains("resonans") || m.Label.Contains("Resonans"));
                 var prosodySeries = real.Series.FirstOrDefault(s => s.Title.Contains("prosodi") || s.Title.Contains("Tonevariasjon"));
                 bool prosodyOk = prosodySeries is not null && prosodySeries.Summary.Contains("18");
-                bool componentsOk = real.HasScoreComponents && real.ScoreComponents.Count == 4;   // WPF score-components section
+                bool componentsOk = real.HasScoreComponents && real.ScoreComponents.Count == 7   // real 7-dimension rings
+                                    && real.ScoreComponents.Any(c => c.Value.Contains("/ 100"));
                 resonanceRealOk = real.HasRealData && resSeries is not null && resSeries.Summary.Contains("64")
                                   && resMetric is not null && resMetric.Value.Contains("64") && prosodyOk && componentsOk;
                 Console.WriteLine($"[analysis] real-resonance: res='{resSeries?.Summary}' prosody='{prosodySeries?.Summary}' components={real.ScoreComponents.Count} ok={resonanceRealOk}");
