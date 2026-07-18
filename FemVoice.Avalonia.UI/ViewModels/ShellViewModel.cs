@@ -319,7 +319,7 @@ public partial class ShellViewModel : ObservableObject
     // Real day-details from the Calendar: shows every session recorded on the clicked day; Back returns to Calendar.
     private void OpenDayDetails(System.DateTime date) => CurrentPage = new DayDetailsViewModel(_database, date, ShowCalendar);
     // Engine-backed: real training level + FemVoice score + ProgressionService summary on the real DB (null-safe).
-    [RelayCommand] private void ShowProgression() => CurrentPage = new ProgressionViewModel(_database);
+    [RelayCommand] private void ShowProgression() => CurrentPage = new ProgressionViewModel(_database, null, ShowGuide);
     // Engine-backed: run the REAL SmartCoachEngine on the REAL database (falls back to a truthful "unavailable"
     // state when no DB is injected, e.g. headless/tests). Fresh each open so it reflects the latest saved sessions.
     [RelayCommand] private void ShowSmartCoach() => CurrentPage = new SmartCoachViewModel(_database);

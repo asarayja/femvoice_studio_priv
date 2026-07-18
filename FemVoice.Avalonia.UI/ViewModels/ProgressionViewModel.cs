@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using FemVoiceStudio.Data;
 using FemVoiceStudio.Services;
 using FemVoice.Avalonia.Localization;
@@ -11,9 +13,17 @@ namespace FemVoice.Avalonia.ViewModels;
 /// Engine-backed Progression page. Reads the REAL training level (UserSettings + <see cref="LevelClassificationSystem"/>),
 /// the REAL recent-session score/pitch averages, and the REAL <see cref="ProgressionService"/> summary from the real
 /// database — no demo data, the same sources WPF uses. Read-only; no clinical logic changed. Fails safe with no DB.
+///
+/// NOTE on the WPF ProgressionDashboard "Parameter Graph" (per-dimension live 0–100 score bars for Resonance/Pitch/
+/// Intonation/VoiceHealth/Comfort/Recovery/Consistency + direction arrows + quickest-improvement): that is driven by
+/// the Voice-Intelligence trend written to <c>SessionAnalyticsStore</c>. The Avalonia capture path produces real PITCH
+/// and RESONANCE only (intonation/health/comfort/recovery/consistency are not computed here), and does NOT write those
+/// snapshots — so a per-dimension parameter graph would be empty or fabricated. It is intentionally omitted (no demo
+/// data) pending real per-dimension DSP + snapshot persistence. This page shows the real level-based parameters instead.
 /// </summary>
-public sealed class ProgressionViewModel
+public sealed partial class ProgressionViewModel : ObservableObject
 {
+    private readonly Action? _startExercise;
     public string Title => Localized.Get("Main_Progression", "Progresjon");
 
     public bool EngineAvailable { get; }
@@ -52,8 +62,18 @@ public sealed class ProgressionViewModel
     public string WeeklyHeading => Localized.Get("Dashboard_WeeklySummary", "Denne uken");
     public const double HistoryHeightPx = 90;
 
-    public ProgressionViewModel(IDatabaseService? database, ILocalizationService? localization = null)
+    // ── Today's focus + Start exercise (WPF ProgressionDashboard parity) ──────────────────────────────────────
+    /// <summary>The current level's focus area (real, from LevelClassificationSystem) — WPF "Dagens fokusområde".</summary>
+    public string TodaysFocusText { get; private set; } = "";
+    public bool HasTodaysFocus { get; private set; }
+    public string TodaysFocusHeading => Localized.Get("Dashboard_TodaysFocus", "Dagens fokusområde");
+    public string StartExerciseLabel => Localized.Get("Dashboard_StartExercise", "Start øvelse");
+    /// <summary>Opens the exercise guide to begin training (WPF's "Start Exercise" action). No-op if not wired.</summary>
+    [RelayCommand] private void StartExercise() => _startExercise?.Invoke();
+
+    public ProgressionViewModel(IDatabaseService? database, ILocalizationService? localization = null, Action? startExercise = null)
     {
+        _startExercise = startExercise;
         if (database is null)
         {
             EngineAvailable = false;
@@ -68,6 +88,8 @@ public sealed class ProgressionViewModel
             LevelName = LevelClassificationSystem.GetLevelName(level);
             LevelEmoji = LevelClassificationSystem.GetLevelEmoji(level);
             LevelDescription = LevelClassificationSystem.GetLevelFocus(level);
+            TodaysFocusText = LevelClassificationSystem.GetFocusArea(level);
+            HasTodaysFocus = !string.IsNullOrWhiteSpace(TodaysFocusText);
 
             IReadOnlyList<FemVoiceStudio.Models.TrainingSession> recent = database.GetRecentSessions(20);
             SessionCount = recent.Count;
