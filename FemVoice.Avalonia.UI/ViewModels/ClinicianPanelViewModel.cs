@@ -27,7 +27,7 @@ public sealed class ClinicianPanelViewModel
 
     public ClinicianPanelViewModel(IDatabaseService? database, Action? onBack = null)
     {
-        Title = Localized.Get("Clinician_Panel_Title", "Klinikerpanel");
+        Title = Localized.Get("Clinician_Title", "Klinisk oversikt");
         BackLabel = Localized.Get("Common_Back", "Tilbake");
         Disclaimer = Localized.Get("Clinician_Panel_Disclaimer",
             "Beskrivende utfallsoversikt sammenstilt fra dine lagrede økter (kun lesing). Aldri en sikkerhets- " +
@@ -54,8 +54,8 @@ public sealed class ClinicianPanelViewModel
     public IReadOnlyList<ClinicianRow> TopExercises { get; private set; } = Array.Empty<ClinicianRow>();
 
     public string OverviewHeading => Localized.Get("Clinician_Panel_Overview", "Utfallsoversikt");
-    public string GoalsHeading => Localized.Get("Clinician_Panel_Goals", "Målfremgang");
-    public string ExercisesHeading => Localized.Get("Clinician_Panel_Exercises", "Mest effektive øvelser");
+    public string GoalsHeading => Localized.Get("Clinician_GoalProgress", "Målfremdrift");
+    public string ExercisesHeading => Localized.Get("Clinician_ExerciseEffectiveness", "Øvelseseffektivitet");
     public bool HasGoals => Goals.Count > 0;
     public bool HasExercises => TopExercises.Count > 0;
 
@@ -78,7 +78,7 @@ public sealed class ClinicianPanelViewModel
                 .AssembleFromStoreAsync(database, null, new RecoveryIntelligenceService(), analytics, now, userId: 1)
                 .GetAwaiter().GetResult();
 
-            OutcomeReport report = new ReportAssembler().BuildOutcomeReport(outcome, now.AddDays(-90), now, now);
+            OutcomeReport report = new ReportAssembler().BuildOutcomeReport(outcome, now.AddDays(-30), now, now);   // WPF canonical 30-day window
             Report = report;
             ReportTitle = report.Title ?? "";
 

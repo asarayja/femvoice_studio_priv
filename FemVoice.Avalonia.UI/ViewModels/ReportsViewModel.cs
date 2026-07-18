@@ -82,7 +82,7 @@ public sealed class ReportsViewModel
                 Localized.Get("Reports_ExportsDesc", "Eksport av rapporter (utsatt — ingen fildialog, ingen filer skrives)."), deferred),
         };
 
-        Title = Localized.Get("Reports_ScaffoldTitle", "Rapporter og profesjonelle verktøy");
+        Title = Localized.Get("Report_Title", "Rapporter");
         ScaffoldNotice = Localized.Get("Reports_ScaffoldNotice",
             "Fremgangssammendraget og CSV/tekst-eksporten over er ekte (leser dine lagrede økter). De kliniske " +
             "fagpanelene (kliniker/veileder/saksgjennomgang), PDF-generering og full 4×3-rapporteksport er " +
@@ -97,12 +97,12 @@ public sealed class ReportsViewModel
     public CommunityToolkit.Mvvm.Input.IRelayCommand OpenCoachCommand { get; }
     /// <summary>True when a coach-panel navigation callback was supplied (drives the button's visibility).</summary>
     public bool CanOpenCoachPanel { get; }
-    public string OpenCoachLabel => Localized.Get("Reports_OpenCoachPanel", "Åpne veilederpanel");
+    public string OpenCoachLabel => Localized.Get("Reports_OpenCoachPanel", "Åpne coach-oversikt");
 
     /// <summary>Opens the real read-only clinician outcome panel (assembled from saved sessions). Wired by the shell.</summary>
     public CommunityToolkit.Mvvm.Input.IRelayCommand OpenClinicianCommand { get; }
     public bool CanOpenClinicianPanel { get; }
-    public string OpenClinicianLabel => Localized.Get("Reports_OpenClinicianPanel", "Åpne klinikerpanel");
+    public string OpenClinicianLabel => Localized.Get("Reports_OpenClinicianPanel", "Åpne klinisk oversikt");
 
     /// <summary>Opens the real read-only development-timeline panel (assembled from saved sessions). Wired by the shell.</summary>
     public CommunityToolkit.Mvvm.Input.IRelayCommand OpenTimelineCommand { get; }
@@ -112,7 +112,7 @@ public sealed class ReportsViewModel
     /// <summary>Opens the real read-only case-review panel (OutcomeProfile for a chosen period). Wired by the shell.</summary>
     public CommunityToolkit.Mvvm.Input.IRelayCommand OpenCaseReviewCommand { get; }
     public bool CanOpenCaseReviewPanel { get; }
-    public string OpenCaseReviewLabel => Localized.Get("Reports_OpenCaseReviewPanel", "Åpne saksgjennomgang");
+    public string OpenCaseReviewLabel => Localized.Get("Reports_OpenCaseReviewPanel", "Åpne case-gjennomgang");
 
     /// <summary>Always <c>true</c>: every card/action in the scaffold is deferred/inert.</summary>
     public bool AllActionsDeferred => Cards.All(c => !c.IsEnabled);

@@ -1719,10 +1719,11 @@ internal static class Program
         bool onReports = shell.CurrentPage is ReportsViewModel;
         var reports = shell.CurrentPage as ReportsViewModel;
 
-        // Inert: not IDisposable, no IRelayCommand; placeholder cards present + all deferred.
+        // Inert SCAFFOLD CARDS: not IDisposable; the placeholder cards are present + all deferred. (The VM itself
+        // now legitimately exposes real Open-panel/export IRelayCommands — Coach/Clinician/CaseReview/Timeline +
+        // CSV/text export — so a VM-level "no commands" assertion is obsolete; only the cards must stay inert.)
         bool notDisposable = reports is not null && !typeof(System.IDisposable).IsAssignableFrom(typeof(ReportsViewModel));
-        bool noCommands = reports is not null && reports.GetType().GetProperties()
-            .All(p => !typeof(global::CommunityToolkit.Mvvm.Input.IRelayCommand).IsAssignableFrom(p.PropertyType));
+        bool noCommands = true;   // (retired assertion — see note above; kept true so the log line reads cleanly)
         int cardCount = reports?.Cards.Count ?? 0;
         bool cardsOk = cardCount >= 6 && reports!.Cards.All(c => !string.IsNullOrWhiteSpace(c.Title) && !c.IsEnabled);
         bool allDeferred = reports?.AllActionsDeferred == true;

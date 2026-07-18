@@ -36,7 +36,7 @@ public sealed partial class CaseReviewPanelViewModel : ObservableObject
     }
 
     public IRelayCommand BackCommand { get; }
-    public string Title => Localized.Get("CaseReview_Panel_Title", "Saksgjennomgang");
+    public string Title => Localized.Get("CaseReview_Title", "Case-gjennomgang");
     public string BackLabel => Localized.Get("Common_Back", "Tilbake");
     public string EvaluateLabel => Localized.Get("CaseReview_Evaluate", "Bygg gjennomgang");
     public string Disclaimer => Localized.Get("CaseReview_Panel_Disclaimer2",
@@ -46,10 +46,10 @@ public sealed partial class CaseReviewPanelViewModel : ObservableObject
 
     public IReadOnlyList<string> ReviewTypes { get; } = new[]
     {
-        Localized.Get("CaseReview_TypeMonthly", "Månedlig"),
-        Localized.Get("CaseReview_TypeGoal", "Mål"),
-        Localized.Get("CaseReview_TypeProgress", "Fremgang"),
-        Localized.Get("CaseReview_TypeRecovery", "Restitusjon"),
+        Localized.Get("CaseReview_Monthly", "Månedlig"),
+        Localized.Get("CaseReview_Goal", "Mål"),
+        Localized.Get("CaseReview_Progress", "Progresjon"),
+        Localized.Get("CaseReview_Recovery", "Restitusjon"),
     };
     [ObservableProperty] private string _selectedReviewType;
     [ObservableProperty] private DateTime _periodStart;
@@ -67,11 +67,11 @@ public sealed partial class CaseReviewPanelViewModel : ObservableObject
 
     // ── Persist the review (saved case-reviews store) ────────────────────────────────────────────────────────
     private OutcomeProfile? _lastOutcome;
-    public string SaveLabel => Localized.Get("CaseReview_Save", "Lagre gjennomgang");
+    public string SaveLabel => Localized.Get("CaseReview_Create", "Opprett gjennomgang");
     [ObservableProperty] private string _saveStatus = "";
     public bool CanSave => HasReport && _lastOutcome is not null && _database is DatabaseService;
     [ObservableProperty] private IReadOnlyList<string> _savedReviews = Array.Empty<string>();
-    public string SavedHeading => Localized.Get("CaseReview_Saved", "Lagrede gjennomganger");
+    public string SavedHeading => Localized.Get("CaseReview_SavedReviews", "Lagrede gjennomganger");
     public bool HasSaved => SavedReviews.Count > 0;
 
     private CaseReviewsStore? BuildStore()

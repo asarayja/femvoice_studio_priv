@@ -26,7 +26,7 @@ public sealed class TimelinePanelViewModel
 
     public TimelinePanelViewModel(IDatabaseService? database, Action? onBack = null)
     {
-        Title = Localized.Get("Timeline_Panel_Title", "Utviklingstidslinje");
+        Title = Localized.Get("Report_Timeline", "Tidslinje");
         BackLabel = Localized.Get("Common_Back", "Tilbake");
         Disclaimer = Localized.Get("Timeline_Panel_Disclaimer",
             "Utviklingstidslinje sammenstilt fra dine lagrede økter (kun lesing). Beskrivende — aldri en " +
@@ -68,7 +68,7 @@ public sealed class TimelinePanelViewModel
                 .AssembleFromStoreAsync(database, null, new RecoveryIntelligenceService(), analytics, now, userId: 1)
                 .GetAwaiter().GetResult();
 
-            TimelineReport report = new ReportAssembler().BuildTimelineReport(outcome, now.AddDays(-180), now, now);
+            TimelineReport report = new ReportAssembler().BuildTimelineReport(outcome, now.AddDays(-30), now, now);   // WPF canonical 30-day window
             Report = report;
             ReportTitle = report.Title ?? "";
 
@@ -76,7 +76,7 @@ public sealed class TimelinePanelViewModel
                 .Select(e => new TimelineRow(
                     string.IsNullOrWhiteSpace(e.Label) ? "—" : e.Label,
                     $"{e.Window.From.ToLocalTime():yyyy-MM-dd} – {e.Window.To.ToLocalTime():yyyy-MM-dd}",
-                    LocalizeDirection(e.Direction),
+                    string.IsNullOrWhiteSpace(e.Direction) ? "—" : e.Direction,   // already localized by the Core assembler
                     $"Snitt {e.Window.CompositeMean.ToString("F0", CultureInfo.InvariantCulture)} · {e.Window.SessionCount} økter"))
                 .ToList();
 
@@ -88,11 +88,4 @@ public sealed class TimelinePanelViewModel
         }
     }
 
-    private static string LocalizeDirection(string? direction) => (direction ?? "").ToLowerInvariant() switch
-    {
-        "up" or "rising" or "improving" => "↑ stigende",
-        "down" or "falling" or "declining" => "↓ synkende",
-        "flat" or "stable" or "plateau" => "→ stabil",
-        _ => string.IsNullOrWhiteSpace(direction) ? "—" : direction,
-    };
 }
