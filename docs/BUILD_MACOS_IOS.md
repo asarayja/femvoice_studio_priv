@@ -6,11 +6,22 @@ Apple's rules allow it — see the honest limitations in each section.
 
 ---
 
+## 0. Get the source
+
+```bash
+git clone https://github.com/asarayja/femvoice_studio_priv.git
+cd femvoice_studio_priv
+git checkout main          # the default branch; all platform heads (incl. FemVoice.iOS) live here
+```
+
+Prerequisite: the **.NET 10 SDK**. The macOS `.app` can be *published* from any OS, but bundling/signing and all
+iOS work require a **Mac + Xcode** (and, for iOS, `dotnet workload install ios`).
+
 ## Part A — macOS desktop (`FemVoice.Avalonia`)
 
 ### A.1 Publish the macOS binary
 
-From any OS with the .NET 10 SDK:
+From the repo root (any OS with the .NET 10 SDK):
 
 ```bash
 # Apple Silicon
