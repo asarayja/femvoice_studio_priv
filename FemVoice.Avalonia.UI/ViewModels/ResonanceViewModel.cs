@@ -32,6 +32,7 @@ public sealed partial class ResonanceViewModel : ObservableObject, IDisposable
         _capture = capture;
         _engine = new FemVoiceStudio.Audio.ResonanceProxyEngine(44100);
         _engine.ResonanceScoreUpdated += OnResonanceScore;
+        _engine.FormantsUpdated += OnFormants;
 
         try
         {
@@ -51,11 +52,15 @@ public sealed partial class ResonanceViewModel : ObservableObject, IDisposable
 
     private IAudioCaptureService? _backend;
 
-    public string Title => Localized.Get("Resonance_Title", "Resonans");
-    public string Intro => Localized.Get("Resonance_Intro",
-        "Sanntids resonansvisning. Måleren viser lys/mørk resonans mens du snakker (frosne Core-motoren). " +
-        "Ingen lagring, ingen klinisk endring.");
-    public string LevelLabel => Localized.Get("Resonance_Level", "Resonans");
+    public string Title => Localized.Get("ResonanceWindow_Title", "Resonansanalyse");
+    public string Intro => Localized.Get("ResonanceWindow_Subtitle", "Sanntids formantvisualisering med resonansfokus");
+    public string LevelLabel => Localized.Get("ResonanceWindow_ResonanceScore", "Resonansscore");
+    // Live formant readouts (WPF ResonanceWindow shows F1/F2/F3 + category).
+    [ObservableProperty] private string _formantF1 = "—";
+    [ObservableProperty] private string _formantF2 = "—";
+    [ObservableProperty] private string _formantF3 = "—";
+    public string FormantsHeading => Localized.Get("ResonanceWindow_Formants", "Formanter");
+    public string CategoryLabel => Localized.Get("ResonanceWindow_Category", "Kategori");
     public string DeviceLabel => Localized.Get("MicCal_Device", "Enhet");
     public string StartLabel => Localized.Get("MicCal_Start", "Start");
     public string StopLabel => Localized.Get("MicCal_Stop", "Stopp");
@@ -98,6 +103,18 @@ public sealed partial class ResonanceViewModel : ObservableObject, IDisposable
         });
     }
 
+    // Live formant snapshot (F1/F2/F3 in Hz) from the Core engine — display-only numeric readout.
+    private void OnFormants(FemVoiceStudio.Audio.FormantSnapshot f)
+    {
+        _ui.Post(() =>
+        {
+            if (_disposed || !Running) return;
+            FormantF1 = f.F1 > 0 ? $"{f.F1:F0} Hz" : "—";
+            FormantF2 = f.F2 > 0 ? $"{f.F2:F0} Hz" : "—";
+            FormantF3 = f.F3 > 0 ? $"{f.F3:F0} Hz" : "—";
+        });
+    }
+
     [RelayCommand]
     private void Start()
     {
@@ -121,6 +138,7 @@ public sealed partial class ResonanceViewModel : ObservableObject, IDisposable
         Running = false;
         Level = 0;
         LevelLabelText = "—";
+        FormantF1 = FormantF2 = FormantF3 = "—";
         StatusMessage = Localized.Get("Resonance_Stopped", "Stoppet.");
     }
 
@@ -131,6 +149,7 @@ public sealed partial class ResonanceViewModel : ObservableObject, IDisposable
         if (_disposed) return;
         _disposed = true;
         _engine.ResonanceScoreUpdated -= OnResonanceScore;
+        _engine.FormantsUpdated -= OnFormants;
         if (_capture is not null) { _capture.FrameAvailable -= OnFrame; _ = _capture.StopAsync(); }
         _engine.Stop();
         _engine.Dispose();

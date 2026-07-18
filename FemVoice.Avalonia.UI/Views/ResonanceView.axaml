@@ -35,6 +35,24 @@
             </Border>
             <TextBlock Text="{Binding LevelLabelText}" Foreground="{DynamicResource ShellAccentBrush}" FontSize="13"/>
           </StackPanel>
+          <!-- Live formant readouts (F1/F2/F3) — WPF ResonanceWindow parity -->
+          <StackPanel Spacing="4">
+            <TextBlock Text="{Binding FormantsHeading}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+            <Grid ColumnDefinitions="*,*,*">
+              <StackPanel Grid.Column="0" Spacing="1">
+                <TextBlock Text="F1" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
+                <TextBlock Text="{Binding FormantF1}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="15" FontWeight="SemiBold"/>
+              </StackPanel>
+              <StackPanel Grid.Column="1" Spacing="1">
+                <TextBlock Text="F2" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
+                <TextBlock Text="{Binding FormantF2}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="15" FontWeight="SemiBold"/>
+              </StackPanel>
+              <StackPanel Grid.Column="2" Spacing="1">
+                <TextBlock Text="F3" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
+                <TextBlock Text="{Binding FormantF3}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="15" FontWeight="SemiBold"/>
+              </StackPanel>
+            </Grid>
+          </StackPanel>
           <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource ShellSuccessBrush}" FontSize="13" TextWrapping="Wrap"/>
         </StackPanel>
       </Border>
