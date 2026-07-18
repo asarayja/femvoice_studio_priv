@@ -1453,7 +1453,7 @@ internal static class Program
                           $"no-orphan-frames={noOrphanFrames} fresh-instance={distinctInstance} " +
                           $"second-running={secondRunning} no-orphan={firstStillStopped}");
 
-        bool ok = landsOnDashboard && shell.NavItems.Count == 15 && implemented == 15 && deferred == 0
+        bool ok = landsOnDashboard && shell.NavItems.Count == 14 && implemented == 14 && deferred == 0
                   && onGuide && backToDash && onDeferred && deferredInert && onProgScaffold && onCoachScaffold
                   && runtimeRunning && firstDisposedOnNav && noOrphanFrames
                   && distinctInstance && secondRunning && firstStillStopped;
@@ -1490,7 +1490,7 @@ internal static class Program
         var svc = new VoiceFeminizationExerciseService();
         var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
         var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
-        bool navLabelsOk = shell.NavItems.Count == 15
+        bool navLabelsOk = shell.NavItems.Count == 14
             && shell.NavItems.All(n => !string.IsNullOrWhiteSpace(n.Label))
             && shell.NavItems[0].Label == "Dashbord"
             && shell.NavItems[2].Label == "Innstillinger"   // Settings implemented
@@ -1886,20 +1886,19 @@ internal static class Program
         vm3.SkipCommand.Execute(null);
         bool skipCompletes = skipStore.Load().FirstTimeSetupCompleted && vm3.Completed;
 
-        // Nav integration: item implemented + navigates to the real VM (retained, not disposable).
+        // Onboarding is NOT a nav item (shown once on first run only): the rail must NOT contain Førstegangsoppsett,
+        // and the shell lands on the dashboard by default (headless smokes don't call ShowOnboardingIfFirstRun).
         var svc = new VoiceFeminizationExerciseService();
         var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
         var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
-        var nav = shell.NavItems.FirstOrDefault(n => n.Label.Contains("Førstegang"));
-        bool navImpl = nav is not null && nav.IsImplemented;
-        nav?.Command.Execute(null);
-        bool onSetup = shell.CurrentPage is FirstTimeSetupViewModel && shell.CurrentPage is not IDisposable;
+        bool notInNav = shell.NavItems.All(n => !n.Label.Contains("Førstegang"));
+        bool landsOnDashboard = shell.CurrentPage is MainDashboardViewModel;
 
         try { System.IO.File.Delete(tmp); System.IO.File.Delete(tmp2); } catch { }
 
         Console.WriteLine($"[firstsetup] startsIncomplete={startsIncomplete} persisted={persisted} vmCompleted={vmCompleted} remembers={remembers}");
-        Console.WriteLine($"[firstsetup] skipCompletes={skipCompletes} navImpl={navImpl} onSetup={onSetup}");
-        bool ok = startsIncomplete && persisted && vmCompleted && remembers && skipCompletes && navImpl && onSetup;
+        Console.WriteLine($"[firstsetup] skipCompletes={skipCompletes} notInNav={notInNav} landsOnDashboard={landsOnDashboard}");
+        bool ok = startsIncomplete && persisted && vmCompleted && remembers && skipCompletes && notInNav && landsOnDashboard;
         Console.WriteLine(ok ? "[firstsetup] First-time setup smoke OK" : "[firstsetup] First-time setup smoke FAIL");
         return ok ? 0 : 1;
     }
@@ -2175,7 +2174,7 @@ internal static class Program
         var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
         int implemented = shell.NavItems.Count(n => n.IsImplemented);
         int deferred = shell.NavItems.Count(n => !n.IsImplemented);
-        bool navOk = shell.NavItems.Count == 15 && implemented == 15 && deferred == 0;   // deferred surfaces stay deferred
+        bool navOk = shell.NavItems.Count == 14 && implemented == 14 && deferred == 0;   // deferred surfaces stay deferred
 
         // Settings stays display-only/inert: not IDisposable, exposes no IRelayCommand (no actions/persistence wired).
         bool settingsInert = !typeof(System.IDisposable).IsAssignableFrom(typeof(SettingsViewModel))
@@ -2794,7 +2793,7 @@ internal static class Program
                         && !coach.EngineAvailable && !string.IsNullOrWhiteSpace(coach.UnavailableNote);
 
         // Sidebar intact (9 items; both now implemented → 1 deferred = Mikrofonkalibrering) and dashboard nav works.
-        bool navIntact = shell.NavItems.Count == 15 && shell.NavItems.Count(n => !n.IsImplemented) == 0
+        bool navIntact = shell.NavItems.Count == 14 && shell.NavItems.Count(n => !n.IsImplemented) == 0
                          && shell.NavItems.First(n => n.Label.Contains("SmartCoach")).IsImplemented
                          && shell.NavItems.First(n => n.Label.Contains("Progresjon")).IsImplemented;
         shell.ShowDashboardCommand.Execute(null);
@@ -2848,7 +2847,7 @@ internal static class Program
         bool deferredWording = settings.DeferredBadge.Contains("Utsatt") && settings.DeferredBanner.Length > 0;
 
         // Sidebar intact.
-        bool navIntact = shell.NavItems.Count == 15 && shell.NavItems.Count(n => n.IsImplemented) == 15;
+        bool navIntact = shell.NavItems.Count == 14 && shell.NavItems.Count(n => n.IsImplemented) == 14;
 
         Console.WriteLine($"[settings-vis] onSettings={onSettings} navOk={navOk} sections={settings.Sections.Count} controls(combo/toggle/button)={hasCombo}/{hasToggle}/{hasButton}");
         Console.WriteLine($"[settings-vis] allInert={allInert} chipsOnActionable={chipsOnActionable} deferredWording={deferredWording} notDisposable={notDisposable} noCommands={noCommands} noServiceDeps={noServiceDeps} navIntact={navIntact}");
@@ -2907,7 +2906,7 @@ internal static class Program
         bool guideFilterIntact = guideVm.CategoryChips.Count >= 2 && guideVm.FilteredExercises.Count == guideVm.Exercises.Count;
         guideVm.SearchText = "zzqx-none"; bool searchWorks = guideVm.FilteredCount == 0; guideVm.SearchText = "";
         bool dashboardChartIntact = dash.DashboardChart is not null;   // chart model unchanged
-        bool navIntact = shell.NavItems.Count == 15 && shell.NavItems.Count(n => n.IsImplemented) == 15;
+        bool navIntact = shell.NavItems.Count == 14 && shell.NavItems.Count(n => n.IsImplemented) == 14;
 
         Console.WriteLine($"[layout] source={(SourcePresent ? "present" : "skipped")} settingsResponsive={settingsResponsive} scaffoldsCentered={scaffoldsCentered} guideCentered={guideCentered}");
         Console.WriteLine($"[layout] settingsInert={settingsInert} scaffoldsDeferred={scaffoldsDeferred} guideFilterIntact={guideFilterIntact}&searchWorks={searchWorks} dashboardChartIntact={dashboardChartIntact} navIntact={navIntact}");

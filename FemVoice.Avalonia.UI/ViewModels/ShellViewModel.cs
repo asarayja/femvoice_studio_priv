@@ -92,7 +92,9 @@ public partial class ShellViewModel : ObservableObject
         _diagnostics = new DiagnosticsViewModel(_database);   // real system status when a DB is present
         _progression = new ProgressionScaffoldViewModel();
         _smartCoach = new SmartCoachScaffoldViewModel();
-        _firstTimeSetup = new FirstTimeSetupViewModel();   // real onboarding — persists language/theme + completed flag
+        // Real onboarding — shown ONLY on first run (never a nav item). Completing/skipping calls back to the shell,
+        // which then moves to the dashboard. Persists language/theme/style/frequency + the completed flag.
+        _firstTimeSetup = new FirstTimeSetupViewModel(null, () => ShowDashboard());
     }
 
     // (Re)build the navigation rail. Labels resolve through the read-only localization adapter for the current
@@ -111,7 +113,7 @@ public partial class ShellViewModel : ObservableObject
             new(Localized.Get("Shell_Nav_Calendar", "Kalender"), true, ShowCalendarCommand),         // real DB history
             new(Localized.Get("Shell_Nav_Progresjon", "Progresjon"), true, ShowProgressionCommand),   // engine-backed
             new(Localized.Get("Shell_Nav_SmartCoach", "SmartCoach"), true, ShowSmartCoachCommand),   // engine-backed
-            new(Localized.Get("Shell_Nav_FirstSetup", "Førstegangsoppsett"), true, ShowFirstTimeSetupCommand),   // real onboarding
+            // NOTE: Førstegangsoppsett is intentionally NOT a nav item — it is onboarding, shown once on first run only.
             new(Localized.Get("Shell_Nav_Resonance", "Resonans"), true, ShowResonanceCommand),   // real-time resonance + contrast demo
             new(Localized.Get("Shell_Nav_Analyzer", "Analysator"), true, ShowAnalyzerCommand),   // real-time pitch/resonance analyzer
             new(Localized.Get("Shell_Nav_MicCalibration", "Mikrofonkalibrering"), true, _showMicCalibrationCommand),
@@ -249,6 +251,19 @@ public partial class ShellViewModel : ObservableObject
         };
     }
 
+    /// <summary>Show the first-time onboarding as the current page IFF setup has not been completed. Called ONCE by
+    /// the real app at startup (both heads) — NOT by headless smokes/snapshots, so those stay on the dashboard.
+    /// Onboarding is never a nav item; after Complete/Skip it calls back to move to the dashboard and never re-shows.</summary>
+    public void ShowOnboardingIfFirstRun()
+    {
+        try
+        {
+            if (!new FemVoice.Avalonia.Preferences.UiPreferencesStore().Load().FirstTimeSetupCompleted)
+                CurrentPage = _firstTimeSetup;
+        }
+        catch { /* prefs unreadable → skip onboarding, land on dashboard */ }
+    }
+
     [RelayCommand] private void ShowDashboard() => CurrentPage = _dashboard;
     [RelayCommand] private void ShowGuide() => CurrentPage = _guide;
     [RelayCommand] private void ShowSettings() => CurrentPage = _settings;          // inert display-only page
@@ -288,8 +303,7 @@ public partial class ShellViewModel : ObservableObject
     // state when no DB is injected, e.g. headless/tests). Fresh each open so it reflects the latest saved sessions.
     [RelayCommand] private void ShowSmartCoach() => CurrentPage = new SmartCoachViewModel(_database);
 
-    // Real onboarding: retained VM so its persisted state (completed flag) survives re-navigation within a session.
-    [RelayCommand] private void ShowFirstTimeSetup() => CurrentPage = _firstTimeSetup;
+    // (Førstegangsoppsett has no Show* command / nav item — it is shown once on first run via ShowOnboardingIfFirstRun.)
 
     // Deferred destinations open a purely static placeholder — no services, no side effects.
     private void ShowDeferred(string surface) => CurrentPage = new DeferredSurfaceViewModel(surface);
