@@ -74,8 +74,8 @@ public sealed class DayDetailsViewModel
                 Summary = $"{sessions.Count} økter · snitt score {avgScore:F0} · total {totalMin} min";
                 SummaryCards = new List<AnalysisSummaryMetric>
                 {
-                    new(Localized.Get("Main_TotalSessions", "Økter"), sessions.Count.ToString()),
-                    new(Localized.Get("Statistics_TotalTime", "Total tid"), $"{totalMin} min"),
+                    new(Localized.Get("Dashboard_Sessions", "Økter"), sessions.Count.ToString()),
+                    new(Localized.Get("Dashboard_Minutes", "Minutter"), $"{totalMin} min"),
                     new(Localized.Get("DayDetails_AverageScore", "Gj. score"), $"{avgScore:F0} / 100"),
                     new(Localized.Get("DayDetails_AverageHz", "Hz gj.snitt"), avgPitch > 0 ? $"{avgPitch:F0} Hz" : "—"),
                 };
