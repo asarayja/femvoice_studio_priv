@@ -61,6 +61,23 @@
           </StackPanel>
         </Border>
 
+        <!-- Recovery detail (WPF parity): debt / overtraining / workload / recommendation -->
+        <Border Classes="card" IsVisible="{Binding HasRecoveryDetail}">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding RecoveryHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <ItemsControl ItemsSource="{Binding RecoveryDetail}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid ColumnDefinitions="240,*" Margin="0,1">
+                    <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}" TextWrapping="Wrap"/>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
         <!-- Top exercises -->
         <Border Classes="card" IsVisible="{Binding HasExercises}">
           <StackPanel Spacing="6">

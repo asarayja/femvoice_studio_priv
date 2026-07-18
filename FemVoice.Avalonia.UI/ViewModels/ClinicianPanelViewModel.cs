@@ -52,6 +52,10 @@ public sealed class ClinicianPanelViewModel
     public IReadOnlyList<ClinicianRow> Overview { get; private set; } = Array.Empty<ClinicianRow>();
     public IReadOnlyList<ClinicianRow> Goals { get; private set; } = Array.Empty<ClinicianRow>();
     public IReadOnlyList<ClinicianRow> TopExercises { get; private set; } = Array.Empty<ClinicianRow>();
+    /// <summary>Recovery-intelligence detail (debt / overtraining / ACWR / recommendation) — WPF parity.</summary>
+    public IReadOnlyList<ClinicianRow> RecoveryDetail { get; private set; } = Array.Empty<ClinicianRow>();
+    public bool HasRecoveryDetail => RecoveryDetail.Count > 0;
+    public string RecoveryHeading => Localized.Get("Clinician_RecoveryStatus", "Restitusjonsstatus");
 
     public string OverviewHeading => Localized.Get("Clinician_Panel_Overview", "Utfallsoversikt");
     public string GoalsHeading => Localized.Get("Clinician_GoalProgress", "Målfremdrift");
@@ -97,10 +101,12 @@ public sealed class ClinicianPanelViewModel
             };
             Overview = overview;
 
+            // Goals now show current → target (WPF grid columns), not just percent.
             Goals = (report.GoalProgress ?? Array.Empty<GoalProgressEntry>())
                 .Select(g => new ClinicianRow(
                     string.IsNullOrWhiteSpace(g.GoalType) ? g.PrimaryFocus.ToString() : g.GoalType,
-                    $"{g.PercentComplete:F0}%" + (g.IsAchieved ? " ✓" : "")))
+                    $"{g.PercentComplete:F0}%" + (g.IsAchieved ? " ✓" : "")
+                    + (g.TargetValue > 0 ? $"  ({g.CurrentValue:F0} / {g.TargetValue:F0})" : "")))
                 .ToList();
 
             TopExercises = (report.TopExercises ?? Array.Empty<ExerciseEffectivenessProfile>())
@@ -110,7 +116,24 @@ public sealed class ClinicianPanelViewModel
                     e.CompositeEffectiveness.ToString("F0", CultureInfo.InvariantCulture)))
                 .ToList();
 
-            HasReport = report.HasEnoughData || Goals.Count > 0 || TopExercises.Count > 0;
+            // Recovery-intelligence detail from the assembled OutcomeProfile (WPF Clinician shows debt / overtraining
+            // / workload ratio / recommendation). Read-only, guarded per-field.
+            var rp = outcome.RecoveryProgress;
+            if (rp is not null)
+            {
+                var rows = new List<ClinicianRow>
+                {
+                    new(Localized.Get("Clinician_RecoveryDebtLabel", "Restitusjonsgjeld"), rp.RecoveryDebt.ToString("F0", CultureInfo.InvariantCulture)),
+                    new(Localized.Get("Clinician_OvertrainingPredicted", "Overtrening forutsett"),
+                        rp.OvertrainingPredicted ? Localized.Get("Common_Yes", "Ja") : Localized.Get("Common_No", "Nei")),
+                    new(Localized.Get("Clinician_Workload", "Arbeidsbelastning (akutt/kronisk)"), rp.AcuteChronicWorkloadRatio.ToString("0.00", CultureInfo.InvariantCulture)),
+                };
+                if (!string.IsNullOrWhiteSpace(rp.RecommendationText))
+                    rows.Add(new(Localized.Get("Clinician_Recommendation", "Anbefaling"), rp.RecommendationText));
+                RecoveryDetail = rows;
+            }
+
+            HasReport = report.HasEnoughData || Goals.Count > 0 || TopExercises.Count > 0 || RecoveryDetail.Count > 0;
         }
         catch
         {
