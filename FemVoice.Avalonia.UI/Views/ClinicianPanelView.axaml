@@ -1,0 +1,79 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
+             x:Class="FemVoice.Avalonia.Views.ClinicianPanelView">
+  <!-- REAL clinician panel: descriptive outcome overview (composite score, recovery, goal progress, top exercises)
+       assembled read-only from saved sessions via the frozen Core report pipeline. Never a safety/training gate. -->
+  <ScrollViewer>
+    <StackPanel Margin="24" Spacing="16" MaxWidth="820" HorizontalAlignment="Center">
+
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Grid.Column="0" Text="{Binding Title}" FontSize="24" FontWeight="Bold"
+                   Foreground="{DynamicResource ShellHeadingBrush}" VerticalAlignment="Center"/>
+        <Button Grid.Column="1" Content="{Binding BackLabel}" Classes="secondary" Command="{Binding BackCommand}"/>
+      </Grid>
+
+      <Border Classes="card" IsVisible="{Binding !HasReport}">
+        <TextBlock Text="{Binding EmptyMessage}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}"/>
+      </Border>
+
+      <StackPanel Spacing="16" IsVisible="{Binding HasReport}">
+        <!-- Outcome overview -->
+        <Border Classes="card" BorderBrush="{DynamicResource ShellSuccessBrush}">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding ReportTitle}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellHeadingBrush}"/>
+            <ItemsControl ItemsSource="{Binding Overview}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid ColumnDefinitions="200,*" Margin="0,2">
+                    <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}" TextWrapping="Wrap"/>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <!-- Goal progress -->
+        <Border Classes="card" IsVisible="{Binding HasGoals}">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding GoalsHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <ItemsControl ItemsSource="{Binding Goals}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid ColumnDefinitions="200,*" Margin="0,1">
+                    <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <!-- Top exercises -->
+        <Border Classes="card" IsVisible="{Binding HasExercises}">
+          <StackPanel Spacing="6">
+            <TextBlock Text="{Binding ExercisesHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <ItemsControl ItemsSource="{Binding TopExercises}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid ColumnDefinitions="*,Auto" Margin="0,1">
+                    <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellBodyTextBrush}" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellMutedBrush}" Margin="8,0,0,0"/>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+
+      <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
+        <TextBlock Text="{Binding Disclaimer}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

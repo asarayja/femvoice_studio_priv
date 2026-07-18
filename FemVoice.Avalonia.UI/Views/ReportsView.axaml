@@ -30,6 +30,8 @@
                     IsEnabled="{Binding CanExport}" Click="OnExportTextClick"/>
             <Button Content="{Binding OpenCoachLabel}" Classes="secondary"
                     IsVisible="{Binding CanOpenCoachPanel}" Command="{Binding OpenCoachCommand}"/>
+            <Button Content="{Binding OpenClinicianLabel}" Classes="secondary"
+                    IsVisible="{Binding CanOpenClinicianPanel}" Command="{Binding OpenClinicianCommand}"/>
           </StackPanel>
           <TextBlock x:Name="ExportStatus" IsVisible="False"
                      Foreground="{DynamicResource ShellSuccessBrush}" FontSize="12" TextWrapping="Wrap"/>

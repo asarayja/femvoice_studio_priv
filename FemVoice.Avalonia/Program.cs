@@ -55,6 +55,7 @@ internal static class Program
         if (args.Contains("--reports-export-smoke")) return ReportsExportSmoke();
         if (args.Contains("--info-sidebar-smoke")) return InfoSidebarSmoke();
         if (args.Contains("--coach-panel-smoke")) return CoachPanelSmoke();
+        if (args.Contains("--clinician-panel-smoke")) return ClinicianPanelSmoke();
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
         if (args.Contains("--visual-baseline-smoke")) return VisualBaselineSmoke();
@@ -461,6 +462,53 @@ internal static class Program
         finally { Cleanup(); }
     }
 
+    // Headless verification of the REAL clinician-panel slice (no display): assembles a real OutcomeProfile →
+    // OutcomeReport from a TEMP DB read-only via the frozen Core pipeline WITHOUT throwing, degrades to a truthful
+    // "not enough data" state, and surfaces the overview rows. Also checks Reports exposes the open-clinician command
+    // + shell navigates + Back returns. No writes / no clinical change.
+    private static int ClinicianPanelSmoke()
+    {
+        string fileName = $"femvoice-clin-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+        string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio");
+        string full = System.IO.Path.Combine(dir, fileName);
+        void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+        Cleanup();
+        try
+        {
+            var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+            var emptyPanel = new ClinicianPanelViewModel(db);   // must not throw; empty-safe
+            bool emptyStateOk = emptyPanel.EmptyMessage.Length > 0 && emptyPanel.Title.Length > 0;
+
+            for (int i = 0; i < 6; i++)
+                db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
+                { UserId = 1, StartTime = DateTime.UtcNow.AddDays(-i * 2), EndTime = DateTime.UtcNow.AddDays(-i * 2).AddMinutes(5),
+                  AveragePitch = 172 + i * 3, OverallScore = 58 + i * 4, Feedback = "s" });
+            var panel = new ClinicianPanelViewModel(db);
+            bool assembledOk = panel is not null && (!panel.HasReport || panel.Overview.Count >= 3);   // no crash; overview coherent when real
+
+            var noDb = new ClinicianPanelViewModel(null);
+            bool noDbOk = !noDb.HasReport && noDb.EmptyMessage.Length > 0;
+
+            var svc = new VoiceFeminizationExerciseService();
+            var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+            var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher(), null, db);
+            shell.ShowReportsCommand.Execute(null);
+            var reports = shell.CurrentPage as ReportsViewModel;
+            bool canOpen = reports is not null && reports.CanOpenClinicianPanel;
+            reports!.OpenClinicianCommand.Execute(null);
+            bool onClin = shell.CurrentPage is ClinicianPanelViewModel;
+            (shell.CurrentPage as ClinicianPanelViewModel)!.BackCommand.Execute(null);
+            bool backToReports = shell.CurrentPage is ReportsViewModel;
+
+            Console.WriteLine($"[clin] emptyStateOk={emptyStateOk} assembledOk={assembledOk} noDbOk={noDbOk} canOpen={canOpen} onClin={onClin} backToReports={backToReports} (hasReport={panel.HasReport} overview={panel.Overview.Count})");
+            bool ok = emptyStateOk && assembledOk && noDbOk && canOpen && onClin && backToReports;
+            Console.WriteLine(ok ? "[clin] Clinician panel smoke OK" : "[clin] Clinician panel smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[clin] Clinician panel smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
+        finally { Cleanup(); }
+    }
+
     // Avalonia-local session-history persistence: round-trips display-only records through a JSON store, degrades
     // gracefully on missing/corrupt files, caps + newest-first, and defaults to the Avalonia-local path (NOT the WPF
     // DB). Uses a TEMP path so it is deterministic and never touches the real history file. No clinical scoring.
@@ -542,11 +590,17 @@ internal static class Program
             _ => "",
             // (coach panel is opened from within Reports, not a top-level nav item)
         };
-        // Coach panel is opened from within Reports (not a top-level nav item) — navigate there explicitly.
+        // Coach/Clinician panels are opened from within Reports (not top-level nav items) — navigate explicitly.
         if (page is "coach" or "coachpanel" or "veilederpanel")
         {
             shell.ShowReportsCommand.Execute(null);
             (shell.CurrentPage as ReportsViewModel)?.OpenCoachCommand.Execute(null);
+            return;
+        }
+        if (page is "clinician" or "clinicianpanel" or "klinikerpanel")
+        {
+            shell.ShowReportsCommand.Execute(null);
+            (shell.CurrentPage as ReportsViewModel)?.OpenClinicianCommand.Execute(null);
             return;
         }
         if (needle.Length == 0) return;   // "shell" / default keeps the dashboard

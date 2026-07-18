@@ -88,7 +88,7 @@ public partial class ShellViewModel : ObservableObject
         _guide = new ExerciseGuideViewModel(_exercises, OpenExercise);
         _settings = new SettingsViewModel();
         _analysis = new AnalysisViewModel(_database);   // engine-backed: real session trends when a DB is present
-        _reports = new ReportsViewModel(_database, OpenCoachPanel);   // real preview/export + opens the real coach panel
+        _reports = new ReportsViewModel(_database, OpenCoachPanel, OpenClinicianPanel);   // real preview/export + coach/clinician panels
         _diagnostics = new DiagnosticsViewModel(_database);   // real system status when a DB is present
         _progression = new ProgressionScaffoldViewModel();
         _smartCoach = new SmartCoachScaffoldViewModel();
@@ -234,6 +234,7 @@ public partial class ShellViewModel : ObservableObject
             FirstTimeSetupViewModel => Localized.Get("Shell_Nav_FirstSetup", "Førstegangsoppsett"),
             MicCalibrationViewModel => Localized.Get("Shell_Nav_MicCalibration", "Mikrofonkalibrering"),
             CoachPanelViewModel => Localized.Get("Coach_Panel_Title", "Veilederpanel"),
+            ClinicianPanelViewModel => Localized.Get("Clinician_Panel_Title", "Klinikerpanel"),
             DeferredSurfaceViewModel d => $"{d.SurfaceName} (utsatt)",
             _ => "—",
         };
@@ -245,10 +246,11 @@ public partial class ShellViewModel : ObservableObject
     // Engine-backed: real pitch/score trends from the saved sessions (fresh each open; null-safe → synthetic).
     [RelayCommand] private void ShowAnalysis() => CurrentPage = new AnalysisViewModel(_database);
     // Real progress-summary preview + CSV/text export from saved sessions (fresh each open; null-safe).
-    [RelayCommand] private void ShowReports() => CurrentPage = new ReportsViewModel(_database, OpenCoachPanel);
+    [RelayCommand] private void ShowReports() => CurrentPage = new ReportsViewModel(_database, OpenCoachPanel, OpenClinicianPanel);
 
-    // Real read-only coach panel assembled from saved sessions; Back returns to the Reports page.
+    // Real read-only coach/clinician panels assembled from saved sessions; Back returns to the Reports page.
     private void OpenCoachPanel() => CurrentPage = new CoachPanelViewModel(_database, ShowReports);
+    private void OpenClinicianPanel() => CurrentPage = new ClinicianPanelViewModel(_database, ShowReports);
     // Real system status (runtime + DB facts) fresh each open; export/support-package/backup stay deferred.
     [RelayCommand] private void ShowDiagnostics() => CurrentPage = new DiagnosticsViewModel(_database);
     // Real training statistics from the saved sessions (fresh each open; null-safe).
