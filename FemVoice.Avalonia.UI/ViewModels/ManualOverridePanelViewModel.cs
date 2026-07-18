@@ -1,9 +1,12 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using FemVoiceStudio.Models;               // ExerciseTargetProfile, ExerciseProfileType, ManualOverrideRequest/Kind/Result, VoiceStyleGoal, RecoverySeverity
-using FemVoiceStudio.Services;             // ManualOverrideEngine, ExerciseProfileFactory
+using FemVoiceStudio.Data;                 // IDatabaseService, DatabaseService (connection string for the store)
+using FemVoiceStudio.Models;               // ExerciseTargetProfile, ExerciseProfileType, ManualOverrideRequest/Kind/Result, VoiceStyleGoal
+using FemVoiceStudio.Services;             // ManualOverrideEngine, ExerciseProfileFactory, ManualOverridesStore, RecoverySeverity
 using FemVoice.Avalonia.Localization;
 
 namespace FemVoice.Avalonia.ViewModels;
@@ -20,9 +23,15 @@ public partial class ManualOverridePanelViewModel : ObservableObject
 {
     private readonly ManualOverrideEngine _engine = new();
     private readonly ExerciseProfileFactory _factory = new();
+    private readonly IDatabaseService? _database;
+    private ManualOverrideRequest? _lastRequest;
+    private ManualOverrideResult? _lastResult;
 
-    public ManualOverridePanelViewModel(System.Action? onBack = null)
+    public ManualOverridePanelViewModel(System.Action? onBack = null) : this(null, onBack) { }
+
+    public ManualOverridePanelViewModel(IDatabaseService? database, System.Action? onBack = null)
     {
+        _database = database;
         BackCommand = new RelayCommand(() => onBack?.Invoke());
         // Seed the intended fields from the default baseline so the form starts valid + realistic.
         var baseline = _factory.CreateProfile(BaselineProfileType);
@@ -31,6 +40,7 @@ public partial class ManualOverridePanelViewModel : ObservableObject
         _intendedStabilityThreshold = baseline.StabilityThreshold;
         _intendedRequiredHoldSeconds = baseline.RequiredHoldSeconds;
         Evaluate();   // show an initial (unclamped) baseline result
+        LoadRecent(); // populate the recent-overrides audit list (best-effort)
     }
 
     public IRelayCommand BackCommand { get; }
@@ -70,9 +80,60 @@ public partial class ManualOverridePanelViewModel : ObservableObject
         "En fagperson kan be om en overstyring av en øvelsesprofil. Den to-trinns sikkerhets-/restitusjonsklampen " +
         "kjøres, og KUN det klampede utfallet vises — den rå forespørselen anvendes eller vises aldri. Klampen kan " +
         "bare gjøre profilen mer konservativ.");
-    public string SafetyNote => Localized.Get("Override_SafetyNote",
-        "Kun visning: klampen beregnes og vises, men lagres ikke og anvendes ikke (skrive-/anvend-steget er utsatt " +
-        "til eksplisitt klinisk godkjenning). Ingen klinisk/sikkerhetslogikk er endret — den frosne Core-motoren brukes uendret.");
+    public string SafetyNote => Localized.Get("Override_SafetyNote2",
+        "Klampen beregnes av den frosne Core-motoren og KUN det klampede utfallet vises/loggføres — aldri den rå " +
+        "forespørselen. «Loggfør» skriver en revisjonsoppføring (utfall + flagg, ikke den rå profilen) til " +
+        "overstyringsloggen. Ingen klinisk/sikkerhetslogikk er endret.");
+
+    // ── Persist the clamped result to the override audit log (safety store) ──────────────────────────────────
+    public string PersistLabel => Localized.Get("Override_Persist", "Loggfør i overstyringsloggen");
+    [ObservableProperty] private string _persistStatus = "";
+    /// <summary>True when there is a computed result AND a real (concrete) database to log to.</summary>
+    public bool CanPersist => _lastResult is not null && _database is DatabaseService;
+
+    /// <summary>Recent logged overrides (audit rows) for this user — refreshed after each log.</summary>
+    [ObservableProperty] private IReadOnlyList<string> _recentOverrides = Array.Empty<string>();
+    public string RecentHeading => Localized.Get("Override_Recent", "Nylige loggførte overstyringer");
+    public bool HasRecent => RecentOverrides.Count > 0;
+
+    private ManualOverridesStore? BuildStore()
+        => _database is DatabaseService concrete
+            ? new ManualOverridesStore(new SqliteManualOverridesRepository(concrete.ConnectionString))
+            : null;
+
+    [RelayCommand]
+    private void Persist()
+    {
+        if (_lastRequest is null || _lastResult is null) { PersistStatus = Localized.Get("Override_NoResult", "Ingen beregnet klamp å loggføre."); return; }
+        var store = BuildStore();
+        if (store is null) { PersistStatus = Localized.Get("Override_NoDb", "Databasen er ikke tilgjengelig i denne visningen."); return; }
+        try
+        {
+            // Persists the RESULT (clamped flags + metadata), NEVER the raw intended profile — same as WPF.
+            store.LogResultAsync(_lastRequest, _lastResult).GetAwaiter().GetResult();
+            PersistStatus = Localized.Get("Override_Logged", "Loggført i overstyringsloggen (kun utfall + flagg).");
+            LoadRecent(store);
+            OnPropertyChanged(nameof(HasRecent));
+        }
+        catch (Exception ex) { PersistStatus = Localized.Get("Override_LogFailed", "Kunne ikke loggføre: ") + ex.Message; }
+    }
+
+    private void LoadRecent(ManualOverridesStore? store = null)
+    {
+        store ??= BuildStore();
+        if (store is null) return;
+        try
+        {
+            var now = DateTime.UtcNow;
+            var rows = store.GetOverridesAsync(1, now.AddDays(-90), now.AddDays(1)).GetAwaiter().GetResult()
+                .OrderByDescending(e => e.RequestedAt).Take(10)
+                .Select(e => $"{e.RequestedAt.ToLocalTime():yyyy-MM-dd HH:mm} · {e.OverrideKind} · "
+                           + (e.WasApplied ? (e.WasClamped ? "klampet" : "anvendt") : $"ikke anvendt ({e.BlockedReasonCode})"))
+                .ToList();
+            RecentOverrides = rows;
+        }
+        catch { /* audit read is best-effort */ }
+    }
 
     // Re-run the clamp whenever an input changes so the UI always reflects the current clamped outcome.
     partial void OnBaselineProfileTypeChanged(ExerciseProfileType value) => Evaluate();
@@ -105,6 +166,9 @@ public partial class ManualOverridePanelViewModel : ObservableObject
             // Run the FROZEN clamp. gateBlocked/severity are the already-evaluated safety signals (here chosen by the
             // clinician to preview the clamp). The result carries ONLY the clamped profile — we display that alone.
             ManualOverrideResult result = _engine.Evaluate(request, baseline, SimulateGateBlocked, RecoverySeverity, StyleGoal);
+            _lastRequest = request;
+            _lastResult = result;
+            OnPropertyChanged(nameof(CanPersist));
 
             WasApplied = result.WasApplied;
             WasClamped = result.WasClamped;

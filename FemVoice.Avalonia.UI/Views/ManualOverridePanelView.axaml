@@ -71,6 +71,26 @@
         </StackPanel>
       </Border>
 
+      <!-- Persist the clamped result to the override audit log (safety store) -->
+      <Border Classes="card">
+        <StackPanel Spacing="8">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <Button Content="{Binding PersistLabel}" Classes="secondary" Command="{Binding PersistCommand}" IsEnabled="{Binding CanPersist}"/>
+            <TextBlock Text="{Binding PersistStatus}" VerticalAlignment="Center" Foreground="{DynamicResource ShellSuccessBrush}" FontSize="12" TextWrapping="Wrap"/>
+          </StackPanel>
+          <StackPanel IsVisible="{Binding HasRecent}" Spacing="2">
+            <TextBlock Text="{Binding RecentHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}" FontSize="13" Margin="0,4,0,0"/>
+            <ItemsControl ItemsSource="{Binding RecentOverrides}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12" Margin="0,1"/>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
       <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
         <TextBlock Text="{Binding SafetyNote}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
       </Border>
