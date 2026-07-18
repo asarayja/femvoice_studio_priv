@@ -21,7 +21,7 @@ public sealed class CoachPanelViewModel
 {
     public CoachPanelViewModel() : this(null, null) { }
 
-    public CoachPanelViewModel(IDatabaseService? database, Action? onBack = null)
+    public CoachPanelViewModel(IDatabaseService? database, Action? onBack = null, Action? onRefresh = null)
     {
         Title = Localized.Get("Coach_Title", "Coach-oversikt");
         BackLabel = Localized.Get("Common_Back", "Tilbake");
@@ -29,12 +29,19 @@ public sealed class CoachPanelViewModel
             "Sammenstilt fra dine lagrede økter (kun lesing). Ingen klinisk endring, ingenting lagres. " +
             "Per-dimensjons resonans/intonasjon fylles først når økter registrerer disse målingene.");
         BackCommand = new RelayCommand(() => onBack?.Invoke());
+        // Refresh re-opens the panel (it re-assembles fresh each open, WPF's RefreshCommand behaviour).
+        RefreshCommand = new RelayCommand(() => (onRefresh ?? onBack)?.Invoke());
         TryBuild(database);
     }
 
     public string Title { get; }
     public string BackLabel { get; }
     public string Disclaimer { get; }
+    public IRelayCommand RefreshCommand { get; }
+    public string RefreshLabel => Localized.Get("Common_Refresh", "Oppdater");
+    /// <summary>Current learning-stage status line (WPF Coach StageSummary), from the SmartCoach engine.</summary>
+    public string StageSummary { get; private set; } = "";
+    public bool HasStageSummary => StageSummary.Length > 0;
     /// <summary>Returns to the Reports page (no-op when opened standalone).</summary>
     public IRelayCommand BackCommand { get; }
 
@@ -86,6 +93,7 @@ public sealed class CoachPanelViewModel
                 : new SessionAnalyticsStore(new InMemorySessionAnalyticsRepository());
 
             var smartCoach = new SmartCoachEngine(database);
+            try { StageSummary = smartCoach.GetStatusSummary(1) ?? ""; } catch { StageSummary = ""; }
             var effectiveness = new ExerciseEffectivenessEngine(analytics);
             var insight = new LongitudinalInsightEngine();
             var recovery = new RecoveryIntelligenceService();

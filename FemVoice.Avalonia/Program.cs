@@ -502,7 +502,10 @@ internal static class Program
             bool sectionsWired = panel!.RecoveryNeedsHeading.Length > 0 && panel.PlateauWarningsHeading.Length > 0
                                  && panel.PlateauWarnings is not null
                                  && (!panel.HasRecoveryNeeds || panel.RecoveryNeedsText.Length > 0)
-                                 && (!panel.HasPlateauWarnings || panel.PlateauWarnings.Count > 0);
+                                 && (!panel.HasPlateauWarnings || panel.PlateauWarnings.Count > 0)
+                                 // StageSummary (learning-stage line) + Refresh command wired (WPF parity).
+                                 && panel.RefreshCommand is not null && panel.RefreshLabel.Length > 0
+                                 && (!panel.HasStageSummary || panel.StageSummary.Length > 0);
 
             // No DB → empty-safe.
             var noDb = new CoachPanelViewModel(null);

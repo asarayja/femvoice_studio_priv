@@ -294,7 +294,7 @@ public partial class ShellViewModel : ObservableObject
     [RelayCommand] private void ShowReports() => CurrentPage = new ReportsViewModel(_database, OpenCoachPanel, OpenClinicianPanel, OpenTimelinePanel, OpenCaseReviewPanel);
 
     // Real read-only coach/clinician/timeline panels assembled from saved sessions; Back returns to the Reports page.
-    private void OpenCoachPanel() => CurrentPage = new CoachPanelViewModel(_database, ShowReports);
+    private void OpenCoachPanel() => CurrentPage = new CoachPanelViewModel(_database, ShowReports, OpenCoachPanel);
     private void OpenClinicianPanel() => CurrentPage = new ClinicianPanelViewModel(_database, ShowReports);
     private void OpenTimelinePanel() => CurrentPage = new TimelinePanelViewModel(_database, ShowReports);
     private void OpenCaseReviewPanel() => CurrentPage = new CaseReviewPanelViewModel(_database, ShowReports);
