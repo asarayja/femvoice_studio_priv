@@ -261,7 +261,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         PitchTracePx.Clear();
         DashboardChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, ComfortZoneLow, ComfortZoneHigh);
         if (_capture is SyntheticAudioCaptureService synth) synth.Mode = SyntheticAudioMode;
-        await _capture.StartAsync(new AudioCaptureOptions(SampleRate)).ConfigureAwait(false);
+        await _capture.StartAsync(new AudioCaptureOptions(SampleRate, DeviceId: FemVoice.Avalonia.Preferences.CapturePreferences.SelectedMicDeviceId())).ConfigureAwait(false);
         _sessionStart = System.DateTime.Now;
         IsRecording = true;
         CurrentFeedbackMessage = "Lytter …";

@@ -36,6 +36,29 @@ public sealed class UiPreferences
     /// <summary>Preferred training days per week (2–5) captured in onboarding. Local preference only. Default: 3.</summary>
     public int TrainingFrequency { get; set; } = 3;
 
+    /// <summary>Preferred input-device id (backend-specific: the waveIn index string on Windows). Null/empty = the
+    /// system-default input. Read by the capture pipeline (dashboard/exercise) to route to the chosen microphone.</summary>
+    public string? MicDeviceId { get; set; }
+
+    /// <summary>"Hear own voice" preference (real-time monitoring). Persisted like WPF's flag; live playback is honored
+    /// only where an audio-output path exists.</summary>
+    public bool HearOwnVoice { get; set; }
+
+    /// <summary>Preferred voice-goal FOCUS token (balanced / pitch / resonance / intonation). Local preference. Default: balanced.</summary>
+    public string VoiceGoalFocus { get; set; } = "balanced";
+
+    /// <summary>Accessibility: stress-sensitive mode (gentler feedback). Persisted local preference. Default: off.</summary>
+    public bool StressSensitiveMode { get; set; }
+
+    /// <summary>Accessibility: reduced visual feedback (calmer live visuals). Persisted local preference. Default: off.</summary>
+    public bool ReducedVisualFeedback { get; set; }
+
+    /// <summary>Privacy: consent to local diagnostics. Persisted local preference. Default: off (opt-in).</summary>
+    public bool DiagnosticsConsent { get; set; }
+
+    /// <summary>Privacy: consent to anonymized research sharing. Persisted local preference. Default: off (opt-in).</summary>
+    public bool ResearchSharingConsent { get; set; }
+
     /// <summary>Schema version for forward-compatible parsing of the local file.</summary>
     public int Version { get; set; } = 1;
 
@@ -58,6 +81,13 @@ public sealed class UiPreferences
             FirstTimeSetupCompleted = FirstTimeSetupCompleted,
             VoiceGoalStyle = string.IsNullOrWhiteSpace(VoiceGoalStyle) ? "soft_feminine" : VoiceGoalStyle,
             TrainingFrequency = TrainingFrequency is >= 2 and <= 5 ? TrainingFrequency : 3,
+            MicDeviceId = string.IsNullOrWhiteSpace(MicDeviceId) ? null : MicDeviceId,
+            HearOwnVoice = HearOwnVoice,
+            VoiceGoalFocus = string.IsNullOrWhiteSpace(VoiceGoalFocus) ? "balanced" : VoiceGoalFocus,
+            StressSensitiveMode = StressSensitiveMode,
+            ReducedVisualFeedback = ReducedVisualFeedback,
+            DiagnosticsConsent = DiagnosticsConsent,
+            ResearchSharingConsent = ResearchSharingConsent,
             Version = Version <= 0 ? 1 : Version,
         };
     }

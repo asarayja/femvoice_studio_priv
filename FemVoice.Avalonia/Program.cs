@@ -40,6 +40,7 @@ internal static class Program
         if (args.Contains("--dashboard-smoke")) return DashboardSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-smoke")) return ExerciseSmoke();
         if (args.Contains("--exercise-save-truthful-smoke")) return ExerciseSaveTruthfulSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--settings-data-ops-smoke")) return SettingsDataOpsSmoke();
         if (args.Contains("--exercise-runtime-smoke")) return ExerciseRuntimeSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-runtime-integration-smoke")) return ExerciseRuntimeIntegrationSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-coordinator-smoke")) return ExerciseCoordinatorSmoke().GetAwaiter().GetResult();
@@ -1366,6 +1367,58 @@ internal static class Program
         catch (Exception ex) { Cleanup(); Console.WriteLine($"[ex-save] FAIL: {ex.Message}"); return 1; }
     }
 
+    // The Settings data actions are REAL file operations on the SQLite DB. Verifies (in a temp dir, no user data):
+    // backup copies the DB; restore replaces it (with a pre-restore safety copy); clear empties it; and the new
+    // persisted prefs (mic device, hear-own-voice, focus, accessibility, consent) round-trip through the store.
+    private static int SettingsDataOpsSmoke()
+    {
+        string root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "femvoice-dataops-" + System.Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(root);
+        string dbPath = System.IO.Path.Combine(root, "femvoice.db");
+        var fixedNow = new DateTime(2026, 7, 19, 10, 30, 0);
+        try
+        {
+            System.IO.File.WriteAllText(dbPath, "ORIGINAL");   // stand-in DB file (real copy/replace semantics)
+            var data = new global::FemVoice.Avalonia.Data.SettingsDataService(null, dbPath);
+
+            // Backup: creates a real file; list reflects it.
+            var b = data.Backup(fixedNow);
+            bool backupOk = b.Ok && data.ListBackups().Count == 1;
+            string backupPath = data.ListBackups()[0].FilePath;
+
+            // Mutate the DB, then restore from the backup → original content is back; a pre-restore safety copy exists.
+            System.IO.File.WriteAllText(dbPath, "CHANGED");
+            var r = data.Restore(backupPath, fixedNow.AddMinutes(1));
+            bool restoreOk = r.Ok && System.IO.File.ReadAllText(dbPath) == "ORIGINAL"
+                && System.IO.Directory.GetFiles(data.BackupFolder, "femvoice-pre-restore-*.db").Length == 1;
+
+            // Clear (no concrete DB service → deletes the file).
+            var c = data.Clear();
+            bool clearOk = c.Ok && !System.IO.File.Exists(dbPath);
+
+            // New persisted prefs round-trip.
+            string prefsPath = System.IO.Path.Combine(root, "ui-preferences.json");
+            var store = new global::FemVoice.Avalonia.Preferences.UiPreferencesStore(prefsPath);
+            store.Save(new global::FemVoice.Avalonia.Preferences.UiPreferences
+            {
+                MicDeviceId = "3", HearOwnVoice = true, VoiceGoalFocus = "resonance",
+                StressSensitiveMode = true, ReducedVisualFeedback = true,
+                DiagnosticsConsent = true, ResearchSharingConsent = true,
+            });
+            var loaded = store.Load();
+            bool prefsOk = loaded.MicDeviceId == "3" && loaded.HearOwnVoice && loaded.VoiceGoalFocus == "resonance"
+                && loaded.StressSensitiveMode && loaded.ReducedVisualFeedback
+                && loaded.DiagnosticsConsent && loaded.ResearchSharingConsent;
+
+            Console.WriteLine($"[data-ops] backupOk={backupOk} restoreOk={restoreOk} clearOk={clearOk} prefsOk={prefsOk}");
+            bool ok = backupOk && restoreOk && clearOk && prefsOk;
+            Console.WriteLine(ok ? "[data-ops] Settings data-ops smoke OK" : "[data-ops] Settings data-ops smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[data-ops] FAIL: {ex.Message}"); return 1; }
+        finally { try { System.IO.Directory.Delete(root, true); } catch { } }
+    }
+
     private static int ExerciseSmoke()
     {
         var svc = new VoiceFeminizationExerciseService();
@@ -1833,13 +1886,16 @@ internal static class Program
         bool notDisposable = settings is not null && !typeof(System.IDisposable).IsAssignableFrom(typeof(SettingsViewModel));
         bool noCommands = settings is not null && settings.GetType().GetProperties()
             .All(p => !typeof(global::CommunityToolkit.Mvvm.Input.IRelayCommand).IsAssignableFrom(p.PropertyType));
-        int sectionCount = settings?.Sections.Count ?? 0;
-        bool sectionsOk = sectionCount == 9
-            && settings!.Sections.All(s => !string.IsNullOrWhiteSpace(s.Title) && s.Rows.Count > 0);
-        bool allDeferred = settings?.AllControlsDeferred == true
-            && settings.Sections.SelectMany(s => s.Rows).All(r => !r.IsEnabled);
-        Console.WriteLine($"[settings] Nav implemented: {navExists}  onSettings: {onSettings}  sections: {sectionCount}");
-        Console.WriteLine($"[settings] Inert: notDisposable={notDisposable} noCommands={noCommands} allDeferred={allDeferred}");
+        // Functional: the preferences editor exposes real option lists + working commands (no deferred sections).
+        var prefs0 = settings?.Preferences;
+        bool functional = prefs0 is not null
+            && prefs0.ThemeOptions.Count > 0 && prefs0.LanguageOptions.Count > 0
+            && prefs0.StyleOptions.Count > 0 && prefs0.FocusOptions.Count > 0
+            && prefs0.FrequencyOptions.Count > 0 && prefs0.MicDeviceOptions.Count > 0
+            && prefs0.SaveCommand is not null && prefs0.BackupCommand is not null
+            && prefs0.RestoreCommand is not null && prefs0.ClearCommand is not null;
+        Console.WriteLine($"[settings] Nav implemented: {navExists}  onSettings: {onSettings}  functional: {functional}");
+        Console.WriteLine($"[settings] host: notDisposable={notDisposable} noCommands={noCommands}");
 
         // Navigating to Settings from a RUNNING runtime disposes the runtime safely (no orphaned capture).
         shell.ShowGuideCommand.Execute(null);
@@ -1857,7 +1913,7 @@ internal static class Program
         bool noOrphanFrames = runtime is not null && runtime.RuntimePitchSamples.Count == framesAfter;
         Console.WriteLine($"[settings] Runtime->Settings: ran={runtimeRan} disposed={runtimeDisposed} no-orphan-frames={noOrphanFrames}");
 
-        bool ok = navExists && onSettings && notDisposable && noCommands && sectionsOk && allDeferred
+        bool ok = navExists && onSettings && notDisposable && noCommands && functional
                   && runtimeRan && runtimeDisposed && noOrphanFrames;
         Console.WriteLine(ok ? "[settings] Settings smoke OK" : "[settings] Settings smoke FAIL");
         return ok ? 0 : 1;
@@ -3146,34 +3202,33 @@ internal static class Program
         bool noCommands = typeof(SettingsViewModel).GetProperties()
             .All(p => !typeof(global::CommunityToolkit.Mvvm.Input.IRelayCommand).IsAssignableFrom(p.PropertyType));
         var ctors = typeof(SettingsViewModel).GetConstructors();
-        // No heavy service/DB/clinical deps: the only ctor params allowed are optional System.Action navigation
-        // callbacks (re-run onboarding / open mic calibration) — not services.
-        bool noServiceDeps = ctors.Length == 1 && ctors[0].GetParameters().All(p => p.ParameterType == typeof(System.Action));
+        // Ctor params are only nav callbacks (System.Action) + the DB service used for real backup/restore/clear —
+        // no other heavy/clinical deps.
+        bool noServiceDeps = ctors.Length == 1 && ctors[0].GetParameters().All(p =>
+            p.ParameterType == typeof(System.Action)
+            || p.ParameterType == typeof(global::FemVoiceStudio.Data.IDatabaseService));
 
-        // WPF-like section set: 9 non-empty section cards (titles are localization-resolved, so we assert the
-        // count + non-emptiness rather than brittle language-specific substrings).
-        bool sectionsOk = settings!.Sections.Count == 9
-            && settings.Sections.All(s => !string.IsNullOrWhiteSpace(s.Title) && s.Rows.Count > 0);
-
-        var rows = settings.Sections.SelectMany(s => s.Rows).ToList();
-        // Every control inert; actionable rows carry an "Utsatt" chip.
-        bool allInert = rows.All(r => !r.IsEnabled);
-        bool chipsOnActionable = rows.Where(r => r.Kind != SettingsControlKind.Info).All(r => r.ShowDeferredChip);
-        // Representative disabled controls present (not just generic text): at least one combo, toggle, button.
-        bool hasCombo = rows.Any(r => r.Kind == SettingsControlKind.Combo);
-        bool hasToggle = rows.Any(r => r.Kind == SettingsControlKind.Toggle);
-        bool hasButton = rows.Any(r => r.Kind == SettingsControlKind.Button);
-        bool deferredWording = settings.DeferredBadge.Contains("Utsatt") && settings.DeferredBanner.Length > 0;
+        // FUNCTIONAL controls (replacing the old deferred scaffold): the preferences editor exposes real option
+        // lists (theme/language/style/focus/frequency/mic) and working commands (save/reload/backup/restore/clear +
+        // the two action buttons). No control is disabled; nothing says "Utsatt".
+        var pf = settings!.Preferences;
+        bool optionListsOk = pf.ThemeOptions.Count > 0 && pf.LanguageOptions.Count > 0 && pf.StyleOptions.Count > 0
+            && pf.FocusOptions.Count > 0 && pf.FrequencyOptions.Count > 0 && pf.MicDeviceOptions.Count > 0;
+        bool commandsOk = pf.SaveCommand is not null && pf.ReloadCommand is not null && pf.BackupCommand is not null
+            && pf.RestoreCommand is not null && pf.ClearCommand is not null
+            && pf.RerunSetupCommand is not null && pf.OpenMicCalibrationCommand is not null;
+        // No leftover deferred wording anywhere on the page's own text.
+        bool noDeferredWording = !settings.Title.Contains("Utsatt") && !settings.SafetyNote.Contains("Utsatt")
+            && !pf.Note.Contains("Utsatt") && !pf.DataNote.Contains("Utsatt");
 
         // Sidebar intact.
         bool navIntact = shell.NavItems.Count == 14 && shell.NavItems.Count(n => n.IsImplemented) == 14;
 
-        Console.WriteLine($"[settings-vis] onSettings={onSettings} navOk={navOk} sections={settings.Sections.Count} controls(combo/toggle/button)={hasCombo}/{hasToggle}/{hasButton}");
-        Console.WriteLine($"[settings-vis] allInert={allInert} chipsOnActionable={chipsOnActionable} deferredWording={deferredWording} notDisposable={notDisposable} noCommands={noCommands} noServiceDeps={noServiceDeps} navIntact={navIntact}");
+        Console.WriteLine($"[settings-vis] onSettings={onSettings} navOk={navOk} optionListsOk={optionListsOk} commandsOk={commandsOk} micDevices={pf.MicDeviceOptions.Count}");
+        Console.WriteLine($"[settings-vis] noDeferredWording={noDeferredWording} notDisposable={notDisposable} noCommands={noCommands} noServiceDeps={noServiceDeps} navIntact={navIntact}");
 
-        bool ok = navOk && onSettings && notDisposable && noCommands && noServiceDeps && sectionsOk
-                  && allInert && chipsOnActionable && hasCombo && hasToggle && hasButton
-                  && deferredWording && navIntact;
+        bool ok = navOk && onSettings && notDisposable && noCommands && noServiceDeps
+                  && optionListsOk && commandsOk && noDeferredWording && navIntact;
         Console.WriteLine(ok ? "[settings-vis] Settings visual parity smoke OK" : "[settings-vis] Settings visual parity smoke FAIL");
         return ok ? 0 : 1;
     }
@@ -3196,7 +3251,8 @@ internal static class Program
 
         // ---- Source (XAML) layout checks — skipped (true) when the source tree isn't shipped. ----
         string settings = View("SettingsView.axaml");
-        bool settingsResponsive = !SourcePresent || (settings.Contains("WrapPanel") && settings.Contains("HorizontalAlignment=\"Center\""));
+        // Functional Settings: centered content column of working cards (no deferred scaffold WrapPanel required).
+        bool settingsResponsive = !SourcePresent || (settings.Contains("HorizontalAlignment=\"Center\"") && settings.Contains("Preferences"));
         bool scaffoldsCentered = !SourcePresent || new[]
         {
             "SmartCoachScaffoldView.axaml", "ProgressionScaffoldView.axaml",
@@ -3209,7 +3265,9 @@ internal static class Program
 
         // ---- VM display-only guarantees (always run; independent of source tree). ----
         var settingsVm = new SettingsViewModel();
-        bool settingsInert = settingsVm.AllControlsDeferred
+        // Settings is now FUNCTIONAL: its preferences editor exposes working save/backup commands (not inert).
+        bool settingsInert = settingsVm.Preferences.SaveCommand is not null
+            && settingsVm.Preferences.BackupCommand is not null
             && !typeof(System.IDisposable).IsAssignableFrom(typeof(SettingsViewModel));
         var coach = new SmartCoachScaffoldViewModel();
         var prog = new ProgressionScaffoldViewModel();
@@ -3255,24 +3313,25 @@ internal static class Program
         var progParams = prog.Parameters.Select(p => p.Label).ToList();
         bool progLabels = prog.ScoreLabel == "FemVoice-score"
             && progParams.SequenceEqual(new[] { "Resonans", "Tonehøyde", "Intonasjon" });
-        // Settings: Norwegian "Lydinnstillinger" present, no English "Audio settings"; privacy labels short.
-        var sectionTitles = settings.Sections.Select(s => s.Title).ToList();
-        bool settingsAudioNo = sectionTitles.Any(t => t == "Lydinnstillinger")
-            && sectionTitles.All(t => t != "Audio settings");
-        var allRowLabels = settings.Sections.SelectMany(s => s.Rows).Select(r => r.Label).ToList();
-        bool privacyShort = allRowLabels.Any(l => l == "Diagnostikk-samtykke")
-            && allRowLabels.All(l => l.Length <= 48);   // no long consent paragraph used as a label
+        // Settings (functional): no English "Audio settings" leftover; privacy consent labels are short (not the
+        // long Core consent paragraphs).
+        var pf = settings.Preferences;
+        var settingsLabels = new List<string> { pf.AudioHeading, pf.DataHeading, pf.MicDeviceLabel, pf.HearOwnVoiceLabel,
+            pf.DiagnosticsConsentLabel, pf.ResearchConsentLabel, pf.StressSensitiveLabel, pf.ReducedVisualLabel,
+            pf.StyleLabel, pf.FocusLabel, pf.FrequencyLabel };
+        bool settingsAudioNo = settingsLabels.All(t => t != "Audio settings");
+        bool privacyShort = pf.DiagnosticsConsentLabel == "Diagnostikk-samtykke"
+            && settingsLabels.All(l => l.Length <= 48);   // no long consent paragraph used as a label
 
-        // No English/terse leftovers across the scaffold labels.
+        // No English/terse leftovers across the scaffold + functional Settings labels.
         var allText = new List<string> { coach.StreakLabel, coach.SessionsLabel, coach.HealthLabel, coach.Title,
-            prog.ScoreLabel }.Concat(progParams).Concat(sectionTitles).Concat(allRowLabels).ToList();
+            prog.ScoreLabel }.Concat(progParams).Concat(settingsLabels).ToList();
         var banned = new[] { "Pitch", "Score", "økter", "helse", "Audio settings" };
         bool noEnglishLeftovers = allText.All(t => !banned.Contains(t));
 
-        // Consistent deferred/display-only phrasing.
+        // Consistent deferred phrasing on the remaining (dead) scaffold VMs — Settings itself is no longer deferred.
         bool deferredConsistent = coach.DeferredBadge.Contains("Utsatt") && prog.DeferredBadge.Contains("Utsatt")
-            && settings.DeferredBadge.Contains("Utsatt")
-            && coach.DeferredBadge.Contains("kun visning") && settings.DeferredBadge.Contains("kun visning");
+            && coach.DeferredBadge.Contains("kun visning");
 
         // Dashboard chart label is Norwegian "Tonehøyde", not "Pitch-trace" (source check; skip→true if no source).
         string dashView = System.IO.Path.GetFullPath(System.IO.Path.Combine(
@@ -3367,9 +3426,9 @@ internal static class Program
         var settings = new SettingsViewModel();
 
         bool notDisposable = !typeof(System.IDisposable).IsAssignableFrom(typeof(SettingsViewModel));
-        // Behaviour-heavy sections stay inert/deferred (Stage 1 only adds the separate harmless prefs card).
-        bool sectionsInert = settings.AllControlsDeferred
-            && settings.Sections.SelectMany(s => s.Rows).All(r => !r.IsEnabled);
+        // Settings is now functional (real prefs + backup/restore/clear); assert the working commands exist.
+        bool functional = settings.Preferences.SaveCommand is not null
+            && settings.Preferences.BackupCommand is not null && settings.Preferences.ClearCommand is not null;
 
         // Source scan across the Settings VM/view + the Avalonia-local preference files: NO WPF/DB/clinical hooks
         // and NO runtime activation. Fragments avoid the leak-guard literal tokens. Skips→pass with no source tree.
@@ -3394,14 +3453,12 @@ internal static class Program
         {
             scanned = true;
             string s = string.Join("\n", files.Select(System.IO.File.ReadAllText));
-            // WPF/DB/clinical hooks (invocations/type-refs, not prose) — detected via non-forbidden fragments.
-            string[] wpfHooks =
-            {
-                "atabaseService", ".GetUserSettings(", ".UpdateUserSettings(", ".ResetDatabase(", "UserSettings",
-                "hemeManager", ".SwitchTheme(", ".SetLanguage(", "LocalBackupService", "icrophoneCalibration",
-            };
+            // WPF-specific hooks must not appear (DB backup/restore/clear + mic enumeration now go through the
+            // fail-safe Avalonia SettingsDataService / IDatabaseService, which are allowed). Forbid the WPF theme
+            // manager + WPF/Core global language switch only.
+            string[] wpfHooks = { "hemeManager", ".SwitchTheme(", "Instance.SetLanguage(" };
             var h1 = wpfHooks.Where(t => s.Contains(t)).ToList();
-            if (h1.Count > 0) { noWpfHooks = false; Console.WriteLine($"[set-persist] WPF/DB/clinical hook in Settings/prefs source: {string.Join(", ", h1)}"); }
+            if (h1.Count > 0) { noWpfHooks = false; Console.WriteLine($"[set-persist] WPF hook in Settings/prefs source: {string.Join(", ", h1)}"); }
             // GLOBAL thread-culture change or Core-service culture mutation must NOT appear (language activation is
             // Avalonia-LOCAL via Localized.CurrentCulture only). The Avalonia-local set "Localized.CurrentCulture ="
             // is allowed and intentionally not in this list.
@@ -3415,9 +3472,9 @@ internal static class Program
         }
         else Console.WriteLine("[set-persist] source scan skipped (no source tree / published DLL)");
 
-        Console.WriteLine($"[set-persist] notDisposable={notDisposable} sectionsInert={sectionsInert} scanned={scanned} noWpfHooks={noWpfHooks} noGlobalCulture={noGlobalCulture}");
+        Console.WriteLine($"[set-persist] notDisposable={notDisposable} functional={functional} scanned={scanned} noWpfHooks={noWpfHooks} noGlobalCulture={noGlobalCulture}");
 
-        bool ok = notDisposable && sectionsInert && noWpfHooks && noGlobalCulture;
+        bool ok = notDisposable && functional && noWpfHooks && noGlobalCulture;
         Console.WriteLine(ok ? "[set-persist] Settings persistence readiness smoke OK" : "[set-persist] Settings persistence readiness smoke FAIL");
         return ok ? 0 : 1;
     }

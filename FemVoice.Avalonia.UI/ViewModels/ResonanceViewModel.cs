@@ -168,7 +168,7 @@ public sealed partial class ResonanceViewModel : ObservableObject, IDisposable
         _capture = _backend;
         _engine.Start();
         _capture.FrameAvailable += OnFrame;
-        _ = _capture.StartAsync(new AudioCaptureOptions());
+        _ = _capture.StartAsync(new AudioCaptureOptions(DeviceId: FemVoice.Avalonia.Preferences.CapturePreferences.SelectedMicDeviceId()));
         Running = true;
         StatusMessage = Localized.Get("Resonance_Listening", "Lytter … syng en jevn tone.");
     }

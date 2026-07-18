@@ -239,7 +239,7 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
         _startUtc = DateTime.UtcNow;
         _resonance.Start();
         _capture.FrameAvailable += OnFrame;
-        _ = _capture.StartAsync(new AudioCaptureOptions(SampleRate));
+        _ = _capture.StartAsync(new AudioCaptureOptions(SampleRate, DeviceId: FemVoice.Avalonia.Preferences.CapturePreferences.SelectedMicDeviceId()));
         Running = true;
         StatusMessage = Localized.Get("Analyzer_Recording", "Analyserer … snakk jevnt.");
     }
