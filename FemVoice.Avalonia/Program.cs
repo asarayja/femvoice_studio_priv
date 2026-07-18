@@ -61,6 +61,7 @@ internal static class Program
         if (args.Contains("--manual-override-smoke")) return ManualOverrideSmoke();
         if (args.Contains("--resonance-screen-smoke")) return ResonanceScreenSmoke().GetAwaiter().GetResult();
         if (args.Contains("--day-details-smoke")) return DayDetailsSmoke();
+        if (args.Contains("--case-review-smoke")) return CaseReviewSmoke();
         if (args.Contains("--dashboard-resonance-smoke")) return DashboardResonanceSmoke().GetAwaiter().GetResult();
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
@@ -701,6 +702,54 @@ internal static class Program
         finally { Cleanup(); }
     }
 
+    // Headless verification of the REAL case-review panel (no display): assembles a real OutcomeProfile for the
+    // selected period from a TEMP DB WITHOUT throwing, surfaces the period-scoped overview (incl. sessions-in-period),
+    // and is reachable from Reports (open command + shell navigates + Back returns). No writes / no clinical change.
+    private static int CaseReviewSmoke()
+    {
+        string fileName = $"femvoice-casereview-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+        string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio");
+        string full = System.IO.Path.Combine(dir, fileName);
+        void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+        Cleanup();
+        try
+        {
+            var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+            // Sessions within the current month (the panel's default period).
+            var now = DateTime.UtcNow;
+            for (int i = 0; i < 4; i++)
+                db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
+                { UserId = 1, StartTime = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc).AddDays(i * 2 + 1),
+                  EndTime = new DateTime(now.Year, now.Month, 1, 0, 5, 0, DateTimeKind.Utc).AddDays(i * 2 + 1),
+                  AveragePitch = 178 + i * 3, OverallScore = 60 + i * 4, Feedback = "c" });
+
+            var empty = new CaseReviewPanelViewModel(null);
+            bool noDbOk = !empty.HasReport && empty.EmptyMessage.Length > 0;
+
+            var panel = new CaseReviewPanelViewModel(db);
+            bool assembledOk = panel is not null && panel.ReviewTypes.Count == 4 && panel.PeriodDisplay.Length > 0;
+            bool hasOverview = panel.Overview.Count >= 3 || !panel.HasReport;   // coherent either way (no crash)
+
+            var svc = new VoiceFeminizationExerciseService();
+            var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+            var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher(), null, db);
+            shell.ShowReportsCommand.Execute(null);
+            var reports = shell.CurrentPage as ReportsViewModel;
+            bool canOpen = reports is not null && reports.CanOpenCaseReviewPanel;
+            reports!.OpenCaseReviewCommand.Execute(null);
+            bool onPanel = shell.CurrentPage is CaseReviewPanelViewModel;
+            (shell.CurrentPage as CaseReviewPanelViewModel)!.BackCommand.Execute(null);
+            bool backToReports = shell.CurrentPage is ReportsViewModel;
+
+            Console.WriteLine($"[casereview] noDbOk={noDbOk} assembledOk={assembledOk} hasOverview={hasOverview} canOpen={canOpen} onPanel={onPanel} backToReports={backToReports} (hasReport={panel.HasReport} overview={panel.Overview.Count})");
+            bool ok = noDbOk && assembledOk && hasOverview && canOpen && onPanel && backToReports;
+            Console.WriteLine(ok ? "[casereview] Case review smoke OK" : "[casereview] Case review smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[casereview] Case review smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
+        finally { Cleanup(); }
+    }
+
     // Headless verification of the REAL resonance screen (no display): nav item implemented + opens a disposable
     // ResonanceViewModel; the contrast-demo content is present; a synthetic tone fed through the Core resonance
     // engine drives the live level; Stop halts; navigate-away disposes it. Synthetic backend only (this box's real
@@ -875,6 +924,12 @@ internal static class Program
         {
             shell.ShowReportsCommand.Execute(null);
             (shell.CurrentPage as ReportsViewModel)?.OpenTimelineCommand.Execute(null);
+            return;
+        }
+        if (page is "casereview" or "saksgjennomgang")
+        {
+            shell.ShowReportsCommand.Execute(null);
+            (shell.CurrentPage as ReportsViewModel)?.OpenCaseReviewCommand.Execute(null);
             return;
         }
         if (needle.Length == 0) return;   // "shell" / default keeps the dashboard

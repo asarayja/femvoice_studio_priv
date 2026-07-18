@@ -34,6 +34,8 @@
                     IsVisible="{Binding CanOpenClinicianPanel}" Command="{Binding OpenClinicianCommand}"/>
             <Button Content="{Binding OpenTimelineLabel}" Classes="secondary"
                     IsVisible="{Binding CanOpenTimelinePanel}" Command="{Binding OpenTimelineCommand}"/>
+            <Button Content="{Binding OpenCaseReviewLabel}" Classes="secondary"
+                    IsVisible="{Binding CanOpenCaseReviewPanel}" Command="{Binding OpenCaseReviewCommand}"/>
           </StackPanel>
           <TextBlock x:Name="ExportStatus" IsVisible="False"
                      Foreground="{DynamicResource ShellSuccessBrush}" FontSize="12" TextWrapping="Wrap"/>

@@ -1,0 +1,57 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
+             x:Class="FemVoice.Avalonia.Views.CaseReviewPanelView">
+  <!-- REAL case-review: pick a review type + period → real OutcomeProfile-based summary for that window. Read-only. -->
+  <ScrollViewer>
+    <StackPanel Margin="24" Spacing="16" MaxWidth="760" HorizontalAlignment="Center">
+
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Grid.Column="0" Text="{Binding Title}" FontSize="22" FontWeight="Bold"
+                   Foreground="{DynamicResource ShellHeadingBrush}" VerticalAlignment="Center"/>
+        <Button Grid.Column="1" Content="{Binding BackLabel}" Classes="secondary" Command="{Binding BackCommand}"/>
+      </Grid>
+
+      <!-- Review parameters -->
+      <Border Classes="card">
+        <StackPanel Spacing="10">
+          <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding ReviewTypeLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,3" MinWidth="200" HorizontalAlignment="Left"
+                      ItemsSource="{Binding ReviewTypes}" SelectedItem="{Binding SelectedReviewType, Mode=TwoWay}"/>
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Periode" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,3" VerticalAlignment="Center" Foreground="{DynamicResource ShellMutedBrush}"
+                       Text="{Binding PeriodDisplay}"/>
+          </Grid>
+          <Button Content="{Binding EvaluateLabel}" Classes="primary" Command="{Binding BuildCommand}" HorizontalAlignment="Left"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card" IsVisible="{Binding !HasReport}">
+        <TextBlock Text="{Binding EmptyMessage}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}"/>
+      </Border>
+
+      <Border Classes="card" IsVisible="{Binding HasReport}" BorderBrush="{DynamicResource ShellSuccessBrush}">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding ReportTitle}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <TextBlock Text="{Binding OverviewHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}" Margin="0,4,0,0"/>
+          <ItemsControl ItemsSource="{Binding Overview}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Grid ColumnDefinitions="200,*" Margin="0,2">
+                  <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                  <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}" TextWrapping="Wrap"/>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
+        <TextBlock Text="{Binding Disclaimer}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
