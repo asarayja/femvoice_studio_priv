@@ -2155,15 +2155,16 @@ internal static class Program
         bool onDiagnostics = shell.CurrentPage is DiagnosticsViewModel;
         var diag = shell.CurrentPage as DiagnosticsViewModel;
 
-        // Inert: not IDisposable, no IRelayCommand; placeholder cards present + all deferred.
+        // FUNCTIONAL: not IDisposable; real status rows; a working backup command + a non-empty diagnostics export;
+        // the intro carries no deferred wording.
         bool notDisposable = diag is not null && !typeof(System.IDisposable).IsAssignableFrom(typeof(DiagnosticsViewModel));
-        bool noCommands = diag is not null && diag.GetType().GetProperties()
-            .All(p => !typeof(global::CommunityToolkit.Mvvm.Input.IRelayCommand).IsAssignableFrom(p.PropertyType));
-        int cardCount = diag?.Cards.Count ?? 0;
-        bool cardsOk = cardCount >= 6 && diag!.Cards.All(c => !string.IsNullOrWhiteSpace(c.Title) && !c.IsEnabled);
-        bool allDeferred = diag?.AllActionsDeferred == true;
-        Console.WriteLine($"[diag] nav-implemented={navExists} onDiagnostics={onDiagnostics} cards={cardCount}");
-        Console.WriteLine($"[diag] inert: notDisposable={notDisposable} noCommands={noCommands} cardsOk={cardsOk} allDeferred={allDeferred}");
+        bool statusOk = diag!.HasStatus && diag.Status.Count > 0;
+        bool actionsOk = diag.BackupCommand is not null
+            && !string.IsNullOrWhiteSpace(diag.BuildDiagnosticsText(new DateTime(2026, 7, 19)));
+        bool noDeferredWording = !diag.Intro.Contains("senere") && !diag.Intro.Contains("utsatt")
+            && !diag.Intro.Contains("visning-bare");
+        Console.WriteLine($"[diag] nav-implemented={navExists} onDiagnostics={onDiagnostics} statusRows={diag.Status.Count}");
+        Console.WriteLine($"[diag] functional: notDisposable={notDisposable} statusOk={statusOk} actionsOk={actionsOk} noDeferredWording={noDeferredWording}");
 
         // Navigating to Diagnostics from a RUNNING runtime disposes the runtime safely (no orphaned capture).
         shell.ShowGuideCommand.Execute(null);
@@ -2181,9 +2182,9 @@ internal static class Program
         bool noOrphanFrames = runtime is not null && runtime.RuntimePitchSamples.Count == framesAfter;
         Console.WriteLine($"[diag] Runtime->Diagnostics: ran={runtimeRan} disposed={runtimeDisposed} no-orphan-frames={noOrphanFrames}");
 
-        bool ok = navExists && onDiagnostics && notDisposable && noCommands && cardsOk && allDeferred
+        bool ok = navExists && onDiagnostics && notDisposable && statusOk && actionsOk && noDeferredWording
                   && runtimeRan && runtimeDisposed && noOrphanFrames;
-        Console.WriteLine(ok ? "[diag] Diagnostics scaffold smoke OK" : "[diag] Diagnostics scaffold smoke FAIL");
+        Console.WriteLine(ok ? "[diag] Diagnostics smoke OK" : "[diag] Diagnostics smoke FAIL");
         return ok ? 0 : 1;
     }
 

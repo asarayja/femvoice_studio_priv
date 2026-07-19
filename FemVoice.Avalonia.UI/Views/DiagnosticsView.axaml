@@ -2,9 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
              x:Class="FemVoice.Avalonia.Views.DiagnosticsView">
-  <!-- Diagnostics / export / backup — WPF-style hub layout (header band + 2-column card grid + status chips),
-       DISPLAY-ONLY: static placeholder cards + disabled actions. No support-package, export, backup/restore,
-       database/history, RC-0/research-anonymization change. Real behaviour deferred (Phase 12). -->
+  <!-- FUNCTIONAL diagnostics: real runtime + database status, real diagnostics-text export (native save dialog in
+       code-behind), real database backup, and the on-disk data-folder path. No deferred placeholder cards. -->
   <ScrollViewer>
     <StackPanel Margin="20" Spacing="16" MaxWidth="1040" HorizontalAlignment="Center">
 
@@ -12,15 +11,14 @@
       <Border Classes="card" Padding="20,16">
         <StackPanel Spacing="4">
           <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-          <TextBlock Text="Visning-bare diagnostikk og eksport — ingen støttepakke, sikkerhetskopi eller filer skrives."
-                     FontSize="14" Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
+          <TextBlock Text="{Binding Intro}" FontSize="14" Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
         </StackPanel>
       </Border>
 
-      <!-- Real system status (runtime + database facts) -->
+      <!-- Real system status (runtime + database facts) + real actions -->
       <Border Classes="card" IsVisible="{Binding HasStatus}" BorderBrush="{DynamicResource ShellSuccessBrush}">
         <StackPanel Spacing="6">
-          <TextBlock Text="Systemstatus" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <TextBlock Text="{Binding StatusHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
           <ItemsControl ItemsSource="{Binding Status}">
             <ItemsControl.ItemTemplate>
               <DataTemplate>
@@ -31,50 +29,24 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
+
+          <!-- Data folder path (so the user knows where files live) -->
+          <Grid ColumnDefinitions="180,*" Margin="0,6,0,0">
+            <TextBlock Grid.Column="0" Text="{Binding DataFolderLabel}" Foreground="{DynamicResource ShellMutedBrush}"/>
+            <TextBlock Grid.Column="1" Text="{Binding DataFolderPath}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
+          </Grid>
+
+          <!-- Real actions: export diagnostics text + database backup -->
+          <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+            <Button x:Name="ExportButton" Content="{Binding ExportLabel}" Classes="primary" Click="OnExportClick"/>
+            <Button Content="{Binding BackupLabel}" Classes="secondary" Command="{Binding BackupCommand}"/>
+          </StackPanel>
+          <TextBlock x:Name="ExportStatus" IsVisible="False"
+                     Foreground="{DynamicResource ShellSuccessBrush}" FontSize="12" TextWrapping="Wrap"/>
+          <TextBlock Text="{Binding ActionStatus}" IsVisible="{Binding HasActionStatus}"
+                     Foreground="{DynamicResource ShellSuccessBrush}" FontSize="12" TextWrapping="Wrap"/>
         </StackPanel>
       </Border>
-
-      <!-- Deferred / not-saved banner (support package / backup / export remain deferred) -->
-      <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
-        <TextBlock Text="{Binding ScaffoldNotice}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-      </Border>
-
-      <!-- Disabled, inert global actions (no command, no file dialog) -->
-      <WrapPanel>
-        <Button Content="Generer støttepakke (senere)" IsEnabled="False" Padding="10,4" Margin="0,0,8,8"/>
-        <Button Content="Eksporter diagnostikk (senere)" IsEnabled="False" Padding="10,4" Margin="0,0,8,8"/>
-        <Button Content="Lag sikkerhetskopi (senere)" IsEnabled="False" Padding="10,4" Margin="0,0,8,8"/>
-        <Button Content="Gjenopprett (senere)" IsEnabled="False" Padding="10,4" Margin="0,0,8,8"/>
-        <Button Content="Åpne diagnostikkmappe (senere)" IsEnabled="False" Padding="10,4" Margin="0,0,8,8"/>
-      </WrapPanel>
-
-      <!-- 2-column grid of diagnostics / export / backup cards -->
-      <ItemsControl ItemsSource="{Binding Cards}">
-        <ItemsControl.ItemsPanel>
-          <ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate>
-        </ItemsControl.ItemsPanel>
-        <ItemsControl.ItemTemplate>
-          <DataTemplate DataType="vm:DiagnosticsCard">
-            <Border Classes="card" Margin="4">
-              <StackPanel Spacing="6">
-                <Grid ColumnDefinitions="*,Auto">
-                  <TextBlock Grid.Column="0" Text="{Binding Title}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}"
-                             TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                  <Border Grid.Column="1" Background="{DynamicResource ShellChipBackgroundBrush}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Status}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11"/>
-                  </Border>
-                </Grid>
-                <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-                <!-- Inert per-card action: disabled, bound to the row's false flag, no command -->
-                <Button Content="Åpne (senere)" IsEnabled="{Binding IsEnabled}" Padding="10,3" HorizontalAlignment="Left"/>
-              </StackPanel>
-            </Border>
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
-
-      <TextBlock Text="Diagnostikk/eksport er en visning-bare plassholder — ingen ekte diagnostikk, støttepakke, eksport, sikkerhetskopi eller gjenoppretting."
-                 Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
 
     </StackPanel>
   </ScrollViewer>
