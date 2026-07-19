@@ -9,8 +9,7 @@ using FemVoiceStudio.Services;   // VoiceFeminizationExerciseService, EnhancedEx
 namespace FemVoice.Avalonia.ViewModels;
 
 /// <summary>
-/// One entry in the shell's navigation list. Implemented entries switch to a real page; deferred entries
-/// open a purely static <see cref="DeferredSurfaceViewModel"/> placeholder (no services, no side effects).
+/// One entry in the shell's navigation list. Every entry switches to a real page.
 /// </summary>
 public sealed class ShellNavItem
 {
@@ -45,8 +44,6 @@ public partial class ShellViewModel : ObservableObject
     private AnalysisViewModel _analysis = null!;
     private ReportsViewModel _reports = null!;
     private DiagnosticsViewModel _diagnostics = null!;
-    private ProgressionScaffoldViewModel _progression = null!;
-    private SmartCoachScaffoldViewModel _smartCoach = null!;
     private FirstTimeSetupViewModel _firstTimeSetup = null!;
     private readonly RelayCommand _showMicCalibrationCommand;
     private readonly FemVoice.Avalonia.Audio.AudioReadiness _audioReadiness;
@@ -91,8 +88,6 @@ public partial class ShellViewModel : ObservableObject
         _analysis = new AnalysisViewModel(_database);   // engine-backed: real session trends when a DB is present
         _reports = new ReportsViewModel(_database, OpenCoachPanel, OpenClinicianPanel, OpenTimelinePanel, OpenCaseReviewPanel);   // real preview/export + coach/clinician/timeline
         _diagnostics = new DiagnosticsViewModel(_database);   // real system status when a DB is present
-        _progression = new ProgressionScaffoldViewModel();
-        _smartCoach = new SmartCoachScaffoldViewModel();
         // Real onboarding — shown ONLY on first run (never a nav item). Completing/skipping calls back to the shell,
         // which then moves to the dashboard. Persists language/theme/style/frequency + the completed flag.
         _firstTimeSetup = new FirstTimeSetupViewModel(null, () => ShowDashboard());
@@ -149,10 +144,7 @@ public partial class ShellViewModel : ObservableObject
                 AnalysisViewModel => _analysis,
                 ReportsViewModel => _reports,
                 DiagnosticsViewModel => _diagnostics,
-                ProgressionScaffoldViewModel => _progression,
-                SmartCoachScaffoldViewModel => _smartCoach,
                 FirstTimeSetupViewModel => _firstTimeSetup,
-                DeferredSurfaceViewModel d => new DeferredSurfaceViewModel(d.SurfaceName),
                 _ => current,   // dashboard / running exercise: leave in place
             };
         }
@@ -213,9 +205,6 @@ public partial class ShellViewModel : ObservableObject
         catch { HasInfoStats = false; }
     }
 
-    // Deferred nav label: "<Surface> — senere", localization-ready with the current text as fallback.
-    private static string DeferredLabel(string surface)
-        => Localized.Get($"Shell_Nav_{surface}_Deferred", $"{surface} — senere");
     /// <summary>Label of the current destination, for the status strip.</summary>
     [ObservableProperty] private string _currentDestinationLabel = "Dashbord";
 
@@ -230,7 +219,6 @@ public partial class ShellViewModel : ObservableObject
         if (!ReferenceEquals(oldValue, _dashboard) && !ReferenceEquals(oldValue, _guide)
             && !ReferenceEquals(oldValue, _settings) && !ReferenceEquals(oldValue, _analysis)
             && !ReferenceEquals(oldValue, _reports) && !ReferenceEquals(oldValue, _diagnostics)
-            && !ReferenceEquals(oldValue, _progression) && !ReferenceEquals(oldValue, _smartCoach)
             && !ReferenceEquals(oldValue, _firstTimeSetup)
             && oldValue is System.IDisposable disposable)
             disposable.Dispose();
@@ -252,9 +240,7 @@ public partial class ShellViewModel : ObservableObject
             CalendarViewModel => Localized.Get("Calendar_Title", "Kalender / historikk"),
             DayDetailsViewModel => Localized.Get("DayDetails_Title", "Øktdetaljer"),
             ProgressionViewModel => Localized.Get("Shell_Nav_Progresjon", "Progresjon"),
-            ProgressionScaffoldViewModel => $"{Localized.Get("Shell_Nav_Progresjon", "Progresjon")} (utsatt)",
             SmartCoachViewModel => Localized.Get("SmartCoach_Scaffold_Title", "SmartCoach"),
-            SmartCoachScaffoldViewModel => $"{Localized.Get("SmartCoach_Title", "SmartCoach")} (utsatt)",
             FirstTimeSetupViewModel => Localized.Get("Shell_Nav_FirstSetup", "Førstegangsoppsett"),
             MicCalibrationViewModel => Localized.Get("Shell_Nav_MicCalibration", "Mikrofonkalibrering"),
             CoachPanelViewModel => Localized.Get("Coach_Title", "Coach-oversikt"),
@@ -264,7 +250,6 @@ public partial class ShellViewModel : ObservableObject
             ManualOverridePanelViewModel => Localized.Get("Shell_Nav_ManualOverride", "Manuell overstyring"),
             ResonanceViewModel => Localized.Get("Shell_Nav_Resonance", "Resonans"),
             AnalyzerViewModel => Localized.Get("Shell_Nav_Analyzer", "Analysator"),
-            DeferredSurfaceViewModel d => $"{d.SurfaceName} (utsatt)",
             _ => "—",
         };
     }
@@ -326,9 +311,6 @@ public partial class ShellViewModel : ObservableObject
     [RelayCommand] private void ShowSmartCoach() => CurrentPage = new SmartCoachViewModel(_database);
 
     // (Førstegangsoppsett has no Show* command / nav item — it is shown once on first run via ShowOnboardingIfFirstRun.)
-
-    // Deferred destinations open a purely static placeholder — no services, no side effects.
-    private void ShowDeferred(string surface) => CurrentPage = new DeferredSurfaceViewModel(surface);
 
     // WPF parity: the exercise guide opens the exercise page DIRECTLY (one page, one Start) — there is no
     // separate detail page and no second Start. Back returns to the guide.

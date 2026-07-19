@@ -12,8 +12,7 @@ namespace FemVoice.Avalonia.Localization;
 /// USAGE CONTRACT: each <see cref="LocalizedValue"/> subscribes to the app-lifetime LocalizationService
 /// singleton and is not disposed, so use <c>{loc:Tr}</c> only on STATIC, app-lifetime chrome (realized once).
 /// For transient/churned content (DataTemplates re-realized on navigation, virtualized item rows), resolve via
-/// the non-subscribing <see cref="Localized.Get"/> on the view-model instead (as DeferredSurfaceViewModel does),
-/// to avoid accruing orphaned subscribers.
+/// the non-subscribing <see cref="Localized.Get"/> on the view-model instead, to avoid accruing orphaned subscribers.
 /// </summary>
 public sealed class TrExtension
 {
