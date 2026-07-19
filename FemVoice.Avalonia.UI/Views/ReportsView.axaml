@@ -2,9 +2,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
              x:Class="FemVoice.Avalonia.Views.ReportsView">
-  <!-- Reports / professional tools — WPF-style hub layout (header band + 2-column card grid), DISPLAY-ONLY:
-       static placeholder cards + disabled actions. No report generation, no file dialogs, no database/history,
-       no clinical calc. Real report export + clinician/coach/case-review remain deferred (Phase 11). -->
+  <!-- FUNCTIONAL Reports: real progress-summary preview + session history + CSV/text export (native save dialog in
+       code-behind) + the real professional panels (coach/clinician/timeline/case-review, each PDF/CSV/JSON). No
+       deferred placeholder cards. -->
   <ScrollViewer>
     <StackPanel Margin="20" Spacing="16" MaxWidth="1040" HorizontalAlignment="Center">
 
@@ -12,70 +12,57 @@
       <Border Classes="card" Padding="20,16">
         <StackPanel Spacing="4">
           <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-          <TextBlock Text="Ekte fremgangssammendrag og CSV/tekst-eksport fra dine lagrede økter. Kliniske fagpaneler (kliniker/veileder) og PDF kommer senere."
-                     FontSize="14" Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
+          <TextBlock Text="{Binding Intro}" FontSize="14" Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
         </StackPanel>
       </Border>
 
-      <!-- Real progress-summary report preview (from the real database) -->
+      <!-- Real progress-summary report preview (from the real database) + CSV/text export -->
       <Border Classes="card" IsVisible="{Binding HasPreview}" BorderBrush="{DynamicResource ShellSuccessBrush}">
         <StackPanel Spacing="6">
           <TextBlock Text="{Binding PreviewTitle}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
           <TextBlock Text="{Binding PreviewBody}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" FontFamily="monospace"/>
-          <!-- REAL export of the saved-session data (CSV / text) via a native save dialog (code-behind). -->
           <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
             <Button x:Name="ExportCsvButton" Content="{Binding ExportLabel}" Classes="primary"
                     IsEnabled="{Binding CanExport}" Click="OnExportCsvClick"/>
             <Button x:Name="ExportTextButton" Content="{Binding ExportTextLabel}" Classes="secondary"
                     IsEnabled="{Binding CanExport}" Click="OnExportTextClick"/>
-            <Button Content="{Binding OpenCoachLabel}" Classes="secondary"
-                    IsVisible="{Binding CanOpenCoachPanel}" Command="{Binding OpenCoachCommand}"/>
-            <Button Content="{Binding OpenClinicianLabel}" Classes="secondary"
-                    IsVisible="{Binding CanOpenClinicianPanel}" Command="{Binding OpenClinicianCommand}"/>
-            <Button Content="{Binding OpenTimelineLabel}" Classes="secondary"
-                    IsVisible="{Binding CanOpenTimelinePanel}" Command="{Binding OpenTimelineCommand}"/>
-            <Button Content="{Binding OpenCaseReviewLabel}" Classes="secondary"
-                    IsVisible="{Binding CanOpenCaseReviewPanel}" Command="{Binding OpenCaseReviewCommand}"/>
           </StackPanel>
           <TextBlock x:Name="ExportStatus" IsVisible="False"
                      Foreground="{DynamicResource ShellSuccessBrush}" FontSize="12" TextWrapping="Wrap"/>
-          <TextBlock Text="Ekte sammendrag + CSV/tekst-eksport fra dine lagrede økter. Fullstendig klinisk rapportgenerering (PDF, kliniker/veileder) kommer senere."
-                     Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" TextWrapping="Wrap"/>
         </StackPanel>
       </Border>
 
-      <!-- Deferred banner (clinical professional panels + PDF remain deferred; preview + export are real) -->
-      <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
-        <TextBlock Text="{Binding ScaffoldNotice}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+      <!-- Professional panels (all real; each assembled read-only from saved data, exportable to PDF/CSV/JSON) -->
+      <Border Classes="card" IsVisible="{Binding HasProfessionalPanels}">
+        <StackPanel Spacing="8">
+          <TextBlock Text="{Binding ProfessionalHeading}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}"/>
+          <WrapPanel>
+            <Button Content="{Binding OpenCoachLabel}" Classes="secondary" Margin="0,0,8,8"
+                    IsVisible="{Binding CanOpenCoachPanel}" Command="{Binding OpenCoachCommand}"/>
+            <Button Content="{Binding OpenClinicianLabel}" Classes="secondary" Margin="0,0,8,8"
+                    IsVisible="{Binding CanOpenClinicianPanel}" Command="{Binding OpenClinicianCommand}"/>
+            <Button Content="{Binding OpenTimelineLabel}" Classes="secondary" Margin="0,0,8,8"
+                    IsVisible="{Binding CanOpenTimelinePanel}" Command="{Binding OpenTimelineCommand}"/>
+            <Button Content="{Binding OpenCaseReviewLabel}" Classes="secondary" Margin="0,0,8,8"
+                    IsVisible="{Binding CanOpenCaseReviewPanel}" Command="{Binding OpenCaseReviewCommand}"/>
+          </WrapPanel>
+        </StackPanel>
       </Border>
 
-      <!-- 2-column grid of report / professional-tool cards -->
-      <ItemsControl ItemsSource="{Binding Cards}">
-        <ItemsControl.ItemsPanel>
-          <ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate>
-        </ItemsControl.ItemsPanel>
-        <ItemsControl.ItemTemplate>
-          <DataTemplate DataType="vm:ReportsCard">
-            <Border Classes="card" Margin="4">
-              <StackPanel Spacing="6">
-                <Grid ColumnDefinitions="*,Auto">
-                  <TextBlock Grid.Column="0" Text="{Binding Title}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}"
-                             TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                  <Border Grid.Column="1" Background="{DynamicResource ShellChipBackgroundBrush}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Status}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11"/>
-                  </Border>
-                </Grid>
-                <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-                <!-- Inert per-card action: disabled, bound to the row's false flag, no command -->
-                <Button Content="Åpne (senere)" IsEnabled="{Binding IsEnabled}" Padding="10,3" HorizontalAlignment="Left"/>
-              </StackPanel>
-            </Border>
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
-
-      <TextBlock Text="Rapporter/profesjonelle verktøy er en visning-bare plassholder — ingen ekte rapport, eksport, lagring eller fagverktøy."
-                 Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
+      <!-- Real session history (from saved sessions) -->
+      <Border Classes="card" IsVisible="{Binding HasHistory}">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding HistoryHeading}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}"/>
+          <ItemsControl ItemsSource="{Binding ExportRows}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:ReportExportRow">
+                <TextBlock Text="{Binding Display}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"
+                           FontFamily="monospace" Margin="0,2"/>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
 
     </StackPanel>
   </ScrollViewer>
