@@ -128,7 +128,9 @@ public partial class ManualOverridePanelViewModel : ObservableObject
     // ── Captions ─────────────────────────────────────────────────────────────────────────────────────────────
     public string Title => Localized.Get("Override_Title", "Manuell justering");
     public string BackLabel => Localized.Get("Common_Back", "Tilbake");
-    public string EvaluateLabel => Localized.Get("Override_Apply", "Bruk overstyring");
+    // The button PREVIEWS the clamp (it does not apply anything to a live profile); a separate «Loggfør» button
+    // persists the outcome. Label it for what it does, not "Bruk/Apply".
+    public string EvaluateLabel => Localized.Get("Override_Evaluate", "Beregn klamp (forhåndsvis)");
     public string OverrideKindLabel => Localized.Get("Override_Kind", "Type overstyring");
     public string ReasonCodeLabel => Localized.Get("Override_Reason", "Årsak (revisjonskode)");
     public string HoldLabel => Localized.Get("Override_RequiredHold", "Ønsket hold (sek)");
