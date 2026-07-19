@@ -9,32 +9,18 @@ using FemVoice.Avalonia.Localization;   // Localized (safe read-only localizatio
 namespace FemVoice.Avalonia.ViewModels;
 
 /// <summary>One real exported session row (read from saved TrainingSessions). Display/export only.</summary>
-public sealed record ReportExportRow(DateTime Date, int DurationMinutes, double AveragePitch, double OverallScore);
-
-/// <summary>One display-only reports/professional card: title + description + a deferred status. Always inert.</summary>
-public sealed class ReportsCard
+public sealed record ReportExportRow(DateTime Date, int DurationMinutes, double AveragePitch, double OverallScore)
 {
-    public ReportsCard(string title, string description, string status)
-    {
-        Title = title;
-        Description = description;
-        Status = status;
-    }
-
-    public string Title { get; }
-    public string Description { get; }
-    public string Status { get; }
-    /// <summary>Always <c>false</c> — every report/professional action is deferred/inert in this scaffold.</summary>
-    public bool IsEnabled => false;
+    /// <summary>One-line display of the session for the history list.</summary>
+    public string Display => $"{Date:yyyy-MM-dd HH:mm}  ·  {DurationMinutes} min" +
+        (AveragePitch > 0 ? $"  ·  {AveragePitch:F0} Hz" : "") + $"  ·  score {OverallScore:F0}";
 }
 
 /// <summary>
-/// DISPLAY-ONLY Reports / Professional-workflow scaffold. A purely static page: it holds NO services, NO
-/// commands, is NOT IDisposable, starts no timers/subscriptions/capture/background work, opens no file
-/// dialogs, and reads/writes NOTHING (no database, no session history, no report generation, no export).
-/// It shows static placeholder cards mirroring the WPF reports/professional surfaces, every action deferred.
-/// No clinical scoring, SmartCoach/progression, Voice-Health/recovery, or diagnostics. Labels resolve through
-/// the safe read-only localization adapter (namespaced keys with Norwegian fallback).
+/// FUNCTIONAL Reports page. It reads the user's saved sessions and produces a real progress-summary preview, a real
+/// session-history list, real CSV/plain-text export (native save dialog, via the view code-behind), and it opens the
+/// real professional panels — Coach, Clinician, development Timeline and Case-review — each assembled read-only from
+/// the same saved data and each exportable to PDF/CSV/JSON. Nothing here is a deferred placeholder.
 /// </summary>
 public sealed class ReportsViewModel
 {
@@ -52,46 +38,19 @@ public sealed class ReportsViewModel
         OpenCaseReviewCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(() => openCaseReviewPanel?.Invoke());
         CanOpenCaseReviewPanel = openCaseReviewPanel is not null;
         BuildPreview(database);
-        string deferred = Localized.Get("Reports_DeferredStatus", "Utsatt — kommer senere");
-        string sample = Localized.Get("Reports_SampleStatus", "Eksempel (ikke lagret)");
-
-        Cards = new List<ReportsCard>
-        {
-            new(Localized.Get("Reports_Preview", "Rapport-forhåndsvisning"),
-                Localized.Get("Reports_PreviewDesc", "Forhåndsvisning av rapport (eksempeltekst, ingen ekte generering)."), sample),
-
-            new(Localized.Get("Reports_ProgressSummary", "Fremgangssammendrag"),
-                Localized.Get("Reports_ProgressSummaryDesc", "Sammendrag av fremgang (plassholder, eksempeldata)."), sample),
-
-            new(Localized.Get("Reports_SessionHistory", "Økthistorikk"),
-                Localized.Get("Reports_SessionHistoryDesc", "Tidligere økter — krever lagring senere (ingen historikk lest)."), deferred),
-
-            new(Localized.Get("Reports_Clinician", "Klinikerpanel"),
-                Localized.Get("Reports_ClinicianDesc", "Profesjonelt klinikerpanel (utsatt, ingen funksjonalitet)."), deferred),
-
-            new(Localized.Get("Reports_Coach", "Veilederpanel"),
-                Localized.Get("Reports_CoachDesc", "Profesjonelt veilederpanel (utsatt, ingen funksjonalitet)."), deferred),
-
-            new(Localized.Get("Reports_Saksgjennomgang", "Saksgjennomgang"),
-                Localized.Get("Reports_SaksgjennomgangDesc", "Saksgjennomgang for fagperson (utsatt, ingen funksjonalitet)."), deferred),
-
-            new(Localized.Get("Reports_Calendar", "Kalender / historikk"),
-                Localized.Get("Reports_CalendarDesc", "Kalender- og historikkvisning (utsatt, ingen lagring)."), deferred),
-
-            new(Localized.Get("Reports_Exports", "Eksport"),
-                Localized.Get("Reports_ExportsDesc", "Eksport av rapporter (utsatt — ingen fildialog, ingen filer skrives)."), deferred),
-        };
 
         Title = Localized.Get("Report_Title", "Rapporter");
-        ScaffoldNotice = Localized.Get("Reports_ScaffoldNotice",
-            "Fremgangssammendraget og CSV/tekst-eksporten over er ekte (leser dine lagrede økter). De kliniske " +
-            "fagpanelene (kliniker/veileder/saksgjennomgang), PDF-generering og full 4×3-rapporteksport er " +
-            "fortsatt utsatt — de krever klinisk rapportsammenstilling og kommer i en senere fase.");
+        Intro = Localized.Get("Reports_Intro2",
+            "Ekte fremgangssammendrag, økthistorikk og CSV/tekst-eksport fra dine lagrede økter, pluss de " +
+            "profesjonelle panelene (coach, kliniker, tidslinje, case-gjennomgang) med PDF/CSV/JSON-eksport.");
     }
 
-    public IReadOnlyList<ReportsCard> Cards { get; }
     public string Title { get; }
-    public string ScaffoldNotice { get; }
+    public string Intro { get; }
+
+    // ── Professional panels (all real; opened via the shell) ──────────────────────────────────────────────────────
+    public string ProfessionalHeading => Localized.Get("Reports_ProfessionalHeading", "Profesjonelle paneler");
+    public bool HasProfessionalPanels => CanOpenCoachPanel || CanOpenClinicianPanel || CanOpenTimelinePanel || CanOpenCaseReviewPanel;
 
     /// <summary>Opens the real read-only coach panel (assembled from saved sessions). Wired by the shell.</summary>
     public CommunityToolkit.Mvvm.Input.IRelayCommand OpenCoachCommand { get; }
@@ -114,8 +73,10 @@ public sealed class ReportsViewModel
     public bool CanOpenCaseReviewPanel { get; }
     public string OpenCaseReviewLabel => Localized.Get("Reports_OpenCaseReviewPanel", "Åpne case-gjennomgang");
 
-    /// <summary>Always <c>true</c>: every card/action in the scaffold is deferred/inert.</summary>
-    public bool AllActionsDeferred => Cards.All(c => !c.IsEnabled);
+    // ── Real session history (from the saved sessions) ───────────────────────────────────────────────────────────
+    public string HistoryHeading => Localized.Get("Reports_SessionHistory", "Økthistorikk");
+    /// <summary>True when there is real saved-session history to list.</summary>
+    public bool HasHistory => ExportRows.Count > 0;
 
     // ── Real progress-summary report PREVIEW (from the real DB) ────────────────────────────────────────────────
     /// <summary>True when a real progress-summary preview was built from saved sessions.</summary>

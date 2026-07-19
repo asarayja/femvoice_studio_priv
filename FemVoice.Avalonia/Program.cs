@@ -2104,16 +2104,14 @@ internal static class Program
         bool onReports = shell.CurrentPage is ReportsViewModel;
         var reports = shell.CurrentPage as ReportsViewModel;
 
-        // Inert SCAFFOLD CARDS: not IDisposable; the placeholder cards are present + all deferred. (The VM itself
-        // now legitimately exposes real Open-panel/export IRelayCommands — Coach/Clinician/CaseReview/Timeline +
-        // CSV/text export — so a VM-level "no commands" assertion is obsolete; only the cards must stay inert.)
+        // FUNCTIONAL page (no deferred scaffold): not IDisposable; the professional-panel open-commands + CSV/text
+        // export exist; the intro carries no "kommer senere" wording.
         bool notDisposable = reports is not null && !typeof(System.IDisposable).IsAssignableFrom(typeof(ReportsViewModel));
-        bool noCommands = true;   // (retired assertion — see note above; kept true so the log line reads cleanly)
-        int cardCount = reports?.Cards.Count ?? 0;
-        bool cardsOk = cardCount >= 6 && reports!.Cards.All(c => !string.IsNullOrWhiteSpace(c.Title) && !c.IsEnabled);
-        bool allDeferred = reports?.AllActionsDeferred == true;
-        Console.WriteLine($"[reports] nav-implemented={navExists} onReports={onReports} cards={cardCount}");
-        Console.WriteLine($"[reports] inert: notDisposable={notDisposable} noCommands={noCommands} cardsOk={cardsOk} allDeferred={allDeferred}");
+        bool commandsOk = reports!.OpenCoachCommand is not null && reports.OpenClinicianCommand is not null
+            && reports.OpenTimelineCommand is not null && reports.OpenCaseReviewCommand is not null;
+        bool noDeferredWording = !reports.Intro.Contains("kommer senere") && !reports.Intro.Contains("utsatt");
+        Console.WriteLine($"[reports] nav-implemented={navExists} onReports={onReports} commandsOk={commandsOk} noDeferredWording={noDeferredWording}");
+        Console.WriteLine($"[reports] host: notDisposable={notDisposable}");
 
         // Navigating to Reports from a RUNNING runtime disposes the runtime safely (no orphaned capture).
         shell.ShowGuideCommand.Execute(null);
@@ -2131,9 +2129,9 @@ internal static class Program
         bool noOrphanFrames = runtime is not null && runtime.RuntimePitchSamples.Count == framesAfter;
         Console.WriteLine($"[reports] Runtime->Reports: ran={runtimeRan} disposed={runtimeDisposed} no-orphan-frames={noOrphanFrames}");
 
-        bool ok = navExists && onReports && notDisposable && noCommands && cardsOk && allDeferred
+        bool ok = navExists && onReports && notDisposable && commandsOk && noDeferredWording
                   && runtimeRan && runtimeDisposed && noOrphanFrames;
-        Console.WriteLine(ok ? "[reports] Reports scaffold smoke OK" : "[reports] Reports scaffold smoke FAIL");
+        Console.WriteLine(ok ? "[reports] Reports smoke OK" : "[reports] Reports smoke FAIL");
         return ok ? 0 : 1;
     }
 
