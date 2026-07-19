@@ -1821,11 +1821,8 @@ internal static class Program
             && shell.NavItems[2].Label == "Analysator"
             && shell.NavItems[^1].Label == "Innstillinger";   // Settings pinned to the bottom
         bool statusOk = shell.MicStatusText.Contains("syntetisk") && shell.ModeText.Contains("ingen klinisk endring");
-        var def = new DeferredSurfaceViewModel("Innstillinger");
-        bool deferredOk = def.Title.Contains("Innstillinger") && !string.IsNullOrWhiteSpace(def.Message);
         Console.WriteLine($"[theme-loc] Shell labels: nav[0]='{shell.NavItems[0].Label}' nav[^1]='{shell.NavItems[^1].Label}' " +
                           $"mic='{shell.MicStatusText}'");
-        Console.WriteLine($"[theme-loc] Deferred page: title='{def.Title}'");
 
         // 5. Theme brushes: guarded runtime lookup (requires an Avalonia platform; cleanly skipped otherwise).
         string[] shellBrushKeys =
@@ -1857,7 +1854,7 @@ internal static class Program
         }
 
         bool ok = knownResolves && missingFallsBack && reactiveOk && trOk
-                  && navLabelsOk && statusOk && deferredOk && (!themeChecked || themeKeysOk);
+                  && navLabelsOk && statusOk && (!themeChecked || themeKeysOk);
         Console.WriteLine(ok ? "[theme-loc] Theme + localization smoke OK" : "[theme-loc] Theme + localization smoke FAIL");
         return ok ? 0 : 1;
     }
@@ -3253,7 +3250,6 @@ internal static class Program
         bool settingsResponsive = !SourcePresent || (settings.Contains("HorizontalAlignment=\"Center\"") && settings.Contains("Preferences"));
         bool scaffoldsCentered = !SourcePresent || new[]
         {
-            "SmartCoachScaffoldView.axaml", "ProgressionScaffoldView.axaml",
             "AnalysisView.axaml", "ReportsView.axaml", "DiagnosticsView.axaml",
         }.All(v => View(v).Contains("HorizontalAlignment=\"Center\""));
         string guide = View("ExerciseGuideView.axaml");
@@ -3267,13 +3263,6 @@ internal static class Program
         bool settingsInert = settingsVm.Preferences.SaveCommand is not null
             && settingsVm.Preferences.BackupCommand is not null
             && !typeof(System.IDisposable).IsAssignableFrom(typeof(SettingsViewModel));
-        var coach = new SmartCoachScaffoldViewModel();
-        var prog = new ProgressionScaffoldViewModel();
-        bool scaffoldsDeferred = !coach.ActionEnabled && !prog.ActionEnabled
-            && prog.Parameters.All(p => p.Value == "—")
-            && typeof(SmartCoachScaffoldViewModel).GetConstructors()[0].GetParameters().Length == 0
-            && typeof(ProgressionScaffoldViewModel).GetConstructors()[0].GetParameters().Length == 0;
-
         var svc = new VoiceFeminizationExerciseService();
         var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
         var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
@@ -3284,10 +3273,10 @@ internal static class Program
         bool navIntact = shell.NavItems.Count == 14 && shell.NavItems.Count(n => n.IsImplemented) == 14;
 
         Console.WriteLine($"[layout] source={(SourcePresent ? "present" : "skipped")} settingsResponsive={settingsResponsive} scaffoldsCentered={scaffoldsCentered} guideCentered={guideCentered}");
-        Console.WriteLine($"[layout] settingsInert={settingsInert} scaffoldsDeferred={scaffoldsDeferred} guideFilterIntact={guideFilterIntact}&searchWorks={searchWorks} dashboardChartIntact={dashboardChartIntact} navIntact={navIntact}");
+        Console.WriteLine($"[layout] settingsInert={settingsInert} guideFilterIntact={guideFilterIntact}&searchWorks={searchWorks} dashboardChartIntact={dashboardChartIntact} navIntact={navIntact}");
 
         bool ok = settingsResponsive && scaffoldsCentered && guideCentered
-                  && settingsInert && scaffoldsDeferred && guideFilterIntact && searchWorks
+                  && settingsInert && guideFilterIntact && searchWorks
                   && dashboardChartIntact && navIntact;
         Console.WriteLine(ok ? "[layout] Visual layout polish smoke OK" : "[layout] Visual layout polish smoke FAIL");
         return ok ? 0 : 1;
@@ -3300,17 +3289,14 @@ internal static class Program
     // (source check — skipped/true with no source tree). Behavior-neutral; no language switching/persistence.
     private static int LocalizationTextPolishSmoke()
     {
-        var coach = new SmartCoachScaffoldViewModel();
-        var prog = new ProgressionScaffoldViewModel();
         var settings = new SettingsViewModel();
 
-        // SmartCoach tile labels consistent; product name one word.
-        bool coachLabels = coach.StreakLabel == "Dager på rad" && coach.SessionsLabel == "Økter denne uken"
-            && coach.HealthLabel == "Helsescore" && coach.Title == "SmartCoach";
-        // Progression: FemVoice-score (not "Score"); params Resonans/Tonehøyde/Intonasjon (not "Pitch").
-        var progParams = prog.Parameters.Select(p => p.Label).ToList();
-        bool progLabels = prog.ScoreLabel == "FemVoice-score"
-            && progParams.SequenceEqual(new[] { "Resonans", "Tonehøyde", "Intonasjon" });
+        // SmartCoach + Progression are engine-backed real screens; check their real headings use Norwegian wording.
+        var coach = new SmartCoachViewModel(null);
+        var prog = new ProgressionViewModel(null);
+        bool realHeadings = coach.Title == "Smart Coach"
+            && prog.ParameterGraphHeading == "Parametere";
+
         // Settings (functional): no English "Audio settings" leftover; privacy consent labels are short (not the
         // long Core consent paragraphs).
         var pf = settings.Preferences;
@@ -3321,15 +3307,9 @@ internal static class Program
         bool privacyShort = pf.DiagnosticsConsentLabel == "Diagnostikk-samtykke"
             && settingsLabels.All(l => l.Length <= 48);   // no long consent paragraph used as a label
 
-        // No English/terse leftovers across the scaffold + functional Settings labels.
-        var allText = new List<string> { coach.StreakLabel, coach.SessionsLabel, coach.HealthLabel, coach.Title,
-            prog.ScoreLabel }.Concat(progParams).Concat(settingsLabels).ToList();
-        var banned = new[] { "Pitch", "Score", "økter", "helse", "Audio settings" };
-        bool noEnglishLeftovers = allText.All(t => !banned.Contains(t));
-
-        // Consistent deferred phrasing on the remaining (dead) scaffold VMs — Settings itself is no longer deferred.
-        bool deferredConsistent = coach.DeferredBadge.Contains("Utsatt") && prog.DeferredBadge.Contains("Utsatt")
-            && coach.DeferredBadge.Contains("kun visning");
+        // No English/terse leftovers across the functional Settings labels.
+        var banned = new[] { "Pitch", "Score", "Audio settings" };
+        bool noEnglishLeftovers = settingsLabels.All(t => !banned.Contains(t));
 
         // Dashboard chart label is Norwegian "Tonehøyde", not "Pitch-trace" (source check; skip→true if no source).
         string dashView = System.IO.Path.GetFullPath(System.IO.Path.Combine(
@@ -3337,11 +3317,10 @@ internal static class Program
         bool dashLabelNo = !System.IO.File.Exists(dashView)
             || (System.IO.File.ReadAllText(dashView).Contains("Tonehøyde") && !System.IO.File.ReadAllText(dashView).Contains("Pitch-trace"));
 
-        Console.WriteLine($"[loc-text] coachLabels={coachLabels} progLabels={progLabels} settingsAudioNorsk={settingsAudioNo} privacyShort={privacyShort}");
-        Console.WriteLine($"[loc-text] noEnglishLeftovers={noEnglishLeftovers} deferredConsistent={deferredConsistent} dashLabelTonehøyde={dashLabelNo}");
+        Console.WriteLine($"[loc-text] realHeadings={realHeadings} settingsAudioNorsk={settingsAudioNo} privacyShort={privacyShort}");
+        Console.WriteLine($"[loc-text] noEnglishLeftovers={noEnglishLeftovers} dashLabelTonehøyde={dashLabelNo}");
 
-        bool ok = coachLabels && progLabels && settingsAudioNo && privacyShort && noEnglishLeftovers
-                  && deferredConsistent && dashLabelNo;
+        bool ok = realHeadings && settingsAudioNo && privacyShort && noEnglishLeftovers && dashLabelNo;
         Console.WriteLine(ok ? "[loc-text] Localization text polish smoke OK" : "[loc-text] Localization text polish smoke FAIL");
         return ok ? 0 : 1;
     }

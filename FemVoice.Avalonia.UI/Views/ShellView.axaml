@@ -70,9 +70,6 @@
             <DataTemplate DataType="vm:AnalysisViewModel"><views:AnalysisView/></DataTemplate>
             <DataTemplate DataType="vm:ReportsViewModel"><views:ReportsView/></DataTemplate>
             <DataTemplate DataType="vm:DiagnosticsViewModel"><views:DiagnosticsView/></DataTemplate>
-            <!-- Deferred, display-only scaffolds (no services, no engines, no side effects) -->
-            <DataTemplate DataType="vm:ProgressionScaffoldViewModel"><views:ProgressionScaffoldView/></DataTemplate>
-            <DataTemplate DataType="vm:SmartCoachScaffoldViewModel"><views:SmartCoachScaffoldView/></DataTemplate>
             <!-- Engine-backed (real engines on the real DB) -->
             <DataTemplate DataType="vm:SmartCoachViewModel"><views:SmartCoachView/></DataTemplate>
             <DataTemplate DataType="vm:ProgressionViewModel"><views:ProgressionView/></DataTemplate>
@@ -88,20 +85,6 @@
             <DataTemplate DataType="vm:ManualOverridePanelViewModel"><views:ManualOverridePanelView/></DataTemplate>
             <DataTemplate DataType="vm:ResonanceViewModel"><views:ResonanceView/></DataTemplate>
             <DataTemplate DataType="vm:AnalyzerViewModel"><views:AnalyzerView/></DataTemplate>
-            <!-- Static deferred placeholder (no services, no side effects) -->
-            <DataTemplate DataType="vm:DeferredSurfaceViewModel">
-              <ScrollViewer>
-                <StackPanel Margin="24" Spacing="10" MaxWidth="640" HorizontalAlignment="Left">
-                  <TextBlock Text="{Binding Title}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource ShellDeferredTitleBrush}"/>
-                  <Border BorderBrush="{DynamicResource ShellDeferredBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="14">
-                    <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-                  </Border>
-                  <!-- Footnote bound from the VM (non-subscribing Localized.Get) since this template is transient. -->
-                  <TextBlock Text="{Binding Footnote}"
-                             Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
-                </StackPanel>
-              </ScrollViewer>
-            </DataTemplate>
           </ContentControl.DataTemplates>
         </ContentControl>
 
