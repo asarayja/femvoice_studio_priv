@@ -2015,9 +2015,8 @@ internal static class Program
         int seriesCount = analysis?.Series.Count ?? -1;
         bool honestEmpty = analysis is not null && seriesCount == 0 && !analysis.HasRealData
                            && !string.IsNullOrWhiteSpace(analysis.SampleDataNotice);
-        bool summaryOk = analysis is not null && analysis.AllActionsDeferred;
         Console.WriteLine($"[analysis] nav-implemented={navExists} onAnalysis={onAnalysis} series={seriesCount} honestEmpty={honestEmpty}");
-        Console.WriteLine($"[analysis] inert: notDisposable={notDisposable} noCommands={noCommands} honestEmpty={honestEmpty} summaryOk={summaryOk}");
+        Console.WriteLine($"[analysis] inert: notDisposable={notDisposable} noCommands={noCommands} honestEmpty={honestEmpty}");
 
         // Navigating to Analysis from a RUNNING runtime disposes the runtime safely (no orphaned capture).
         shell.ShowGuideCommand.Execute(null);
@@ -2078,7 +2077,7 @@ internal static class Program
             finally { Cleanup(); }
         }
 
-        bool ok = navExists && onAnalysis && notDisposable && noCommands && honestEmpty && summaryOk
+        bool ok = navExists && onAnalysis && notDisposable && noCommands && honestEmpty
                   && runtimeRan && runtimeDisposed && noOrphanFrames && resonanceRealOk;
         Console.WriteLine(ok ? "[analysis] Analysis scaffold smoke OK" : "[analysis] Analysis scaffold smoke FAIL");
         return ok ? 0 : 1;

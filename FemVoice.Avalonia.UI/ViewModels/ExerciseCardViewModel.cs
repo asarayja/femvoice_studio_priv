@@ -6,12 +6,16 @@ namespace FemVoice.Avalonia.ViewModels;
 /// <summary>Read-only summary of one catalog exercise for the Exercise Guide list.</summary>
 public sealed class ExerciseCardViewModel
 {
-    public ExerciseCardViewModel(EnhancedExercise exercise)
+    public ExerciseCardViewModel(EnhancedExercise exercise, int sessionCount = 0)
     {
         Exercise = exercise;
+        SessionCount = sessionCount;
     }
 
     public EnhancedExercise Exercise { get; }
+
+    /// <summary>Real count of completed sessions for THIS exercise (from the DB; 0 when none / no DB).</summary>
+    public int SessionCount { get; }
 
     public int Id => Exercise.Id;
     public string Name => Exercise.Name;
@@ -25,8 +29,7 @@ public sealed class ExerciseCardViewModel
         : "—";
     public string DurationText => $"{Exercise.DurationMinutes} min";
     public string FrequencyText => ExerciseDisplay.Frequency(Exercise.Frequency);
-    // WPF parity: the list shows a per-exercise completed-session count ("N økter"). This Avalonia preview has NO
-    // session persistence/analytics, so the truthful display-only value is 0 for every exercise (clearly labelled
-    // as a display-only preview by the list's progress note). No DB/analytics read, no invented numbers.
-    public string SessionCountText => "0 økter";
+    // WPF parity: the list shows a per-exercise completed-session count. Real value read from the DB by the guide
+    // (sessions saved by this exercise's runtime), passed in via the ctor. 0 when the exercise hasn't been done.
+    public string SessionCountText => $"{SessionCount} økter";
 }

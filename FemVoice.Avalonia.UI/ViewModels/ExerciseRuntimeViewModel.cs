@@ -52,8 +52,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     // We feed it synthetic-derived metrics via UpdateMetrics and surface its in-memory hold/state.
     // Nothing here is persisted, gated, scored, or enforced — the safety-lock value is shown as text.
     private const int    SyntheticUserId           = 1;     // positive probe id; coordinator writes no DB
-    private const double  CoordResonancePlaceholder = 60.0;  // neutral placeholder (pitch is the only real feed)
-    private const double  CoordStabilityPlaceholder = 0.8;   // neutral placeholder
+    private const double  CoordStabilityPlaceholder = 0.8;   // neutral placeholder (runtime has no per-frame stability)
     private const double  CoordHealthPlaceholder    = 100.0; // safe → never trips a health-threshold lock
     private readonly ExerciseIntelligenceCoordinator _coordinator = new();
     private readonly ExerciseTargetProfile? _coordinatorProfile;
@@ -454,12 +453,13 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         double hold = _holdRaw;
         int elapsed = (int)(now - _startUtc).TotalSeconds;
 
-        // Feed the VM-local coordinator READ-ONLY: pitch is the real signal; resonance/stability/health
-        // are documented neutral placeholders. Read its in-memory hold/state for the display-only readout.
+        // Feed the VM-local coordinator READ-ONLY: pitch AND resonance are now the REAL measured signals (the Core
+        // ResonanceProxyEngine's live 0–100 score); stability/health remain documented neutral placeholders (the
+        // runtime doesn't compute those per-frame). Read its in-memory hold/state for the advisory readout.
         ExerciseCoordinatorReadoutDisplay? readout = null;
         if (_coordinatorEnabled && _coordinator.IsExerciseActive)
         {
-            _coordinator.UpdateMetrics(CoordResonancePlaceholder, pitch, CoordStabilityPlaceholder, CoordHealthPlaceholder);
+            _coordinator.UpdateMetrics(_latestResonancePercent, pitch, CoordStabilityPlaceholder, CoordHealthPlaceholder);
             readout = ExerciseCoordinatorReadoutDisplay.From(
                 _coordinator.IsExerciseActive, _coordinator.GetHoldProgress(),
                 _holdTargetSeconds, _latestLiveState, hold);

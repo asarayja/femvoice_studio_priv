@@ -95,13 +95,7 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
 
-      <!-- Deferred analysis actions (inert: disabled, no command) -->
-      <StackPanel Orientation="Horizontal" Spacing="8">
-        <Button Content="Importer analyse (senere)" IsEnabled="False" Padding="10,4"/>
-        <Button Content="Eksporter analyse (senere)" IsEnabled="False" Padding="10,4"/>
-      </StackPanel>
-
-      <TextBlock Text="Trender beregnes fra dine lagrede økter. Import/eksport av analyse kommer senere."
+      <TextBlock Text="Trender beregnes fra dine lagrede økter. Bruk Rapporter for å eksportere øktdata (CSV/tekst) og profesjonelle rapporter (PDF)."
                  Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
 
     </StackPanel>

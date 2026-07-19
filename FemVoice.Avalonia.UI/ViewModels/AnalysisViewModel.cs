@@ -65,9 +65,6 @@ public sealed class AnalysisViewModel
     /// <summary>True when the charts/metrics are computed from real saved sessions (vs synthetic sample data).</summary>
     public bool HasRealData { get; }
 
-    /// <summary>Always <c>true</c>: this page has no interactive analysis actions wired (import/export deferred).</summary>
-    public bool AllActionsDeferred => true;
-
     public AnalysisViewModel() : this(null) { }
 
     public AnalysisViewModel(IDatabaseService? database)

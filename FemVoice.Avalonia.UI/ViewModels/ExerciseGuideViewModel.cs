@@ -30,8 +30,9 @@ public partial class ExerciseGuideViewModel : ObservableObject
         FemVoiceStudio.Data.IDatabaseService? database = null)
     {
         _openDetail = openDetail;
+        var counts = PerExerciseCounts(database);
         _all = service.GetAllEnhancedExercises()
-            .Select(e => new ExerciseCardViewModel(e))
+            .Select(e => new ExerciseCardViewModel(e, counts.TryGetValue(e.Name, out int c) ? c : 0))
             .ToList();
 
         ComputeTodaysProgress(database);
@@ -82,6 +83,26 @@ public partial class ExerciseGuideViewModel : ObservableObject
     [ObservableProperty] private string _todaysProgressText = "— · 0 økter";
     [ObservableProperty] private string _progressNote =
         "Fullførte øvelser lagres og teller mot progresjonen din.";
+
+    // Real per-exercise completed-session count. Exercise runs are saved with Feedback = "Øvelse: {name}" (see
+    // ExerciseRuntimeViewModel.SaveFinishedSession), so we group saved sessions by that name. Null-safe; never throws.
+    private static Dictionary<string, int> PerExerciseCounts(FemVoiceStudio.Data.IDatabaseService? database)
+    {
+        var map = new Dictionary<string, int>(StringComparer.Ordinal);
+        if (database is null) return map;
+        try
+        {
+            const string prefix = "Øvelse: ";
+            foreach (var s in database.GetRecentSessions(2000))
+            {
+                if (string.IsNullOrEmpty(s.Feedback) || !s.Feedback.StartsWith(prefix, StringComparison.Ordinal)) continue;
+                string name = s.Feedback.Substring(prefix.Length);
+                map[name] = map.TryGetValue(name, out int c) ? c + 1 : 1;
+            }
+        }
+        catch { /* best effort — no counts on error */ }
+        return map;
+    }
 
     /// <summary>Real today's minutes + completed-session count from the database (local day). Null-safe: with no DB
     /// the note stays neutral and the counts show a placeholder. Never throws.</summary>
