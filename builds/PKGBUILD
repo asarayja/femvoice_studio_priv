@@ -1,0 +1,57 @@
+# Maintainer: Asarayja <asarayja@users.noreply.github.com>
+# PKGBUILD for FemVoice Studio (Avalonia, self-contained .NET).
+#
+# Build the package the Arch way, from a clone of the repo:
+#   makepkg -si          # build + install
+# The pre-built package (builds/femvoice-studio-1.0.0-1-x86_64.pkg.tar.zst) is the output of this recipe.
+#
+# NOTE: the app targets .NET 10. `dotnet-sdk` in the Arch repos may lag; if so, install a .NET 10 SDK
+# (Microsoft feed or an AUR package) and makepkg will pick it up. Trimming/stripping is disabled so the
+# bundled native libraries (Skia, ALSA P/Invoke, etc.) are not broken.
+
+pkgname=femvoice-studio
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="FemVoice Studio - voice feminization biofeedback (Avalonia, self-contained)"
+arch=('x86_64')
+url="https://github.com/asarayja/femvoice_studio_priv"
+license=('custom')
+depends=('glibc' 'gcc-libs' 'icu' 'openssl' 'zlib' 'fontconfig' 'libx11' 'alsa-lib')
+makedepends=('dotnet-sdk')
+options=('!strip' '!lto')
+
+# Builds from the repo checkout this PKGBUILD ships in (the project root is two levels up from builds/).
+_projectroot="${startdir}/.."
+
+build() {
+  cd "$_projectroot"
+  dotnet publish FemVoice.Avalonia/FemVoice.Avalonia.csproj \
+    -c Release -r linux-x64 --self-contained true -o "$srcdir/out"
+}
+
+package() {
+  # Payload
+  install -dm755 "$pkgdir/opt/femvoice-studio"
+  cp -r "$srcdir/out/." "$pkgdir/opt/femvoice-studio/"
+  chmod 755 "$pkgdir/opt/femvoice-studio/FemVoice.Avalonia"
+
+  # Launcher on PATH
+  install -dm755 "$pkgdir/usr/bin"
+  printf '#!/bin/sh\nexec /opt/femvoice-studio/FemVoice.Avalonia "$@"\n' > "$pkgdir/usr/bin/femvoice-studio"
+  chmod 755 "$pkgdir/usr/bin/femvoice-studio"
+
+  # Icon + desktop entry
+  install -Dm644 "$_projectroot/FemVoice.Avalonia.UI/Assets/logo.png" \
+    "$pkgdir/usr/share/icons/hicolor/256x256/apps/femvoice-studio.png"
+  install -dm755 "$pkgdir/usr/share/applications"
+  cat > "$pkgdir/usr/share/applications/femvoice-studio.desktop" <<'DESKTOP'
+[Desktop Entry]
+Name=FemVoice Studio
+Comment=Stemmetrening – voice feminization biofeedback
+Exec=/opt/femvoice-studio/FemVoice.Avalonia
+Icon=femvoice-studio
+Terminal=false
+Type=Application
+Categories=Education;Audio;Utility;
+DESKTOP
+}
