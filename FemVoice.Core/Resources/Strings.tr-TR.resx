@@ -5648,4 +5648,205 @@ Bu işlem geri alınamaz!</value>
   <data name="Dash_SessionStopped" xml:space="preserve">
     <value>Session stopped.</value>
   </data>
+  <data name="ExRun_Back" xml:space="preserve">
+    <value>← Back</value>
+  </data>
+  <data name="ExRun_Stop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="ExRun_SessionEnded" xml:space="preserve">
+    <value>Session ended</value>
+  </data>
+  <data name="ExRun_PitchHint" xml:space="preserve">
+    <value>Say a steady tone — the pitch appears here.</value>
+  </data>
+  <data name="ExRun_HoldInTarget" xml:space="preserve">
+    <value>Hold in the target range (display)</value>
+  </data>
+  <data name="ExRun_DerivedHold" xml:space="preserve">
+    <value>Derived hold</value>
+  </data>
+  <data name="ExRun_CoordinatorHold" xml:space="preserve">
+    <value>Coordinator hold (advisory)</value>
+  </data>
+  <data name="ExRun_CoordinatorReadout" xml:space="preserve">
+    <value>Coordinator readout</value>
+  </data>
+  <data name="ExRun_TargetProfile" xml:space="preserve">
+    <value>Target profile (technical)</value>
+  </data>
+  <data name="ExRun_Lbl_Level" xml:space="preserve">
+    <value>Level</value>
+  </data>
+  <data name="ExRun_Lbl_Focus" xml:space="preserve">
+    <value>Focus</value>
+  </data>
+  <data name="ExRun_Lbl_Duration" xml:space="preserve">
+    <value>Duration</value>
+  </data>
+  <data name="ExRun_Lbl_TargetRange" xml:space="preserve">
+    <value>Target range</value>
+  </data>
+  <data name="ExRun_Lbl_State" xml:space="preserve">
+    <value>State</value>
+  </data>
+  <data name="ExRun_Lbl_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="ExRun_Lbl_Held" xml:space="preserve">
+    <value>Held</value>
+  </data>
+  <data name="ExRun_Lbl_Difference" xml:space="preserve">
+    <value>Difference</value>
+  </data>
+  <data name="ExRun_Lbl_Active" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="ExRun_Lbl_TargetPitch" xml:space="preserve">
+    <value>Target pitch</value>
+  </data>
+  <data name="ExRun_Lbl_ResonanceTarget" xml:space="preserve">
+    <value>Resonance target</value>
+  </data>
+  <data name="ExRun_Lbl_HoldTarget" xml:space="preserve">
+    <value>Hold target</value>
+  </data>
+  <data name="ExRun_Lbl_TargetSkills" xml:space="preserve">
+    <value>Target skills</value>
+  </data>
+  <data name="ExRun_Lbl_CommonMistakes" xml:space="preserve">
+    <value>Common mistakes</value>
+  </data>
+  <data name="ExRunVm_DefaultCategory" xml:space="preserve">
+    <value>Exercise</value>
+  </data>
+  <data name="ExRunVm_ReadySynthetic" xml:space="preserve">
+    <value>Ready — press Start (synthetic test tone — no microphone found, the session is not saved).</value>
+  </data>
+  <data name="ExRunVm_Ready" xml:space="preserve">
+    <value>Ready — press Start to begin.</value>
+  </data>
+  <data name="ExRunVm_HoldTarget" xml:space="preserve">
+    <value>Target: hold for {0} s (display)</value>
+  </data>
+  <data name="ExRunVm_SafetyNote" xml:space="preserve">
+    <value>Practice without pressure: stop if uncomfortable, relax your throat/shoulders, and take breaks. Health and safety always come before pitch.</value>
+  </data>
+  <data name="ExRunVm_SecondaryPitch" xml:space="preserve">
+    <value>Technical target (pitch): {0}</value>
+  </data>
+  <data name="ExRunVm_GettingReady" xml:space="preserve">
+    <value>Get ready …</value>
+  </data>
+  <data name="ExRunVm_Phase_Ready" xml:space="preserve">
+    <value>Ready</value>
+  </data>
+  <data name="ExRunVm_Phase_ActiveSynth" xml:space="preserve">
+    <value>Active (synthetic test tone)</value>
+  </data>
+  <data name="ExRunVm_Phase_Active" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="ExRunVm_Phase_Stopped" xml:space="preserve">
+    <value>Stopped</value>
+  </data>
+  <data name="ExRunVm_RecDuration" xml:space="preserve">
+    <value>Recommended duration: {0} min (advisory)</value>
+  </data>
+  <data name="ExRunVm_RecDurationNone" xml:space="preserve">
+    <value>Recommended duration: —</value>
+  </data>
+  <data name="ExRunVm_SaveNote_Real" xml:space="preserve">
+    <value>The session is saved and counts toward your progression.</value>
+  </data>
+  <data name="ExRunVm_SaveNote_Synth" xml:space="preserve">
+    <value>Synthetic test tone — the session is not saved.</value>
+  </data>
+  <data name="ExRunVm_SaveNote_Local" xml:space="preserve">
+    <value>The session is saved locally.</value>
+  </data>
+  <data name="ExRunVm_LiveHeading_Synth" xml:space="preserve">
+    <value>Real-time (synthetic test tone)</value>
+  </data>
+  <data name="ExRunVm_ReadyToStart_Synth" xml:space="preserve">
+    <value>No microphone found — Start runs a synthetic test tone (not saved).</value>
+  </data>
+  <data name="ExRunVm_ReadyToStart_Real" xml:space="preserve">
+    <value>Ready to start — press Start to practice with your microphone.</value>
+  </data>
+  <data name="ExRunVm_Fb_Pause" xml:space="preserve">
+    <value>The coordinator recommends a break (advisory)</value>
+  </data>
+  <data name="ExRunVm_Fb_NoStableVoice" xml:space="preserve">
+    <value>No stable voice detected</value>
+  </data>
+  <data name="ExRunVm_Fb_SlightlyUnder" xml:space="preserve">
+    <value>Slightly below the target range</value>
+  </data>
+  <data name="ExRunVm_Fb_SlightlyOver" xml:space="preserve">
+    <value>Slightly above the target range</value>
+  </data>
+  <data name="ExRunVm_Fb_InRange" xml:space="preserve">
+    <value>Within the target range</value>
+  </data>
+  <data name="ExRunVm_Fb_SteadyTone" xml:space="preserve">
+    <value>Say a steady tone in the target range.</value>
+  </data>
+  <data name="ExRunVm_Status_InProgress" xml:space="preserve">
+    <value>Exercise in progress — keep the tone in the target range.</value>
+  </data>
+  <data name="ExRunVm_SessionEnded" xml:space="preserve">
+    <value>Session complete · duration {0} · best hold {1} %. {2}</value>
+  </data>
+  <data name="ExRunVm_Tail_Saved" xml:space="preserve">
+    <value>Saved — counts toward your progression.</value>
+  </data>
+  <data name="ExRunVm_Tail_Synth" xml:space="preserve">
+    <value>Synthetic test tone — not saved.</value>
+  </data>
+  <data name="ExRunVm_Tail_Local" xml:space="preserve">
+    <value>Saved locally.</value>
+  </data>
+  <data name="ExRunVm_ExerciseStopped" xml:space="preserve">
+    <value>Exercise stopped.</value>
+  </data>
+  <data name="ExRunVm_Status_HoldingGreat" xml:space="preserve">
+    <value>Great — you&#x27;re holding the target range!</value>
+  </data>
+  <data name="ExRunVm_Status_HoldSteady" xml:space="preserve">
+    <value>Good — keep the tone calm in the target range.</value>
+  </data>
+  <data name="ExRunVm_Status_SayTone" xml:space="preserve">
+    <value>Say a steady tone to begin.</value>
+  </data>
+  <data name="ExRunVm_Status_Adjust" xml:space="preserve">
+    <value>Adjust your tone toward the target range.</value>
+  </data>
+  <data name="ExRun_Status_Under" xml:space="preserve">
+    <value>Below target</value>
+  </data>
+  <data name="ExRun_Status_Over" xml:space="preserve">
+    <value>Above target</value>
+  </data>
+  <data name="ExRun_Status_In" xml:space="preserve">
+    <value>Within target</value>
+  </data>
+  <data name="GuideVm_SearchPlaceholder" xml:space="preserve">
+    <value>Search exercises …</value>
+  </data>
+  <data name="GuideVm_EmptyText" xml:space="preserve">
+    <value>No exercises match your search.</value>
+  </data>
+  <data name="GuideVm_ProgressZero" xml:space="preserve">
+    <value>— · 0 sessions</value>
+  </data>
+  <data name="GuideVm_ProgressNote_Default" xml:space="preserve">
+    <value>Completed exercises are saved and count toward your progression.</value>
+  </data>
+  <data name="GuideVm_ProgressText" xml:space="preserve">
+    <value>{0} min · {1} sessions</value>
+  </data>
+  <data name="GuideVm_ProgressNote_Today" xml:space="preserve">
+    <value>Today&#x27;s completed exercises are saved and count toward your progression.</value>
+  </data>
 </root>

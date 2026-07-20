@@ -1327,6 +1327,9 @@ internal static class Program
         Cleanup();
         try
         {
+            // Pin the resolver to Norwegian so the truthful-label assertions below match the known nb source text
+            // (the runtime labels are now localized; the source/neutral language is Norwegian).
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
             var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
             var svc = new global::FemVoiceStudio.Services.VoiceFeminizationExerciseService();
             var exercise = svc.GetAllEnhancedExercises()[0];
@@ -1928,6 +1931,8 @@ internal static class Program
     // subscription (no orphan frames after stop); nav-away still disposes safely. No persistence/write APIs.
     private static async Task<int> RuntimeLifecycleSmoke()
     {
+        // Pin the resolver to Norwegian — the runtime summary text is now localized; assert against the nb source.
+        global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
         var svc = new VoiceFeminizationExerciseService();
         var exercise = svc.GetAllEnhancedExercises()[0];
         using var rt = new ExerciseRuntimeViewModel(exercise, new InlineUiDispatcher(), () => { });

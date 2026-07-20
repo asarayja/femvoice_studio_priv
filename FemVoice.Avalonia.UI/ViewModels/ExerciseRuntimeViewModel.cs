@@ -106,7 +106,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         TargetPitchMin = exercise.TargetPitchMin;
         TargetPitchMax = exercise.TargetPitchMax;
         SelectedExerciseName = exercise.Name;
-        Category = string.IsNullOrWhiteSpace(exercise.Category) ? "Øvelse" : exercise.Category;
+        Category = string.IsNullOrWhiteSpace(exercise.Category) ? Localized.Get("ExRunVm_DefaultCategory", "Øvelse") : exercise.Category;
         Difficulty = ExerciseDisplay.Difficulty(exercise.Difficulty);
         Steps = exercise.Steps ?? new List<string>();
         MetricsText = exercise.Metrics is { Count: > 0 }
@@ -180,8 +180,8 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         // the synthetic session; the FrameAvailable handler is subscribed once here and only fires while the
         // capture is started (in Begin) — re-Start does not re-subscribe.
         RuntimeStatusMessage = IsSyntheticSource
-            ? "Klar — trykk Start (syntetisk testlyd — ingen mikrofon funnet, økten lagres ikke)."
-            : "Klar — trykk Start for å begynne.";
+            ? Localized.Get("ExRunVm_ReadySynthetic", "Klar — trykk Start (syntetisk testlyd — ingen mikrofon funnet, økten lagres ikke).")
+            : Localized.Get("ExRunVm_Ready", "Klar — trykk Start for å begynne.");
     }
 
     public EnhancedExercise Exercise { get; }
@@ -200,7 +200,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     public bool HasFeedbackMode => FeedbackModeText.Length > 0;
 
     /// <summary>Display-only hold target (from the profile's RequiredHoldSeconds when available).</summary>
-    public string HoldTargetDescription => $"Mål: hold i {_holdTargetSeconds:F0} s (visning)";
+    public string HoldTargetDescription => string.Format(Localized.Get("ExRunVm_HoldTarget", "Mål: hold i {0} s (visning)"), _holdTargetSeconds.ToString("F0"));
 
     [ObservableProperty] private string _selectedExerciseName = "";
     [ObservableProperty] private string _category = "";
@@ -219,9 +219,9 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     public string DurationText => $"{Exercise.DurationMinutes} min";
     public string MetricsText { get; }
     // General, non-clinical reminder (the catalog has no per-exercise safety field) — NOT a Voice-Health gate.
-    public string SafetyNote =>
+    public string SafetyNote => Localized.Get("ExRunVm_SafetyNote",
         "Øv uten press: stopp ved ubehag, slapp av i hals/skuldre, og ta pauser. " +
-        "Helse og sikkerhet går alltid foran tonehøyde.";
+        "Helse og sikkerhet går alltid foran tonehøyde.");
 
     // ── Focus-aware wording (display-only — reflects the exercise's goal/category, NOT always pitch) ──
     /// <summary>Focus label from the exercise goal (Tonehøyde/Resonans/Intonasjon/Pust/Kombinert).</summary>
@@ -232,7 +232,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     public bool IsPitchFocused => ExerciseDisplay.IsPitchPrimary(Exercise.Goal);
     /// <summary>For non-pitch exercises, the pitch range is shown only as a SECONDARY technical detail.</summary>
     public bool ShowSecondaryPitch => !IsPitchFocused && TargetPitchMin > 0 && TargetPitchMax > 0;
-    public string SecondaryPitchText => $"Tekniske mål (tonehøyde): {TargetPitchText}";
+    public string SecondaryPitchText => string.Format(Localized.Get("ExRunVm_SecondaryPitch", "Tekniske mål (tonehøyde): {0}"), TargetPitchText);
 
     [ObservableProperty] private bool _isRunning;
     [ObservableProperty] private double _currentPitch;
@@ -244,7 +244,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     partial void OnElapsedSecondsChanged(int value) => OnPropertyChanged(nameof(ElapsedText));
     [ObservableProperty] private double _holdSeconds;
     [ObservableProperty] private double _holdProgressPercent;
-    [ObservableProperty] private string _runtimeStatusMessage = "Gjør deg klar …";
+    [ObservableProperty] private string _runtimeStatusMessage = Localized.Get("ExRunVm_GettingReady", "Gjør deg klar …");
 
     // ── Lifecycle (display-only; synthetic — no persistence/clinical meaning) ─────────
     [ObservableProperty] private RuntimePhase _phase = RuntimePhase.Inactive;
@@ -257,29 +257,29 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     /// <summary>Short phase label for the lifecycle bar.</summary>
     public string PhaseText => Phase switch
     {
-        RuntimePhase.Inactive => "Klar",
-        RuntimePhase.Active => IsSyntheticSource ? "Aktiv (syntetisk testlyd)" : "Aktiv",
-        RuntimePhase.Stopped => "Stoppet",
+        RuntimePhase.Inactive => Localized.Get("ExRunVm_Phase_Ready", "Klar"),
+        RuntimePhase.Active => IsSyntheticSource ? Localized.Get("ExRunVm_Phase_ActiveSynth", "Aktiv (syntetisk testlyd)") : Localized.Get("ExRunVm_Phase_Active", "Aktiv"),
+        RuntimePhase.Stopped => Localized.Get("ExRunVm_Phase_Stopped", "Stoppet"),
         _ => "—",
     };
     /// <summary>Display-only recommended duration from the exercise definition (read-only).</summary>
     public string RecommendedDurationText => Exercise.DurationMinutes > 0
-        ? $"Anbefalt varighet: {Exercise.DurationMinutes} min (veiledende)"
-        : "Anbefalt varighet: —";
+        ? string.Format(Localized.Get("ExRunVm_RecDuration", "Anbefalt varighet: {0} min (veiledende)"), Exercise.DurationMinutes)
+        : Localized.Get("ExRunVm_RecDurationNone", "Anbefalt varighet: —");
     /// <summary>Truthful save note: real runs are saved and count toward progression; synthetic test-tone runs are not.</summary>
     public string NotSavedNote => SavesRealSession
-        ? "Økten lagres og teller mot progresjonen din."
+        ? Localized.Get("ExRunVm_SaveNote_Real", "Økten lagres og teller mot progresjonen din.")
         : IsSyntheticSource
-            ? "Syntetisk testlyd — økten lagres ikke."
-            : "Økten lagres lokalt.";
+            ? Localized.Get("ExRunVm_SaveNote_Synth", "Syntetisk testlyd — økten lagres ikke.")
+            : Localized.Get("ExRunVm_SaveNote_Local", "Økten lagres lokalt.");
 
     // ── Truthful live-panel headings (bound by the view; conditional on real vs synthetic source) ─────────────────
     /// <summary>Live-readout heading — notes the synthetic test-tone only when there is no real mic.</summary>
-    public string LiveHeading => IsSyntheticSource ? "Sanntid (syntetisk testlyd)" : "Sanntid";
+    public string LiveHeading => IsSyntheticSource ? Localized.Get("ExRunVm_LiveHeading_Synth", "Sanntid (syntetisk testlyd)") : Localized.Get("Dash_LiveHeading", "Sanntid");
     /// <summary>Pre-start hint — truthful about the source and whether the run saves.</summary>
     public string ReadyToStartText => IsSyntheticSource
-        ? "Ingen mikrofon funnet — Start kjører en syntetisk testlyd (lagres ikke)."
-        : "Klar til å starte — trykk Start for å øve med mikrofonen din.";
+        ? Localized.Get("ExRunVm_ReadyToStart_Synth", "Ingen mikrofon funnet — Start kjører en syntetisk testlyd (lagres ikke).")
+        : Localized.Get("ExRunVm_ReadyToStart_Real", "Klar til å starte — trykk Start for å øve med mikrofonen din.");
 
     partial void OnPhaseChanged(RuntimePhase value)
     {
@@ -304,7 +304,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         RuntimeChartDisplay.Empty(ChartHeightPx, 60, 110, 0, 0);
 
     /// <summary>Local, display-only live feedback text (NOT FeedbackConsistencyGuard / SmartCoach).</summary>
-    [ObservableProperty] private string _liveFeedbackMessage = "Gjør deg klar …";
+    [ObservableProperty] private string _liveFeedbackMessage = Localized.Get("ExRunVm_GettingReady", "Gjør deg klar …");
     /// <summary>Short, display-only severity label for the feedback (text only — no clinical meaning).</summary>
     [ObservableProperty] private string _liveFeedbackSeverity = "Nøytral";
 
@@ -328,12 +328,12 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     private (string message, string severity) DeriveLiveFeedback(bool voiced, double pitch, ExerciseLiveState? live)
     {
         if (live?.IsSafetyLocked == true)
-            return ("Koordinator anbefaler en pause (veiledende)", "Pause anbefalt");
+            return (Localized.Get("ExRunVm_Fb_Pause", "Koordinator anbefaler en pause (veiledende)"), "Pause anbefalt");
         if (!voiced || pitch <= 0)
-            return ("Ingen stabil stemme registrert", "Ingen stemme");
-        if (pitch < TargetPitchMin) return ("Litt under målområdet", "Juster");
-        if (pitch > TargetPitchMax) return ("Litt over målområdet", "Juster");
-        return ("Innenfor målområdet", "I mål");
+            return (Localized.Get("ExRunVm_Fb_NoStableVoice", "Ingen stabil stemme registrert"), "Ingen stemme");
+        if (pitch < TargetPitchMin) return (Localized.Get("ExRunVm_Fb_SlightlyUnder", "Litt under målområdet"), "Juster");
+        if (pitch > TargetPitchMax) return (Localized.Get("ExRunVm_Fb_SlightlyOver", "Litt over målområdet"), "Juster");
+        return (Localized.Get("ExRunVm_Fb_InRange", "Innenfor målområdet"), "I mål");
     }
 
     [RelayCommand]
@@ -353,14 +353,14 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         ElapsedSeconds = 0;
         RuntimePitchSamples.Clear();
         RuntimeChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, TargetPitchMin, TargetPitchMax);
-        LiveFeedbackMessage = "Si en jevn tone i målområdet.";
+        LiveFeedbackMessage = Localized.Get("ExRunVm_Fb_SteadyTone", "Si en jevn tone i målområdet.");
         LiveFeedbackSeverity = "Nøytral";
         SessionEndedSummary = "";
         _startUtc = DateTime.UtcNow;
         _lastFrameUtc = _startUtc;
         IsRunning = true;
         Phase = RuntimePhase.Active;
-        RuntimeStatusMessage = "Øvelse i gang — hold tonen i målområdet.";
+        RuntimeStatusMessage = Localized.Get("ExRunVm_Status_InProgress", "Øvelse i gang — hold tonen i målområdet.");
         StartCoordinatorReadout();
         _ = _capture.StartAsync(new AudioCaptureOptions(SampleRate, DeviceId: FemVoice.Avalonia.Preferences.CapturePreferences.SelectedMicDeviceId()));
         _voiceMonitor.Start(SampleRate);   // hear-own-voice (opt-in; no-op when off)
@@ -405,19 +405,20 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         {
             // Build the truthful session-ended summary from the last live values BEFORE clearing them.
             string tail = saved
-                ? "Lagret — teller mot progresjonen din."
-                : IsSyntheticSource ? "Syntetisk testlyd — ikke lagret." : "Lagret lokalt.";
-            SessionEndedSummary =
-                $"Økt fullført · varighet {ElapsedText} · beste hold {_peakHoldPercent:F0} %. {tail}";
+                ? Localized.Get("ExRunVm_Tail_Saved", "Lagret — teller mot progresjonen din.")
+                : IsSyntheticSource ? Localized.Get("ExRunVm_Tail_Synth", "Syntetisk testlyd — ikke lagret.") : Localized.Get("ExRunVm_Tail_Local", "Lagret lokalt.");
+            SessionEndedSummary = string.Format(
+                Localized.Get("ExRunVm_SessionEnded", "Økt fullført · varighet {0} · beste hold {1} %. {2}"),
+                ElapsedText, _peakHoldPercent.ToString("F0"), tail);
 
             IsRunning = false;
             Phase = RuntimePhase.Stopped;
-            PitchStatus = "Stoppet";
-            RuntimeStatusMessage = "Øvelse stoppet.";
+            PitchStatus = Localized.Get("ExRunVm_Phase_Stopped", "Stoppet");
+            RuntimeStatusMessage = Localized.Get("ExRunVm_ExerciseStopped", "Øvelse stoppet.");
             CoordinatorReadout = ExerciseCoordinatorReadoutDisplay.Inactive();
             RuntimePitchSamples.Clear();
             RuntimeChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, TargetPitchMin, TargetPitchMax);
-            LiveFeedbackMessage = "Øvelse stoppet.";
+            LiveFeedbackMessage = Localized.Get("ExRunVm_ExerciseStopped", "Øvelse stoppet.");
             LiveFeedbackSeverity = "Stoppet";
         });
     }
@@ -448,6 +449,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         if (result.IsVoiced && pitch > 0) _sessionPitch.Add(pitch);   // real per-session sample → saved session stats
 
         bool inRange = result.IsVoiced && pitch >= TargetPitchMin && pitch <= TargetPitchMax;
+        // INTERNAL status token (Norwegian, used for comparison + chart snapshot); localized only at display time.
         string status;
         if (!result.IsVoiced) status = "Ingen stemme";
         else if (pitch < TargetPitchMin) status = "Under målområde";
@@ -475,7 +477,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         double samplePx = hasVoice ? RuntimeChartDisplay.ToPx(pitch, _chartMin, _chartMax, ChartHeightPx) : 0;
         var chartSnap = RuntimeChartDisplay.From(
             ChartHeightPx, _chartMin, _chartMax, TargetPitchMin, TargetPitchMax,
-            pitch, hasVoice, hasVoice ? status : "Ingen stemme");
+            pitch, hasVoice, PitchStatusDisplay(hasVoice ? status : "Ingen stemme"));
         (string fbMsg, string fbSev) = DeriveLiveFeedback(result.IsVoiced, pitch,
             _coordinatorEnabled ? _latestLiveState : null);
 
@@ -485,14 +487,14 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
             if (!IsRunning) return;   // VM stopped/disposed between capture and dispatch → don't apply orphan updates
             CurrentPitch = result.IsVoiced ? Math.Round(pitch, 1) : 0;
             CurrentResonance = result.IsVoiced ? ResonanceText(resonancePct) : "—";
-            PitchStatus = status;
+            PitchStatus = PitchStatusDisplay(status);
             HoldSeconds = Math.Round(hold, 1);
             HoldProgressPercent = Math.Round(hold / _holdTargetSeconds * 100.0, 0);
             if (HoldProgressPercent > _peakHoldPercent) _peakHoldPercent = HoldProgressPercent;
             ElapsedSeconds = elapsed;
             RuntimeStatusMessage = inRange
-                ? (hold >= _holdTargetSeconds ? "Flott — du holder målområdet!" : "Bra — hold tonen rolig i målområdet.")
-                : status == "Ingen stemme" ? "Si en jevn tone for å begynne." : "Juster tonen mot målområdet.";
+                ? (hold >= _holdTargetSeconds ? Localized.Get("ExRunVm_Status_HoldingGreat", "Flott — du holder målområdet!") : Localized.Get("ExRunVm_Status_HoldSteady", "Bra — hold tonen rolig i målområdet."))
+                : status == "Ingen stemme" ? Localized.Get("ExRunVm_Status_SayTone", "Si en jevn tone for å begynne.") : Localized.Get("ExRunVm_Status_Adjust", "Juster tonen mot målområdet.");
             if (readout is not null) CoordinatorReadout = readout;
             RuntimeChart = chartSnap;
             LiveFeedbackMessage = fbMsg;
@@ -516,9 +518,19 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     // Qualitative label + value for the live resonance readout (0–100). Mirrors WPF's bright/neutral/dark buckets.
     private static string ResonanceText(int pct) => pct switch
     {
-        >= 67 => $"Lys ({pct})",
-        >= 34 => $"Nøytral ({pct})",
-        _ => $"Mørk ({pct})",
+        >= 67 => string.Format(Localized.Get("Resonance_Bright", "Lys ({0})"), pct),
+        >= 34 => string.Format(Localized.Get("Resonance_Neutral", "Nøytral ({0})"), pct),
+        _ => string.Format(Localized.Get("Resonance_Dark", "Mørk ({0})"), pct),
+    };
+
+    // Localize an INTERNAL pitch-status token for DISPLAY only (the raw token stays Norwegian for comparison/chart).
+    private static string PitchStatusDisplay(string token) => token switch
+    {
+        "Ingen stemme" => Localized.Get("Signal_NoVoice", "Ingen stemme"),
+        "Under målområde" => Localized.Get("ExRun_Status_Under", "Under målområde"),
+        "Over målområde" => Localized.Get("ExRun_Status_Over", "Over målområde"),
+        "Innenfor målområde" => Localized.Get("ExRun_Status_In", "Innenfor målområde"),
+        _ => token,
     };
 
     /// <summary>Persist the finished exercise. A real-microphone run with a DB saves a real TrainingSession (so it

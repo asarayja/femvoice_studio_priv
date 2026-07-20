@@ -75,14 +75,14 @@ public partial class ExerciseGuideViewModel : ObservableObject
     // Heading uses the shared WPF keys (Exercise_Title + Exercise_Subtitle) with the live count appended.
     public string Heading => $"{Localized.Get("Exercise_Title", "Øvelsesguide")} — {Count} {Localized.Get("Exercise_ItemsSuffix", "øvelser")}";
     public string Subtitle => Localized.Get("Exercise_Subtitle", "steg for steg");
-    public string SearchPlaceholder => "Søk i øvelser …";
-    public string EmptyText => "Ingen øvelser matcher søket.";
+    public string SearchPlaceholder => Localized.Get("GuideVm_SearchPlaceholder", "Søk i øvelser …");
+    public string EmptyText => Localized.Get("GuideVm_EmptyText", "Ingen øvelser matcher søket.");
 
     // WPF parity: the list has a "today's progress" summary (minutes + session count) — now REAL, read from the
     // database (the sessions completed today), or a neutral placeholder when no DB is present (headless/tests).
-    [ObservableProperty] private string _todaysProgressText = "— · 0 økter";
+    [ObservableProperty] private string _todaysProgressText = Localized.Get("GuideVm_ProgressZero", "— · 0 økter");
     [ObservableProperty] private string _progressNote =
-        "Fullførte øvelser lagres og teller mot progresjonen din.";
+        Localized.Get("GuideVm_ProgressNote_Default", "Fullførte øvelser lagres og teller mot progresjonen din.");
 
     // Real per-exercise completed-session count. Exercise runs are saved with Feedback = "Øvelse: {name}" (see
     // ExerciseRuntimeViewModel.SaveFinishedSession), so we group saved sessions by that name. Null-safe; never throws.
@@ -110,8 +110,8 @@ public partial class ExerciseGuideViewModel : ObservableObject
     {
         if (database is null)
         {
-            TodaysProgressText = "— · 0 økter";
-            ProgressNote = "Fullførte øvelser lagres og teller mot progresjonen din.";
+            TodaysProgressText = Localized.Get("GuideVm_ProgressZero", "— · 0 økter");
+            ProgressNote = Localized.Get("GuideVm_ProgressNote_Default", "Fullførte øvelser lagres og teller mot progresjonen din.");
             return;
         }
         try
@@ -121,14 +121,14 @@ public partial class ExerciseGuideViewModel : ObservableObject
                 .Where(s => s.StartTime.ToLocalTime().Date == today)
                 .ToList();
             int minutes = (int)Math.Round(todays.Sum(s => Math.Max(0, ((s.EndTime ?? s.StartTime) - s.StartTime).TotalMinutes)));
-            TodaysProgressText = $"{minutes} min · {todays.Count} økter";
+            TodaysProgressText = string.Format(Localized.Get("GuideVm_ProgressText", "{0} min · {1} økter"), minutes, todays.Count);
             ProgressNote = todays.Count > 0
-                ? "Dagens fullførte øvelser er lagret og teller mot progresjonen din."
-                : "Fullførte øvelser lagres og teller mot progresjonen din.";
+                ? Localized.Get("GuideVm_ProgressNote_Today", "Dagens fullførte øvelser er lagret og teller mot progresjonen din.")
+                : Localized.Get("GuideVm_ProgressNote_Default", "Fullførte øvelser lagres og teller mot progresjonen din.");
         }
         catch
         {
-            TodaysProgressText = "— · 0 økter";
+            TodaysProgressText = Localized.Get("GuideVm_ProgressZero", "— · 0 økter");
         }
     }
 
