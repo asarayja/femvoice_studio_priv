@@ -112,6 +112,11 @@ public sealed class SettingsDataService
             }
             if (File.Exists(_dbPath))
             {
+                // Release pooled SQLite handles before deleting, or Windows reports the file as
+                // "used by another process" (Microsoft.Data.Sqlite pools connections by default).
+                Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
                 File.Delete(_dbPath);
                 return new DataOpResult(true, L.Get("SettingsData_ClearedRestart", "Databasen er tømt. Start appen på nytt for å opprette en ny tom database."));
             }

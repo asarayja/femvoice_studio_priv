@@ -1734,20 +1734,57 @@ namespace FemVoiceStudio.Data
                 ? _connectionString.Substring(prefix.Length)
                 : Path.Combine(ResolveAppDataDir(), "femvoice.db");
             
-            // Lukk eksisterende tilkobling
+            // Close this instance's connection AND release EVERY pooled connection to the file.
+            // Microsoft.Data.Sqlite pools connections by default, so Dispose() alone just returns the
+            // handle to the pool and keeps the OS-level file lock — File.Delete then fails on Windows
+            // with "The process cannot access the file ... because it is being used by another process".
+            // Other stores (AuditTrailStore, CaseReviewsStore, SmartCoach*, SessionAnalyticsStore, …)
+            // share this same femvoice.db, so we must clear ALL pools, not just _connection.
             _connection?.Dispose();
             _connection = null;
-            
-            // Slett databasefilen hvis den eksisterer
+            CloseAllConnections();
+            SqliteConnection.ClearAllPools();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            // Delete the db file (+ any WAL/SHM/journal sidecars). Retry briefly: an AV scanner or the
+            // Windows search indexer can hold a fresh handle for a beat right after the pool is cleared.
             if (File.Exists(dbPath))
             {
-                File.Delete(dbPath);
+                DeleteFileWithRetry(dbPath);
+                foreach (var sidecar in new[] { dbPath + "-wal", dbPath + "-shm", dbPath + "-journal" })
+                    if (File.Exists(sidecar)) DeleteFileWithRetry(sidecar);
             }
-            
+
             // Reset the initialization guard so InitializeDatabase() will run again
             // on this fresh empty database. This is the only legitimate second call site.
             _initialized = false;
             InitializeDatabase();
+        }
+
+        /// <summary>
+        /// Deletes a file, retrying a few times on transient sharing violations (an AV scanner or the
+        /// search indexer briefly re-opening the file right after SQLite releases it). Throws the last
+        /// IOException if every attempt fails, so callers still surface a real "cannot delete" error.
+        /// </summary>
+        private static void DeleteFileWithRetry(string path, int attempts = 5, int delayMs = 100)
+        {
+            for (int i = 0; ; i++)
+            {
+                try
+                {
+                    File.Delete(path);
+                    return;
+                }
+                catch (IOException) when (i < attempts - 1)
+                {
+                    System.Threading.Thread.Sleep(delayMs);
+                }
+                catch (UnauthorizedAccessException) when (i < attempts - 1)
+                {
+                    System.Threading.Thread.Sleep(delayMs);
+                }
+            }
         }
         
         #region Smart Coach Data Access Methods

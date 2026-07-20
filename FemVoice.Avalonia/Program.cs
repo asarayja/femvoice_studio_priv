@@ -97,6 +97,7 @@ internal static class Program
         if (args.Contains("--snapshot-smoke")) return SnapshotSmoke();
         if (args.Contains("--session-history-persistence-smoke")) return SessionHistoryPersistenceSmoke();
         if (args.Contains("--database-service-smoke")) return DatabaseServiceSmoke();
+        if (args.Contains("--db-reset-smoke")) return DbResetSmoke();
         if (args.Contains("--smartcoach-engine-smoke")) return SmartCoachEngineSmoke();
         if (args.Contains("--progression-engine-smoke")) return ProgressionEngineSmoke();
         if (args.Contains("--statistics-smoke")) return StatisticsSmoke();
@@ -386,6 +387,47 @@ internal static class Program
             return ok ? 0 : 1;
         }
         catch (Exception ex) { Console.WriteLine($"[db] Database service smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
+        finally { Cleanup(); }
+    }
+
+    // Headless regression for the "database in use by another process" bug on Windows: real DB operations leave
+    // POOLED SQLite connections holding the file open (Microsoft.Data.Sqlite pools by default), so ResetDatabase()'s
+    // File.Delete used to throw an IOException. ResetDatabase() now clears all pools first; this proves the reset
+    // deletes + recreates the file with live pooled handles present. Would FAIL (IOException) before the fix.
+    private static int DbResetSmoke()
+    {
+        string fileName = $"femvoice-resetsmoke-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+        string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio");
+        string full = System.IO.Path.Combine(dir, fileName);
+        void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm", "-journal" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+        Cleanup();
+        try
+        {
+            var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+
+            // Real writes/reads → these open and (Dispose→pool) leave pooled connections holding the file open.
+            int id = db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
+            {
+                UserId = 1, StartTime = DateTime.UtcNow.AddMinutes(-2), EndTime = DateTime.UtcNow,
+                AveragePitch = 180, OverallScore = 60, Feedback = "reset-smoke",
+            });
+            _ = db.GetRecentSessions(10);
+            bool seeded = id > 0 && System.IO.File.Exists(full);
+
+            // The operation that used to throw "used by another process" on Windows.
+            db.ResetDatabase();
+
+            // After reset: file exists again (recreated empty), schema is usable, and the old row is gone.
+            bool fileRecreated = System.IO.File.Exists(full);
+            bool schemaUsable = db.GetUserSettings() is not null;
+            bool clearedRows = !db.GetRecentSessions(10).Any(s => s.Id == id);
+
+            Console.WriteLine($"[db-reset] seeded={seeded} fileRecreated={fileRecreated} schemaUsable={schemaUsable} clearedRows={clearedRows}");
+            bool ok = seeded && fileRecreated && schemaUsable && clearedRows;
+            Console.WriteLine(ok ? "[db-reset] DB reset smoke OK" : "[db-reset] DB reset smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[db-reset] DB reset smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
         finally { Cleanup(); }
     }
 
