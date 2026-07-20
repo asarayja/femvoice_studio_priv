@@ -373,9 +373,14 @@ internal static class Program
             var after = db.GetRecentSessions(10);
             bool roundTrip = after.Any(s => s.Id == id && System.Math.Abs(s.AveragePitch - 182) < 0.5);
 
-            Console.WriteLine($"[db] created={created} settingsOk={settingsOk} readOk={readOk} saveOk={saveOk}(id={id}) roundTrip={roundTrip}");
+            // Android-safe path: the app-data dir must be a ROOTED (absolute) path, never relative — a relative path
+            // (which is what an empty SpecialFolder.MyDocuments produces on Android) is what crashed the app at startup.
+            string appDataDir = global::FemVoiceStudio.Data.DatabaseService.ResolveAppDataDir();
+            bool rootedPath = System.IO.Path.IsPathRooted(appDataDir) && appDataDir.EndsWith("FemVoiceStudio");
+
+            Console.WriteLine($"[db] created={created} settingsOk={settingsOk} readOk={readOk} saveOk={saveOk}(id={id}) roundTrip={roundTrip} rootedPath={rootedPath}");
             Console.WriteLine($"[db] db path = {full}");
-            bool ok = created && settingsOk && readOk && saveOk && roundTrip;
+            bool ok = created && settingsOk && readOk && saveOk && roundTrip && rootedPath;
             Console.WriteLine(ok ? "[db] Database service smoke OK" : "[db] Database service smoke FAIL");
             return ok ? 0 : 1;
         }

@@ -39,7 +39,7 @@ public partial class DiagnosticsViewModel : ObservableObject
         Intro = Localized.Get("Diag_Intro2",
             "Ekte system- og databasestatus (kun lesing). Du kan eksportere en diagnostikkrapport og lage en " +
             "sikkerhetskopi av databasen.");
-        DataFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio");
+        DataFolderPath = FemVoiceStudio.Data.DatabaseService.ResolveAppDataDir();
     }
 
     public string Title { get; }

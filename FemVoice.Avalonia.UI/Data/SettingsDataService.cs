@@ -38,9 +38,9 @@ public sealed class SettingsDataService
         _backupDir = Path.Combine(Path.GetDirectoryName(_dbPath) ?? ".", "Backups");
     }
 
-    /// <summary>The canonical DB location used by <see cref="FemVoiceStudio.Data.DatabaseService"/>.</summary>
+    /// <summary>The canonical DB location used by <see cref="FemVoiceStudio.Data.DatabaseService"/> (Android-safe).</summary>
     public static string DefaultDbPath() => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio", "femvoice.db");
+        FemVoiceStudio.Data.DatabaseService.ResolveAppDataDir(), "femvoice.db");
 
     public string DatabasePath => _dbPath;
     public string BackupFolder => _backupDir;
