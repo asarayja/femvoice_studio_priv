@@ -13,56 +13,26 @@
                    Text="Trykk Start for live tonehøyde, stabilitet og helse fra mikrofonen."/>
       </StackPanel>
 
-      <!-- Top cards: side-by-side on wide, stacked on narrow (responsive in code-behind). -->
-      <Grid x:Name="TopCards" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto">
-
-        <!-- Session controls -->
-        <Border x:Name="SessionCard" Grid.Row="0" Grid.Column="0" Classes="card" Margin="0,0,6,0">
-          <StackPanel Spacing="10">
-            <TextBlock Text="Økt" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-            <WrapPanel>
-              <Button Content="{loc:Tr Key=UI_StartSession, Fallback='Start Økt'}" Classes="primary" Command="{Binding StartCommand}" IsEnabled="{Binding !IsRecording}" MinWidth="100" Margin="0,0,8,6"/>
-              <Button Content="{loc:Tr Key=UI_StopSession, Fallback='Stopp Økt'}" Command="{Binding StopCommand}" IsEnabled="{Binding IsRecording}" MinWidth="90" Margin="0,0,8,6"/>
-              <TextBlock VerticalAlignment="Center" Margin="0,0,0,6" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding IsRecording, StringFormat='Tar opp: {0}'}"/>
-            </WrapPanel>
-            <WrapPanel>
-              <TextBlock VerticalAlignment="Center" Margin="0,0,8,6" Foreground="{DynamicResource ShellBodyTextBrush}" Text="Vanskelighetsgrad:"/>
-              <ComboBox ItemsSource="{Binding DifficultyOptions}" SelectedItem="{Binding SelectedDifficultyOption}" MinWidth="140" MaxWidth="220" Margin="0,0,0,6"
-                        DisplayMemberBinding="{Binding Label}"/>
-            </WrapPanel>
-            <!-- Synthetic test-tone selector: only relevant when no real microphone is available (hidden otherwise). -->
-            <WrapPanel IsVisible="{Binding IsSyntheticBackend}">
-              <TextBlock VerticalAlignment="Center" Margin="0,0,8,6" Foreground="{DynamicResource ShellBodyTextBrush}" Text="Syntetisk testlyd:"/>
-              <ComboBox ItemsSource="{Binding SyntheticAudioModes}" SelectedItem="{Binding SyntheticAudioMode}" MinWidth="140" MaxWidth="220" Margin="0,0,0,6"/>
-            </WrapPanel>
-          </StackPanel>
-        </Border>
-
-        <!-- Live metrics -->
-        <Border x:Name="LiveCard" Grid.Row="0" Grid.Column="1" Classes="card" Margin="6,0,0,0">
-          <StackPanel Spacing="6">
-            <TextBlock Text="Sanntid" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-            <!-- Comfort-zone COMPLIANCE (no raw Hz — WPF principle A7). The green highlight = in the comfort zone. -->
-            <Border CornerRadius="4" Padding="10,6" HorizontalAlignment="Left"
-                    Background="{DynamicResource ShellChartBackgroundBrush}">
-              <TextBlock Text="{Binding ComfortZoneStatus}" FontSize="20" FontWeight="Bold"
-                         Foreground="{DynamicResource ShellAccentBrush}"/>
-            </Border>
-            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding CurrentSignalStatus, StringFormat='Signal: {0}'}"/>
-            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding PitchStability, StringFormat='Stabilitet: {0}'}"/>
-            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding ResonanceDisplay, StringFormat='Resonans: {0}'}"/>
-            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding HealthStatusDisplay, StringFormat='Helse: {0}'}"/>
-            <!-- The comfort zone is shown as a band in the graph below (not a numeric Hz target). -->
-            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellSuccessBrush}" Text="{Binding ComfortZoneLabel}"/>
-          </StackPanel>
-        </Border>
-      </Grid>
-
-      <!-- Feedback -->
-      <Border Classes="card" BorderBrush="{DynamicResource ShellSuccessBrush}">
-        <StackPanel Spacing="2">
-          <TextBlock Text="{Binding FeedbackHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}"/>
-          <TextBlock Text="{Binding CurrentFeedbackMessage}" TextWrapping="Wrap" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+      <!-- Session controls (full width). Mid-session this collapses to just Stop + a "Tar opp" indicator so the
+           reading text + pitch graph below are what you see. -->
+      <Border x:Name="SessionCard" Classes="card">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Økt" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <WrapPanel>
+            <Button Content="{loc:Tr Key=UI_StartSession, Fallback='Start Økt'}" Classes="primary" Command="{Binding StartCommand}" IsEnabled="{Binding !IsRecording}" MinWidth="100" Margin="0,0,8,6" IsVisible="{Binding !IsRecording}"/>
+            <Button Content="{loc:Tr Key=UI_StopSession, Fallback='Stopp Økt'}" Classes="primary" Command="{Binding StopCommand}" IsEnabled="{Binding IsRecording}" MinWidth="90" Margin="0,0,8,6" IsVisible="{Binding IsRecording}"/>
+            <TextBlock VerticalAlignment="Center" Margin="0,0,0,6" Foreground="{DynamicResource ShellSuccessBrush}" Text="● Tar opp" IsVisible="{Binding IsRecording}"/>
+          </WrapPanel>
+          <!-- Pre-start choices (difficulty + synthetic test tone) — hidden while recording. -->
+          <WrapPanel IsVisible="{Binding !IsRecording}">
+            <TextBlock VerticalAlignment="Center" Margin="0,0,8,6" Foreground="{DynamicResource ShellBodyTextBrush}" Text="Vanskelighetsgrad:"/>
+            <ComboBox ItemsSource="{Binding DifficultyOptions}" SelectedItem="{Binding SelectedDifficultyOption}" MinWidth="140" MaxWidth="220" Margin="0,0,0,6"
+                      DisplayMemberBinding="{Binding Label}"/>
+          </WrapPanel>
+          <WrapPanel IsVisible="{Binding IsSyntheticBackend}">
+            <TextBlock VerticalAlignment="Center" Margin="0,0,8,6" Foreground="{DynamicResource ShellBodyTextBrush}" Text="Syntetisk testlyd:" IsVisible="{Binding !IsRecording}"/>
+            <ComboBox ItemsSource="{Binding SyntheticAudioModes}" SelectedItem="{Binding SyntheticAudioMode}" MinWidth="140" MaxWidth="220" Margin="0,0,0,6" IsVisible="{Binding !IsRecording}"/>
+          </WrapPanel>
         </StackPanel>
       </Border>
 
@@ -138,6 +108,31 @@
             </Border>
           </Grid>
         </Grid>
+      </Border>
+
+      <!-- Live metrics (Sanntid) — below the graph so text + pitch trace stay the priority. -->
+      <Border x:Name="LiveCard" Classes="card">
+        <StackPanel Spacing="6">
+          <TextBlock Text="Sanntid" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <Border CornerRadius="4" Padding="10,6" HorizontalAlignment="Left"
+                  Background="{DynamicResource ShellChartBackgroundBrush}">
+            <TextBlock Text="{Binding ComfortZoneStatus}" FontSize="20" FontWeight="Bold"
+                       Foreground="{DynamicResource ShellAccentBrush}"/>
+          </Border>
+          <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding CurrentSignalStatus, StringFormat='Signal: {0}'}"/>
+          <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding PitchStability, StringFormat='Stabilitet: {0}'}"/>
+          <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding ResonanceDisplay, StringFormat='Resonans: {0}'}"/>
+          <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding HealthStatusDisplay, StringFormat='Helse: {0}'}"/>
+          <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellSuccessBrush}" Text="{Binding ComfortZoneLabel}"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Feedback -->
+      <Border Classes="card" BorderBrush="{DynamicResource ShellSuccessBrush}">
+        <StackPanel Spacing="2">
+          <TextBlock Text="{Binding FeedbackHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}"/>
+          <TextBlock Text="{Binding CurrentFeedbackMessage}" TextWrapping="Wrap" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+        </StackPanel>
       </Border>
 
       <!-- Mobile-only Stop bar: on phone widths, while recording, a clear full-width Stop button placed AFTER the
