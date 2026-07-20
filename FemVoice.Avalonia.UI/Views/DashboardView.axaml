@@ -101,9 +101,9 @@
                              Height="2" Width="{Binding #DashChartCanvas.Bounds.Width}" Fill="{DynamicResource ShellMarkerBrush}"
                              IsVisible="{Binding DashboardChart.HasVoice}"/>
                 </Canvas>
-                <!-- Empty-state hint (centered, subtle) when not recording -->
+                <!-- Empty-state hint (centered) when not recording — readable muted, not faint -->
                 <TextBlock Text="Tonehøyde vises her under opptak" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap"
-                           Foreground="{DynamicResource ShellFaintBrush}" IsVisible="{Binding !IsRecording}"/>
+                           FontSize="14" Foreground="{DynamicResource ShellMutedBrush}" IsVisible="{Binding !IsRecording}"/>
               </Panel>
             </Border>
           </Grid>
