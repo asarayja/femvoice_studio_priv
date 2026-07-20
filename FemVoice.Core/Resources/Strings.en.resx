@@ -4866,7 +4866,7 @@ This cannot be undone!</value>
     <value>{0} holder seg stabilt. Å bevare det du har bygget opp er verdifullt i seg selv.</value>
   </data>
   <data name="Main_ComfortZone" xml:space="preserve">
-    <value>Komfortsone</value>
+    <value>Comfort zone</value>
   </data>
   <data name="Pattern_Breakthrough_Description" xml:space="preserve">
     <value>Det er tydelig fremgang innen {0}. Stemmen din responderer godt på treningen i denne perioden.</value>
@@ -4908,13 +4908,13 @@ This cannot be undone!</value>
     <value>Roligere skjermbilde med færre animasjoner og mindre bevegelse.</value>
   </data>
   <data name="Settings_Accessibility_StressSensitive" xml:space="preserve">
-    <value>Rolig modus</value>
+    <value>Calm mode</value>
   </data>
   <data name="Settings_Accessibility_StressSensitiveDesc" xml:space="preserve">
     <value>Roligere farger og dempede varsler i stedet for rød alarm. Fint hvis det fort blir overveldende.</value>
   </data>
   <data name="Settings_Accessibility_Title" xml:space="preserve">
-    <value>Tilgjengelighet</value>
+    <value>Accessibility</value>
   </data>
   <data name="Settings_Accessibility_TrainingFrequency" xml:space="preserve">
     <value>Training days per week</value>
@@ -5059,5 +5059,593 @@ This cannot be undone!</value>
   </data>
   <data name="ResonanceContrast_NotRequiredNote" xml:space="preserve">
     <value>This demo is not required to complete the program.</value>
+  </data>
+  <data name="Dash_Session" xml:space="preserve">
+    <value>Session</value>
+  </data>
+  <data name="Dash_Subtitle" xml:space="preserve">
+    <value>Press Start for live pitch, stability and health from the microphone.</value>
+  </data>
+  <data name="Dash_Difficulty" xml:space="preserve">
+    <value>Difficulty:</value>
+  </data>
+  <data name="Dash_SyntheticTone" xml:space="preserve">
+    <value>Synthetic test tone:</value>
+  </data>
+  <data name="Dash_Recording" xml:space="preserve">
+    <value>● Recording</value>
+  </data>
+  <data name="Dash_LiveHeading" xml:space="preserve">
+    <value>Real-time</value>
+  </data>
+  <data name="Dash_PitchChartTitle" xml:space="preserve">
+    <value>Pitch (newest on the right)</value>
+  </data>
+  <data name="Dash_AxisHigher" xml:space="preserve">
+    <value>Higher</value>
+  </data>
+  <data name="Dash_AxisLower" xml:space="preserve">
+    <value>Lower</value>
+  </data>
+  <data name="Dash_PitchEmptyHint" xml:space="preserve">
+    <value>Pitch appears here during recording</value>
+  </data>
+  <data name="Dash_StopSession" xml:space="preserve">
+    <value>Stop session</value>
+  </data>
+  <data name="Dash_RecentSessions" xml:space="preserve">
+    <value>Recent sessions (local)</value>
+  </data>
+  <data name="Dash_SafetyNote" xml:space="preserve">
+    <value>Saved locally in your database on this machine — no clinical change.</value>
+  </data>
+  <data name="Analysis_NoDb" xml:space="preserve">
+    <value>Analysis requires the database, which is not available in this view.</value>
+  </data>
+  <data name="Analysis_ReadError" xml:space="preserve">
+    <value>Could not read analysis from the database.</value>
+  </data>
+  <data name="Analyzer_Done" xml:space="preserve">
+    <value>Done. The statistics show the entire recording.</value>
+  </data>
+  <data name="Analyzer_Spectrogram" xml:space="preserve">
+    <value>Spectrum</value>
+  </data>
+  <data name="Audio_Backend_NotConfigured" xml:space="preserve">
+    <value>Microphone: audio backend not configured yet</value>
+  </data>
+  <data name="Audio_Backend_Unavailable" xml:space="preserve">
+    <value>Microphone: audio backend unavailable</value>
+  </data>
+  <data name="Audio_DevicesFound" xml:space="preserve">
+    <value>Microphone: devices found</value>
+  </data>
+  <data name="Audio_NoDevices" xml:space="preserve">
+    <value>Microphone: no devices found</value>
+  </data>
+  <data name="Calendar_Legend" xml:space="preserve">
+    <value>Intensity</value>
+  </data>
+  <data name="Calendar_LegendHigh" xml:space="preserve">
+    <value>High score</value>
+  </data>
+  <data name="Calendar_LegendLow" xml:space="preserve">
+    <value>Low score</value>
+  </data>
+  <data name="Calendar_LegendMed" xml:space="preserve">
+    <value>Medium</value>
+  </data>
+  <data name="Calendar_LegendNone" xml:space="preserve">
+    <value>No session</value>
+  </data>
+  <data name="Calendar_NoDb" xml:space="preserve">
+    <value>The calendar requires the database, which is not available in this view.</value>
+  </data>
+  <data name="Calendar_RealDataNote" xml:space="preserve">
+    <value>Real training history from your saved sessions. Click a day for details.</value>
+  </data>
+  <data name="CaseReview_CompletedMsg" xml:space="preserve">
+    <value>Review completed.</value>
+  </data>
+  <data name="CaseReview_Empty" xml:space="preserve">
+    <value>Not enough data in the selected period. Choose a period with saved sessions.</value>
+  </data>
+  <data name="CaseReview_Evaluate" xml:space="preserve">
+    <value>Build review</value>
+  </data>
+  <data name="CaseReview_NoData" xml:space="preserve">
+    <value>No review to save.</value>
+  </data>
+  <data name="CaseReview_NoDb2" xml:space="preserve">
+    <value>The database is not available in this view.</value>
+  </data>
+  <data name="CaseReview_Overview" xml:space="preserve">
+    <value>Summary for the period</value>
+  </data>
+  <data name="CaseReview_PeriodEnd" xml:space="preserve">
+    <value>To</value>
+  </data>
+  <data name="CaseReview_PeriodStart" xml:space="preserve">
+    <value>From</value>
+  </data>
+  <data name="CaseReview_SaveFailed" xml:space="preserve">
+    <value>Could not save: </value>
+  </data>
+  <data name="CaseReview_Saved2" xml:space="preserve">
+    <value>Review saved.</value>
+  </data>
+  <data name="CaseReview_Sessions" xml:space="preserve">
+    <value>Sessions in the period</value>
+  </data>
+  <data name="Clinician_Composite" xml:space="preserve">
+    <value>Composite voice score</value>
+  </data>
+  <data name="Clinician_Cost" xml:space="preserve">
+    <value>cost</value>
+  </data>
+  <data name="Clinician_DataSufficiency" xml:space="preserve">
+    <value>Data sufficiency</value>
+  </data>
+  <data name="Clinician_DimensionTrends" xml:space="preserve">
+    <value>Dimension trends</value>
+  </data>
+  <data name="Clinician_Enough" xml:space="preserve">
+    <value>Sufficient</value>
+  </data>
+  <data name="Clinician_ExerciseConcerns" xml:space="preserve">
+    <value>Exercise concerns</value>
+  </data>
+  <data name="Clinician_FocusAreas" xml:space="preserve">
+    <value>Focus areas</value>
+  </data>
+  <data name="Clinician_Gain" xml:space="preserve">
+    <value>gain</value>
+  </data>
+  <data name="Clinician_Insufficient" xml:space="preserve">
+    <value>Not enough data yet</value>
+  </data>
+  <data name="Clinician_NoDimData" xml:space="preserve">
+    <value>—</value>
+  </data>
+  <data name="Clinician_NotEnough" xml:space="preserve">
+    <value>Insufficient</value>
+  </data>
+  <data name="Clinician_Panel_Empty" xml:space="preserve">
+    <value>Not enough data yet. Complete some sessions on the dashboard to build an outcome overview.</value>
+  </data>
+  <data name="Clinician_Panel_Overview" xml:space="preserve">
+    <value>Outcome overview</value>
+  </data>
+  <data name="Clinician_Recommendation" xml:space="preserve">
+    <value>Recommendation</value>
+  </data>
+  <data name="Clinician_Recovery" xml:space="preserve">
+    <value>Recovery</value>
+  </data>
+  <data name="Clinician_Success" xml:space="preserve">
+    <value>success</value>
+  </data>
+  <data name="Clinician_Workload" xml:space="preserve">
+    <value>Workload (acute/chronic)</value>
+  </data>
+  <data name="Coach_Panel_Breakthrough" xml:space="preserve">
+    <value>breakthrough recorded</value>
+  </data>
+  <data name="Coach_Panel_Plateau" xml:space="preserve">
+    <value>plateau</value>
+  </data>
+  <data name="Coach_Panel_Regression" xml:space="preserve">
+    <value>regression</value>
+  </data>
+  <data name="Common_Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="Common_Confirm" xml:space="preserve">
+    <value>Confirm</value>
+  </data>
+  <data name="Dashboard_AveragePitch" xml:space="preserve">
+    <value>Average pitch</value>
+  </data>
+  <data name="Dashboard_Comfort" xml:space="preserve">
+    <value>Comfort</value>
+  </data>
+  <data name="Dashboard_Consistency" xml:space="preserve">
+    <value>Consistency</value>
+  </data>
+  <data name="Dashboard_Progress" xml:space="preserve">
+    <value>Progress to next level</value>
+  </data>
+  <data name="Dashboard_Recovery" xml:space="preserve">
+    <value>Recovery</value>
+  </data>
+  <data name="Dashboard_ResonanceMin" xml:space="preserve">
+    <value>Minimum resonance</value>
+  </data>
+  <data name="Dashboard_TargetPitch" xml:space="preserve">
+    <value>Target pitch range</value>
+  </data>
+  <data name="Dashboard_WeeklySummary" xml:space="preserve">
+    <value>This week</value>
+  </data>
+  <data name="Diag_AppVersion" xml:space="preserve">
+    <value>App version</value>
+  </data>
+  <data name="Diag_Arch" xml:space="preserve">
+    <value>Architecture</value>
+  </data>
+  <data name="Diag_DataFolder" xml:space="preserve">
+    <value>Data folder</value>
+  </data>
+  <data name="Diag_Database" xml:space="preserve">
+    <value>Database</value>
+  </data>
+  <data name="Diag_DbConnected" xml:space="preserve">
+    <value>Connected (real SQLite)</value>
+  </data>
+  <data name="Diag_DbNotConnected" xml:space="preserve">
+    <value>Not connected in this view</value>
+  </data>
+  <data name="Diag_DbSize" xml:space="preserve">
+    <value>Database size</value>
+  </data>
+  <data name="Diag_ExportReport" xml:space="preserve">
+    <value>Export diagnostics</value>
+  </data>
+  <data name="Diag_OS" xml:space="preserve">
+    <value>Operating system</value>
+  </data>
+  <data name="Diag_Runtime" xml:space="preserve">
+    <value>.NET runtime</value>
+  </data>
+  <data name="Diag_SavedSessions" xml:space="preserve">
+    <value>Saved sessions</value>
+  </data>
+  <data name="Diag_SystemStatus" xml:space="preserve">
+    <value>System status</value>
+  </data>
+  <data name="Diag_Title2" xml:space="preserve">
+    <value>Diagnostics</value>
+  </data>
+  <data name="Exercise_ItemsSuffix" xml:space="preserve">
+    <value>exercises</value>
+  </data>
+  <data name="FirstSetup_Completed" xml:space="preserve">
+    <value>Setup completed ✓</value>
+  </data>
+  <data name="FirstSetup_NotCompleted" xml:space="preserve">
+    <value>Setup is not completed yet.</value>
+  </data>
+  <data name="FirstSetup_SaveFailed" xml:space="preserve">
+    <value>Could not save the setup locally.</value>
+  </data>
+  <data name="FirstSetup_Saved" xml:space="preserve">
+    <value>Setup saved. Language and theme have been updated.</value>
+  </data>
+  <data name="FirstSetup_Skipped" xml:space="preserve">
+    <value>Setup skipped. You can change everything under Settings.</value>
+  </data>
+  <data name="Main_AboveComfortZone" xml:space="preserve">
+    <value>Above the comfort zone</value>
+  </data>
+  <data name="Main_BelowComfortZone" xml:space="preserve">
+    <value>Below the comfort zone</value>
+  </data>
+  <data name="Main_Category" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="Main_InComfortZone" xml:space="preserve">
+    <value>In the comfort zone</value>
+  </data>
+  <data name="Main_NextText" xml:space="preserve">
+    <value>Next text</value>
+  </data>
+  <data name="MicCal_Device" xml:space="preserve">
+    <value>Device</value>
+  </data>
+  <data name="MicCal_Level" xml:space="preserve">
+    <value>Input level</value>
+  </data>
+  <data name="MicCal_NoDevice" xml:space="preserve">
+    <value>No microphone found in this view.</value>
+  </data>
+  <data name="MicCal_Start" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="MicCal_Stop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="Override_Error" xml:space="preserve">
+    <value>Could not compute clamp: </value>
+  </data>
+  <data name="Override_Evaluate" xml:space="preserve">
+    <value>Compute clamp (preview)</value>
+  </data>
+  <data name="Override_GateBlocked" xml:space="preserve">
+    <value>Blocked</value>
+  </data>
+  <data name="Override_GateOpen" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="Override_GateState" xml:space="preserve">
+    <value>Safety gate (live)</value>
+  </data>
+  <data name="Override_LogFailed" xml:space="preserve">
+    <value>Could not log: </value>
+  </data>
+  <data name="Override_NoDb" xml:space="preserve">
+    <value>The database is not available in this view.</value>
+  </data>
+  <data name="Override_NoResult" xml:space="preserve">
+    <value>No computed clamp to log.</value>
+  </data>
+  <data name="Override_NotApplied" xml:space="preserve">
+    <value>Not applied</value>
+  </data>
+  <data name="Override_Persist" xml:space="preserve">
+    <value>Log to the override log</value>
+  </data>
+  <data name="Override_Recent" xml:space="preserve">
+    <value>Recent logged overrides</value>
+  </data>
+  <data name="Override_RecoveryState" xml:space="preserve">
+    <value>Recovery level (live)</value>
+  </data>
+  <data name="Override_RequiredHold" xml:space="preserve">
+    <value>Desired hold (sec)</value>
+  </data>
+  <data name="Override_Unchanged" xml:space="preserve">
+    <value>Within safe limits — no clamping needed.</value>
+  </data>
+  <data name="Progression_Error" xml:space="preserve">
+    <value>Progression is temporarily unavailable.</value>
+  </data>
+  <data name="Progression_NoDb" xml:space="preserve">
+    <value>Progression requires the database, which is not available in this view.</value>
+  </data>
+  <data name="Progression_RealDataNote" xml:space="preserve">
+    <value>Level, points and summary from your actual saved sessions (real progression engine).</value>
+  </data>
+  <data name="Reports_ExportCsv" xml:space="preserve">
+    <value>Export CSV</value>
+  </data>
+  <data name="Reports_ExportText" xml:space="preserve">
+    <value>Export text</value>
+  </data>
+  <data name="Reports_OpenCaseReviewPanel" xml:space="preserve">
+    <value>Open case review</value>
+  </data>
+  <data name="Reports_OpenClinicianPanel" xml:space="preserve">
+    <value>Open clinical overview</value>
+  </data>
+  <data name="Reports_OpenCoachPanel" xml:space="preserve">
+    <value>Open coach overview</value>
+  </data>
+  <data name="Reports_OpenTimelinePanel" xml:space="preserve">
+    <value>Open development timeline</value>
+  </data>
+  <data name="Reports_ProfessionalHeading" xml:space="preserve">
+    <value>Professional panels</value>
+  </data>
+  <data name="Reports_SessionHistory" xml:space="preserve">
+    <value>Session history</value>
+  </data>
+  <data name="ResonanceWindow_FormantMap" xml:space="preserve">
+    <value>Formant map (F1/F2)</value>
+  </data>
+  <data name="ResonanceWindow_Formants" xml:space="preserve">
+    <value>Formants</value>
+  </data>
+  <data name="Resonance_Listening" xml:space="preserve">
+    <value>Listening … sing a steady tone.</value>
+  </data>
+  <data name="Resonance_NoDevice" xml:space="preserve">
+    <value>No microphone found in this view.</value>
+  </data>
+  <data name="Resonance_Ready" xml:space="preserve">
+    <value>Ready. Press «Start» and sing a steady tone — aim for a brighter resonance.</value>
+  </data>
+  <data name="Resonance_Stopped" xml:space="preserve">
+    <value>Stopped.</value>
+  </data>
+  <data name="Settings_DatabaseNote" xml:space="preserve">
+    <value>Real actions on the local database. Backup is safe; restore and clear change your data.</value>
+  </data>
+  <data name="Settings_HearOwnVoiceNote2" xml:space="preserve">
+    <value>Plays your microphone back to the speaker while you practice. Use headphones to avoid feedback/howling.</value>
+  </data>
+  <data name="Settings_LocalPrefs_Saved2" xml:space="preserve">
+    <value>Saved. Theme, language and motion have been updated; microphone and other choices apply going forward.</value>
+  </data>
+  <data name="Settings_MicDefault" xml:space="preserve">
+    <value>System default</value>
+  </data>
+  <data name="Settings_NoBackups" xml:space="preserve">
+    <value>No backups yet.</value>
+  </data>
+  <data name="Settings_ReducedVisualFeedback" xml:space="preserve">
+    <value>Reduced visual feedback</value>
+  </data>
+  <data name="Settings_ScaffoldSafety3" xml:space="preserve">
+    <value>All choices are saved locally on this machine · no clinical change.</value>
+  </data>
+  <data name="Settings_TrainingFrequency" xml:space="preserve">
+    <value>Training frequency</value>
+  </data>
+  <data name="Shell_Info_Days" xml:space="preserve">
+    <value>days</value>
+  </data>
+  <data name="Shell_Info_LastScore" xml:space="preserve">
+    <value>Last score</value>
+  </data>
+  <data name="Shell_Info_NoStats" xml:space="preserve">
+    <value>Complete a session on the dashboard to see your progress here.</value>
+  </data>
+  <data name="Shell_Info_Sessions" xml:space="preserve">
+    <value>Sessions</value>
+  </data>
+  <data name="Shell_Info_Streak" xml:space="preserve">
+    <value>Streak</value>
+  </data>
+  <data name="Shell_Info_YourProgress" xml:space="preserve">
+    <value>Your progress</value>
+  </data>
+  <data name="Shell_Nav_Analyzer" xml:space="preserve">
+    <value>Analyzer</value>
+  </data>
+  <data name="Shell_Nav_Calendar" xml:space="preserve">
+    <value>Calendar</value>
+  </data>
+  <data name="Shell_Nav_FirstSetup" xml:space="preserve">
+    <value>First-time setup</value>
+  </data>
+  <data name="Shell_Nav_ManualOverride" xml:space="preserve">
+    <value>Manual override</value>
+  </data>
+  <data name="Shell_Nav_MicCalibration" xml:space="preserve">
+    <value>Microphone calibration</value>
+  </data>
+  <data name="Shell_Nav_Resonance" xml:space="preserve">
+    <value>Resonance</value>
+  </data>
+  <data name="Shell_Nav_SmartCoach" xml:space="preserve">
+    <value>SmartCoach</value>
+  </data>
+  <data name="Shell_Nav_Statistics" xml:space="preserve">
+    <value>Statistics</value>
+  </data>
+  <data name="SmartCoach_Completed" xml:space="preserve">
+    <value>Completed ✓</value>
+  </data>
+  <data name="SmartCoach_Consistency" xml:space="preserve">
+    <value>Consistency</value>
+  </data>
+  <data name="SmartCoach_Detail" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="SmartCoach_Error" xml:space="preserve">
+    <value>SmartCoach is temporarily unavailable.</value>
+  </data>
+  <data name="SmartCoach_NoDb" xml:space="preserve">
+    <value>SmartCoach requires the database, which is not available in this view.</value>
+  </data>
+  <data name="SmartCoach_NoMessages" xml:space="preserve">
+    <value>No new messages.</value>
+  </data>
+  <data name="SmartCoach_RealDataNote" xml:space="preserve">
+    <value>Computed by the real SmartCoach engine on your saved sessions.</value>
+  </data>
+  <data name="SmartCoach_Scaffold_Title" xml:space="preserve">
+    <value>SmartCoach</value>
+  </data>
+  <data name="Statistics_CurrentLevel" xml:space="preserve">
+    <value>Current level</value>
+  </data>
+  <data name="Statistics_Error" xml:space="preserve">
+    <value>Statistics are temporarily unavailable.</value>
+  </data>
+  <data name="Statistics_NoDb" xml:space="preserve">
+    <value>Statistics require the database, which is not available in this view.</value>
+  </data>
+  <data name="Statistics_RealDataNote" xml:space="preserve">
+    <value>Real statistics from your saved sessions.</value>
+  </data>
+  <data name="Statistics_RecentSessions" xml:space="preserve">
+    <value>Recent sessions</value>
+  </data>
+  <data name="Timeline_Panel_Empty" xml:space="preserve">
+    <value>Not enough data yet. Complete more sessions over time to build a development timeline.</value>
+  </data>
+  <data name="CaseReview_Panel_Disclaimer2" xml:space="preserve">
+    <value>Case review compiled from your saved sessions for the selected period. Descriptive — never a safety or training gate. «Save review» writes a review entry (outcome snapshot) to the review log. No clinical/safety logic is changed.</value>
+  </data>
+  <data name="Clinician_Panel_Disclaimer" xml:space="preserve">
+    <value>Descriptive outcome overview compiled from your saved sessions (read-only). Never a safety or training gate. No clinical change, nothing is saved.</value>
+  </data>
+  <data name="Coach_Panel_Disclaimer" xml:space="preserve">
+    <value>Compiled from your saved sessions (read-only). No clinical change, nothing is saved. Per-dimension resonance/intonation is populated only once sessions record those measurements.</value>
+  </data>
+  <data name="Diag_Intro2" xml:space="preserve">
+    <value>Real system and database status (read-only). You can export a diagnostics report and make a backup of the database.</value>
+  </data>
+  <data name="Override_Intro" xml:space="preserve">
+    <value>A professional can request an override of an exercise profile. The two-step safety/recovery clamp is run, and ONLY the clamped outcome is shown — the raw request is never applied or shown. The clamp can only make the profile more conservative.</value>
+  </data>
+  <data name="Override_SafetyNote2" xml:space="preserve">
+    <value>The clamp is computed by the frozen Core engine and ONLY the clamped outcome is shown/logged — never the raw request. «Log» writes an audit entry (outcome + flags, not the raw profile) to the override log. No clinical/safety logic is changed.</value>
+  </data>
+  <data name="Reports_Intro2" xml:space="preserve">
+    <value>Real progress summary, session history and CSV/text export from your saved sessions, plus the professional panels (coach, clinician, timeline, case review) with PDF/CSV/JSON export.</value>
+  </data>
+  <data name="Settings_LocalPrefs_Note2" xml:space="preserve">
+    <value>All choices are saved locally on this machine. Theme, language and motion apply immediately (only translated text follows the language). The microphone choice applies the next time you start a session.</value>
+  </data>
+  <data name="Timeline_Panel_Disclaimer" xml:space="preserve">
+    <value>Development timeline compiled from your saved sessions (read-only). Descriptive — never a safety or training gate. No clinical change, nothing is saved.</value>
+  </data>
+  <data name="Signal_NoVoice" xml:space="preserve">
+    <value>No voice</value>
+  </data>
+  <data name="Signal_Voiced" xml:space="preserve">
+    <value>Voice ({0} confidence)</value>
+  </data>
+  <data name="Signal_MicUnavailable" xml:space="preserve">
+    <value>Microphone unavailable</value>
+  </data>
+  <data name="Audio_DeviceLost" xml:space="preserve">
+    <value>Audio device lost.</value>
+  </data>
+  <data name="Dash_PressStartFeedback" xml:space="preserve">
+    <value>Press Start to begin.</value>
+  </data>
+  <data name="Chart_VoiceDetected" xml:space="preserve">
+    <value>Voice detected</value>
+  </data>
+  <data name="Chart_WaitingForVoice" xml:space="preserve">
+    <value>Waiting for voice …</value>
+  </data>
+  <data name="Resonance_Bright" xml:space="preserve">
+    <value>Bright ({0})</value>
+  </data>
+  <data name="Resonance_Neutral" xml:space="preserve">
+    <value>Neutral ({0})</value>
+  </data>
+  <data name="Resonance_Dark" xml:space="preserve">
+    <value>Dark ({0})</value>
+  </data>
+  <data name="Feedback_NoVoice" xml:space="preserve">
+    <value>No voice detected — try to speak steadily.</value>
+  </data>
+  <data name="Feedback_TakeBreak" xml:space="preserve">
+    <value>Take a break and relax your voice.</value>
+  </data>
+  <data name="Feedback_BelowZone" xml:space="preserve">
+    <value>A little below the comfort zone — raise your pitch gently.</value>
+  </data>
+  <data name="Feedback_AboveZone" xml:space="preserve">
+    <value>A little above the comfort zone — lower your pitch slightly.</value>
+  </data>
+  <data name="Feedback_Stable" xml:space="preserve">
+    <value>Nice, steady tone in the comfort zone.</value>
+  </data>
+  <data name="Feedback_KeepSteady" xml:space="preserve">
+    <value>Keep the tone steady in the comfort zone.</value>
+  </data>
+  <data name="Dash_SignalLabel" xml:space="preserve">
+    <value>Signal</value>
+  </data>
+  <data name="Dash_StabilityLabel" xml:space="preserve">
+    <value>Stability</value>
+  </data>
+  <data name="Dash_ResonanceLabel" xml:space="preserve">
+    <value>Resonance</value>
+  </data>
+  <data name="Dash_HealthLabel" xml:space="preserve">
+    <value>Health</value>
+  </data>
+  <data name="Dash_Listening" xml:space="preserve">
+    <value>Listening …</value>
+  </data>
+  <data name="Dash_SessionStopped" xml:space="preserve">
+    <value>Session stopped.</value>
   </data>
 </root>
