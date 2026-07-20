@@ -5858,4 +5858,85 @@ Tuto akci nelze vrátit zpět!</value>
   <data name="Settings_ClearConfirm" xml:space="preserve">
     <value>Clear the entire database? All local training history is deleted. This cannot be undone (but you can restore from a backup).</value>
   </data>
+  <data name="Metric_PitchVariability" xml:space="preserve">
+    <value>Pitch variability</value>
+  </data>
+  <data name="Metric_Intensity" xml:space="preserve">
+    <value>Intensity</value>
+  </data>
+  <data name="Metric_Smoothness" xml:space="preserve">
+    <value>Smoothness</value>
+  </data>
+  <data name="ExDisp_Focus_Pitch" xml:space="preserve">
+    <value>Focus: steady pitch within the target range.</value>
+  </data>
+  <data name="ExDisp_Focus_Resonance" xml:space="preserve">
+    <value>Focus: brighter resonance and forward placement — not just pitch.</value>
+  </data>
+  <data name="ExDisp_Focus_Intonation" xml:space="preserve">
+    <value>Focus: melody and sentence intonation.</value>
+  </data>
+  <data name="ExDisp_Focus_Breathing" xml:space="preserve">
+    <value>Focus: breath, support and a steady, calm airflow.</value>
+  </data>
+  <data name="ExDisp_Focus_Combined" xml:space="preserve">
+    <value>Focus: combined — pitch, resonance and control.</value>
+  </data>
+  <data name="ExDisp_Focus_Default" xml:space="preserve">
+    <value>Focus: voice training.</value>
+  </data>
+  <data name="Coord_SafetyLockDefault" xml:space="preserve">
+    <value>Safety lock: — (advisory)</value>
+  </data>
+  <data name="Coord_SafetyLockFormat" xml:space="preserve">
+    <value>Safety lock: {0} (advisory)</value>
+  </data>
+  <data name="Coord_On" xml:space="preserve">
+    <value>ON</value>
+  </data>
+  <data name="Coord_Off" xml:space="preserve">
+    <value>OFF</value>
+  </data>
+  <data name="Coord_ReadoutMode" xml:space="preserve">
+    <value>Coordinator readout (advisory)</value>
+  </data>
+  <data name="Coord_Inactive" xml:space="preserve">
+    <value>Inactive</value>
+  </data>
+  <data name="Coord_Status_Holding" xml:space="preserve">
+    <value>Holding correctly</value>
+  </data>
+  <data name="Coord_Status_InZone" xml:space="preserve">
+    <value>In comfort zone</value>
+  </data>
+  <data name="Coord_Status_OutOfTarget" xml:space="preserve">
+    <value>Outside target</value>
+  </data>
+  <data name="Coord_Guidance_Starting" xml:space="preserve">
+    <value>Coordinator starting …</value>
+  </data>
+  <data name="Coord_Guidance_Good" xml:space="preserve">
+    <value>Coordinator: good hold state.</value>
+  </data>
+  <data name="Coord_Guidance_Adjust" xml:space="preserve">
+    <value>Coordinator: adjust toward the target.</value>
+  </data>
+  <data name="Coord_NoLiveState" xml:space="preserve">
+    <value>(no live state yet)</value>
+  </data>
+  <data name="Coord_HoldDiff" xml:space="preserve">
+    <value>{0} s (coordinator − derived)</value>
+  </data>
+  <data name="ExProf_NoProfile" xml:space="preserve">
+    <value>No linked profile</value>
+  </data>
+  <data name="ExProf_NoProfileMsg" xml:space="preserve">
+    <value>No linked target profile for this exercise — showing the exercise&#x27;s own targets.</value>
+  </data>
+  <data name="ExProf_ProfileFormat" xml:space="preserve">
+    <value>Target profile: {0}</value>
+  </data>
+  <data name="Card_SessionCount" xml:space="preserve">
+    <value>{0} sessions</value>
+  </data>
 </root>

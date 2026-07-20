@@ -229,9 +229,9 @@ public partial class ShellViewModel : ObservableObject
         RefreshInfoStats();   // keep the sidebar quick-stats fresh (e.g. after a session saved on the dashboard)
         CurrentDestinationLabel = value switch
         {
-            MainDashboardViewModel => "Dashbord",
-            ExerciseGuideViewModel => "Øvelsesguide",
-            ExerciseRuntimeViewModel => "Øvelse",
+            MainDashboardViewModel => Localized.Get("Shell_Nav_Dashboard", "Dashbord"),
+            ExerciseGuideViewModel => Localized.Get("Shell_Nav_Guide", "Øvelsesguide"),
+            ExerciseRuntimeViewModel => Localized.Get("ExRunVm_DefaultCategory", "Øvelse"),
             SettingsViewModel => Localized.Get("Settings_Title", "Innstillinger"),
             AnalysisViewModel => Localized.Get("Shell_Nav_Analysis", "Analyse"),
             ReportsViewModel => Localized.Get("Shell_Nav_Reports", "Rapporter"),

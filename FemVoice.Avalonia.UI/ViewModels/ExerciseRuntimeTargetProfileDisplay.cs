@@ -38,8 +38,8 @@ public sealed class ExerciseRuntimeTargetProfileDisplay
             return new ExerciseRuntimeTargetProfileDisplay
             {
                 HasProfile = false,
-                ProfileType = "Ingen koblet profil",
-                ProfileStatusMessage = "Ingen koblet målprofil for denne øvelsen — viser øvelsens egne mål.",
+                ProfileType = FemVoice.Avalonia.Localization.Localized.Get("ExProf_NoProfile", "Ingen koblet profil"),
+                ProfileStatusMessage = FemVoice.Avalonia.Localization.Localized.Get("ExProf_NoProfileMsg", "Ingen koblet målprofil for denne øvelsen — viser øvelsens egne mål."),
                 TargetPitch = ExerciseDisplay.TargetPitch(exercise.TargetPitchMin, exercise.TargetPitchMax),
             };
         }
@@ -47,10 +47,10 @@ public sealed class ExerciseRuntimeTargetProfileDisplay
         ExerciseTargetProfile p = new ExerciseProfileFactory().CreateProfile(type.Value);
 
         var skills = new List<string>();
-        if (p.UsesPitch) skills.Add("Tonehøyde");
-        if (p.UsesResonance) skills.Add("Resonans");
-        if (p.UsesStability) skills.Add("Stabilitet");
-        if (p.UsesIntensity) skills.Add("Intensitet");
+        if (p.UsesPitch) skills.Add(FemVoice.Avalonia.Localization.Localized.Get("Goal_Pitch", "Tonehøyde"));
+        if (p.UsesResonance) skills.Add(FemVoice.Avalonia.Localization.Localized.Get("Goal_Resonance", "Resonans"));
+        if (p.UsesStability) skills.Add(FemVoice.Avalonia.Localization.Localized.Get("Dash_StabilityLabel", "Stabilitet"));
+        if (p.UsesIntensity) skills.Add(FemVoice.Avalonia.Localization.Localized.Get("Metric_Intensity", "Intensitet"));
 
         double pitchMin = p.MinPitch ?? exercise.TargetPitchMin;
         double pitchMax = p.MaxPitch ?? exercise.TargetPitchMax;
@@ -59,7 +59,7 @@ public sealed class ExerciseRuntimeTargetProfileDisplay
         {
             HasProfile = true,
             ProfileType = type.Value.ToString(),
-            ProfileStatusMessage = $"Målprofil: {type.Value}",
+            ProfileStatusMessage = string.Format(FemVoice.Avalonia.Localization.Localized.Get("ExProf_ProfileFormat", "Målprofil: {0}"), type.Value),
             TargetPitch = ExerciseDisplay.TargetPitch(pitchMin, pitchMax),
             RequiredHoldSecondsValue = p.RequiredHoldSeconds,
             RequiredHoldSeconds = p.RequiredHoldSeconds > 0 ? $"{p.RequiredHoldSeconds:F0} s" : "—",

@@ -19,7 +19,7 @@ public sealed class ExerciseCardViewModel
 
     public int Id => Exercise.Id;
     public string Name => Exercise.Name;
-    public string Category => string.IsNullOrWhiteSpace(Exercise.Category) ? "Øvelse" : Exercise.Category;
+    public string Category => string.IsNullOrWhiteSpace(Exercise.Category) ? FemVoice.Avalonia.Localization.Localized.Get("ExRunVm_DefaultCategory", "Øvelse") : Exercise.Category;
     public string ShortDescription => Exercise.Description;
     public string DifficultyText => ExerciseDisplay.Difficulty(Exercise.Difficulty);
     public string GoalText => ExerciseDisplay.Goal(Exercise.Goal);
@@ -31,5 +31,5 @@ public sealed class ExerciseCardViewModel
     public string FrequencyText => ExerciseDisplay.Frequency(Exercise.Frequency);
     // WPF parity: the list shows a per-exercise completed-session count. Real value read from the DB by the guide
     // (sessions saved by this exercise's runtime), passed in via the ctor. 0 when the exercise hasn't been done.
-    public string SessionCountText => $"{SessionCount} økter";
+    public string SessionCountText => string.Format(FemVoice.Avalonia.Localization.Localized.Get("Card_SessionCount", "{0} økter"), SessionCount);
 }

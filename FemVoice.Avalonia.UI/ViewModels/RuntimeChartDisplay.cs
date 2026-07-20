@@ -25,7 +25,7 @@ public sealed class RuntimeChartDisplay
     /// <summary>Current-pitch marker as px-from-bottom (Canvas.Bottom for the marker line).</summary>
     public double CurrentPitchMarkerPx { get; init; }
     public bool HasVoice { get; init; }
-    public string ChartStatusText { get; init; } = "Venter på stemme …";
+    public string ChartStatusText { get; init; } = FemVoice.Avalonia.Localization.Localized.Get("Chart_WaitingForVoice", "Venter på stemme …");
 
     /// <summary>Map a pitch (Hz) to px-from-bottom within [min,max] over a chart of heightPx, clamped to [0,heightPx].</summary>
     public static double ToPx(double hz, double min, double max, double heightPx)
@@ -40,7 +40,7 @@ public sealed class RuntimeChartDisplay
     public static RuntimeChartDisplay Empty(double heightPx, double chartMin, double chartMax,
         double targetMin, double targetMax)
         => Build(heightPx, chartMin, chartMax, targetMin, targetMax, currentPitch: 0, hasVoice: false,
-            statusText: "Venter på stemme …");
+            statusText: FemVoice.Avalonia.Localization.Localized.Get("Chart_WaitingForVoice", "Venter på stemme …"));
 
     public static RuntimeChartDisplay From(double heightPx, double chartMin, double chartMax,
         double targetMin, double targetMax, double currentPitch, bool hasVoice, string statusText)
