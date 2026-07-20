@@ -90,6 +90,7 @@ internal static class Program
         if (args.Contains("--avalonia-translation-contribution-smoke")) return AvaloniaTranslationContributionSmoke();
         if (args.Contains("--avalonia-audio-readiness-smoke")) return AvaloniaAudioReadinessSmoke();
         if (args.Contains("--avalonia-audio-backend-smoke")) return AvaloniaAudioBackendSmoke();
+        if (args.Contains("--audio-playback-smoke")) return AudioPlaybackSmoke();
         if (args.Contains("--real-audio-capture-smoke")) return RealAudioCaptureSmoke();
         if (args.Contains("--android-readiness-smoke")) return AndroidReadinessSmoke();
         if (args.Contains("--runtime-real-audio-activation-smoke")) return RuntimeRealAudioActivationSmoke().GetAwaiter().GetResult();
@@ -3953,6 +3954,59 @@ internal static class Program
         public Task StopAsync() => Task.CompletedTask;
         // Keep the compiler from warning about unused events (they are part of the interface contract).
         private void Touch() { FrameAvailable?.Invoke(this, null!); DeviceLost?.Invoke(this, null!); }
+    }
+
+    // "Hear your own voice" playback: the output backend + VoiceMonitor must be fail-safe on every platform (this
+    // Linux box may or may not have an ALSA output; the smoke asserts NO throw either way), the platform-override
+    // plumbing works (Android injects AudioTrack), and the monitor is a true no-op when the preference is OFF.
+    private static int AudioPlaybackSmoke()
+    {
+        bool noThrow = true;
+        try
+        {
+            // Runtime backend: Start/Write/Stop/Dispose never throw regardless of whether a device exists.
+            var pb = global::FemVoiceStudio.Audio.Abstractions.AudioPlaybackBackendFactory.CreateForRuntime();
+            pb.Start(44100, 1);
+            pb.Write(new float[512]);
+            pb.Write(new float[512]);
+            System.Threading.Thread.Sleep(60);
+            pb.Stop();
+            pb.Dispose();
+        }
+        catch (Exception ex) { noThrow = false; Console.WriteLine($"[playback] runtime backend threw: {ex.GetType().Name}: {ex.Message}"); }
+
+        // No-op backend is always safe + unavailable.
+        var noop = new global::FemVoiceStudio.Audio.Abstractions.NoopAudioPlaybackService();
+        bool noopOk = !noop.IsAvailable;
+        try { noop.Start(44100, 1); noop.Write(new float[16]); noop.Stop(); noop.Dispose(); } catch { noopOk = false; }
+
+        // Platform override (Android path): a set factory is used by CreateForRuntime.
+        bool overrideOk;
+        try
+        {
+            var fake = new global::FemVoiceStudio.Audio.Abstractions.NoopAudioPlaybackService();
+            global::FemVoiceStudio.Audio.Abstractions.AudioPlaybackBackendFactory.PlatformPlaybackFactory = () => fake;
+            overrideOk = ReferenceEquals(global::FemVoiceStudio.Audio.Abstractions.AudioPlaybackBackendFactory.CreateForRuntime(), fake);
+        }
+        catch { overrideOk = false; }
+        finally { global::FemVoiceStudio.Audio.Abstractions.AudioPlaybackBackendFactory.PlatformPlaybackFactory = null; }
+
+        // VoiceMonitor with an unavailable backend: Start opens nothing, Feed is a no-op, all fail-safe.
+        bool monitorOk = true;
+        try
+        {
+            using var monitor = new global::FemVoice.Avalonia.Audio.VoiceMonitor(new global::FemVoiceStudio.Audio.Abstractions.NoopAudioPlaybackService());
+            monitorOk = !monitor.IsAvailable;
+            monitor.Start(44100);
+            monitor.Feed(new float[256]);   // must not throw / not play (backend unavailable)
+            monitor.Stop();
+        }
+        catch (Exception ex) { monitorOk = false; Console.WriteLine($"[playback] monitor threw: {ex.GetType().Name}"); }
+
+        Console.WriteLine($"[playback] noThrow={noThrow} noopOk={noopOk} overrideOk={overrideOk} monitorOk={monitorOk}");
+        bool ok = noThrow && noopOk && overrideOk && monitorOk;
+        Console.WriteLine(ok ? "[playback] Audio playback smoke OK" : "[playback] Audio playback smoke FAIL");
+        return ok ? 0 : 1;
     }
 
     private static int AvaloniaAudioBackendSmoke()

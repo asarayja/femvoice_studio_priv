@@ -33,6 +33,8 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     // Real cross-platform resonance DSP (frozen Core engine) — same as WPF. Emits a 0–1 resonance score per frame
     // via ResonanceScoreUpdated; we surface it live and persist the session average. Read-only use of the engine.
     private readonly FemVoiceStudio.Audio.ResonanceProxyEngine _resonanceEngine;
+    // "Hear your own voice" — routes captured frames to the speaker while recording (opt-in; no-op when off/unavailable).
+    private readonly FemVoice.Avalonia.Audio.VoiceMonitor _voiceMonitor = new();
     private volatile int _latestResonancePercent;   // 0–100, latest real resonance (volatile: written on capture thread)
     private readonly List<double> _sessionResonance = new();   // per-session samples → saved average
     // Per-frame health/stability states mapped to 0–100, accumulated during a recording → per-dimension VI scores.
@@ -262,6 +264,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         DashboardChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, ComfortZoneLow, ComfortZoneHigh);
         if (_capture is SyntheticAudioCaptureService synth) synth.Mode = SyntheticAudioMode;
         await _capture.StartAsync(new AudioCaptureOptions(SampleRate, DeviceId: FemVoice.Avalonia.Preferences.CapturePreferences.SelectedMicDeviceId())).ConfigureAwait(false);
+        _voiceMonitor.Start(SampleRate);   // hear-own-voice (opt-in; no-op when off)
         _sessionStart = System.DateTime.Now;
         IsRecording = true;
         CurrentFeedbackMessage = "Lytter …";
@@ -272,6 +275,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     {
         if (!IsRecording) return;
         await _capture.StopAsync().ConfigureAwait(false);
+        _voiceMonitor.Stop();
         _resonanceEngine.Stop();
         IsRecording = false;
         CurrentSignalStatus = "Ingen stemme";
@@ -355,6 +359,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
 
     private void OnFrameAvailable(object? sender, AudioFrameAvailableEventArgs e)
     {
+        _voiceMonitor.Feed(e.Samples);                 // hear-own-voice: play the frame back (no-op when off)
         PitchAnalysisResult result = _pitch.DetectPitch(e.Samples);
         _resonanceEngine.ProcessSamples(e.Samples);   // real resonance DSP (emits ResonanceScoreUpdated → _latestResonancePercent)
         double smoothed = _metrics.CalculateSmoothedPitch(result.Pitch, result.IsVoiced);
@@ -539,6 +544,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     {
         _capture.FrameAvailable -= OnFrameAvailable;
         _capture.DeviceLost -= OnDeviceLost;
+        _voiceMonitor.Dispose();
         _resonanceEngine.ResonanceScoreUpdated -= OnResonanceScore;
         _resonanceEngine.Dispose();
     }

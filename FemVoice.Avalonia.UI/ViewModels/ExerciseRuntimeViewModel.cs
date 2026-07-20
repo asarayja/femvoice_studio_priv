@@ -70,6 +70,8 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     // Real cross-platform resonance DSP (frozen Core engine, same as WPF/dashboard). Emits 0–1 per frame; feeds the
     // live readout + the coordinator's resonance input (replacing the old neutral placeholder). Read-only use.
     private readonly FemVoiceStudio.Audio.ResonanceProxyEngine _resonanceEngine = new(SampleRate);
+    // "Hear your own voice" — plays captured frames back to the speaker while running (opt-in; no-op when off).
+    private readonly FemVoice.Avalonia.Audio.VoiceMonitor _voiceMonitor = new();
     private volatile int _latestResonancePercent;   // 0–100 latest real resonance (volatile: written on capture thread)
 
     private DateTime _startUtc;
@@ -361,6 +363,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         RuntimeStatusMessage = "Øvelse i gang — hold tonen i målområdet.";
         StartCoordinatorReadout();
         _ = _capture.StartAsync(new AudioCaptureOptions(SampleRate, DeviceId: FemVoice.Avalonia.Preferences.CapturePreferences.SelectedMicDeviceId()));
+        _voiceMonitor.Start(SampleRate);   // hear-own-voice (opt-in; no-op when off)
     }
 
     /// <summary>
@@ -390,6 +393,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     {
         if (!IsRunning) return;
         await _capture.StopAsync().ConfigureAwait(false);
+        _voiceMonitor.Stop();
         _resonanceEngine.Stop();
         // Clear the VM-local coordinator's in-memory state (safe no-op when inactive; persists nothing).
         if (_coordinatorEnabled) _coordinator.StopExercise();
@@ -431,6 +435,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         // first in Stop/Dispose). Prevents an orphan pitch sample being posted after navigate-away — the per-frame
         // work (pitch + resonance DSP) widened that race, so guard explicitly.
         if (!IsRunning) return;
+        _voiceMonitor.Feed(e.Samples);                 // hear-own-voice: play the frame back (no-op when off)
         var now = DateTime.UtcNow;
         double delta = (now - _lastFrameUtc).TotalSeconds;
         _lastFrameUtc = now;
@@ -585,6 +590,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     {
         IsRunning = false;                       // mark stopped (also when navigated away via top nav)
         _capture.FrameAvailable -= OnFrameAvailable;
+        _voiceMonitor.Dispose();
         _ = _capture.StopAsync();                // stops the capture loop (synthetic or real) — no more frames
         (_capture as IDisposable)?.Dispose();    // release a real capture backend (e.g. ALSA) if used
         _resonanceEngine.ResonanceScoreUpdated -= OnResonanceScore;

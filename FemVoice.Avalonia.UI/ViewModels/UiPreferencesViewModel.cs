@@ -164,8 +164,8 @@ public partial class UiPreferencesViewModel : ObservableObject
     public string GoalHeading => Localized.Get("Settings_VoiceGoalTitle", "Øvelsespreferanser");
     public string AccessibilityHeading => Localized.Get("Settings_Accessibility_Title", "Tilgjengelighet");
     public string PrivacyHeading => Localized.Get("Privacy_Title", "Personvern");
-    public string HearOwnVoiceNote => Localized.Get("Settings_HearOwnVoiceNote",
-        "Valget lagres. Sanntidsavspilling («hør egen stemme») aktiveres der lydutgang er tilgjengelig.");
+    public string HearOwnVoiceNote => Localized.Get("Settings_HearOwnVoiceNote2",
+        "Spiller mikrofonen din tilbake til høyttaleren mens du øver. Bruk hodetelefoner for å unngå tilbakekobling/hyl.");
 
     /// <summary>Current edited values as a model (no I/O).</summary>
     public UiPreferences Current() => new()

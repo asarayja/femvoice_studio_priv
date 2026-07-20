@@ -14,6 +14,7 @@ internal static class AlsaInterop
     private const string Lib = "libasound.so.2";
 
     // snd_pcm_stream_t
+    internal const int SND_PCM_STREAM_PLAYBACK = 0;
     internal const int SND_PCM_STREAM_CAPTURE = 1;
 
     // snd_pcm_format_t
@@ -36,6 +37,11 @@ internal static class AlsaInterop
     /// <summary>Read interleaved frames. Returns frames read (&gt;0) or a negative errno (e.g. -EPIPE on overrun).</summary>
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
     internal static extern long snd_pcm_readi(IntPtr pcm, byte[] buffer, ulong frames);
+
+    /// <summary>Write interleaved frames to the output. Returns frames written (&gt;0) or a negative errno
+    /// (e.g. -EPIPE on underrun). Used by the playback backend ("hear your own voice").</summary>
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern long snd_pcm_writei(IntPtr pcm, byte[] buffer, ulong frames);
 
     /// <summary>Recover the stream after an error (xrun/suspend). 0 on success, else negative errno.</summary>
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
