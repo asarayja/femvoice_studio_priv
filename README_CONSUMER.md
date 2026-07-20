@@ -8,6 +8,16 @@ The app is built around modern clinical voice research. Rather than focusing on 
 
 ---
 
+## Disclaimer and Liability
+
+FemVoice Studio is a **self-help training aid only**. It is **not** a substitute for a qualified voice trainer, speech-language pathologist, or other clinician, and it does not provide medical or clinical advice.
+
+The app has **not** been approved, certified, registered, or clinically validated by any regulatory body, health authority, or professional organisation. Its exercises, measurements, scores, and guidance are built on published voice research and developed with great care, but they have **not been independently verified** and may be incomplete or inaccurate. Do not treat any output as a diagnosis or clinical assessment.
+
+Use of FemVoice Studio is **entirely at your own risk**. The app is provided "as is", without warranties of any kind, express or implied. To the fullest extent permitted by law, the author accepts **no responsibility or liability** for any injury, vocal harm, loss, or damage arising from the use of, or reliance on, this app. If you have vocal health concerns — or before starting any new voice-training programme — consult a qualified professional.
+
+---
+
 ## Runs On Your Devices
 
 FemVoice Studio is built on a single shared, cross-platform interface (Avalonia), so you get the same navigation, exercises, and theme on every supported platform.
