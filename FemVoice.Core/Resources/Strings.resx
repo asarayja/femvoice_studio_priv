@@ -5850,4 +5850,13 @@ Dette kan ikke angres!</value>
   <data name="GuideVm_ProgressNote_Today" xml:space="preserve">
     <value>Dagens fullførte øvelser er lagret og teller mot progresjonen din.</value>
   </data>
+  <data name="Settings_SaveHint" xml:space="preserve">
+    <value>Endringene lagres når du trykker «Lagre» øverst.</value>
+  </data>
+  <data name="Settings_RestoreConfirm" xml:space="preserve">
+    <value>Gjenopprett fra valgt sikkerhetskopi? Nåværende data erstattes (en sikkerhetskopi tas først).</value>
+  </data>
+  <data name="Settings_ClearConfirm" xml:space="preserve">
+    <value>Tømme hele databasen? All lokal treningshistorikk slettes. Dette kan ikke angres (men du kan gjenopprette fra en sikkerhetskopi).</value>
+  </data>
 </root>

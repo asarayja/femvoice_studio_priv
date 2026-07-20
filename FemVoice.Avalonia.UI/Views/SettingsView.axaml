@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
+             xmlns:loc="clr-namespace:FemVoice.Avalonia.Localization"
              x:Class="FemVoice.Avalonia.Views.SettingsView">
   <!-- FUNCTIONAL Settings. Every control below is live and persisted (theme/language/motion apply immediately;
        the rest are stored and read by their consumers). No disabled "Utsatt" placeholders. The page DataContext is
@@ -75,7 +76,7 @@
           <TextBlock Text="{Binding PrivacyHeading}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}" Margin="0,6,0,0"/>
           <CheckBox Content="{Binding DiagnosticsConsentLabel}" IsChecked="{Binding DiagnosticsConsent, Mode=TwoWay}"/>
           <CheckBox Content="{Binding ResearchConsentLabel}" IsChecked="{Binding ResearchConsent, Mode=TwoWay}"/>
-          <TextBlock Text="Endringene lagres når du trykker «Lagre» øverst." Foreground="{DynamicResource ShellFaintBrush}" FontSize="11"/>
+          <TextBlock Text="{loc:Tr Key=Settings_SaveHint, Fallback='Endringene lagres når du trykker «Lagre» øverst.'}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11"/>
         </StackPanel>
       </Border>
 
@@ -102,7 +103,7 @@
           <Border BorderBrush="{DynamicResource ShellWarningBrush}" BorderThickness="1" CornerRadius="6" Padding="10"
                   IsVisible="{Binding ConfirmRestore}">
             <StackPanel Spacing="6">
-              <TextBlock Text="Gjenopprett fra valgt sikkerhetskopi? Nåværende data erstattes (en sikkerhetskopi tas først)."
+              <TextBlock Text="{loc:Tr Key=Settings_RestoreConfirm, Fallback='Gjenopprett fra valgt sikkerhetskopi? Nåværende data erstattes (en sikkerhetskopi tas først).'}"
                          TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
               <StackPanel Orientation="Horizontal" Spacing="8">
                 <Button Classes="primary" Content="{Binding ConfirmLabel}" Command="{Binding ConfirmRestoreActionCommand}"/>
@@ -113,7 +114,7 @@
           <Border BorderBrush="{DynamicResource ShellWarningBrush}" BorderThickness="1" CornerRadius="6" Padding="10"
                   IsVisible="{Binding ConfirmClear}">
             <StackPanel Spacing="6">
-              <TextBlock Text="Tømme hele databasen? All lokal treningshistorikk slettes. Dette kan ikke angres (men du kan gjenopprette fra en sikkerhetskopi)."
+              <TextBlock Text="{loc:Tr Key=Settings_ClearConfirm, Fallback='Tømme hele databasen? All lokal treningshistorikk slettes. Dette kan ikke angres (men du kan gjenopprette fra en sikkerhetskopi).'}"
                          TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
               <StackPanel Orientation="Horizontal" Spacing="8">
                 <Button Classes="primary" Content="{Binding ConfirmLabel}" Command="{Binding ConfirmClearActionCommand}"/>
