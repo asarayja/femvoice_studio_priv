@@ -74,7 +74,7 @@ public sealed class DayDetailsViewModel
                 double avgScore = sessions.Average(s => s.OverallScore);
                 var pitches = sessions.Select(s => s.AveragePitch).Where(p => p > 0).ToList();
                 double avgPitch = pitches.Count > 0 ? pitches.Average() : 0;
-                Summary = $"{sessions.Count} økter · snitt score {avgScore:F0} · total {totalMin} min";
+                Summary = string.Format(Localized.Get("DayDetails_SummaryFormat", "{0} økter · snitt score {1} · total {2} min"), sessions.Count, avgScore.ToString("F0"), totalMin);
                 SummaryCards = new List<AnalysisSummaryMetric>
                 {
                     new(Localized.Get("Dashboard_Sessions", "Økter"), sessions.Count.ToString()),

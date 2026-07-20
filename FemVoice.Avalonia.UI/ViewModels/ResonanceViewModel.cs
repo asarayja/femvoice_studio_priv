@@ -121,7 +121,7 @@ public sealed partial class ResonanceViewModel : ObservableObject, IDisposable
         {
             if (_disposed || !Running) return;
             Level = pct;
-            string cat = pct >= 67 ? "Lys" : pct >= 34 ? "Nøytral" : "Mørk";
+            string cat = pct >= 67 ? Localized.Get("ResCat_Bright", "Lys") : pct >= 34 ? Localized.Get("ResCat_Neutral", "Nøytral") : Localized.Get("ResCat_Dark", "Mørk");
             LevelLabelText = $"{cat} ({pct})";
             CategoryText = cat;
         });

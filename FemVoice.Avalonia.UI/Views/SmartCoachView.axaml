@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:FemVoice.Avalonia.Localization"
              x:Class="FemVoice.Avalonia.Views.SmartCoachView">
   <!-- Engine-backed SmartCoach: the REAL Core SmartCoachEngine's daily recommendation on the REAL database. -->
   <ScrollViewer HorizontalScrollBarVisibility="Disabled">
@@ -90,7 +91,7 @@
         <!-- Weekly target + status -->
         <Border Classes="card">
           <StackPanel Spacing="6">
-            <TextBlock Text="Ukesmål og status" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+            <TextBlock Text="{loc:Tr Key=SmartCoach_WeeklyGoalStatus, Fallback='Ukesmål og status'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
             <TextBlock Text="{Binding WeeklyTargetText}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
             <TextBlock Text="{Binding StatusSummary}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}"/>
           </StackPanel>

@@ -99,7 +99,7 @@ public sealed class ReportsViewModel
     public string BuildCsv()
     {
         var sb = new StringBuilder();
-        sb.Append("Dato,Varighet (min),Snitt tonehøyde (Hz),FemVoice-score\r\n");
+        sb.Append(Localized.Get("Reports_CsvHeader", "Dato,Varighet (min),Snitt tonehøyde (Hz),FemVoice-score")).Append("\r\n");
         foreach (var r in ExportRows)
             sb.Append(Csv(r.Date.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture))).Append(',')
               .Append(r.DurationMinutes.ToString(CultureInfo.InvariantCulture)).Append(',')
@@ -113,7 +113,7 @@ public sealed class ReportsViewModel
     {
         var sb = new StringBuilder();
         sb.Append(PreviewTitle).Append("\r\n\r\n").Append(PreviewBody).Append("\r\n\r\n");
-        sb.Append("Økter:\r\n");
+        sb.Append(Localized.Get("Reports_SessionsHeader", "Økter:")).Append("\r\n");
         foreach (var r in ExportRows)
             sb.Append("  ").Append(r.Date.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture))
               .Append("  ·  ").Append(r.DurationMinutes).Append(" min")
@@ -138,7 +138,7 @@ public sealed class ReportsViewModel
             if (sessions.Count == 0)
             {
                 HasPreview = true;
-                PreviewBody = "Ingen lagrede økter ennå. Fullfør en økt på dashbordet for å generere et sammendrag.";
+                PreviewBody = Localized.Get("Reports_NoSessionsPreview", "Ingen lagrede økter ennå. Fullfør en økt på dashbordet for å generere et sammendrag.");
                 return;
             }
             var ordered = sessions.OrderBy(s => s.StartTime).ToList();
@@ -156,10 +156,10 @@ public sealed class ReportsViewModel
             DateTime to = ordered.Last().StartTime.ToLocalTime();
 
             PreviewBody =
-                $"Periode: {from:yyyy-MM-dd} – {to:yyyy-MM-dd}\n" +
-                $"Antall økter: {ordered.Count} · Total tid: {totalMinutes} min\n" +
-                (avgPitch > 0 ? $"Snitt tonehøyde: {avgPitch:F0} Hz\n" : "") +
-                $"Snitt FemVoice-score: {avgScore:F0} / 100 · Beste økt: {bestScore:F0} / 100";
+                string.Format(Localized.Get("Reports_PeriodFormat", "Periode: {0} – {1}"), from.ToString("yyyy-MM-dd"), to.ToString("yyyy-MM-dd")) + "\n" +
+                string.Format(Localized.Get("Reports_SessionCountTimeFormat", "Antall økter: {0} · Total tid: {1} min"), ordered.Count, totalMinutes) + "\n" +
+                (avgPitch > 0 ? string.Format(Localized.Get("Reports_AvgPitchLineFormat", "Snitt tonehøyde: {0} Hz"), avgPitch.ToString("F0")) + "\n" : "") +
+                string.Format(Localized.Get("Reports_ScoreLineFormat", "Snitt FemVoice-score: {0} / 100 · Beste økt: {1} / 100"), avgScore.ToString("F0"), bestScore.ToString("F0"));
             HasPreview = true;
         }
         catch { HasPreview = false; }

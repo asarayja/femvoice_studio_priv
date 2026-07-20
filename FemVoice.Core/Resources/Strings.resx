@@ -5940,4 +5940,193 @@ Dette kan ikke angres!</value>
   <data name="Card_SessionCount" xml:space="preserve">
     <value>{0} økter</value>
   </data>
+  <data name="Analysis_SessionsAnalyzed" xml:space="preserve">
+    <value>Økter analysert</value>
+  </data>
+  <data name="Analysis_NoSessionsShort" xml:space="preserve">
+    <value>0 — ingen lagrede økter ennå</value>
+  </data>
+  <data name="Analysis_NoSessionsNotice" xml:space="preserve">
+    <value>Ingen lagrede økter ennå. Fullfør en økt på dashbordet, så vises ekte analyse her.</value>
+  </data>
+  <data name="Analysis_PitchTrend" xml:space="preserve">
+    <value>Tonehøyde-trend</value>
+  </data>
+  <data name="Analysis_PitchTrendDesc" xml:space="preserve">
+    <value>Snitt tonehøyde per lagret økt (eldst → nyest).</value>
+  </data>
+  <data name="Analysis_AvgPitchOverFormat" xml:space="preserve">
+    <value>Snitt {0} Hz over {1} økter</value>
+  </data>
+  <data name="Analysis_NoVoiceRecorded" xml:space="preserve">
+    <value>Ingen stemme registrert</value>
+  </data>
+  <data name="Analysis_ResonanceTrend" xml:space="preserve">
+    <value>Resonans-trend</value>
+  </data>
+  <data name="Analysis_ResonanceTrendDesc" xml:space="preserve">
+    <value>Resonans-score per lagret økt (ekte, fra resonansmotoren).</value>
+  </data>
+  <data name="Analysis_AvgResonanceOverFormat" xml:space="preserve">
+    <value>Snitt {0} / 100 over {1} økter med resonansdata</value>
+  </data>
+  <data name="Analysis_NoResonanceData" xml:space="preserve">
+    <value>Ingen resonansdata ennå — fullfør en økt for å registrere resonans</value>
+  </data>
+  <data name="Analysis_ProsodyTrend" xml:space="preserve">
+    <value>Tonevariasjon (prosodi)</value>
+  </data>
+  <data name="Analysis_ProsodyTrendDesc" xml:space="preserve">
+    <value>Tonehøyde-variasjon (Hz std-avvik) per lagret økt — ekte måling.</value>
+  </data>
+  <data name="Analysis_AvgVariationOverFormat" xml:space="preserve">
+    <value>Snitt ± {0} Hz over {1} økter</value>
+  </data>
+  <data name="Analysis_NoProsodyData" xml:space="preserve">
+    <value>Ingen prosodidata ennå — fullfør en økt for å måle tonevariasjon</value>
+  </data>
+  <data name="Analysis_ScoreTrend" xml:space="preserve">
+    <value>Score-trend</value>
+  </data>
+  <data name="Analysis_ScoreTrendDesc" xml:space="preserve">
+    <value>FemVoice-score per lagret økt (komfortsone-treff).</value>
+  </data>
+  <data name="Analysis_AvgScoreBestFormat" xml:space="preserve">
+    <value>Snitt {0} · beste {1}</value>
+  </data>
+  <data name="Analysis_AvgResonanceLabel" xml:space="preserve">
+    <value>Snitt resonans</value>
+  </data>
+  <data name="Analysis_AvgVariationLabel" xml:space="preserve">
+    <value>Snitt tonevariasjon</value>
+  </data>
+  <data name="Analysis_AvgScoreLabel" xml:space="preserve">
+    <value>Snitt score</value>
+  </data>
+  <data name="Analysis_NoDataYet" xml:space="preserve">
+    <value>— (ingen data ennå)</value>
+  </data>
+  <data name="Analysis_BestSession" xml:space="preserve">
+    <value>Beste økt</value>
+  </data>
+  <data name="Analysis_SummaryFormat" xml:space="preserve">
+    <value>{0} økter analysert · snitt tonehøyde {1} Hz · snitt score {2} · beste {3}.</value>
+  </data>
+  <data name="Analysis_SummaryNoVoiceFormat" xml:space="preserve">
+    <value>{0} økter analysert · snitt score {1} · beste {2} (ingen stemme registrert).</value>
+  </data>
+  <data name="Analysis_TrendsNote" xml:space="preserve">
+    <value>Trender beregnes fra dine lagrede økter. Bruk Rapporter for å eksportere øktdata (CSV/tekst) og profesjonelle rapporter (PDF).</value>
+  </data>
+  <data name="Reports_CsvHeader" xml:space="preserve">
+    <value>Dato,Varighet (min),Snitt tonehøyde (Hz),FemVoice-score</value>
+  </data>
+  <data name="Reports_SessionsHeader" xml:space="preserve">
+    <value>Økter:</value>
+  </data>
+  <data name="Reports_NoSessionsPreview" xml:space="preserve">
+    <value>Ingen lagrede økter ennå. Fullfør en økt på dashbordet for å generere et sammendrag.</value>
+  </data>
+  <data name="Reports_PeriodFormat" xml:space="preserve">
+    <value>Periode: {0} – {1}</value>
+  </data>
+  <data name="Reports_SessionCountTimeFormat" xml:space="preserve">
+    <value>Antall økter: {0} · Total tid: {1} min</value>
+  </data>
+  <data name="Reports_AvgPitchLineFormat" xml:space="preserve">
+    <value>Snitt tonehøyde: {0} Hz</value>
+  </data>
+  <data name="Reports_ScoreLineFormat" xml:space="preserve">
+    <value>Snitt FemVoice-score: {0} / 100 · Beste økt: {1} / 100</value>
+  </data>
+  <data name="Progression_SessionCountFormat" xml:space="preserve">
+    <value>{0} lagrede økter</value>
+  </data>
+  <data name="Progression_RecommendedLevelFormat" xml:space="preserve">
+    <value>Anbefalt nivå: {0}</value>
+  </data>
+  <data name="Level_SessionsAtLevelFormat" xml:space="preserve">
+    <value>{0} / {1} økter på dette nivået</value>
+  </data>
+  <data name="Progression_WeeklyFormat" xml:space="preserve">
+    <value>{0} økter · {1} min · snitt score {2}</value>
+  </data>
+  <data name="SmartCoach_WeeklyTargetFormat" xml:space="preserve">
+    <value>{0} økter/uke (mål)</value>
+  </data>
+  <data name="SmartCoach_DayHistoryFormat" xml:space="preserve">
+    <value>{0} økter · snitt {1}</value>
+  </data>
+  <data name="SmartCoach_WeeklyGoalStatus" xml:space="preserve">
+    <value>Ukesmål og status</value>
+  </data>
+  <data name="Calendar_DayTooltipFormat" xml:space="preserve">
+    <value>{0:d}\n{1} økter · {2} min\nSnitt score {3:F0} · pitch {4:F0} · resonans {5:F0}</value>
+  </data>
+  <data name="DayDetails_SummaryFormat" xml:space="preserve">
+    <value>{0} økter · snitt score {1} · total {2} min</value>
+  </data>
+  <data name="Timeline_RowFormat" xml:space="preserve">
+    <value>Snitt {0} · {1} økter</value>
+  </data>
+  <data name="ResCat_Bright" xml:space="preserve">
+    <value>Lys</value>
+  </data>
+  <data name="ResCat_Neutral" xml:space="preserve">
+    <value>Nøytral</value>
+  </data>
+  <data name="ResCat_Dark" xml:space="preserve">
+    <value>Mørk</value>
+  </data>
+  <data name="Analyzer_DeltaFormat" xml:space="preserve">
+    <value>{0} Hz fra mål</value>
+  </data>
+  <data name="Analyzer_VoicedMeasurements" xml:space="preserve">
+    <value>Stemte målinger</value>
+  </data>
+  <data name="Override_DesiredProfile" xml:space="preserve">
+    <value>Ønsket profil (forespørsel)</value>
+  </data>
+  <data name="Override_StyleGoal" xml:space="preserve">
+    <value>Stilmål</value>
+  </data>
+  <data name="Override_ResonanceGoal" xml:space="preserve">
+    <value>Resonansmål (min–max)</value>
+  </data>
+  <data name="Error_SaveDialogFailed" xml:space="preserve">
+    <value>Kunne ikke åpne lagringsdialog.</value>
+  </data>
+  <data name="Report_NothingToExport" xml:space="preserve">
+    <value>Ingen rapport å eksportere.</value>
+  </data>
+  <data name="SettingsData_NoDbBackup" xml:space="preserve">
+    <value>Ingen database å sikkerhetskopiere ennå.</value>
+  </data>
+  <data name="SettingsData_Restored" xml:space="preserve">
+    <value>Gjenopprettet. Start appen på nytt for at endringen skal gjelde fullt ut.</value>
+  </data>
+  <data name="SettingsData_Cleared" xml:space="preserve">
+    <value>Databasen er tømt (tom, klar til bruk).</value>
+  </data>
+  <data name="SettingsData_ClearedRestart" xml:space="preserve">
+    <value>Databasen er tømt. Start appen på nytt for å opprette en ny tom database.</value>
+  </data>
+  <data name="SettingsData_NoDbClear" xml:space="preserve">
+    <value>Ingen database å tømme.</value>
+  </data>
+  <data name="SettingsData_ClearFailedFormat" xml:space="preserve">
+    <value>Tømming feilet: {0}</value>
+  </data>
+  <data name="SettingsData_BackupSavedFormat" xml:space="preserve">
+    <value>Sikkerhetskopi lagret: {0}</value>
+  </data>
+  <data name="SettingsData_BackupFailedFormat" xml:space="preserve">
+    <value>Sikkerhetskopi feilet: {0}</value>
+  </data>
+  <data name="SettingsData_BackupNotFound" xml:space="preserve">
+    <value>Fant ikke sikkerhetskopien.</value>
+  </data>
+  <data name="SettingsData_RestoreFailedFormat" xml:space="preserve">
+    <value>Gjenoppretting feilet: {0}</value>
+  </data>
 </root>

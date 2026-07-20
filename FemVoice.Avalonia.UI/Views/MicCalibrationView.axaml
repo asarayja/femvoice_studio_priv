@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
+             xmlns:loc="clr-namespace:FemVoice.Avalonia.Localization"
              x:Class="FemVoice.Avalonia.Views.MicCalibrationView">
   <!-- REAL microphone CALIBRATION wizard (ports the WPF MicrophoneCalibrationWindow): device list + a two-phase
        guided flow (measure silence → measure comfortable voice), then the FROZEN Core MicrophoneCalibrationService
@@ -50,8 +51,11 @@
                            Foreground="{DynamicResource ShellAccentBrush}" Background="Transparent"/>
             </Border>
             <Grid ColumnDefinitions="*,Auto">
-              <TextBlock Grid.Column="0" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11"
-                         Text="{Binding Level, StringFormat='Nivå: {0:F0}'}"/>
+              <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <TextBlock Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" Text="{loc:Tr Key=ExRun_Lbl_Level, Fallback='Nivå'}"/>
+                <TextBlock Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" Text=": "/>
+                <TextBlock Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" Text="{Binding Level, StringFormat='{}{0:F0}'}"/>
+              </StackPanel>
               <TextBlock Grid.Column="1" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11"
                          Text="{Binding PeakLevel, StringFormat='Topp: {0:F0}'}"/>
             </Grid>

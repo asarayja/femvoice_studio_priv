@@ -77,7 +77,7 @@ public sealed class TimelinePanelViewModel
                     string.IsNullOrWhiteSpace(e.Label) ? "—" : e.Label,
                     $"{e.Window.From.ToLocalTime():yyyy-MM-dd} – {e.Window.To.ToLocalTime():yyyy-MM-dd}",
                     string.IsNullOrWhiteSpace(e.Direction) ? "—" : e.Direction,   // already localized by the Core assembler
-                    $"Snitt {e.Window.CompositeMean.ToString("F0", CultureInfo.InvariantCulture)} · {e.Window.SessionCount} økter"))
+                    string.Format(Localized.Get("Timeline_RowFormat", "Snitt {0} · {1} økter"), e.Window.CompositeMean.ToString("F0", CultureInfo.InvariantCulture), e.Window.SessionCount)))
                 .ToList();
 
             HasReport = Entries.Count > 0;

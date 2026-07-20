@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
+             xmlns:loc="clr-namespace:FemVoice.Avalonia.Localization"
              x:Class="FemVoice.Avalonia.Views.AnalysisView">
   <!-- Analysis / Resonance — structural parity with the WPF AnalysisWindow (header band · 4-card stats row ·
        2-column chart-card grid), but DISPLAY-ONLY over SYNTHETIC in-memory sample data. Converter-free mini
@@ -95,7 +96,7 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
 
-      <TextBlock Text="Trender beregnes fra dine lagrede økter. Bruk Rapporter for å eksportere øktdata (CSV/tekst) og profesjonelle rapporter (PDF)."
+      <TextBlock Text="{loc:Tr Key=Analysis_TrendsNote, Fallback='Trender beregnes fra dine lagrede økter. Bruk Rapporter for å eksportere øktdata (CSV/tekst) og profesjonelle rapporter (PDF).'}"
                  Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
 
     </StackPanel>

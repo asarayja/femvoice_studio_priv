@@ -108,8 +108,8 @@ public sealed class AnalysisViewModel
             var ordered = database.GetRecentSessions(30).AsEnumerable().Reverse().ToList();
             if (ordered.Count == 0)
             {
-                metrics = new List<AnalysisSummaryMetric> { new("Økter analysert", "0 — ingen lagrede økter ennå") };
-                notice = "Ingen lagrede økter ennå. Fullfør en økt på dashbordet, så vises ekte analyse her.";
+                metrics = new List<AnalysisSummaryMetric> { new(Localized.Get("Analysis_SessionsAnalyzed", "Økter analysert"), Localized.Get("Analysis_NoSessionsShort", "0 — ingen lagrede økter ennå")) };
+                notice = Localized.Get("Analysis_NoSessionsNotice", "Ingen lagrede økter ennå. Fullfør en økt på dashbordet, så vises ekte analyse her.");
                 return true;
             }
 
@@ -132,43 +132,43 @@ public sealed class AnalysisViewModel
 
             var seriesList = new List<AnalysisSeries>
             {
-                new("Tonehøyde-trend", "Snitt tonehøyde per lagret økt (eldst → nyest).",
+                new(Localized.Get("Analysis_PitchTrend", "Tonehøyde-trend"), Localized.Get("Analysis_PitchTrendDesc", "Snitt tonehøyde per lagret økt (eldst → nyest)."),
                     ordered.Select(s => PitchToPx(s.AveragePitch)).ToList(),
-                    avgPitch > 0 ? $"Snitt {avgPitch:F0} Hz over {ordered.Count} økter" : "Ingen stemme registrert"),
-                new("Resonans-trend", "Resonans-score per lagret økt (ekte, fra resonansmotoren).",
+                    avgPitch > 0 ? string.Format(Localized.Get("Analysis_AvgPitchOverFormat", "Snitt {0} Hz over {1} økter"), avgPitch.ToString("F0"), ordered.Count) : Localized.Get("Analysis_NoVoiceRecorded", "Ingen stemme registrert")),
+                new(Localized.Get("Analysis_ResonanceTrend", "Resonans-trend"), Localized.Get("Analysis_ResonanceTrendDesc", "Resonans-score per lagret økt (ekte, fra resonansmotoren)."),
                     resonances.Select(ScoreToPx).ToList(),
                     withResonance.Count > 0
-                        ? $"Snitt {avgResonance:F0} / 100 over {withResonance.Count} økter med resonansdata"
-                        : "Ingen resonansdata ennå — fullfør en økt for å registrere resonans"),
-                new("Tonevariasjon (prosodi)", "Tonehøyde-variasjon (Hz std-avvik) per lagret økt — ekte måling.",
+                        ? string.Format(Localized.Get("Analysis_AvgResonanceOverFormat", "Snitt {0} / 100 over {1} økter med resonansdata"), avgResonance.ToString("F0"), withResonance.Count)
+                        : Localized.Get("Analysis_NoResonanceData", "Ingen resonansdata ennå — fullfør en økt for å registrere resonans")),
+                new(Localized.Get("Analysis_ProsodyTrend", "Tonevariasjon (prosodi)"), Localized.Get("Analysis_ProsodyTrendDesc", "Tonehøyde-variasjon (Hz std-avvik) per lagret økt — ekte måling."),
                     variations.Select(VariationToPx).ToList(),
                     withVariation.Count > 0
-                        ? $"Snitt ± {avgVariation:F0} Hz over {withVariation.Count} økter"
-                        : "Ingen prosodidata ennå — fullfør en økt for å måle tonevariasjon"),
-                new("Score-trend", "FemVoice-score per lagret økt (komfortsone-treff).",
+                        ? string.Format(Localized.Get("Analysis_AvgVariationOverFormat", "Snitt ± {0} Hz over {1} økter"), avgVariation.ToString("F0"), withVariation.Count)
+                        : Localized.Get("Analysis_NoProsodyData", "Ingen prosodidata ennå — fullfør en økt for å måle tonevariasjon")),
+                new(Localized.Get("Analysis_ScoreTrend", "Score-trend"), Localized.Get("Analysis_ScoreTrendDesc", "FemVoice-score per lagret økt (komfortsone-treff)."),
                     scores.Select(ScoreToPx).ToList(),
-                    $"Snitt {avgScore:F0} · beste {bestScore:F0}"),
+                    string.Format(Localized.Get("Analysis_AvgScoreBestFormat", "Snitt {0} · beste {1}"), avgScore.ToString("F0"), bestScore.ToString("F0"))),
             };
             series = seriesList;
             metrics = new List<AnalysisSummaryMetric>
             {
-                new("Økter analysert", ordered.Count.ToString()),
-                new("Snitt tonehøyde", avgPitch > 0 ? $"{avgPitch:F0} Hz" : "—"),
-                new("Snitt resonans", withResonance.Count > 0 ? $"{avgResonance:F0} / 100" : "— (ingen data ennå)"),
-                new("Snitt tonevariasjon", withVariation.Count > 0 ? $"± {avgVariation:F0} Hz" : "— (ingen data ennå)"),
-                new("Snitt score", $"{avgScore:F0} / 100"),
-                new("Beste økt", $"{bestScore:F0} / 100"),
+                new(Localized.Get("Analysis_SessionsAnalyzed", "Økter analysert"), ordered.Count.ToString()),
+                new(Localized.Get("Dashboard_AveragePitch", "Snitt tonehøyde"), avgPitch > 0 ? $"{avgPitch:F0} Hz" : "—"),
+                new(Localized.Get("Analysis_AvgResonanceLabel", "Snitt resonans"), withResonance.Count > 0 ? $"{avgResonance:F0} / 100" : Localized.Get("Analysis_NoDataYet", "— (ingen data ennå)")),
+                new(Localized.Get("Analysis_AvgVariationLabel", "Snitt tonevariasjon"), withVariation.Count > 0 ? $"± {avgVariation:F0} Hz" : Localized.Get("Analysis_NoDataYet", "— (ingen data ennå)")),
+                new(Localized.Get("Analysis_AvgScoreLabel", "Snitt score"), $"{avgScore:F0} / 100"),
+                new(Localized.Get("Analysis_BestSession", "Beste økt"), $"{bestScore:F0} / 100"),
             };
 
             // Score-components (per-dimension) — WPF Analysis "rings". Prefer the REAL 7-dimension VoiceIntelligence
             // records the dashboard writes; fall back to the pitch/resonance TrainingSession approximation when none.
             components = BuildScoreComponents(database, avgPitch, avgResonance, withResonance.Count > 0);
 
-            notice = "Ekte analyse beregnet fra dine faktiske lagrede økter.";
+            notice = Localized.Get("Analysis_RealDataNote", "Ekte analyse beregnet fra dine faktiske lagrede økter.");
             // Human-readable per-session summary (WPF Analysis "Økt-sammendrag") from the real aggregates.
             sessionSummary = avgPitch > 0
-                ? $"{ordered.Count} økter analysert · snitt tonehøyde {avgPitch:F0} Hz · snitt score {avgScore:F0} · beste {bestScore:F0}."
-                : $"{ordered.Count} økter analysert · snitt score {avgScore:F0} · beste {bestScore:F0} (ingen stemme registrert).";
+                ? string.Format(Localized.Get("Analysis_SummaryFormat", "{0} økter analysert · snitt tonehøyde {1} Hz · snitt score {2} · beste {3}."), ordered.Count, avgPitch.ToString("F0"), avgScore.ToString("F0"), bestScore.ToString("F0"))
+                : string.Format(Localized.Get("Analysis_SummaryNoVoiceFormat", "{0} økter analysert · snitt score {1} · beste {2} (ingen stemme registrert)."), ordered.Count, avgScore.ToString("F0"), bestScore.ToString("F0"));
             return true;
         }
         catch { return false; }   // fall back to synthetic on any DB error

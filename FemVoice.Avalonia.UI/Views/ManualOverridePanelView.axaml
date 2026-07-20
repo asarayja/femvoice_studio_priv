@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
+             xmlns:loc="clr-namespace:FemVoice.Avalonia.Localization"
              x:Class="FemVoice.Avalonia.Views.ManualOverridePanelView">
   <!-- SAFETY-CRITICAL manual override: a professional enters an intended profile; the FROZEN two-stage clamp runs
        and ONLY the clamped outcome is shown (never the raw intent). Display-only: no persistence, no application. -->
@@ -20,13 +21,13 @@
       <!-- Intended request (raw intent) -->
       <Border Classes="card">
         <StackPanel Spacing="10">
-          <TextBlock Text="Ønsket profil (forespørsel)" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+          <TextBlock Text="{loc:Tr Key=Override_DesiredProfile, Fallback='Ønsket profil (forespørsel)'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
           <Grid ColumnDefinitions="130,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Baseline-profil" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
             <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,3" HorizontalAlignment="Stretch" MaxWidth="320"
                       ItemsSource="{Binding ProfileTypes}" SelectedItem="{Binding BaselineProfileType, Mode=TwoWay}"/>
 
-            <TextBlock Grid.Row="1" Grid.Column="0" Text="Stilmål" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="{loc:Tr Key=Override_StyleGoal, Fallback='Stilmål'}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
             <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,3" HorizontalAlignment="Stretch" MaxWidth="320"
                       ItemsSource="{Binding StyleGoals}" SelectedItem="{Binding StyleGoal, Mode=TwoWay}"/>
 
@@ -72,7 +73,7 @@
           <TextBlock Text="Klampet utfall (sikkerhet)" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
           <TextBlock Text="{Binding OutcomeText}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
           <Grid ColumnDefinitions="130,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,4,0,0">
-            <TextBlock Grid.Row="0" Grid.Column="0" Text="Resonansmål (min–max)" Foreground="{DynamicResource ShellMutedBrush}"/>
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Tr Key=Override_ResonanceGoal, Fallback='Resonansmål (min–max)'}" Foreground="{DynamicResource ShellMutedBrush}"/>
             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AppliedResonance}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
             <TextBlock Grid.Row="1" Grid.Column="0" Text="Stabilitetsterskel" Foreground="{DynamicResource ShellMutedBrush}"/>
             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AppliedStability}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
