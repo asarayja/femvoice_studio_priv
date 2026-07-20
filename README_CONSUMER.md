@@ -14,6 +14,8 @@ FemVoice Studio is a **self-help training aid only**. It is **not** a substitute
 
 The app has **not** been approved, certified, registered, or clinically validated by any regulatory body, health authority, or professional organisation. Its exercises, measurements, scores, and guidance are built on published voice research and developed with great care, but they have **not been independently verified** and may be incomplete or inaccurate. Do not treat any output as a diagnosis or clinical assessment.
 
+Independent review of the app by qualified professionals (such as speech-language pathologists experienced in voice feminisation) is **planned**, but has **not yet taken place**. This notice will be updated if and when such a review is completed.
+
 Use of FemVoice Studio is **entirely at your own risk**. The app is provided "as is", without warranties of any kind, express or implied. To the fullest extent permitted by law, the author accepts **no responsibility or liability** for any injury, vocal harm, loss, or damage arising from the use of, or reliance on, this app. If you have vocal health concerns — or before starting any new voice-training programme — consult a qualified professional.
 
 ---
