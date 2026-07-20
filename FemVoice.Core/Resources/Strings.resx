@@ -5649,4 +5649,205 @@ Dette kan ikke angres!</value>
   <data name="Dash_SessionStopped" xml:space="preserve">
     <value>Økt stoppet.</value>
   </data>
+  <data name="ExRun_Back" xml:space="preserve">
+    <value>← Tilbake</value>
+  </data>
+  <data name="ExRun_Stop" xml:space="preserve">
+    <value>Stopp</value>
+  </data>
+  <data name="ExRun_SessionEnded" xml:space="preserve">
+    <value>Økt avsluttet</value>
+  </data>
+  <data name="ExRun_PitchHint" xml:space="preserve">
+    <value>Si en jevn tone — tonehøyden vises her.</value>
+  </data>
+  <data name="ExRun_HoldInTarget" xml:space="preserve">
+    <value>Hold i målområdet (visning)</value>
+  </data>
+  <data name="ExRun_DerivedHold" xml:space="preserve">
+    <value>Avledet hold</value>
+  </data>
+  <data name="ExRun_CoordinatorHold" xml:space="preserve">
+    <value>Koordinator-hold (veiledende)</value>
+  </data>
+  <data name="ExRun_CoordinatorReadout" xml:space="preserve">
+    <value>Koordinator-readout</value>
+  </data>
+  <data name="ExRun_TargetProfile" xml:space="preserve">
+    <value>Mål-profil (teknisk)</value>
+  </data>
+  <data name="ExRun_Lbl_Level" xml:space="preserve">
+    <value>Nivå</value>
+  </data>
+  <data name="ExRun_Lbl_Focus" xml:space="preserve">
+    <value>Fokus</value>
+  </data>
+  <data name="ExRun_Lbl_Duration" xml:space="preserve">
+    <value>Varighet</value>
+  </data>
+  <data name="ExRun_Lbl_TargetRange" xml:space="preserve">
+    <value>Målområde</value>
+  </data>
+  <data name="ExRun_Lbl_State" xml:space="preserve">
+    <value>Tilstand</value>
+  </data>
+  <data name="ExRun_Lbl_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="ExRun_Lbl_Held" xml:space="preserve">
+    <value>Holdt</value>
+  </data>
+  <data name="ExRun_Lbl_Difference" xml:space="preserve">
+    <value>Differanse</value>
+  </data>
+  <data name="ExRun_Lbl_Active" xml:space="preserve">
+    <value>Aktiv</value>
+  </data>
+  <data name="ExRun_Lbl_TargetPitch" xml:space="preserve">
+    <value>Mål-pitch</value>
+  </data>
+  <data name="ExRun_Lbl_ResonanceTarget" xml:space="preserve">
+    <value>Resonans-mål</value>
+  </data>
+  <data name="ExRun_Lbl_HoldTarget" xml:space="preserve">
+    <value>Hold-mål</value>
+  </data>
+  <data name="ExRun_Lbl_TargetSkills" xml:space="preserve">
+    <value>Mål-skills</value>
+  </data>
+  <data name="ExRun_Lbl_CommonMistakes" xml:space="preserve">
+    <value>Vanlige feil</value>
+  </data>
+  <data name="ExRunVm_DefaultCategory" xml:space="preserve">
+    <value>Øvelse</value>
+  </data>
+  <data name="ExRunVm_ReadySynthetic" xml:space="preserve">
+    <value>Klar — trykk Start (syntetisk testlyd — ingen mikrofon funnet, økten lagres ikke).</value>
+  </data>
+  <data name="ExRunVm_Ready" xml:space="preserve">
+    <value>Klar — trykk Start for å begynne.</value>
+  </data>
+  <data name="ExRunVm_HoldTarget" xml:space="preserve">
+    <value>Mål: hold i {0} s (visning)</value>
+  </data>
+  <data name="ExRunVm_SafetyNote" xml:space="preserve">
+    <value>Øv uten press: stopp ved ubehag, slapp av i hals/skuldre, og ta pauser. Helse og sikkerhet går alltid foran tonehøyde.</value>
+  </data>
+  <data name="ExRunVm_SecondaryPitch" xml:space="preserve">
+    <value>Tekniske mål (tonehøyde): {0}</value>
+  </data>
+  <data name="ExRunVm_GettingReady" xml:space="preserve">
+    <value>Gjør deg klar …</value>
+  </data>
+  <data name="ExRunVm_Phase_Ready" xml:space="preserve">
+    <value>Klar</value>
+  </data>
+  <data name="ExRunVm_Phase_ActiveSynth" xml:space="preserve">
+    <value>Aktiv (syntetisk testlyd)</value>
+  </data>
+  <data name="ExRunVm_Phase_Active" xml:space="preserve">
+    <value>Aktiv</value>
+  </data>
+  <data name="ExRunVm_Phase_Stopped" xml:space="preserve">
+    <value>Stoppet</value>
+  </data>
+  <data name="ExRunVm_RecDuration" xml:space="preserve">
+    <value>Anbefalt varighet: {0} min (veiledende)</value>
+  </data>
+  <data name="ExRunVm_RecDurationNone" xml:space="preserve">
+    <value>Anbefalt varighet: —</value>
+  </data>
+  <data name="ExRunVm_SaveNote_Real" xml:space="preserve">
+    <value>Økten lagres og teller mot progresjonen din.</value>
+  </data>
+  <data name="ExRunVm_SaveNote_Synth" xml:space="preserve">
+    <value>Syntetisk testlyd — økten lagres ikke.</value>
+  </data>
+  <data name="ExRunVm_SaveNote_Local" xml:space="preserve">
+    <value>Økten lagres lokalt.</value>
+  </data>
+  <data name="ExRunVm_LiveHeading_Synth" xml:space="preserve">
+    <value>Sanntid (syntetisk testlyd)</value>
+  </data>
+  <data name="ExRunVm_ReadyToStart_Synth" xml:space="preserve">
+    <value>Ingen mikrofon funnet — Start kjører en syntetisk testlyd (lagres ikke).</value>
+  </data>
+  <data name="ExRunVm_ReadyToStart_Real" xml:space="preserve">
+    <value>Klar til å starte — trykk Start for å øve med mikrofonen din.</value>
+  </data>
+  <data name="ExRunVm_Fb_Pause" xml:space="preserve">
+    <value>Koordinator anbefaler en pause (veiledende)</value>
+  </data>
+  <data name="ExRunVm_Fb_NoStableVoice" xml:space="preserve">
+    <value>Ingen stabil stemme registrert</value>
+  </data>
+  <data name="ExRunVm_Fb_SlightlyUnder" xml:space="preserve">
+    <value>Litt under målområdet</value>
+  </data>
+  <data name="ExRunVm_Fb_SlightlyOver" xml:space="preserve">
+    <value>Litt over målområdet</value>
+  </data>
+  <data name="ExRunVm_Fb_InRange" xml:space="preserve">
+    <value>Innenfor målområdet</value>
+  </data>
+  <data name="ExRunVm_Fb_SteadyTone" xml:space="preserve">
+    <value>Si en jevn tone i målområdet.</value>
+  </data>
+  <data name="ExRunVm_Status_InProgress" xml:space="preserve">
+    <value>Øvelse i gang — hold tonen i målområdet.</value>
+  </data>
+  <data name="ExRunVm_SessionEnded" xml:space="preserve">
+    <value>Økt fullført · varighet {0} · beste hold {1} %. {2}</value>
+  </data>
+  <data name="ExRunVm_Tail_Saved" xml:space="preserve">
+    <value>Lagret — teller mot progresjonen din.</value>
+  </data>
+  <data name="ExRunVm_Tail_Synth" xml:space="preserve">
+    <value>Syntetisk testlyd — ikke lagret.</value>
+  </data>
+  <data name="ExRunVm_Tail_Local" xml:space="preserve">
+    <value>Lagret lokalt.</value>
+  </data>
+  <data name="ExRunVm_ExerciseStopped" xml:space="preserve">
+    <value>Øvelse stoppet.</value>
+  </data>
+  <data name="ExRunVm_Status_HoldingGreat" xml:space="preserve">
+    <value>Flott — du holder målområdet!</value>
+  </data>
+  <data name="ExRunVm_Status_HoldSteady" xml:space="preserve">
+    <value>Bra — hold tonen rolig i målområdet.</value>
+  </data>
+  <data name="ExRunVm_Status_SayTone" xml:space="preserve">
+    <value>Si en jevn tone for å begynne.</value>
+  </data>
+  <data name="ExRunVm_Status_Adjust" xml:space="preserve">
+    <value>Juster tonen mot målområdet.</value>
+  </data>
+  <data name="ExRun_Status_Under" xml:space="preserve">
+    <value>Under målområde</value>
+  </data>
+  <data name="ExRun_Status_Over" xml:space="preserve">
+    <value>Over målområde</value>
+  </data>
+  <data name="ExRun_Status_In" xml:space="preserve">
+    <value>Innenfor målområde</value>
+  </data>
+  <data name="GuideVm_SearchPlaceholder" xml:space="preserve">
+    <value>Søk i øvelser …</value>
+  </data>
+  <data name="GuideVm_EmptyText" xml:space="preserve">
+    <value>Ingen øvelser matcher søket.</value>
+  </data>
+  <data name="GuideVm_ProgressZero" xml:space="preserve">
+    <value>— · 0 økter</value>
+  </data>
+  <data name="GuideVm_ProgressNote_Default" xml:space="preserve">
+    <value>Fullførte øvelser lagres og teller mot progresjonen din.</value>
+  </data>
+  <data name="GuideVm_ProgressText" xml:space="preserve">
+    <value>{0} min · {1} økter</value>
+  </data>
+  <data name="GuideVm_ProgressNote_Today" xml:space="preserve">
+    <value>Dagens fullførte øvelser er lagret og teller mot progresjonen din.</value>
+  </data>
 </root>

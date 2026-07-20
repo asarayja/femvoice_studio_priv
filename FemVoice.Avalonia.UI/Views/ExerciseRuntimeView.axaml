@@ -12,7 +12,7 @@
 
       <!-- Header: back + title -->
       <StackPanel Orientation="Horizontal" Spacing="10">
-        <Button Content="← Tilbake" Command="{Binding BackCommand}"/>
+        <Button Content="{loc:Tr Key=ExRun_Back, Fallback='← Tilbake'}" Command="{Binding BackCommand}"/>
         <TextBlock Text="{Binding SelectedExerciseName}" FontSize="22" FontWeight="Bold" VerticalAlignment="Center"
                    Foreground="{DynamicResource ShellHeadingBrush}"/>
       </StackPanel>
@@ -24,13 +24,32 @@
       <Border Classes="card">
         <StackPanel Spacing="4">
           <WrapPanel>
-            <TextBlock Text="{Binding Category, StringFormat='Kategori: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <TextBlock Text="{Binding Difficulty, StringFormat='Nivå: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <TextBlock Text="{Binding FocusLabel, StringFormat='Fokus: {0}'}" Margin="0,0,20,4" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
-            <TextBlock Text="{Binding DurationText, StringFormat='Varighet: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,20,4">
+              <TextBlock Text="{loc:Tr Key=Main_Category, Fallback='Kategori'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text=": " Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text="{Binding Category}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,20,4">
+              <TextBlock Text="{loc:Tr Key=ExRun_Lbl_Level, Fallback='Nivå'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text=": " Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text="{Binding Difficulty}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,20,4">
+              <TextBlock Text="{loc:Tr Key=ExRun_Lbl_Focus, Fallback='Fokus'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+              <TextBlock Text=": " FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+              <TextBlock Text="{Binding FocusLabel}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,20,4">
+              <TextBlock Text="{loc:Tr Key=ExRun_Lbl_Duration, Fallback='Varighet'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text=": " Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text="{Binding DurationText}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            </StackPanel>
             <!-- Pitch target shown prominently ONLY when pitch is the primary focus -->
-            <TextBlock Text="{Binding TargetPitchText, StringFormat='Målområde: {0}'}" Margin="0,0,20,4"
-                       Foreground="{DynamicResource ShellBodyTextBrush}" IsVisible="{Binding IsPitchFocused}"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,20,4" IsVisible="{Binding IsPitchFocused}">
+              <TextBlock Text="{loc:Tr Key=ExRun_Lbl_TargetRange, Fallback='Målområde'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text=": " Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <TextBlock Text="{Binding TargetPitchText}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            </StackPanel>
           </WrapPanel>
           <!-- For non-pitch exercises, the pitch range is a secondary technical detail (muted) -->
           <TextBlock Text="{Binding SecondaryPitchText}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"
@@ -76,12 +95,16 @@
             <TextBlock Text="{Binding ElapsedText}" FontSize="40" FontWeight="Bold" HorizontalAlignment="Center"
                        Foreground="{DynamicResource ShellHeadingBrush}"/>
             <WrapPanel HorizontalAlignment="Center">
-              <TextBlock Text="{Binding PhaseText, StringFormat='Tilstand: {0}'}" FontWeight="SemiBold" Margin="0,0,16,0" Foreground="{DynamicResource ShellAccentBrush}"/>
+              <StackPanel Orientation="Horizontal" Margin="0,0,16,0">
+                <TextBlock Text="{loc:Tr Key=ExRun_Lbl_State, Fallback='Tilstand'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+                <TextBlock Text=": " FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+                <TextBlock Text="{Binding PhaseText}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
+              </StackPanel>
               <TextBlock Text="{Binding RecommendedDurationText}" Foreground="{DynamicResource ShellMutedBrush}"/>
             </WrapPanel>
             <WrapPanel HorizontalAlignment="Center">
               <Button Content="{loc:Tr Key=UI_StartExercise, Fallback='Start øvelse'}" Classes="primary" Command="{Binding BeginCommand}" IsEnabled="{Binding !IsRunning}" IsVisible="{Binding !IsRunning}" MinWidth="120" Margin="0,0,8,0"/>
-              <Button Content="Stopp" Classes="primary" Command="{Binding StopCommand}" IsEnabled="{Binding IsRunning}" IsVisible="{Binding IsRunning}" MinWidth="120"/>
+              <Button Content="{loc:Tr Key=ExRun_Stop, Fallback='Stopp'}" Classes="primary" Command="{Binding StopCommand}" IsEnabled="{Binding IsRunning}" IsVisible="{Binding IsRunning}" MinWidth="120"/>
             </WrapPanel>
 
             <!-- Inactive: before first Start -->
@@ -93,7 +116,7 @@
             <!-- Stopped: session-ended summary -->
             <Border IsVisible="{Binding IsStopped}" BorderBrush="{DynamicResource ShellOkBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10">
               <StackPanel Spacing="4">
-                <TextBlock Text="Økt avsluttet" FontWeight="SemiBold" Foreground="{DynamicResource ShellOkBrush}"/>
+                <TextBlock Text="{loc:Tr Key=ExRun_SessionEnded, Fallback='Økt avsluttet'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellOkBrush}"/>
                 <TextBlock Text="{Binding SessionEndedSummary}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
                 <TextBlock Text="{Binding NotSavedNote}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
               </StackPanel>
@@ -110,15 +133,23 @@
                 <TextBlock Text="{Binding CurrentPitch, StringFormat='{}{0:F1}'}" FontSize="34" FontWeight="Bold" Foreground="{DynamicResource ShellAccentBrush}"/>
                 <TextBlock Text="Hz" VerticalAlignment="Bottom" Margin="0,0,0,6" Foreground="{DynamicResource ShellMutedBrush}"/>
               </StackPanel>
-              <TextBlock Text="{Binding PitchStatus, StringFormat='Status: {0}'}" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-              <TextBlock Text="{Binding CurrentResonance, StringFormat='Resonans: {0}'}" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{loc:Tr Key=ExRun_Lbl_Status, Fallback='Status'}" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                <TextBlock Text=": " FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                <TextBlock Text="{Binding PitchStatus}" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              </StackPanel>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{loc:Tr Key=Dash_ResonanceLabel, Fallback='Resonans'}" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                <TextBlock Text=": " FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                <TextBlock Text="{Binding CurrentResonance}" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              </StackPanel>
 
               <!-- Moving pitch trace (converter-free Canvas; px == distance from bottom). -->
-              <TextBlock Text="Tonehøyde (nyeste til høyre)" FontSize="12" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,4,0,0"/>
+              <TextBlock Text="{loc:Tr Key=Dash_PitchChartTitle, Fallback='Tonehøyde (nyeste til høyre)'}" FontSize="12" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,4,0,0"/>
               <Grid ColumnDefinitions="Auto,*" Height="{Binding RuntimeChart.ChartHeightPx}">
                 <Grid Grid.Column="0" Width="46" RowDefinitions="Auto,*,Auto" Margin="0,0,6,0">
-                  <TextBlock Grid.Row="0" Text="Høyere" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
-                  <TextBlock Grid.Row="2" Text="Lavere" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
+                  <TextBlock Grid.Row="0" Text="{loc:Tr Key=Dash_AxisHigher, Fallback='Høyere'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
+                  <TextBlock Grid.Row="2" Text="{loc:Tr Key=Dash_AxisLower, Fallback='Lavere'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
                 </Grid>
                 <Border Grid.Column="1" Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="6" ClipToBounds="True">
                   <Panel>
@@ -148,7 +179,7 @@
                                  IsVisible="{Binding RuntimeChart.HasVoice}"/>
                     </Canvas>
                     <!-- Empty-state hint until a voice is detected — readable muted, not faint -->
-                    <TextBlock Text="Si en jevn tone — tonehøyden vises her." HorizontalAlignment="Center" VerticalAlignment="Center"
+                    <TextBlock Text="{loc:Tr Key=ExRun_PitchHint, Fallback='Si en jevn tone — tonehøyden vises her.'}" HorizontalAlignment="Center" VerticalAlignment="Center"
                                TextWrapping="Wrap" FontSize="14" Foreground="{DynamicResource ShellMutedBrush}" IsVisible="{Binding !RuntimeChart.HasVoice}"/>
                   </Panel>
                 </Border>
@@ -168,27 +199,47 @@
           <!-- Hold progress (display-only): derived vs coordinator -->
           <Border Classes="card" IsVisible="{Binding IsRunning}">
             <StackPanel Spacing="4">
-              <TextBlock Text="Hold i målområdet (visning)" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-              <TextBlock Text="Avledet hold" Foreground="{DynamicResource ShellSecondaryBrush}" FontSize="12"/>
+              <TextBlock Text="{loc:Tr Key=ExRun_HoldInTarget, Fallback='Hold i målområdet (visning)'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+              <TextBlock Text="{loc:Tr Key=ExRun_DerivedHold, Fallback='Avledet hold'}" Foreground="{DynamicResource ShellSecondaryBrush}" FontSize="12"/>
               <ProgressBar Minimum="0" Maximum="100" Value="{Binding DerivedHoldVisualPercent}" Height="16"/>
-              <TextBlock Text="{Binding HoldSeconds, StringFormat='Holdt: {0:F1} s'}" FontSize="12" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-              <TextBlock Text="Koordinator-hold (veiledende)" Foreground="{DynamicResource ShellDeferredTitleBrush}" FontSize="12" Margin="0,6,0,0"/>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{loc:Tr Key=ExRun_Lbl_Held, Fallback='Holdt'}" FontSize="12" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                <TextBlock Text=": " FontSize="12" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                <TextBlock Text="{Binding HoldSeconds, StringFormat='{}{0:F1} s'}" FontSize="12" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              </StackPanel>
+              <TextBlock Text="{loc:Tr Key=ExRun_CoordinatorHold, Fallback='Koordinator-hold (veiledende)'}" Foreground="{DynamicResource ShellDeferredTitleBrush}" FontSize="12" Margin="0,6,0,0"/>
               <ProgressBar Minimum="0" Maximum="100" Value="{Binding CoordinatorHoldVisualPercent}" Height="16"/>
-              <TextBlock Text="{Binding HoldComparisonText, StringFormat='Differanse: {0}'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{loc:Tr Key=ExRun_Lbl_Difference, Fallback='Differanse'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+                <TextBlock Text=": " Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+                <TextBlock Text="{Binding HoldComparisonText}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              </StackPanel>
             </StackPanel>
           </Border>
 
           <!-- Coordinator readout (DISPLAY-ONLY — parameterless ExerciseIntelligenceCoordinator, NOT enforced) -->
           <Border Classes="card" BorderBrush="{DynamicResource ShellDeferredBorderBrush}" IsVisible="{Binding IsRunning}">
             <StackPanel Spacing="6">
-              <TextBlock Text="Koordinator-readout" FontWeight="SemiBold" Foreground="{DynamicResource ShellDeferredTitleBrush}"/>
+              <TextBlock Text="{loc:Tr Key=ExRun_CoordinatorReadout, Fallback='Koordinator-readout'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellDeferredTitleBrush}"/>
               <TextBlock Text="{Binding CoordinatorReadout.ReadoutMode}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
               <WrapPanel>
-                <TextBlock Text="{Binding CoordinatorReadout.IsCoordinatorActive, StringFormat='Aktiv: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-                <TextBlock Text="{Binding CoordinatorReadout.CoordinatorStatusText, StringFormat='Tilstand: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,20,4">
+                  <TextBlock Text="{loc:Tr Key=ExRun_Lbl_Active, Fallback='Aktiv'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                  <TextBlock Text=": " Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                  <TextBlock Text="{Binding CoordinatorReadout.IsCoordinatorActive}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,20,4">
+                  <TextBlock Text="{loc:Tr Key=ExRun_Lbl_State, Fallback='Tilstand'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                  <TextBlock Text=": " Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                  <TextBlock Text="{Binding CoordinatorReadout.CoordinatorStatusText}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                </StackPanel>
               </WrapPanel>
               <ProgressBar Minimum="0" Maximum="100" Value="{Binding CoordinatorReadout.CoordinatorHoldProgressPercent}" Height="14"/>
-              <TextBlock Text="{Binding CoordinatorReadout.HoldDifferenceDisplay, StringFormat='Differanse: {0}'}" Foreground="{DynamicResource ShellMutedBrush}"/>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{loc:Tr Key=ExRun_Lbl_Difference, Fallback='Differanse'}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                <TextBlock Text=": " Foreground="{DynamicResource ShellMutedBrush}"/>
+                <TextBlock Text="{Binding CoordinatorReadout.HoldDifferenceDisplay}" Foreground="{DynamicResource ShellMutedBrush}"/>
+              </StackPanel>
               <TextBlock Text="{Binding CoordinatorReadout.CoordinatorGuidanceText}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
               <Border Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="4" Padding="8">
                 <StackPanel Spacing="2">
@@ -234,18 +285,45 @@
           <!-- Technical target profile (secondary detail) -->
           <Border Classes="card" BorderBrush="{DynamicResource ShellSecondaryBrush}">
             <StackPanel Spacing="4">
-              <TextBlock Text="Mål-profil (teknisk)" FontWeight="SemiBold" Foreground="{DynamicResource ShellSecondaryBrush}"/>
+              <TextBlock Text="{loc:Tr Key=ExRun_TargetProfile, Fallback='Mål-profil (teknisk)'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellSecondaryBrush}"/>
               <TextBlock Text="{Binding TargetProfile.ProfileStatusMessage}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
               <WrapPanel>
-                <TextBlock Text="{Binding TargetProfile.TargetPitch, StringFormat='Mål-pitch: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellMutedBrush}"/>
-                <TextBlock Text="{Binding TargetProfile.ResonanceTarget, StringFormat='Resonans-mål: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellMutedBrush}"/>
-                <TextBlock Text="{Binding TargetProfile.StabilityTarget, StringFormat='Stabilitet: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellMutedBrush}"/>
-                <TextBlock Text="{Binding TargetProfile.RequiredHoldSeconds, StringFormat='Hold-mål: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellMutedBrush}"/>
-                <TextBlock Text="{Binding MetricsText, StringFormat='Mål-skills: {0}'}" Margin="0,0,20,4" Foreground="{DynamicResource ShellMutedBrush}"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,20,4">
+                  <TextBlock Text="{loc:Tr Key=ExRun_Lbl_TargetPitch, Fallback='Mål-pitch'}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                  <TextBlock Text=": " Foreground="{DynamicResource ShellMutedBrush}"/>
+                  <TextBlock Text="{Binding TargetProfile.TargetPitch}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,20,4">
+                  <TextBlock Text="{loc:Tr Key=ExRun_Lbl_ResonanceTarget, Fallback='Resonans-mål'}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                  <TextBlock Text=": " Foreground="{DynamicResource ShellMutedBrush}"/>
+                  <TextBlock Text="{Binding TargetProfile.ResonanceTarget}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,20,4">
+                  <TextBlock Text="{loc:Tr Key=Dash_StabilityLabel, Fallback='Stabilitet'}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                  <TextBlock Text=": " Foreground="{DynamicResource ShellMutedBrush}"/>
+                  <TextBlock Text="{Binding TargetProfile.StabilityTarget}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,20,4">
+                  <TextBlock Text="{loc:Tr Key=ExRun_Lbl_HoldTarget, Fallback='Hold-mål'}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                  <TextBlock Text=": " Foreground="{DynamicResource ShellMutedBrush}"/>
+                  <TextBlock Text="{Binding TargetProfile.RequiredHoldSeconds}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,20,4">
+                  <TextBlock Text="{loc:Tr Key=ExRun_Lbl_TargetSkills, Fallback='Mål-skills'}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                  <TextBlock Text=": " Foreground="{DynamicResource ShellMutedBrush}"/>
+                  <TextBlock Text="{Binding MetricsText}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                </StackPanel>
               </WrapPanel>
-              <TextBlock Text="{Binding TargetProfile.FocusText, StringFormat='Fokus: {0}'}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}"/>
-              <TextBlock Text="{Binding TargetProfile.CommonMistakesText, StringFormat='Vanlige feil: {0}'}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}"
-                         IsVisible="{Binding TargetProfile.HasCommonMistakes}"/>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{loc:Tr Key=ExRun_Lbl_Focus, Fallback='Fokus'}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                <TextBlock Text=": " Foreground="{DynamicResource ShellMutedBrush}"/>
+                <TextBlock Text="{Binding TargetProfile.FocusText}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}"/>
+              </StackPanel>
+              <StackPanel Orientation="Horizontal" IsVisible="{Binding TargetProfile.HasCommonMistakes}">
+                <TextBlock Text="{loc:Tr Key=ExRun_Lbl_CommonMistakes, Fallback='Vanlige feil'}" Foreground="{DynamicResource ShellMutedBrush}"/>
+                <TextBlock Text=": " Foreground="{DynamicResource ShellMutedBrush}"/>
+                <TextBlock Text="{Binding TargetProfile.CommonMistakesText}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}"/>
+              </StackPanel>
             </StackPanel>
           </Border>
 
