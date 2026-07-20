@@ -6,13 +6,18 @@ The app runs locally on your device. It is not a cloud service, and it is not a 
 
 ## Runs On Your Devices
 
-FemVoice Studio is built on a single shared, cross-platform interface (Avalonia), so you get the same navigation, exercises, and theme everywhere:
+FemVoice Studio is built on a single shared, cross-platform interface (Avalonia), so you get the same navigation, exercises, and theme on every supported platform.
+
+**Available now:**
 
 - **Windows** desktops and laptops (10 or 11).
-- **macOS** (Apple Silicon or Intel).
-- **Linux** (x64 or ARM64).
 - **Android** phones and tablets.
-- **iPhone / iPad** — in preview (currently built on a Mac; some features are still catching up to the desktop version).
+- **Linux** (x64 or ARM64).
+
+**In development (not ready yet):**
+
+- **macOS** (Apple Silicon or Intel).
+- **iPhone / iPad**.
 
 The layout adapts to the screen: a full multi-column view on larger displays, and a compact layout with collapsible navigation on phones. Your training data lives on each device separately unless you move it yourself.
 
@@ -90,7 +95,7 @@ Avoid sharing private notes, personal identifiers, or sensitive health informati
 
 ## Requirements
 
-- One of the supported platforms: Windows 10/11, macOS, Linux, or Android (5.0 / API 21 or newer). An iPhone/iPad preview build is also available (built on a Mac).
+- One of the currently available platforms: Windows 10/11, Android (5.0 / API 21 or newer), or Linux. macOS and iPhone/iPad versions are still in development and not ready yet.
 - A working microphone. On phones and tablets, allow the microphone permission when the app asks for it, so live feedback works.
 - A quiet practice environment.
 - The packaged app build for your platform (for example the Windows installer), or the .NET SDK if running from source.
