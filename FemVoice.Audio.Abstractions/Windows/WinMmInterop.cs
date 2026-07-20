@@ -90,4 +90,29 @@ internal static class WinMmInterop
 
     [DllImport("winmm.dll")]
     internal static extern uint waveInReset(IntPtr hwi);
+
+    // ── waveOut (speaker playback — "hear your own voice") ────────────────────────────────────────────────────────
+    internal const uint WAVE_MAPPER_OUT = 0xFFFFFFFF;   // system-default output device
+
+    [DllImport("winmm.dll")]
+    internal static extern uint waveOutGetNumDevs();
+
+    [DllImport("winmm.dll")]
+    internal static extern uint waveOutOpen(out IntPtr phwo, uint uDeviceID, ref WAVEFORMATEX pwfx,
+        IntPtr dwCallback, IntPtr dwInstance, uint fdwOpen);
+
+    [DllImport("winmm.dll")]
+    internal static extern uint waveOutClose(IntPtr hwo);
+
+    [DllImport("winmm.dll")]
+    internal static extern uint waveOutPrepareHeader(IntPtr hwo, IntPtr pwh, uint cbwh);
+
+    [DllImport("winmm.dll")]
+    internal static extern uint waveOutUnprepareHeader(IntPtr hwo, IntPtr pwh, uint cbwh);
+
+    [DllImport("winmm.dll")]
+    internal static extern uint waveOutWrite(IntPtr hwo, IntPtr pwh, uint cbwh);
+
+    [DllImport("winmm.dll")]
+    internal static extern uint waveOutReset(IntPtr hwo);
 }

@@ -26,6 +26,8 @@ public class MainActivity : AvaloniaMainActivity<App>
         // Provide the REAL Android capture backend (AudioRecord) to the shared DI, BEFORE Avalonia builds the shell
         // and resolves IAudioCaptureService. Without this, Android falls back to the synthetic display-only source.
         AudioCaptureBackendFactory.PlatformRealBackendFactory = () => new AndroidAudioCaptureService();
+        // And the real Android speaker backend (AudioTrack) for "hear your own voice".
+        AudioPlaybackBackendFactory.PlatformPlaybackFactory = () => new AndroidAudioPlaybackService();
 
         base.OnCreate(savedInstanceState);
 

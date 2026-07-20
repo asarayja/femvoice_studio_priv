@@ -13,4 +13,11 @@ public static class CapturePreferences
         try { return new UiPreferencesStore().Load().MicDeviceId; }
         catch { return null; }
     }
+
+    /// <summary>Whether the user enabled "hear your own voice" (real-time mic→speaker monitoring). Never throws.</summary>
+    public static bool HearOwnVoice()
+    {
+        try { return new UiPreferencesStore().Load().HearOwnVoice; }
+        catch { return false; }
+    }
 }
