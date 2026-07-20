@@ -21,42 +21,42 @@
       <Border Classes="card">
         <StackPanel Spacing="10">
           <TextBlock Text="Ønsket profil (forespørsel)" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}"/>
-          <Grid ColumnDefinitions="180,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+          <Grid ColumnDefinitions="130,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Baseline-profil" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,3" MinWidth="220" HorizontalAlignment="Left"
+            <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,3" HorizontalAlignment="Stretch" MaxWidth="320"
                       ItemsSource="{Binding ProfileTypes}" SelectedItem="{Binding BaselineProfileType, Mode=TwoWay}"/>
 
             <TextBlock Grid.Row="1" Grid.Column="0" Text="Stilmål" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,3" MinWidth="220" HorizontalAlignment="Left"
+            <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,3" HorizontalAlignment="Stretch" MaxWidth="320"
                       ItemsSource="{Binding StyleGoals}" SelectedItem="{Binding StyleGoal, Mode=TwoWay}"/>
 
             <TextBlock Grid.Row="2" Grid.Column="0" Text="Ønsket resonans min" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <NumericUpDown Grid.Row="2" Grid.Column="1" Margin="0,3" MinWidth="180" HorizontalAlignment="Left" Increment="10"
+            <NumericUpDown Grid.Row="2" Grid.Column="1" Margin="0,3" HorizontalAlignment="Stretch" MaxWidth="320" Increment="10"
                            Value="{Binding IntendedResonanceMin, Mode=TwoWay}"/>
 
             <TextBlock Grid.Row="3" Grid.Column="0" Text="Ønsket resonans max" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <NumericUpDown Grid.Row="3" Grid.Column="1" Margin="0,3" MinWidth="180" HorizontalAlignment="Left" Increment="10"
+            <NumericUpDown Grid.Row="3" Grid.Column="1" Margin="0,3" HorizontalAlignment="Stretch" MaxWidth="320" Increment="10"
                            Value="{Binding IntendedResonanceMax, Mode=TwoWay}"/>
 
             <TextBlock Grid.Row="4" Grid.Column="0" Text="Ønsket stabilitetsterskel" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <NumericUpDown Grid.Row="4" Grid.Column="1" Margin="0,3" MinWidth="180" HorizontalAlignment="Left" Increment="0.05" Minimum="0" Maximum="1"
+            <NumericUpDown Grid.Row="4" Grid.Column="1" Margin="0,3" HorizontalAlignment="Stretch" MaxWidth="320" Increment="0.05" Minimum="0" Maximum="1"
                            Value="{Binding IntendedStabilityThreshold, Mode=TwoWay}"/>
 
             <TextBlock Grid.Row="5" Grid.Column="0" Text="{Binding OverrideKindLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <ComboBox Grid.Row="5" Grid.Column="1" Margin="0,3" MinWidth="220" HorizontalAlignment="Left"
+            <ComboBox Grid.Row="5" Grid.Column="1" Margin="0,3" HorizontalAlignment="Stretch" MaxWidth="320"
                       ItemsSource="{Binding OverrideKinds}" SelectedItem="{Binding SelectedKind, Mode=TwoWay}"/>
 
             <TextBlock Grid.Row="6" Grid.Column="0" Text="{Binding ReasonCodeLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <TextBox Grid.Row="6" Grid.Column="1" Margin="0,3" MinWidth="220" HorizontalAlignment="Left"
+            <TextBox Grid.Row="6" Grid.Column="1" Margin="0,3" HorizontalAlignment="Stretch" MaxWidth="320"
                      Text="{Binding ReasonCode, Mode=TwoWay}"/>
 
             <TextBlock Grid.Row="7" Grid.Column="0" Text="{Binding HoldLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <NumericUpDown Grid.Row="7" Grid.Column="1" Margin="0,3" MinWidth="180" HorizontalAlignment="Left" Increment="1" Minimum="0" Maximum="30"
+            <NumericUpDown Grid.Row="7" Grid.Column="1" Margin="0,3" HorizontalAlignment="Stretch" MaxWidth="320" Increment="1" Minimum="0" Maximum="30"
                            Value="{Binding IntendedRequiredHoldSeconds, Mode=TwoWay}"/>
           </Grid>
 
           <!-- Live safety/recovery signals actually driving the clamp (read-only; WPF shows the observed state) -->
-          <Grid ColumnDefinitions="180,*" RowDefinitions="Auto,Auto">
+          <Grid ColumnDefinitions="130,*" RowDefinitions="Auto,Auto">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding ObservedGateLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ObservedGateText}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"/>
             <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding ObservedSeverityLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
@@ -71,7 +71,7 @@
         <StackPanel Spacing="6">
           <TextBlock Text="Klampet utfall (sikkerhet)" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
           <TextBlock Text="{Binding OutcomeText}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-          <Grid ColumnDefinitions="180,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,4,0,0">
+          <Grid ColumnDefinitions="130,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,4,0,0">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Resonansmål (min–max)" Foreground="{DynamicResource ShellMutedBrush}"/>
             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AppliedResonance}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
             <TextBlock Grid.Row="1" Grid.Column="0" Text="Stabilitetsterskel" Foreground="{DynamicResource ShellMutedBrush}"/>

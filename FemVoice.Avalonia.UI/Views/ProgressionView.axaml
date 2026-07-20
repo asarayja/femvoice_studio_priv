@@ -28,10 +28,10 @@
           </Grid>
         </Border>
 
-        <!-- Two-column masonry. Cards are split between LeftCol/RightCol; the code-behind reflows them into a single
-             column on narrow widths. Each column is a star so they share the full width evenly. -->
-        <Grid x:Name="CardsGrid" ColumnDefinitions="*,*">
-          <StackPanel x:Name="LeftCol" Grid.Column="0" Spacing="14" Margin="0,0,7,0">
+        <!-- Single robust column: the cards stack full-width so nothing is squeezed on phone widths (and it reads
+             cleanly on desktop too, like Settings/Reports). -->
+        <StackPanel x:Name="CardsGrid" Spacing="14">
+          <StackPanel x:Name="LeftCol" Spacing="14">
 
             <!-- Level -->
             <Border Classes="card">
@@ -107,7 +107,7 @@
             </Border>
 
           </StackPanel>
-          <StackPanel x:Name="RightCol" Grid.Column="1" Spacing="14" Margin="7,0,0,0">
+          <StackPanel x:Name="RightCol" Spacing="14">
 
             <!-- FemVoice score -->
             <Border Classes="card">
@@ -171,7 +171,7 @@
             </Border>
 
           </StackPanel>
-        </Grid>
+        </StackPanel>
 
         <TextBlock Text="{Binding DataNote}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12" TextWrapping="Wrap"/>
       </StackPanel>

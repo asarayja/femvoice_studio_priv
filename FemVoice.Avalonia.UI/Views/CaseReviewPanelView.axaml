@@ -17,7 +17,7 @@
         <StackPanel Spacing="10">
           <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding ReviewTypeLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,3" MinWidth="200" HorizontalAlignment="Left"
+            <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,3" HorizontalAlignment="Stretch" MaxWidth="320"
                       ItemsSource="{Binding ReviewTypes}" SelectedItem="{Binding SelectedReviewType, Mode=TwoWay}"/>
             <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding PeriodLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
             <!-- Editable period (WPF parity): two DatePickers -->
@@ -43,7 +43,7 @@
           <ItemsControl ItemsSource="{Binding Overview}">
             <ItemsControl.ItemTemplate>
               <DataTemplate>
-                <Grid ColumnDefinitions="200,*" Margin="0,2">
+                <Grid ColumnDefinitions="130,*" Margin="0,2">
                   <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}"/>
                   <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}" TextWrapping="Wrap"/>
                 </Grid>

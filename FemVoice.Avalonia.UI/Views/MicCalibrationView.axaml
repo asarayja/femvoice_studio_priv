@@ -22,7 +22,7 @@
         <StackPanel Spacing="12">
           <Grid ColumnDefinitions="90,*" VerticalAlignment="Center">
             <TextBlock Grid.Column="0" Text="{Binding DeviceLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <ComboBox Grid.Column="1" MinWidth="240" HorizontalAlignment="Left"
+            <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" MaxWidth="320"
                       ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
                       IsEnabled="{Binding IsAvailable}"/>
           </Grid>

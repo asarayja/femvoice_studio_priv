@@ -18,10 +18,10 @@
         <StackPanel Spacing="12">
           <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding DeviceLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,3" MinWidth="220" HorizontalAlignment="Left"
+            <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,3" HorizontalAlignment="Stretch" MaxWidth="320"
                       ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice, Mode=TwoWay}" IsEnabled="{Binding IsAvailable}"/>
             <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding TargetLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <NumericUpDown Grid.Row="1" Grid.Column="1" Margin="0,3" MinWidth="160" HorizontalAlignment="Left" Increment="5" Minimum="80" Maximum="500"
+            <NumericUpDown Grid.Row="1" Grid.Column="1" Margin="0,3" HorizontalAlignment="Stretch" MaxWidth="320" Increment="5" Minimum="80" Maximum="500"
                            Value="{Binding TargetFrequency, Mode=TwoWay}"/>
           </Grid>
           <!-- Musical-note target picker (WPF Analyzer parity): sets the target frequency -->
@@ -103,7 +103,7 @@
       <Border Classes="card">
         <StackPanel Spacing="6">
           <TextBlock Text="{Binding StatsLabel}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
-          <Grid ColumnDefinitions="180,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+          <Grid ColumnDefinitions="130,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Snitt tonehøyde" Foreground="{DynamicResource ShellMutedBrush}"/>
             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AveragePitch, StringFormat='{}{0:F0} Hz'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
             <TextBlock Grid.Row="1" Grid.Column="0" Text="Minimum" Foreground="{DynamicResource ShellMutedBrush}"/>

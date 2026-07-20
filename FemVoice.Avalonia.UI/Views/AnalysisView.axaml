@@ -47,7 +47,7 @@
           <ItemsControl ItemsSource="{Binding ScoreComponents}">
             <ItemsControl.ItemTemplate>
               <DataTemplate DataType="vm:AnalysisSummaryMetric">
-                <Grid ColumnDefinitions="160,*" Margin="0,2">
+                <Grid ColumnDefinitions="120,*" Margin="0,2">
                   <TextBlock Grid.Column="0" Text="{Binding Label}" Foreground="{DynamicResource ShellMutedBrush}"/>
                   <TextBlock Grid.Column="1" Text="{Binding Value}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
                 </Grid>
@@ -65,7 +65,7 @@
       <!-- Chart cards (WPF: 2-column grid of chart cards; here converter-free mini bar-charts) -->
       <ItemsControl ItemsSource="{Binding Series}">
         <ItemsControl.ItemsPanel>
-          <ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate>
+          <ItemsPanelTemplate><UniformGrid Columns="1"/></ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="vm:AnalysisSeries">

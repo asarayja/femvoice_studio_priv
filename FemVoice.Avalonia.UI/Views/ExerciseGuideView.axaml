@@ -29,24 +29,23 @@
     <StackPanel Grid.Row="2" Spacing="8" Margin="0,0,0,12">
       <TextBox Text="{Binding SearchText, Mode=TwoWay}" Watermark="{Binding SearchPlaceholder}"
                ToolTip.Tip="Søk på navn eller beskrivelse"/>
-      <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-        <ItemsControl ItemsSource="{Binding CategoryChips}">
-          <ItemsControl.ItemsPanel>
-            <ItemsPanelTemplate>
-              <StackPanel Orientation="Horizontal" Spacing="8"/>
-            </ItemsPanelTemplate>
-          </ItemsControl.ItemsPanel>
-          <ItemsControl.ItemTemplate>
-            <DataTemplate>
-              <!-- Chip button; selected state is a converter-free bool->class binding. -->
-              <Button Classes="chipFilter" Classes.selected="{Binding IsSelected}"
-                      Content="{Binding Label}"
-                      Command="{Binding $parent[ItemsControl].DataContext.SelectCategoryCommand}"
-                      CommandParameter="{Binding Label}"/>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </ScrollViewer>
+      <ItemsControl ItemsSource="{Binding CategoryChips}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <!-- Wrap so all filter chips are visible on phone widths (no horizontal scroll / cut-off). -->
+            <WrapPanel Orientation="Horizontal"/>
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <!-- Chip button; selected state is a converter-free bool->class binding. -->
+            <Button Classes="chipFilter" Classes.selected="{Binding IsSelected}"
+                    Content="{Binding Label}" Margin="0,0,8,8"
+                    Command="{Binding $parent[ItemsControl].DataContext.SelectCategoryCommand}"
+                    CommandParameter="{Binding Label}"/>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
     </StackPanel>
 
     <Grid Grid.Row="3">
