@@ -106,7 +106,7 @@ public sealed partial class SmartCoachViewModel : ObservableObject
             HasHealthWarning = rec.HealthWarning;
             HealthWarningText = rec.HealthWarningText ?? "";
             IsRecommendationCompleted = rec.IsCompleted;
-            WeeklyTargetText = $"{engine.GetWeeklySessionTarget(UserId)} økter/uke (mål)";
+            WeeklyTargetText = string.Format(Localized.Get("SmartCoach_WeeklyTargetFormat", "{0} økter/uke (mål)"), engine.GetWeeklySessionTarget(UserId));
             StatusSummary = engine.GetStatusSummary(UserId);
             BuildProgressToGoal(database, engine);
             BuildDetail(database);
@@ -234,7 +234,7 @@ public sealed partial class SmartCoachViewModel : ObservableObject
                 var day = DateTime.Now.Date.AddDays(-i);
                 if (byDay.TryGetValue(day, out var daySessions) && daySessions.Count > 0)
                     hist.Add(new AnalysisSummaryMetric(day.ToString("ddd dd.MM"),
-                        $"{daySessions.Count} økter · snitt {daySessions.Average(s => s.OverallScore):F0}"));
+                        string.Format(Localized.Get("SmartCoach_DayHistoryFormat", "{0} økter · snitt {1}"), daySessions.Count, daySessions.Average(s => s.OverallScore).ToString("F0"))));
                 else
                     hist.Add(new AnalysisSummaryMetric(day.ToString("ddd dd.MM"), "—"));
             }
@@ -245,10 +245,10 @@ public sealed partial class SmartCoachViewModel : ObservableObject
 
     private static string FocusText(string? focusArea) => (focusArea ?? "").ToLowerInvariant() switch
     {
-        "resonance" => "Resonans",
-        "pitch" => "Tonehøyde",
-        "intonation" => "Intonasjon",
-        "breathing" => "Pust",
+        "resonance" => Localized.Get("Goal_Resonance", "Resonans"),
+        "pitch" => Localized.Get("Goal_Pitch", "Tonehøyde"),
+        "intonation" => Localized.Get("Goal_Intonation", "Intonasjon"),
+        "breathing" => Localized.Get("Goal_Breathing", "Pust"),
         _ => string.IsNullOrWhiteSpace(focusArea) ? "—" : focusArea!,
     };
 }

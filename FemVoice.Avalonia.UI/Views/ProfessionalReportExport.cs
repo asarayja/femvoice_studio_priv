@@ -19,7 +19,7 @@ internal static class ProfessionalReportExport
 {
     public static async Task SaveAsync(Visual? owner, object? report, ExportFormat format, string baseName, Action<string> status)
     {
-        if (report is null) { status("Ingen rapport å eksportere."); return; }
+        if (report is null) { status(FemVoice.Avalonia.Localization.Localized.Get("Report_NothingToExport", "Ingen rapport å eksportere.")); return; }
         var (ext, mime, typeName) = format switch
         {
             ExportFormat.Pdf => ("pdf", "application/pdf", "PDF"),
@@ -29,7 +29,7 @@ internal static class ProfessionalReportExport
         try
         {
             var top = owner is null ? null : TopLevel.GetTopLevel(owner);
-            if (top is null) { status("Kunne ikke åpne lagringsdialog."); return; }
+            if (top is null) { status(FemVoice.Avalonia.Localization.Localized.Get("Error_SaveDialogFailed", "Kunne ikke åpne lagringsdialog.")); return; }
 
             var file = await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {

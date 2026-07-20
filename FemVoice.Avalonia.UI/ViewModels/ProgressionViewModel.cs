@@ -106,7 +106,7 @@ public sealed partial class ProgressionViewModel : ObservableObject
 
             IReadOnlyList<FemVoiceStudio.Models.TrainingSession> recent = database.GetRecentSessions(20);
             SessionCount = recent.Count;
-            SessionCountText = $"{recent.Count} lagrede økter";
+            SessionCountText = string.Format(Localized.Get("Progression_SessionCountFormat", "{0} lagrede økter"), recent.Count);
             if (recent.Count > 0)
             {
                 FemVoiceScore = Math.Round(recent.Average(s => s.OverallScore));
@@ -116,14 +116,14 @@ public sealed partial class ProgressionViewModel : ObservableObject
 
             var ps = new ProgressionService(database, localization ?? LocalizationService.Instance);
             Summary = ps.GetProgressionSummary();
-            RecommendedDifficultyText = $"Anbefalt nivå: {ps.GetRecommendedDifficulty()}";
+            RecommendedDifficultyText = string.Format(Localized.Get("Progression_RecommendedLevelFormat", "Anbefalt nivå: {0}"), ps.GetRecommendedDifficulty());
 
             // Progress toward the next level + real stat rows (from the real ProgressionStatus).
             var status = ps.GetProgressionStatus();
             if (status.SessionsRequiredForPromotion > 0)
             {
                 ProgressPercent = Math.Round(Math.Clamp(100.0 * status.SessionsAtCurrentLevel / status.SessionsRequiredForPromotion, 0, 100));
-                ProgressToNextText = $"{status.SessionsAtCurrentLevel} / {status.SessionsRequiredForPromotion} økter på dette nivået";
+                ProgressToNextText = string.Format(Localized.Get("Level_SessionsAtLevelFormat", "{0} / {1} økter på dette nivået"), status.SessionsAtCurrentLevel, status.SessionsRequiredForPromotion);
                 HasProgress = true;
             }
             StatMetrics = new List<AnalysisSummaryMetric>
@@ -152,7 +152,7 @@ public sealed partial class ProgressionViewModel : ObservableObject
             var week = database.GetTrainingSessions(DateTime.UtcNow.Date.AddDays(-7), DateTime.UtcNow);
             int weekMin = (int)Math.Round(week.Sum(s => s.DurationSeconds) / 60.0);
             double weekAvg = week.Count > 0 ? week.Average(s => s.OverallScore) : 0;
-            WeeklySummary = $"{week.Count} økter · {weekMin} min · snitt score {weekAvg:F0}";
+            WeeklySummary = string.Format(Localized.Get("Progression_WeeklyFormat", "{0} økter · {1} min · snitt score {2}"), week.Count, weekMin, weekAvg.ToString("F0"));
 
             BuildParameterGraph(database);
 

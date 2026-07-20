@@ -31,7 +31,7 @@ public partial class ReportsView : UserControl
         try
         {
             var top = TopLevel.GetTopLevel(this);
-            if (top is null) { ShowStatus("Kunne ikke åpne lagringsdialog."); return; }
+            if (top is null) { ShowStatus(FemVoice.Avalonia.Localization.Localized.Get("Error_SaveDialogFailed", "Kunne ikke åpne lagringsdialog.")); return; }
 
             var file = await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {

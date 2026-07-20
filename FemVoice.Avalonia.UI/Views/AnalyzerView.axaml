@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
+             xmlns:loc="clr-namespace:FemVoice.Avalonia.Localization"
              x:Class="FemVoice.Avalonia.Views.AnalyzerView">
   <!-- REAL real-time analyzer: live main frequency + resonance vs a target, plus running pitch stats (avg/min/max/
        duration/samples). Core pitch + resonance engines. Measurement only — no scoring/persistence. IDisposable. -->
@@ -104,7 +105,7 @@
         <StackPanel Spacing="6">
           <TextBlock Text="{Binding StatsLabel}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
           <Grid ColumnDefinitions="130,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
-            <TextBlock Grid.Row="0" Grid.Column="0" Text="Snitt tonehøyde" Foreground="{DynamicResource ShellMutedBrush}"/>
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Tr Key=Dashboard_AveragePitch, Fallback='Snitt tonehøyde'}" Foreground="{DynamicResource ShellMutedBrush}"/>
             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AveragePitch, StringFormat='{}{0:F0} Hz'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
             <TextBlock Grid.Row="1" Grid.Column="0" Text="Minimum" Foreground="{DynamicResource ShellMutedBrush}"/>
             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding MinPitch, StringFormat='{}{0:F0} Hz'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
@@ -112,7 +113,7 @@
             <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding MaxPitch, StringFormat='{}{0:F0} Hz'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
             <TextBlock Grid.Row="3" Grid.Column="0" Text="Varighet" Foreground="{DynamicResource ShellMutedBrush}"/>
             <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding DurationText}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <TextBlock Grid.Row="4" Grid.Column="0" Text="Stemte målinger" Foreground="{DynamicResource ShellMutedBrush}"/>
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="{loc:Tr Key=Analyzer_VoicedMeasurements, Fallback='Stemte målinger'}" Foreground="{DynamicResource ShellMutedBrush}"/>
             <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SampleCount}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
           </Grid>
         </StackPanel>

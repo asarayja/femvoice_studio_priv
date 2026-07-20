@@ -150,7 +150,7 @@ public sealed partial class CalendarViewModel : ObservableObject
                 var cellDate = d;
                 string tip = count > 0
                     ? string.Format(CultureInfo.CurrentCulture,
-                        "{0:d}\n{1} økter · {2} min\nSnitt score {3:F0} · pitch {4:F0} · resonans {5:F0}",
+                        Localized.Get("Calendar_DayTooltipFormat", "{0:d}\\n{1} økter · {2} min\\nSnitt score {3:F0} · pitch {4:F0} · resonans {5:F0}").Replace("\\n", "\n"),
                         d, count, agg!.Minutes, agg.Score, agg.PitchScore, agg.ResonanceScore)
                     : d.ToString("d", CultureInfo.CurrentCulture);
                 cells.Add(new CalendarDayCell(d, d.Month == Month.Month, d == today, count,

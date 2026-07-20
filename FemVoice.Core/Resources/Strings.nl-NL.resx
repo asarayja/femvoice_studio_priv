@@ -5939,4 +5939,193 @@ Dit kan niet ongedaan worden gemaakt!</value>
   <data name="Card_SessionCount" xml:space="preserve">
     <value>{0} sessions</value>
   </data>
+  <data name="Analysis_SessionsAnalyzed" xml:space="preserve">
+    <value>Sessions analyzed</value>
+  </data>
+  <data name="Analysis_NoSessionsShort" xml:space="preserve">
+    <value>0 — no saved sessions yet</value>
+  </data>
+  <data name="Analysis_NoSessionsNotice" xml:space="preserve">
+    <value>No saved sessions yet. Complete a session on the dashboard and real analysis will appear here.</value>
+  </data>
+  <data name="Analysis_PitchTrend" xml:space="preserve">
+    <value>Pitch trend</value>
+  </data>
+  <data name="Analysis_PitchTrendDesc" xml:space="preserve">
+    <value>Average pitch per saved session (oldest → newest).</value>
+  </data>
+  <data name="Analysis_AvgPitchOverFormat" xml:space="preserve">
+    <value>Average {0} Hz over {1} sessions</value>
+  </data>
+  <data name="Analysis_NoVoiceRecorded" xml:space="preserve">
+    <value>No voice recorded</value>
+  </data>
+  <data name="Analysis_ResonanceTrend" xml:space="preserve">
+    <value>Resonance trend</value>
+  </data>
+  <data name="Analysis_ResonanceTrendDesc" xml:space="preserve">
+    <value>Resonance score per saved session (real, from the resonance engine).</value>
+  </data>
+  <data name="Analysis_AvgResonanceOverFormat" xml:space="preserve">
+    <value>Average {0} / 100 over {1} sessions with resonance data</value>
+  </data>
+  <data name="Analysis_NoResonanceData" xml:space="preserve">
+    <value>No resonance data yet — complete a session to record resonance</value>
+  </data>
+  <data name="Analysis_ProsodyTrend" xml:space="preserve">
+    <value>Tone variation (prosody)</value>
+  </data>
+  <data name="Analysis_ProsodyTrendDesc" xml:space="preserve">
+    <value>Pitch variation (Hz std-dev) per saved session — real measurement.</value>
+  </data>
+  <data name="Analysis_AvgVariationOverFormat" xml:space="preserve">
+    <value>Average ± {0} Hz over {1} sessions</value>
+  </data>
+  <data name="Analysis_NoProsodyData" xml:space="preserve">
+    <value>No prosody data yet — complete a session to measure tone variation</value>
+  </data>
+  <data name="Analysis_ScoreTrend" xml:space="preserve">
+    <value>Score trend</value>
+  </data>
+  <data name="Analysis_ScoreTrendDesc" xml:space="preserve">
+    <value>FemVoice score per saved session (comfort-zone hits).</value>
+  </data>
+  <data name="Analysis_AvgScoreBestFormat" xml:space="preserve">
+    <value>Average {0} · best {1}</value>
+  </data>
+  <data name="Analysis_AvgResonanceLabel" xml:space="preserve">
+    <value>Average resonance</value>
+  </data>
+  <data name="Analysis_AvgVariationLabel" xml:space="preserve">
+    <value>Average tone variation</value>
+  </data>
+  <data name="Analysis_AvgScoreLabel" xml:space="preserve">
+    <value>Average score</value>
+  </data>
+  <data name="Analysis_NoDataYet" xml:space="preserve">
+    <value>— (no data yet)</value>
+  </data>
+  <data name="Analysis_BestSession" xml:space="preserve">
+    <value>Best session</value>
+  </data>
+  <data name="Analysis_SummaryFormat" xml:space="preserve">
+    <value>{0} sessions analyzed · average pitch {1} Hz · average score {2} · best {3}.</value>
+  </data>
+  <data name="Analysis_SummaryNoVoiceFormat" xml:space="preserve">
+    <value>{0} sessions analyzed · average score {1} · best {2} (no voice recorded).</value>
+  </data>
+  <data name="Analysis_TrendsNote" xml:space="preserve">
+    <value>Trends are computed from your saved sessions. Use Reports to export session data (CSV/text) and professional reports (PDF).</value>
+  </data>
+  <data name="Reports_CsvHeader" xml:space="preserve">
+    <value>Date,Duration (min),Average pitch (Hz),FemVoice score</value>
+  </data>
+  <data name="Reports_SessionsHeader" xml:space="preserve">
+    <value>Sessions:</value>
+  </data>
+  <data name="Reports_NoSessionsPreview" xml:space="preserve">
+    <value>No saved sessions yet. Complete a session on the dashboard to generate a summary.</value>
+  </data>
+  <data name="Reports_PeriodFormat" xml:space="preserve">
+    <value>Period: {0} – {1}</value>
+  </data>
+  <data name="Reports_SessionCountTimeFormat" xml:space="preserve">
+    <value>Number of sessions: {0} · Total time: {1} min</value>
+  </data>
+  <data name="Reports_AvgPitchLineFormat" xml:space="preserve">
+    <value>Average pitch: {0} Hz</value>
+  </data>
+  <data name="Reports_ScoreLineFormat" xml:space="preserve">
+    <value>Average FemVoice score: {0} / 100 · Best session: {1} / 100</value>
+  </data>
+  <data name="Progression_SessionCountFormat" xml:space="preserve">
+    <value>{0} saved sessions</value>
+  </data>
+  <data name="Progression_RecommendedLevelFormat" xml:space="preserve">
+    <value>Recommended level: {0}</value>
+  </data>
+  <data name="Level_SessionsAtLevelFormat" xml:space="preserve">
+    <value>{0} / {1} sessions at this level</value>
+  </data>
+  <data name="Progression_WeeklyFormat" xml:space="preserve">
+    <value>{0} sessions · {1} min · average score {2}</value>
+  </data>
+  <data name="SmartCoach_WeeklyTargetFormat" xml:space="preserve">
+    <value>{0} sessions/week (goal)</value>
+  </data>
+  <data name="SmartCoach_DayHistoryFormat" xml:space="preserve">
+    <value>{0} sessions · average {1}</value>
+  </data>
+  <data name="SmartCoach_WeeklyGoalStatus" xml:space="preserve">
+    <value>Weekly goal and status</value>
+  </data>
+  <data name="Calendar_DayTooltipFormat" xml:space="preserve">
+    <value>{0:d}\n{1} sessions · {2} min\nAverage score {3:F0} · pitch {4:F0} · resonance {5:F0}</value>
+  </data>
+  <data name="DayDetails_SummaryFormat" xml:space="preserve">
+    <value>{0} sessions · average score {1} · total {2} min</value>
+  </data>
+  <data name="Timeline_RowFormat" xml:space="preserve">
+    <value>Average {0} · {1} sessions</value>
+  </data>
+  <data name="ResCat_Bright" xml:space="preserve">
+    <value>Bright</value>
+  </data>
+  <data name="ResCat_Neutral" xml:space="preserve">
+    <value>Neutral</value>
+  </data>
+  <data name="ResCat_Dark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="Analyzer_DeltaFormat" xml:space="preserve">
+    <value>{0} Hz from target</value>
+  </data>
+  <data name="Analyzer_VoicedMeasurements" xml:space="preserve">
+    <value>Voiced measurements</value>
+  </data>
+  <data name="Override_DesiredProfile" xml:space="preserve">
+    <value>Desired profile (request)</value>
+  </data>
+  <data name="Override_StyleGoal" xml:space="preserve">
+    <value>Style goal</value>
+  </data>
+  <data name="Override_ResonanceGoal" xml:space="preserve">
+    <value>Resonance goal (min–max)</value>
+  </data>
+  <data name="Error_SaveDialogFailed" xml:space="preserve">
+    <value>Could not open the save dialog.</value>
+  </data>
+  <data name="Report_NothingToExport" xml:space="preserve">
+    <value>No report to export.</value>
+  </data>
+  <data name="SettingsData_NoDbBackup" xml:space="preserve">
+    <value>No database to back up yet.</value>
+  </data>
+  <data name="SettingsData_Restored" xml:space="preserve">
+    <value>Restored. Restart the app for the change to take full effect.</value>
+  </data>
+  <data name="SettingsData_Cleared" xml:space="preserve">
+    <value>The database has been cleared (empty, ready to use).</value>
+  </data>
+  <data name="SettingsData_ClearedRestart" xml:space="preserve">
+    <value>The database has been cleared. Restart the app to create a new empty database.</value>
+  </data>
+  <data name="SettingsData_NoDbClear" xml:space="preserve">
+    <value>No database to clear.</value>
+  </data>
+  <data name="SettingsData_ClearFailedFormat" xml:space="preserve">
+    <value>Clear failed: {0}</value>
+  </data>
+  <data name="SettingsData_BackupSavedFormat" xml:space="preserve">
+    <value>Backup saved: {0}</value>
+  </data>
+  <data name="SettingsData_BackupFailedFormat" xml:space="preserve">
+    <value>Backup failed: {0}</value>
+  </data>
+  <data name="SettingsData_BackupNotFound" xml:space="preserve">
+    <value>Backup not found.</value>
+  </data>
+  <data name="SettingsData_RestoreFailedFormat" xml:space="preserve">
+    <value>Restore failed: {0}</value>
+  </data>
 </root>

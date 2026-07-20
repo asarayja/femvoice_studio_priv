@@ -324,8 +324,8 @@ public sealed partial class AnalyzerViewModel : ObservableObject, IDisposable
             if (_disposed || !Running) return;
             MainFrequency = r.IsVoiced ? Math.Round(pitch, 1) : 0;
             MainFreqMarkerPx = r.IsVoiced ? FreqToSpectrumPx(pitch) : -1;   // main-freq line over the spectrogram
-            ResonanceText = r.IsVoiced ? (resPct >= 67 ? $"Lys ({resPct})" : resPct >= 34 ? $"Nøytral ({resPct})" : $"Mørk ({resPct})") : "—";
-            TargetDeltaText = r.IsVoiced && TargetFrequency > 0 ? $"{(pitch - TargetFrequency):+0;-0;0} Hz fra mål" : "—";
+            ResonanceText = r.IsVoiced ? string.Format(resPct >= 67 ? Localized.Get("Resonance_Bright", "Lys ({0})") : resPct >= 34 ? Localized.Get("Resonance_Neutral", "Nøytral ({0})") : Localized.Get("Resonance_Dark", "Mørk ({0})"), resPct) : "—";
+            TargetDeltaText = r.IsVoiced && TargetFrequency > 0 ? string.Format(Localized.Get("Analyzer_DeltaFormat", "{0} Hz fra mål"), (pitch - TargetFrequency).ToString("+0;-0;0")) : "—";
             AveragePitch = Math.Round(avg, 1);
             MinPitch = Math.Round(min, 1);
             MaxPitch = Math.Round(max, 1);

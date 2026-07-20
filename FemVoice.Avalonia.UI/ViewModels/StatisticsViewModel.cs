@@ -70,7 +70,7 @@ public sealed class StatisticsViewModel
                 if (status.SessionsRequiredForPromotion > 0)
                 {
                     LevelProgressPercent = Math.Round(Math.Clamp(100.0 * status.SessionsAtCurrentLevel / status.SessionsRequiredForPromotion, 0, 100));
-                    LevelProgressText = $"{status.SessionsAtCurrentLevel} / {status.SessionsRequiredForPromotion} økter på dette nivået";
+                    LevelProgressText = string.Format(Localized.Get("Level_SessionsAtLevelFormat", "{0} / {1} økter på dette nivået"), status.SessionsAtCurrentLevel, status.SessionsRequiredForPromotion);
                 }
                 HasLevel = true;
             }
