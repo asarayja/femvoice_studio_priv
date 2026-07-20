@@ -1,8 +1,20 @@
 # FemVoice Studio
 
-FemVoice Studio is a Windows desktop app for voice training. It is designed to help users practice pitch, resonance, intonation, consistency, comfort, and sustainable training habits with real-time visual feedback and structured exercises.
+FemVoice Studio is a cross-platform voice training app. It is designed to help users practice pitch, resonance, intonation, consistency, comfort, and sustainable training habits with real-time visual feedback and structured exercises.
 
-The app runs locally on your PC. It is not a cloud service, and it is not a medical device.
+The app runs locally on your device. It is not a cloud service, and it is not a medical device.
+
+## Runs On Your Devices
+
+FemVoice Studio is built on a single shared, cross-platform interface (Avalonia), so you get the same navigation, exercises, and theme everywhere:
+
+- **Windows** desktops and laptops (10 or 11).
+- **macOS** (Apple Silicon or Intel).
+- **Linux** (x64 or ARM64).
+- **Android** phones and tablets.
+- **iPhone / iPad** — in preview (currently built on a Mac; some features are still catching up to the desktop version).
+
+The layout adapts to the screen: a full multi-column view on larger displays, and a compact layout with collapsible navigation on phones. Your training data lives on each device separately unless you move it yourself.
 
 ## What It Does
 
@@ -14,7 +26,8 @@ The app runs locally on your PC. It is not a cloud service, and it is not a medi
 - Includes voice health, recovery, pause, and comfort reminders.
 - Supports light and dark themes.
 - Includes report export tools for personal review or professional support.
-- Stores data locally by default.
+- Works across your devices with a layout that adapts to each screen.
+- Stores data locally on each device by default.
 
 ## Who It Is For
 
@@ -71,20 +84,19 @@ Settings include theme, language, voice goals, accessibility preferences, microp
 
 ## Data And Privacy
 
-FemVoice Studio is local-first. Training data and settings are stored on your computer. Support packages and exports are user-controlled.
+FemVoice Studio is local-first. Training data and settings are stored on your device. Support packages and exports are user-controlled.
 
 Avoid sharing private notes, personal identifiers, or sensitive health information unless you intentionally choose to do so.
 
 ## Requirements
 
-- Windows 10 or Windows 11.
-- A working microphone.
+- One of the supported platforms: Windows 10/11, macOS, Linux, or Android (5.0 / API 21 or newer). An iPhone/iPad preview build is also available (built on a Mac).
+- A working microphone. On phones and tablets, allow the microphone permission when the app asks for it, so live feedback works.
 - A quiet practice environment.
-- The packaged app build, or the .NET SDK if running from source.
+- The packaged app build for your platform (for example the Windows installer), or the .NET SDK if running from source.
 
 ## Important Safety Note
 
 Stop or pause if you feel pain, strain, hoarseness, dizziness, or unusual discomfort. Use the app as a training aid, not as a diagnosis or medical assessment.
 
 For clinical concerns, work with a qualified professional.
-
