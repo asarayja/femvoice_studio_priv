@@ -18,7 +18,7 @@ OS (including Linux/CI) and never signs.
 artifacts/dist/<rid>/FemVoice Studio.app/
   Contents/
     Info.plist            (from Packaging/macos/Info.plist — CFBundleExecutable = FemVoice.Avalonia)
-    MacOS/                (the published apphost FemVoice.Avalonia + FemVoice.Avalonia.dll + all managed/native bits)
+    MacOS/                (the published apphost FemVoice.Studio + FemVoice.Studio.dll + all managed/native bits)
     Resources/            (AppIcon.icns is copied here only if present — see "App icon" below)
 ```
 The bundle is **framework-dependent** (a compatible .NET 10 runtime must be present on the target) and **unsigned**.

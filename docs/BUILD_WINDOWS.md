@@ -31,7 +31,7 @@ dotnet publish FemVoice.Avalonia/FemVoice.Avalonia.csproj \
   -o dist/win-x64
 ```
 
-Output: `dist/win-x64/FemVoice.Avalonia.exe` (self-contained — no .NET install required on the target).
+Output: `dist/win-x64/FemVoice.Studio.exe` (self-contained — no .NET install required on the target).
 
 - Trimming is intentionally **off** (Avalonia XAML/reflection would break); the exe is ~80–90 MB.
 - To give the exe the app name/icon, it already uses `Assets/logo.ico` via `ApplicationIcon` in the csproj.
@@ -72,7 +72,7 @@ Export-Certificate -Cert $cert -FilePath "$env:USERPROFILE\AsarayjaDev.cer"
 
 ```powershell
 Set-AuthenticodeSignature `
-  -FilePath "dist\win-x64\FemVoice.Avalonia.exe" `
+  -FilePath "dist\win-x64\FemVoice.Studio.exe" `
   -Certificate $cert `
   -TimeStampServer "http://timestamp.digicert.com" `
   -HashAlgorithm SHA256
@@ -83,7 +83,7 @@ Set-AuthenticodeSignature `
 ```powershell
 signtool sign /f "%USERPROFILE%\AsarayjaDev.pfx" /p <PFX_PASSWORD> `
   /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 `
-  "dist\win-x64\FemVoice.Avalonia.exe"
+  "dist\win-x64\FemVoice.Studio.exe"
 ```
 
 The timestamp (`/tr`) keeps the signature valid after the cert expires.
@@ -91,9 +91,9 @@ The timestamp (`/tr`) keeps the signature valid after the cert expires.
 Verify:
 
 ```powershell
-signtool verify /pa /v "dist\win-x64\FemVoice.Avalonia.exe"
+signtool verify /pa /v "dist\win-x64\FemVoice.Studio.exe"
 # or
-Get-AuthenticodeSignature "dist\win-x64\FemVoice.Avalonia.exe" | Format-List
+Get-AuthenticodeSignature "dist\win-x64\FemVoice.Studio.exe" | Format-List
 ```
 
 ---
@@ -137,8 +137,8 @@ Users install the same `AsarayjaDev.cer` into Trusted Root/Trusted Publisher bef
 ## 6. Run / smoke-test
 
 ```powershell
-dist\win-x64\FemVoice.Avalonia.exe            # launches the GUI
-dist\win-x64\FemVoice.Avalonia.exe --shell-smoke   # headless self-check (exit code 0 = OK)
+dist\win-x64\FemVoice.Studio.exe            # launches the GUI
+dist\win-x64\FemVoice.Studio.exe --shell-smoke   # headless self-check (exit code 0 = OK)
 ```
 
 The Windows head uses the **real Windows audio backend** when available; if not, it falls back to the synthetic

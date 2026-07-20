@@ -50,7 +50,7 @@ cat > "$WORK/usr/bin/femvoice-studio" <<'LAUNCHER'
 set -euo pipefail
 
 APP_DIR="/opt/femvoice-studio"
-APP_DLL="$APP_DIR/FemVoice.Avalonia.dll"
+APP_DLL="$APP_DIR/FemVoice.Studio.dll"
 
 if ! command -v dotnet >/dev/null 2>&1; then
   echo "FemVoice Studio requires the .NET runtime to be installed." >&2

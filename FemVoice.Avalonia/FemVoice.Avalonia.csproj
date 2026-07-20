@@ -3,6 +3,11 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
+    <!-- Output/apphost name = the product ("FemVoice.Studio.exe" on Windows, "FemVoice.Studio" on Linux/macOS),
+         not the project name. RootNamespace is pinned to the project name so code/XAML namespaces stay
+         FemVoice.Avalonia.* (they intentionally shadow Avalonia.*); only the produced file name changes. -->
+    <AssemblyName>FemVoice.Studio</AssemblyName>
+    <RootNamespace>FemVoice.Avalonia</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
