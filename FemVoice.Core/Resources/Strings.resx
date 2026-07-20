@@ -5061,4 +5061,592 @@ Dette kan ikke angres!</value>
   <data name="ResonanceContrast_NotRequiredNote" xml:space="preserve">
     <value>Denne demoen er ikke nødvendig for å fullføre programmet.</value>
   </data>
+  <data name="Dash_Session" xml:space="preserve">
+    <value>Økt</value>
+  </data>
+  <data name="Dash_Subtitle" xml:space="preserve">
+    <value>Trykk Start for live tonehøyde, stabilitet og helse fra mikrofonen.</value>
+  </data>
+  <data name="Dash_Difficulty" xml:space="preserve">
+    <value>Vanskelighetsgrad:</value>
+  </data>
+  <data name="Dash_SyntheticTone" xml:space="preserve">
+    <value>Syntetisk testlyd:</value>
+  </data>
+  <data name="Dash_Recording" xml:space="preserve">
+    <value>● Tar opp</value>
+  </data>
+  <data name="Dash_LiveHeading" xml:space="preserve">
+    <value>Sanntid</value>
+  </data>
+  <data name="Dash_PitchChartTitle" xml:space="preserve">
+    <value>Tonehøyde (nyeste til høyre)</value>
+  </data>
+  <data name="Dash_AxisHigher" xml:space="preserve">
+    <value>Høyere</value>
+  </data>
+  <data name="Dash_AxisLower" xml:space="preserve">
+    <value>Lavere</value>
+  </data>
+  <data name="Dash_PitchEmptyHint" xml:space="preserve">
+    <value>Tonehøyde vises her under opptak</value>
+  </data>
+  <data name="Dash_StopSession" xml:space="preserve">
+    <value>Stopp økt</value>
+  </data>
+  <data name="Dash_RecentSessions" xml:space="preserve">
+    <value>Siste økter (lokalt)</value>
+  </data>
+  <data name="Dash_SafetyNote" xml:space="preserve">
+    <value>Lagres lokalt i din database på denne maskinen — ingen klinisk endring.</value>
+  </data>
+  <data name="Analysis_NoDb" xml:space="preserve">
+    <value>Analyse krever databasen, som ikke er tilgjengelig i denne visningen.</value>
+  </data>
+  <data name="Analysis_ReadError" xml:space="preserve">
+    <value>Kunne ikke lese analyse fra databasen.</value>
+  </data>
+  <data name="Analyzer_Done" xml:space="preserve">
+    <value>Ferdig. Statistikken viser hele opptaket.</value>
+  </data>
+  <data name="Analyzer_Spectrogram" xml:space="preserve">
+    <value>Spektrum</value>
+  </data>
+  <data name="Audio_Backend_NotConfigured" xml:space="preserve">
+    <value>Mikrofon: lydbackend ikke konfigurert ennå</value>
+  </data>
+  <data name="Audio_Backend_Unavailable" xml:space="preserve">
+    <value>Mikrofon: lydbackend utilgjengelig</value>
+  </data>
+  <data name="Audio_DevicesFound" xml:space="preserve">
+    <value>Mikrofon: enheter funnet</value>
+  </data>
+  <data name="Audio_NoDevices" xml:space="preserve">
+    <value>Mikrofon: ingen enheter funnet</value>
+  </data>
+  <data name="Calendar_Legend" xml:space="preserve">
+    <value>Intensitet</value>
+  </data>
+  <data name="Calendar_LegendHigh" xml:space="preserve">
+    <value>Høy score</value>
+  </data>
+  <data name="Calendar_LegendLow" xml:space="preserve">
+    <value>Lav score</value>
+  </data>
+  <data name="Calendar_LegendMed" xml:space="preserve">
+    <value>Middels</value>
+  </data>
+  <data name="Calendar_LegendNone" xml:space="preserve">
+    <value>Ingen økt</value>
+  </data>
+  <data name="Calendar_NoDb" xml:space="preserve">
+    <value>Kalender krever databasen, som ikke er tilgjengelig i denne visningen.</value>
+  </data>
+  <data name="Calendar_RealDataNote" xml:space="preserve">
+    <value>Ekte treningshistorikk fra dine lagrede økter. Klikk en dag for detaljer.</value>
+  </data>
+  <data name="CaseReview_CompletedMsg" xml:space="preserve">
+    <value>Gjennomgang fullført.</value>
+  </data>
+  <data name="CaseReview_Empty" xml:space="preserve">
+    <value>Ikke nok data i valgt periode. Velg en periode med lagrede økter.</value>
+  </data>
+  <data name="CaseReview_Evaluate" xml:space="preserve">
+    <value>Bygg gjennomgang</value>
+  </data>
+  <data name="CaseReview_NoData" xml:space="preserve">
+    <value>Ingen gjennomgang å lagre.</value>
+  </data>
+  <data name="CaseReview_NoDb2" xml:space="preserve">
+    <value>Databasen er ikke tilgjengelig i denne visningen.</value>
+  </data>
+  <data name="CaseReview_Overview" xml:space="preserve">
+    <value>Sammendrag for perioden</value>
+  </data>
+  <data name="CaseReview_PeriodEnd" xml:space="preserve">
+    <value>Til</value>
+  </data>
+  <data name="CaseReview_PeriodStart" xml:space="preserve">
+    <value>Fra</value>
+  </data>
+  <data name="CaseReview_SaveFailed" xml:space="preserve">
+    <value>Kunne ikke lagre: </value>
+  </data>
+  <data name="CaseReview_Saved2" xml:space="preserve">
+    <value>Gjennomgang lagret.</value>
+  </data>
+  <data name="CaseReview_Sessions" xml:space="preserve">
+    <value>Økter i perioden</value>
+  </data>
+  <data name="Clinician_Composite" xml:space="preserve">
+    <value>Samlet stemmescore</value>
+  </data>
+  <data name="Clinician_Cost" xml:space="preserve">
+    <value>kost</value>
+  </data>
+  <data name="Clinician_DataSufficiency" xml:space="preserve">
+    <value>Datagrunnlag</value>
+  </data>
+  <data name="Clinician_DimensionTrends" xml:space="preserve">
+    <value>Dimensjonstrender</value>
+  </data>
+  <data name="Clinician_Enough" xml:space="preserve">
+    <value>Tilstrekkelig</value>
+  </data>
+  <data name="Clinician_ExerciseConcerns" xml:space="preserve">
+    <value>Øvelsesmerknader</value>
+  </data>
+  <data name="Clinician_FocusAreas" xml:space="preserve">
+    <value>Fokusområder</value>
+  </data>
+  <data name="Clinician_Gain" xml:space="preserve">
+    <value>gevinst</value>
+  </data>
+  <data name="Clinician_Insufficient" xml:space="preserve">
+    <value>Ikke nok data ennå</value>
+  </data>
+  <data name="Clinician_NoDimData" xml:space="preserve">
+    <value>—</value>
+  </data>
+  <data name="Clinician_NotEnough" xml:space="preserve">
+    <value>Utilstrekkelig</value>
+  </data>
+  <data name="Clinician_Panel_Empty" xml:space="preserve">
+    <value>Ikke nok data ennå. Fullfør noen økter på dashbordet for å bygge en utfallsoversikt.</value>
+  </data>
+  <data name="Clinician_Panel_Overview" xml:space="preserve">
+    <value>Utfallsoversikt</value>
+  </data>
+  <data name="Clinician_Recommendation" xml:space="preserve">
+    <value>Anbefaling</value>
+  </data>
+  <data name="Clinician_Recovery" xml:space="preserve">
+    <value>Restitusjon</value>
+  </data>
+  <data name="Clinician_Success" xml:space="preserve">
+    <value>suksess</value>
+  </data>
+  <data name="Clinician_Workload" xml:space="preserve">
+    <value>Arbeidsbelastning (akutt/kronisk)</value>
+  </data>
+  <data name="Coach_Panel_Breakthrough" xml:space="preserve">
+    <value>gjennombrudd registrert</value>
+  </data>
+  <data name="Coach_Panel_Plateau" xml:space="preserve">
+    <value>platå</value>
+  </data>
+  <data name="Coach_Panel_Regression" xml:space="preserve">
+    <value>tilbakegang</value>
+  </data>
+  <data name="Common_Back" xml:space="preserve">
+    <value>Tilbake</value>
+  </data>
+  <data name="Common_Confirm" xml:space="preserve">
+    <value>Bekreft</value>
+  </data>
+  <data name="Dashboard_AveragePitch" xml:space="preserve">
+    <value>Snitt tonehøyde</value>
+  </data>
+  <data name="Dashboard_Comfort" xml:space="preserve">
+    <value>Komfort</value>
+  </data>
+  <data name="Dashboard_Consistency" xml:space="preserve">
+    <value>Jevnhet</value>
+  </data>
+  <data name="Dashboard_Progress" xml:space="preserve">
+    <value>Fremgang til neste nivå</value>
+  </data>
+  <data name="Dashboard_Recovery" xml:space="preserve">
+    <value>Restitusjon</value>
+  </data>
+  <data name="Dashboard_ResonanceMin" xml:space="preserve">
+    <value>Minste resonans</value>
+  </data>
+  <data name="Dashboard_TargetPitch" xml:space="preserve">
+    <value>Målområde tonehøyde</value>
+  </data>
+  <data name="Dashboard_WeeklySummary" xml:space="preserve">
+    <value>Denne uken</value>
+  </data>
+  <data name="Diag_AppVersion" xml:space="preserve">
+    <value>Appversjon</value>
+  </data>
+  <data name="Diag_Arch" xml:space="preserve">
+    <value>Arkitektur</value>
+  </data>
+  <data name="Diag_DataFolder" xml:space="preserve">
+    <value>Datamappe</value>
+  </data>
+  <data name="Diag_Database" xml:space="preserve">
+    <value>Database</value>
+  </data>
+  <data name="Diag_DbConnected" xml:space="preserve">
+    <value>Tilkoblet (ekte SQLite)</value>
+  </data>
+  <data name="Diag_DbNotConnected" xml:space="preserve">
+    <value>Ikke tilkoblet i denne visningen</value>
+  </data>
+  <data name="Diag_DbSize" xml:space="preserve">
+    <value>Database-størrelse</value>
+  </data>
+  <data name="Diag_ExportReport" xml:space="preserve">
+    <value>Eksporter diagnostikk</value>
+  </data>
+  <data name="Diag_OS" xml:space="preserve">
+    <value>Operativsystem</value>
+  </data>
+  <data name="Diag_Runtime" xml:space="preserve">
+    <value>.NET-kjøretid</value>
+  </data>
+  <data name="Diag_SavedSessions" xml:space="preserve">
+    <value>Lagrede økter</value>
+  </data>
+  <data name="Diag_SystemStatus" xml:space="preserve">
+    <value>Systemstatus</value>
+  </data>
+  <data name="Diag_Title2" xml:space="preserve">
+    <value>Diagnostikk</value>
+  </data>
+  <data name="Exercise_ItemsSuffix" xml:space="preserve">
+    <value>øvelser</value>
+  </data>
+  <data name="FirstSetup_Completed" xml:space="preserve">
+    <value>Oppsett fullført ✓</value>
+  </data>
+  <data name="FirstSetup_NotCompleted" xml:space="preserve">
+    <value>Oppsettet er ikke fullført ennå.</value>
+  </data>
+  <data name="FirstSetup_SaveFailed" xml:space="preserve">
+    <value>Kunne ikke lagre oppsettet lokalt.</value>
+  </data>
+  <data name="FirstSetup_Saved" xml:space="preserve">
+    <value>Oppsett lagret. Språk og tema er oppdatert.</value>
+  </data>
+  <data name="FirstSetup_Skipped" xml:space="preserve">
+    <value>Oppsett hoppet over. Du kan endre alt under Innstillinger.</value>
+  </data>
+  <data name="Main_AboveComfortZone" xml:space="preserve">
+    <value>Over komfortsonen</value>
+  </data>
+  <data name="Main_BelowComfortZone" xml:space="preserve">
+    <value>Under komfortsonen</value>
+  </data>
+  <data name="Main_Category" xml:space="preserve">
+    <value>Kategori</value>
+  </data>
+  <data name="Main_InComfortZone" xml:space="preserve">
+    <value>I komfortsonen</value>
+  </data>
+  <data name="Main_NextText" xml:space="preserve">
+    <value>Neste tekst</value>
+  </data>
+  <data name="MicCal_Device" xml:space="preserve">
+    <value>Enhet</value>
+  </data>
+  <data name="MicCal_Level" xml:space="preserve">
+    <value>Inngangsnivå</value>
+  </data>
+  <data name="MicCal_NoDevice" xml:space="preserve">
+    <value>Ingen mikrofon funnet i denne visningen.</value>
+  </data>
+  <data name="MicCal_Start" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="MicCal_Stop" xml:space="preserve">
+    <value>Stopp</value>
+  </data>
+  <data name="Override_Error" xml:space="preserve">
+    <value>Kunne ikke beregne klamp: </value>
+  </data>
+  <data name="Override_Evaluate" xml:space="preserve">
+    <value>Beregn klamp (forhåndsvis)</value>
+  </data>
+  <data name="Override_GateBlocked" xml:space="preserve">
+    <value>Blokkert</value>
+  </data>
+  <data name="Override_GateOpen" xml:space="preserve">
+    <value>Åpen</value>
+  </data>
+  <data name="Override_GateState" xml:space="preserve">
+    <value>Sikkerhetsport (live)</value>
+  </data>
+  <data name="Override_LogFailed" xml:space="preserve">
+    <value>Kunne ikke loggføre: </value>
+  </data>
+  <data name="Override_NoDb" xml:space="preserve">
+    <value>Databasen er ikke tilgjengelig i denne visningen.</value>
+  </data>
+  <data name="Override_NoResult" xml:space="preserve">
+    <value>Ingen beregnet klamp å loggføre.</value>
+  </data>
+  <data name="Override_NotApplied" xml:space="preserve">
+    <value>Ikke anvendt</value>
+  </data>
+  <data name="Override_Persist" xml:space="preserve">
+    <value>Loggfør i overstyringsloggen</value>
+  </data>
+  <data name="Override_Recent" xml:space="preserve">
+    <value>Nylige loggførte overstyringer</value>
+  </data>
+  <data name="Override_RecoveryState" xml:space="preserve">
+    <value>Restitusjonsnivå (live)</value>
+  </data>
+  <data name="Override_RequiredHold" xml:space="preserve">
+    <value>Ønsket hold (sek)</value>
+  </data>
+  <data name="Override_Unchanged" xml:space="preserve">
+    <value>Innenfor trygge grenser — ingen klamping nødvendig.</value>
+  </data>
+  <data name="Progression_Error" xml:space="preserve">
+    <value>Progresjon er midlertidig utilgjengelig.</value>
+  </data>
+  <data name="Progression_NoDb" xml:space="preserve">
+    <value>Progresjon krever databasen, som ikke er tilgjengelig i denne visningen.</value>
+  </data>
+  <data name="Progression_RealDataNote" xml:space="preserve">
+    <value>Nivå, poeng og sammendrag fra dine faktiske lagrede økter (ekte progresjonsmotor).</value>
+  </data>
+  <data name="Reports_ExportCsv" xml:space="preserve">
+    <value>Eksporter CSV</value>
+  </data>
+  <data name="Reports_ExportText" xml:space="preserve">
+    <value>Eksporter tekst</value>
+  </data>
+  <data name="Reports_OpenCaseReviewPanel" xml:space="preserve">
+    <value>Åpne case-gjennomgang</value>
+  </data>
+  <data name="Reports_OpenClinicianPanel" xml:space="preserve">
+    <value>Åpne klinisk oversikt</value>
+  </data>
+  <data name="Reports_OpenCoachPanel" xml:space="preserve">
+    <value>Åpne coach-oversikt</value>
+  </data>
+  <data name="Reports_OpenTimelinePanel" xml:space="preserve">
+    <value>Åpne utviklingstidslinje</value>
+  </data>
+  <data name="Reports_ProfessionalHeading" xml:space="preserve">
+    <value>Profesjonelle paneler</value>
+  </data>
+  <data name="Reports_SessionHistory" xml:space="preserve">
+    <value>Økthistorikk</value>
+  </data>
+  <data name="ResonanceWindow_FormantMap" xml:space="preserve">
+    <value>Formantkart (F1/F2)</value>
+  </data>
+  <data name="ResonanceWindow_Formants" xml:space="preserve">
+    <value>Formanter</value>
+  </data>
+  <data name="Resonance_Listening" xml:space="preserve">
+    <value>Lytter … syng en jevn tone.</value>
+  </data>
+  <data name="Resonance_NoDevice" xml:space="preserve">
+    <value>Ingen mikrofon funnet i denne visningen.</value>
+  </data>
+  <data name="Resonance_Ready" xml:space="preserve">
+    <value>Klar. Trykk «Start» og syng en jevn tone — mål mot lysere resonans.</value>
+  </data>
+  <data name="Resonance_Stopped" xml:space="preserve">
+    <value>Stoppet.</value>
+  </data>
+  <data name="Settings_DatabaseNote" xml:space="preserve">
+    <value>Ekte handlinger på den lokale databasen. Sikkerhetskopi er trygt; gjenoppretting og tømming endrer dataene dine.</value>
+  </data>
+  <data name="Settings_HearOwnVoiceNote2" xml:space="preserve">
+    <value>Spiller mikrofonen din tilbake til høyttaleren mens du øver. Bruk hodetelefoner for å unngå tilbakekobling/hyl.</value>
+  </data>
+  <data name="Settings_LocalPrefs_Saved2" xml:space="preserve">
+    <value>Lagret. Tema, språk og bevegelse er oppdatert; mikrofon og øvrige valg brukes videre.</value>
+  </data>
+  <data name="Settings_MicDefault" xml:space="preserve">
+    <value>Systemstandard</value>
+  </data>
+  <data name="Settings_NoBackups" xml:space="preserve">
+    <value>Ingen sikkerhetskopier ennå.</value>
+  </data>
+  <data name="Settings_ReducedVisualFeedback" xml:space="preserve">
+    <value>Redusert visuell tilbakemelding</value>
+  </data>
+  <data name="Settings_ScaffoldSafety3" xml:space="preserve">
+    <value>Alle valg lagres lokalt på denne maskinen · ingen klinisk endring.</value>
+  </data>
+  <data name="Settings_TrainingFrequency" xml:space="preserve">
+    <value>Treningsfrekvens</value>
+  </data>
+  <data name="Shell_Info_Days" xml:space="preserve">
+    <value>dager</value>
+  </data>
+  <data name="Shell_Info_LastScore" xml:space="preserve">
+    <value>Siste score</value>
+  </data>
+  <data name="Shell_Info_NoStats" xml:space="preserve">
+    <value>Fullfør en økt på dashbordet for å se fremgangen din her.</value>
+  </data>
+  <data name="Shell_Info_Sessions" xml:space="preserve">
+    <value>Økter</value>
+  </data>
+  <data name="Shell_Info_Streak" xml:space="preserve">
+    <value>Streak</value>
+  </data>
+  <data name="Shell_Info_YourProgress" xml:space="preserve">
+    <value>Din fremgang</value>
+  </data>
+  <data name="Shell_Nav_Analyzer" xml:space="preserve">
+    <value>Analysator</value>
+  </data>
+  <data name="Shell_Nav_Calendar" xml:space="preserve">
+    <value>Kalender</value>
+  </data>
+  <data name="Shell_Nav_FirstSetup" xml:space="preserve">
+    <value>Førstegangsoppsett</value>
+  </data>
+  <data name="Shell_Nav_ManualOverride" xml:space="preserve">
+    <value>Manuell overstyring</value>
+  </data>
+  <data name="Shell_Nav_MicCalibration" xml:space="preserve">
+    <value>Mikrofonkalibrering</value>
+  </data>
+  <data name="Shell_Nav_Resonance" xml:space="preserve">
+    <value>Resonans</value>
+  </data>
+  <data name="Shell_Nav_SmartCoach" xml:space="preserve">
+    <value>SmartCoach</value>
+  </data>
+  <data name="Shell_Nav_Statistics" xml:space="preserve">
+    <value>Statistikk</value>
+  </data>
+  <data name="SmartCoach_Completed" xml:space="preserve">
+    <value>Fullført ✓</value>
+  </data>
+  <data name="SmartCoach_Consistency" xml:space="preserve">
+    <value>Jevnhet</value>
+  </data>
+  <data name="SmartCoach_Detail" xml:space="preserve">
+    <value>Detaljer</value>
+  </data>
+  <data name="SmartCoach_Error" xml:space="preserve">
+    <value>SmartCoach er midlertidig utilgjengelig.</value>
+  </data>
+  <data name="SmartCoach_NoDb" xml:space="preserve">
+    <value>SmartCoach krever databasen, som ikke er tilgjengelig i denne visningen.</value>
+  </data>
+  <data name="SmartCoach_NoMessages" xml:space="preserve">
+    <value>Ingen nye meldinger.</value>
+  </data>
+  <data name="SmartCoach_RealDataNote" xml:space="preserve">
+    <value>Beregnet av den ekte SmartCoach-motoren på dine lagrede økter.</value>
+  </data>
+  <data name="SmartCoach_Scaffold_Title" xml:space="preserve">
+    <value>SmartCoach</value>
+  </data>
+  <data name="Statistics_CurrentLevel" xml:space="preserve">
+    <value>Nåværende nivå</value>
+  </data>
+  <data name="Statistics_Error" xml:space="preserve">
+    <value>Statistikk er midlertidig utilgjengelig.</value>
+  </data>
+  <data name="Statistics_NoDb" xml:space="preserve">
+    <value>Statistikk krever databasen, som ikke er tilgjengelig i denne visningen.</value>
+  </data>
+  <data name="Statistics_RealDataNote" xml:space="preserve">
+    <value>Ekte statistikk fra dine lagrede økter.</value>
+  </data>
+  <data name="Statistics_RecentSessions" xml:space="preserve">
+    <value>Siste økter</value>
+  </data>
+  <data name="Timeline_Panel_Empty" xml:space="preserve">
+    <value>Ikke nok data ennå. Fullfør flere økter over tid for å bygge en utviklingstidslinje.</value>
+  </data>
+  <data name="CaseReview_Panel_Disclaimer2" xml:space="preserve">
+    <value>Saksgjennomgang sammenstilt fra dine lagrede økter for valgt periode. Beskrivende — aldri en sikkerhets- eller treningsport. «Lagre gjennomgang» skriver en gjennomgangsoppføring (utfallssnapshot) til gjennomgangsloggen. Ingen klinisk/sikkerhetslogikk er endret.</value>
+  </data>
+  <data name="Clinician_Panel_Disclaimer" xml:space="preserve">
+    <value>Beskrivende utfallsoversikt sammenstilt fra dine lagrede økter (kun lesing). Aldri en sikkerhets- eller treningsport. Ingen klinisk endring, ingenting lagres.</value>
+  </data>
+  <data name="Coach_Panel_Disclaimer" xml:space="preserve">
+    <value>Sammenstilt fra dine lagrede økter (kun lesing). Ingen klinisk endring, ingenting lagres. Per-dimensjons resonans/intonasjon fylles først når økter registrerer disse målingene.</value>
+  </data>
+  <data name="Diag_Intro2" xml:space="preserve">
+    <value>Ekte system- og databasestatus (kun lesing). Du kan eksportere en diagnostikkrapport og lage en sikkerhetskopi av databasen.</value>
+  </data>
+  <data name="Override_Intro" xml:space="preserve">
+    <value>En fagperson kan be om en overstyring av en øvelsesprofil. Den to-trinns sikkerhets-/restitusjonsklampen kjøres, og KUN det klampede utfallet vises — den rå forespørselen anvendes eller vises aldri. Klampen kan bare gjøre profilen mer konservativ.</value>
+  </data>
+  <data name="Override_SafetyNote2" xml:space="preserve">
+    <value>Klampen beregnes av den frosne Core-motoren og KUN det klampede utfallet vises/loggføres — aldri den rå forespørselen. «Loggfør» skriver en revisjonsoppføring (utfall + flagg, ikke den rå profilen) til overstyringsloggen. Ingen klinisk/sikkerhetslogikk er endret.</value>
+  </data>
+  <data name="Reports_Intro2" xml:space="preserve">
+    <value>Ekte fremgangssammendrag, økthistorikk og CSV/tekst-eksport fra dine lagrede økter, pluss de profesjonelle panelene (coach, kliniker, tidslinje, case-gjennomgang) med PDF/CSV/JSON-eksport.</value>
+  </data>
+  <data name="Settings_LocalPrefs_Note2" xml:space="preserve">
+    <value>Alle valg lagres lokalt på denne maskinen. Tema, språk og bevegelse brukes med en gang (kun oversatt tekst følger språket). Mikrofonvalget brukes neste gang du starter en økt.</value>
+  </data>
+  <data name="Timeline_Panel_Disclaimer" xml:space="preserve">
+    <value>Utviklingstidslinje sammenstilt fra dine lagrede økter (kun lesing). Beskrivende — aldri en sikkerhets- eller treningsport. Ingen klinisk endring, ingenting lagres.</value>
+  </data>
+  <data name="Signal_NoVoice" xml:space="preserve">
+    <value>Ingen stemme</value>
+  </data>
+  <data name="Signal_Voiced" xml:space="preserve">
+    <value>Stemme ({0} sikkerhet)</value>
+  </data>
+  <data name="Signal_MicUnavailable" xml:space="preserve">
+    <value>Mikrofon utilgjengelig</value>
+  </data>
+  <data name="Audio_DeviceLost" xml:space="preserve">
+    <value>Lydenhet mistet.</value>
+  </data>
+  <data name="Dash_PressStartFeedback" xml:space="preserve">
+    <value>Trykk Start for å begynne.</value>
+  </data>
+  <data name="Chart_VoiceDetected" xml:space="preserve">
+    <value>Stemme registrert</value>
+  </data>
+  <data name="Chart_WaitingForVoice" xml:space="preserve">
+    <value>Venter på stemme …</value>
+  </data>
+  <data name="Resonance_Bright" xml:space="preserve">
+    <value>Lys ({0})</value>
+  </data>
+  <data name="Resonance_Neutral" xml:space="preserve">
+    <value>Nøytral ({0})</value>
+  </data>
+  <data name="Resonance_Dark" xml:space="preserve">
+    <value>Mørk ({0})</value>
+  </data>
+  <data name="Feedback_NoVoice" xml:space="preserve">
+    <value>Ingen stemme oppdaget — prøv å snakke jevnt.</value>
+  </data>
+  <data name="Feedback_TakeBreak" xml:space="preserve">
+    <value>Ta en pause og slapp av i stemmen.</value>
+  </data>
+  <data name="Feedback_BelowZone" xml:space="preserve">
+    <value>Litt under komfortsonen — løft tonen forsiktig.</value>
+  </data>
+  <data name="Feedback_AboveZone" xml:space="preserve">
+    <value>Litt over komfortsonen — slipp tonen litt ned.</value>
+  </data>
+  <data name="Feedback_Stable" xml:space="preserve">
+    <value>Fin, stabil tone i komfortsonen.</value>
+  </data>
+  <data name="Feedback_KeepSteady" xml:space="preserve">
+    <value>Hold tonen jevn i komfortsonen.</value>
+  </data>
+  <data name="Dash_SignalLabel" xml:space="preserve">
+    <value>Signal</value>
+  </data>
+  <data name="Dash_StabilityLabel" xml:space="preserve">
+    <value>Stabilitet</value>
+  </data>
+  <data name="Dash_ResonanceLabel" xml:space="preserve">
+    <value>Resonans</value>
+  </data>
+  <data name="Dash_HealthLabel" xml:space="preserve">
+    <value>Helse</value>
+  </data>
+  <data name="Dash_Listening" xml:space="preserve">
+    <value>Lytter …</value>
+  </data>
+  <data name="Dash_SessionStopped" xml:space="preserve">
+    <value>Økt stoppet.</value>
+  </data>
 </root>

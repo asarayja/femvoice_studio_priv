@@ -140,8 +140,8 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _isRecording;
     [ObservableProperty] private double _currentPitch;
     [ObservableProperty] private string _pitchStability = "—";
-    [ObservableProperty] private string _currentSignalStatus = "Ingen stemme";
-    [ObservableProperty] private string _currentFeedbackMessage = "Trykk Start for å begynne.";
+    [ObservableProperty] private string _currentSignalStatus = Localized.Get("Signal_NoVoice", "Ingen stemme");
+    [ObservableProperty] private string _currentFeedbackMessage = Localized.Get("Dash_PressStartFeedback", "Trykk Start for å begynne.");
     [ObservableProperty] private string _healthStatusDisplay = "—";
     /// <summary>Live real resonance readout (from the Core ResonanceProxyEngine), e.g. "Lys (72)". "—" when no voice.</summary>
     [ObservableProperty] private string _resonanceDisplay = "—";
@@ -267,7 +267,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         _voiceMonitor.Start(SampleRate);   // hear-own-voice (opt-in; no-op when off)
         _sessionStart = System.DateTime.Now;
         IsRecording = true;
-        CurrentFeedbackMessage = "Lytter …";
+        CurrentFeedbackMessage = Localized.Get("Dash_Listening", "Lytter …");
     }
 
     [RelayCommand]
@@ -278,8 +278,8 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         _voiceMonitor.Stop();
         _resonanceEngine.Stop();
         IsRecording = false;
-        CurrentSignalStatus = "Ingen stemme";
-        CurrentFeedbackMessage = "Økt stoppet.";
+        CurrentSignalStatus = Localized.Get("Signal_NoVoice", "Ingen stemme");
+        CurrentFeedbackMessage = Localized.Get("Dash_SessionStopped", "Økt stoppet.");
         ResonanceDisplay = "—";
 
         // Record the session. Skip trivial (<2 s) sessions.
@@ -381,8 +381,8 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         {
             CurrentPitch = result.IsVoiced ? Math.Round(stabilized, 1) : 0;
             CurrentSignalStatus = result.IsVoiced
-                ? $"Stemme ({result.Confidence:P0} sikkerhet)"
-                : "Ingen stemme";
+                ? string.Format(Localized.Get("Signal_Voiced", "Stemme ({0} sikkerhet)"), result.Confidence.ToString("P0"))
+                : Localized.Get("Signal_NoVoice", "Ingen stemme");
             // Comfort-zone COMPLIANCE (no raw Hz exposed — WPF principle A7): in-zone / below / above.
             if (result.IsVoiced && stabilized > 0)
             {
@@ -403,7 +403,9 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
             // Display-only chart snapshot (axis + comfort band fixed; marker follows current pitch). No data change.
             DashboardChart = RuntimeChartDisplay.From(
                 ChartHeightPx, _chartMin, _chartMax, ComfortZoneLow, ComfortZoneHigh,
-                stabilized, voiced, voiced ? "Stemme registrert" : "Venter på stemme …");
+                stabilized, voiced,
+                voiced ? Localized.Get("Chart_VoiceDetected", "Stemme registrert")
+                       : Localized.Get("Chart_WaitingForVoice", "Venter på stemme …"));
             if (voiced)
             {
                 PitchSamples.Add(stabilized);
@@ -418,8 +420,8 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         => _ui.Post(() =>
         {
             IsRecording = false;
-            CurrentSignalStatus = "Mikrofon utilgjengelig";
-            CurrentFeedbackMessage = e.Reason ?? "Lydenhet mistet.";
+            CurrentSignalStatus = Localized.Get("Signal_MicUnavailable", "Mikrofon utilgjengelig");
+            CurrentFeedbackMessage = e.Reason ?? Localized.Get("Audio_DeviceLost", "Lydenhet mistet.");
         });
 
     private void UpdateComfortZone()
@@ -438,9 +440,9 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     // Qualitative label + value for the live resonance readout (0–100). Mirrors WPF's bright/neutral/dark buckets.
     private static string ResonanceText(int pct) => pct switch
     {
-        >= 67 => $"Lys ({pct})",
-        >= 34 => $"Nøytral ({pct})",
-        _ => $"Mørk ({pct})",
+        >= 67 => string.Format(Localized.Get("Resonance_Bright", "Lys ({0})"), pct),
+        >= 34 => string.Format(Localized.Get("Resonance_Neutral", "Nøytral ({0})"), pct),
+        _ => string.Format(Localized.Get("Resonance_Dark", "Mørk ({0})"), pct),
     };
 
     // Stability / health labels resolve the SAME shared RESX keys WPF uses ({loc:Loc Stability_*/Health_*}) so the
@@ -531,13 +533,13 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     // Simple, safe descriptive feedback (NOT the FeedbackConsistencyGuard pipeline — that is deferred).
     private string DeriveFeedback(bool voiced, StabilityState stability, HealthState health, double pitch)
     {
-        if (!voiced) return "Ingen stemme oppdaget — prøv å snakke jevnt.";
-        if (health is HealthState.Warning or HealthState.Danger) return "Ta en pause og slapp av i stemmen.";
-        if (pitch < ComfortZoneLow) return "Litt under komfortsonen — løft tonen forsiktig.";
-        if (pitch > ComfortZoneHigh) return "Litt over komfortsonen — slipp tonen litt ned.";
+        if (!voiced) return Localized.Get("Feedback_NoVoice", "Ingen stemme oppdaget — prøv å snakke jevnt.");
+        if (health is HealthState.Warning or HealthState.Danger) return Localized.Get("Feedback_TakeBreak", "Ta en pause og slapp av i stemmen.");
+        if (pitch < ComfortZoneLow) return Localized.Get("Feedback_BelowZone", "Litt under komfortsonen — løft tonen forsiktig.");
+        if (pitch > ComfortZoneHigh) return Localized.Get("Feedback_AboveZone", "Litt over komfortsonen — slipp tonen litt ned.");
         return stability is StabilityState.Stable or StabilityState.VeryStable
-            ? "Fin, stabil tone i komfortsonen."
-            : "Hold tonen jevn i komfortsonen.";
+            ? Localized.Get("Feedback_Stable", "Fin, stabil tone i komfortsonen.")
+            : Localized.Get("Feedback_KeepSteady", "Hold tonen jevn i komfortsonen.");
     }
 
     public void Dispose()

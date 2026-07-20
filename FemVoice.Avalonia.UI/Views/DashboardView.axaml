@@ -10,27 +10,27 @@
         <TextBlock Text="{loc:Tr Key=Main_TrainingForFeminineVoice, Fallback='Trening for feminin stemme'}" FontSize="22" FontWeight="Bold" TextWrapping="Wrap"
                    Foreground="{DynamicResource ShellHeadingBrush}"/>
         <TextBlock Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"
-                   Text="Trykk Start for live tonehøyde, stabilitet og helse fra mikrofonen."/>
+                   Text="{loc:Tr Key=Dash_Subtitle, Fallback='Trykk Start for live tonehøyde, stabilitet og helse fra mikrofonen.'}"/>
       </StackPanel>
 
       <!-- Session controls (full width). Mid-session this collapses to just Stop + a "Tar opp" indicator so the
            reading text + pitch graph below are what you see. -->
       <Border x:Name="SessionCard" Classes="card">
         <StackPanel Spacing="10">
-          <TextBlock Text="Økt" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <TextBlock Text="{loc:Tr Key=Dash_Session, Fallback='Økt'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
           <WrapPanel>
             <Button Content="{loc:Tr Key=UI_StartSession, Fallback='Start Økt'}" Classes="primary" Command="{Binding StartCommand}" IsEnabled="{Binding !IsRecording}" MinWidth="100" Margin="0,0,8,6" IsVisible="{Binding !IsRecording}"/>
             <Button Content="{loc:Tr Key=UI_StopSession, Fallback='Stopp Økt'}" Classes="primary" Command="{Binding StopCommand}" IsEnabled="{Binding IsRecording}" MinWidth="90" Margin="0,0,8,6" IsVisible="{Binding IsRecording}"/>
-            <TextBlock VerticalAlignment="Center" Margin="0,0,0,6" Foreground="{DynamicResource ShellSuccessBrush}" Text="● Tar opp" IsVisible="{Binding IsRecording}"/>
+            <TextBlock VerticalAlignment="Center" Margin="0,0,0,6" Foreground="{DynamicResource ShellSuccessBrush}" Text="{loc:Tr Key=Dash_Recording, Fallback='● Tar opp'}" IsVisible="{Binding IsRecording}"/>
           </WrapPanel>
           <!-- Pre-start choices (difficulty + synthetic test tone) — hidden while recording. -->
           <WrapPanel IsVisible="{Binding !IsRecording}">
-            <TextBlock VerticalAlignment="Center" Margin="0,0,8,6" Foreground="{DynamicResource ShellBodyTextBrush}" Text="Vanskelighetsgrad:"/>
+            <TextBlock VerticalAlignment="Center" Margin="0,0,8,6" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{loc:Tr Key=Dash_Difficulty, Fallback='Vanskelighetsgrad:'}"/>
             <ComboBox ItemsSource="{Binding DifficultyOptions}" SelectedItem="{Binding SelectedDifficultyOption}" MinWidth="140" MaxWidth="220" Margin="0,0,0,6"
                       DisplayMemberBinding="{Binding Label}"/>
           </WrapPanel>
           <WrapPanel IsVisible="{Binding IsSyntheticBackend}">
-            <TextBlock VerticalAlignment="Center" Margin="0,0,8,6" Foreground="{DynamicResource ShellBodyTextBrush}" Text="Syntetisk testlyd:" IsVisible="{Binding !IsRecording}"/>
+            <TextBlock VerticalAlignment="Center" Margin="0,0,8,6" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{loc:Tr Key=Dash_SyntheticTone, Fallback='Syntetisk testlyd:'}" IsVisible="{Binding !IsRecording}"/>
             <ComboBox ItemsSource="{Binding SyntheticAudioModes}" SelectedItem="{Binding SyntheticAudioMode}" MinWidth="140" MaxWidth="220" Margin="0,0,0,6" IsVisible="{Binding !IsRecording}"/>
           </WrapPanel>
         </StackPanel>
@@ -66,12 +66,12 @@
       <Border Classes="card" MinHeight="260">
         <Grid RowDefinitions="Auto,*">
           <!-- No raw Hz (WPF principle A7): title + axis communicate direction, not numeric frequency. -->
-          <TextBlock Grid.Row="0" Text="Tonehøyde (nyeste til høyre)" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <TextBlock Grid.Row="0" Text="{loc:Tr Key=Dash_PitchChartTitle, Fallback='Tonehøyde (nyeste til høyre)'}" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{DynamicResource ShellHeadingBrush}"/>
           <Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,8,0,0">
             <!-- Y-axis direction labels: higher at top, lower at bottom (qualitative, no Hz numerals) -->
             <Grid Grid.Column="0" Width="46" Height="{Binding DashboardChart.ChartHeightPx}" RowDefinitions="Auto,*,Auto" Margin="0,0,6,0">
-              <TextBlock Grid.Row="0" Text="Høyere" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
-              <TextBlock Grid.Row="2" Text="Lavere" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
+              <TextBlock Grid.Row="0" Text="{loc:Tr Key=Dash_AxisHigher, Fallback='Høyere'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
+              <TextBlock Grid.Row="2" Text="{loc:Tr Key=Dash_AxisLower, Fallback='Lavere'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
             </Grid>
             <!-- Plot surface -->
             <Border Grid.Column="1" Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="6" ClipToBounds="True">
@@ -102,7 +102,7 @@
                              IsVisible="{Binding DashboardChart.HasVoice}"/>
                 </Canvas>
                 <!-- Empty-state hint (centered) when not recording — readable muted, not faint -->
-                <TextBlock Text="Tonehøyde vises her under opptak" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap"
+                <TextBlock Text="{loc:Tr Key=Dash_PitchEmptyHint, Fallback='Tonehøyde vises her under opptak'}" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap"
                            FontSize="14" Foreground="{DynamicResource ShellMutedBrush}" IsVisible="{Binding !IsRecording}"/>
               </Panel>
             </Border>
@@ -113,16 +113,32 @@
       <!-- Live metrics (Sanntid) — below the graph so text + pitch trace stay the priority. -->
       <Border x:Name="LiveCard" Classes="card">
         <StackPanel Spacing="6">
-          <TextBlock Text="Sanntid" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <TextBlock Text="{loc:Tr Key=Dash_LiveHeading, Fallback='Sanntid'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
           <Border CornerRadius="4" Padding="10,6" HorizontalAlignment="Left"
                   Background="{DynamicResource ShellChartBackgroundBrush}">
             <TextBlock Text="{Binding ComfortZoneStatus}" FontSize="20" FontWeight="Bold"
                        Foreground="{DynamicResource ShellAccentBrush}"/>
           </Border>
-          <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding CurrentSignalStatus, StringFormat='Signal: {0}'}"/>
-          <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding PitchStability, StringFormat='Stabilitet: {0}'}"/>
-          <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding ResonanceDisplay, StringFormat='Resonans: {0}'}"/>
-          <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding HealthStatusDisplay, StringFormat='Helse: {0}'}"/>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Foreground="{DynamicResource ShellBodyTextBrush}" Text="{loc:Tr Key=Dash_SignalLabel, Fallback='Signal'}"/>
+            <TextBlock Foreground="{DynamicResource ShellBodyTextBrush}" Text=": "/>
+            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding CurrentSignalStatus}"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Foreground="{DynamicResource ShellBodyTextBrush}" Text="{loc:Tr Key=Dash_StabilityLabel, Fallback='Stabilitet'}"/>
+            <TextBlock Foreground="{DynamicResource ShellBodyTextBrush}" Text=": "/>
+            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding PitchStability}"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Foreground="{DynamicResource ShellBodyTextBrush}" Text="{loc:Tr Key=Dash_ResonanceLabel, Fallback='Resonans'}"/>
+            <TextBlock Foreground="{DynamicResource ShellBodyTextBrush}" Text=": "/>
+            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding ResonanceDisplay}"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Foreground="{DynamicResource ShellBodyTextBrush}" Text="{loc:Tr Key=Dash_HealthLabel, Fallback='Helse'}"/>
+            <TextBlock Foreground="{DynamicResource ShellBodyTextBrush}" Text=": "/>
+            <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" Text="{Binding HealthStatusDisplay}"/>
+          </StackPanel>
           <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource ShellSuccessBrush}" Text="{Binding ComfortZoneLabel}"/>
         </StackPanel>
       </Border>
@@ -139,7 +155,7 @@
            graph so it never overlaps other controls (the top Start/Stop stay for desktop). Shown only when the layout
            is compact (code-behind) AND recording. -->
       <Border x:Name="MobileStopBar" IsVisible="False" Background="Transparent">
-        <Button Content="Stopp økt" Classes="primary" Command="{Binding StopCommand}" IsVisible="{Binding IsRecording}"
+        <Button Content="{loc:Tr Key=Dash_StopSession, Fallback='Stopp økt'}" Classes="primary" Command="{Binding StopCommand}" IsVisible="{Binding IsRecording}"
                 HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="16,12" FontSize="16"/>
       </Border>
 
@@ -169,7 +185,7 @@
       <!-- Recent local sessions (real saved TrainingSessions from the local database; display-only, no clinical change). -->
       <Border Classes="card" IsVisible="{Binding HasRecentSessions}">
         <StackPanel Spacing="6">
-          <TextBlock Text="Siste økter (lokalt)" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <TextBlock Text="{loc:Tr Key=Dash_RecentSessions, Fallback='Siste økter (lokalt)'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
           <ItemsControl ItemsSource="{Binding RecentSessions}">
             <ItemsControl.ItemTemplate>
               <DataTemplate>
@@ -177,7 +193,7 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
-          <TextBlock Text="Lagres lokalt i din database på denne maskinen — ingen klinisk endring."
+          <TextBlock Text="{loc:Tr Key=Dash_SafetyNote, Fallback='Lagres lokalt i din database på denne maskinen — ingen klinisk endring.'}"
                      Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" TextWrapping="Wrap"/>
         </StackPanel>
       </Border>

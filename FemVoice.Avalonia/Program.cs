@@ -3388,10 +3388,40 @@ internal static class Program
         }
         else Console.WriteLine("[loc-cov] source cross-check skipped (no source tree / published DLL)");
 
-        Console.WriteLine($"[loc-cov] cultures={cultures.Count}(20={cultures20}) trusted={trusted.Count} documentedFallback={backlog.Count} broken={undocumented}");
-        Console.WriteLine($"[loc-cov] trustedResolves={trustedResolves} registeredSane={registeredSane} overlayClean={overlayClean} noBrokenKeys={noBrokenKeys}");
+        // i18n FALLBACK: the VM/view keys surfaced in the localization sweep (now Core-backed with Norwegian neutral +
+        // English elsewhere) must NOT resolve to leftover Norwegian under a non-NO culture (de-DE) — they land on the
+        // real per-language translation where one exists (overlay/resx), otherwise the English fallback. Regression
+        // guard for the "language switch leaves Norwegian on the page" class of bug. `no` is the Norwegian that must
+        // NOT appear; `en` is the expected value ONLY for keys that have no other-language translation (English fallback).
+        var samples = new (string key, string no, string? en)[]
+        {
+            ("Main_NextText", "Neste tekst", "Next text"),
+            ("Shell_Nav_Settings", "Innstillinger", null),     // has a real German overlay ("Einstellungen")
+            ("Dash_LiveHeading", "Sanntid", "Real-time"),
+            ("Dash_StopSession", "Stopp økt", "Stop session"),
+            ("Signal_NoVoice", "Ingen stemme", "No voice"),
+            ("Feedback_KeepSteady", "Hold tonen jevn i komfortsonen.", "Keep the tone steady in the comfort zone."),
+            ("Main_ComfortZone", "Komfortsone", "Comfort zone"),
+            ("Settings_Accessibility_Title", "Tilgjengelighet", "Accessibility"),
+        };
+        global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("de-DE");
+        bool fallbackEnglish = true;
+        foreach (var s in samples)
+        {
+            var v = global::FemVoice.Avalonia.Localization.Localized.Get(s.key, s.no);
+            // Must never be the Norwegian; and where an English fallback is expected, must equal it.
+            if (v == s.no || (s.en != null && v != s.en))
+            {
+                fallbackEnglish = false;
+                Console.WriteLine($"[loc-cov] FALLBACK LEAK key={s.key} got=\"{v}\" no=\"{s.no}\" expectedEn=\"{s.en ?? "(any non-NO)"}\"");
+            }
+        }
+        global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");   // restore
 
-        bool okk = cultures20 && trustedResolves && registeredSane && overlayClean && noBrokenKeys;
+        Console.WriteLine($"[loc-cov] cultures={cultures.Count}(20={cultures20}) trusted={trusted.Count} documentedFallback={backlog.Count} broken={undocumented}");
+        Console.WriteLine($"[loc-cov] trustedResolves={trustedResolves} registeredSane={registeredSane} overlayClean={overlayClean} noBrokenKeys={noBrokenKeys} fallbackEnglish={fallbackEnglish}");
+
+        bool okk = cultures20 && trustedResolves && registeredSane && overlayClean && noBrokenKeys && fallbackEnglish;
         Console.WriteLine(okk ? "[loc-cov] Avalonia localization coverage smoke OK" : "[loc-cov] Avalonia localization coverage smoke FAIL");
         return okk ? 0 : 1;
     }
