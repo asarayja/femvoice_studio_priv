@@ -5,7 +5,7 @@
   <!-- FUNCTIONAL Settings. Every control below is live and persisted (theme/language/motion apply immediately;
        the rest are stored and read by their consumers). No disabled "Utsatt" placeholders. The page DataContext is
        the SettingsViewModel; the working cards bind to its Preferences editor. -->
-  <ScrollViewer>
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="24" Spacing="14" MaxWidth="1000" HorizontalAlignment="Center">
 
       <!-- Header -->
@@ -19,32 +19,32 @@
 
           <Grid ColumnDefinitions="150,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" Margin="0,4,0,0">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding ThemeLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <ComboBox Grid.Row="0" Grid.Column="1" MinWidth="200" HorizontalAlignment="Left" Margin="0,3"
+            <ComboBox Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" MaxWidth="360" Margin="0,3"
                       ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding Theme, Mode=TwoWay}"/>
             <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding LanguageLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <ComboBox Grid.Row="1" Grid.Column="1" MinWidth="200" HorizontalAlignment="Left" Margin="0,3"
+            <ComboBox Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" MaxWidth="360" Margin="0,3"
                       ItemsSource="{Binding LanguageOptions}" SelectedItem="{Binding Language, Mode=TwoWay}"/>
             <TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding StyleLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <ComboBox Grid.Row="2" Grid.Column="1" MinWidth="200" HorizontalAlignment="Left" Margin="0,3"
+            <ComboBox Grid.Row="2" Grid.Column="1" HorizontalAlignment="Stretch" MaxWidth="360" Margin="0,3"
                       ItemsSource="{Binding StyleOptions}" SelectedItem="{Binding SelectedStyle, Mode=TwoWay}"/>
             <TextBlock Grid.Row="3" Grid.Column="0" Text="{Binding FocusLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <ComboBox Grid.Row="3" Grid.Column="1" MinWidth="200" HorizontalAlignment="Left" Margin="0,3"
+            <ComboBox Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch" MaxWidth="360" Margin="0,3"
                       ItemsSource="{Binding FocusOptions}" SelectedItem="{Binding SelectedFocus, Mode=TwoWay}"/>
             <TextBlock Grid.Row="4" Grid.Column="0" Text="{Binding FrequencyLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <ComboBox Grid.Row="4" Grid.Column="1" MinWidth="200" HorizontalAlignment="Left" Margin="0,3"
+            <ComboBox Grid.Row="4" Grid.Column="1" HorizontalAlignment="Stretch" MaxWidth="360" Margin="0,3"
                       ItemsSource="{Binding FrequencyOptions}" SelectedItem="{Binding SelectedFrequency, Mode=TwoWay}"/>
             <TextBlock Grid.Row="5" Grid.Column="0" Text="{Binding ReduceMotionLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
             <CheckBox Grid.Row="5" Grid.Column="1" Margin="0,3" IsChecked="{Binding ReduceMotion, Mode=TwoWay}"/>
           </Grid>
 
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button Classes="primary" Content="{Binding SaveLabel}" Command="{Binding SaveCommand}"/>
-            <Button Classes="secondary" Content="{Binding ReloadLabel}" Command="{Binding ReloadCommand}"/>
-          </StackPanel>
-          <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasActions}" Margin="0,4,0,0">
-            <Button Classes="secondary" Content="{Binding RerunSetupLabel}" Command="{Binding RerunSetupCommand}"/>
-            <Button Classes="secondary" Content="{Binding OpenMicCalLabel}" Command="{Binding OpenMicCalibrationCommand}"/>
-          </StackPanel>
+          <WrapPanel>
+            <Button Classes="primary" Content="{Binding SaveLabel}" Command="{Binding SaveCommand}" Margin="0,0,8,8"/>
+            <Button Classes="secondary" Content="{Binding ReloadLabel}" Command="{Binding ReloadCommand}" Margin="0,0,8,8"/>
+          </WrapPanel>
+          <WrapPanel IsVisible="{Binding HasActions}">
+            <Button Classes="secondary" Content="{Binding RerunSetupLabel}" Command="{Binding RerunSetupCommand}" Margin="0,0,8,8"/>
+            <Button Classes="secondary" Content="{Binding OpenMicCalLabel}" Command="{Binding OpenMicCalibrationCommand}" Margin="0,0,8,8"/>
+          </WrapPanel>
           <TextBlock Text="{Binding Status}" IsVisible="{Binding HasStatus}"
                      Foreground="{DynamicResource ShellSuccessBrush}" FontSize="12" TextWrapping="Wrap"/>
           <TextBlock Text="{Binding FilePath}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" TextWrapping="Wrap"/>
@@ -57,7 +57,7 @@
           <TextBlock Text="{Binding AudioHeading}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}"/>
           <Grid ColumnDefinitions="150,*" RowDefinitions="Auto,Auto" Margin="0,2,0,0">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding MicDeviceLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <ComboBox Grid.Row="0" Grid.Column="1" MinWidth="240" HorizontalAlignment="Left" Margin="0,3"
+            <ComboBox Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" MaxWidth="360" Margin="0,3"
                       ItemsSource="{Binding MicDeviceOptions}" SelectedItem="{Binding SelectedMicDevice, Mode=TwoWay}"/>
             <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding HearOwnVoiceLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
             <CheckBox Grid.Row="1" Grid.Column="1" Margin="0,3" IsChecked="{Binding HearOwnVoice, Mode=TwoWay}"/>
@@ -85,18 +85,18 @@
           <TextBlock Text="{Binding DataHeading}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}"/>
           <TextBlock Text="{Binding DataNote}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
 
-          <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-            <Button Classes="secondary" Content="{Binding BackupLabel}" Command="{Binding BackupCommand}"/>
-            <ComboBox MinWidth="220" ItemsSource="{Binding Backups}" SelectedItem="{Binding SelectedBackup, Mode=TwoWay}"
+          <WrapPanel>
+            <Button Classes="secondary" Content="{Binding BackupLabel}" Command="{Binding BackupCommand}" Margin="0,0,8,8"/>
+            <ComboBox MinWidth="180" MaxWidth="320" HorizontalAlignment="Left" Margin="0,0,8,8" ItemsSource="{Binding Backups}" SelectedItem="{Binding SelectedBackup, Mode=TwoWay}"
                       IsVisible="{Binding HasBackups}" DisplayMemberBinding="{Binding DisplayName}"/>
             <TextBlock Text="{Binding NoBackupsLabel}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="12"
                        VerticalAlignment="Center" IsVisible="{Binding !HasBackups}"/>
-          </StackPanel>
+          </WrapPanel>
 
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button Classes="secondary" Content="{Binding RestoreLabel}" Command="{Binding RestoreCommand}" IsVisible="{Binding HasBackups}"/>
-            <Button Classes="secondary" Content="{Binding ClearLabel}" Command="{Binding ClearCommand}"/>
-          </StackPanel>
+          <WrapPanel>
+            <Button Classes="secondary" Content="{Binding RestoreLabel}" Command="{Binding RestoreCommand}" IsVisible="{Binding HasBackups}" Margin="0,0,8,8"/>
+            <Button Classes="secondary" Content="{Binding ClearLabel}" Command="{Binding ClearCommand}" Margin="0,0,8,8"/>
+          </WrapPanel>
 
           <!-- Inline confirmation for the destructive actions -->
           <Border BorderBrush="{DynamicResource ShellWarningBrush}" BorderThickness="1" CornerRadius="6" Padding="10"

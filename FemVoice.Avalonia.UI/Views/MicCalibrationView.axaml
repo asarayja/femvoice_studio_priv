@@ -6,7 +6,7 @@
        guided flow (measure silence → measure comfortable voice), then the FROZEN Core MicrophoneCalibrationService
        assesses quality and, when usable, builds + SAVES the adaptive profile. Live RMS/dBFS meter + progress during
        each phase. Stops capture on navigate-away (IDisposable). No threshold math here — all in the frozen service. -->
-  <ScrollViewer>
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="24" Spacing="16" MaxWidth="720" HorizontalAlignment="Center">
 
       <!-- Header -->

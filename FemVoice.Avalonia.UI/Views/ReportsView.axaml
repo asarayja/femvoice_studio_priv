@@ -5,7 +5,7 @@
   <!-- FUNCTIONAL Reports: real progress-summary preview + session history + CSV/text export (native save dialog in
        code-behind) + the real professional panels (coach/clinician/timeline/case-review, each PDF/CSV/JSON). No
        deferred placeholder cards. -->
-  <ScrollViewer>
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="20" Spacing="16" MaxWidth="1040" HorizontalAlignment="Center">
 
       <!-- Header band -->

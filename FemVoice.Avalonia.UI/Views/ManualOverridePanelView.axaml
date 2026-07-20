@@ -4,7 +4,7 @@
              x:Class="FemVoice.Avalonia.Views.ManualOverridePanelView">
   <!-- SAFETY-CRITICAL manual override: a professional enters an intended profile; the FROZEN two-stage clamp runs
        and ONLY the clamped outcome is shown (never the raw intent). Display-only: no persistence, no application. -->
-  <ScrollViewer>
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="24" Spacing="16" MaxWidth="760" HorizontalAlignment="Center">
 
       <Grid ColumnDefinitions="*,Auto">

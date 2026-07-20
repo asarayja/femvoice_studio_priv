@@ -3,7 +3,7 @@
              xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
              x:Class="FemVoice.Avalonia.Views.CaseReviewPanelView">
   <!-- REAL case-review: pick a review type + period → real OutcomeProfile-based summary for that window. Read-only. -->
-  <ScrollViewer>
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="24" Spacing="16" MaxWidth="760" HorizontalAlignment="Center">
 
       <Grid ColumnDefinitions="*,Auto">

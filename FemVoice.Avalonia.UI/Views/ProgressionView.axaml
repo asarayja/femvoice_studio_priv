@@ -4,7 +4,7 @@
   <!-- Engine-backed Progression: real level + FemVoice score + summary from the real database. RESPONSIVE: the many
        cards flow into TWO columns on desktop widths (uses the full content width, far less scrolling) and collapse to
        a single column on narrow/phone widths (see code-behind reflow). -->
-  <ScrollViewer>
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="20" Spacing="14" MaxWidth="1400" HorizontalAlignment="Stretch">
 
       <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>
