@@ -3478,7 +3478,7 @@ internal static class Program
             var d = store.Load();
             bool defaultsOk = !System.IO.File.Exists(tmp)
                 && d.Theme == global::FemVoice.Avalonia.Preferences.ThemePreference.System
-                && d.Language == "nb-NO" && d.ReduceMotion == false;
+                && d.Language == "en-US" && d.ReduceMotion == false;
 
             // 2) Save → file written under the temp (Avalonia-local) path.
             store.Save(new global::FemVoice.Avalonia.Preferences.UiPreferences
@@ -3495,11 +3495,11 @@ internal static class Program
             // 4) Corrupt file → safe defaults, no throw.
             System.IO.File.WriteAllText(tmp, "{ this is not valid json ]]");
             var c = store.Load();
-            bool corruptOk = c.Theme == global::FemVoice.Avalonia.Preferences.ThemePreference.System && c.Language == "nb-NO";
+            bool corruptOk = c.Theme == global::FemVoice.Avalonia.Preferences.ThemePreference.System && c.Language == "en-US";
 
             // 5) Unknown language normalises to the default.
             store.Save(new global::FemVoice.Avalonia.Preferences.UiPreferences { Language = "zz-ZZ" });
-            bool normOk = store.Load().Language == "nb-NO";
+            bool normOk = store.Load().Language == "en-US";
 
             // 6) Default path is Avalonia-local (own folder), not a WPF/DB file.
             string defPath = global::FemVoice.Avalonia.Preferences.UiPreferencesStore.DefaultPath();
@@ -3681,10 +3681,10 @@ internal static class Program
             bool corruptSafe = !global::FemVoice.Avalonia.Localization.LanguageActivation.ApplyFromStore(Store())
                 && global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name == "de-DE";
 
-            // Unknown/unsupported language saved → model normalizes to nb-NO → applied.
+            // Unknown/unsupported language saved → model normalizes to the default (en-US) → applied.
             Store().Save(new global::FemVoice.Avalonia.Preferences.UiPreferences { Language = "zz-ZZ" });
             bool unknownSafe = global::FemVoice.Avalonia.Localization.LanguageActivation.ApplyFromStore(Store())
-                && global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name == "nb-NO";
+                && global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name == "en-US";
 
             // Boundary: language activation must NOT change the global thread culture (Avalonia-local only).
             bool threadCultureUntouched = System.Globalization.CultureInfo.CurrentUICulture.Name == threadUiBefore

@@ -18,8 +18,10 @@ public sealed class UiPreferences
     /// <summary>Theme preference (default: follow the system).</summary>
     public ThemePreference Theme { get; set; } = ThemePreference.System;
 
-    /// <summary>Language preference as a culture code (default: nb-NO). One of the 20 supported cultures.</summary>
-    public string Language { get; set; } = "nb-NO";
+    /// <summary>Language preference as a culture code. One of the 20 supported cultures. Default: en-US — a fresh
+    /// install (and the first-run onboarding) starts in ENGLISH so international users understand it; they pick their
+    /// own language in onboarding / Settings, which is then saved and applied.</summary>
+    public string Language { get; set; } = "en-US";
 
     /// <summary>Accessibility/display preference: reduce motion/animation (default: off). Display-only.</summary>
     public bool ReduceMotion { get; set; }
@@ -72,7 +74,7 @@ public sealed class UiPreferences
         var lang = Language;
         if (string.IsNullOrWhiteSpace(lang)
             || !FemVoice.Avalonia.Localization.ScaffoldStrings.Cultures.Contains(lang, StringComparer.OrdinalIgnoreCase))
-            lang = "nb-NO";
+            lang = "en-US";   // default language is English (fresh install / first-run onboarding)
         return new UiPreferences
         {
             Theme = Enum.IsDefined(typeof(ThemePreference), Theme) ? Theme : ThemePreference.System,

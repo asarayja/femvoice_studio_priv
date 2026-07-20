@@ -4830,16 +4830,16 @@ This cannot be undone!</value>
     <value>{0} er valgt som fokusområde fordi det er her treningen din har størst potensiale for vekst akkurat nå.</value>
   </data>
   <data name="FirstSetup_FrequencyDesc" xml:space="preserve">
-    <value>Hvor ofte ønsker du å trene? Velg et tempo som kjennes overkommelig for deg.</value>
+    <value>How often do you want to practice? Pick a pace that feels manageable.</value>
   </data>
   <data name="FirstSetup_FrequencyLabel" xml:space="preserve">
-    <value>Treningsdager per uke</value>
+    <value>Training days per week</value>
   </data>
   <data name="FirstSetup_StyleGoalDesc" xml:space="preserve">
-    <value>Hvilken klang ønsker du å utforske? Du kan endre dette når som helst senere.</value>
+    <value>Which sound do you want to explore? You can change this anytime later.</value>
   </data>
   <data name="FirstSetup_StyleGoalLabel" xml:space="preserve">
-    <value>Velg målstil</value>
+    <value>Choose voice style</value>
   </data>
   <data name="HealthWarning_DefaultRest" xml:space="preserve">
     <value>🛑 Ta en pause. Drikk vann og slapp av i halsen.</value>
@@ -4890,16 +4890,16 @@ This cannot be undone!</value>
     <value>Tilpass tempo og synsinntrykk slik at trening kjennes trygt og overkommelig.</value>
   </data>
   <data name="Settings_Accessibility_Frequency2" xml:space="preserve">
-    <value>2 dager</value>
+    <value>2 days</value>
   </data>
   <data name="Settings_Accessibility_Frequency3" xml:space="preserve">
-    <value>3 dager (anbefalt)</value>
+    <value>3 days (recommended)</value>
   </data>
   <data name="Settings_Accessibility_Frequency4" xml:space="preserve">
-    <value>4 dager</value>
+    <value>4 days</value>
   </data>
   <data name="Settings_Accessibility_Frequency5" xml:space="preserve">
-    <value>5 eller flere dager</value>
+    <value>5 or more days</value>
   </data>
   <data name="Settings_Accessibility_ReducedVisual" xml:space="preserve">
     <value>Redusert visuell tilbakemelding</value>
@@ -4917,7 +4917,7 @@ This cannot be undone!</value>
     <value>Tilgjengelighet</value>
   </data>
   <data name="Settings_Accessibility_TrainingFrequency" xml:space="preserve">
-    <value>Treningsdager per uke</value>
+    <value>Training days per week</value>
   </data>
   <data name="SmartCoach_Focus_Comfort" xml:space="preserve">
     <value>Fokus i dag: Komfort. La stemmen få hvile i et avslappet, behagelig leie. Utforsk en lett og myk klang i ditt eget tempo, og legg merke til hvordan det kjennes godt ut i hals og kjeve. Ingen mål om å nå noe bestemt – bare la lyden komme rolig.</value>
