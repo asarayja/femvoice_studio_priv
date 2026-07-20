@@ -11,7 +11,7 @@ linux-x64 ; linux-arm64 ; osx-x64 ; osx-arm64 ; win-x64 ; win-arm64
 ```
 `RuntimeIdentifiers` is plural, so `dotnet build` / `dotnet run` stay portable and unchanged; only
 `dotnet publish -r <rid>` targets a specific platform. The **Windows** RIDs make the Avalonia head the
-cross-platform Windows path — a `win-x64` publish produces `FemVoice.Avalonia.exe` (`Avalonia.Win32`), and it
+cross-platform Windows path — a `win-x64` publish produces `FemVoice.Studio.exe` (`Avalonia.Win32`), and it
 cross-compiles from Linux. The WPF app (`FemVoiceStudio`) remains the frozen Windows *reference* baseline.
 
 Windows publish:
@@ -71,7 +71,7 @@ The launcher is now a small `bash` script instead:
 #!/usr/bin/env bash
 set -euo pipefail
 APP_DIR="/opt/femvoice-studio"
-APP_DLL="$APP_DIR/FemVoice.Avalonia.dll"
+APP_DLL="$APP_DIR/FemVoice.Studio.dll"
 if ! command -v dotnet >/dev/null 2>&1; then
   echo "FemVoice Studio requires the .NET runtime to be installed." >&2
   echo "Install the matching .NET desktop/runtime package, then run femvoice-studio again." >&2
@@ -130,13 +130,13 @@ scripts + dry-run/check/help flags + unsigned-flow-intact + signing-not-wired-in
 Framework-dependent publish for `linux-x64` and `osx-x64` completed and produced a valid apphost plus the
 expected managed DLLs (`FemVoice.Core`, `FemVoice.Audio.Abstractions`, `Avalonia`, `Tmds.DBus.Protocol` — and
 NOT `FemVoice.Audio.Windows`). The published `linux-x64` app runs `--smoke` OK via the shared .NET runtime
-(`dotnet FemVoice.Avalonia.dll --smoke`). Note: a standalone framework-dependent apphost additionally needs a
+(`dotnet FemVoice.Studio.dll --smoke`). Note: a standalone framework-dependent apphost additionally needs a
 system/registered .NET runtime; on a user-local-SDK box, launch via `dotnet <app>.dll` or publish
 self-contained.
 
 The helper scripts were exercised end-to-end: `publish-linux.sh linux-x64` + `publish-macos.sh osx-x64`
 published successfully, and `package-deb.sh linux-x64` produced `femvoice-studio_0.1.0_amd64.deb` with the
-expected layout (`/opt/femvoice-studio/FemVoice.Avalonia.dll`, `/usr/bin/femvoice-studio`,
+expected layout (`/opt/femvoice-studio/FemVoice.Studio.dll`, `/usr/bin/femvoice-studio`,
 `/usr/share/applications/femvoice-studio.desktop`, `/usr/share/doc/femvoice-studio/{copyright,README.Debian}`),
 `root:root` ownership, and `Maintainer: A hansen <rassyhansen@gmail.com>`.
 

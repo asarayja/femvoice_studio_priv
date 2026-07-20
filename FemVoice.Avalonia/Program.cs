@@ -2389,7 +2389,7 @@ internal static class Program
         // --- Launcher robustness: /usr/bin/femvoice-studio runs the DLL via `dotnet`, not the apphost. ---
         bool debLauncherPath = deb.Contains("/usr/bin/femvoice-studio");
         bool debLauncherUsesDotnet = deb.Contains("exec dotnet");
-        bool debLauncherTargetsDll = deb.Contains("FemVoice.Avalonia.dll");
+        bool debLauncherTargetsDll = deb.Contains("FemVoice.Studio.dll");
         bool debLauncherChecksDotnet = deb.Contains("command -v dotnet");
         // No automatic dependency install / no system-state mutation from the helper or launcher.
         bool debNoInstall = deb.Length > 0 && !deb.Contains("apt-get") && !deb.Contains("apt install")

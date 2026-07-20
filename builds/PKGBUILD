@@ -33,11 +33,11 @@ package() {
   # Payload
   install -dm755 "$pkgdir/opt/femvoice-studio"
   cp -r "$srcdir/out/." "$pkgdir/opt/femvoice-studio/"
-  chmod 755 "$pkgdir/opt/femvoice-studio/FemVoice.Avalonia"
+  chmod 755 "$pkgdir/opt/femvoice-studio/FemVoice.Studio"
 
   # Launcher on PATH
   install -dm755 "$pkgdir/usr/bin"
-  printf '#!/bin/sh\nexec /opt/femvoice-studio/FemVoice.Avalonia "$@"\n' > "$pkgdir/usr/bin/femvoice-studio"
+  printf '#!/bin/sh\nexec /opt/femvoice-studio/FemVoice.Studio "$@"\n' > "$pkgdir/usr/bin/femvoice-studio"
   chmod 755 "$pkgdir/usr/bin/femvoice-studio"
 
   # Icon + desktop entry
@@ -48,7 +48,7 @@ package() {
 [Desktop Entry]
 Name=FemVoice Studio
 Comment=Stemmetrening – voice feminization biofeedback
-Exec=/opt/femvoice-studio/FemVoice.Avalonia
+Exec=/opt/femvoice-studio/FemVoice.Studio
 Icon=femvoice-studio
 Terminal=false
 Type=Application

@@ -38,6 +38,9 @@
   <ItemGroup>
     <!-- The desktop head's headless verification smokes (in FemVoice.Avalonia/Program.cs) exercise some internal
          UI types (e.g. ScaffoldTranslations, ExerciseDisplay). Expose internals to that Exe only. -->
+    <!-- The desktop head's assembly is now named FemVoice.Studio (its exe/apphost is FemVoice.Studio.exe); keep the
+         old name too so any other consumer still resolves. -->
+    <InternalsVisibleTo Include="FemVoice.Studio" />
     <InternalsVisibleTo Include="FemVoice.Avalonia" />
   </ItemGroup>
 
