@@ -4,7 +4,7 @@
              x:Class="FemVoice.Avalonia.Views.AnalyzerView">
   <!-- REAL real-time analyzer: live main frequency + resonance vs a target, plus running pitch stats (avg/min/max/
        duration/samples). Core pitch + resonance engines. Measurement only — no scoring/persistence. IDisposable. -->
-  <ScrollViewer>
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="24" Spacing="16" MaxWidth="720" HorizontalAlignment="Center">
 
       <Border Classes="card" Padding="20,16">

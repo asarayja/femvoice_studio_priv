@@ -4,7 +4,7 @@
              x:Class="FemVoice.Avalonia.Views.ResonanceView">
   <!-- REAL resonance screen: live resonance meter (Core ResonanceProxyEngine) + optional non-scored resonance-
        contrast awareness demo. Stops capture on navigate-away (IDisposable). No scoring/persistence. -->
-  <ScrollViewer>
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="24" Spacing="16" MaxWidth="720" HorizontalAlignment="Center">
 
       <Border Classes="card" Padding="20,16">

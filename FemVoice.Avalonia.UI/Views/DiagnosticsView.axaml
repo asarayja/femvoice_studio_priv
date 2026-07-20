@@ -4,7 +4,7 @@
              x:Class="FemVoice.Avalonia.Views.DiagnosticsView">
   <!-- FUNCTIONAL diagnostics: real runtime + database status, real diagnostics-text export (native save dialog in
        code-behind), real database backup, and the on-disk data-folder path. No deferred placeholder cards. -->
-  <ScrollViewer>
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="20" Spacing="16" MaxWidth="1040" HorizontalAlignment="Center">
 
       <!-- Header band -->

@@ -3,7 +3,7 @@
              xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
              x:Class="FemVoice.Avalonia.Views.StatisticsView">
   <!-- Statistics: real training stats from the real database (WPF StatisticsWindow parity). -->
-  <ScrollViewer>
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="20" Spacing="14" MaxWidth="1000" HorizontalAlignment="Center">
 
       <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>

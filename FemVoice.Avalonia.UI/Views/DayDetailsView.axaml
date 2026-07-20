@@ -4,7 +4,7 @@
              xmlns:vm="clr-namespace:FemVoice.Avalonia.ViewModels"
              x:Class="FemVoice.Avalonia.Views.DayDetailsView">
   <!-- Day-details: every real training session recorded on the chosen day (from the DB). Read-only. -->
-  <ScrollViewer>
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="24" Spacing="16" MaxWidth="820" HorizontalAlignment="Center">
 
       <Grid ColumnDefinitions="*,Auto">

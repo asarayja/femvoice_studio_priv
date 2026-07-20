@@ -7,7 +7,7 @@
        pressing Start activates the same page. No pitch graph here (WPF has none). Wording is focus-aware
        (pitch is demoted to a secondary technical detail for non-pitch exercises). Display-only; no clinical/
        domain/WPF change. -->
-  <ScrollViewer>
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="20" Spacing="14">
 
       <!-- Header: back + title -->

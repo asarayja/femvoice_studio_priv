@@ -6,7 +6,7 @@
        2-column chart-card grid), but DISPLAY-ONLY over SYNTHETIC in-memory sample data. Converter-free mini
        bar-charts (no OxyPlot); no database/history reads, no export, no clinical scoring. Real analysis-engine
        + OxyPlot parity + session data remain deferred (Phase 10). -->
-  <ScrollViewer>
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="20" Spacing="16" MaxWidth="1040" HorizontalAlignment="Center">
 
       <!-- Header band (WPF: heading + subtitle) -->

@@ -4,7 +4,7 @@
              x:Class="FemVoice.Avalonia.Views.CalendarView">
   <!-- Month-grid calendar (WPF CalendarWindow parity): weekday headers + prev/next/today + day cells that
        highlight today and training days (session marks); click a day with sessions to open its details. -->
-  <ScrollViewer>
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="20" Spacing="14" MaxWidth="760" HorizontalAlignment="Center">
       <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource ShellHeadingBrush}"/>
 

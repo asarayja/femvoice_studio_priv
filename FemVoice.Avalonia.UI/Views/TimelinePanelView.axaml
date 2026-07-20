@@ -5,7 +5,7 @@
              x:Class="FemVoice.Avalonia.Views.TimelinePanelView">
   <!-- REAL voice-development timeline: trend windows (period, composite mean, session count, direction) assembled
        read-only from saved sessions via the frozen Core report pipeline. Exportable (PDF/CSV/JSON). No writes. -->
-  <ScrollViewer>
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="24" Spacing="16" MaxWidth="820" HorizontalAlignment="Center">
 
       <Grid ColumnDefinitions="*,Auto">

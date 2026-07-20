@@ -5,7 +5,7 @@
   <!-- REAL first-time onboarding (ported from WPF FirstTimeSetupWindow). Welcome header + language + theme choices
        that persist to the Avalonia-local prefs file and apply LIVE. Fullfør/Hopp over record the completed flag so
        onboarding shows only once. No database/clinical/WPF interaction. -->
-  <ScrollViewer>
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="24" Spacing="16" MaxWidth="640" HorizontalAlignment="Center">
 
       <!-- Welcome header -->
