@@ -5849,4 +5849,13 @@ Tuto akci nelze vrátit zpět!</value>
   <data name="GuideVm_ProgressNote_Today" xml:space="preserve">
     <value>Today&#x27;s completed exercises are saved and count toward your progression.</value>
   </data>
+  <data name="Settings_SaveHint" xml:space="preserve">
+    <value>Changes are saved when you press «Save» at the top.</value>
+  </data>
+  <data name="Settings_RestoreConfirm" xml:space="preserve">
+    <value>Restore from the selected backup? Current data is replaced (a backup is taken first).</value>
+  </data>
+  <data name="Settings_ClearConfirm" xml:space="preserve">
+    <value>Clear the entire database? All local training history is deleted. This cannot be undone (but you can restore from a backup).</value>
+  </data>
 </root>
