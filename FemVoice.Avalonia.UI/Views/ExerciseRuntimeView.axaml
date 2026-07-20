@@ -112,9 +112,11 @@
             </StackPanel>
           </Border>
 
-          <!-- Live status (text readout; no graph — WPF parity) — visible while running -->
+          <!-- Live status: a numeric readout PLUS the moving pitch trace (WPF's exercise window had a live moving
+               graph). The trace scrolls right as you speak, over the green target band, with a current-pitch marker.
+               Bound to the same per-frame RuntimeChart / RuntimePitchSamples the VM already computes. -->
           <Border Classes="card" IsVisible="{Binding IsRunning}">
-            <StackPanel Spacing="6">
+            <StackPanel Spacing="8">
               <TextBlock Text="{Binding LiveHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
               <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsPitchFocused}">
                 <TextBlock Text="{Binding CurrentPitch, StringFormat='{}{0:F1}'}" FontSize="34" FontWeight="Bold" Foreground="{DynamicResource ShellAccentBrush}"/>
@@ -122,6 +124,47 @@
               </StackPanel>
               <TextBlock Text="{Binding PitchStatus, StringFormat='Status: {0}'}" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
               <TextBlock Text="{Binding CurrentResonance, StringFormat='Resonans: {0}'}" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+
+              <!-- Moving pitch trace (converter-free Canvas; px == distance from bottom). -->
+              <TextBlock Text="Tonehøyde (nyeste til høyre)" FontSize="12" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,4,0,0"/>
+              <Grid ColumnDefinitions="Auto,*" Height="{Binding RuntimeChart.ChartHeightPx}">
+                <Grid Grid.Column="0" Width="46" RowDefinitions="Auto,*,Auto" Margin="0,0,6,0">
+                  <TextBlock Grid.Row="0" Text="Høyere" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
+                  <TextBlock Grid.Row="2" Text="Lavere" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
+                </Grid>
+                <Border Grid.Column="1" Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="6" ClipToBounds="True">
+                  <Panel>
+                    <Canvas Name="RtChartCanvas" Height="{Binding RuntimeChart.ChartHeightPx}" HorizontalAlignment="Stretch">
+                      <!-- Subtle grid lines -->
+                      <Rectangle Canvas.Left="0" Canvas.Bottom="50"  Height="1" Width="{Binding #RtChartCanvas.Bounds.Width}" Fill="{DynamicResource ShellBorderBrush}"/>
+                      <Rectangle Canvas.Left="0" Canvas.Bottom="100" Height="1" Width="{Binding #RtChartCanvas.Bounds.Width}" Fill="{DynamicResource ShellBorderBrush}"/>
+                      <Rectangle Canvas.Left="0" Canvas.Bottom="150" Height="1" Width="{Binding #RtChartCanvas.Bounds.Width}" Fill="{DynamicResource ShellBorderBrush}"/>
+                      <!-- Target band (green) -->
+                      <Rectangle Canvas.Left="0" Canvas.Bottom="{Binding RuntimeChart.TargetBandBottomPx}"
+                                 Height="{Binding RuntimeChart.TargetBandHeightPx}"
+                                 Width="{Binding #RtChartCanvas.Bounds.Width}" Fill="{DynamicResource ShellTargetBandBrush}"/>
+                      <!-- Live pitch trace (newest at right) -->
+                      <ItemsControl Canvas.Left="0" Canvas.Bottom="0" ItemsSource="{Binding RuntimePitchSamples}">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate><StackPanel Orientation="Horizontal" VerticalAlignment="Bottom"/></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <Rectangle Width="3" Margin="1,0" Fill="{DynamicResource ShellChartTraceBrush}" VerticalAlignment="Bottom" Height="{Binding}"/>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                      <!-- Current-pitch marker line -->
+                      <Rectangle Canvas.Left="0" Canvas.Bottom="{Binding RuntimeChart.CurrentPitchMarkerPx}"
+                                 Height="2" Width="{Binding #RtChartCanvas.Bounds.Width}" Fill="{DynamicResource ShellMarkerBrush}"
+                                 IsVisible="{Binding RuntimeChart.HasVoice}"/>
+                    </Canvas>
+                    <!-- Empty-state hint until a voice is detected -->
+                    <TextBlock Text="Si en jevn tone — tonehøyden vises her." HorizontalAlignment="Center" VerticalAlignment="Center"
+                               TextWrapping="Wrap" Foreground="{DynamicResource ShellFaintBrush}" IsVisible="{Binding !RuntimeChart.HasVoice}"/>
+                  </Panel>
+                </Border>
+              </Grid>
             </StackPanel>
           </Border>
 
