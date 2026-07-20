@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <!-- Launch splash: the FemVoice Studio logo centered on the brand-dark background, shown while the app loads. -->
-  <style name="FemVoiceSplash" parent="@android:style/Theme.Material.Light.NoActionBar">
+  <!-- Launch splash: the FemVoice Studio logo centered on the brand-dark background, shown while the app loads.
+       Parent MUST be a Theme.AppCompat descendant: Avalonia's AvaloniaMainActivity is an AppCompatActivity, and
+       AppCompat's SetContentView throws "You need to use a Theme.AppCompat theme" under any non-AppCompat parent
+       (the platform @android:Theme.Material.* is NOT AppCompat). NoActionBar keeps the chromeless splash look. -->
+  <style name="FemVoiceSplash" parent="Theme.AppCompat.Light.NoActionBar">
     <item name="android:windowBackground">@drawable/splash_background</item>
   </style>
 </resources>

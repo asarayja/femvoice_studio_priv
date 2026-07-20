@@ -25,6 +25,11 @@
     <AndroidManifest>Properties\AndroidManifest.xml</AndroidManifest>
     <!-- Reflection bindings (matches the desktop head; AvaloniaUseCompiledBindingsByDefault=false). -->
     <AndroidLinkMode>None</AndroidLinkMode>
+    <!-- Marshal methods (a Release-default build optimization since .NET 9) crashes this app at startup with a
+         native Mono runtime assertion `klass->instance_size == instance_size` in class-init.c, aborting before any
+         managed code runs (Avalonia 11.2.1 on the net10.0-android runtime). Disabling it is the supported workaround
+         and has no functional effect — remove once Avalonia/the Android workload resolve the incompatibility. -->
+    <AndroidEnableMarshalMethods>false</AndroidEnableMarshalMethods>
   </PropertyGroup>
 
   <ItemGroup>
