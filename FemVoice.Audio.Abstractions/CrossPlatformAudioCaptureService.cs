@@ -89,9 +89,17 @@ public sealed class CrossPlatformAudioCaptureService : IRealAudioCaptureBackend,
 /// </summary>
 public static class AudioCaptureBackendFactory
 {
-    /// <summary>The real (hardware) capture backend for the current OS — an OS dispatcher that degrades gracefully
-    /// to "unavailable" where no native binding is wired. Does NOT start capture.</summary>
-    public static IRealAudioCaptureBackend CreateReal() => new CrossPlatformAudioCaptureService();
+    /// <summary>Optional platform-provided real backend, set by a platform head whose native capture API cannot live
+    /// in this dependency-free abstractions assembly (e.g. Android's <c>AudioRecord</c>, wired from FemVoice.Android
+    /// at startup). When set, it is used for BOTH device enumeration (<see cref="CreateReal"/>) and the runtime
+    /// backend (<see cref="CreateForRuntime"/>). Null on desktop → the built-in Linux/Windows dispatcher is used.</summary>
+    public static Func<IRealAudioCaptureBackend>? PlatformRealBackendFactory { get; set; }
+
+    /// <summary>The real (hardware) capture backend for the current OS: the platform-provided one when a head has set
+    /// <see cref="PlatformRealBackendFactory"/> (Android), otherwise the built-in cross-platform OS dispatcher
+    /// (Linux/ALSA, Windows/winmm; degrades to "unavailable" elsewhere). Does NOT start capture.</summary>
+    public static IRealAudioCaptureBackend CreateReal()
+        => PlatformRealBackendFactory?.Invoke() ?? new CrossPlatformAudioCaptureService();
 
     /// <summary>The synthetic, display-only backend (deterministic frames, no hardware). Used as the fail-safe
     /// fallback for the runtime and for headless/CI hosts.</summary>

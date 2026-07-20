@@ -3941,6 +3941,20 @@ internal static class Program
     // unavailable OS is fail-safe (no frames), AudioReadiness reports it truthfully, the synthetic runtime backend
     // is unaffected, and the backend sources carry no Windows-audio/WPF/DB code refs. (Deep real-frame capture is
     // proven by --real-audio-capture-smoke.)
+    // Minimal real-backend double for the platform-override test (stands in for the Android AudioRecord backend).
+    private sealed class FakeRealCaptureBackend : global::FemVoiceStudio.Audio.Abstractions.IRealAudioCaptureBackend
+    {
+        public event EventHandler<global::FemVoiceStudio.Audio.Abstractions.AudioFrameAvailableEventArgs>? FrameAvailable;
+        public event EventHandler<global::FemVoiceStudio.Audio.Abstractions.AudioDeviceLostEventArgs>? DeviceLost;
+        public bool IsBackendAvailable => true;
+        public System.Collections.Generic.IReadOnlyList<global::FemVoiceStudio.Audio.Abstractions.AudioInputDevice> GetInputDevices()
+            => new[] { new global::FemVoiceStudio.Audio.Abstractions.AudioInputDevice("default", "fake", true) };
+        public Task StartAsync(global::FemVoiceStudio.Audio.Abstractions.AudioCaptureOptions options, System.Threading.CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task StopAsync() => Task.CompletedTask;
+        // Keep the compiler from warning about unused events (they are part of the interface contract).
+        private void Touch() { FrameAvailable?.Invoke(this, null!); DeviceLost?.Invoke(this, null!); }
+    }
+
     private static int AvaloniaAudioBackendSmoke()
     {
         var backend = new global::FemVoiceStudio.Audio.Abstractions.CrossPlatformAudioCaptureService();
@@ -4012,7 +4026,22 @@ internal static class Program
 
         (backend as IDisposable)?.Dispose();
 
-        bool ok = enumerationSafe && consistent && noAutoCapture && probeSafe && readinessTruthful && syntheticUnaffected && noForbidden && winMmFailSafe;
+        // Platform backend override (used by the Android head to inject its AudioRecord backend): when set,
+        // CreateReal() returns it and CreateForRuntime() uses it. Restore null afterwards (desktop uses the dispatcher).
+        bool platformOverrideOk;
+        try
+        {
+            var fake = new FakeRealCaptureBackend();
+            global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory = () => fake;
+            bool createRealUsesIt = ReferenceEquals(global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.CreateReal(), fake);
+            bool runtimeUsesIt = ReferenceEquals(global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.CreateForRuntime(), fake);
+            platformOverrideOk = createRealUsesIt && runtimeUsesIt;
+        }
+        catch { platformOverrideOk = false; }
+        finally { global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory = null; }
+        Console.WriteLine($"[audio-be] platformOverrideOk={platformOverrideOk}");
+
+        bool ok = enumerationSafe && consistent && noAutoCapture && probeSafe && readinessTruthful && syntheticUnaffected && noForbidden && winMmFailSafe && platformOverrideOk;
         Console.WriteLine(ok ? "[audio-be] Avalonia audio backend smoke OK" : "[audio-be] Avalonia audio backend smoke FAIL");
         return ok ? 0 : 1;
     }
