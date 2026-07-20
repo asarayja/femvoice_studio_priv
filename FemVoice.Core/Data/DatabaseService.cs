@@ -24,16 +24,30 @@ namespace FemVoiceStudio.Data
         
         public DatabaseService(string databasePath = "femvoice.db")
         {
-            // Lag database i brukerens Documents-mappe
-            var appDataPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                "FemVoiceStudio");
-                
+            var appDataPath = ResolveAppDataDir();
             Directory.CreateDirectory(appDataPath);
             var fullPath = Path.Combine(appDataPath, databasePath);
             _connectionString = $"Data Source={fullPath}";
-            
+
             InitializeDatabase();
+        }
+
+        /// <summary>
+        /// The FemVoiceStudio data directory. On desktop this is &lt;Documents&gt;/FemVoiceStudio (unchanged). On
+        /// Android/mobile <see cref="Environment.SpecialFolder.MyDocuments"/> resolves to an EMPTY string, which would
+        /// make the path relative and land in a non-writable working directory (crashing at startup) — so fall back to
+        /// the app-private, writable LocalApplicationData/Personal folder, and finally to the app base directory.
+        /// </summary>
+        public static string ResolveAppDataDir()
+        {
+            string baseDir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            if (string.IsNullOrEmpty(baseDir))
+                baseDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            if (string.IsNullOrEmpty(baseDir))
+                baseDir = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+            if (string.IsNullOrEmpty(baseDir))
+                baseDir = AppContext.BaseDirectory;
+            return Path.Combine(baseDir, "FemVoiceStudio");
         }
         
         /// <summary>
@@ -1713,11 +1727,12 @@ namespace FemVoiceStudio.Data
         /// </summary>
         public void ResetDatabase()
         {
-            // Hent database path
-            var appDataPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                "FemVoiceStudio");
-            var dbPath = Path.Combine(appDataPath, "femvoice.db");
+            // Delete the ACTUAL database file this instance uses (derived from the connection string), so a custom
+            // path or the Android-safe app-data fallback is honoured — not a recomputed MyDocuments path.
+            const string prefix = "Data Source=";
+            var dbPath = _connectionString.StartsWith(prefix)
+                ? _connectionString.Substring(prefix.Length)
+                : Path.Combine(ResolveAppDataDir(), "femvoice.db");
             
             // Lukk eksisterende tilkobling
             _connection?.Dispose();
