@@ -5859,4 +5859,85 @@ Dette kan ikke angres!</value>
   <data name="Settings_ClearConfirm" xml:space="preserve">
     <value>Tømme hele databasen? All lokal treningshistorikk slettes. Dette kan ikke angres (men du kan gjenopprette fra en sikkerhetskopi).</value>
   </data>
+  <data name="Metric_PitchVariability" xml:space="preserve">
+    <value>Tonehøyde-variasjon</value>
+  </data>
+  <data name="Metric_Intensity" xml:space="preserve">
+    <value>Intensitet</value>
+  </data>
+  <data name="Metric_Smoothness" xml:space="preserve">
+    <value>Jevnhet</value>
+  </data>
+  <data name="ExDisp_Focus_Pitch" xml:space="preserve">
+    <value>Fokus: stabil tonehøyde i målområdet.</value>
+  </data>
+  <data name="ExDisp_Focus_Resonance" xml:space="preserve">
+    <value>Fokus: lysere resonans og fremre plassering — ikke bare tonehøyde.</value>
+  </data>
+  <data name="ExDisp_Focus_Intonation" xml:space="preserve">
+    <value>Fokus: melodi og setningsmelodi (intonasjon).</value>
+  </data>
+  <data name="ExDisp_Focus_Breathing" xml:space="preserve">
+    <value>Fokus: pust, støtte og jevn, rolig luftstrøm.</value>
+  </data>
+  <data name="ExDisp_Focus_Combined" xml:space="preserve">
+    <value>Fokus: kombinert — tonehøyde, resonans og kontroll.</value>
+  </data>
+  <data name="ExDisp_Focus_Default" xml:space="preserve">
+    <value>Fokus: stemmetrening.</value>
+  </data>
+  <data name="Coord_SafetyLockDefault" xml:space="preserve">
+    <value>Sikkerhetslås: — (veiledende)</value>
+  </data>
+  <data name="Coord_SafetyLockFormat" xml:space="preserve">
+    <value>Sikkerhetslås: {0} (veiledende)</value>
+  </data>
+  <data name="Coord_On" xml:space="preserve">
+    <value>PÅ</value>
+  </data>
+  <data name="Coord_Off" xml:space="preserve">
+    <value>AV</value>
+  </data>
+  <data name="Coord_ReadoutMode" xml:space="preserve">
+    <value>Koordinator-readout (veiledende)</value>
+  </data>
+  <data name="Coord_Inactive" xml:space="preserve">
+    <value>Inaktiv</value>
+  </data>
+  <data name="Coord_Status_Holding" xml:space="preserve">
+    <value>Holder riktig</value>
+  </data>
+  <data name="Coord_Status_InZone" xml:space="preserve">
+    <value>I komfortsone</value>
+  </data>
+  <data name="Coord_Status_OutOfTarget" xml:space="preserve">
+    <value>Utenfor mål</value>
+  </data>
+  <data name="Coord_Guidance_Starting" xml:space="preserve">
+    <value>Koordinator starter …</value>
+  </data>
+  <data name="Coord_Guidance_Good" xml:space="preserve">
+    <value>Koordinator: god holdetilstand.</value>
+  </data>
+  <data name="Coord_Guidance_Adjust" xml:space="preserve">
+    <value>Koordinator: juster mot målet.</value>
+  </data>
+  <data name="Coord_NoLiveState" xml:space="preserve">
+    <value>(ingen live-state ennå)</value>
+  </data>
+  <data name="Coord_HoldDiff" xml:space="preserve">
+    <value>{0} s (koordinator − avledet)</value>
+  </data>
+  <data name="ExProf_NoProfile" xml:space="preserve">
+    <value>Ingen koblet profil</value>
+  </data>
+  <data name="ExProf_NoProfileMsg" xml:space="preserve">
+    <value>Ingen koblet målprofil for denne øvelsen — viser øvelsens egne mål.</value>
+  </data>
+  <data name="ExProf_ProfileFormat" xml:space="preserve">
+    <value>Målprofil: {0}</value>
+  </data>
+  <data name="Card_SessionCount" xml:space="preserve">
+    <value>{0} økter</value>
+  </data>
 </root>

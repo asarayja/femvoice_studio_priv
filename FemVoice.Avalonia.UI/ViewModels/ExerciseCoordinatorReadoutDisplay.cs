@@ -1,5 +1,6 @@
 using System;
 using FemVoiceStudio.Models;   // ExerciseLiveState
+using FemVoice.Avalonia.Localization;
 
 namespace FemVoice.Avalonia.ViewModels;
 
@@ -15,16 +16,16 @@ public sealed class ExerciseCoordinatorReadoutDisplay
     public double CoordinatorHoldProgressPercent { get; init; }
     public double CoordinatorHoldSeconds { get; init; }
     public string CoordinatorStatusText { get; init; } = "—";
-    public string CoordinatorSafetyLockDisplay { get; init; } = "Sikkerhetslås: — (veiledende)";
+    public string CoordinatorSafetyLockDisplay { get; init; } = Localized.Get("Coord_SafetyLockDefault", "Sikkerhetslås: — (veiledende)");
     public string CoordinatorGuidanceText { get; init; } = "";
     public string CoordinatorRawStateSummary { get; init; } = "";
     public double DerivedHoldProgressPercent { get; init; }
     public double DerivedHoldSeconds { get; init; }
     public string HoldDifferenceDisplay { get; init; } = "—";
-    public string ReadoutMode { get; init; } = "Koordinator-readout (veiledende)";
+    public string ReadoutMode { get; init; } = Localized.Get("Coord_ReadoutMode", "Koordinator-readout (veiledende)");
 
     public static ExerciseCoordinatorReadoutDisplay Inactive() =>
-        new() { IsCoordinatorActive = false, CoordinatorStatusText = "Inaktiv" };
+        new() { IsCoordinatorActive = false, CoordinatorStatusText = Localized.Get("Coord_Inactive", "Inaktiv") };
 
     /// <param name="active">coordinator IsExerciseActive.</param>
     /// <param name="coordHoldFraction">coordinator GetHoldProgress() (0–1).</param>
@@ -41,9 +42,9 @@ public sealed class ExerciseCoordinatorReadoutDisplay
 
         string status = live is null
             ? "—"
-            : live.IsHoldingCorrectly ? "Holder riktig"
-            : live.IsInComfortZone ? "I komfortsone"
-            : "Utenfor mål";
+            : live.IsHoldingCorrectly ? Localized.Get("Coord_Status_Holding", "Holder riktig")
+            : live.IsInComfortZone ? Localized.Get("Coord_Status_InZone", "I komfortsone")
+            : Localized.Get("Coord_Status_OutOfTarget", "Utenfor mål");
 
         return new ExerciseCoordinatorReadoutDisplay
         {
@@ -51,18 +52,20 @@ public sealed class ExerciseCoordinatorReadoutDisplay
             CoordinatorHoldProgressPercent = Math.Round(coordHoldFraction * 100.0, 0),
             CoordinatorHoldSeconds = Math.Round(coordSeconds, 1),
             CoordinatorStatusText = status,
-            CoordinatorSafetyLockDisplay = $"Sikkerhetslås: {(locked ? "PÅ" : "AV")} (veiledende)",
+            CoordinatorSafetyLockDisplay = string.Format(Localized.Get("Coord_SafetyLockFormat", "Sikkerhetslås: {0} (veiledende)"),
+                locked ? Localized.Get("Coord_On", "PÅ") : Localized.Get("Coord_Off", "AV")),
             CoordinatorGuidanceText = live is null
-                ? "Koordinator starter …"
-                : live.IsHoldingCorrectly ? "Koordinator: god holdetilstand." : "Koordinator: juster mot målet.",
+                ? Localized.Get("Coord_Guidance_Starting", "Koordinator starter …")
+                : live.IsHoldingCorrectly ? Localized.Get("Coord_Guidance_Good", "Koordinator: god holdetilstand.") : Localized.Get("Coord_Guidance_Adjust", "Koordinator: juster mot målet."),
             CoordinatorRawStateSummary = live is null
-                ? "(ingen live-state ennå)"
+                ? Localized.Get("Coord_NoLiveState", "(ingen live-state ennå)")
                 : $"hold={live.HoldProgress:F2} inZone={live.IsInComfortZone} holding={live.IsHoldingCorrectly} " +
                   $"locked={live.IsSafetyLocked} elapsed={live.SessionElapsedSeconds}s quality={live.Quality}",
             DerivedHoldProgressPercent = Math.Round(derivedPct, 0),
             DerivedHoldSeconds = Math.Round(derivedHoldSeconds, 1),
-            HoldDifferenceDisplay = $"{coordSeconds - derivedHoldSeconds:+0.0;-0.0;0.0} s (koordinator − avledet)",
-            ReadoutMode = "Koordinator-readout (veiledende)",
+            HoldDifferenceDisplay = string.Format(Localized.Get("Coord_HoldDiff", "{0} s (koordinator − avledet)"),
+                (coordSeconds - derivedHoldSeconds).ToString("+0.0;-0.0;0.0")),
+            ReadoutMode = Localized.Get("Coord_ReadoutMode", "Koordinator-readout (veiledende)"),
         };
     }
 }
