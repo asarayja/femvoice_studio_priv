@@ -30,12 +30,8 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     private readonly PitchDetectionService _pitch;
     private readonly PitchTraceStabilizer _stabilizer = new();
     private readonly LiveMetricsService _metrics = new();
-    // Real cross-platform resonance DSP (frozen Core engine) — same as WPF. Emits a 0–1 resonance score per frame
-    // via ResonanceScoreUpdated; we surface it live and persist the session average. Read-only use of the engine.
-    private readonly FemVoiceStudio.Audio.ResonanceProxyEngine _resonanceEngine;
     // "Hear your own voice" — routes captured frames to the speaker while recording (opt-in; no-op when off/unavailable).
     private readonly FemVoice.Avalonia.Audio.VoiceMonitor _voiceMonitor = new();
-    private volatile int _latestResonancePercent;   // 0–100, latest real resonance (volatile: written on capture thread)
     private readonly List<double> _sessionResonance = new();   // per-session samples → saved average
     // Per-frame health/stability states mapped to 0–100, accumulated during a recording → per-dimension VI scores.
     private readonly List<double> _sessionHealth = new();
@@ -68,8 +64,6 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         _database = database;
         _history = history ?? new History.SessionHistoryStore();
         _pitch = new PitchDetectionService(SampleRate);
-        _resonanceEngine = new FemVoiceStudio.Audio.ResonanceProxyEngine(SampleRate);
-        _resonanceEngine.ResonanceScoreUpdated += OnResonanceScore;
         _capture.FrameAvailable += OnFrameAvailable;
         _capture.DeviceLost += OnDeviceLost;
         UpdateComfortZone();
@@ -143,7 +137,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _currentSignalStatus = Localized.Get("Signal_NoVoice", "Ingen stemme");
     [ObservableProperty] private string _currentFeedbackMessage = Localized.Get("Dash_PressStartFeedback", "Trykk Start for å begynne.");
     [ObservableProperty] private string _healthStatusDisplay = "—";
-    /// <summary>Live real resonance readout (from the Core ResonanceProxyEngine), e.g. "Lys (72)". "—" when no voice.</summary>
+    /// <summary>Live real resonance readout (brightness via VoiceBrightnessMeter), e.g. "Lys (72)". "—" when no voice.</summary>
     [ObservableProperty] private string _resonanceDisplay = "—";
     [ObservableProperty] private double _comfortZoneLow = 150;
     [ObservableProperty] private double _comfortZoneHigh = 220;
@@ -254,11 +248,9 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         if (IsRecording) return;
         _stabilizer.Reset();
         _metrics.Reset();
-        _resonanceEngine.Start();          // real resonance DSP (Reset()s internally)
         _sessionResonance.Clear();
         _sessionHealth.Clear();
         _sessionStability.Clear();
-        _latestResonancePercent = 0;
         PitchSamples.Clear();
         PitchTracePx.Clear();
         DashboardChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, ComfortZoneLow, ComfortZoneHigh);
@@ -276,7 +268,6 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         if (!IsRecording) return;
         await _capture.StopAsync().ConfigureAwait(false);
         _voiceMonitor.Stop();
-        _resonanceEngine.Stop();
         IsRecording = false;
         CurrentSignalStatus = Localized.Get("Signal_NoVoice", "Ingen stemme");
         CurrentFeedbackMessage = Localized.Get("Dash_SessionStopped", "Økt stoppet.");
@@ -348,28 +339,15 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     }
 
     // ── Analysis (shared services, read-only) ──────────────────────────────────
-    // Real resonance score (0–1 from the Core engine) → 0–100. Fires on the capture thread; store into a volatile
-    // field read by the next UI post. When voiced this feeds the live readout + the per-session average.
-    private void OnResonanceScore(double score0to1)
-    {
-        int pct = (int)Math.Round(Math.Clamp(score0to1, 0, 1) * 100);
-        _latestResonancePercent = pct;
-        if (IsRecording) _sessionResonance.Add(pct);
-    }
-
     private void OnFrameAvailable(object? sender, AudioFrameAvailableEventArgs e)
     {
         _voiceMonitor.Feed(e.Samples);                 // hear-own-voice: play the frame back (no-op when off)
         PitchAnalysisResult result = _pitch.DetectPitch(e.Samples);
-        // Feed pitch context to the resonance engine BEFORE ProcessSamples (mirrors the WPF ExerciseWindow pipeline).
-        // Without a caller-provided fallback resonance + voiced flag, the engine rejects every low-confidence-formant
-        // frame and emits nothing, leaving resonance stuck at 0 ("Mørk") even on a good voice. rms/0.05 is the same
-        // no-calibration fallback WPF uses.
-        double resRms = FemVoiceStudio.Audio.MicrophoneCalibrationService.CalculateRms(e.Samples);
-        _resonanceEngine.LastKnownPitchIsVoiced = result.IsVoiced;
-        _resonanceEngine.LastKnownPitchHz = result.Pitch;
-        _resonanceEngine.LastKnownFallbackResonance = System.Math.Clamp(resRms / 0.05, 0, 1);
-        _resonanceEngine.ProcessSamples(e.Samples);   // real resonance DSP (emits ResonanceScoreUpdated → _latestResonancePercent)
+        // Live BRIGHTNESS via the monotonic VoiceBrightnessMeter (proper spectral centroid → 0–100). Replaces the old
+        // ResonanceProxyEngine score, which stuck low ("always Mørk") on real mics because its formant peak detection
+        // fell back to fixed values and froze the score. The meter responds to the actual voice and is loudness-independent.
+        int resonancePct = result.IsVoiced ? FemVoiceStudio.Audio.VoiceBrightnessMeter.BrightnessPercent(e.Samples, SampleRate) : 0;
+        if (IsRecording && result.IsVoiced) _sessionResonance.Add(resonancePct);
         double smoothed = _metrics.CalculateSmoothedPitch(result.Pitch, result.IsVoiced);
         double stabilized = result.IsVoiced ? _stabilizer.Filter(smoothed, DateTime.Now) : 0;
         StabilityState stability = _metrics.CalculateStability();
@@ -404,7 +382,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
             else { InComfortZone = false; ComfortZoneStatus = "—"; }
             PitchStability = StabilityText(stability);
             HealthStatusDisplay = HealthText(health);
-            ResonanceDisplay = result.IsVoiced ? ResonanceText(_latestResonancePercent) : "—";
+            ResonanceDisplay = result.IsVoiced ? ResonanceText(resonancePct) : "—";
             CurrentFeedbackMessage = DeriveFeedback(result.IsVoiced, stability, health, stabilized);
 
             bool voiced = result.IsVoiced && stabilized > 0;
@@ -555,7 +533,5 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         _capture.FrameAvailable -= OnFrameAvailable;
         _capture.DeviceLost -= OnDeviceLost;
         _voiceMonitor.Dispose();
-        _resonanceEngine.ResonanceScoreUpdated -= OnResonanceScore;
-        _resonanceEngine.Dispose();
     }
 }

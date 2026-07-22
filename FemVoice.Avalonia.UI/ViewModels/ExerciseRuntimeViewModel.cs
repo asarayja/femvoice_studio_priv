@@ -26,7 +26,7 @@ public enum RuntimePhase
 
 /// <summary>
 /// Avalonia exercise runtime. Drives the SHARED, UI-free DSP services (PitchDetectionService +
-/// PitchTraceStabilizer + LiveMetricsService + the Core ResonanceProxyEngine) from the REAL microphone when one is
+/// PitchTraceStabilizer + LiveMetricsService + the VoiceBrightnessMeter) from the REAL microphone when one is
 /// available (falling back to a target-tuned synthetic source only in headless/no-mic contexts). It compares the
 /// live pitch to the exercise's own target band and shows a live hold/progress + elapsed time. When a real
 /// microphone drives the session AND a database is present, the finished exercise is SAVED as a real
@@ -71,11 +71,8 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     private readonly PitchTraceStabilizer _stabilizer = new();
     private readonly LiveMetricsService _metrics = new();
     // Real cross-platform resonance DSP (frozen Core engine, same as WPF/dashboard). Emits 0–1 per frame; feeds the
-    // live readout + the coordinator's resonance input (replacing the old neutral placeholder). Read-only use.
-    private readonly FemVoiceStudio.Audio.ResonanceProxyEngine _resonanceEngine = new(SampleRate);
     // "Hear your own voice" — plays captured frames back to the speaker while running (opt-in; no-op when off).
     private readonly FemVoice.Avalonia.Audio.VoiceMonitor _voiceMonitor = new();
-    private volatile int _latestResonancePercent;   // 0–100 latest real resonance (volatile: written on capture thread)
 
     private DateTime _startUtc;
     private DateTime _lastFrameUtc;
@@ -203,7 +200,6 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
             IsSyntheticSource = true;
         }
         _capture.FrameAvailable += OnFrameAvailable;
-        _resonanceEngine.ResonanceScoreUpdated += OnResonanceScore;
 
         // Explicit lifecycle: start Inactive (no auto-start). The user presses Start (BeginCommand) to run
         // the synthetic session; the FrameAvailable handler is subscribed once here and only fires while the
@@ -281,7 +277,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
 
     [ObservableProperty] private bool _isRunning;
     [ObservableProperty] private double _currentPitch;
-    /// <summary>Live real resonance readout (from the Core ResonanceProxyEngine), e.g. "Lys (72)". "—" when no voice.</summary>
+    /// <summary>Live real resonance readout (brightness via VoiceBrightnessMeter), e.g. "Lys (72)". "—" when no voice.</summary>
     [ObservableProperty] private string _currentResonance = "—";
     [ObservableProperty] private string _pitchStatus = "—";
     /// <summary>Live voice-health readout (same LiveMetricsService engine as the dashboard): Trygt/Observer/Advarsel/Fare.</summary>
@@ -411,8 +407,6 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         if (IsRunning) return;
         _stabilizer.Reset();
         _metrics.Reset();
-        _resonanceEngine.Start();          // real resonance DSP (Reset()s internally)
-        _latestResonancePercent = 0;
         _sessionPitch.Clear();
         _sessionResonance.Clear();
         _sessionHealth.Clear();
@@ -466,7 +460,6 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         if (!IsRunning) return;
         await _capture.StopAsync().ConfigureAwait(false);
         _voiceMonitor.Stop();
-        _resonanceEngine.Stop();
         // Clear the VM-local coordinator's in-memory state (safe no-op when inactive; persists nothing).
         if (_coordinatorEnabled) _coordinator.StopExercise();
         // Persist the finished exercise (off the UI thread) BEFORE clearing live values. A real microphone run with a
@@ -516,14 +509,12 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         _lastFrameUtc = now;
 
         PitchAnalysisResult result = _pitch.DetectPitch(e.Samples);
-        // Feed pitch context to the resonance engine BEFORE ProcessSamples (mirrors the WPF ExerciseWindow pipeline).
-        // Without a caller-provided fallback resonance + voiced flag, the engine rejects every low-confidence-formant
-        // frame and emits nothing — resonance stays stuck at 0 ("Mørk"), so a resonance-focused exercise never moves.
-        double resRms = FemVoiceStudio.Audio.MicrophoneCalibrationService.CalculateRms(e.Samples);
-        _resonanceEngine.LastKnownPitchIsVoiced = result.IsVoiced;
-        _resonanceEngine.LastKnownPitchHz = result.Pitch;
-        _resonanceEngine.LastKnownFallbackResonance = System.Math.Clamp(resRms / 0.05, 0, 1);
-        _resonanceEngine.ProcessSamples(e.Samples);   // real resonance DSP → _latestResonancePercent (display-only readout)
+        // Live BRIGHTNESS via the monotonic VoiceBrightnessMeter (proper spectral centroid → 0–100). This replaces the
+        // old ResonanceProxyEngine score, which stuck low ("always Mørk") on real mics because its formant peak
+        // detection kept falling back to fixed values and froze the score. The meter responds to the actual voice and
+        // is loudness-independent, so a resonance-focused exercise's target band is reachable by brightening the voice.
+        int resonancePct = result.IsVoiced ? FemVoiceStudio.Audio.VoiceBrightnessMeter.BrightnessPercent(e.Samples, SampleRate) : 0;
+        if (result.IsVoiced && IsRunning) _sessionResonance.Add(resonancePct);   // real per-session resonance → saved average
         double smoothed = _metrics.CalculateSmoothedPitch(result.Pitch, result.IsVoiced);
         double pitch = result.IsVoiced ? _stabilizer.Filter(smoothed, now) : 0;
 
@@ -535,7 +526,6 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         if (result.IsVoiced) _sessionHealth.Add(HealthTo100(health));
         bool healthWarning = health is HealthState.Warning or HealthState.Danger;
 
-        int resonancePct = _latestResonancePercent;
         // FOCUS-AWARE: a resonance exercise is judged on live brightness vs the resonance target band; a pitch
         // exercise on pitch vs the pitch band. focusValue/focusMin/focusMax drive in-range, hold, chart and feedback.
         double focusValue = _resonanceFocused ? resonancePct : pitch;
@@ -554,12 +544,12 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         int elapsed = (int)(now - _startUtc).TotalSeconds;
 
         // Feed the VM-local coordinator READ-ONLY: pitch, resonance AND health are now the REAL measured signals
-        // (resonance from the Core ResonanceProxyEngine, health from LiveMetricsService); only stability stays a
+        // (resonance/brightness from the VoiceBrightnessMeter, health from LiveMetricsService); only stability stays a
         // documented neutral placeholder. Read its in-memory hold/state for the advisory readout.
         ExerciseCoordinatorReadoutDisplay? readout = null;
         if (_coordinatorEnabled && _coordinator.IsExerciseActive)
         {
-            _coordinator.UpdateMetrics(_latestResonancePercent, pitch, CoordStabilityPlaceholder, HealthTo100(health));
+            _coordinator.UpdateMetrics(resonancePct, pitch, CoordStabilityPlaceholder, HealthTo100(health));
             readout = ExerciseCoordinatorReadoutDisplay.From(
                 _coordinator.IsExerciseActive, _coordinator.GetHoldProgress(),
                 _holdTargetSeconds, _latestLiveState, hold);
@@ -600,14 +590,6 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
                 while (RuntimePitchSamples.Count > MaxTracePoints) RuntimePitchSamples.RemoveAt(0);
             }
         });
-    }
-
-    // Real resonance score (0–1 from the Core engine) → 0–100. Fires on the capture thread; stored volatile.
-    private void OnResonanceScore(double score0to1)
-    {
-        int pct = (int)Math.Round(Math.Clamp(score0to1, 0, 1) * 100);
-        _latestResonancePercent = pct;
-        if (IsRunning) _sessionResonance.Add(pct);   // real per-session resonance → saved session average
     }
 
     // Qualitative label + value for the live resonance readout (0–100). Mirrors WPF's bright/neutral/dark buckets.
@@ -719,8 +701,6 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         _voiceMonitor.Dispose();
         _ = _capture.StopAsync();                // stops the capture loop (synthetic or real) — no more frames
         (_capture as IDisposable)?.Dispose();    // release a real capture backend (e.g. ALSA) if used
-        _resonanceEngine.ResonanceScoreUpdated -= OnResonanceScore;
-        _resonanceEngine.Dispose();
         if (_coordinatorEnabled) _coordinator.ExerciseUpdated -= OnCoordinatorState;
         _coordinator.StopExercise();             // in-memory clear; no persistence
         _coordinator.Dispose();
