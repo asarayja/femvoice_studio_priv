@@ -13,7 +13,7 @@
 ; Output:                dist\FemVoice-Studio-Setup.exe   (sign it afterwards)
 
 #define AppName "FemVoice Studio"
-#define AppVersion "0.1.1"
+#define AppVersion "0.1.2"
 #define AppPublisher "Asarayja"
 #define AppExeName "FemVoice.Studio.exe"
 #define RepoRoot SourcePath + "..\..\"
