@@ -92,6 +92,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     // Per-session real samples accumulated during the run → session stats on Stop (voiced pitch Hz; resonance 0–100).
     private readonly List<double> _sessionPitch = new();
     private readonly List<double> _sessionResonance = new();
+    private readonly List<double> _sessionHealth = new();   // real per-frame voice-health 0–100 → session average
 
     /// <summary>True when this run will be saved as a real session: a real microphone drives it AND a DB is present.</summary>
     public bool SavesRealSession => !IsSyntheticSource && _database is not null;
@@ -271,6 +272,12 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     /// <summary>Live real resonance readout (from the Core ResonanceProxyEngine), e.g. "Lys (72)". "—" when no voice.</summary>
     [ObservableProperty] private string _currentResonance = "—";
     [ObservableProperty] private string _pitchStatus = "—";
+    /// <summary>Live voice-health readout (same LiveMetricsService engine as the dashboard): Trygt/Observer/Advarsel/Fare.</summary>
+    [ObservableProperty] private string _healthStatusDisplay = "—";
+    /// <summary>True when live strain reaches Warning/Danger — the view shows a prominent take-a-break banner.</summary>
+    [ObservableProperty] private bool _hasHealthWarning;
+    /// <summary>The take-a-break message shown when strain is detected (safety-first, mirrors the dashboard).</summary>
+    public string HealthWarningText => Localized.Get("Feedback_TakeBreak", "Ta en pause og slapp av i stemmen.");
     [ObservableProperty] private int _elapsedSeconds;
     public string ElapsedText => $"{ElapsedSeconds / 60}:{ElapsedSeconds % 60:00}";
     partial void OnElapsedSecondsChanged(int value) => OnPropertyChanged(nameof(ElapsedText));
@@ -359,8 +366,11 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     // Local, display-only feedback derivation (mirrors the dashboard's DeriveFeedback approach).
     // Focus-aware feedback: for a resonance exercise the message is about BRIGHTNESS (too dark/too bright/nice), for a
     // pitch exercise about pitch (under/over/in-range). focusValue/min/max are the resonance-% or pitch band already.
-    private (string message, string severity) DeriveLiveFeedback(bool voiced, double focusValue, double focusMin, double focusMax, ExerciseLiveState? live)
+    private (string message, string severity) DeriveLiveFeedback(bool voiced, bool healthWarning, double focusValue, double focusMin, double focusMax, ExerciseLiveState? live)
     {
+        // Voice health takes PRIORITY over pitch/resonance feedback — safety first (mirrors the dashboard).
+        if (healthWarning)
+            return (Localized.Get("Feedback_TakeBreak", "Ta en pause og slapp av i stemmen."), "Helse");
         if (live?.IsSafetyLocked == true)
             return (Localized.Get("ExRunVm_Fb_Pause", "Koordinator anbefaler en pause (veiledende)"), "Pause anbefalt");
         if (!voiced)
@@ -387,6 +397,9 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         _latestResonancePercent = 0;
         _sessionPitch.Clear();
         _sessionResonance.Clear();
+        _sessionHealth.Clear();
+        HealthStatusDisplay = "—";
+        HasHealthWarning = false;
         _holdRaw = 0;
         _peakHoldPercent = 0;
         HoldSeconds = 0;
@@ -454,6 +467,8 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
 
             IsRunning = false;
             Phase = RuntimePhase.Stopped;
+            HasHealthWarning = false;
+            HealthStatusDisplay = "—";
             PitchStatus = Localized.Get("ExRunVm_Phase_Stopped", "Stoppet");
             RuntimeStatusMessage = Localized.Get("ExRunVm_ExerciseStopped", "Øvelse stoppet.");
             CoordinatorReadout = ExerciseCoordinatorReadoutDisplay.Inactive();
@@ -489,6 +504,12 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
 
         if (result.IsVoiced && pitch > 0) _sessionPitch.Add(pitch);   // real per-session sample → saved session stats
 
+        // Real voice-HEALTH monitoring (same LiveMetricsService engine as the dashboard). Detects strain during the
+        // exercise so we can warn the user to take a break — safety-first, exactly like the dashboard.
+        HealthState health = result.IsVoiced ? _metrics.CalculateHealth(0, smoothed, result.Intensity) : HealthState.NoVoice;
+        if (result.IsVoiced) _sessionHealth.Add(HealthTo100(health));
+        bool healthWarning = health is HealthState.Warning or HealthState.Danger;
+
         int resonancePct = _latestResonancePercent;
         // FOCUS-AWARE: a resonance exercise is judged on live brightness vs the resonance target band; a pitch
         // exercise on pitch vs the pitch band. focusValue/focusMin/focusMax drive in-range, hold, chart and feedback.
@@ -507,13 +528,13 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         double hold = _holdRaw;
         int elapsed = (int)(now - _startUtc).TotalSeconds;
 
-        // Feed the VM-local coordinator READ-ONLY: pitch AND resonance are now the REAL measured signals (the Core
-        // ResonanceProxyEngine's live 0–100 score); stability/health remain documented neutral placeholders (the
-        // runtime doesn't compute those per-frame). Read its in-memory hold/state for the advisory readout.
+        // Feed the VM-local coordinator READ-ONLY: pitch, resonance AND health are now the REAL measured signals
+        // (resonance from the Core ResonanceProxyEngine, health from LiveMetricsService); only stability stays a
+        // documented neutral placeholder. Read its in-memory hold/state for the advisory readout.
         ExerciseCoordinatorReadoutDisplay? readout = null;
         if (_coordinatorEnabled && _coordinator.IsExerciseActive)
         {
-            _coordinator.UpdateMetrics(_latestResonancePercent, pitch, CoordStabilityPlaceholder, CoordHealthPlaceholder);
+            _coordinator.UpdateMetrics(_latestResonancePercent, pitch, CoordStabilityPlaceholder, HealthTo100(health));
             readout = ExerciseCoordinatorReadoutDisplay.From(
                 _coordinator.IsExerciseActive, _coordinator.GetHoldProgress(),
                 _holdTargetSeconds, _latestLiveState, hold);
@@ -527,13 +548,15 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         var chartSnap = RuntimeChartDisplay.From(
             ChartHeightPx, _chartMin, _chartMax, focusMin, focusMax,
             chartValue, hasVoice, PitchStatusDisplay(hasVoice ? status : "Ingen stemme"));
-        (string fbMsg, string fbSev) = DeriveLiveFeedback(result.IsVoiced, focusValue, focusMin, focusMax,
+        (string fbMsg, string fbSev) = DeriveLiveFeedback(result.IsVoiced, healthWarning, focusValue, focusMin, focusMax,
             _coordinatorEnabled ? _latestLiveState : null);
         _ui.Post(() =>
         {
             if (!IsRunning) return;   // VM stopped/disposed between capture and dispatch → don't apply orphan updates
             CurrentPitch = result.IsVoiced ? Math.Round(pitch, 1) : 0;
             CurrentResonance = result.IsVoiced ? ResonanceText(resonancePct) : "—";
+            HealthStatusDisplay = HealthText(health);
+            HasHealthWarning = healthWarning;
             PitchStatus = PitchStatusDisplay(status);
             HoldSeconds = Math.Round(hold, 1);
             HoldProgressPercent = Math.Round(hold / _holdTargetSeconds * 100.0, 0);
@@ -570,6 +593,21 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         _ => string.Format(Localized.Get("Resonance_Dark", "Mørk ({0})"), pct),
     };
 
+    // Voice-health mapping — same buckets/keys as the dashboard so the exercise readout matches.
+    private static double HealthTo100(HealthState h) => h switch
+    {
+        HealthState.Safe => 100, HealthState.Monitor => 70, HealthState.Warning => 45, HealthState.Danger => 20, _ => 0,
+    };
+    private static string HealthText(HealthState h) => h switch
+    {
+        HealthState.NoVoice => "—",
+        HealthState.Safe => Localized.Get("Health_Safe", "Trygt"),
+        HealthState.Monitor => Localized.Get("Health_Monitor", "Observer"),
+        HealthState.Warning => Localized.Get("Health_Warning", "Advarsel"),
+        HealthState.Danger => Localized.Get("Health_Danger", "Fare"),
+        _ => "—",
+    };
+
     // Localize an INTERNAL pitch-status token for DISPLAY only (the raw token stays Norwegian for comparison/chart).
     private static string PitchStatusDisplay(string token) => token switch
     {
@@ -599,6 +637,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
                 double inZone = voiced.Count > 0
                     ? 100.0 * voiced.Count(p => p >= TargetPitchMin && p <= TargetPitchMax) / voiced.Count : 0;
                 double avgResonance = _sessionResonance.Count > 0 ? _sessionResonance.Average() : 0;
+                double avgHealth = _sessionHealth.Count > 0 ? _sessionHealth.Average() : 0;
                 double pitchVariation = 0;
                 if (voiced.Count > 1)
                 {
@@ -616,6 +655,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
                     PitchVariation = Math.Round(pitchVariation, 1),          // real prosody metric (std-dev of pitch)
                     OverallScore = Math.Round(inZone),                       // adherence to THIS exercise's target band
                     ResonanceScore = Math.Round(avgResonance, 1),            // real resonance from the Core DSP engine
+                    VoiceHealthScore = Math.Round(avgHealth, 1),            // real per-session voice-health average
                     DifficultyLevel = Exercise.Difficulty,
                     Feedback = $"Øvelse: {SelectedExerciseName}",
                 };
