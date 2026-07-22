@@ -112,7 +112,7 @@ namespace FemVoiceStudio.Services
                     Description = "Utforsk ulike vokallyder med fokus på fremre munnresonans. Åpne vokaler fremmer fremre resonans.",
                     Steps = new List<string> {
                         "Si 'ahhh' - åpne munnen bred",
-                        "Si 'eee' - trekk munnvikene bakover",
+                        "Si 'eee' - munnviker bakover; tungespiss bak nedre fortenner, fremre del av tungen buet opp (fremre tunge = lysere klang)",
                         "Si 'ooo' - runde lepper",
                         "Kombiner: 'ah-ee-oo'",
                         "Gjenta mønsteret 5 ganger"
@@ -507,7 +507,7 @@ namespace FemVoiceStudio.Services
                         "Pes tungt og sakte som en stor hund — kjenn det åpne, mørke, romslige",
                         "Veksle mellom de to og merk hvordan resonansrommet endrer STØRRELSE (ikke lyden)",
                         "Legg til stemme: lys «jaff jaff» (lite rom) mot mørk «voff voff» (stort rom)",
-                        "Velg det lille, lyse rommet og lås den lette, fremre formen",
+                        "Velg det lille, lyse rommet og lås den lette, fremre formen — tungespiss bak nedre fortenner, fremre del av tungen opp (som i «eee»)",
                         "Hold én jevn tone og gli lysere («iii») og mørkere («åå») uten å endre tonehøyden",
                         "Hold den lyse formen på en vokal, så lyse ord (mi, se, hei), så korte setninger",
                         "Demp det ytterste til en naturlig, behagelig lyshet — avslutt med rolig humming"

@@ -346,7 +346,7 @@ namespace FemVoiceStudio.Data
                 new { 
                     Name = "Vokallyder - Fremre resonans", 
                     Description = "Utforsk ulike vokallyder med fokus på fremre munnresonans. Åpne vokaler fremmer fremre resonans.",
-                    Steps = new[] { "Si 'ahhh' - åpne munnen bred", "Si 'eee' - trekk munnvikene bakover", "Si 'ooo' - runde lepper", "Kombiner: 'ah-ee-oo'", "Gjenta mønsteret 5 ganger" },
+                    Steps = new[] { "Si 'ahhh' - åpne munnen bred", "Si 'eee' - munnviker bakover; tungespiss bak nedre fortenner, fremre del av tungen buet opp (fremre tunge = lysere klang)", "Si 'ooo' - runde lepper", "Kombiner: 'ah-ee-oo'", "Gjenta mønsteret 5 ganger" },
                     Duration = 7, Frequency = 1, Difficulty = 1,
                     Metrics = new[] { "pitch", "resonance", "intensity" },
                     Category = "Oppvarming",
@@ -633,7 +633,7 @@ namespace FemVoiceStudio.Data
                 new {
                     Name = "Stor hund / liten hund (resonanskontrast)",
                     Description = "Resonansøvelse: bruk «stor hund» (mørk, åpen woff) mot «liten hund» (lys, fremre jaff) for å kjenne hvordan resonansrommet endrer størrelse — uavhengig av tonehøyde. Velg den lyse, lille innstillingen og ta den med i vokaler, ord og setninger. Resonans er ofte den sterkeste feminiseringsfaktoren.",
-                    Steps = new[] { "Varm opp mykt med lett humming og leppetriller", "Pes lett og raskt som en liten hund — kjenn det lille, lyse, fremre rommet", "Pes tungt og sakte som en stor hund — kjenn det åpne, mørke rommet", "Veksle mellom de to og merk hvordan resonansrommet endrer STØRRELSE (ikke lyden)", "Legg til stemme: lys «jaff jaff» mot mørk «voff voff»", "Velg det lille, lyse rommet og lås den lette, fremre formen", "Hold én jevn tone og gli lysere og mørkere uten å endre tonehøyden", "Hold den lyse formen på vokal, så ord, så korte setninger", "Demp til en naturlig, behagelig lyshet; avslutt med rolig humming" },
+                    Steps = new[] { "Varm opp mykt med lett humming og leppetriller", "Pes lett og raskt som en liten hund — kjenn det lille, lyse, fremre rommet", "Pes tungt og sakte som en stor hund — kjenn det åpne, mørke rommet", "Veksle mellom de to og merk hvordan resonansrommet endrer STØRRELSE (ikke lyden)", "Legg til stemme: lys «jaff jaff» mot mørk «voff voff»", "Velg det lille, lyse rommet og lås den lette, fremre formen — tungespiss bak nedre fortenner, fremre del av tungen opp (som i «eee»)", "Hold én jevn tone og gli lysere og mørkere uten å endre tonehøyden", "Hold den lyse formen på vokal, så ord, så korte setninger", "Demp til en naturlig, behagelig lyshet; avslutt med rolig humming" },
                     Duration = 6, Frequency = 1, Difficulty = 1,
                     Metrics = new[] { "resonance", "intensity" },
                     Category = "Resonans",
