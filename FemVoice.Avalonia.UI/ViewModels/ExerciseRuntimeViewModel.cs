@@ -135,7 +135,15 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         // FOCUS-AWARE runtime: a resonance-profiled exercise (uses resonance, not pitch) is judged on live BRIGHTNESS
         // against the profile's resonance target band (0–1 → 0–100%), not on pitch. Everything else (pitch exercises)
         // keeps the pitch path. Determined once from the resolved profile.
-        _resonanceFocused = _coordinatorProfile is { UsesResonance: true, UsesPitch: false };
+        //
+        // GUARD: the resonance chart is only taken when the exercise is NOT pitch-primary. A handful of exercises pair a
+        // pitch/combined Goal (which shows the live Hz readout via IsPitchFocused) with a resonance-focused profile
+        // (StabilityTraining, ResonanceVowels) — e.g. #5/#6 pitch-stability, #9/#10 combined phrase/conversation. Without
+        // this guard the chart would plot resonance while the Hz number climbs, so the trace sits stuck in the target
+        // band (resonance is a low, noisy signal on real mics) while Hz shows 200+. Keying the chart metric off the SAME
+        // pitch-primary signal as the Hz readout keeps the two consistent: Hz shown ⇒ pitch chart; no Hz ⇒ resonance chart.
+        bool profileResonanceFocused = _coordinatorProfile is { UsesResonance: true, UsesPitch: false };
+        _resonanceFocused = profileResonanceFocused && !ExerciseDisplay.IsPitchPrimary(exercise.Goal);
         _targetResMinPct = (_coordinatorProfile?.TargetResonanceMin ?? 0.0) * 100.0;
         _targetResMaxPct = (_coordinatorProfile?.TargetResonanceMax ?? 1.0) * 100.0;
 
@@ -391,6 +399,12 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         return (Localized.Get("ExRunVm_Fb_InRange", "Innenfor målområdet"), "I mål");
     }
 
+    // Empty chart with the focus-correct target band: resonance band (0–100 axis) for resonance exercises, pitch band
+    // otherwise. Mirrors the ctor so a mid-session reset/stop keeps the same green band the running chart used.
+    private RuntimeChartDisplay EmptyFocusChart() => _resonanceFocused
+        ? RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, _targetResMinPct, _targetResMaxPct)
+        : RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, TargetPitchMin, TargetPitchMax);
+
     [RelayCommand]
     private void Begin()
     {
@@ -410,7 +424,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         HoldProgressPercent = 0;
         ElapsedSeconds = 0;
         RuntimePitchSamples.Clear();
-        RuntimeChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, TargetPitchMin, TargetPitchMax);
+        RuntimeChart = EmptyFocusChart();
         LiveFeedbackMessage = Localized.Get("ExRunVm_Fb_SteadyTone", "Si en jevn tone i målområdet.");
         LiveFeedbackSeverity = "Nøytral";
         SessionEndedSummary = "";
@@ -477,7 +491,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
             RuntimeStatusMessage = Localized.Get("ExRunVm_ExerciseStopped", "Øvelse stoppet.");
             CoordinatorReadout = ExerciseCoordinatorReadoutDisplay.Inactive();
             RuntimePitchSamples.Clear();
-            RuntimeChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, TargetPitchMin, TargetPitchMax);
+            RuntimeChart = EmptyFocusChart();
             LiveFeedbackMessage = Localized.Get("ExRunVm_ExerciseStopped", "Øvelse stoppet.");
             LiveFeedbackSeverity = "Stoppet";
         });

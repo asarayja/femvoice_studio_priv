@@ -1746,8 +1746,25 @@ internal static class Program
         Console.WriteLine($"[focus] pitch: title='{pitTitle}' axisHi='{pitAxisHi}' status='{pitStatus}' fb='{pitFb}'");
         Console.WriteLine($"[focus] resLabels={resLabels} resJudged={resJudged} pitLabels={pitLabels} pitJudged={pitJudged}");
 
+        // CONSISTENCY GUARD (regression): the live Hz readout (IsPitchFocused, from Goal) and the chart metric
+        // (from the resolved profile) must never disagree. If the Hz number is shown, the chart MUST plot pitch —
+        // otherwise the trace sits stuck in the resonance band while Hz climbs (exactly the #5/#6/#9/#10 bug: a
+        // pitch/combined Goal paired with a resonance-focused StabilityTraining/ResonanceVowels profile).
+        bool consistent = true;
+        foreach (var ex in exercises)
+        {
+            using var vm = new ExerciseRuntimeViewModel(ex, new InlineUiDispatcher(), () => { });
+            bool chartIsResonance = vm.LiveChartTitle.Contains("Resonans", StringComparison.OrdinalIgnoreCase);
+            if (vm.IsPitchFocused && chartIsResonance)
+            {
+                consistent = false;
+                Console.WriteLine($"[focus] MISMATCH id={ex.Id} '{ex.Name}' goal={ex.Goal}: Hz shown but chart plots resonance");
+            }
+        }
+        Console.WriteLine($"[focus] focus-metric consistency across {exercises.Count} exercises: {(consistent ? "OK" : "FAIL")}");
+
         global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");   // restore
-        bool ok = resLabels && resJudged && pitLabels && pitJudged;
+        bool ok = resLabels && resJudged && pitLabels && pitJudged && consistent;
         Console.WriteLine(ok ? "[focus] Focus-aware runtime smoke OK" : "[focus] Focus-aware runtime smoke FAIL");
         return ok ? 0 : 1;
     }
