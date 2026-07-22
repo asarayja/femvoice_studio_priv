@@ -18,8 +18,8 @@
     <OutputType>Exe</OutputType>
 
     <ApplicationId>com.femvoice.studio</ApplicationId>
-    <ApplicationVersion>2</ApplicationVersion>
-    <ApplicationDisplayVersion>0.1.1</ApplicationDisplayVersion>
+    <ApplicationVersion>3</ApplicationVersion>
+    <ApplicationDisplayVersion>0.1.2</ApplicationDisplayVersion>
 
     <AndroidPackageFormat>apk</AndroidPackageFormat>
     <AndroidManifest>Properties\AndroidManifest.xml</AndroidManifest>
