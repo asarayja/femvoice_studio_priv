@@ -59,6 +59,7 @@ namespace FemVoiceStudio.Services
                 FrequencyType.TreGangerUkentlig => "3x/uke",
                 FrequencyType.ToGangerUkentlig => "2x/uke",
                 FrequencyType.Ukentlig => "Ukentlig",
+                FrequencyType.FlereGangerDaglig => "3–5× daglig",
                 _ => "Daglig"
             };
         }
@@ -429,7 +430,7 @@ namespace FemVoiceStudio.Services
                         "Gjenta med ulike toner"
                     },
                     DurationMinutes = 5,
-                    Frequency = FrequencyType.ToGangerUkentlig,
+                    Frequency = FrequencyType.FlereGangerDaglig,
                     Difficulty = DifficultyLevel.Middels,
                     Category = "Pust",
                     Icon = "\uE81C",
@@ -465,6 +466,33 @@ namespace FemVoiceStudio.Services
                     TargetPitchMin = 150,
                     TargetPitchMax = 250,
                     Metrics = new List<MetricType> { MetricType.Intonation, MetricType.PitchVariability }
+                },
+
+                // ØVELSE 16: Boblefonasjon / Lax Vox (SOVT vann-variant, NY)
+                new EnhancedExercise
+                {
+                    Id = 16,
+                    Name = "Boblefonasjon (Lax Vox)",
+                    Description = "Vann-variant av halmsfonasjon (SOVT): syng gjennom et bredt rør ned i et glass vann så det bobler. Gir justerbart mottrykk pluss synlig og følbar tilbakemelding — en skånsom oppvarming som reduserer stemmeslitasje før feminiseringsøvelser.",
+                    Steps = new List<string> {
+                        "Sitt eller stå avslappet; hold et glass rent vann lavt så skuldrene ikke løftes",
+                        "Legg et bredt sugerør/rør løst mellom leppene (ikke bit), med enden bare 1–2 cm under vann",
+                        "Blås en jevn, rolig luftstrøm UTEN stemme i ca. 5 pust — kjenn boblingen i kinnene",
+                        "Slå på en lett 'ooo' på behagelig tonehøyde så vannet bobler jevnt — jag summingen, ikke volum",
+                        "Legg til myke tonehøyde-glid opp og ned på ett pust, jevnt uten hopp",
+                        "Ta røret ut og før den lette, fremre summe-følelsen rett over i åpen 'ooo', så et ord, så en kort setning"
+                    },
+                    DurationMinutes = 5,
+                    Frequency = FrequencyType.FlereGangerDaglig,
+                    Difficulty = DifficultyLevel.Middels,
+                    Category = "Pust",
+                    Icon = "",
+                    Goal = GoalCategory.Breathing,
+                    GoalIcon = "",
+                    ScientificRationale = "Semi-okkludert vokaltrakt (SOVT) med vannmotstand øker mottrykket og senker fonasjonsterskeltrykket, slik at stemmebåndene svinger med mindre kraft. Vann-varianten gir i tillegg visuell og taktil tilbakemelding. Bruk rent vann, hold munnenden over vannflaten, og del aldri rør.",
+                    TargetPitchMin = 140,
+                    TargetPitchMax = 180,
+                    Metrics = new List<MetricType> { MetricType.Intensity, MetricType.Consistency }
                 }
             };
         }
@@ -501,17 +529,17 @@ namespace FemVoiceStudio.Services
             var plan = new TrainingPlan();
             var all = GetAllEnhancedExercises();
             
-            // Mandag, onsdag, fredag - full program
-            plan.Monday = all.FindAll(e => e.Frequency == FrequencyType.Daglig || e.Frequency == FrequencyType.TreGangerUkentlig);
-            plan.Wednesday = all.FindAll(e => e.Frequency == FrequencyType.Daglig || e.Frequency == FrequencyType.TreGangerUkentlig);
-            plan.Friday = all.FindAll(e => e.Frequency == FrequencyType.Daglig || e.Frequency == FrequencyType.TreGangerUkentlig);
-            
+            // Mandag, onsdag, fredag - full program (multi-daily SOVT counts as daily)
+            plan.Monday = all.FindAll(e => e.Frequency == FrequencyType.Daglig || e.Frequency == FrequencyType.FlereGangerDaglig || e.Frequency == FrequencyType.TreGangerUkentlig);
+            plan.Wednesday = all.FindAll(e => e.Frequency == FrequencyType.Daglig || e.Frequency == FrequencyType.FlereGangerDaglig || e.Frequency == FrequencyType.TreGangerUkentlig);
+            plan.Friday = all.FindAll(e => e.Frequency == FrequencyType.Daglig || e.Frequency == FrequencyType.FlereGangerDaglig || e.Frequency == FrequencyType.TreGangerUkentlig);
+
             // Tirsdag, lørdag - 2x/uke øvelser
             plan.Tuesday = all.FindAll(e => e.Frequency == FrequencyType.ToGangerUkentlig);
             plan.Saturday = all.FindAll(e => e.Frequency == FrequencyType.ToGangerUkentlig);
-            
-            // Daglige øvelser hver dag
-            plan.Daily = all.FindAll(e => e.Frequency == FrequencyType.Daglig);
+
+            // Daglige øvelser hver dag (inkl. flere-ganger-daglig)
+            plan.Daily = all.FindAll(e => e.Frequency == FrequencyType.Daglig || e.Frequency == FrequencyType.FlereGangerDaglig);
             
             return plan;
         }

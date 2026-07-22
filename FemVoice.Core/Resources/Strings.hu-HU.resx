@@ -6114,18 +6114,24 @@ Ez nem vonható vissza!</value>
     <value>No database to clear.</value>
   </data>
   <data name="SettingsData_ClearFailedFormat" xml:space="preserve">
-    <value>Clear failed: {0}</value>
+    <value>Could not clear the database: {0}</value>
   </data>
   <data name="SettingsData_BackupSavedFormat" xml:space="preserve">
     <value>Backup saved: {0}</value>
   </data>
   <data name="SettingsData_BackupFailedFormat" xml:space="preserve">
-    <value>Backup failed: {0}</value>
+    <value>Could not create the backup: {0}</value>
   </data>
   <data name="SettingsData_BackupNotFound" xml:space="preserve">
     <value>Backup not found.</value>
   </data>
   <data name="SettingsData_RestoreFailedFormat" xml:space="preserve">
-    <value>Restore failed: {0}</value>
+    <value>Could not restore: {0}</value>
+  </data>
+  <data name="Frequency_MultipleDaily" xml:space="preserve">
+    <value>3–5× daily</value>
+  </data>
+  <data name="TrainingFrequency_MultipleDailyReason" xml:space="preserve">
+    <value>Short, frequent bouts through the day work best for this exercise.</value>
   </data>
 </root>

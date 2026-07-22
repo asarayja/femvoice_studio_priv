@@ -51,6 +51,7 @@ namespace FemVoiceStudio.Services
                 FrequencyType.TreGangerUkentlig => _localization["Frequency_3xWeek"],
                 FrequencyType.ToGangerUkentlig => _localization["Frequency_2xWeek"],
                 FrequencyType.Ukentlig => _localization["Frequency_Weekly"],
+                FrequencyType.FlereGangerDaglig => _localization["Frequency_MultipleDaily"],
                 _ => exercise.FrequencyText
             };
 
