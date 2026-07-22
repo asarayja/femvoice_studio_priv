@@ -69,5 +69,40 @@ namespace FemVoice.Tests.Portable
             Assert.Equal(0, VoiceBrightnessMeter.BrightnessPercent(new float[16], SampleRate));
             Assert.Equal(0, VoiceBrightnessMeter.BrightnessPercent(Array.Empty<float>(), SampleRate));
         }
+
+        [Fact]
+        public void Calibrated_ScaleIsAnchoredToTheBaseline()
+        {
+            // With a per-user baseline B, a tone AT the baseline reads low (relaxed voice ≈ bottom) and a tone ~900 Hz
+            // BRIGHTER than the baseline reads high — regardless of the absolute Hz, which is the whole point (mic-robust).
+            double baseline = VoiceBrightnessMeter.SpectralCentroidHz(Sine(900), SampleRate);
+            int atBaseline = VoiceBrightnessMeter.BrightnessPercent(Sine(900), SampleRate, baseline);
+            int brighter = VoiceBrightnessMeter.BrightnessPercent(Sine(1800), SampleRate, baseline);
+            Assert.True(atBaseline <= 20, $"relaxed voice (at baseline) should read low, was {atBaseline}");
+            Assert.True(brighter >= 80, $"a ~900 Hz-brighter voice should read high, was {brighter}");
+            Assert.True(brighter - atBaseline > 55, "calibrated scale must span most of its range across the training gap");
+        }
+
+        [Fact]
+        public void Calibrated_ShiftsTheScale_SoTheSameToneReadsDifferently()
+        {
+            // The same input read against a LOWER baseline (darker habitual voice) reads BRIGHTER than against a higher
+            // baseline — i.e. the meter measures improvement RELATIVE to the user, not an absolute Hz.
+            int againstLowBaseline = VoiceBrightnessMeter.BrightnessPercent(Sine(1400), SampleRate, baselineCentroidHz: 700);
+            int againstHighBaseline = VoiceBrightnessMeter.BrightnessPercent(Sine(1400), SampleRate, baselineCentroidHz: 1200);
+            Assert.True(againstLowBaseline > againstHighBaseline,
+                $"same tone should read brighter vs a lower baseline: low={againstLowBaseline} high={againstHighBaseline}");
+        }
+
+        [Fact]
+        public void MedianCentroid_IgnoresSilentFrames_AndReturnsMiddle()
+        {
+            var frames = new[] { Sine(600), new float[4096], Sine(1000), Sine(1400) };
+            double median = VoiceBrightnessMeter.MedianCentroidHz(frames, SampleRate);
+            // Silent frame dropped → median of {~600, ~1000, ~1400} ≈ 1000.
+            Assert.InRange(median, 850, 1150);
+            Assert.Equal(0, VoiceBrightnessMeter.MedianCentroidHz(new[] { new float[4096] }, SampleRate));
+            Assert.Equal(0, VoiceBrightnessMeter.MedianCentroidHz(Array.Empty<float[]>(), SampleRate));
+        }
     }
 }

@@ -61,6 +61,12 @@ public sealed class UiPreferences
     /// <summary>Privacy: consent to anonymized research sharing. Persisted local preference. Default: off (opt-in).</summary>
     public bool ResearchSharingConsent { get; set; }
 
+    /// <summary>Per-user resonance-brightness baseline: the spectral centroid (Hz) of the user's RELAXED voice, measured
+    /// once during mic calibration. The <c>VoiceBrightnessMeter</c> scales the live resonance readout relative to this so
+    /// the meter is robust to the microphone (absolute centroid Hz varies by hundreds of Hz across mics). 0 = not yet
+    /// calibrated → the meter uses fixed provisional anchors. Persisted local preference.</summary>
+    public double ResonanceBaselineCentroidHz { get; set; }
+
     /// <summary>Schema version for forward-compatible parsing of the local file.</summary>
     public int Version { get; set; } = 1;
 
@@ -90,6 +96,8 @@ public sealed class UiPreferences
             ReducedVisualFeedback = ReducedVisualFeedback,
             DiagnosticsConsent = DiagnosticsConsent,
             ResearchSharingConsent = ResearchSharingConsent,
+            // Guard against absurd/corrupt values; a plausible voiced-speech centroid is a few hundred–few thousand Hz.
+            ResonanceBaselineCentroidHz = ResonanceBaselineCentroidHz is >= 100 and <= 4000 ? ResonanceBaselineCentroidHz : 0,
             Version = Version <= 0 ? 1 : Version,
         };
     }
