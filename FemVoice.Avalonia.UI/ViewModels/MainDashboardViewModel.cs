@@ -32,6 +32,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     private readonly LiveMetricsService _metrics = new();
     // "Hear your own voice" — routes captured frames to the speaker while recording (opt-in; no-op when off/unavailable).
     private readonly FemVoice.Avalonia.Audio.VoiceMonitor _voiceMonitor = new();
+    private double? _resonanceBaseline;   // per-user calibrated relaxed-voice centroid (Hz); null = use fixed anchors
     private readonly List<double> _sessionResonance = new();   // per-session samples → saved average
     // Per-frame health/stability states mapped to 0–100, accumulated during a recording → per-dimension VI scores.
     private readonly List<double> _sessionHealth = new();
@@ -246,6 +247,9 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     private async Task Start()
     {
         if (IsRecording) return;
+        // Snapshot the per-user resonance-brightness baseline once per session (no prefs read per frame); null when
+        // the user hasn't calibrated → the meter uses its fixed provisional anchors.
+        _resonanceBaseline = FemVoice.Avalonia.Preferences.CapturePreferences.ResonanceBaselineCentroidHz();
         _stabilizer.Reset();
         _metrics.Reset();
         _sessionResonance.Clear();
@@ -346,7 +350,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         // Live BRIGHTNESS via the monotonic VoiceBrightnessMeter (proper spectral centroid → 0–100). Replaces the old
         // ResonanceProxyEngine score, which stuck low ("always Mørk") on real mics because its formant peak detection
         // fell back to fixed values and froze the score. The meter responds to the actual voice and is loudness-independent.
-        int resonancePct = result.IsVoiced ? FemVoiceStudio.Audio.VoiceBrightnessMeter.BrightnessPercent(e.Samples, SampleRate) : 0;
+        int resonancePct = result.IsVoiced ? FemVoiceStudio.Audio.VoiceBrightnessMeter.BrightnessPercent(e.Samples, SampleRate, _resonanceBaseline) : 0;
         if (IsRecording && result.IsVoiced) _sessionResonance.Add(resonancePct);
         double smoothed = _metrics.CalculateSmoothedPitch(result.Pitch, result.IsVoiced);
         double stabilized = result.IsVoiced ? _stabilizer.Filter(smoothed, DateTime.Now) : 0;

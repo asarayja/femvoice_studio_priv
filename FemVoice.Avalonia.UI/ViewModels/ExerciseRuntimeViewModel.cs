@@ -73,6 +73,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     // Real cross-platform resonance DSP (frozen Core engine, same as WPF/dashboard). Emits 0–1 per frame; feeds the
     // "Hear your own voice" — plays captured frames back to the speaker while running (opt-in; no-op when off).
     private readonly FemVoice.Avalonia.Audio.VoiceMonitor _voiceMonitor = new();
+    private double? _resonanceBaseline;   // per-user calibrated relaxed-voice centroid (Hz); null = use fixed anchors
 
     private DateTime _startUtc;
     private DateTime _lastFrameUtc;
@@ -405,6 +406,9 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     private void Begin()
     {
         if (IsRunning) return;
+        // Snapshot the per-user resonance-brightness baseline once per session (avoids a prefs file read per frame);
+        // null when the user hasn't calibrated → the meter uses its fixed provisional anchors.
+        _resonanceBaseline = FemVoice.Avalonia.Preferences.CapturePreferences.ResonanceBaselineCentroidHz();
         _stabilizer.Reset();
         _metrics.Reset();
         _sessionPitch.Clear();
@@ -513,7 +517,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         // old ResonanceProxyEngine score, which stuck low ("always Mørk") on real mics because its formant peak
         // detection kept falling back to fixed values and froze the score. The meter responds to the actual voice and
         // is loudness-independent, so a resonance-focused exercise's target band is reachable by brightening the voice.
-        int resonancePct = result.IsVoiced ? FemVoiceStudio.Audio.VoiceBrightnessMeter.BrightnessPercent(e.Samples, SampleRate) : 0;
+        int resonancePct = result.IsVoiced ? FemVoiceStudio.Audio.VoiceBrightnessMeter.BrightnessPercent(e.Samples, SampleRate, _resonanceBaseline) : 0;
         if (result.IsVoiced && IsRunning) _sessionResonance.Add(resonancePct);   // real per-session resonance → saved average
         double smoothed = _metrics.CalculateSmoothedPitch(result.Pitch, result.IsVoiced);
         double pitch = result.IsVoiced ? _stabilizer.Filter(smoothed, now) : 0;

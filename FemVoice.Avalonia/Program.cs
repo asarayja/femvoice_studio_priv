@@ -2419,11 +2419,20 @@ internal static class Program
         bool silenceCaptured = mic.NoiseSummary.Length > 0 && !mic.IsComplete && !mic.Capturing
                                && mic.PrimaryActionLabel.Contains("stemme", StringComparison.OrdinalIgnoreCase);
 
+        // Snapshot the real per-user resonance baseline so this headless smoke can assert it gets written, then restore
+        // it (never leave a synthetic-tone baseline in the user's prefs).
+        double? prevBaseline = FemVoice.Avalonia.Preferences.CapturePreferences.ResonanceBaselineCentroidHz();
+
         // Step 2: comfortable voice (stable tone, well above the silent floor) → assess + build + SAVE the profile.
         source.Mode = SyntheticAudioMode.StablePitch;
         await mic.NextCommand.ExecuteAsync(null);
         bool completed = mic.IsComplete && !mic.Capturing;
         bool savedMsg = mic.ResultText.Length > 0;
+
+        // The comfortable-voice phase must have measured + stored a per-user resonance-brightness baseline (centroid Hz).
+        double? baseline = FemVoice.Avalonia.Preferences.CapturePreferences.ResonanceBaselineCentroidHz();
+        bool baselineStored = baseline is > 0;
+        FemVoice.Avalonia.Preferences.CapturePreferences.SetResonanceBaselineCentroidHz(prevBaseline ?? 0);   // restore
 
         // A real profile file must now exist on disk (SHA-256 of the device name → <hex>.json).
         bool profileOnDisk = System.IO.Directory.Exists(profileDir)
@@ -2438,10 +2447,10 @@ internal static class Program
         try { System.IO.Directory.Delete(profileDir, true); } catch { }
 
         Console.WriteLine($"[miccal] navImpl={navImpl} zeroDeferred={zeroDeferred} onPage={onPage} disposedOnLeave={disposedOnLeave} available={available}");
-        Console.WriteLine($"[miccal] silenceCaptured={silenceCaptured} completed={completed} savedMsg={savedMsg} profileOnDisk={profileOnDisk} profileSane={profileSane}");
+        Console.WriteLine($"[miccal] silenceCaptured={silenceCaptured} completed={completed} savedMsg={savedMsg} profileOnDisk={profileOnDisk} profileSane={profileSane} baselineStored={baselineStored} ({baseline:F0} Hz)");
 
         bool ok = navImpl && zeroDeferred && onPage && disposedOnLeave && available
-                  && silenceCaptured && completed && savedMsg && profileOnDisk && profileSane;
+                  && silenceCaptured && completed && savedMsg && profileOnDisk && profileSane && baselineStored;
         Console.WriteLine(ok ? "[miccal] Mic calibration wizard smoke OK" : "[miccal] Mic calibration wizard smoke FAIL");
         return ok ? 0 : 1;
     }

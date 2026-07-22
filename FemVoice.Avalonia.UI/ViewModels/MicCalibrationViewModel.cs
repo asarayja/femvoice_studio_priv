@@ -190,6 +190,12 @@ public partial class MicCalibrationViewModel : ObservableObject, IDisposable
         var profile = _calibration.BuildAdaptiveProfile(deviceName, _background, _voice);
         _calibration.Save(profile);
 
+        // PER-USER RESONANCE-BRIGHTNESS BASELINE: the comfortable-voice phase (`_voice`) is exactly a relaxed-speech
+        // recording on THIS user's mic, so its median spectral centroid is the ideal anchor for the VoiceBrightnessMeter
+        // (absolute centroid Hz varies by hundreds of Hz across mics — a fixed threshold can't be robust). Store it so
+        // the live resonance readout scales relative to the user's own relaxed voice. Fail-safe; never blocks calibration.
+        MeasureAndStoreResonanceBaseline(_voice);
+
         // Calibration-completed telemetry line (WPF parity) — device + measured floor/speech + derived thresholds.
         try
         {
@@ -290,6 +296,30 @@ public partial class MicCalibrationViewModel : ObservableObject, IDisposable
                 Localized.Get("MicCalibration_LiveLevelFormat", "Live nivå: RMS {0:F4} ({1:F1} dBFS), peak {2:F1} dBFS"),
                 rms, MicrophoneCalibrationService.CalculateDbFs(rms), MicrophoneCalibrationService.CalculateDbFs(peak));
         });
+    }
+
+    // Chunk the relaxed-voice recording into FFT-sized frames and store the median spectral centroid as this user's
+    // resonance-brightness baseline. SampleRate 44100 matches the capture (AudioCaptureOptions default) and the live
+    // dashboard/exercise meters, so the anchor is consistent with what those measure. Fail-safe.
+    private static void MeasureAndStoreResonanceBaseline(float[] voiceSamples)
+    {
+        try
+        {
+            const int sampleRate = 44100;
+            const int frameSize = 2048;
+            if (voiceSamples is null || voiceSamples.Length < frameSize) return;
+            var frames = new List<float[]>(voiceSamples.Length / frameSize);
+            for (int i = 0; i + frameSize <= voiceSamples.Length; i += frameSize)
+            {
+                var frame = new float[frameSize];
+                Array.Copy(voiceSamples, i, frame, 0, frameSize);
+                frames.Add(frame);
+            }
+            double median = FemVoiceStudio.Audio.VoiceBrightnessMeter.MedianCentroidHz(frames, sampleRate);
+            if (median > 0)
+                FemVoice.Avalonia.Preferences.CapturePreferences.SetResonanceBaselineCentroidHz(median);
+        }
+        catch { /* baseline is a nicety; never affect calibration */ }
     }
 
     // ── WPF-parity formatting helpers (text only; the numbers come from the frozen service) ───────────────────────
