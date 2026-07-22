@@ -577,7 +577,7 @@ namespace FemVoiceStudio.Data
                     Name = "Straw phonation (Halmsfonasjon)", 
                     Description = "Reduser stemmeslitasje og styrk airflow-kontroll med halm-teknikk. Tvinger frem semi-okkludert vokaltrakt.",
                     Steps = new[] { "Ta et sugerør", "Blås lett gjennom", "Syng 'ooo' gjennom strået", "Hold i 5 sekunder", "Gjenta med ulike toner" },
-                    Duration = 5, Frequency = 3, Difficulty = 2,
+                    Duration = 5, Frequency = 5, Difficulty = 2,
                     Metrics = new[] { "intensity", "consistency" },
                     Category = "Pust",
                     Icon = "\uE81C",
@@ -585,7 +585,7 @@ namespace FemVoiceStudio.Data
                     Goal = 3, // Breathing
                     GoalIcon = "\uE81C",
                     ScientificRationale = "",
-                    FrequencyText = "2×/uke",
+                    FrequencyText = "3–5× daglig",
                     TargetPitchMin = 140.0,
                     TargetPitchMax = 180.0,
                     // KLINISK MUST-FIX: straw phonation er SOVT/airflow, ikke endurance-hold.
@@ -610,6 +610,24 @@ namespace FemVoiceStudio.Data
                     TargetPitchMin = 150.0,
                     TargetPitchMax = 250.0,
                     ProfileType = Models.ExerciseProfileType.CoordinatedGlideUp,
+                },
+                // ØVELSE 16: Boblefonasjon / Lax Vox (SOVT vann-variant)
+                new {
+                    Name = "Boblefonasjon (Lax Vox)",
+                    Description = "Vann-variant av halmsfonasjon (SOVT): syng gjennom et bredt rør ned i et glass vann så det bobler. Gir justerbart mottrykk pluss synlig og følbar tilbakemelding — en skånsom oppvarming som reduserer stemmeslitasje før feminiseringsøvelser.",
+                    Steps = new[] { "Sitt eller stå avslappet; hold et glass rent vann lavt", "Legg et bredt rør løst mellom leppene, enden 1–2 cm under vann", "Blås jevnt UTEN stemme i ca. 5 pust — kjenn boblingen", "Slå på en lett 'ooo' så vannet bobler jevnt — jag summingen, ikke volum", "Legg til myke tonehøyde-glid opp og ned på ett pust", "Ta røret ut og før den lette, fremre følelsen over i åpen 'ooo', ord, setning" },
+                    Duration = 5, Frequency = 5, Difficulty = 2,
+                    Metrics = new[] { "intensity", "consistency" },
+                    Category = "Pust",
+                    Icon = "",
+                    SortOrder = 16,
+                    Goal = 3, // Breathing
+                    GoalIcon = "",
+                    ScientificRationale = "",
+                    FrequencyText = "3–5× daglig",
+                    TargetPitchMin = 140.0,
+                    TargetPitchMax = 180.0,
+                    ProfileType = Models.ExerciseProfileType.StrawPhonation,
                 }
             };
             
@@ -671,6 +689,7 @@ namespace FemVoiceStudio.Data
                 WHERE e.IsActive = 1
                 AND (
                     (e.FrequencyType = 1) OR  -- Daglig
+                    (e.FrequencyType = 5) OR  -- Flere ganger daglig (SOVT) — hver dag, som daglig
                     (e.FrequencyType = 2 AND @DayOfWeek IN (0, 2, 4)) OR  -- 3x/uke (man, ons, fre)
                     (e.FrequencyType = 3 AND @DayOfWeek IN (1, 4)) OR  -- 2x/uke (tir, fre)
                     (e.FrequencyType = 4 AND @DayOfWeek = 6)  -- Ukentlig (søn)

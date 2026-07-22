@@ -1497,7 +1497,7 @@ internal static class Program
         bool backToGuide = shell.CurrentPage is ExerciseGuideViewModel;
         Console.WriteLine($"[exercise] nav: dashboard={onDashboard} guide={onGuide} exercise={onExercise} back-to-guide={backToGuide}");
 
-        bool ok = count == 15 && onDashboard && onGuide && onExercise && backToGuide && page.Steps.Count > 0;
+        bool ok = count == 16 && onDashboard && onGuide && onExercise && backToGuide && page.Steps.Count > 0;
         Console.WriteLine(ok ? "[exercise] Exercise smoke OK" : "[exercise] Exercise smoke FAIL");
         return ok ? 0 : 1;
     }
@@ -1604,7 +1604,7 @@ internal static class Program
         Console.WriteLine($"[rt-int] Runtime: {(onRuntime ? "OK" : "FAIL")}");
         Console.WriteLine($"[rt-int] Navigation: runtime={onRuntime} back-to-guide={backToGuide}");
 
-        bool ok = exercises.Count == 15 && (mapped + fallback) == 15 && profileShown
+        bool ok = exercises.Count == 16 && (mapped + fallback) == 16 && profileShown
                   && pitch > 0 && status == "Innenfor målområde" && onRuntime && backToGuide;
         Console.WriteLine(ok ? "[rt-int] Exercise runtime integration smoke OK" : "[rt-int] Exercise runtime integration smoke FAIL");
         return ok ? 0 : 1;
@@ -1686,7 +1686,7 @@ internal static class Program
         if (!active)
             Console.WriteLine("[coord] Coordinator readout unavailable: documented");
 
-        bool ok = exercises.Count == 15 && active && liveStateReceived && readoutMode && safetyDisplayOnly
+        bool ok = exercises.Count == 16 && active && liveStateReceived && readoutMode && safetyDisplayOnly
                   && clearedOnStop && reBeginActive && reBeginLive
                   && onRuntime && backToGuide && wasRunning && clearedByNav;
         Console.WriteLine(ok ? "[coord] Exercise coordinator smoke OK" : "[coord] Exercise coordinator smoke FAIL");
@@ -1745,7 +1745,7 @@ internal static class Program
         bool backToGuide = shell.CurrentPage is ExerciseGuideViewModel;
         Console.WriteLine($"[chart] Navigation: {(onRuntime && backToGuide ? "OK" : "FAIL")} (runtime={onRuntime} back-to-guide={backToGuide})");
 
-        bool ok = exercises.Count == 15 && samples > 0 && samples <= 120 && markerOk && bandOk
+        bool ok = exercises.Count == 16 && samples > 0 && samples <= 120 && markerOk && bandOk
                   && feedbackOk && feedbackMsg == "Innenfor målområdet" && derivedHoldOk
                   && coordVisualOk && stopped && onRuntime && backToGuide;
         Console.WriteLine(ok ? "[chart] Runtime chart feedback smoke OK" : "[chart] Runtime chart feedback smoke FAIL");

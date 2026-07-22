@@ -41,7 +41,7 @@ namespace FemVoiceStudio.Tests
     {
         // Katalogen har nøyaktig 15 reelle, seedede øvelser (ExerciseId 1–15).
         private const int CatalogMinId = 1;
-        private const int CatalogMaxId = 15;
+        private const int CatalogMaxId = 16;
 
         private static readonly (string Dimension, Func<ExerciseTargetProfile, string?> Key)[] GuidanceDimensions =
         {

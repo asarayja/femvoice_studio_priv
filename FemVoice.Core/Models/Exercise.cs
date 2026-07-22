@@ -126,6 +126,7 @@ namespace FemVoiceStudio.Models
                 FrequencyType.TreGangerUkentlig => "3×/uke",
                 FrequencyType.ToGangerUkentlig => "2×/uke",
                 FrequencyType.Ukentlig => "Ukentlig",
+                FrequencyType.FlereGangerDaglig => "3–5× daglig",
                 _ => "Daglig"
             };
         }
@@ -232,7 +233,10 @@ namespace FemVoiceStudio.Models
         Daglig = 1,
         TreGangerUkentlig = 2,
         ToGangerUkentlig = 3,
-        Ukentlig = 4
+        Ukentlig = 4,
+        // Several times per DAY (e.g. SOVT/straw phonation, clinically dosed 3–5×/day). Append-only: existing values
+        // are persisted as INTEGER in Exercises.FrequencyType, so never renumber the ones above.
+        FlereGangerDaglig = 5
     }
     
     /// <summary>

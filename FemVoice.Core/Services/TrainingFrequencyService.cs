@@ -38,8 +38,8 @@ namespace FemVoiceStudio.Services
             var remainingMinutes = Math.Max(0, RecommendedDailyMinutes - minutesToday);
             
             // Prioriter øvelser basert på frekvens og progresjon
-            var dailyExercises = allExercises.Where(e => 
-                e.Frequency == FrequencyType.Daglig && 
+            var dailyExercises = allExercises.Where(e =>
+                (e.Frequency == FrequencyType.Daglig || e.Frequency == FrequencyType.FlereGangerDaglig) &&
                 !_exerciseService.IsExerciseCompletedToday(e.ExerciseId))
                 .OrderBy(e => e.TotalSessions)
                 .ToList();
@@ -198,6 +198,7 @@ namespace FemVoiceStudio.Services
                 FrequencyType.TreGangerUkentlig => LocalizationService.Instance.GetFormattedString("TrainingFrequency_ThreeTimesReasonFormat", exercise.Name),
                 FrequencyType.ToGangerUkentlig => LocalizationService.Instance.GetFormattedString("TrainingFrequency_TwoTimesReasonFormat", exercise.Name),
                 FrequencyType.Ukentlig => LocalizationService.Instance["TrainingFrequency_WeeklyReason"],
+                FrequencyType.FlereGangerDaglig => LocalizationService.Instance["TrainingFrequency_MultipleDailyReason"],
                 _ => LocalizationService.Instance["TrainingFrequency_DefaultReason"]
             };
         }

@@ -6129,4 +6129,10 @@ Dette kan ikke angres!</value>
   <data name="SettingsData_RestoreFailedFormat" xml:space="preserve">
     <value>Gjenoppretting feilet: {0}</value>
   </data>
+  <data name="Frequency_MultipleDaily" xml:space="preserve">
+    <value>3–5× daglig</value>
+  </data>
+  <data name="TrainingFrequency_MultipleDailyReason" xml:space="preserve">
+    <value>Korte, hyppige økter gjennom dagen gir best effekt for denne øvelsen.</value>
+  </data>
 </root>

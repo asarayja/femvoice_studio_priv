@@ -49,6 +49,7 @@ internal static class ExerciseDisplay
         FrequencyType.TreGangerUkentlig => Localized.Get("Frequency_3xWeek", "3x/uke"),
         FrequencyType.ToGangerUkentlig => Localized.Get("Frequency_2xWeek", "2x/uke"),
         FrequencyType.Ukentlig => Localized.Get("Frequency_Weekly", "Ukentlig"),
+        FrequencyType.FlereGangerDaglig => Localized.Get("Frequency_MultipleDaily", "3–5× daglig"),
         _ => Localized.Get("Frequency_Daily", "Daglig"),
     };
 
