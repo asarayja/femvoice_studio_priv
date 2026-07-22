@@ -6159,4 +6159,7 @@ Dette kan ikke angres!</value>
   <data name="ExRun_AxisDarker" xml:space="preserve">
     <value>Mørkere</value>
   </data>
+  <data name="ExRun_ResHint" xml:space="preserve">
+    <value>Si en jevn tone — lysheten vises her.</value>
+  </data>
 </root>

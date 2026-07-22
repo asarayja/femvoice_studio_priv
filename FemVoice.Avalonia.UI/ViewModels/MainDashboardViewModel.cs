@@ -361,6 +361,14 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     {
         _voiceMonitor.Feed(e.Samples);                 // hear-own-voice: play the frame back (no-op when off)
         PitchAnalysisResult result = _pitch.DetectPitch(e.Samples);
+        // Feed pitch context to the resonance engine BEFORE ProcessSamples (mirrors the WPF ExerciseWindow pipeline).
+        // Without a caller-provided fallback resonance + voiced flag, the engine rejects every low-confidence-formant
+        // frame and emits nothing, leaving resonance stuck at 0 ("Mørk") even on a good voice. rms/0.05 is the same
+        // no-calibration fallback WPF uses.
+        double resRms = FemVoiceStudio.Audio.MicrophoneCalibrationService.CalculateRms(e.Samples);
+        _resonanceEngine.LastKnownPitchIsVoiced = result.IsVoiced;
+        _resonanceEngine.LastKnownPitchHz = result.Pitch;
+        _resonanceEngine.LastKnownFallbackResonance = System.Math.Clamp(resRms / 0.05, 0, 1);
         _resonanceEngine.ProcessSamples(e.Samples);   // real resonance DSP (emits ResonanceScoreUpdated → _latestResonancePercent)
         double smoothed = _metrics.CalculateSmoothedPitch(result.Pitch, result.IsVoiced);
         double stabilized = result.IsVoiced ? _stabilizer.Filter(smoothed, DateTime.Now) : 0;
