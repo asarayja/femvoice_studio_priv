@@ -53,7 +53,10 @@ namespace FemVoiceStudio.Tests
         {
             var sig = new Dictionary<string, (List<string>, List<string>, int)>();
             foreach (var (k, v) in src)
-                sig[k] = (Placeholder.Matches(v).Select(m => m.Value).OrderBy(x => x).ToList(),
+                // Placeholders compared as a DISTINCT set: a translation may legitimately repeat a placeholder
+                // (e.g. "{0}: {0} …") — string.Format handles repeats fine. Dropping or adding a distinct index
+                // is still caught. (Globs/pipes stay exact.)
+                sig[k] = (Placeholder.Matches(v).Select(m => m.Value).Distinct().OrderBy(x => x).ToList(),
                           Glob.Matches(v).Select(m => m.Value).OrderBy(x => x).ToList(),
                           v.Count(c => c == '|'));
             return sig;
@@ -108,7 +111,7 @@ namespace FemVoiceStudio.Tests
             foreach (var (k, want) in src)
             {
                 if (!target.TryGetValue(k, out var v)) continue; // coverage covered elsewhere
-                var ph = Placeholder.Matches(v).Select(m => m.Value).OrderBy(x => x).ToList();
+                var ph = Placeholder.Matches(v).Select(m => m.Value).Distinct().OrderBy(x => x).ToList();
                 var globs = Glob.Matches(v).Select(m => m.Value).OrderBy(x => x).ToList();
                 var pipes = v.Count(c => c == '|');
                 Assert.True(ph.SequenceEqual(want.ph), $"{culture}: placeholder mismatch in {k}");

@@ -113,11 +113,13 @@ namespace FemVoiceStudio.Tests
         }
 
         [Fact]
-        public void ResourceFiles_NoMojibake_All12Resx()
+        public void ResourceFiles_NoMojibake_AllResx()
         {
             var files = ActiveResourceFiles().ToArray();
 
-            Assert.Equal(12, files.Length);
+            // Sanity floor only — the app has grown past its original 12 locales (21 today). The real assertion is
+            // the mojibake scan below; this just guards that we're actually enumerating the resx set.
+            Assert.True(files.Length >= 12, $"expected the full resx set, found only {files.Length}");
 
             var failures = new List<string>();
             foreach (var file in files)
@@ -235,7 +237,9 @@ namespace FemVoiceStudio.Tests
         }
 
         private static bool ContainsMojibake(string value)
-            => MojibakePatterns.Any(pattern => value.Contains(pattern, StringComparison.OrdinalIgnoreCase));
+            // Case-SENSITIVE: the "Ã"/"Â" markers are the UTF-8-decoded-as-Latin1 mojibake bytes (e.g. "Ã©", "Ã¸").
+            // Matching case-insensitively wrongly flags legitimate lowercase "â"/"ã" in Portuguese/Romanian text.
+            => MojibakePatterns.Any(pattern => value.Contains(pattern, StringComparison.Ordinal));
 
         private static IEnumerable<(string Key, string Value)> LoadResxValues(string file)
         {
