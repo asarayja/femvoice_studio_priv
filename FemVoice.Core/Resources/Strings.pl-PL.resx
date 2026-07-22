@@ -6158,4 +6158,7 @@ Tej operacji nie można cofnąć!</value>
   <data name="ExRun_AxisDarker" xml:space="preserve">
     <value>Darker</value>
   </data>
+  <data name="ExRun_ResHint" xml:space="preserve">
+    <value>Say a steady tone — the brightness appears here.</value>
+  </data>
 </root>

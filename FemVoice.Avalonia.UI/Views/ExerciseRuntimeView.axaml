@@ -191,7 +191,7 @@
                                  IsVisible="{Binding RuntimeChart.HasVoice}"/>
                     </Canvas>
                     <!-- Empty-state hint until a voice is detected — readable muted, not faint -->
-                    <TextBlock Text="{loc:Tr Key=ExRun_PitchHint, Fallback='Si en jevn tone — tonehøyden vises her.'}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    <TextBlock Text="{Binding LiveChartEmptyHint}" HorizontalAlignment="Center" VerticalAlignment="Center"
                                TextWrapping="Wrap" FontSize="14" Foreground="{DynamicResource ShellMutedBrush}" IsVisible="{Binding !RuntimeChart.HasVoice}"/>
                   </Panel>
                 </Border>

@@ -263,6 +263,10 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     public string AxisLowLabel => _resonanceFocused
         ? Localized.Get("ExRun_AxisDarker", "Mørkere")
         : Localized.Get("Dash_AxisLower", "Lavere");
+    /// <summary>Empty-state hint under the live chart — focus-aware (brightness for resonance, pitch otherwise).</summary>
+    public string LiveChartEmptyHint => _resonanceFocused
+        ? Localized.Get("ExRun_ResHint", "Si en jevn tone — lysheten vises her.")
+        : Localized.Get("ExRun_PitchHint", "Si en jevn tone — tonehøyden vises her.");
     /// <summary>For non-pitch exercises, the pitch range is shown only as a SECONDARY technical detail.</summary>
     public bool ShowSecondaryPitch => !IsPitchFocused && TargetPitchMin > 0 && TargetPitchMax > 0;
     public string SecondaryPitchText => string.Format(Localized.Get("ExRunVm_SecondaryPitch", "Tekniske mål (tonehøyde): {0}"), TargetPitchText);
@@ -498,6 +502,13 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         _lastFrameUtc = now;
 
         PitchAnalysisResult result = _pitch.DetectPitch(e.Samples);
+        // Feed pitch context to the resonance engine BEFORE ProcessSamples (mirrors the WPF ExerciseWindow pipeline).
+        // Without a caller-provided fallback resonance + voiced flag, the engine rejects every low-confidence-formant
+        // frame and emits nothing — resonance stays stuck at 0 ("Mørk"), so a resonance-focused exercise never moves.
+        double resRms = FemVoiceStudio.Audio.MicrophoneCalibrationService.CalculateRms(e.Samples);
+        _resonanceEngine.LastKnownPitchIsVoiced = result.IsVoiced;
+        _resonanceEngine.LastKnownPitchHz = result.Pitch;
+        _resonanceEngine.LastKnownFallbackResonance = System.Math.Clamp(resRms / 0.05, 0, 1);
         _resonanceEngine.ProcessSamples(e.Samples);   // real resonance DSP → _latestResonancePercent (display-only readout)
         double smoothed = _metrics.CalculateSmoothedPitch(result.Pitch, result.IsVoiced);
         double pitch = result.IsVoiced ? _stabilizer.Filter(smoothed, now) : 0;
