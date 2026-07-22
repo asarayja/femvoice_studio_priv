@@ -4138,10 +4138,64 @@ internal static class Program
         }
         catch (Exception ex) { monitorOk = false; Console.WriteLine($"[playback] monitor threw: {ex.GetType().Name}"); }
 
-        Console.WriteLine($"[playback] noThrow={noThrow} noopOk={noopOk} overrideOk={overrideOk} monitorOk={monitorOk}");
-        bool ok = noThrow && noopOk && overrideOk && monitorOk;
+        // LIVE toggle: enabling/disabling "hear own voice" in Settings must take effect on a RUNNING session (no
+        // restart). The monitor re-reads the persisted preference (throttled) in Feed and starts/stops accordingly.
+        bool liveToggleOk = false;
+        string prefsPath = global::FemVoice.Avalonia.Preferences.UiPreferencesStore.DefaultPath();
+        string? backup = null;
+        try
+        {
+            if (System.IO.File.Exists(prefsPath)) backup = System.IO.File.ReadAllText(prefsPath);
+            var store = new global::FemVoice.Avalonia.Preferences.UiPreferencesStore();
+            void SetHear(bool on) { var p = store.Load(); p.HearOwnVoice = on; store.Save(p); }
+
+            SetHear(false);
+            var fake = new CountingPlayback();
+            using var mon = new global::FemVoice.Avalonia.Audio.VoiceMonitor(fake);
+            mon.Start(44100);
+            mon.Feed(new float[256]);                   // pref OFF → playback not started
+            bool offInitially = fake.Starts == 0;
+
+            SetHear(true);
+            System.Threading.Thread.Sleep(450);         // pass the ~400ms live-recheck throttle
+            mon.Feed(new float[256]);                    // pref now ON → starts live (no restart)
+            bool startedLive = fake.Starts == 1;
+
+            SetHear(false);
+            System.Threading.Thread.Sleep(450);
+            mon.Feed(new float[256]);                    // pref now OFF → stops live (no restart)
+            bool stoppedLive = fake.Stops >= 1;
+
+            mon.Stop();
+            liveToggleOk = offInitially && startedLive && stoppedLive;
+            Console.WriteLine($"[playback] liveToggle: offInitially={offInitially} startedLive={startedLive} stoppedLive={stoppedLive}");
+        }
+        catch (Exception ex) { Console.WriteLine($"[playback] liveToggle threw: {ex.GetType().Name}: {ex.Message}"); }
+        finally
+        {
+            try
+            {
+                if (backup is not null) System.IO.File.WriteAllText(prefsPath, backup);
+                else if (System.IO.File.Exists(prefsPath)) System.IO.File.Delete(prefsPath);
+            }
+            catch { }
+        }
+
+        Console.WriteLine($"[playback] noThrow={noThrow} noopOk={noopOk} overrideOk={overrideOk} monitorOk={monitorOk} liveToggleOk={liveToggleOk}");
+        bool ok = noThrow && noopOk && overrideOk && monitorOk && liveToggleOk;
         Console.WriteLine(ok ? "[playback] Audio playback smoke OK" : "[playback] Audio playback smoke FAIL");
         return ok ? 0 : 1;
+    }
+
+    // Counting fake playback backend (IsAvailable=true) for the live-toggle assertion in AudioPlaybackSmoke.
+    private sealed class CountingPlayback : global::FemVoiceStudio.Audio.Abstractions.IAudioPlaybackService
+    {
+        public int Starts, Stops, Writes;
+        public bool IsAvailable => true;
+        public void Start(int sampleRate, int channels) => Starts++;
+        public void Write(float[] samples) => Writes++;
+        public void Stop() => Stops++;
+        public void Dispose() { }
     }
 
     private static int AvaloniaAudioBackendSmoke()
