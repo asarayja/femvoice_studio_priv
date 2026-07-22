@@ -1524,6 +1524,11 @@ internal static class Program
         // label, not the "—" placeholder (a formant-less synthetic tone legitimately reads "Mørk (0)").
         string resonance = rt.CurrentResonance;
         bool resonanceLive = resonance != "—" && resonance.Length > 0;
+        // Real voice-HEALTH readout is live (same LiveMetricsService engine as the dashboard); a voiced run yields a
+        // real state (Trygt/Observer/…), not the "—" placeholder. A mid-band synthetic tone is not strained → no warning.
+        string health = rt.HealthStatusDisplay;
+        bool healthLive = health != "—" && health.Length > 0 && !rt.HasHealthWarning;
+        Console.WriteLine($"[runtime] Helse: {health} (live={healthLive}, warning={rt.HasHealthWarning})");
         Console.WriteLine($"[runtime] Resonans: {resonance} (live={resonanceLive})");
         Console.WriteLine($"[runtime] Exercise: {rt.SelectedExerciseName}");
         Console.WriteLine($"[runtime] Target: {rt.TargetPitchMin:F0}-{rt.TargetPitchMax:F0} Hz");
@@ -1554,7 +1559,7 @@ internal static class Program
         Console.WriteLine($"[runtime] Guidance: items={rt.GuidanceItems.Count} feedbackMode='{rt.FeedbackModeText}' ok={guidanceOk}");
 
         bool ok = running && stopped && pitch > 0 && rt.TargetPitchMax > 0
-                  && status == "Innenfor målområde" && hold > 0 && onRuntime && backToGuide && resonanceLive && guidanceOk;
+                  && status == "Innenfor målområde" && hold > 0 && onRuntime && backToGuide && resonanceLive && healthLive && guidanceOk;
         Console.WriteLine(ok ? "[runtime] Exercise runtime smoke OK" : "[runtime] Exercise runtime smoke FAIL");
         return ok ? 0 : 1;
     }

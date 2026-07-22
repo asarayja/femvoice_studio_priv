@@ -143,6 +143,18 @@
                 <TextBlock Text=": " FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
                 <TextBlock Text="{Binding CurrentResonance}" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
               </StackPanel>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{loc:Tr Key=Dash_HealthLabel, Fallback='Helse'}" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                <TextBlock Text=": " FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+                <TextBlock Text="{Binding HealthStatusDisplay}" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              </StackPanel>
+
+              <!-- Voice-health strain warning (safety-first): shown prominently when live strain reaches Warning/Danger. -->
+              <Border IsVisible="{Binding HasHealthWarning}" Background="{DynamicResource ShellChartBackgroundBrush}"
+                      BorderBrush="{DynamicResource ShellWarningBrush}" BorderThickness="1" CornerRadius="6" Padding="10">
+                <TextBlock Text="{Binding HealthWarningText}" TextWrapping="Wrap" FontWeight="SemiBold"
+                           Foreground="{DynamicResource ShellWarningBrush}"/>
+              </Border>
 
               <!-- Moving focus trace (pitch for pitch exercises, brightness for resonance exercises). -->
               <TextBlock Text="{Binding LiveChartTitle}" FontSize="12" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,4,0,0"/>
