@@ -628,9 +628,27 @@ namespace FemVoiceStudio.Data
                     TargetPitchMin = 140.0,
                     TargetPitchMax = 180.0,
                     ProfileType = Models.ExerciseProfileType.StrawPhonation,
+                },
+                // ØVELSE 17: Stor hund / liten hund — resonanskontrast (scoret)
+                new {
+                    Name = "Stor hund / liten hund (resonanskontrast)",
+                    Description = "Resonansøvelse: bruk «stor hund» (mørk, åpen woff) mot «liten hund» (lys, fremre jaff) for å kjenne hvordan resonansrommet endrer størrelse — uavhengig av tonehøyde. Velg den lyse, lille innstillingen og ta den med i vokaler, ord og setninger. Resonans er ofte den sterkeste feminiseringsfaktoren.",
+                    Steps = new[] { "Varm opp mykt med lett humming og leppetriller", "Pes lett og raskt som en liten hund — kjenn det lille, lyse, fremre rommet", "Pes tungt og sakte som en stor hund — kjenn det åpne, mørke rommet", "Veksle mellom de to og merk hvordan resonansrommet endrer STØRRELSE (ikke lyden)", "Legg til stemme: lys «jaff jaff» mot mørk «voff voff»", "Velg det lille, lyse rommet og lås den lette, fremre formen", "Hold én jevn tone og gli lysere og mørkere uten å endre tonehøyden", "Hold den lyse formen på vokal, så ord, så korte setninger", "Demp til en naturlig, behagelig lyshet; avslutt med rolig humming" },
+                    Duration = 6, Frequency = 1, Difficulty = 1,
+                    Metrics = new[] { "resonance", "intensity" },
+                    Category = "Resonans",
+                    Icon = "",
+                    SortOrder = 17,
+                    Goal = 1, // Resonance
+                    GoalIcon = "",
+                    ScientificRationale = "",
+                    FrequencyText = "Daglig",
+                    TargetPitchMin = 150.0,
+                    TargetPitchMax = 220.0,
+                    ProfileType = Models.ExerciseProfileType.ResonanceExercise,
                 }
             };
-            
+
             foreach (var ex in exercises)
             {
                 var insertCmd = connection.CreateCommand();
