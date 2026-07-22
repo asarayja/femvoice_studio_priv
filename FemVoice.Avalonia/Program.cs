@@ -45,6 +45,7 @@ internal static class Program
         if (args.Contains("--exercise-runtime-integration-smoke")) return ExerciseRuntimeIntegrationSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-coordinator-smoke")) return ExerciseCoordinatorSmoke().GetAwaiter().GetResult();
         if (args.Contains("--runtime-chart-feedback-smoke")) return RuntimeChartFeedbackSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--focus-aware-runtime-smoke")) return FocusAwareRuntimeSmoke().GetAwaiter().GetResult();
         if (args.Contains("--shell-smoke")) return ShellSmoke().GetAwaiter().GetResult();
         if (args.Contains("--theme-loc-smoke")) return ThemeLocSmoke();
         if (args.Contains("--settings-smoke")) return SettingsSmoke().GetAwaiter().GetResult();
@@ -1506,7 +1507,10 @@ internal static class Program
     private static async Task<int> ExerciseRuntimeSmoke()
     {
         var svc = new VoiceFeminizationExerciseService();
-        var exercise = svc.GetAllEnhancedExercises()[0]; // Grunnleggende humming (target 140-180 Hz)
+        // Pitch-focused exercise so the lifecycle/status/hold assertions are deterministic: the runtime is focus-aware,
+        // so a resonance exercise is judged on brightness (a synthetic sine has no formants → never in the resonance
+        // band). Resonance-focused behaviour has its own coverage in --focus-aware-runtime-smoke.
+        var exercise = svc.GetAllEnhancedExercises().First(e => e.Goal == FemVoiceStudio.Models.GoalCategory.Pitch);
 
         using var rt = new ExerciseRuntimeViewModel(exercise, new InlineUiDispatcher(), () => { });
         rt.BeginCommand.Execute(null);   // explicit start (runtime no longer auto-starts)
@@ -1572,7 +1576,9 @@ internal static class Program
         Console.WriteLine($"[rt-int] Mapped profiles: {mapped}/{exercises.Count}");
         Console.WriteLine($"[rt-int] Fallback profiles: {fallback}/{exercises.Count}");
 
-        var first = exercises[0];
+        // Pitch-focused exercise so the synthetic mid-band tone yields a deterministic in-range pitch status (the
+        // runtime is focus-aware now — a resonance exercise would be judged on brightness instead).
+        var first = exercises.First(e => e.Goal == FemVoiceStudio.Models.GoalCategory.Pitch);
         using var rt = new ExerciseRuntimeViewModel(first, new InlineUiDispatcher(), () => { });
         rt.BeginCommand.Execute(null);   // explicit start (runtime no longer auto-starts)
         var prof = rt.TargetProfile;
@@ -1696,13 +1702,59 @@ internal static class Program
     // produces a converter-free pitch trace (px heights), a target band + current-pitch marker (chart px),
     // a local display-only feedback message, and derived + coordinator hold visuals. All display-only;
     // no OxyPlot, no FeedbackConsistencyGuard, no ComfortZoneController, no persistence/clinical change.
+    // Verifies the FOCUS-AWARE runtime: a resonance-profiled exercise (e.g. "Stor hund / liten hund") is judged on
+    // live BRIGHTNESS (resonance target band) with a brightness chart + resonance feedback, while a pitch exercise
+    // keeps pitch labels/feedback. With synthetic audio (a pure sine has no formants) the resonance exercise sits
+    // "too dark", which is the correct honest readout — the point is that it is judged on the RIGHT metric.
+    private static async Task<int> FocusAwareRuntimeSmoke()
+    {
+        global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
+        var svc = new VoiceFeminizationExerciseService();
+        var exercises = svc.GetAllEnhancedExercises();
+
+        // Resonance exercise: the big-dog/small-dog contrast drill (Id 17), ResonanceExercise profile.
+        var resEx = exercises.First(e => e.Name.Contains("hund", StringComparison.OrdinalIgnoreCase));
+        using var res = new ExerciseRuntimeViewModel(resEx, new InlineUiDispatcher(), () => { });
+        res.BeginCommand.Execute(null);
+        await Task.Delay(500);
+        string resTitle = res.LiveChartTitle, resAxisHi = res.AxisHighLabel, resFb = res.LiveFeedbackMessage, resStatus = res.PitchStatus;
+        await res.StopCommand.ExecuteAsync(null);
+
+        // Pitch exercise: labels + feedback stay pitch-based, synthetic tone sits in-band.
+        var pitchEx = exercises.First(e => e.Goal == FemVoiceStudio.Models.GoalCategory.Pitch);
+        using var pit = new ExerciseRuntimeViewModel(pitchEx, new InlineUiDispatcher(), () => { });
+        pit.BeginCommand.Execute(null);
+        await Task.Delay(500);
+        string pitTitle = pit.LiveChartTitle, pitAxisHi = pit.AxisHighLabel, pitFb = pit.LiveFeedbackMessage, pitStatus = pit.PitchStatus;
+        await pit.StopCommand.ExecuteAsync(null);
+
+        // Resonance exercise: brightness chart labels + resonance-based readout (a sine → "for mørk"/too dark).
+        bool resLabels = resTitle.Contains("Resonans") && resAxisHi == "Lysere";
+        bool resJudged = resStatus.Contains("Resonans") || resFb.Contains("mørk") || resFb.Contains("resonans");
+        // Pitch exercise: pitch chart labels + pitch-based in-range readout.
+        bool pitLabels = pitTitle.Contains("Tonehøyde") && pitAxisHi == "Høyere";
+        bool pitJudged = pitStatus == "Innenfor målområde" && pitFb == "Innenfor målområdet";
+
+        Console.WriteLine($"[focus] resonance: title='{resTitle}' axisHi='{resAxisHi}' status='{resStatus}' fb='{resFb}'");
+        Console.WriteLine($"[focus] pitch: title='{pitTitle}' axisHi='{pitAxisHi}' status='{pitStatus}' fb='{pitFb}'");
+        Console.WriteLine($"[focus] resLabels={resLabels} resJudged={resJudged} pitLabels={pitLabels} pitJudged={pitJudged}");
+
+        global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");   // restore
+        bool ok = resLabels && resJudged && pitLabels && pitJudged;
+        Console.WriteLine(ok ? "[focus] Focus-aware runtime smoke OK" : "[focus] Focus-aware runtime smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
     private static async Task<int> RuntimeChartFeedbackSmoke()
     {
         var svc = new VoiceFeminizationExerciseService();
         var exercises = svc.GetAllEnhancedExercises();
         Console.WriteLine($"[chart] Exercises: {exercises.Count}");
 
-        var first = exercises[0]; // Grunnleggende humming (target 140–180 Hz)
+        // Use a PITCH-focused exercise: the runtime is now focus-aware, so a resonance exercise is judged on live
+        // brightness (a synthetic sine has no formants → "too dark", never in-band). A pitch exercise's synthetic
+        // tone sits at the target-band midpoint, giving the deterministic in-range chart/feedback this smoke checks.
+        var first = exercises.First(e => e.Goal == FemVoiceStudio.Models.GoalCategory.Pitch);
         using var rt = new ExerciseRuntimeViewModel(first, new InlineUiDispatcher(), () => { });
         rt.BeginCommand.Execute(null);   // explicit start (runtime no longer auto-starts)
         await Task.Delay(700); // collect synthetic frames aimed at the target-band midpoint

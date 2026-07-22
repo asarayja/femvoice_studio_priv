@@ -6135,4 +6135,28 @@ Dette kan ikke angres!</value>
   <data name="TrainingFrequency_MultipleDailyReason" xml:space="preserve">
     <value>Korte, hyppige økter gjennom dagen gir best effekt for denne øvelsen.</value>
   </data>
+  <data name="ExRun_Status_ResTooDark" xml:space="preserve">
+    <value>Resonans: for mørk</value>
+  </data>
+  <data name="ExRun_Status_ResTooBright" xml:space="preserve">
+    <value>Resonans: for lys</value>
+  </data>
+  <data name="ExRunVm_Fb_ResTooDark" xml:space="preserve">
+    <value>Litt for mørk — lysne klangen</value>
+  </data>
+  <data name="ExRunVm_Fb_ResTooBright" xml:space="preserve">
+    <value>Litt for lys — slipp litt tilbake</value>
+  </data>
+  <data name="ExRunVm_Fb_ResInRange" xml:space="preserve">
+    <value>Fin, lys resonans</value>
+  </data>
+  <data name="ExRun_ResChartTitle" xml:space="preserve">
+    <value>Resonans (lysere til høyre)</value>
+  </data>
+  <data name="ExRun_AxisBrighter" xml:space="preserve">
+    <value>Lysere</value>
+  </data>
+  <data name="ExRun_AxisDarker" xml:space="preserve">
+    <value>Mørkere</value>
+  </data>
 </root>

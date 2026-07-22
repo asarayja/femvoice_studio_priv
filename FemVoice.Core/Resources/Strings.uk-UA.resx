@@ -6134,4 +6134,28 @@
   <data name="TrainingFrequency_MultipleDailyReason" xml:space="preserve">
     <value>Short, frequent bouts through the day work best for this exercise.</value>
   </data>
+  <data name="ExRun_Status_ResTooDark" xml:space="preserve">
+    <value>Resonance: too dark</value>
+  </data>
+  <data name="ExRun_Status_ResTooBright" xml:space="preserve">
+    <value>Resonance: too bright</value>
+  </data>
+  <data name="ExRunVm_Fb_ResTooDark" xml:space="preserve">
+    <value>A little too dark — brighten the resonance</value>
+  </data>
+  <data name="ExRunVm_Fb_ResTooBright" xml:space="preserve">
+    <value>A little too bright — ease back slightly</value>
+  </data>
+  <data name="ExRunVm_Fb_ResInRange" xml:space="preserve">
+    <value>Nice, bright resonance</value>
+  </data>
+  <data name="ExRun_ResChartTitle" xml:space="preserve">
+    <value>Resonance (brighter to the right)</value>
+  </data>
+  <data name="ExRun_AxisBrighter" xml:space="preserve">
+    <value>Brighter</value>
+  </data>
+  <data name="ExRun_AxisDarker" xml:space="preserve">
+    <value>Darker</value>
+  </data>
 </root>
