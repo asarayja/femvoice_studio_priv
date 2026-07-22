@@ -3,14 +3,14 @@
 #
 # Build the package the Arch way, from a clone of the repo:
 #   makepkg -si          # build + install
-# The pre-built package (builds/femvoice-studio-0.1.3-1-x86_64.pkg.tar.zst) is the output of this recipe.
+# The pre-built package (builds/femvoice-studio-0.1.4-1-x86_64.pkg.tar.zst) is the output of this recipe.
 #
 # NOTE: the app targets .NET 10. `dotnet-sdk` in the Arch repos may lag; if so, install a .NET 10 SDK
 # (Microsoft feed or an AUR package) and makepkg will pick it up. Trimming/stripping is disabled so the
 # bundled native libraries (Skia, ALSA P/Invoke, etc.) are not broken.
 
 pkgname=femvoice-studio
-pkgver=0.1.3
+pkgver=0.1.4
 pkgrel=1
 pkgdesc="FemVoice Studio - voice feminization biofeedback (Avalonia, self-contained)"
 arch=('x86_64')
