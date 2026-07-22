@@ -1082,7 +1082,6 @@ internal static class Program
         // Behaviour with a deterministic synthetic tone injected (real mic would be silent here).
         using var vm = new ResonanceViewModel(new SyntheticAudioCaptureService(), new InlineUiDispatcher());
         bool available = vm.IsAvailable && vm.Devices.Count > 0;
-        bool contentOk = vm.ContrastSteps.Count >= 3 && vm.ContrastTitle.Length > 0;
         vm.StartCommand.Execute(null);
         bool running = vm.IsRunning;
         await Task.Delay(300);   // frames flow through the engine (no crash); a pure sine has no formants, so the
@@ -1096,10 +1095,10 @@ internal static class Program
         vm.StopCommand.Execute(null);
         bool stopped = !vm.IsRunning;
 
-        Console.WriteLine($"[resonance] navImpl={navImpl} onPage={onPage} disposedOnLeave={disposedOnLeave} available={available} contentOk={contentOk} running={running} chartsWired={chartsWired} resetOk={resetOk} stopped={stopped} label='{vm.LevelLabelText}'");
+        Console.WriteLine($"[resonance] navImpl={navImpl} onPage={onPage} disposedOnLeave={disposedOnLeave} available={available} running={running} chartsWired={chartsWired} resetOk={resetOk} stopped={stopped} label='{vm.LevelLabelText}'");
         // Verify the WIRING (nav/open/dispose/content/start/charts/reset/stop). The live resonance value requires a
         // formant-bearing signal (real voice) that a synthetic sine cannot provide, so it is intentionally not asserted.
-        bool ok = navImpl && onPage && disposedOnLeave && available && contentOk && running && chartsWired && resetOk && stopped;
+        bool ok = navImpl && onPage && disposedOnLeave && available && running && chartsWired && resetOk && stopped;
         Console.WriteLine(ok ? "[resonance] Resonance screen smoke OK" : "[resonance] Resonance screen smoke FAIL");
         return ok ? 0 : 1;
     }
@@ -1497,7 +1496,7 @@ internal static class Program
         bool backToGuide = shell.CurrentPage is ExerciseGuideViewModel;
         Console.WriteLine($"[exercise] nav: dashboard={onDashboard} guide={onGuide} exercise={onExercise} back-to-guide={backToGuide}");
 
-        bool ok = count == 16 && onDashboard && onGuide && onExercise && backToGuide && page.Steps.Count > 0;
+        bool ok = count == 17 && onDashboard && onGuide && onExercise && backToGuide && page.Steps.Count > 0;
         Console.WriteLine(ok ? "[exercise] Exercise smoke OK" : "[exercise] Exercise smoke FAIL");
         return ok ? 0 : 1;
     }
@@ -1604,7 +1603,7 @@ internal static class Program
         Console.WriteLine($"[rt-int] Runtime: {(onRuntime ? "OK" : "FAIL")}");
         Console.WriteLine($"[rt-int] Navigation: runtime={onRuntime} back-to-guide={backToGuide}");
 
-        bool ok = exercises.Count == 16 && (mapped + fallback) == 16 && profileShown
+        bool ok = exercises.Count == 17 && (mapped + fallback) == 17 && profileShown
                   && pitch > 0 && status == "Innenfor målområde" && onRuntime && backToGuide;
         Console.WriteLine(ok ? "[rt-int] Exercise runtime integration smoke OK" : "[rt-int] Exercise runtime integration smoke FAIL");
         return ok ? 0 : 1;
@@ -1686,7 +1685,7 @@ internal static class Program
         if (!active)
             Console.WriteLine("[coord] Coordinator readout unavailable: documented");
 
-        bool ok = exercises.Count == 16 && active && liveStateReceived && readoutMode && safetyDisplayOnly
+        bool ok = exercises.Count == 17 && active && liveStateReceived && readoutMode && safetyDisplayOnly
                   && clearedOnStop && reBeginActive && reBeginLive
                   && onRuntime && backToGuide && wasRunning && clearedByNav;
         Console.WriteLine(ok ? "[coord] Exercise coordinator smoke OK" : "[coord] Exercise coordinator smoke FAIL");
@@ -1745,7 +1744,7 @@ internal static class Program
         bool backToGuide = shell.CurrentPage is ExerciseGuideViewModel;
         Console.WriteLine($"[chart] Navigation: {(onRuntime && backToGuide ? "OK" : "FAIL")} (runtime={onRuntime} back-to-guide={backToGuide})");
 
-        bool ok = exercises.Count == 16 && samples > 0 && samples <= 120 && markerOk && bandOk
+        bool ok = exercises.Count == 17 && samples > 0 && samples <= 120 && markerOk && bandOk
                   && feedbackOk && feedbackMsg == "Innenfor målområdet" && derivedHoldOk
                   && coordVisualOk && stopped && onRuntime && backToGuide;
         Console.WriteLine(ok ? "[chart] Runtime chart feedback smoke OK" : "[chart] Runtime chart feedback smoke FAIL");

@@ -493,6 +493,36 @@ namespace FemVoiceStudio.Services
                     TargetPitchMin = 140,
                     TargetPitchMax = 180,
                     Metrics = new List<MetricType> { MetricType.Intensity, MetricType.Consistency }
+                },
+
+                // ØVELSE 17: Stor hund / liten hund — resonanskontrast (scoret, NY)
+                new EnhancedExercise
+                {
+                    Id = 17,
+                    Name = "Stor hund / liten hund (resonanskontrast)",
+                    Description = "Resonansøvelse: bruk «stor hund» (mørk, åpen woff) mot «liten hund» (lys, fremre jaff) for å kjenne hvordan resonansrommet endrer størrelse — uavhengig av tonehøyde. Velg den lyse, lille innstillingen og ta den med i vokaler, ord og setninger. Resonans er ofte den sterkeste feminiseringsfaktoren, viktigere enn tonehøyde alene.",
+                    Steps = new List<string> {
+                        "Varm opp mykt med lett humming og leppetriller",
+                        "Pes lett og raskt som en liten hund — kjenn det lille, lyse, fremre rommet",
+                        "Pes tungt og sakte som en stor hund — kjenn det åpne, mørke, romslige",
+                        "Veksle mellom de to og merk hvordan resonansrommet endrer STØRRELSE (ikke lyden)",
+                        "Legg til stemme: lys «jaff jaff» (lite rom) mot mørk «voff voff» (stort rom)",
+                        "Velg det lille, lyse rommet og lås den lette, fremre formen",
+                        "Hold én jevn tone og gli lysere («iii») og mørkere («åå») uten å endre tonehøyden",
+                        "Hold den lyse formen på en vokal, så lyse ord (mi, se, hei), så korte setninger",
+                        "Demp det ytterste til en naturlig, behagelig lyshet — avslutt med rolig humming"
+                    },
+                    DurationMinutes = 6,
+                    Frequency = FrequencyType.Daglig,
+                    Difficulty = DifficultyLevel.Nybegynner,
+                    Category = "Resonans",
+                    Icon = "",
+                    Goal = GoalCategory.Resonance,
+                    GoalIcon = "",
+                    ScientificRationale = "Resonans (formantfrekvenser / vokaltraktens lengde) er trolig den sterkeste enkeltfaktoren for oppfattet stemmekjønn — kortere vokaltrakt gir høyere formanter, nokså uavhengig av tonehøyde. Stor-hund/liten-hund lærer deg å styre denne «knappen» bevisst. Lysheten skal komme fra formen, ikke fra å presse strupehodet.",
+                    TargetPitchMin = 150,
+                    TargetPitchMax = 220,
+                    Metrics = new List<MetricType> { MetricType.Resonance, MetricType.Intensity }
                 }
             };
         }

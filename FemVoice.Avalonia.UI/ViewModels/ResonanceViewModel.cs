@@ -12,11 +12,11 @@ using FemVoice.Avalonia.Localization;
 namespace FemVoice.Avalonia.ViewModels;
 
 /// <summary>
-/// REAL resonance screen — ports the WPF ResonanceWindow (real-time resonance visualisation) AND the non-scored
-/// ResonanceContrastDemoWindow (educational content). Runs the FROZEN Core <see cref="ResonanceProxyEngine"/> on
-/// live capture frames (real backend in production, synthetic in tests) and shows a live resonance meter
-/// (bright/neutral/dark), plus the optional "resonance contrast" awareness steps (content only — no scoring, no
-/// persistence). Read-only use of the engine; IDisposable stops capture on navigate-away.
+/// REAL resonance screen — ports the WPF ResonanceWindow (real-time resonance visualisation). Runs the FROZEN
+/// Core <see cref="ResonanceProxyEngine"/> on live capture frames (real backend in production, synthetic in
+/// tests) and shows a live resonance meter (bright/neutral/dark). The old non-scored "resonance contrast"
+/// awareness demo has been removed — the resonance-contrast content now ships as the scored catalog exercise
+/// "Stor hund / liten hund". Read-only use of the engine; IDisposable stops capture on navigate-away.
 /// </summary>
 public sealed partial class ResonanceViewModel : ObservableObject, IDisposable
 {
@@ -84,20 +84,6 @@ public sealed partial class ResonanceViewModel : ObservableObject, IDisposable
     public string TimelineHeading => Localized.Get("ResonanceWindow_FormantTimeline", "Formant-tidslinje (F2)");
     /// <summary>Live resonance category readout (Lys/Nøytral/Mørk) — WPF's bright/neutral/dark category.</summary>
     [ObservableProperty] private string _categoryText = "—";
-
-    // ── Optional resonance-contrast awareness demo (content only — non-scored) ────────────────────────────────
-    public string ContrastTitle => Localized.Get("ResonanceContrast_Title", "Resonanskontrast (valgfri øvelse)");
-    public string ContrastSubtitle => Localized.Get("ResonanceContrast_Subtitle", "Kjenn forskjellen på større og mindre resonansrom.");
-    public string ContrastDescription => Localized.Get("ResonanceContrast_Description", "Prøv en kort og rolig demo for å kjenne forskjellen i klang.");
-    public IReadOnlyList<string> ContrastSteps { get; } = new[]
-    {
-        Localized.Get("ResonanceContrast_StepLarge", "Forestill deg et stort, åpent rom bak i munnen — en «mørk» klang."),
-        Localized.Get("ResonanceContrast_StepSmall", "Forestill deg så et lite, fremre rom — en «lysere» klang."),
-        Localized.Get("ResonanceContrast_NoticeDifference", "Legg merke til forskjellen i klang — ikke i tonehøyde."),
-        Localized.Get("ResonanceContrast_Safety", "Hold det avslappet og uanstrengt. Stopp hvis noe kjennes ubehagelig."),
-    };
-    public string ContrastNote => Localized.Get("ResonanceContrast_NoScoreNote",
-        "Dette er en bevisstgjøringsøvelse — den scores ikke og er ikke påkrevd.");
 
     public IReadOnlyList<string> Devices { get; }
     [ObservableProperty] private string? _selectedDevice;

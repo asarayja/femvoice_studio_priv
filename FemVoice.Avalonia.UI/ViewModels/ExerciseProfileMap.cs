@@ -31,6 +31,7 @@ internal static class ExerciseProfileMap
         [14] = ExerciseProfileType.StrawPhonation,
         [15] = ExerciseProfileType.CoordinatedGlideUp,
         [16] = ExerciseProfileType.StrawPhonation,   // Boblefonasjon / Lax Vox (SOVT vann-variant)
+        [17] = ExerciseProfileType.ResonanceExercise, // Stor hund / liten hund (resonanskontrast)
     };
 
     /// <summary>Profile type for a catalog exercise id, or null if unmapped (fail-safe).</summary>
