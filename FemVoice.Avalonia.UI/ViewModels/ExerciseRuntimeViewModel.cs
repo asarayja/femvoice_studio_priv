@@ -45,6 +45,9 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     private const int MaxTracePoints = 120;      // recent-pitch window (capped like the dashboard trace)
     private double _chartMin;                    // fixed axis range for the session (from the target band)
     private double _chartMax;
+    private readonly bool _resonanceFocused;     // exercise judged on live brightness (resonance) rather than pitch
+    private readonly double _targetResMinPct;    // resonance target band, 0–100 (profile 0–1 × 100)
+    private readonly double _targetResMaxPct;
 
     // ── VM-local coordinator readout (DISPLAY-ONLY) ──────────────────────────────────
     // The parameterless ExerciseIntelligenceCoordinator is wired READ-ONLY as a readout source only:
@@ -128,6 +131,13 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         if (_coordinatorEnabled)
             _coordinator.ExerciseUpdated += OnCoordinatorState;
 
+        // FOCUS-AWARE runtime: a resonance-profiled exercise (uses resonance, not pitch) is judged on live BRIGHTNESS
+        // against the profile's resonance target band (0–1 → 0–100%), not on pitch. Everything else (pitch exercises)
+        // keeps the pitch path. Determined once from the resolved profile.
+        _resonanceFocused = _coordinatorProfile is { UsesResonance: true, UsesPitch: false };
+        _targetResMinPct = (_coordinatorProfile?.TargetResonanceMin ?? 0.0) * 100.0;
+        _targetResMaxPct = (_coordinatorProfile?.TargetResonanceMax ?? 1.0) * 100.0;
+
         // Exercise Guidance panel (WPF ExerciseWindow): the 4 guidance items (purpose/focus/mistakes/safety) + the
         // feedback-mode badge, resolved from the exercise's profile keys via the shared RESX. Display-only.
         var g = new List<GuidanceItem>();
@@ -148,12 +158,22 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         }
         GuidanceItems = g;
 
-        // Fixed chart axis range for the session (pure, portable PitchChartAxisRangeCalculator over the
-        // target band). Keeping it stable means the target band stays put and the trace scrolls under it.
-        var axis = PitchChartAxisRangeCalculator.Calculate(Array.Empty<double>(), TargetPitchMin, TargetPitchMax);
-        _chartMin = axis.Minimum;
-        _chartMax = axis.Maximum;
-        _runtimeChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, TargetPitchMin, TargetPitchMax);
+        // Fixed chart axis range for the session. Resonance exercises plot BRIGHTNESS on a fixed 0–100 axis with the
+        // resonance target band; pitch exercises use the pure PitchChartAxisRangeCalculator over the pitch band.
+        // Keeping it stable means the target band stays put and the trace scrolls under it.
+        if (_resonanceFocused)
+        {
+            _chartMin = 0;
+            _chartMax = 100;
+            _runtimeChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, _targetResMinPct, _targetResMaxPct);
+        }
+        else
+        {
+            var axis = PitchChartAxisRangeCalculator.Calculate(Array.Empty<double>(), TargetPitchMin, TargetPitchMax);
+            _chartMin = axis.Minimum;
+            _chartMax = axis.Maximum;
+            _runtimeChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, TargetPitchMin, TargetPitchMax);
+        }
 
         // Audio source. In production (real mic available) the exercise is driven by the REAL microphone — the same
         // pitch/coordinator pipeline, just real frames. Otherwise (no mic / tests) a dedicated synthetic source aimed
@@ -230,6 +250,18 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     public string FocusSummary => ExerciseDisplay.FocusSummary(Exercise.Goal);
     /// <summary>True when tonehøyde is the PRIMARY focus (Pitch/Combined) — show the pitch target prominently.</summary>
     public bool IsPitchFocused => ExerciseDisplay.IsPitchPrimary(Exercise.Goal);
+
+    // Focus-aware live-chart labels: a resonance exercise shows a brightness chart (Lysere/Mørkere), a pitch
+    // exercise shows the pitch chart (Høyere/Lavere). Bound by the view; evaluated once (focus is fixed per session).
+    public string LiveChartTitle => _resonanceFocused
+        ? Localized.Get("ExRun_ResChartTitle", "Resonans (lysere til høyre)")
+        : Localized.Get("Dash_PitchChartTitle", "Tonehøyde (nyeste til høyre)");
+    public string AxisHighLabel => _resonanceFocused
+        ? Localized.Get("ExRun_AxisBrighter", "Lysere")
+        : Localized.Get("Dash_AxisHigher", "Høyere");
+    public string AxisLowLabel => _resonanceFocused
+        ? Localized.Get("ExRun_AxisDarker", "Mørkere")
+        : Localized.Get("Dash_AxisLower", "Lavere");
     /// <summary>For non-pitch exercises, the pitch range is shown only as a SECONDARY technical detail.</summary>
     public bool ShowSecondaryPitch => !IsPitchFocused && TargetPitchMin > 0 && TargetPitchMax > 0;
     public string SecondaryPitchText => string.Format(Localized.Get("ExRunVm_SecondaryPitch", "Tekniske mål (tonehøyde): {0}"), TargetPitchText);
@@ -325,14 +357,23 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     }
 
     // Local, display-only feedback derivation (mirrors the dashboard's DeriveFeedback approach).
-    private (string message, string severity) DeriveLiveFeedback(bool voiced, double pitch, ExerciseLiveState? live)
+    // Focus-aware feedback: for a resonance exercise the message is about BRIGHTNESS (too dark/too bright/nice), for a
+    // pitch exercise about pitch (under/over/in-range). focusValue/min/max are the resonance-% or pitch band already.
+    private (string message, string severity) DeriveLiveFeedback(bool voiced, double focusValue, double focusMin, double focusMax, ExerciseLiveState? live)
     {
         if (live?.IsSafetyLocked == true)
             return (Localized.Get("ExRunVm_Fb_Pause", "Koordinator anbefaler en pause (veiledende)"), "Pause anbefalt");
-        if (!voiced || pitch <= 0)
+        if (!voiced)
             return (Localized.Get("ExRunVm_Fb_NoStableVoice", "Ingen stabil stemme registrert"), "Ingen stemme");
-        if (pitch < TargetPitchMin) return (Localized.Get("ExRunVm_Fb_SlightlyUnder", "Litt under målområdet"), "Juster");
-        if (pitch > TargetPitchMax) return (Localized.Get("ExRunVm_Fb_SlightlyOver", "Litt over målområdet"), "Juster");
+        if (_resonanceFocused)
+        {
+            if (focusValue < focusMin) return (Localized.Get("ExRunVm_Fb_ResTooDark", "Litt for mørk — lysne klangen"), "Juster");
+            if (focusValue > focusMax) return (Localized.Get("ExRunVm_Fb_ResTooBright", "Litt for lys — slipp litt tilbake"), "Juster");
+            return (Localized.Get("ExRunVm_Fb_ResInRange", "Fin, lys resonans"), "I mål");
+        }
+        if (focusValue <= 0) return (Localized.Get("ExRunVm_Fb_NoStableVoice", "Ingen stabil stemme registrert"), "Ingen stemme");
+        if (focusValue < focusMin) return (Localized.Get("ExRunVm_Fb_SlightlyUnder", "Litt under målområdet"), "Juster");
+        if (focusValue > focusMax) return (Localized.Get("ExRunVm_Fb_SlightlyOver", "Litt over målområdet"), "Juster");
         return (Localized.Get("ExRunVm_Fb_InRange", "Innenfor målområdet"), "I mål");
     }
 
@@ -448,12 +489,18 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
 
         if (result.IsVoiced && pitch > 0) _sessionPitch.Add(pitch);   // real per-session sample → saved session stats
 
-        bool inRange = result.IsVoiced && pitch >= TargetPitchMin && pitch <= TargetPitchMax;
+        int resonancePct = _latestResonancePercent;
+        // FOCUS-AWARE: a resonance exercise is judged on live brightness vs the resonance target band; a pitch
+        // exercise on pitch vs the pitch band. focusValue/focusMin/focusMax drive in-range, hold, chart and feedback.
+        double focusValue = _resonanceFocused ? resonancePct : pitch;
+        double focusMin = _resonanceFocused ? _targetResMinPct : TargetPitchMin;
+        double focusMax = _resonanceFocused ? _targetResMaxPct : TargetPitchMax;
+        bool inRange = result.IsVoiced && focusValue >= focusMin && focusValue <= focusMax;
         // INTERNAL status token (Norwegian, used for comparison + chart snapshot); localized only at display time.
         string status;
         if (!result.IsVoiced) status = "Ingen stemme";
-        else if (pitch < TargetPitchMin) status = "Under målområde";
-        else if (pitch > TargetPitchMax) status = "Over målområde";
+        else if (focusValue < focusMin) status = _resonanceFocused ? "Resonans: for mørk" : "Under målområde";
+        else if (focusValue > focusMax) status = _resonanceFocused ? "Resonans: for lys" : "Over målområde";
         else status = "Innenfor målområde";
 
         _holdRaw = inRange ? Math.Min(_holdTargetSeconds, _holdRaw + delta) : 0;
@@ -472,16 +519,16 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
                 _holdTargetSeconds, _latestLiveState, hold);
         }
 
-        // Converter-free chart snapshot + local display-only feedback (computed off the UI thread).
+        // Converter-free chart snapshot + local display-only feedback (computed off the UI thread). The chart plots
+        // the FOCUS metric (brightness for resonance exercises, pitch otherwise) against its target band.
         bool hasVoice = result.IsVoiced && pitch > 0;
-        double samplePx = hasVoice ? RuntimeChartDisplay.ToPx(pitch, _chartMin, _chartMax, ChartHeightPx) : 0;
+        double chartValue = _resonanceFocused ? resonancePct : pitch;
+        double samplePx = hasVoice ? RuntimeChartDisplay.ToPx(chartValue, _chartMin, _chartMax, ChartHeightPx) : 0;
         var chartSnap = RuntimeChartDisplay.From(
-            ChartHeightPx, _chartMin, _chartMax, TargetPitchMin, TargetPitchMax,
-            pitch, hasVoice, PitchStatusDisplay(hasVoice ? status : "Ingen stemme"));
-        (string fbMsg, string fbSev) = DeriveLiveFeedback(result.IsVoiced, pitch,
+            ChartHeightPx, _chartMin, _chartMax, focusMin, focusMax,
+            chartValue, hasVoice, PitchStatusDisplay(hasVoice ? status : "Ingen stemme"));
+        (string fbMsg, string fbSev) = DeriveLiveFeedback(result.IsVoiced, focusValue, focusMin, focusMax,
             _coordinatorEnabled ? _latestLiveState : null);
-
-        int resonancePct = _latestResonancePercent;
         _ui.Post(() =>
         {
             if (!IsRunning) return;   // VM stopped/disposed between capture and dispatch → don't apply orphan updates
@@ -530,6 +577,8 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         "Under målområde" => Localized.Get("ExRun_Status_Under", "Under målområde"),
         "Over målområde" => Localized.Get("ExRun_Status_Over", "Over målområde"),
         "Innenfor målområde" => Localized.Get("ExRun_Status_In", "Innenfor målområde"),
+        "Resonans: for mørk" => Localized.Get("ExRun_Status_ResTooDark", "Resonans: for mørk"),
+        "Resonans: for lys" => Localized.Get("ExRun_Status_ResTooBright", "Resonans: for lys"),
         _ => token,
     };
 

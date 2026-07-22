@@ -144,12 +144,12 @@
                 <TextBlock Text="{Binding CurrentResonance}" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
               </StackPanel>
 
-              <!-- Moving pitch trace (converter-free Canvas; px == distance from bottom). -->
-              <TextBlock Text="{loc:Tr Key=Dash_PitchChartTitle, Fallback='Tonehøyde (nyeste til høyre)'}" FontSize="12" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,4,0,0"/>
+              <!-- Moving focus trace (pitch for pitch exercises, brightness for resonance exercises). -->
+              <TextBlock Text="{Binding LiveChartTitle}" FontSize="12" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,4,0,0"/>
               <Grid ColumnDefinitions="Auto,*" Height="{Binding RuntimeChart.ChartHeightPx}">
                 <Grid Grid.Column="0" Width="46" RowDefinitions="Auto,*,Auto" Margin="0,0,6,0">
-                  <TextBlock Grid.Row="0" Text="{loc:Tr Key=Dash_AxisHigher, Fallback='Høyere'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
-                  <TextBlock Grid.Row="2" Text="{loc:Tr Key=Dash_AxisLower, Fallback='Lavere'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
+                  <TextBlock Grid.Row="0" Text="{Binding AxisHighLabel}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
+                  <TextBlock Grid.Row="2" Text="{Binding AxisLowLabel}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="11"/>
                 </Grid>
                 <Border Grid.Column="1" Background="{DynamicResource ShellChartBackgroundBrush}" CornerRadius="6" ClipToBounds="True">
                   <Panel>
