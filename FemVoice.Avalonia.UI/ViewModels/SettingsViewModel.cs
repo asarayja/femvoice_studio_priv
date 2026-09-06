@@ -41,8 +41,9 @@ public sealed class SettingsViewModel
     public string AboutHeading => Localized.Get("Settings_About", "Om");
     public string AppName => "FemVoice Studio";
     public string VersionLabel => Localized.Get("Settings_Version", "Versjon");
-    public string VersionValue =>
-        typeof(SettingsViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
+    // Read from the HEAD assembly, not this shared library: the library carries no <Version> and reported the SDK
+    // default 1.0.0, so About showed "1.0.0" while the app was 0.1.6.
+    public string VersionValue => FemVoice.Avalonia.AppVersion.Current;
     public string PlatformValue => "Avalonia · Windows / macOS / Linux / Android / iOS";
 
     // ── Privacy consent paragraphs (informational; real shared Privacy_* keys) ────────────────────────────────────
