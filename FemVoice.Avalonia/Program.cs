@@ -1213,6 +1213,33 @@ internal static class Program
             todayItem?.Open.Execute(null);
             bool openedToday = opened == today;
 
+            // WEEKDAY HEADERS + TITLE must be in the ACTIVE language and must be real weekday abbreviations. They were
+            // machine-translated from the English WORDS, so "Wed" became "to marry" (de/fr/es: Heiraten/Épouser/
+            // Casarse) and "Sun" became "the sun" (de/fr/es/it/da/fi/hr/sv), while the Norwegian neutral file held
+            // ENGLISH. Assert per language that the headers change with the culture and contain none of that poison.
+            var previousCulture = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture;
+            bool weekdaysOk = true;
+            string[] poison = { "Heiraten", "Épouser", "Casarse", "Sonne", "Soleil", "Sole", "Sunce", "Aurinko" };
+            var seenHeaders = new System.Collections.Generic.List<string>();
+            try
+            {
+                foreach (var culture in new[] { "nb-NO", "en-US", "de-DE", "fr-FR", "es-ES", "it-IT", "sv-SE" })
+                {
+                    global::FemVoice.Avalonia.Localization.LanguageActivation.Apply(culture);
+                    var headers = new CalendarViewModel(db, _ => { }).WeekdayHeaders;
+                    string joined = string.Join(",", headers);
+                    seenHeaders.Add($"{culture}=[{joined}]");
+                    if (headers.Count != 7) { weekdaysOk = false; continue; }
+                    // No mistranslated day names, and (outside English) not simply the English abbreviations.
+                    if (poison.Any(p => headers.Any(h => string.Equals(h, p, StringComparison.OrdinalIgnoreCase))))
+                        weekdaysOk = false;
+                    if (culture is "nb-NO" && joined != "Man,Tir,Ons,Tor,Fre,Lør,Søn") weekdaysOk = false;
+                    if (culture is "de-DE" && joined != "Mo,Di,Mi,Do,Fr,Sa,So") weekdaysOk = false;
+                }
+            }
+            finally { global::FemVoice.Avalonia.Localization.Localized.CurrentCulture = previousCulture; }
+            Console.WriteLine($"[daydetails] weekdays ok={weekdaysOk} {string.Join(" ", seenHeaders)}");
+
             // DayDetails loads exactly today's two sessions with real detail.
             var det = new DayDetailsViewModel(db, today, null);
             bool twoSessions = det.HasSessions && det.Sessions.Count == 2;
@@ -1221,7 +1248,8 @@ internal static class Program
             bool cardsOk = det.SummaryCards.Count == 4 && det.SummaryCards.All(c => c.Value.Length > 0);   // WPF 4 summary cards
 
             Console.WriteLine($"[daydet] hasDays={hasDays} todayFound={todayFound} heatmapOk={heatmapOk} openedToday={openedToday} twoSessions={twoSessions} detailOk={detailOk} summaryOk={summaryOk} cardsOk={cardsOk}");
-            bool ok = hasDays && todayFound && heatmapOk && openedToday && twoSessions && detailOk && summaryOk && cardsOk;
+            bool ok = hasDays && todayFound && heatmapOk && openedToday && twoSessions && detailOk && summaryOk && cardsOk
+                      && weekdaysOk;
             Console.WriteLine(ok ? "[daydet] Day details smoke OK" : "[daydet] Day details smoke FAIL");
             return ok ? 0 : 1;
         }

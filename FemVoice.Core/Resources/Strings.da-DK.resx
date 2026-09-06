@@ -232,10 +232,10 @@
     <value>Ingen sessioner</value>
   </data>
   <data name="Calendar_Sat" xml:space="preserve">
-    <value>Lør</value>
+    <value>lør</value>
   </data>
   <data name="Calendar_Sun" xml:space="preserve">
-    <value>Sol</value>
+    <value>søn</value>
   </data>
   <data name="Calendar_Thu" xml:space="preserve">
     <value>tor</value>

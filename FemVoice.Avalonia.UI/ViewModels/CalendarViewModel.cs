@@ -76,7 +76,9 @@ public sealed partial class CalendarViewModel : ObservableObject
     public string DataNote => Localized.Get("Calendar_RealDataNote",
         "Ekte treningshistorikk fra dine lagrede økter. Klikk en dag for detaljer.");
     public string TodayLabel => Localized.Get("Calendar_Today", "I dag");
-    public IReadOnlyList<string> WeekdayHeaders { get; } = new[]
+    /// <summary>Monday-first weekday column headers. A COMPUTED property, not a field initializer: the grid is built
+    /// once per view-model, and a field would freeze the headers in whatever language was active at construction.</summary>
+    public IReadOnlyList<string> WeekdayHeaders => new[]
     {
         Localized.Get("Calendar_Mon", "Man"), Localized.Get("Calendar_Tue", "Tir"), Localized.Get("Calendar_Wed", "Ons"),
         Localized.Get("Calendar_Thu", "Tor"), Localized.Get("Calendar_Fri", "Fre"), Localized.Get("Calendar_Sat", "Lør"),

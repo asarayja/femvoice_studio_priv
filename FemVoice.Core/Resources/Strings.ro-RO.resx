@@ -1525,25 +1525,25 @@
     <value>2+ sesiuni</value>
   </data>
   <data name="Calendar_Sun" xml:space="preserve">
-    <value>Dum</value>
+    <value>dum</value>
   </data>
   <data name="Calendar_Mon" xml:space="preserve">
-    <value>Lun</value>
+    <value>lun</value>
   </data>
   <data name="Calendar_Tue" xml:space="preserve">
-    <value>Mar</value>
+    <value>mar</value>
   </data>
   <data name="Calendar_Wed" xml:space="preserve">
-    <value>Mie</value>
+    <value>mie</value>
   </data>
   <data name="Calendar_Thu" xml:space="preserve">
-    <value>Joi</value>
+    <value>joi</value>
   </data>
   <data name="Calendar_Fri" xml:space="preserve">
-    <value>Vin</value>
+    <value>vin</value>
   </data>
   <data name="Calendar_Sat" xml:space="preserve">
-    <value>Sâm</value>
+    <value>sâm</value>
   </data>
   <data name="Main_PitchGraph" xml:space="preserve">
     <value>Grafic înălțime</value>

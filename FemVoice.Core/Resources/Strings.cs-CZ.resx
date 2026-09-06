@@ -1525,25 +1525,25 @@
     <value>2+ lekce</value>
   </data>
   <data name="Calendar_Sun" xml:space="preserve">
-    <value>Ne</value>
+    <value>ne</value>
   </data>
   <data name="Calendar_Mon" xml:space="preserve">
-    <value>Po</value>
+    <value>po</value>
   </data>
   <data name="Calendar_Tue" xml:space="preserve">
-    <value>Út</value>
+    <value>út</value>
   </data>
   <data name="Calendar_Wed" xml:space="preserve">
-    <value>St</value>
+    <value>st</value>
   </data>
   <data name="Calendar_Thu" xml:space="preserve">
-    <value>Čt</value>
+    <value>čt</value>
   </data>
   <data name="Calendar_Fri" xml:space="preserve">
-    <value>Pá</value>
+    <value>pá</value>
   </data>
   <data name="Calendar_Sat" xml:space="preserve">
-    <value>So</value>
+    <value>so</value>
   </data>
   <data name="Main_PitchGraph" xml:space="preserve">
     <value>Graf výšky tónu</value>
