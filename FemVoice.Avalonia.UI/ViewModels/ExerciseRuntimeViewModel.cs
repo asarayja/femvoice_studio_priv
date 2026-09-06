@@ -668,6 +668,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
                     ResonanceScore = Math.Round(avgResonance, 1),            // real resonance from the Core DSP engine
                     VoiceHealthScore = Math.Round(avgHealth, 1),            // real per-session voice-health average
                     DifficultyLevel = Exercise.Difficulty,
+                    ExerciseTextId = Exercise.Id,   // catalog id (WPF parity) so per-exercise progress can be keyed by id
                     Feedback = $"Øvelse: {SelectedExerciseName}",
                 };
                 // Create-then-enrich two-step (ResonanceScore is only written by UpdateTrainingSession), same as the

@@ -23,6 +23,14 @@ internal static class ScaffoldTranslations
     {
         ["en"] = new()
         {
+            ["StartHere_Heading"] = "Start here",
+            ["StartHere_StageFormat"] = "Step {0} of {1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "Fundamentals",
+            ["StartHere_Stage_Resonance"] = "Resonance",
+            ["StartHere_Stage_Integration"] = "Integration",
+            ["StartHere_NextLabel"] = "Next exercise",
+            ["StartHere_StageProgress"] = "{0} of {1} exercises in this step",
+            ["StartHere_Button"] = "Go to the exercise",
             ["Reminder_Heading"] = "Reminder",
             ["Reminder_DueMessage"] = "Today's session is still to do — a few minutes is enough.",
             ["Reminder_StreakNote"] = "Keep your {0}-day streak going.",
@@ -90,6 +98,14 @@ internal static class ScaffoldTranslations
         },
         ["sv"] = new()
         {
+            ["StartHere_Heading"] = "Börja här",
+            ["StartHere_StageFormat"] = "Steg {0} av {1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "Grunder",
+            ["StartHere_Stage_Resonance"] = "Resonans",
+            ["StartHere_Stage_Integration"] = "Integrering",
+            ["StartHere_NextLabel"] = "Nästa övning",
+            ["StartHere_StageProgress"] = "{0} av {1} övningar i det här steget",
+            ["StartHere_Button"] = "Gå till övningen",
             ["Reminder_Heading"] = "Påminnelse",
             ["Reminder_DueMessage"] = "Dagens pass återstår — några minuter räcker.",
             ["Reminder_StreakNote"] = "Behåll din svit på {0} dagar.",
@@ -130,6 +146,14 @@ internal static class ScaffoldTranslations
         },
         ["da"] = new()
         {
+            ["StartHere_Heading"] = "Start her",
+            ["StartHere_StageFormat"] = "Trin {0} af {1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "Grundlag",
+            ["StartHere_Stage_Resonance"] = "Resonans",
+            ["StartHere_Stage_Integration"] = "Integration",
+            ["StartHere_NextLabel"] = "Næste øvelse",
+            ["StartHere_StageProgress"] = "{0} af {1} øvelser i dette trin",
+            ["StartHere_Button"] = "Gå til øvelsen",
             ["Reminder_Heading"] = "Påmindelse",
             ["Reminder_DueMessage"] = "Dagens session mangler stadig — få minutter er nok.",
             ["Reminder_StreakNote"] = "Behold din stime på {0} dage.",
@@ -170,6 +194,14 @@ internal static class ScaffoldTranslations
         },
         ["fi"] = new()
         {
+            ["StartHere_Heading"] = "Aloita tästä",
+            ["StartHere_StageFormat"] = "Vaihe {0}/{1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "Perusteet",
+            ["StartHere_Stage_Resonance"] = "Resonanssi",
+            ["StartHere_Stage_Integration"] = "Yhdistäminen",
+            ["StartHere_NextLabel"] = "Seuraava harjoitus",
+            ["StartHere_StageProgress"] = "{0}/{1} harjoitusta tässä vaiheessa",
+            ["StartHere_Button"] = "Siirry harjoitukseen",
             ["Reminder_Heading"] = "Muistutus",
             ["Reminder_DueMessage"] = "Tämän päivän harjoitus on vielä tekemättä — muutama minuutti riittää.",
             ["Reminder_StreakNote"] = "Pidä {0} päivän putkesi käynnissä.",
@@ -210,6 +242,14 @@ internal static class ScaffoldTranslations
         },
         ["de"] = new()
         {
+            ["StartHere_Heading"] = "Hier starten",
+            ["StartHere_StageFormat"] = "Schritt {0} von {1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "Grundlagen",
+            ["StartHere_Stage_Resonance"] = "Resonanz",
+            ["StartHere_Stage_Integration"] = "Integration",
+            ["StartHere_NextLabel"] = "Nächste Übung",
+            ["StartHere_StageProgress"] = "{0} von {1} Übungen in diesem Schritt",
+            ["StartHere_Button"] = "Zur Übung",
             ["Reminder_Heading"] = "Erinnerung",
             ["Reminder_DueMessage"] = "Die heutige Übung steht noch aus — ein paar Minuten genügen.",
             ["Reminder_StreakNote"] = "Halte deine Serie von {0} Tagen aufrecht.",
@@ -250,6 +290,14 @@ internal static class ScaffoldTranslations
         },
         ["fr"] = new()
         {
+            ["StartHere_Heading"] = "Commencer ici",
+            ["StartHere_StageFormat"] = "Étape {0} sur {1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "Fondamentaux",
+            ["StartHere_Stage_Resonance"] = "Résonance",
+            ["StartHere_Stage_Integration"] = "Intégration",
+            ["StartHere_NextLabel"] = "Prochain exercice",
+            ["StartHere_StageProgress"] = "{0} exercice(s) sur {1} dans cette étape",
+            ["StartHere_Button"] = "Aller à l'exercice",
             ["Reminder_Heading"] = "Rappel",
             ["Reminder_DueMessage"] = "La séance du jour reste à faire — quelques minutes suffisent.",
             ["Reminder_StreakNote"] = "Maintenez votre série de {0} jours.",
@@ -290,6 +338,14 @@ internal static class ScaffoldTranslations
         },
         ["es"] = new()
         {
+            ["StartHere_Heading"] = "Empieza aquí",
+            ["StartHere_StageFormat"] = "Paso {0} de {1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "Fundamentos",
+            ["StartHere_Stage_Resonance"] = "Resonancia",
+            ["StartHere_Stage_Integration"] = "Integración",
+            ["StartHere_NextLabel"] = "Siguiente ejercicio",
+            ["StartHere_StageProgress"] = "{0} de {1} ejercicios en este paso",
+            ["StartHere_Button"] = "Ir al ejercicio",
             ["Reminder_Heading"] = "Recordatorio",
             ["Reminder_DueMessage"] = "La sesión de hoy está pendiente — con unos minutos basta.",
             ["Reminder_StreakNote"] = "Mantén tu racha de {0} días.",
@@ -330,6 +386,14 @@ internal static class ScaffoldTranslations
         },
         ["pt"] = new()
         {
+            ["StartHere_Heading"] = "Comece aqui",
+            ["StartHere_StageFormat"] = "Etapa {0} de {1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "Fundamentos",
+            ["StartHere_Stage_Resonance"] = "Ressonância",
+            ["StartHere_Stage_Integration"] = "Integração",
+            ["StartHere_NextLabel"] = "Próximo exercício",
+            ["StartHere_StageProgress"] = "{0} de {1} exercícios nesta etapa",
+            ["StartHere_Button"] = "Ir para o exercício",
             ["Reminder_Heading"] = "Lembrete",
             ["Reminder_DueMessage"] = "A sessão de hoje ainda falta — poucos minutos bastam.",
             ["Reminder_StreakNote"] = "Mantenha sua sequência de {0} dias.",
@@ -370,6 +434,14 @@ internal static class ScaffoldTranslations
         },
         ["it"] = new()
         {
+            ["StartHere_Heading"] = "Inizia qui",
+            ["StartHere_StageFormat"] = "Passo {0} di {1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "Fondamenti",
+            ["StartHere_Stage_Resonance"] = "Risonanza",
+            ["StartHere_Stage_Integration"] = "Integrazione",
+            ["StartHere_NextLabel"] = "Prossimo esercizio",
+            ["StartHere_StageProgress"] = "{0} di {1} esercizi in questo passo",
+            ["StartHere_Button"] = "Vai all'esercizio",
             ["Reminder_Heading"] = "Promemoria",
             ["Reminder_DueMessage"] = "La sessione di oggi è ancora da fare — bastano pochi minuti.",
             ["Reminder_StreakNote"] = "Mantieni la tua serie di {0} giorni.",
@@ -410,6 +482,14 @@ internal static class ScaffoldTranslations
         },
         ["nl"] = new()
         {
+            ["StartHere_Heading"] = "Begin hier",
+            ["StartHere_StageFormat"] = "Stap {0} van {1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "Basis",
+            ["StartHere_Stage_Resonance"] = "Resonantie",
+            ["StartHere_Stage_Integration"] = "Integratie",
+            ["StartHere_NextLabel"] = "Volgende oefening",
+            ["StartHere_StageProgress"] = "{0} van {1} oefeningen in deze stap",
+            ["StartHere_Button"] = "Ga naar de oefening",
             ["Reminder_Heading"] = "Herinnering",
             ["Reminder_DueMessage"] = "De sessie van vandaag moet nog — een paar minuten is genoeg.",
             ["Reminder_StreakNote"] = "Houd je reeks van {0} dagen vast.",
@@ -450,6 +530,14 @@ internal static class ScaffoldTranslations
         },
         ["pl"] = new()
         {
+            ["StartHere_Heading"] = "Zacznij tutaj",
+            ["StartHere_StageFormat"] = "Krok {0} z {1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "Podstawy",
+            ["StartHere_Stage_Resonance"] = "Rezonans",
+            ["StartHere_Stage_Integration"] = "Integracja",
+            ["StartHere_NextLabel"] = "Następne ćwiczenie",
+            ["StartHere_StageProgress"] = "{0} z {1} ćwiczeń w tym kroku",
+            ["StartHere_Button"] = "Przejdź do ćwiczenia",
             ["Reminder_Heading"] = "Przypomnienie",
             ["Reminder_DueMessage"] = "Dzisiejsza sesja wciąż czeka — wystarczy kilka minut.",
             ["Reminder_StreakNote"] = "Utrzymaj swoją serię {0} dni.",
@@ -490,6 +578,14 @@ internal static class ScaffoldTranslations
         },
         ["cs"] = new()
         {
+            ["StartHere_Heading"] = "Začni zde",
+            ["StartHere_StageFormat"] = "Krok {0} z {1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "Základy",
+            ["StartHere_Stage_Resonance"] = "Rezonance",
+            ["StartHere_Stage_Integration"] = "Integrace",
+            ["StartHere_NextLabel"] = "Další cvičení",
+            ["StartHere_StageProgress"] = "{0} z {1} cvičení v tomto kroku",
+            ["StartHere_Button"] = "Přejít na cvičení",
             ["Reminder_Heading"] = "Připomenutí",
             ["Reminder_DueMessage"] = "Dnešní lekce ještě čeká — stačí pár minut.",
             ["Reminder_StreakNote"] = "Udrž si sérii {0} dní.",
@@ -530,6 +626,14 @@ internal static class ScaffoldTranslations
         },
         ["hu"] = new()
         {
+            ["StartHere_Heading"] = "Kezdd itt",
+            ["StartHere_StageFormat"] = "{0}. lépés / {1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "Alapok",
+            ["StartHere_Stage_Resonance"] = "Rezonancia",
+            ["StartHere_Stage_Integration"] = "Integráció",
+            ["StartHere_NextLabel"] = "Következő gyakorlat",
+            ["StartHere_StageProgress"] = "{0} / {1} gyakorlat ebben a lépésben",
+            ["StartHere_Button"] = "Ugrás a gyakorlathoz",
             ["Reminder_Heading"] = "Emlékeztető",
             ["Reminder_DueMessage"] = "A mai gyakorlat még hátravan — pár perc is elég.",
             ["Reminder_StreakNote"] = "Tartsd meg a(z) {0} napos sorozatod.",
@@ -570,6 +674,14 @@ internal static class ScaffoldTranslations
         },
         ["ro"] = new()
         {
+            ["StartHere_Heading"] = "Începe aici",
+            ["StartHere_StageFormat"] = "Pasul {0} din {1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "Fundamente",
+            ["StartHere_Stage_Resonance"] = "Rezonanță",
+            ["StartHere_Stage_Integration"] = "Integrare",
+            ["StartHere_NextLabel"] = "Următorul exercițiu",
+            ["StartHere_StageProgress"] = "{0} din {1} exerciții în acest pas",
+            ["StartHere_Button"] = "Mergi la exercițiu",
             ["Reminder_Heading"] = "Memento",
             ["Reminder_DueMessage"] = "Sesiunea de azi mai rămâne — câteva minute sunt de ajuns.",
             ["Reminder_StreakNote"] = "Menține-ți seria de {0} zile.",
@@ -610,6 +722,14 @@ internal static class ScaffoldTranslations
         },
         ["hr"] = new()
         {
+            ["StartHere_Heading"] = "Počni ovdje",
+            ["StartHere_StageFormat"] = "Korak {0} od {1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "Osnove",
+            ["StartHere_Stage_Resonance"] = "Rezonancija",
+            ["StartHere_Stage_Integration"] = "Integracija",
+            ["StartHere_NextLabel"] = "Sljedeća vježba",
+            ["StartHere_StageProgress"] = "{0} od {1} vježbi u ovom koraku",
+            ["StartHere_Button"] = "Idi na vježbu",
             ["Reminder_Heading"] = "Podsjetnik",
             ["Reminder_DueMessage"] = "Današnja vježba još je pred tobom — dovoljno je nekoliko minuta.",
             ["Reminder_StreakNote"] = "Zadrži svoj niz od {0} dana.",
@@ -650,6 +770,14 @@ internal static class ScaffoldTranslations
         },
         ["tr"] = new()
         {
+            ["StartHere_Heading"] = "Buradan başla",
+            ["StartHere_StageFormat"] = "Adım {0} / {1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "Temeller",
+            ["StartHere_Stage_Resonance"] = "Rezonans",
+            ["StartHere_Stage_Integration"] = "Bütünleştirme",
+            ["StartHere_NextLabel"] = "Sonraki alıştırma",
+            ["StartHere_StageProgress"] = "Bu adımda {0} / {1} alıştırma",
+            ["StartHere_Button"] = "Alıştırmaya git",
             ["Reminder_Heading"] = "Hatırlatma",
             ["Reminder_DueMessage"] = "Bugünkü seans hâlâ bekliyor — birkaç dakika yeterli.",
             ["Reminder_StreakNote"] = "{0} günlük serini sürdür.",
@@ -690,6 +818,14 @@ internal static class ScaffoldTranslations
         },
         ["uk"] = new()
         {
+            ["StartHere_Heading"] = "Почни тут",
+            ["StartHere_StageFormat"] = "Крок {0} з {1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "Основи",
+            ["StartHere_Stage_Resonance"] = "Резонанс",
+            ["StartHere_Stage_Integration"] = "Інтеграція",
+            ["StartHere_NextLabel"] = "Наступна вправа",
+            ["StartHere_StageProgress"] = "{0} з {1} вправ на цьому кроці",
+            ["StartHere_Button"] = "Перейти до вправи",
             ["Reminder_Heading"] = "Нагадування",
             ["Reminder_DueMessage"] = "Сьогоднішнє заняття ще попереду — вистачить кількох хвилин.",
             ["Reminder_StreakNote"] = "Збережи свою серію у {0} днів.",
@@ -730,6 +866,14 @@ internal static class ScaffoldTranslations
         },
         ["el"] = new()
         {
+            ["StartHere_Heading"] = "Ξεκίνα εδώ",
+            ["StartHere_StageFormat"] = "Βήμα {0} από {1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "Βασικά",
+            ["StartHere_Stage_Resonance"] = "Αντήχηση",
+            ["StartHere_Stage_Integration"] = "Ενσωμάτωση",
+            ["StartHere_NextLabel"] = "Επόμενη άσκηση",
+            ["StartHere_StageProgress"] = "{0} από {1} ασκήσεις σε αυτό το βήμα",
+            ["StartHere_Button"] = "Μετάβαση στην άσκηση",
             ["Reminder_Heading"] = "Υπενθύμιση",
             ["Reminder_DueMessage"] = "Η σημερινή συνεδρία εκκρεμεί — λίγα λεπτά αρκούν.",
             ["Reminder_StreakNote"] = "Κράτησε το σερί σου των {0} ημερών.",
@@ -770,6 +914,14 @@ internal static class ScaffoldTranslations
         },
         ["ar"] = new()
         {
+            ["StartHere_Heading"] = "ابدأ هنا",
+            ["StartHere_StageFormat"] = "الخطوة {0} من {1} · {2}",
+            ["StartHere_Stage_Fundamentals"] = "الأساسيات",
+            ["StartHere_Stage_Resonance"] = "الرنين",
+            ["StartHere_Stage_Integration"] = "الدمج",
+            ["StartHere_NextLabel"] = "التمرين التالي",
+            ["StartHere_StageProgress"] = "{0} من {1} تمارين في هذه الخطوة",
+            ["StartHere_Button"] = "الانتقال إلى التمرين",
             ["Reminder_Heading"] = "تذكير",
             ["Reminder_DueMessage"] = "جلسة اليوم لا تزال متبقية — بضع دقائق تكفي.",
             ["Reminder_StreakNote"] = "حافظ على سلسلتك المكوّنة من {0} أيام.",

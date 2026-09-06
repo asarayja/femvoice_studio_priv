@@ -179,6 +179,15 @@ public static class ScaffoldStrings
         "Settings_Reminders_Enable",
         "Settings_Reminders_Time",
         "Settings_Reminders_Note",
+        // "Start her" beginner path card (dashboard). Translated across all overlay languages.
+        "StartHere_Heading",
+        "StartHere_StageFormat",
+        "StartHere_Stage_Fundamentals",
+        "StartHere_Stage_Resonance",
+        "StartHere_Stage_Integration",
+        "StartHere_NextLabel",
+        "StartHere_StageProgress",
+        "StartHere_Button",
     };
 
     /// <summary>Keys with a trusted, culture-invariant translation already populated (no native review needed).</summary>

@@ -30,6 +30,25 @@
         </Grid>
       </Border>
 
+      <!-- "Start her" beginner path: a fixed 3-stage curriculum card ("Steg X av 3 · <stage>", next exercise, progress)
+           with a one-tap jump to that exercise. Hidden while recording, when the path is complete, or when progression
+           is safety-locked. Short copy; wraps on phones. -->
+      <Border Classes="card" IsVisible="{Binding ShowStartHere}" BorderBrush="{DynamicResource ShellAccentBrush}">
+        <StackPanel Spacing="6">
+          <TextBlock Text="{Binding StartHereHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellAccentBrush}" FontSize="13"/>
+          <TextBlock Text="{Binding StartHereStage}" FontWeight="SemiBold" FontSize="16" TextWrapping="Wrap"
+                     Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <ProgressBar Minimum="0" Maximum="100" Value="{Binding StartHerePercent}" Height="8"
+                       Foreground="{DynamicResource ShellAccentBrush}"/>
+          <TextBlock Text="{Binding StartHereProgress}" FontSize="12" Foreground="{DynamicResource ShellMutedBrush}" TextWrapping="Wrap"/>
+          <TextBlock Text="{Binding StartHereNextLabel, StringFormat='{}{0}:'}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="13"/>
+          <TextBlock Text="{Binding StartHereNext}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap"
+                     Foreground="{DynamicResource ShellBodyTextBrush}"/>
+          <Button Content="{Binding StartHereButton}" Classes="primary" Command="{Binding StartNextStepCommand}"
+                  HorizontalAlignment="Left"/>
+        </StackPanel>
+      </Border>
+
       <!-- Session controls (full width). Mid-session this collapses to just Stop + a "Tar opp" indicator so the
            reading text + pitch graph below are what you see. -->
       <Border x:Name="SessionCard" Classes="card">

@@ -59,6 +59,10 @@ public partial class ShellViewModel : ObservableObject
         _exercises = exercises;
         _ui = ui;
         _database = database;
+        // Dashboard→exercise navigation for the "Start her" path card (same callback idiom as the guide; the shell
+        // depends on the dashboard, never the reverse, so no DI cycle). Null in headless smokes that build the
+        // dashboard standalone.
+        _dashboard.OpenExerciseRequested = OpenExerciseById;
         // Truthful audio status via the approved capture abstraction (read-only; never starts capture). The injected
         // backend is the real-when-available cross-platform one (ALSA/winmm); fall back to synthetic only when no
         // service is injected (headless/tests).
@@ -320,4 +324,11 @@ public partial class ShellViewModel : ObservableObject
         // smokes stay deterministic). Only the frame SOURCE differs — no clinical change.
         => CurrentPage = new ExerciseRuntimeViewModel(exercise, _ui, ShowGuide, new History.SessionHistoryStore(),
             useRealMic: _audioReadiness.IsRealCaptureAvailable, database: _database);
+
+    /// <summary>Open a catalog exercise by id (used by the dashboard "Start her" card). Unknown ids are ignored.</summary>
+    public void OpenExerciseById(int exerciseId)
+    {
+        var exercise = _exercises.GetAllEnhancedExercises().FirstOrDefault(e => e.Id == exerciseId);
+        if (exercise is not null) OpenExercise(exercise);
+    }
 }
