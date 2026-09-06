@@ -304,6 +304,8 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     [ObservableProperty] private int _perceptionResonanceScore;
     /// <summary>View-styling token for the current band: feminine / androgynous / masculine / none.</summary>
     [ObservableProperty] private string _perceptionBand = "none";
+    /// <summary>Smooths the per-frame estimate and applies band hysteresis so the label is readable while training.</summary>
+    private readonly FemVoiceStudio.Audio.VoicePerceptionStabilizer _perceptionStabilizer = new();
     public string PerceptionHeading => Localized.Get("Dash_Perception_Heading", "Slik leser stemmen din nå");
     public string PerceptionExplainer => Localized.Get("Dash_Perception_Explainer",
         "Et anslag ut fra tonehøyde + resonans — ikke en fasit. Kalibrer mikrofonen for et mer presist anslag.");
@@ -611,9 +613,12 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
             PerceptionTip = "";
             PerceptionBand = "none";
             PerceptionScore = PerceptionPitchScore = PerceptionResonanceScore = 0;
+            _perceptionStabilizer.Reset();   // a new voicing run must not inherit the previous one's average
             return;
         }
-        var p = FemVoiceStudio.Audio.VoicePerceptionEstimator.Estimate(pitch, resonancePct);
+        // Smooth + hysteresis before display: the raw per-frame estimate flips the headline label tens of times per
+        // second for a voice sitting on a band threshold, which reads as an unreliable instrument while training.
+        var p = _perceptionStabilizer.Update(FemVoiceStudio.Audio.VoicePerceptionEstimator.Estimate(pitch, resonancePct));
         PerceptionScore = p.Score;
         PerceptionPitchScore = p.PitchScore;
         PerceptionResonanceScore = p.ResonanceScore;
