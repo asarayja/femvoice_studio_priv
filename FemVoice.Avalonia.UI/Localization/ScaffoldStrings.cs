@@ -188,6 +188,8 @@ public static class ScaffoldStrings
         "StartHere_NextLabel",
         "StartHere_StageProgress",
         "StartHere_Button",
+        // Reports: explicit note when the on-screen history list is capped (the export never is).
+        "Reports_HistoryTruncatedFormat",
     };
 
     /// <summary>Keys with a trusted, culture-invariant translation already populated (no native review needed).</summary>

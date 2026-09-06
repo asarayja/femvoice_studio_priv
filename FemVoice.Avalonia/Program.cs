@@ -473,8 +473,38 @@ internal static class Program
             bool textOk = text.Contains(vm.PreviewTitle) && text.Contains("Økter:")
                           && text.Contains("175") && text.Contains("190");
 
+            // NO SILENT CAP: with more sessions than the old 50-row limit (and than the on-screen display cap), the
+            // summary and the export must cover EVERY session — the report used to describe only the newest 50 while
+            // still printing "Antall økter: 50", and the CSV silently dropped the rest.
+            const int extra = 120;
+            var oldest = DateTime.UtcNow.AddDays(-400);
+            for (int i = 0; i < extra; i++)
+                db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
+                {
+                    UserId = 1,
+                    StartTime = oldest.AddDays(i),
+                    EndTime = oldest.AddDays(i).AddMinutes(5),
+                    AveragePitch = 160 + (i % 20),
+                    OverallScore = 50 + (i % 30),
+                    Feedback = $"bulk-{i}",
+                });
+            int expectedTotal = extra + 2;
+
+            var big = new ReportsViewModel(db);
+            int csvDataRows = big.BuildCsv().Replace("\r\n", "\n").TrimEnd('\n').Split('\n').Length - 1;   // minus header
+            bool exportComplete = big.ExportRows.Count == expectedTotal && csvDataRows == expectedTotal;
+            // Summary must count ALL sessions, and its period must reach back to the oldest one.
+            bool summaryComplete = big.PreviewBody.Contains(expectedTotal.ToString())
+                                   && big.PreviewBody.Contains(oldest.ToLocalTime().ToString("yyyy-MM-dd"));
+            // The screen list is capped on purpose — but it must SAY so, never truncate silently.
+            bool displayCapHonest = big.DisplayRows.Count == ReportsViewModel.MaxDisplayedRows
+                                    && big.IsHistoryTruncated
+                                    && big.HistoryTruncatedNote.Contains(expectedTotal.ToString());
+
             Console.WriteLine($"[rpt-export] emptyNoExport={emptyNoExport} canExport={canExport} csvOk={csvOk} textOk={textOk} rows={vm.ExportRows.Count}");
-            bool ok = emptyNoExport && canExport && csvOk && textOk;
+            Console.WriteLine($"[rpt-export] no-silent-cap: total={expectedTotal} exportRows={big.ExportRows.Count} csvRows={csvDataRows} displayed={big.DisplayRows.Count} exportComplete={exportComplete} summaryComplete={summaryComplete} displayCapHonest={displayCapHonest}");
+            bool ok = emptyNoExport && canExport && csvOk && textOk
+                      && exportComplete && summaryComplete && displayCapHonest;
             Console.WriteLine(ok ? "[rpt-export] Reports export smoke OK" : "[rpt-export] Reports export smoke FAIL");
             return ok ? 0 : 1;
         }

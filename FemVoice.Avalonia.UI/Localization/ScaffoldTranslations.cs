@@ -23,6 +23,7 @@ internal static class ScaffoldTranslations
     {
         ["en"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "Showing the {0} most recent of {1} sessions. The export contains all of them.",
             ["StartHere_Heading"] = "Start here",
             ["StartHere_StageFormat"] = "Step {0} of {1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "Fundamentals",
@@ -98,6 +99,7 @@ internal static class ScaffoldTranslations
         },
         ["sv"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "Visar de {0} senaste av {1} pass. Exporten innehåller alla.",
             ["StartHere_Heading"] = "Börja här",
             ["StartHere_StageFormat"] = "Steg {0} av {1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "Grunder",
@@ -146,6 +148,7 @@ internal static class ScaffoldTranslations
         },
         ["da"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "Viser de {0} nyeste af {1} sessioner. Eksporten indeholder dem alle.",
             ["StartHere_Heading"] = "Start her",
             ["StartHere_StageFormat"] = "Trin {0} af {1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "Grundlag",
@@ -194,6 +197,7 @@ internal static class ScaffoldTranslations
         },
         ["fi"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "Näytetään {0} uusinta {1} harjoituksesta. Vienti sisältää kaikki.",
             ["StartHere_Heading"] = "Aloita tästä",
             ["StartHere_StageFormat"] = "Vaihe {0}/{1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "Perusteet",
@@ -242,6 +246,7 @@ internal static class ScaffoldTranslations
         },
         ["de"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "Zeigt die {0} neuesten von {1} Sitzungen. Der Export enthält alle.",
             ["StartHere_Heading"] = "Hier starten",
             ["StartHere_StageFormat"] = "Schritt {0} von {1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "Grundlagen",
@@ -290,6 +295,7 @@ internal static class ScaffoldTranslations
         },
         ["fr"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "Affiche les {0} séances les plus récentes sur {1}. L'export les contient toutes.",
             ["StartHere_Heading"] = "Commencer ici",
             ["StartHere_StageFormat"] = "Étape {0} sur {1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "Fondamentaux",
@@ -338,6 +344,7 @@ internal static class ScaffoldTranslations
         },
         ["es"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "Mostrando las {0} sesiones más recientes de {1}. La exportación las incluye todas.",
             ["StartHere_Heading"] = "Empieza aquí",
             ["StartHere_StageFormat"] = "Paso {0} de {1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "Fundamentos",
@@ -386,6 +393,7 @@ internal static class ScaffoldTranslations
         },
         ["pt"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "Mostrando as {0} sessões mais recentes de {1}. A exportação inclui todas.",
             ["StartHere_Heading"] = "Comece aqui",
             ["StartHere_StageFormat"] = "Etapa {0} de {1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "Fundamentos",
@@ -434,6 +442,7 @@ internal static class ScaffoldTranslations
         },
         ["it"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "Mostra le {0} sessioni più recenti su {1}. L'esportazione le contiene tutte.",
             ["StartHere_Heading"] = "Inizia qui",
             ["StartHere_StageFormat"] = "Passo {0} di {1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "Fondamenti",
@@ -482,6 +491,7 @@ internal static class ScaffoldTranslations
         },
         ["nl"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "Toont de {0} nieuwste van {1} sessies. De export bevat ze allemaal.",
             ["StartHere_Heading"] = "Begin hier",
             ["StartHere_StageFormat"] = "Stap {0} van {1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "Basis",
@@ -530,6 +540,7 @@ internal static class ScaffoldTranslations
         },
         ["pl"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "Pokazuje {0} najnowszych z {1} sesji. Eksport zawiera wszystkie.",
             ["StartHere_Heading"] = "Zacznij tutaj",
             ["StartHere_StageFormat"] = "Krok {0} z {1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "Podstawy",
@@ -578,6 +589,7 @@ internal static class ScaffoldTranslations
         },
         ["cs"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "Zobrazuje {0} nejnovějších z {1} lekcí. Export obsahuje všechny.",
             ["StartHere_Heading"] = "Začni zde",
             ["StartHere_StageFormat"] = "Krok {0} z {1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "Základy",
@@ -626,6 +638,7 @@ internal static class ScaffoldTranslations
         },
         ["hu"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "A(z) {1} alkalomból a {0} legutóbbi látható. Az exportálás mindet tartalmazza.",
             ["StartHere_Heading"] = "Kezdd itt",
             ["StartHere_StageFormat"] = "{0}. lépés / {1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "Alapok",
@@ -674,6 +687,7 @@ internal static class ScaffoldTranslations
         },
         ["ro"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "Afișează cele mai recente {0} din {1} sesiuni. Exportul le conține pe toate.",
             ["StartHere_Heading"] = "Începe aici",
             ["StartHere_StageFormat"] = "Pasul {0} din {1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "Fundamente",
@@ -722,6 +736,7 @@ internal static class ScaffoldTranslations
         },
         ["hr"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "Prikazuje {0} najnovijih od {1} vježbi. Izvoz sadrži sve.",
             ["StartHere_Heading"] = "Počni ovdje",
             ["StartHere_StageFormat"] = "Korak {0} od {1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "Osnove",
@@ -770,6 +785,7 @@ internal static class ScaffoldTranslations
         },
         ["tr"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "{1} seanstan en yeni {0} tanesi gösteriliyor. Dışa aktarma hepsini içerir.",
             ["StartHere_Heading"] = "Buradan başla",
             ["StartHere_StageFormat"] = "Adım {0} / {1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "Temeller",
@@ -818,6 +834,7 @@ internal static class ScaffoldTranslations
         },
         ["uk"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "Показано {0} найновіших із {1} занять. Експорт містить усі.",
             ["StartHere_Heading"] = "Почни тут",
             ["StartHere_StageFormat"] = "Крок {0} з {1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "Основи",
@@ -866,6 +883,7 @@ internal static class ScaffoldTranslations
         },
         ["el"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "Εμφανίζονται οι {0} πιο πρόσφατες από {1} συνεδρίες. Η εξαγωγή τις περιέχει όλες.",
             ["StartHere_Heading"] = "Ξεκίνα εδώ",
             ["StartHere_StageFormat"] = "Βήμα {0} από {1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "Βασικά",
@@ -914,6 +932,7 @@ internal static class ScaffoldTranslations
         },
         ["ar"] = new()
         {
+            ["Reports_HistoryTruncatedFormat"] = "يتم عرض أحدث {0} من أصل {1} جلسة. التصدير يحتوي عليها جميعاً.",
             ["StartHere_Heading"] = "ابدأ هنا",
             ["StartHere_StageFormat"] = "الخطوة {0} من {1} · {2}",
             ["StartHere_Stage_Fundamentals"] = "الأساسيات",
