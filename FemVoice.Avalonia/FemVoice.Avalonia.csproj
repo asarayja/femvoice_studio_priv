@@ -35,7 +35,7 @@
     <!-- Single source of truth for the app version. InformationalVersion is deliberately NOT set: it used to carry
          "0.1.0-dev (Avalonia desktop preview — display-only)", which went stale against <Version> and was no longer
          true (the port is not display-only). The SDK derives InformationalVersion from <Version>. -->
-    <Version>0.1.6</Version>
+    <Version>0.1.7</Version>
   </PropertyGroup>
 
   <ItemGroup>
