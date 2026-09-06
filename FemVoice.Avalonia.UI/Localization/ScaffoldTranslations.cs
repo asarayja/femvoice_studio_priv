@@ -23,6 +23,8 @@ internal static class ScaffoldTranslations
     {
         ["en"] = new()
         {
+            ["Settings_MergeBackup"] = "Merge selected",
+            ["Settings_MergeNote"] = "Brings the sessions from a backup into this device without deleting anything — use it to carry your progress over from another device.",
             ["Dash_CalibrateHint_Heading"] = "Calibrate your microphone",
             ["Dash_CalibrateHint_Body"] = "The resonance meter gets more accurate once it knows your ordinary voice. Takes under a minute.",
             ["Dash_CalibrateHint_Button"] = "Calibrate now",
@@ -102,6 +104,8 @@ internal static class ScaffoldTranslations
         },
         ["sv"] = new()
         {
+            ["Settings_MergeBackup"] = "Slå ihop vald",
+            ["Settings_MergeNote"] = "Hämtar passen från en säkerhetskopia till den här enheten utan att radera något — använd den för att ta med dig framstegen från en annan enhet.",
             ["Dash_CalibrateHint_Heading"] = "Kalibrera mikrofonen",
             ["Dash_CalibrateHint_Body"] = "Resonansmätaren blir mer exakt när den känner din vanliga röst. Tar under en minut.",
             ["Dash_CalibrateHint_Button"] = "Kalibrera nu",
@@ -154,6 +158,8 @@ internal static class ScaffoldTranslations
         },
         ["da"] = new()
         {
+            ["Settings_MergeBackup"] = "Flet valgte",
+            ["Settings_MergeNote"] = "Henter sessionerne fra en sikkerhedskopi ind på denne enhed uden at slette noget — brug den til at tage fremskridtet med fra en anden enhed.",
             ["Dash_CalibrateHint_Heading"] = "Kalibrer mikrofonen",
             ["Dash_CalibrateHint_Body"] = "Resonansmåleren bliver mere præcis, når den kender din almindelige stemme. Tager under et minut.",
             ["Dash_CalibrateHint_Button"] = "Kalibrer nu",
@@ -206,6 +212,8 @@ internal static class ScaffoldTranslations
         },
         ["fi"] = new()
         {
+            ["Settings_MergeBackup"] = "Yhdistä valittu",
+            ["Settings_MergeNote"] = "Tuo harjoitukset varmuuskopiosta tähän laitteeseen poistamatta mitään — käytä sitä edistymisen siirtämiseen toiselta laitteelta.",
             ["Dash_CalibrateHint_Heading"] = "Kalibroi mikrofoni",
             ["Dash_CalibrateHint_Body"] = "Resonanssimittari tarkentuu, kun se tuntee tavallisen äänesi. Kestää alle minuutin.",
             ["Dash_CalibrateHint_Button"] = "Kalibroi nyt",
@@ -258,6 +266,8 @@ internal static class ScaffoldTranslations
         },
         ["de"] = new()
         {
+            ["Settings_MergeBackup"] = "Ausgewählte zusammenführen",
+            ["Settings_MergeNote"] = "Holt die Sitzungen aus einer Sicherung auf dieses Gerät, ohne etwas zu löschen — so nimmst du deinen Fortschritt von einem anderen Gerät mit.",
             ["Dash_CalibrateHint_Heading"] = "Mikrofon kalibrieren",
             ["Dash_CalibrateHint_Body"] = "Die Resonanzanzeige wird genauer, wenn sie deine gewöhnliche Stimme kennt. Dauert unter einer Minute.",
             ["Dash_CalibrateHint_Button"] = "Jetzt kalibrieren",
@@ -310,6 +320,8 @@ internal static class ScaffoldTranslations
         },
         ["fr"] = new()
         {
+            ["Settings_MergeBackup"] = "Fusionner la sélection",
+            ["Settings_MergeNote"] = "Récupère les séances d'une sauvegarde sur cet appareil sans rien supprimer — pour reprendre votre progression depuis un autre appareil.",
             ["Dash_CalibrateHint_Heading"] = "Calibrez votre micro",
             ["Dash_CalibrateHint_Body"] = "Le mesureur de résonance gagne en précision une fois qu'il connaît votre voix ordinaire. Moins d'une minute.",
             ["Dash_CalibrateHint_Button"] = "Calibrer maintenant",
@@ -362,6 +374,8 @@ internal static class ScaffoldTranslations
         },
         ["es"] = new()
         {
+            ["Settings_MergeBackup"] = "Combinar seleccionada",
+            ["Settings_MergeNote"] = "Trae las sesiones de una copia de seguridad a este dispositivo sin borrar nada — úsalo para traer tu progreso desde otro dispositivo.",
             ["Dash_CalibrateHint_Heading"] = "Calibra tu micrófono",
             ["Dash_CalibrateHint_Body"] = "El medidor de resonancia gana precisión cuando conoce tu voz habitual. Menos de un minuto.",
             ["Dash_CalibrateHint_Button"] = "Calibrar ahora",
@@ -414,6 +428,8 @@ internal static class ScaffoldTranslations
         },
         ["pt"] = new()
         {
+            ["Settings_MergeBackup"] = "Mesclar selecionada",
+            ["Settings_MergeNote"] = "Traz as sessões de um backup para este dispositivo sem apagar nada — use para levar seu progresso de outro dispositivo.",
             ["Dash_CalibrateHint_Heading"] = "Calibre o microfone",
             ["Dash_CalibrateHint_Body"] = "O medidor de ressonância fica mais preciso quando conhece sua voz habitual. Leva menos de um minuto.",
             ["Dash_CalibrateHint_Button"] = "Calibrar agora",
@@ -466,6 +482,8 @@ internal static class ScaffoldTranslations
         },
         ["it"] = new()
         {
+            ["Settings_MergeBackup"] = "Unisci selezionato",
+            ["Settings_MergeNote"] = "Porta le sessioni da un backup su questo dispositivo senza cancellare nulla — usalo per riprendere i progressi da un altro dispositivo.",
             ["Dash_CalibrateHint_Heading"] = "Calibra il microfono",
             ["Dash_CalibrateHint_Body"] = "Il misuratore di risonanza diventa più preciso quando conosce la tua voce abituale. Meno di un minuto.",
             ["Dash_CalibrateHint_Button"] = "Calibra ora",
@@ -518,6 +536,8 @@ internal static class ScaffoldTranslations
         },
         ["nl"] = new()
         {
+            ["Settings_MergeBackup"] = "Geselecteerde samenvoegen",
+            ["Settings_MergeNote"] = "Haalt de sessies uit een back-up naar dit apparaat zonder iets te verwijderen — zo neem je je voortgang mee van een ander apparaat.",
             ["Dash_CalibrateHint_Heading"] = "Kalibreer je microfoon",
             ["Dash_CalibrateHint_Body"] = "De resonantiemeter wordt nauwkeuriger zodra hij je gewone stem kent. Duurt minder dan een minuut.",
             ["Dash_CalibrateHint_Button"] = "Nu kalibreren",
@@ -570,6 +590,8 @@ internal static class ScaffoldTranslations
         },
         ["pl"] = new()
         {
+            ["Settings_MergeBackup"] = "Scal wybraną",
+            ["Settings_MergeNote"] = "Przenosi sesje z kopii zapasowej na to urządzenie, niczego nie usuwając — użyj, aby zabrać postępy z innego urządzenia.",
             ["Dash_CalibrateHint_Heading"] = "Skalibruj mikrofon",
             ["Dash_CalibrateHint_Body"] = "Miernik rezonansu jest dokładniejszy, gdy zna Twój zwykły głos. Zajmuje mniej niż minutę.",
             ["Dash_CalibrateHint_Button"] = "Kalibruj teraz",
@@ -622,6 +644,8 @@ internal static class ScaffoldTranslations
         },
         ["cs"] = new()
         {
+            ["Settings_MergeBackup"] = "Sloučit vybranou",
+            ["Settings_MergeNote"] = "Přenese lekce ze zálohy do tohoto zařízení, aniž by cokoli smazal — použij k převzetí pokroku z jiného zařízení.",
             ["Dash_CalibrateHint_Heading"] = "Zkalibruj mikrofon",
             ["Dash_CalibrateHint_Body"] = "Měřič rezonance je přesnější, když zná tvůj běžný hlas. Trvá to necelou minutu.",
             ["Dash_CalibrateHint_Button"] = "Kalibrovat nyní",
@@ -674,6 +698,8 @@ internal static class ScaffoldTranslations
         },
         ["hu"] = new()
         {
+            ["Settings_MergeBackup"] = "Kijelölt egyesítése",
+            ["Settings_MergeNote"] = "Áthozza az alkalmakat egy biztonsági mentésből erre az eszközre, törlés nélkül — így viheted át a haladásod egy másik eszközről.",
             ["Dash_CalibrateHint_Heading"] = "Kalibráld a mikrofont",
             ["Dash_CalibrateHint_Body"] = "A rezonanciamérő pontosabb lesz, ha ismeri a szokásos hangodat. Kevesebb mint egy perc.",
             ["Dash_CalibrateHint_Button"] = "Kalibrálás most",
@@ -726,6 +752,8 @@ internal static class ScaffoldTranslations
         },
         ["ro"] = new()
         {
+            ["Settings_MergeBackup"] = "Îmbină selecția",
+            ["Settings_MergeNote"] = "Aduce sesiunile dintr-o copie de rezervă pe acest dispozitiv fără a șterge nimic — folosește-l ca să-ți aduci progresul de pe alt dispozitiv.",
             ["Dash_CalibrateHint_Heading"] = "Calibrează microfonul",
             ["Dash_CalibrateHint_Body"] = "Indicatorul de rezonanță devine mai precis când îți cunoaște vocea obișnuită. Durează sub un minut.",
             ["Dash_CalibrateHint_Button"] = "Calibrează acum",
@@ -778,6 +806,8 @@ internal static class ScaffoldTranslations
         },
         ["hr"] = new()
         {
+            ["Settings_MergeBackup"] = "Spoji odabrano",
+            ["Settings_MergeNote"] = "Donosi vježbe iz sigurnosne kopije na ovaj uređaj bez brisanja ičega — koristi za prijenos napretka s drugog uređaja.",
             ["Dash_CalibrateHint_Heading"] = "Kalibriraj mikrofon",
             ["Dash_CalibrateHint_Body"] = "Mjerač rezonancije postaje precizniji kad zna tvoj uobičajeni glas. Traje manje od minute.",
             ["Dash_CalibrateHint_Button"] = "Kalibriraj sada",
@@ -830,6 +860,8 @@ internal static class ScaffoldTranslations
         },
         ["tr"] = new()
         {
+            ["Settings_MergeBackup"] = "Seçileni birleştir",
+            ["Settings_MergeNote"] = "Bir yedekteki seansları hiçbir şey silmeden bu cihaza getirir — ilerlemeni başka bir cihazdan taşımak için kullan.",
             ["Dash_CalibrateHint_Heading"] = "Mikrofonunu kalibre et",
             ["Dash_CalibrateHint_Body"] = "Rezonans ölçer, her zamanki sesini tanıdığında daha isabetli olur. Bir dakikadan kısa sürer.",
             ["Dash_CalibrateHint_Button"] = "Şimdi kalibre et",
@@ -882,6 +914,8 @@ internal static class ScaffoldTranslations
         },
         ["uk"] = new()
         {
+            ["Settings_MergeBackup"] = "Об'єднати вибране",
+            ["Settings_MergeNote"] = "Переносить заняття з резервної копії на цей пристрій, нічого не видаляючи — щоб забрати прогрес з іншого пристрою.",
             ["Dash_CalibrateHint_Heading"] = "Відкалібруй мікрофон",
             ["Dash_CalibrateHint_Body"] = "Вимірювач резонансу стає точнішим, коли знає твій звичайний голос. Займе менше хвилини.",
             ["Dash_CalibrateHint_Button"] = "Калібрувати зараз",
@@ -934,6 +968,8 @@ internal static class ScaffoldTranslations
         },
         ["el"] = new()
         {
+            ["Settings_MergeBackup"] = "Συγχώνευση επιλεγμένου",
+            ["Settings_MergeNote"] = "Φέρνει τις συνεδρίες από ένα αντίγραφο ασφαλείας σε αυτή τη συσκευή χωρίς να διαγράψει τίποτα — για να μεταφέρεις την πρόοδό σου από άλλη συσκευή.",
             ["Dash_CalibrateHint_Heading"] = "Βαθμονόμησε το μικρόφωνο",
             ["Dash_CalibrateHint_Body"] = "Ο μετρητής αντήχησης γίνεται πιο ακριβής όταν γνωρίζει τη συνηθισμένη σου φωνή. Λιγότερο από ένα λεπτό.",
             ["Dash_CalibrateHint_Button"] = "Βαθμονόμηση τώρα",
@@ -986,6 +1022,8 @@ internal static class ScaffoldTranslations
         },
         ["ar"] = new()
         {
+            ["Settings_MergeBackup"] = "دمج المحدد",
+            ["Settings_MergeNote"] = "ينقل الجلسات من نسخة احتياطية إلى هذا الجهاز دون حذف أي شيء — استخدمه لنقل تقدّمك من جهاز آخر.",
             ["Dash_CalibrateHint_Heading"] = "عاير الميكروفون",
             ["Dash_CalibrateHint_Body"] = "يصبح مقياس الرنين أدق عندما يعرف صوتك المعتاد. يستغرق أقل من دقيقة.",
             ["Dash_CalibrateHint_Button"] = "عاير الآن",

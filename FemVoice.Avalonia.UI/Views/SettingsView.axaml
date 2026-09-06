@@ -109,9 +109,12 @@
           </WrapPanel>
 
           <WrapPanel>
+            <Button Classes="secondary" Content="{Binding MergeLabel}" Command="{Binding MergeSelectedCommand}" IsVisible="{Binding HasBackups}" Margin="0,0,8,8"/>
             <Button Classes="secondary" Content="{Binding RestoreLabel}" Command="{Binding RestoreCommand}" IsVisible="{Binding HasBackups}" Margin="0,0,8,8"/>
             <Button Classes="secondary" Content="{Binding ClearLabel}" Command="{Binding ClearCommand}" Margin="0,0,8,8"/>
           </WrapPanel>
+          <TextBlock Text="{Binding MergeNote}" TextWrapping="Wrap" IsVisible="{Binding HasBackups}"
+                     Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
 
           <!-- Inline confirmation for the destructive actions -->
           <Border BorderBrush="{DynamicResource ShellWarningBrush}" BorderThickness="1" CornerRadius="6" Padding="10"

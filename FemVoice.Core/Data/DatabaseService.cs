@@ -1242,6 +1242,104 @@ namespace FemVoiceStudio.Data
         /// <summary>
         /// Henter treningsøkter for en gitt periode
         /// </summary>
+        /// <summary>
+        /// Merge the training sessions from ANOTHER FemVoice database file into this one, and return how many were
+        /// added. Sessions are immutable events, so merging is a UNION: a row is imported only when no session with the
+        /// same StartTime already exists here. Nothing is ever overwritten or deleted.
+        ///
+        /// This is what makes a backup portable BETWEEN DEVICES. Restore replaces the whole file, which is right for
+        /// "put my database back" but destroys the other device's sessions — train on the phone Monday and the PC
+        /// Tuesday, and a restore in either direction loses a day. Merging keeps both, so streak, totals, per-exercise
+        /// progress and the calendar are the union of everywhere the user trained.
+        ///
+        /// Robust to schema drift between app versions: the column list is intersected with what the source file
+        /// actually has (PRAGMA table_info), so a backup written by an older build still imports.
+        /// Returns 0 for a missing/unreadable file or one with no TrainingSessions table. Never throws.
+        /// </summary>
+        public virtual int MergeSessionsFrom(string otherDatabasePath)
+        {
+            if (string.IsNullOrWhiteSpace(otherDatabasePath) || !File.Exists(otherDatabasePath)) return 0;
+
+            // Every column worth carrying across. StartTime is required (it is the identity of a session).
+            string[] wanted =
+            {
+                "StartTime", "EndTime", "ExerciseTextId", "AveragePitch", "MinPitch", "MaxPitch",
+                "PitchVariation", "IntonationScore", "OverallScore", "Feedback", "DifficultyLevel",
+                "ResonanceScore", "AverageF1", "AverageF2", "AverageF3", "ResonanceCategory",
+                "SpectralCentroid", "IsRecoveryPractice",
+            };
+
+            try
+            {
+                using var source = new SqliteConnection($"Data Source={otherDatabasePath};Mode=ReadOnly");
+                source.Open();
+
+                var available = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                using (var pragma = source.CreateCommand())
+                {
+                    pragma.CommandText = "PRAGMA table_info(TrainingSessions)";
+                    using var info = pragma.ExecuteReader();
+                    while (info.Read()) available.Add(info.GetString(1));
+                }
+                if (!available.Contains("StartTime")) return 0;   // not a FemVoice database
+
+                var columns = new List<string>();
+                foreach (var c in wanted) if (available.Contains(c)) columns.Add(c);
+                string columnList = string.Join(", ", columns);
+
+                // What we already have. StartTime is stored as an ISO-8601 round-trip string, so comparing the stored
+                // text is exact — no timezone or precision ambiguity.
+                var existing = new HashSet<string>(StringComparer.Ordinal);
+                using (var mine = new SqliteConnection(_connectionString))
+                {
+                    mine.Open();
+                    using var read = mine.CreateCommand();
+                    read.CommandText = "SELECT StartTime FROM TrainingSessions";
+                    using var r = read.ExecuteReader();
+                    while (r.Read()) if (!r.IsDBNull(0)) existing.Add(r.GetString(0));
+                }
+
+                // Pull the source rows first, so the write connection is not held open across a long read.
+                var incoming = new List<object?[]>();
+                using (var read = source.CreateCommand())
+                {
+                    read.CommandText = $"SELECT {columnList} FROM TrainingSessions";
+                    using var r = read.ExecuteReader();
+                    int startIndex = columns.IndexOf("StartTime");
+                    while (r.Read())
+                    {
+                        if (r.IsDBNull(startIndex)) continue;
+                        if (existing.Contains(r.GetString(startIndex))) continue;   // already have this session
+                        var row = new object?[columns.Count];
+                        for (int i = 0; i < columns.Count; i++) row[i] = r.IsDBNull(i) ? null : r.GetValue(i);
+                        incoming.Add(row);
+                    }
+                }
+                if (incoming.Count == 0) return 0;
+
+                using var target = new SqliteConnection(_connectionString);
+                target.Open();
+                using var tx = target.BeginTransaction();
+                string parameters = string.Join(", ", columns.ConvertAll(c => "@" + c));
+                foreach (var row in incoming)
+                {
+                    using var insert = target.CreateCommand();
+                    insert.Transaction = tx;
+                    insert.CommandText = $"INSERT INTO TrainingSessions ({columnList}) VALUES ({parameters})";
+                    for (int i = 0; i < columns.Count; i++)
+                        insert.Parameters.AddWithValue("@" + columns[i], row[i] ?? DBNull.Value);
+                    insert.ExecuteNonQuery();
+                }
+                tx.Commit();
+                return incoming.Count;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"MergeSessionsFrom failed: {ex.Message}");
+                return 0;
+            }
+        }
+
         public virtual List<Models.TrainingSession> GetTrainingSessions(DateTime from, DateTime to)
         {
             var sessions = new List<Models.TrainingSession>();

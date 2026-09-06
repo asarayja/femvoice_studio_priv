@@ -194,6 +194,9 @@ public static class ScaffoldStrings
         "Dash_CalibrateHint_Heading",
         "Dash_CalibrateHint_Body",
         "Dash_CalibrateHint_Button",
+        // Non-destructive merge of a backup (carry progress between devices).
+        "Settings_MergeBackup",
+        "Settings_MergeNote",
     };
 
     /// <summary>Keys with a trusted, culture-invariant translation already populated (no native review needed).</summary>

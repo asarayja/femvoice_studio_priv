@@ -99,6 +99,28 @@ public sealed class SettingsDataService
         catch (Exception ex) { return new DataOpResult(false, string.Format(L.Get("SettingsData_RestoreFailedFormat", "Gjenoppretting feilet: {0}"), ex.Message)); }
     }
 
+    /// <summary>
+    /// MERGE the sessions from a backup into the current database (non-destructive union) — the way to carry progress
+    /// BETWEEN DEVICES. Unlike <see cref="Restore"/>, which replaces the whole file and would discard whatever the
+    /// other device recorded, this only ADDS sessions that are not already present. Never throws.
+    /// </summary>
+    public DataOpResult Merge(string backupPath)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(backupPath) || !File.Exists(backupPath))
+                return new DataOpResult(false, L.Get("SettingsData_BackupNotFound", "Fant ikke sikkerhetskopien."));
+            if (_database is not FemVoiceStudio.Data.DatabaseService concrete)
+                return new DataOpResult(false, L.Get("SettingsData_MergeUnavailable", "Sammenslåing krever en aktiv database."));
+
+            int added = concrete.MergeSessionsFrom(backupPath);
+            return new DataOpResult(true, added > 0
+                ? string.Format(L.Get("SettingsData_MergedFormat", "La til {0} nye økter. Ingenting ble overskrevet."), added)
+                : L.Get("SettingsData_MergedNothing", "Ingen nye økter å legge til — alt fantes allerede."));
+        }
+        catch (Exception ex) { return new DataOpResult(false, string.Format(L.Get("SettingsData_MergeFailedFormat", "Sammenslåing feilet: {0}"), ex.Message)); }
+    }
+
     /// <summary>Empty the database (destructive — caller confirms). Uses the concrete service's ResetDatabase when
     /// available (recreates the empty schema live), else deletes the file. Never throws.</summary>
     public DataOpResult Clear()

@@ -312,6 +312,20 @@ public partial class UiPreferencesViewModel : ObservableObject
         if (r.Ok) RefreshBackups();
     }
 
+    /// <summary>Merge the selected backup's sessions into the current database. Non-destructive (a pure union), so
+    /// unlike Restore it needs no confirmation — it is the "bring my progress over from the other device" action.</summary>
+    [RelayCommand]
+    private void MergeSelected()
+    {
+        if (SelectedBackup is null) { DataStatus = NoBackupsLabel; return; }
+        ConfirmRestore = false; ConfirmClear = false;
+        DataStatus = _data.Merge(SelectedBackup.FilePath).Message;
+    }
+
+    public string MergeLabel => Localized.Get("Settings_MergeBackup", "Slå sammen valgt");
+    public string MergeNote => Localized.Get("Settings_MergeNote",
+        "Henter øktene fra en sikkerhetskopi inn i denne enheten uten å slette noe — bruk den for å ta med progresjonen fra en annen enhet.");
+
     [RelayCommand] private void Restore() { if (SelectedBackup is not null) { ConfirmClear = false; ConfirmRestore = true; } }
     [RelayCommand] private void Clear() { ConfirmRestore = false; ConfirmClear = true; }
     [RelayCommand] private void CancelConfirm() { ConfirmRestore = false; ConfirmClear = false; }
