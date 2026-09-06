@@ -148,6 +148,24 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _comfortZoneStatus = "—";
     [ObservableProperty] private bool _inComfortZone;
 
+    // ── Perceived-voice mirror ────────────────────────────────────────────────────────────────────────────────────
+    // The question a trainee actually asks — "does my voice read feminine yet, and if not what do I fix?" — answered
+    // honestly from the two strongest cues (pitch + calibrated resonance) via the pure Core VoicePerceptionEstimator.
+    // Both ingredient scores are surfaced (not a black box), plus the single highest-leverage next step.
+    [ObservableProperty] private bool _hasPerception;
+    [ObservableProperty] private string _perceptionLabel = "—";
+    [ObservableProperty] private string _perceptionTip = "";
+    [ObservableProperty] private int _perceptionScore;
+    [ObservableProperty] private int _perceptionPitchScore;
+    [ObservableProperty] private int _perceptionResonanceScore;
+    /// <summary>View-styling token for the current band: feminine / androgynous / masculine / none.</summary>
+    [ObservableProperty] private string _perceptionBand = "none";
+    public string PerceptionHeading => Localized.Get("Dash_Perception_Heading", "Slik leser stemmen din nå");
+    public string PerceptionExplainer => Localized.Get("Dash_Perception_Explainer",
+        "Et anslag ut fra tonehøyde + resonans — ikke en fasit. Kalibrer mikrofonen for et mer presist anslag.");
+    public string PerceptionPitchLabel => Localized.Get("Dash_Perception_PitchLabel", "Tonehøyde");
+    public string PerceptionResonanceLabel => Localized.Get("Dash_ResonanceLabel", "Resonans");
+
     // Localized section headings (shared RESX keys WPF uses) so the dashboard text matches WPF and relocalizes.
     public string ComfortZoneLabel => Localized.Get("Main_ComfortZone", "Komfortsone");
     public string FeedbackHeading => Localized.Get("Main_Feedback", "Tilbakemelding");
@@ -276,6 +294,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         CurrentSignalStatus = Localized.Get("Signal_NoVoice", "Ingen stemme");
         CurrentFeedbackMessage = Localized.Get("Dash_SessionStopped", "Økt stoppet.");
         ResonanceDisplay = "—";
+        UpdatePerception(false, 0, 0);   // clear the perceived-voice mirror when the session ends
 
         // Record the session. Skip trivial (<2 s) sessions.
         int durationSeconds = (int)System.Math.Round((System.DateTime.Now - _sessionStart).TotalSeconds);
@@ -390,6 +409,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
             CurrentFeedbackMessage = DeriveFeedback(result.IsVoiced, stability, health, stabilized);
 
             bool voiced = result.IsVoiced && stabilized > 0;
+            UpdatePerception(voiced, stabilized, resonancePct);   // perceived-voice mirror (pitch + resonance → band + tip)
             // Display-only chart snapshot (axis + comfort band fixed; marker follows current pitch). No data change.
             DashboardChart = RuntimeChartDisplay.From(
                 ChartHeightPx, _chartMin, _chartMax, ComfortZoneLow, ComfortZoneHigh,
@@ -426,6 +446,49 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         PitchTracePx.Clear();
         DashboardChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, ComfortZoneLow, ComfortZoneHigh);
     }
+
+    // Compute the perceived-voice mirror from the current voiced frame (pure Core estimator), or clear it when there
+    // is no voice. Runs on the UI thread (called inside the _ui.Post block / from Stop).
+    private void UpdatePerception(bool voiced, double pitch, int resonancePct)
+    {
+        if (!voiced || pitch <= 0)
+        {
+            HasPerception = false;
+            PerceptionLabel = "—";
+            PerceptionTip = "";
+            PerceptionBand = "none";
+            PerceptionScore = PerceptionPitchScore = PerceptionResonanceScore = 0;
+            return;
+        }
+        var p = FemVoiceStudio.Audio.VoicePerceptionEstimator.Estimate(pitch, resonancePct);
+        PerceptionScore = p.Score;
+        PerceptionPitchScore = p.PitchScore;
+        PerceptionResonanceScore = p.ResonanceScore;
+        PerceptionLabel = PerceptionBandText(p.Band);
+        PerceptionBand = p.Band switch
+        {
+            VoicePerceptionBand.Feminine => "feminine",
+            VoicePerceptionBand.Androgynous => "androgynous",
+            _ => "masculine",
+        };
+        PerceptionTip = PerceptionHintText(p.Hint);
+        HasPerception = true;
+    }
+
+    private static string PerceptionBandText(VoicePerceptionBand band) => band switch
+    {
+        VoicePerceptionBand.Feminine => Localized.Get("Perception_Feminine", "Feminin"),
+        VoicePerceptionBand.Androgynous => Localized.Get("Perception_Androgynous", "Androgyn"),
+        _ => Localized.Get("Perception_Masculine", "Maskulin"),
+    };
+
+    private static string PerceptionHintText(VoicePerceptionHint hint) => hint switch
+    {
+        VoicePerceptionHint.RaisePitch => Localized.Get("Perception_TipRaisePitch", "Løft tonehøyden litt for et lysere inntrykk."),
+        VoicePerceptionHint.BrightenResonance => Localized.Get("Perception_TipBrighten", "Gjør resonansen lysere og mer fremover i munnen."),
+        VoicePerceptionHint.HoldSteady => Localized.Get("Perception_TipHold", "Fint — hold denne klangen jevnt."),
+        _ => "",
+    };
 
     // Qualitative label + value for the live resonance readout (0–100). Mirrors WPF's bright/neutral/dark buckets.
     private static string ResonanceText(int pct) => pct switch

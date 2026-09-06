@@ -110,6 +110,38 @@
         </Grid>
       </Border>
 
+      <!-- Perceived-voice mirror: the headline "how does my voice read right now?" answer (masculine/androgynous/
+           feminine) from pitch + resonance, with the two ingredient scores shown (honest, not a black box) and the
+           single most useful next step. Visible while recording; values update live. -->
+      <Border Classes="card" IsVisible="{Binding IsRecording}" BorderBrush="{DynamicResource ShellAccentBrush}">
+        <StackPanel Spacing="8">
+          <TextBlock Text="{Binding PerceptionHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+          <!-- Big band reading -->
+          <TextBlock Text="{Binding PerceptionLabel}" FontSize="26" FontWeight="Bold" TextWrapping="Wrap"
+                     Foreground="{DynamicResource ShellAccentBrush}"/>
+          <!-- Combined 0–100 reading -->
+          <ProgressBar Minimum="0" Maximum="100" Value="{Binding PerceptionScore}" Height="12"
+                       Foreground="{DynamicResource ShellAccentBrush}"/>
+          <!-- The two ingredients (transparency) -->
+          <Grid ColumnDefinitions="*,*" IsVisible="{Binding HasPerception}">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="{Binding PerceptionPitchLabel}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Text="{Binding PerceptionPitchScore}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12" FontWeight="SemiBold"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="{Binding PerceptionResonanceLabel}" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Text="{Binding PerceptionResonanceScore}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12" FontWeight="SemiBold"/>
+            </StackPanel>
+          </Grid>
+          <!-- Highest-leverage next step -->
+          <TextBlock Text="{Binding PerceptionTip}" TextWrapping="Wrap" FontSize="14"
+                     Foreground="{DynamicResource ShellBodyTextBrush}" IsVisible="{Binding HasPerception}"/>
+          <!-- Honesty note: an estimate, not a verdict -->
+          <TextBlock Text="{Binding PerceptionExplainer}" TextWrapping="Wrap" FontSize="11"
+                     Foreground="{DynamicResource ShellFaintBrush}"/>
+        </StackPanel>
+      </Border>
+
       <!-- Live metrics (Sanntid) — below the graph so text + pitch trace stay the priority. -->
       <Border x:Name="LiveCard" Classes="card">
         <StackPanel Spacing="6">
