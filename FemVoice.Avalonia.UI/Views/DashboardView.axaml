@@ -30,6 +30,22 @@
         </Grid>
       </Border>
 
+      <!-- One-time "calibrate your microphone" hint: shown only while no resonance baseline is stored, so it
+           disappears for good once calibrated. Deliberately about METER ACCURACY — the perceived-voice mirror does not
+           depend on calibration. -->
+      <Border Classes="card" IsVisible="{Binding ShowCalibrationHint}" BorderBrush="{DynamicResource ShellBorderBrush}">
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+            <TextBlock Text="{Binding CalibrationHintHeading}" FontWeight="SemiBold" FontSize="13"
+                       Foreground="{DynamicResource ShellHeadingBrush}"/>
+            <TextBlock Text="{Binding CalibrationHintBody}" TextWrapping="Wrap" FontSize="13"
+                       Foreground="{DynamicResource ShellMutedBrush}"/>
+          </StackPanel>
+          <Button Grid.Column="1" Content="{Binding CalibrationHintButton}" Classes="secondary"
+                  Command="{Binding OpenMicCalibrationCommand}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+        </Grid>
+      </Border>
+
       <!-- "Start her" beginner path: a fixed 3-stage curriculum card ("Steg X av 3 · <stage>", next exercise, progress)
            with a one-tap jump to that exercise. Hidden while recording, when the path is complete, or when progression
            is safety-locked. Short copy; wraps on phones. -->

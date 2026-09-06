@@ -1034,8 +1034,44 @@ internal static class Program
             true, 3, new TimeSpan(18, 0, 0), manyOneDay, new DateTime(2026, 9, 9, 19, 0, 0));
         bool distinctDays = st.SessionsThisWeek == 1 && st.State == global::FemVoiceStudio.Services.ReminderState.Due;
 
-        bool ok = baselineSurvives && progressionAdvances && distinctDays;
-        Console.WriteLine($"[audit-fix] baselineSurvivesSave={baselineSurvives} progressionAdvances={progressionAdvances} distinctDays={distinctDays}");
+        // (4) CALIBRATION HINT: mic calibration was never suggested anywhere, while the resonance/training meter is
+        //     scaled to the user's own voice. The dashboard now hints exactly while no baseline is stored — and the
+        //     hint must disappear once one is, otherwise it nags forever. Snapshots/restores the REAL prefs.
+        var hintStore = new global::FemVoice.Avalonia.Preferences.UiPreferencesStore();
+        var hintPrefs = hintStore.Load();
+        double hintPrevBaseline = hintPrefs.ResonanceBaselineCentroidHz;
+        bool hintOk;
+        try
+        {
+            bool HintShownWithBaseline(double baseline)
+            {
+                hintPrefs.ResonanceBaselineCentroidHz = baseline;
+                hintStore.Save(hintPrefs);
+                var svc = new VoiceFeminizationExerciseService();
+                var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+                var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());   // wires the nav callback
+                bool shown = dash.ShowCalibrationHint;
+                dash.Dispose();
+                return shown;
+            }
+            bool shownUncalibrated = HintShownWithBaseline(0);      // no baseline → hint
+            bool hiddenCalibrated = !HintShownWithBaseline(900.0);  // baseline stored → gone
+            // Without a shell there is no way to open the wizard, so the hint must not appear at all.
+            hintPrefs.ResonanceBaselineCentroidHz = 0; hintStore.Save(hintPrefs);
+            using var lone = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+            bool hiddenWithoutShell = !lone.ShowCalibrationHint;
+            hintOk = shownUncalibrated && hiddenCalibrated && hiddenWithoutShell;
+            Console.WriteLine($"[audit-fix] calibration hint: uncalibrated={shownUncalibrated} calibrated-hidden={hiddenCalibrated} no-shell-hidden={hiddenWithoutShell}");
+        }
+        finally
+        {
+            var cur = hintStore.Load();
+            cur.ResonanceBaselineCentroidHz = hintPrevBaseline;
+            hintStore.Save(cur);
+        }
+
+        bool ok = baselineSurvives && progressionAdvances && distinctDays && hintOk;
+        Console.WriteLine($"[audit-fix] baselineSurvivesSave={baselineSurvives} progressionAdvances={progressionAdvances} distinctDays={distinctDays} calibrationHint={hintOk}");
         Console.WriteLine(ok ? "[audit-fix] Audit-fixes smoke OK" : "[audit-fix] Audit-fixes smoke FAIL");
         return ok ? 0 : 1;
     }
