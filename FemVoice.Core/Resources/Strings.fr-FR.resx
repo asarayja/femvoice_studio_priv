@@ -220,34 +220,34 @@
     <value>2+ séances</value>
   </data>
   <data name="Calendar_Fri" xml:space="preserve">
-    <value>Ven</value>
+    <value>ven</value>
   </data>
   <data name="Calendar_Mon" xml:space="preserve">
-    <value>Lun</value>
+    <value>lun</value>
   </data>
   <data name="Calendar_NoSessions" xml:space="preserve">
     <value>Aucune séance</value>
   </data>
   <data name="Calendar_Sat" xml:space="preserve">
-    <value>Sam.</value>
+    <value>sam</value>
   </data>
   <data name="Calendar_Sun" xml:space="preserve">
-    <value>Soleil</value>
+    <value>dim</value>
   </data>
   <data name="Calendar_Thu" xml:space="preserve">
-    <value>Jeu</value>
+    <value>jeu</value>
   </data>
   <data name="Calendar_Title" xml:space="preserve">
-    <value>Calendrier de formation</value>
+    <value>Calendrier d'entraînement</value>
   </data>
   <data name="Calendar_Today" xml:space="preserve">
     <value>Today</value>
   </data>
   <data name="Calendar_Tue" xml:space="preserve">
-    <value>Mar</value>
+    <value>mar</value>
   </data>
   <data name="Calendar_Wed" xml:space="preserve">
-    <value>Épouser</value>
+    <value>mer</value>
   </data>
   <data name="Common_Cancel" xml:space="preserve">
     <value>Annuler</value>

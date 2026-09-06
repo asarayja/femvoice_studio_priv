@@ -223,34 +223,34 @@
     <value>2+ sesiones</value>
   </data>
   <data name="Calendar_Fri" xml:space="preserve">
-    <value>Vie</value>
+    <value>vie</value>
   </data>
   <data name="Calendar_Mon" xml:space="preserve">
-    <value>Lun</value>
+    <value>lun</value>
   </data>
   <data name="Calendar_NoSessions" xml:space="preserve">
     <value>Sin sesiones</value>
   </data>
   <data name="Calendar_Sat" xml:space="preserve">
-    <value>Sat</value>
+    <value>sáb</value>
   </data>
   <data name="Calendar_Sun" xml:space="preserve">
-    <value>Sol</value>
+    <value>dom</value>
   </data>
   <data name="Calendar_Thu" xml:space="preserve">
-    <value>Jue</value>
+    <value>jue</value>
   </data>
   <data name="Calendar_Title" xml:space="preserve">
-    <value>Training Calendar</value>
+    <value>Calendario de entrenamiento</value>
   </data>
   <data name="Calendar_Today" xml:space="preserve">
     <value>Today</value>
   </data>
   <data name="Calendar_Tue" xml:space="preserve">
-    <value>Mar</value>
+    <value>mar</value>
   </data>
   <data name="Calendar_Wed" xml:space="preserve">
-    <value>Casarse</value>
+    <value>mié</value>
   </data>
   <data name="Common_Cancel" xml:space="preserve">
     <value>Cancelar</value>
