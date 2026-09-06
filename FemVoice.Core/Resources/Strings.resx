@@ -640,7 +640,7 @@
     <value>Mikrofon ikke klar</value>
   </data>
   <data name="UI_Recording" xml:space="preserve">
-    <value>Recording...</value>
+    <value>Tar opp …</value>
   </data>
   <data name="UI_Ready" xml:space="preserve">
     <value>Klar</value>
@@ -712,7 +712,7 @@
     <value>Intonasjonsscore</value>
   </data>
   <data name="Analyzer_OverallScore" xml:space="preserve">
-    <value>Total score</value>
+    <value>Samlet score</value>
   </data>
   <data name="Analyzer_Feedback" xml:space="preserve">
     <value>Tilbakemelding</value>
@@ -2606,7 +2606,7 @@
     <value>Resonans, pitch, intonasjon og helsetrender</value>
   </data>
   <data name="Analysis_TotalScore" xml:space="preserve">
-    <value>Total score</value>
+    <value>Samlet score</value>
   </data>
   <data name="Analysis_AveragePitch" xml:space="preserve">
     <value>Gj.snittlig pitch</value>
@@ -3518,13 +3518,13 @@
     <value>Vanskelighetsgraden er justert ned på grunn av lav score.</value>
   </data>
   <data name="Progression_MilestonePitch165" xml:space="preserve">
-    <value>Milestone reached! You reached your first pitch step toward a more feminine voice.</value>
+    <value>Milepæl nådd! Du har tatt det første steget mot en lysere stemme.</value>
   </data>
   <data name="Progression_MilestonePitch180" xml:space="preserve">
-    <value>Milestone reached! You are in the recommended pitch area for a feminine voice.</value>
+    <value>Milepæl nådd! Du er i det anbefalte området for en feminin stemme.</value>
   </data>
   <data name="Progression_MilestonePitch200" xml:space="preserve">
-    <value>Strong milestone! You have a solid feminine pitch foundation.</value>
+    <value>Sterk milepæl! Du har et solid feminint tonehøyde-grunnlag.</value>
   </data>
   <data name="Progression_MilestoneStreak7" xml:space="preserve">
     <value>7 dager på rad! Du er i gang med en god vane.</value>
@@ -4975,16 +4975,16 @@ Dette kan ikke angres!</value>
     <value>Quantiles</value>
   </data>
   <data name="Analyzer_SelectTargetFrequency" xml:space="preserve">
-    <value>Select target frequency with notes</value>
+    <value>Velg målfrekvens med noter</value>
   </data>
   <data name="Analyzer_TargetFrequency" xml:space="preserve">
     <value>Target frequency</value>
   </data>
   <data name="Calendar_1Session" xml:space="preserve">
-    <value>1 session</value>
+    <value>1 økt</value>
   </data>
   <data name="Calendar_2PlusSessions" xml:space="preserve">
-    <value>2+ sessions</value>
+    <value>2+ økter</value>
   </data>
   <data name="Calendar_Fri" xml:space="preserve">
     <value>Fre</value>
@@ -4993,7 +4993,7 @@ Dette kan ikke angres!</value>
     <value>Man</value>
   </data>
   <data name="Calendar_NoSessions" xml:space="preserve">
-    <value>No sessions</value>
+    <value>Ingen økter</value>
   </data>
   <data name="Calendar_Sat" xml:space="preserve">
     <value>Lør</value>
@@ -5014,13 +5014,13 @@ Dette kan ikke angres!</value>
     <value>Ons</value>
   </data>
   <data name="Settings_AudioSettings" xml:space="preserve">
-    <value>Audio settings</value>
+    <value>Lydinnstillinger</value>
   </data>
   <data name="Settings_Database" xml:space="preserve">
     <value>Database</value>
   </data>
   <data name="Settings_SelectLanguage" xml:space="preserve">
-    <value>Select language for the app.</value>
+    <value>Velg språk for appen.</value>
   </data>
   <data name="ResonanceContrast_Title" xml:space="preserve">
     <value>Resonanskontrast</value>
