@@ -72,6 +72,11 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         RefreshRecentSessions();
     }
 
+    /// <summary>Re-read history-derived state (recent sessions, progression, reminder, "Start her"). Called by the shell
+    /// when the dashboard becomes the current page, so returning from an exercise — or opening the app the next day —
+    /// does not leave a stale reminder/path card from construction time.</summary>
+    public void RefreshFromHistory() => RefreshRecentSessions();
+
     private void RefreshRecentSessions()
     {
         RecentSessions.Clear();
@@ -97,6 +102,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         HasRecentSessions = RecentSessions.Count > 0;
         RefreshProgression();
         RefreshReminder();
+        RefreshStartHere();
     }
 
     // Recent session start times in LOCAL time (for the reminder scheduler): from the real DB when available, else the
@@ -142,6 +148,87 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     {
         try { return new FemVoice.Avalonia.Preferences.UiPreferencesStore().Load().TrainingFrequency; }
         catch { return 3; }
+    }
+
+    // ── "Start her" beginner path (sequential curriculum card) ────────────────────────────────────────────────────
+    // "What do I practise today, in what order?" — a fixed 3-stage path over the real exercise catalog (pure Core
+    // BeginnerPath), driven by per-exercise completed-session counts from the DB. Complements SmartCoach (adaptive,
+    // daily) rather than duplicating it; steps aside once the path is complete or while progression is safety-locked.
+    /// <summary>Set by the shell: opens a catalog exercise by id (dashboard→exercise). Null in headless/tests.</summary>
+    public Action<int>? OpenExerciseRequested { get; set; }
+    [ObservableProperty] private bool _showStartHere;
+    [ObservableProperty] private string _startHereStage = "";      // "Steg 1 av 3 · Grunnlag"
+    [ObservableProperty] private string _startHereNext = "";       // localized next-exercise name
+    [ObservableProperty] private string _startHereProgress = "";   // "1 av 3 øvelser i dette steget"
+    [ObservableProperty] private int _startHerePercent;
+    private int _startHereNextId;
+    private readonly FemVoiceStudio.Services.VoiceFeminizationExerciseService _catalog = new();
+    public string StartHereHeading => Localized.Get("StartHere_Heading", "Start her");
+    public string StartHereNextLabel => Localized.Get("StartHere_NextLabel", "Neste øvelse");
+    public string StartHereButton => Localized.Get("StartHere_Button", "Gå til øvelsen");
+
+    /// <summary>Open the path's next exercise (no-op when nothing is due or no shell hook is wired).</summary>
+    [RelayCommand]
+    private void StartNextStep() { if (_startHereNextId > 0) OpenExerciseRequested?.Invoke(_startHereNextId); }
+
+    private void RefreshStartHere()
+    {
+        try
+        {
+            var status = FemVoiceStudio.Services.BeginnerPath.Evaluate(CompletedCountsByExerciseId());
+            if (status.IsComplete) { ShowStartHere = false; _startHereNextId = 0; return; }
+            // Never push the next step while the progression safety lock is engaged (frozen safety logic decides).
+            if (_database is not null)
+            {
+                try
+                {
+                    if (new FemVoiceStudio.Services.ProgressionService(_database, LocalizationService.Instance).IsProgressionBlocked())
+                    { ShowStartHere = false; return; }
+                }
+                catch { /* lock state unreadable → fall through and show; the exercise page enforces its own limits */ }
+            }
+            var exercise = _catalog.GetAllEnhancedExercises().FirstOrDefault(e => e.Id == status.NextExerciseId);
+            if (exercise is null) { ShowStartHere = false; return; }
+            _startHereNextId = exercise.Id;
+            // Exercise names are localized under Exercise_{id+100}_Title in the shared resources (catalog seed as fallback).
+            StartHereNext = Localized.Get($"Exercise_{exercise.Id + 100}_Title", exercise.Name);
+            StartHereStage = string.Format(Localized.Get("StartHere_StageFormat", "Steg {0} av {1} · {2}"),
+                status.StageNumber, FemVoiceStudio.Services.BeginnerPath.Stages.Count, StageName(status.StageKey));
+            StartHereProgress = string.Format(Localized.Get("StartHere_StageProgress", "{0} av {1} øvelser i dette steget"),
+                status.StageDone, status.StageTotal);
+            StartHerePercent = status.PercentOverall;
+            ShowStartHere = !IsRecording;
+        }
+        catch { ShowStartHere = false; }
+    }
+
+    private static string StageName(string key) => key switch
+    {
+        "fundamentals" => Localized.Get("StartHere_Stage_Fundamentals", "Grunnlag"),
+        "resonance" => Localized.Get("StartHere_Stage_Resonance", "Resonans"),
+        _ => Localized.Get("StartHere_Stage_Integration", "Integrasjon"),
+    };
+
+    // Per-exercise completed-session counts keyed by catalog id. Prefers the ExerciseTextId column (now written by
+    // the Avalonia exercise runtime, WPF parity); older rows fall back to the "Øvelse: {name}" feedback marker.
+    private Dictionary<int, int> CompletedCountsByExerciseId()
+    {
+        var result = new Dictionary<int, int>();
+        if (_database is null) return result;
+        try
+        {
+            const string marker = "Øvelse: ";
+            var idByName = _catalog.GetAllEnhancedExercises().ToDictionary(e => e.Name, e => e.Id, StringComparer.Ordinal);
+            foreach (var s in _database.GetRecentSessions(2000))
+            {
+                int id = s.ExerciseTextId;
+                if (id <= 0 && s.Feedback is not null && s.Feedback.StartsWith(marker, StringComparison.Ordinal))
+                    idByName.TryGetValue(s.Feedback.Substring(marker.Length), out id);
+                if (id > 0) result[id] = result.TryGetValue(id, out var n) ? n + 1 : 1;
+            }
+        }
+        catch { /* empty counts → path starts at step 1; never crashes the dashboard */ }
+        return result;
     }
 
     // ── Daily training reminder (in-app nudge) ────────────────────────────────────────────────────────────────────
@@ -339,6 +426,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         _sessionStart = System.DateTime.Now;
         IsRecording = true;
         ShowReminder = false;   // a nudge mid-session is pointless; re-evaluated after the session is saved
+        ShowStartHere = false;  // likewise the path card; re-evaluated after the session is saved
         CurrentFeedbackMessage = Localized.Get("Dash_Listening", "Lytter …");
     }
 
@@ -356,6 +444,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
 
         // Record the session. Skip trivial (<2 s) sessions.
         int durationSeconds = (int)System.Math.Round((System.DateTime.Now - _sessionStart).TotalSeconds);
+        if (durationSeconds < 2) { RefreshStartHere(); RefreshReminder(); }   // nothing saved → just re-show the cards
         if (durationSeconds >= 2)
         {
             if (_database is not null)
@@ -402,6 +491,12 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
                     // Per-dimension Voice-Intelligence record (the write the Avalonia head used to skip) so the WPF-parity
                     // per-dimension screens light up with REAL data. Best-effort, never blocks the session save.
                     WriteSessionAnalytics(savedId, session.StartTime, System.DateTime.UtcNow, inZone, avgResonance, pitchVariation);
+
+                    // Advance the real progression (streak, totals, sessions-at-level, promotion) exactly as WPF does.
+                    // Without this the Avalonia head never called it, so level/streak/totals stayed 0 forever on the
+                    // dashboard, Statistics and Progression — and the reminder's streak note could never appear.
+                    // WithSafety suppresses promotion while the safety lock is active. Best-effort; never blocks a save.
+                    EvaluateProgressionSafely(session);
                 }
                 catch { /* never surface a session-save error to the app */ }
             }
@@ -608,6 +703,15 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
             }).GetAwaiter().GetResult();
         }
         catch { /* analytics write is best-effort — never affects the session save */ }
+    }
+
+    /// <summary>Advance the real Core progression for a saved session (WPF parity). Fully guarded — progression is a
+    /// display/level concern and must never break the session save.</summary>
+    private void EvaluateProgressionSafely(FemVoiceStudio.Models.TrainingSession session)
+    {
+        if (_database is null) return;
+        try { new FemVoiceStudio.Services.ProgressionService(_database, LocalizationService.Instance).EvaluateProgressionWithSafety(session); }
+        catch { /* never affects the session save */ }
     }
 
     // Map the Core health/stability enums to 0–100 for the per-dimension VI scores (real state → numeric).

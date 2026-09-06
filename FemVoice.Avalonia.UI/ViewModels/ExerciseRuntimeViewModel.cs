@@ -553,7 +553,11 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         ExerciseCoordinatorReadoutDisplay? readout = null;
         if (_coordinatorEnabled && _coordinator.IsExerciseActive)
         {
-            _coordinator.UpdateMetrics(resonancePct, pitch, CoordStabilityPlaceholder, HealthTo100(health));
+            // The coordinator's resonance contract is 0–1 (compared against ExerciseTargetProfile.TargetResonanceMin/Max,
+            // which are fractions) — the display meter is 0–100. Feeding the percent straight in made primaryMetric
+            // always exceed the target band, so the hold timer never accumulated and the readout was stuck
+            // "outside target" for every resonance-focused exercise. Convert to the fraction the contract expects.
+            _coordinator.UpdateMetrics(resonancePct / 100.0, pitch, CoordStabilityPlaceholder, HealthTo100(health));
             readout = ExerciseCoordinatorReadoutDisplay.From(
                 _coordinator.IsExerciseActive, _coordinator.GetHoldProgress(),
                 _holdTargetSeconds, _latestLiveState, hold);
@@ -668,6 +672,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
                     ResonanceScore = Math.Round(avgResonance, 1),            // real resonance from the Core DSP engine
                     VoiceHealthScore = Math.Round(avgHealth, 1),            // real per-session voice-health average
                     DifficultyLevel = Exercise.Difficulty,
+                    ExerciseTextId = Exercise.Id,   // catalog id (WPF parity) so per-exercise progress can be keyed by id
                     Feedback = $"Øvelse: {SelectedExerciseName}",
                 };
                 // Create-then-enrich two-step (ResonanceScore is only written by UpdateTrainingSession), same as the
@@ -677,6 +682,14 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
                 {
                     session.Id = savedId;
                     _database.UpdateTrainingSession(session);
+                }
+                // Advance the real progression (streak, totals, sessions-at-level, promotion) exactly as WPF does —
+                // most sessions happen here, so without it level/streak stayed 0 across the whole app. WithSafety
+                // suppresses promotion while the safety lock is active. Guarded; never fails the save.
+                if (savedId > 0)
+                {
+                    try { new FemVoiceStudio.Services.ProgressionService(_database, LocalizationService.Instance).EvaluateProgressionWithSafety(session); }
+                    catch { /* progression is display-level; never affects the saved session */ }
                 }
                 return savedId > 0;
             }

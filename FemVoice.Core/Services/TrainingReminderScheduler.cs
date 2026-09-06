@@ -20,6 +20,7 @@ namespace FemVoiceStudio.Services
     /// <summary>The evaluated reminder situation. All counts are for the CURRENT local week (Mon–Sun).</summary>
     public readonly record struct ReminderStatus(
         ReminderState State,
+        // Distinct training DAYS so far this week (not session rows) — the goal is days/week.
         int SessionsThisWeek,
         int WeeklyGoal,
         int RemainingThisWeek,
@@ -54,7 +55,10 @@ namespace FemVoiceStudio.Services
 
             DateTime weekStart = StartOfWeek(nowLocal.Date);            // Monday 00:00 of the current week
             DateTime today = nowLocal.Date;
-            int sessionsThisWeek = sessions.Count(t => t.Date >= weekStart && t.Date <= today);
+            // Count distinct training DAYS, not rows: the weekly goal is "days per week"
+            // (UiPreferences.TrainingFrequency), so several short recordings on one day must not consume the whole week.
+            int sessionsThisWeek = sessions.Where(t => t.Date >= weekStart && t.Date <= today)
+                                           .Select(t => t.Date).Distinct().Count();
             bool trainedToday = sessions.Any(t => t.Date == today);
             int remaining = Math.Max(0, goal - sessionsThisWeek);
 

@@ -38,3 +38,6 @@ packages/
 Thumbs.db
 .DS_Store
 dist/
+
+# Runtime artifact: LocalizationService writes the chosen language here at run time.
+FemVoiceStudio/language.txt

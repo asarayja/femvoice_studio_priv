@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using FemVoiceStudio.Services;
 using Xunit;
 
@@ -55,18 +56,39 @@ namespace FemVoice.Tests.Portable
         [Fact]
         public void WeeklyGoalMet_IsDone_EvenIfNotTrainedToday()
         {
-            // 3 sessions Mon/Tue earlier this week, none today, goal 3 → goal met, no nag.
-            var sessions = new List<DateTime>
+            // Mon + Tue (twice on Tue) = 2 distinct in-week days, plus a session from the PREVIOUS week that must not
+            // count. Goal 3 → one day still owed today → Due.
+            var owed = new List<DateTime>
             {
+                new(2026, 9, 6, 9, 0, 0),    // Sun of the previous week (week starts Mon 2026-09-07) — excluded
                 new(2026, 9, 7, 18, 0, 0),   // Mon
                 new(2026, 9, 8, 18, 0, 0),   // Tue
-                new(2026, 9, 8, 20, 0, 0),   // Tue (2nd)
+                new(2026, 9, 8, 20, 0, 0),   // Tue again — does not add a day
             };
+            var owedStatus = TrainingReminderScheduler.Evaluate(true, 3, At18, owed, Wed1900);
+            Assert.Equal(ReminderState.Due, owedStatus.State);
+            Assert.Equal(2, owedStatus.SessionsThisWeek);
+            Assert.Equal(1, owedStatus.RemainingThisWeek);
+
+            // A third distinct in-week day (today) meets the goal → Done.
+            var met = new List<DateTime>(owed) { new DateTime(2026, 9, 9, 7, 0, 0) };
+            var metStatus = TrainingReminderScheduler.Evaluate(true, 3, At18, met, Wed1900);
+            Assert.Equal(ReminderState.Done, metStatus.State);
+            Assert.True(metStatus.TrainedToday);
+            Assert.Equal(3, metStatus.SessionsThisWeek);
+            Assert.Equal(0, metStatus.RemainingThisWeek);
+        }
+
+        [Fact]
+        public void ManySessionsInOneDay_DoNotConsumeTheWholeWeek()
+        {
+            // Five recordings on Monday only. Goal 3 days/week → Monday counts once, so a session is still owed today.
+            var sessions = Enumerable.Range(0, 5)
+                .Select(i => new DateTime(2026, 9, 7, 10 + i, 0, 0)).ToList();
             var s = TrainingReminderScheduler.Evaluate(true, 3, At18, sessions, Wed1900);
-            Assert.Equal(ReminderState.Done, s.State);
-            Assert.False(s.TrainedToday);
-            Assert.Equal(0, s.RemainingThisWeek);
-            Assert.Equal(3, s.SessionsThisWeek);
+            Assert.Equal(1, s.SessionsThisWeek);          // one DAY, not five sessions
+            Assert.Equal(2, s.RemainingThisWeek);
+            Assert.Equal(ReminderState.Due, s.State);
         }
 
         [Fact]

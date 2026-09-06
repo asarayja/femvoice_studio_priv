@@ -69,6 +69,8 @@ internal static class Program
         if (args.Contains("--dashboard-resonance-smoke")) return DashboardResonanceSmoke().GetAwaiter().GetResult();
         if (args.Contains("--voice-perception-smoke")) return VoicePerceptionSmoke().GetAwaiter().GetResult();
         if (args.Contains("--training-reminder-smoke")) return TrainingReminderSmoke();
+        if (args.Contains("--start-here-path-smoke")) return StartHerePathSmoke();
+        if (args.Contains("--audit-fixes-smoke")) return AuditFixesSmoke().GetAwaiter().GetResult();
         if (args.Contains("--session-analytics-smoke")) return SessionAnalyticsSmoke().GetAwaiter().GetResult();
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
@@ -867,6 +869,144 @@ internal static class Program
         bool ok = schedulerOk && prefsRoundTrip && dueOk && hiddenWhileRecording && localizationOk;
         Console.WriteLine($"[reminder] scheduler={schedulerOk} prefs={prefsRoundTrip} due={dueOk} hiddenWhileRecording={hiddenWhileRecording} localization={localizationOk}");
         Console.WriteLine(ok ? "[reminder] Training-reminder smoke OK" : "[reminder] Training-reminder smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // "Start her" beginner path: the pure Core path evaluates deterministically over REAL catalog ids; a fresh DB puts
+    // the dashboard at step 1 with a real localized next exercise; completing an exercise (2 saved sessions keyed by
+    // ExerciseTextId) advances the next step; the shell wires dashboard→exercise navigation by id; keys resolve in English.
+    private static int StartHerePathSmoke()
+    {
+        var fresh = global::FemVoiceStudio.Services.BeginnerPath.Evaluate(new System.Collections.Generic.Dictionary<int, int>());
+        var allDone = global::FemVoiceStudio.Services.BeginnerPath.Evaluate(
+            global::FemVoiceStudio.Services.BeginnerPath.AllExerciseIds.ToDictionary(id => id, _ => 10));
+        int firstId = global::FemVoiceStudio.Services.BeginnerPath.Stages[0].ExerciseIds[0];
+        int secondId = global::FemVoiceStudio.Services.BeginnerPath.Stages[0].ExerciseIds[1];
+        bool pathOk = !fresh.IsComplete && fresh.StageNumber == 1 && fresh.NextExerciseId == firstId
+                      && allDone.IsComplete && allDone.PercentOverall == 100;
+
+        string fileName = $"femvoice-starthere-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+        string full = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio", fileName);
+        void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+        Cleanup();
+        bool freshDashOk, navHookOk, advancedOk, shellNavOk, localizationOk;
+        var prevCulture = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture;
+        try
+        {
+            var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+            var svc = new global::FemVoiceStudio.Services.VoiceFeminizationExerciseService();
+            string firstName = svc.GetAllEnhancedExercises().First(e => e.Id == firstId).Name;
+
+            int requested = 0;
+            using (var vm = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher(), db))
+            {
+                vm.OpenExerciseRequested = id => requested = id;
+                freshDashOk = vm.ShowStartHere && vm.StartHereNext.Length > 0 && vm.StartHereStage.Contains("1") && vm.StartHerePercent == 0;
+                vm.StartNextStepCommand.Execute(null);
+                navHookOk = requested == firstId;
+            }
+
+            for (int i = 0; i < global::FemVoiceStudio.Services.BeginnerPath.RequiredPerExercise; i++)
+                db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
+                {
+                    UserId = 1, StartTime = DateTime.UtcNow.AddMinutes(-10 + i), EndTime = DateTime.UtcNow.AddMinutes(-5 + i),
+                    ExerciseTextId = firstId, Feedback = $"Øvelse: {firstName}",
+                    DifficultyLevel = global::FemVoiceStudio.Models.DifficultyLevel.Nybegynner,
+                });
+            using (var vm2 = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher(), db))
+            {
+                int next = 0; vm2.OpenExerciseRequested = id => next = id;
+                vm2.StartNextStepCommand.Execute(null);
+                advancedOk = next == secondId && vm2.StartHerePercent > 0;
+            }
+
+            var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+            var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
+            shell.OpenExerciseById(firstId);
+            shellNavOk = dash.OpenExerciseRequested is not null
+                         && shell.CurrentPage is ExerciseRuntimeViewModel rt && rt.SelectedExerciseName == firstName;
+            (shell.CurrentPage as IDisposable)?.Dispose();
+            dash.Dispose();
+
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");
+            localizationOk = global::FemVoice.Avalonia.Localization.Localized.Get("StartHere_Heading", "Start her") == "Start here"
+                             && global::FemVoice.Avalonia.Localization.Localized.Get("StartHere_Stage_Fundamentals", "Grunnlag") == "Fundamentals";
+        }
+        finally
+        {
+            global::FemVoice.Avalonia.Localization.Localized.CurrentCulture = prevCulture;
+            Cleanup();
+        }
+
+        bool ok = pathOk && freshDashOk && navHookOk && advancedOk && shellNavOk && localizationOk;
+        Console.WriteLine($"[start-here] path={pathOk} freshDash={freshDashOk} navHook={navHookOk} advanced={advancedOk} shellNav={shellNavOk} localization={localizationOk}");
+        Console.WriteLine(ok ? "[start-here] Start-here path smoke OK" : "[start-here] Start-here path smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Regression guards for the multi-agent audit fixes that had NO test:
+    //  (1) Settings Save must never wipe a mic-calibration baseline made after the Settings VM was constructed
+    //      (the #183 fix snapshotted at construction; the Settings page itself offers "Kalibrer mikrofon").
+    //  (2) A saved dashboard session must ADVANCE the real progression (streak/totals), which the Avalonia head
+    //      never did — level/streak/totals were pinned to 0 across dashboard, Statistics and Progression.
+    private static async Task<int> AuditFixesSmoke()
+    {
+        // (1) calibrate-after-opening-Settings must survive Save. Snapshot/restore the REAL prefs file.
+        var store = new global::FemVoice.Avalonia.Preferences.UiPreferencesStore();
+        var saved = store.Load();
+        double prevBaseline = saved.ResonanceBaselineCentroidHz;
+        bool prevSetup = saved.FirstTimeSetupCompleted;
+        bool baselineSurvives;
+        try
+        {
+            saved.ResonanceBaselineCentroidHz = 0; store.Save(saved);          // start uncalibrated
+            var prefsVm = new UiPreferencesViewModel(store);                    // Settings page opened (snapshot taken)
+            global::FemVoice.Avalonia.Preferences.CapturePreferences.SetResonanceBaselineCentroidHz(1234.0);  // user calibrates now
+            prefsVm.SaveCommand.Execute(null);                                  // then presses Lagre
+            baselineSurvives = global::FemVoice.Avalonia.Preferences.CapturePreferences.ResonanceBaselineCentroidHz() == 1234.0;
+        }
+        finally
+        {
+            var cur = store.Load();
+            cur.ResonanceBaselineCentroidHz = prevBaseline; cur.FirstTimeSetupCompleted = prevSetup;
+            store.Save(cur);
+        }
+
+        // (2) a saved session advances real progression (totals/streak move off zero).
+        string fileName = $"femvoice-auditfix-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+        string full = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio", fileName);
+        void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+        Cleanup();
+        bool progressionAdvances;
+        try
+        {
+            var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+            var svc = new global::FemVoiceStudio.Services.ProgressionService(db, global::FemVoiceStudio.Services.LocalizationService.Instance);
+            int before = svc.GetProgressionStatus().TotalSessions;
+            using (var vm = new MainDashboardViewModel(new SyntheticAudioCaptureService(), new InlineUiDispatcher(), db))
+            {
+                await vm.StartCommand.ExecuteAsync(null);
+                vm.SyntheticAudioMode = SyntheticAudioMode.StablePitch;
+                await Task.Delay(2600);   // > 2 s so the session is actually saved
+                await vm.StopCommand.ExecuteAsync(null);
+                await Task.Delay(150);
+            }
+            int after = svc.GetProgressionStatus().TotalSessions;
+            progressionAdvances = after > before;
+            Console.WriteLine($"[audit-fix] progression totalSessions {before} -> {after}");
+        }
+        catch (Exception ex) { progressionAdvances = false; Console.WriteLine($"[audit-fix] progression check failed: {ex.GetType().Name}: {ex.Message}"); }
+        finally { Cleanup(); }
+
+        // (3) reminder weekly goal counts distinct DAYS, not session rows.
+        var manyOneDay = Enumerable.Range(0, 5).Select(i => new DateTime(2026, 9, 7, 10 + i, 0, 0)).ToList();
+        var st = global::FemVoiceStudio.Services.TrainingReminderScheduler.Evaluate(
+            true, 3, new TimeSpan(18, 0, 0), manyOneDay, new DateTime(2026, 9, 9, 19, 0, 0));
+        bool distinctDays = st.SessionsThisWeek == 1 && st.State == global::FemVoiceStudio.Services.ReminderState.Due;
+
+        bool ok = baselineSurvives && progressionAdvances && distinctDays;
+        Console.WriteLine($"[audit-fix] baselineSurvivesSave={baselineSurvives} progressionAdvances={progressionAdvances} distinctDays={distinctDays}");
+        Console.WriteLine(ok ? "[audit-fix] Audit-fixes smoke OK" : "[audit-fix] Audit-fixes smoke FAIL");
         return ok ? 0 : 1;
     }
 
