@@ -72,6 +72,11 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         RefreshRecentSessions();
     }
 
+    /// <summary>Re-read history-derived state (recent sessions, progression, reminder, "Start her"). Called by the shell
+    /// when the dashboard becomes the current page, so returning from an exercise — or opening the app the next day —
+    /// does not leave a stale reminder/path card from construction time.</summary>
+    public void RefreshFromHistory() => RefreshRecentSessions();
+
     private void RefreshRecentSessions()
     {
         RecentSessions.Clear();
@@ -486,6 +491,12 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
                     // Per-dimension Voice-Intelligence record (the write the Avalonia head used to skip) so the WPF-parity
                     // per-dimension screens light up with REAL data. Best-effort, never blocks the session save.
                     WriteSessionAnalytics(savedId, session.StartTime, System.DateTime.UtcNow, inZone, avgResonance, pitchVariation);
+
+                    // Advance the real progression (streak, totals, sessions-at-level, promotion) exactly as WPF does.
+                    // Without this the Avalonia head never called it, so level/streak/totals stayed 0 forever on the
+                    // dashboard, Statistics and Progression — and the reminder's streak note could never appear.
+                    // WithSafety suppresses promotion while the safety lock is active. Best-effort; never blocks a save.
+                    EvaluateProgressionSafely(session);
                 }
                 catch { /* never surface a session-save error to the app */ }
             }
@@ -692,6 +703,15 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
             }).GetAwaiter().GetResult();
         }
         catch { /* analytics write is best-effort — never affects the session save */ }
+    }
+
+    /// <summary>Advance the real Core progression for a saved session (WPF parity). Fully guarded — progression is a
+    /// display/level concern and must never break the session save.</summary>
+    private void EvaluateProgressionSafely(FemVoiceStudio.Models.TrainingSession session)
+    {
+        if (_database is null) return;
+        try { new FemVoiceStudio.Services.ProgressionService(_database, LocalizationService.Instance).EvaluateProgressionWithSafety(session); }
+        catch { /* never affects the session save */ }
     }
 
     // Map the Core health/stability enums to 0–100 for the per-dimension VI scores (real state → numeric).

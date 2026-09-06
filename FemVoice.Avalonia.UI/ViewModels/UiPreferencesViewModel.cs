@@ -207,15 +207,36 @@ public partial class UiPreferencesViewModel : ObservableObject
         ResearchSharingConsent = ResearchConsent,
         RemindersEnabled = RemindersEnabled,
         ReminderMinuteOfDay = SelectedReminderTime?.MinuteOfDay ?? 1080,
+        // Fields this panel does NOT own are merged from disk at save time (see Save) — never from a constructor
+        // snapshot, which goes stale as soon as the user calibrates while the Settings page is alive.
         ResonanceBaselineCentroidHz = _resonanceBaselineCentroidHz,
     };
+
+    /// <summary>
+    /// The values to persist: everything this panel edits, merged onto whatever is CURRENTLY on disk for the fields it
+    /// does not own. The Settings page is long-lived and offers "Kalibrer mikrofon", so a user can calibrate after this
+    /// VM was constructed; writing a constructor-time snapshot back would silently wipe that fresh calibration (and the
+    /// onboarding-completed flag). Re-reading at save time is the only correct order.
+    /// </summary>
+    private UiPreferences ToPersist()
+    {
+        var merged = Current();
+        try
+        {
+            var onDisk = _store.Load();
+            merged.ResonanceBaselineCentroidHz = onDisk.ResonanceBaselineCentroidHz;   // owned by mic calibration
+            merged.FirstTimeSetupCompleted = onDisk.FirstTimeSetupCompleted;           // owned by onboarding
+        }
+        catch { /* unreadable file → fall back to the in-memory values */ }
+        return merged;
+    }
 
     // Persist, then apply THEME + LANGUAGE + reduce-motion LIVE. Other prefs (mic device, focus, hear-own-voice,
     // accessibility, consent) are stored and read by their consumers (capture pipeline / live visuals). Fail-safe.
     [RelayCommand]
     private void Save()
     {
-        bool ok = _store.Save(Current());
+        bool ok = _store.Save(ToPersist());
         if (ok)
         {
             FemVoice.Avalonia.Theming.ThemeActivation.Apply(Theme);                  // theme — live

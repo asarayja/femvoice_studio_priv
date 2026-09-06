@@ -231,6 +231,10 @@ public partial class ShellViewModel : ObservableObject
     partial void OnCurrentPageChanged(object value)
     {
         RefreshInfoStats();   // keep the sidebar quick-stats fresh (e.g. after a session saved on the dashboard)
+        // The dashboard is a long-lived singleton: its history-derived cards (progression, daily reminder, "Start her"
+        // path) are computed on construction, so returning from an exercise — or coming back the next day with the app
+        // still open — would otherwise show yesterday's state. Re-read whenever the dashboard becomes visible.
+        if (value is MainDashboardViewModel dash) dash.RefreshFromHistory();
         CurrentDestinationLabel = value switch
         {
             MainDashboardViewModel => Localized.Get("Shell_Nav_Dashboard", "Dashbord"),
