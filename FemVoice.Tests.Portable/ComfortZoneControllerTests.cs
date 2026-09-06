@@ -396,16 +396,23 @@ namespace FemVoiceStudio.Tests
         {
             var userRepo = new InMemoryUserRepository();
             var scoreRepo = new InMemoryScoreRepository();
-            var controller = new ComfortZoneController(userRepo, scoreRepo);
+
+            // ComfortZoneController captures SynchronizationContext.Current at construction and POSTS ZoneUpdated
+            // through it. Under xunit's async context that made delivery asynchronous, so the old
+            // "await Task.Delay(10) and hope" made this test flaky (it failed in full-suite runs, passed in isolation).
+            // Constructing with no context makes the event fire synchronously, which is deterministic.
+            var previous = SynchronizationContext.Current;
+            SynchronizationContext.SetSynchronizationContext(null);
+            ComfortZoneController controller;
+            try { controller = new ComfortZoneController(userRepo, scoreRepo); }
+            finally { SynchronizationContext.SetSynchronizationContext(previous); }
 
             await controller.InitializeAsync(1);
 
             ComfortZoneState? capturedState = null;
             controller.ZoneUpdated += state => capturedState = state;
 
-            // Give a slight delay to ensure event fires
             await controller.UpdateZoneAsync(80, 80, 80, 80, 100);
-            await Task.Delay(10); // Allow event handler to execute
 
             Assert.NotNull(capturedState);
         }
