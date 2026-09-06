@@ -200,7 +200,12 @@ namespace FemVoiceStudio.Audio
         {
             Array.Clear(_fftBuffer, 0, _fftBuffer.Length);
             Array.Clear(_inputBuffer, 0, _inputBuffer.Length);
-            Array.Clear(_windowBuffer, 0, _windowBuffer.Length);
+            // _windowBuffer is the CONSTANT Hann analysis window derived from _fftSize — it is not per-session state.
+            // Clearing it here zeroed the window on every Start() (Start → Reset), and ProcessFrame multiplies each
+            // sample by it, so the FFT saw pure silence: no spectrum, formant detection always fell back to its fixed
+            // values, and the resonance score froze ("always Mørk") for BOTH the WPF and Avalonia resonance/analyzer
+            // screens. Regenerate it instead of zeroing it.
+            GenerateWindowFunction();
             _bufferPosition = 0;
             _frameCount = 0;
             _lastSample = 0;
