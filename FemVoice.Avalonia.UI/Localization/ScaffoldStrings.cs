@@ -171,6 +171,14 @@ public static class ScaffoldStrings
         "Perception_TipRaisePitch",
         "Perception_TipBrighten",
         "Perception_TipHold",
+        // Daily training reminder (in-app nudge + Settings section). Translated across all overlay languages.
+        "Reminder_Heading",
+        "Reminder_DueMessage",
+        "Reminder_StreakNote",
+        "Settings_Reminders_Title",
+        "Settings_Reminders_Enable",
+        "Settings_Reminders_Time",
+        "Settings_Reminders_Note",
     };
 
     /// <summary>Keys with a trusted, culture-invariant translation already populated (no native review needed).</summary>

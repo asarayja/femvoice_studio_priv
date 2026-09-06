@@ -80,6 +80,20 @@
         </StackPanel>
       </Border>
 
+      <!-- Daily training reminder (opt-in in-app nudge) -->
+      <Border Classes="card">
+        <StackPanel Spacing="8" DataContext="{Binding Preferences}">
+          <TextBlock Text="{Binding RemindersHeading}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}"/>
+          <CheckBox Content="{Binding RemindersEnabledLabel}" IsChecked="{Binding RemindersEnabled, Mode=TwoWay}"/>
+          <StackPanel Orientation="Horizontal" Spacing="10" IsEnabled="{Binding RemindersEnabled}">
+            <TextBlock Text="{Binding ReminderTimeLabel}" VerticalAlignment="Center" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <ComboBox MinWidth="110" ItemsSource="{Binding ReminderTimeOptions}" SelectedItem="{Binding SelectedReminderTime, Mode=TwoWay}"/>
+          </StackPanel>
+          <TextBlock Text="{Binding RemindersNote}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+          <TextBlock Text="{loc:Tr Key=Settings_SaveHint, Fallback='Endringene lagres når du trykker «Lagre» øverst.'}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11"/>
+        </StackPanel>
+      </Border>
+
       <!-- Data: real backup / restore / clear -->
       <Border Classes="card">
         <StackPanel Spacing="8" DataContext="{Binding Preferences}">

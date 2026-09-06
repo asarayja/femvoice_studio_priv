@@ -53,7 +53,19 @@ public partial class UiPreferencesViewModel : ObservableObject
         _reducedVisualFeedback = p.ReducedVisualFeedback;
         _diagnosticsConsent = p.DiagnosticsConsent;
         _researchConsent = p.ResearchSharingConsent;
+        _remindersEnabled = p.RemindersEnabled;
+        _selectedReminderTime = MatchReminderTime(p.ReminderMinuteOfDay);
+        _resonanceBaselineCentroidHz = p.ResonanceBaselineCentroidHz;   // not edited here; round-tripped so Save doesn't wipe it
     }
+
+    // The mic-calibration resonance baseline is owned by MicCalibration, not this panel; kept verbatim so a Settings
+    // Save never clears the per-user calibration (would otherwise reset the perceived-voice/resonance meter).
+    private double _resonanceBaselineCentroidHz;
+
+    // Map a stored minute-of-day to a preset option; a hand-edited/off-grid value falls back to 18:00.
+    private ReminderTimeOption MatchReminderTime(int minuteOfDay)
+        => ReminderTimeOptions.FirstOrDefault(t => t.MinuteOfDay == minuteOfDay)
+           ?? ReminderTimeOptions.First(t => t.MinuteOfDay == 1080);
 
     // ── Voice-goal style + focus + training frequency (real persisted prefs, WPF Settings parity) ──────────────────
     public sealed record StyleOption(string Token, string Label) { public override string ToString() => Label; }
@@ -107,6 +119,20 @@ public partial class UiPreferencesViewModel : ObservableObject
         catch { /* enumeration is best-effort; the default entry always remains */ }
         return list;
     }
+
+    // ── Daily training reminder (opt-in in-app nudge; time-of-day preset) ─────────────────────────────────────────
+    public sealed record ReminderTimeOption(int MinuteOfDay, string Label) { public override string ToString() => Label; }
+    public IReadOnlyList<ReminderTimeOption> ReminderTimeOptions { get; } = new[]
+    {
+        8 * 60, 12 * 60, 15 * 60, 17 * 60, 18 * 60, 19 * 60, 20 * 60, 21 * 60,
+    }.Select(m => new ReminderTimeOption(m, $"{m / 60:00}:{m % 60:00}")).ToArray();
+    [ObservableProperty] private bool _remindersEnabled;
+    [ObservableProperty] private ReminderTimeOption _selectedReminderTime;
+    public string RemindersHeading => Localized.Get("Settings_Reminders_Title", "Påminnelser");
+    public string RemindersEnabledLabel => Localized.Get("Settings_Reminders_Enable", "Daglig påminnelse om å øve");
+    public string ReminderTimeLabel => Localized.Get("Settings_Reminders_Time", "Påminn meg klokka");
+    public string RemindersNote => Localized.Get("Settings_Reminders_Note",
+        "Viser en vennlig påminnelse på forsiden når dagens økt gjenstår — kun etter valgt tidspunkt, aldri to ganger samme dag, og aldri når du har nådd ukemålet ditt.");
 
     // ── Hear own voice + accessibility + privacy (persisted prefs) ────────────────────────────────────────────────
     [ObservableProperty] private bool _hearOwnVoice;
@@ -179,6 +205,9 @@ public partial class UiPreferencesViewModel : ObservableObject
         ReducedVisualFeedback = ReducedVisualFeedback,
         DiagnosticsConsent = DiagnosticsConsent,
         ResearchSharingConsent = ResearchConsent,
+        RemindersEnabled = RemindersEnabled,
+        ReminderMinuteOfDay = SelectedReminderTime?.MinuteOfDay ?? 1080,
+        ResonanceBaselineCentroidHz = _resonanceBaselineCentroidHz,
     };
 
     // Persist, then apply THEME + LANGUAGE + reduce-motion LIVE. Other prefs (mic device, focus, hear-own-voice,
@@ -216,6 +245,9 @@ public partial class UiPreferencesViewModel : ObservableObject
         ReducedVisualFeedback = p.ReducedVisualFeedback;
         DiagnosticsConsent = p.DiagnosticsConsent;
         ResearchConsent = p.ResearchSharingConsent;
+        RemindersEnabled = p.RemindersEnabled;
+        SelectedReminderTime = MatchReminderTime(p.ReminderMinuteOfDay);
+        _resonanceBaselineCentroidHz = p.ResonanceBaselineCentroidHz;
         Status = Localized.Get("Settings_LocalPrefs_Reloaded", "Lastet fra lagret fil.");
     }
 

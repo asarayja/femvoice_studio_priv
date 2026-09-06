@@ -96,7 +96,63 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         }
         HasRecentSessions = RecentSessions.Count > 0;
         RefreshProgression();
+        RefreshReminder();
     }
+
+    // Recent session start times in LOCAL time (for the reminder scheduler): from the real DB when available, else the
+    // display-only local history store. Best-effort — a read error yields an empty list (→ reminder simply "owed").
+    private System.Collections.Generic.List<DateTime> RecentSessionLocalTimes()
+    {
+        var list = new System.Collections.Generic.List<DateTime>();
+        try
+        {
+            if (_database is not null)
+                foreach (var s in _database.GetRecentSessions(30)) list.Add(s.StartTime.ToLocalTime());
+            else
+                foreach (var r in _history.Recent(30)) list.Add(new DateTime(r.WhenUtcTicks, DateTimeKind.Utc).ToLocalTime());
+        }
+        catch { /* empty list is a safe default */ }
+        return list;
+    }
+
+    // Evaluate the in-app daily reminder from the opt-in prefs + real history via the pure Core scheduler, and compose
+    // an encouraging, streak-aware message. Never surfaces while recording (a nudge mid-session is pointless).
+    private void RefreshReminder()
+    {
+        if (IsRecording) { ShowReminder = false; return; }
+        var status = FemVoiceStudio.Services.TrainingReminderScheduler.Evaluate(
+            FemVoice.Avalonia.Preferences.ReminderPreferences.RemindersEnabled(),
+            _selectedFrequencyDays(),
+            FemVoice.Avalonia.Preferences.ReminderPreferences.ReminderTimeOfDay(),
+            RecentSessionLocalTimes(),
+            DateTime.Now);
+
+        ShowReminder = status.State == FemVoiceStudio.Services.ReminderState.Due;
+        if (ShowReminder)
+        {
+            ReminderMessage = Localized.Get("Reminder_DueMessage", "Dagens økt gjenstår — noen minutter holder.");
+            ReminderStreakNote = _currentStreak >= 2
+                ? string.Format(Localized.Get("Reminder_StreakNote", "Behold rekken din på {0} dager."), _currentStreak)
+                : "";
+        }
+    }
+
+    // The user's weekly training goal (days/week) from the persisted onboarding/Settings preference; 3 when unreadable.
+    private static int _selectedFrequencyDays()
+    {
+        try { return new FemVoice.Avalonia.Preferences.UiPreferencesStore().Load().TrainingFrequency; }
+        catch { return 3; }
+    }
+
+    // ── Daily training reminder (in-app nudge) ────────────────────────────────────────────────────────────────────
+    // A humane "today's session is still owed" banner, derived (no timer) from the weekly goal + real session history
+    // by the pure Core TrainingReminderScheduler. Opt-in; only surfaces at/after the user's preferred time, never twice
+    // a day, never past the weekly goal. Groundwork for a later OS-notification bridge.
+    [ObservableProperty] private bool _showReminder;
+    [ObservableProperty] private string _reminderMessage = "";
+    [ObservableProperty] private string _reminderStreakNote = "";
+    private int _currentStreak;
+    public string ReminderHeading => Localized.Get("Reminder_Heading", "Påminnelse");
 
     // ── "Din progresjon" block (ported from the WPF MainWindow) — real level/streak/totals from the DB ──────────
     [ObservableProperty] private bool _hasProgression;
@@ -120,6 +176,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
             ProgLevelName = FemVoiceStudio.Services.LevelClassificationSystem.GetLevelName(level);
             ProgTotalSessions = status.TotalSessions.ToString();
             ProgStreak = status.CurrentStreak.ToString();
+            _currentStreak = status.CurrentStreak;
             if (status.SessionsRequiredForPromotion > 0)
             {
                 ProgPercent = System.Math.Round(System.Math.Clamp(100.0 * status.SessionsAtCurrentLevel / status.SessionsRequiredForPromotion, 0, 100));
@@ -281,6 +338,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         _voiceMonitor.Start(SampleRate);   // hear-own-voice (opt-in; no-op when off)
         _sessionStart = System.DateTime.Now;
         IsRecording = true;
+        ShowReminder = false;   // a nudge mid-session is pointless; re-evaluated after the session is saved
         CurrentFeedbackMessage = Localized.Get("Dash_Listening", "Lytter …");
     }
 
