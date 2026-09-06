@@ -3753,7 +3753,7 @@ This cannot be undone!</value>
     <value>Measure voice</value>
   </data>
   <data name="MicCalibration_Ready" xml:space="preserve">
-    <value>Press start. Then you choose when the app measures a quiet room and when it measures comfortable voice or humming.</value>
+    <value>Press start. Then you choose when the app measures a quiet room and when it measures your ordinary speaking voice.</value>
   </data>
   <data name="MicCalibration_ManualReady" xml:space="preserve">
     <value>Ready. Press "Measure quiet room" when you are silent and the room is calm.</value>
@@ -3768,13 +3768,13 @@ This cannot be undone!</value>
     <value>Measuring background noise. Stay quiet.</value>
   </data>
   <data name="MicCalibration_SilenceCaptured" xml:space="preserve">
-    <value>Quiet room has been measured. Press "Measure voice" when you are ready to use comfortable voice or gentle humming.</value>
+    <value>Quiet room has been measured. Press "Measure voice" when you are ready to speak in your ordinary voice.</value>
   </data>
   <data name="MicCalibration_VoiceInstruction" xml:space="preserve">
-    <value>Use a comfortable voice or gentle humming. Do not press your voice. Press the measure button when you are ready.</value>
+    <value>Speak in your ordinary, relaxed speaking voice — please don't hum. Don't push your voice. Press the measure button when you are ready.</value>
   </data>
   <data name="MicCalibration_VoiceRecording" xml:space="preserve">
-    <value>Measuring comfortable voice or humming. Keep the level calm and steady.</value>
+    <value>Measuring your ordinary speaking voice. Speak calmly and steadily.</value>
   </data>
   <data name="MicCalibration_Complete" xml:space="preserve">
     <value>Calibration is complete.</value>
@@ -3798,10 +3798,10 @@ This cannot be undone!</value>
     <value>Calibration failed: {0}</value>
   </data>
   <data name="MicCalibration_TooQuiet" xml:space="preserve">
-    <value>Voice/humming was too quiet. Try again closer to the microphone, check the Windows input device, and use calm comfortable sound.</value>
+    <value>Your voice was too quiet. Try again closer to the microphone, check the Windows input device, and speak calmly at a comfortable level.</value>
   </data>
   <data name="MicCalibration_TooCloseToNoise" xml:space="preserve">
-    <value>Voice/humming was too close to the background noise. Reduce room noise, move the microphone closer, or raise Windows input level slightly.</value>
+    <value>Your voice was too close to the background noise. Reduce room noise, move the microphone closer, or raise the Windows input level slightly.</value>
   </data>
   <data name="MicCalibration_TooLoud" xml:space="preserve">
     <value>The microphone level was too high and may clip. Lower Windows input volume or microphone gain and try again.</value>

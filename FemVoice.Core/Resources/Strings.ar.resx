@@ -3753,7 +3753,7 @@
     <value>قياس الصوت</value>
   </data>
   <data name="MicCalibration_Ready" xml:space="preserve">
-    <value>اضغط على بدء. ثم تختار بنفسك متى يقيس التطبيق غرفة هادئة ومتى يقيس صوتاً مريحاً أو همهمة.</value>
+    <value>اضغط ابدأ. ثم تختار بنفسك متى يقيس التطبيق الغرفة الهادئة ومتى يقيس صوت كلامك العادي.</value>
   </data>
   <data name="MicCalibration_ManualReady" xml:space="preserve">
     <value>جاهز. اضغط على "قياس الغرفة الهادئة" عندما تكون صامتاً والغرفة هادئة.</value>
@@ -3768,13 +3768,13 @@
     <value>جارٍ قياس ضوضاء الخلفية. ابقَ صامتاً.</value>
   </data>
   <data name="MicCalibration_SilenceCaptured" xml:space="preserve">
-    <value>تم قياس الغرفة الهادئة. اضغط على "قياس الصوت" عندما تكون جاهزاً لاستخدام صوت مريح أو همهمة لطيفة.</value>
+    <value>تم قياس الغرفة الهادئة. اضغط «قياس الصوت» عندما تكون جاهزاً للتحدث بصوتك العادي.</value>
   </data>
   <data name="MicCalibration_VoiceInstruction" xml:space="preserve">
-    <value>استخدم صوتاً مريحاً أو همهمة لطيفة. لا تضغط على صوتك. اضغط زر القياس عندما تكون جاهزاً.</value>
+    <value>تحدث بصوت الكلام العادي والمريح — من فضلك لا تهمهم. لا تضغط على صوتك. اضغط زر القياس عندما تكون جاهزاً.</value>
   </data>
   <data name="MicCalibration_VoiceRecording" xml:space="preserve">
-    <value>جارٍ قياس الصوت المريح أو الهمهمة. حافظ على مستوى هادئ وثابت.</value>
+    <value>يقيس صوت كلامك العادي. تحدث بهدوء وثبات.</value>
   </data>
   <data name="MicCalibration_Complete" xml:space="preserve">
     <value>اكتملت المعايرة.</value>
@@ -3798,10 +3798,10 @@
     <value>فشلت المعايرة: {0}</value>
   </data>
   <data name="MicCalibration_TooQuiet" xml:space="preserve">
-    <value>كان الصوت/الهمهمة منخفضاً جداً. حاول من جديد أقرب إلى الميكروفون، وتحقق من جهاز الإدخال في ويندوز، واستخدم صوتاً هادئاً مريحاً.</value>
+    <value>كان صوتك منخفضاً جداً. حاول مرة أخرى بالقرب من الميكروفون، وتحقق من جهاز الإدخال في ويندوز، وتحدث بهدوء بمستوى مريح.</value>
   </data>
   <data name="MicCalibration_TooCloseToNoise" xml:space="preserve">
-    <value>كان الصوت/الهمهمة قريباً جداً من ضوضاء الخلفية. قلّل ضوضاء الغرفة، أو قرّب الميكروفون، أو ارفع مستوى الإدخال في ويندوز قليلاً.</value>
+    <value>كان صوتك قريباً جداً من ضجيج الخلفية. قلّل ضجيج الغرفة، أو قرّب الميكروفون، أو ارفع مستوى الإدخال في ويندوز قليلاً.</value>
   </data>
   <data name="MicCalibration_TooLoud" xml:space="preserve">
     <value>كان مستوى الميكروفون مرتفعاً جداً وقد يحدث تشويه قطعي. اخفض مستوى الإدخال في ويندوز أو كسب الميكروفون وحاول من جديد.</value>

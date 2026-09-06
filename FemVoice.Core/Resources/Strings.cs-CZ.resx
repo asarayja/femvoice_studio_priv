@@ -3753,7 +3753,7 @@ Tuto akci nelze vrátit zpět!</value>
     <value>Změřit hlas</value>
   </data>
   <data name="MicCalibration_Ready" xml:space="preserve">
-    <value>Stiskněte spustit. Poté si sami zvolíte, kdy aplikace změří tichou místnost a kdy změří pohodlný hlas nebo broukání.</value>
+    <value>Stiskni start. Poté si sám zvolíš, kdy aplikace změří tichou místnost a kdy tvůj běžný mluvený hlas.</value>
   </data>
   <data name="MicCalibration_ManualReady" xml:space="preserve">
     <value>Připraveno. Stiskněte "Změřit tichou místnost", až budete potichu a místnost bude klidná.</value>
@@ -3768,13 +3768,13 @@ Tuto akci nelze vrátit zpět!</value>
     <value>Měření hluku pozadí. Buďte potichu.</value>
   </data>
   <data name="MicCalibration_SilenceCaptured" xml:space="preserve">
-    <value>Tichá místnost byla změřena. Stiskněte "Změřit hlas", až budete připraveni použít pohodlný hlas nebo jemné broukání.</value>
+    <value>Tichá místnost byla změřena. Stiskni „Změřit hlas“, až budeš připraven mluvit svým běžným hlasem.</value>
   </data>
   <data name="MicCalibration_VoiceInstruction" xml:space="preserve">
-    <value>Použijte pohodlný hlas nebo jemné broukání. Netlačte na hlas. Až budete připraveni, stiskněte tlačítko měření.</value>
+    <value>Mluv svým běžným, uvolněným mluveným hlasem — prosím nebroukej. Netlač na hlas. Až budeš připraven, stiskni tlačítko měření.</value>
   </data>
   <data name="MicCalibration_VoiceRecording" xml:space="preserve">
-    <value>Měření pohodlného hlasu nebo broukání. Udržujte úroveň klidnou a stálou.</value>
+    <value>Měří se tvůj běžný mluvený hlas. Mluv klidně a rovnoměrně.</value>
   </data>
   <data name="MicCalibration_Complete" xml:space="preserve">
     <value>Kalibrace je dokončena.</value>
@@ -3798,10 +3798,10 @@ Tuto akci nelze vrátit zpět!</value>
     <value>Kalibrace se nezdařila: {0}</value>
   </data>
   <data name="MicCalibration_TooQuiet" xml:space="preserve">
-    <value>Hlas/broukání byly příliš tiché. Zkuste to znovu blíže k mikrofonu, zkontrolujte vstupní zařízení ve Windows a použijte klidný pohodlný zvuk.</value>
+    <value>Tvůj hlas byl příliš tichý. Zkus to znovu blíž k mikrofonu, zkontroluj vstupní zařízení ve Windows a mluv klidně na pohodlné úrovni.</value>
   </data>
   <data name="MicCalibration_TooCloseToNoise" xml:space="preserve">
-    <value>Hlas/broukání byly příliš blízko hluku pozadí. Snižte hluk v místnosti, přibližte mikrofon nebo mírně zvyšte vstupní úroveň ve Windows.</value>
+    <value>Tvůj hlas byl příliš blízko hluku pozadí. Sniž hluk v místnosti, přibliž mikrofon nebo mírně zvyš vstupní úroveň ve Windows.</value>
   </data>
   <data name="MicCalibration_TooLoud" xml:space="preserve">
     <value>Úroveň mikrofonu byla příliš vysoká a může docházet k ořezávání. Snižte vstupní hlasitost ve Windows nebo zesílení mikrofonu a zkuste to znovu.</value>

@@ -3753,7 +3753,7 @@ Ez nem vonható vissza!</value>
     <value>Hang mérése</value>
   </data>
   <data name="MicCalibration_Ready" xml:space="preserve">
-    <value>Nyomd meg az indítást. Ezután te választod meg, mikor mérje az alkalmazás a csendes szobát, és mikor a kényelmes hangot vagy dúdolást.</value>
+    <value>Nyomd meg az indítást. Utána te választod meg, mikor mérje az alkalmazás a csendes szobát és mikor a szokásos beszédhangodat.</value>
   </data>
   <data name="MicCalibration_ManualReady" xml:space="preserve">
     <value>Készen áll. Nyomd meg a „Csendes szoba mérése” gombot, amikor csendben vagy, és a szoba nyugodt.</value>
@@ -3768,13 +3768,13 @@ Ez nem vonható vissza!</value>
     <value>Háttérzaj mérése. Maradj csendben.</value>
   </data>
   <data name="MicCalibration_SilenceCaptured" xml:space="preserve">
-    <value>A csendes szoba mérése megtörtént. Nyomd meg a „Hang mérése” gombot, amikor készen állsz a kényelmes hang vagy a halk dúdolás használatára.</value>
+    <value>A csendes szoba megmérve. Nyomd meg a „Hang mérése” gombot, amikor készen állsz a szokásos hangodon beszélni.</value>
   </data>
   <data name="MicCalibration_VoiceInstruction" xml:space="preserve">
-    <value>Használj kényelmes hangot vagy halk dúdolást. Ne préseld a hangod. Nyomd meg a mérés gombot, amikor készen állsz.</value>
+    <value>Beszélj a szokásos, laza beszédhangodon — kérlek, ne dúdolj. Ne préseld a hangod. Nyomd meg a mérés gombot, amikor készen állsz.</value>
   </data>
   <data name="MicCalibration_VoiceRecording" xml:space="preserve">
-    <value>Kényelmes hang vagy dúdolás mérése. Tartsd a szintet nyugodtan és egyenletesen.</value>
+    <value>A szokásos beszédhangodat méri. Beszélj nyugodtan és egyenletesen.</value>
   </data>
   <data name="MicCalibration_Complete" xml:space="preserve">
     <value>A kalibrálás befejeződött.</value>
@@ -3798,10 +3798,10 @@ Ez nem vonható vissza!</value>
     <value>A kalibrálás nem sikerült: {0}</value>
   </data>
   <data name="MicCalibration_TooQuiet" xml:space="preserve">
-    <value>A hang/dúdolás túl halk volt. Próbáld újra közelebb a mikrofonhoz, ellenőrizd a Windows bemeneti eszközét, és használj nyugodt, kényelmes hangot.</value>
+    <value>A hangod túl halk volt. Próbáld újra közelebb a mikrofonhoz, ellenőrizd a Windows bemeneti eszközt, és beszélj nyugodtan, kényelmes hangerőn.</value>
   </data>
   <data name="MicCalibration_TooCloseToNoise" xml:space="preserve">
-    <value>A hang/dúdolás túl közel volt a háttérzajhoz. Csökkentsd a szoba zaját, vidd közelebb a mikrofont, vagy emeld kissé a Windows bemeneti szintjét.</value>
+    <value>A hangod túl közel volt a háttérzajhoz. Csökkentsd a zajt, told közelebb a mikrofont, vagy emeld kissé a Windows bemeneti szintjét.</value>
   </data>
   <data name="MicCalibration_TooLoud" xml:space="preserve">
     <value>A mikrofon szintje túl magas volt, és torzulhat. Csökkentsd a Windows bemeneti hangerejét vagy a mikrofon erősítését, és próbáld újra.</value>

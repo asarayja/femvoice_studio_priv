@@ -3753,7 +3753,7 @@ Această acțiune nu poate fi anulată!</value>
     <value>Măsoară vocea</value>
   </data>
   <data name="MicCalibration_Ready" xml:space="preserve">
-    <value>Apasă start. Apoi alegi tu când aplicația măsoară o cameră liniștită și când măsoară o voce confortabilă sau fredonatul.</value>
+    <value>Apasă start. Apoi alegi tu când aplicația măsoară camera liniștită și când măsoară vocea ta obișnuită de vorbire.</value>
   </data>
   <data name="MicCalibration_ManualReady" xml:space="preserve">
     <value>Gata. Apasă „Măsoară camera liniștită” când ești tăcut și camera este calmă.</value>
@@ -3768,13 +3768,13 @@ Această acțiune nu poate fi anulată!</value>
     <value>Se măsoară zgomotul de fond. Stai tăcut.</value>
   </data>
   <data name="MicCalibration_SilenceCaptured" xml:space="preserve">
-    <value>Camera liniștită a fost măsurată. Apasă „Măsoară vocea” când ești pregătit să folosești o voce confortabilă sau un fredonat blând.</value>
+    <value>Camera liniștită a fost măsurată. Apasă „Măsoară vocea” când ești gata să vorbești cu vocea ta obișnuită.</value>
   </data>
   <data name="MicCalibration_VoiceInstruction" xml:space="preserve">
-    <value>Folosește o voce confortabilă sau un fredonat blând. Nu forța vocea. Apasă butonul de măsurare când ești pregătit.</value>
+    <value>Vorbește cu vocea ta obișnuită, relaxată — te rog nu fredona. Nu forța vocea. Apasă butonul de măsurare când ești gata.</value>
   </data>
   <data name="MicCalibration_VoiceRecording" xml:space="preserve">
-    <value>Se măsoară vocea confortabilă sau fredonatul. Păstrează nivelul calm și constant.</value>
+    <value>Se măsoară vocea ta obișnuită de vorbire. Vorbește calm și constant.</value>
   </data>
   <data name="MicCalibration_Complete" xml:space="preserve">
     <value>Calibrarea este finalizată.</value>
@@ -3798,10 +3798,10 @@ Această acțiune nu poate fi anulată!</value>
     <value>Calibrarea a eșuat: {0}</value>
   </data>
   <data name="MicCalibration_TooQuiet" xml:space="preserve">
-    <value>Vocea/fredonatul a fost prea slab. Încearcă din nou mai aproape de microfon, verifică dispozitivul de intrare din Windows și folosește un sunet calm și confortabil.</value>
+    <value>Vocea ta a fost prea slabă. Încearcă din nou mai aproape de microfon, verifică dispozitivul de intrare din Windows și vorbește calm, la un nivel confortabil.</value>
   </data>
   <data name="MicCalibration_TooCloseToNoise" xml:space="preserve">
-    <value>Vocea/fredonatul a fost prea apropiat de zgomotul de fond. Redu zgomotul din cameră, apropie microfonul sau ridică ușor nivelul de intrare din Windows.</value>
+    <value>Vocea ta a fost prea aproape de zgomotul de fond. Redu zgomotul, apropie microfonul sau crește ușor nivelul de intrare din Windows.</value>
   </data>
   <data name="MicCalibration_TooLoud" xml:space="preserve">
     <value>Nivelul microfonului a fost prea ridicat și poate distorsiona. Redu volumul de intrare din Windows sau câștigul microfonului și încearcă din nou.</value>
