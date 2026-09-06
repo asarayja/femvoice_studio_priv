@@ -154,14 +154,20 @@ public sealed partial class SmartCoachViewModel : ObservableObject
             };
 
             var goals = database.GetSmartCoachGoals(UserId, true);
-            if (goals.Count == 0) goals = engine.GenerateGoals(UserId);
+            // Only MINT goals once the baseline is trustworthy. Generating on a "low"-confidence baseline persisted
+            // permanent goals built from zeros (pitch 20 Hz, resonance 15, intonation 20), which later read as a
+            // fabricated 100 % "goal reached" once real sessions existed. The engine now refuses zero-baseline goals
+            // too; this keeps the UI from asking for them in the first place.
+            if (goals.Count == 0 && baseline.ConfidenceLevel != "low") goals = engine.GenerateGoals(UserId);
 
             var recent = database.GetRecentSessions(10, UserId);
             double recentPitch = recent.Where(s => s.AveragePitch > 0).Select(s => s.AveragePitch).DefaultIfEmpty(baseline.BaselinePitch).Average();
             double recentReson = recent.Where(s => s.ResonanceScore > 0).Select(s => s.ResonanceScore).DefaultIfEmpty(baseline.BaselineResonanceScore).Average();
             double recentInton = recent.Where(s => s.IntonationScore > 0).Select(s => s.IntonationScore).DefaultIfEmpty(baseline.BaselineIntonation).Average();
 
-            foreach (var goal in goals.Where(g => !g.IsAchieved).Take(3))
+            // Skip goals whose target is not a real, plausible measurement — a legacy zero-baseline goal (e.g. a 20 Hz
+            // pitch target persisted by an older build) would otherwise render as a permanent 100 % bar.
+            foreach (var goal in goals.Where(g => !g.IsAchieved && IsPlausibleGoal(g)).Take(3))
             {
                 double current = goal.GoalType switch
                 {
@@ -183,6 +189,17 @@ public sealed partial class SmartCoachViewModel : ObservableObject
         }
         catch { HasProgressToGoal = false; }
     }
+
+    /// <summary>Whether a stored goal's target can have come from a real baseline. Guards against goals persisted by an
+    /// older build from an all-zero baseline (pitch 20 Hz, resonance 15, intonation 20), which render as a permanent
+    /// "100 % achieved" bar. Ranges mirror the engine's own caps (pitch ≤ 220 Hz, resonance ≤ 85).</summary>
+    private static bool IsPlausibleGoal(FemVoiceStudio.Data.SmartCoachGoal goal) => goal.GoalType switch
+    {
+        "pitch" => goal.TargetValue >= 100 && goal.TargetValue <= 220,
+        "resonance" => goal.TargetValue >= 20 && goal.TargetValue <= 85,
+        "intonation" => goal.TargetValue >= 25,
+        _ => goal.TargetValue > 0,
+    };
 
     // Coach messages (WPF SmartCoach): generate real motivational messages from the real data, then read the unread
     // ones. Also derive the building-baseline state (low baseline confidence). Guarded, best-effort.

@@ -365,7 +365,13 @@ namespace FemVoiceStudio.Services
             // Kun når ingen aktiv strain — ellers ville vi be brukeren presse pitch opp
             // mens helse-gaten ber om restitusjon. OG kun når stilen ikke peker mot en
             // lavere/varmere stemme (DarkFeminine/Androgynous).
-            if (!strainActive && !styleWantsLowerPitch)
+            // ==== DATA-GATE: et mål må bygge på en EKTE måling, ikke på en tom baseline ====
+            // En baseline uten reelle økter har 0 i alle komponenter. Uten denne porten ble det da lagret PERMANENTE
+            // mål med absurde måltall (pitch 0+20 = 20 Hz, resonans 15, intonasjon 20). Senere, når brukeren faktisk
+            // har data, hentes de samme aktive målene (så GenerateGoals kalles ikke på nytt) og fremdriften regnes som
+            // nåverdi/måltall → klemt til 100 % «mål nådd» for alltid. Det er oppdiktede tall presentert som ekte.
+            // Vi lager derfor kun mål for dimensjoner som HAR en reell måling; øvrige mål lages når dataene finnes.
+            if (!strainActive && !styleWantsLowerPitch && baseline.BaselinePitch > 0)
             {
                 goals.Add(new SmartCoachGoal
                 {
@@ -380,7 +386,7 @@ namespace FemVoiceStudio.Services
             }
             
             // Mål 2: Resonansforbedring (prioriteres klinisk)
-            if (baseline.BaselineResonanceScore < ResonancePriorityThreshold)
+            if (baseline.BaselineResonanceScore > 0 && baseline.BaselineResonanceScore < ResonancePriorityThreshold)
             {
                 goals.Add(new SmartCoachGoal
                 {
@@ -395,7 +401,7 @@ namespace FemVoiceStudio.Services
             }
             
             // Mål 3: Intonasjonsvariasjon
-            if (baseline.BaselineIntonation < 60)
+            if (baseline.BaselineIntonation > 0 && baseline.BaselineIntonation < 60)
             {
                 goals.Add(new SmartCoachGoal
                 {
