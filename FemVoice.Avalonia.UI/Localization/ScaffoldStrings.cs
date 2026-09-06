@@ -160,6 +160,17 @@ public static class ScaffoldStrings
         "SmartCoach_Scaffold_SessionsLabel",
         "SmartCoach_Scaffold_StreakLabel",
         "SmartCoach_TodayFocus",
+        // Perceived-voice mirror (dashboard headline: pitch + resonance → masculine/androgynous/feminine + next step).
+        // Translated across all overlay languages (ScaffoldTranslations); registered here as documented Avalonia-only keys.
+        "Dash_Perception_Heading",
+        "Dash_Perception_Explainer",
+        "Dash_Perception_PitchLabel",
+        "Perception_Feminine",
+        "Perception_Androgynous",
+        "Perception_Masculine",
+        "Perception_TipRaisePitch",
+        "Perception_TipBrighten",
+        "Perception_TipHold",
     };
 
     /// <summary>Keys with a trusted, culture-invariant translation already populated (no native review needed).</summary>

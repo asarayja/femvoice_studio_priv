@@ -67,6 +67,7 @@ internal static class Program
         if (args.Contains("--day-details-smoke")) return DayDetailsSmoke();
         if (args.Contains("--case-review-smoke")) return CaseReviewSmoke();
         if (args.Contains("--dashboard-resonance-smoke")) return DashboardResonanceSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--voice-perception-smoke")) return VoicePerceptionSmoke().GetAwaiter().GetResult();
         if (args.Contains("--session-analytics-smoke")) return SessionAnalyticsSmoke().GetAwaiter().GetResult();
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
@@ -741,6 +742,65 @@ internal static class Program
         }
         catch (Exception ex) { Console.WriteLine($"[dash-res] Dashboard resonance smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
         finally { Cleanup(); }
+    }
+
+    // Perceived-voice mirror: the pure estimator must land the documented bands for canonical inputs, a live synthetic
+    // session must surface a non-empty reading (label + band token + tip) while recording and clear it on stop, and the
+    // new visible keys must resolve to real English (overlay coverage across all languages is enforced separately by
+    // --avalonia-translation-contribution-smoke).
+    private static async Task<int> VoicePerceptionSmoke()
+    {
+        // (1) Pure estimator: canonical bands + transparent ingredient scores + weaker-lever hint.
+        var masc = global::FemVoiceStudio.Audio.VoicePerceptionEstimator.Estimate(120, 15);
+        var fem = global::FemVoiceStudio.Audio.VoicePerceptionEstimator.Estimate(215, 85);
+        var andro = global::FemVoiceStudio.Audio.VoicePerceptionEstimator.Estimate(175, 50);
+        var brightNeeded = global::FemVoiceStudio.Audio.VoicePerceptionEstimator.Estimate(200, 10);
+        bool estimatorOk =
+            masc.Band == global::FemVoiceStudio.Audio.VoicePerceptionBand.Masculine &&
+            fem.Band == global::FemVoiceStudio.Audio.VoicePerceptionBand.Feminine &&
+            fem.Hint == global::FemVoiceStudio.Audio.VoicePerceptionHint.HoldSteady &&
+            andro.Band == global::FemVoiceStudio.Audio.VoicePerceptionBand.Androgynous &&
+            brightNeeded.Hint == global::FemVoiceStudio.Audio.VoicePerceptionHint.BrightenResonance &&
+            fem.PitchScore == 100 && fem.Score is >= 0 and <= 100;
+
+        // (2) Localization: the new visible keys resolve to real English under the en overlay (not the Norwegian seed).
+        var prevCulture = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture;
+        bool localizationOk;
+        try
+        {
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");
+            localizationOk =
+                global::FemVoice.Avalonia.Localization.Localized.Get("Perception_Feminine", "Feminin") == "Feminine" &&
+                global::FemVoice.Avalonia.Localization.Localized.Get("Perception_Masculine", "Maskulin") == "Masculine" &&
+                global::FemVoice.Avalonia.Localization.Localized.Get("Dash_Perception_Heading", "x") == "How your voice reads now";
+        }
+        finally { global::FemVoice.Avalonia.Localization.Localized.CurrentCulture = prevCulture; }
+
+        // (3) Live: a voiced synthetic session surfaces a reading while recording and clears it on stop.
+        bool liveOk;
+        using (var vm = new MainDashboardViewModel(
+                   new SyntheticAudioCaptureService { BaseFrequency = 210, Mode = SyntheticAudioMode.StablePitch },
+                   new InlineUiDispatcher()))
+        {
+            await vm.StartCommand.ExecuteAsync(null);
+            await Task.Delay(1200);
+            bool duringOk = vm.HasPerception && vm.PerceptionLabel != "—" && vm.PerceptionLabel.Length > 0
+                            && vm.PerceptionScore is >= 0 and <= 100
+                            && (vm.PerceptionBand is "feminine" or "androgynous" or "masculine")
+                            && vm.PerceptionTip.Length > 0;
+            string labelWhileVoiced = vm.PerceptionLabel;
+            int scoreWhileVoiced = vm.PerceptionScore;
+            await vm.StopCommand.ExecuteAsync(null);
+            await Task.Delay(80);
+            bool clearedOk = !vm.HasPerception && vm.PerceptionLabel == "—" && vm.PerceptionBand == "none";
+            liveOk = duringOk && clearedOk;
+            Console.WriteLine($"[perception] live label='{labelWhileVoiced}' score={scoreWhileVoiced} band='{vm.PerceptionBand}' during={duringOk} cleared={clearedOk}");
+        }
+
+        bool ok = estimatorOk && localizationOk && liveOk;
+        Console.WriteLine($"[perception] estimator={estimatorOk} localization={localizationOk} live={liveOk}");
+        Console.WriteLine(ok ? "[perception] Voice-perception mirror smoke OK" : "[perception] Voice-perception mirror smoke FAIL");
+        return ok ? 0 : 1;
     }
 
     // Per-dimension VoiceIntelligence write-path (DSP foundation): a synthetic dashboard session must persist a
