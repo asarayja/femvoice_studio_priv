@@ -59,8 +59,9 @@ public partial class DiagnosticsViewModel : ObservableObject
         {
             var rows = new List<DiagnosticsStatusRow>
             {
-                new(Localized.Get("Diag_AppVersion", "Appversjon"),
-                    typeof(DiagnosticsViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.0.0"),
+                // The running app's version comes from the HEAD, not this shared library (which has no <Version> and
+                // would report the SDK default 1.0.0 — what users actually saw here).
+                new(Localized.Get("Diag_AppVersion", "Appversjon"), FemVoice.Avalonia.AppVersion.Current),
                 new(Localized.Get("Diag_OS", "Operativsystem"), System.Runtime.InteropServices.RuntimeInformation.OSDescription),
                 new(Localized.Get("Diag_Runtime", ".NET-kjøretid"), System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription),
                 new(Localized.Get("Diag_Arch", "Arkitektur"), System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString()),

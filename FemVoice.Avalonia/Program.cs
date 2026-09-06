@@ -2554,6 +2554,18 @@ internal static class Program
             && !string.IsNullOrWhiteSpace(diag.BuildDiagnosticsText(new DateTime(2026, 7, 19)));
         bool noDeferredWording = !diag.Intro.Contains("senere") && !diag.Intro.Contains("utsatt")
             && !diag.Intro.Contains("visning-bare");
+
+        // VERSION TRUTHFULNESS: the view-models live in the shared UI library, which has no <Version> and reports the
+        // SDK default 1.0.0 — so Diagnostics and Settings both showed "1.0.0" while the app was 0.1.6. Both must now
+        // report the HEAD's version. Asserted without hard-coding the number, so releases need no smoke edit.
+        string headVersion = global::FemVoice.Avalonia.AppVersion.Current;
+        var versionRow = diag.Status.FirstOrDefault(r => r.Label.Contains("versjon", StringComparison.OrdinalIgnoreCase)
+                                                     || r.Label.Contains("version", StringComparison.OrdinalIgnoreCase));
+        bool versionOk = headVersion != "1.0.0"
+                         && System.Text.RegularExpressions.Regex.IsMatch(headVersion, @"^\d+\.\d+\.\d+")
+                         && versionRow is not null && versionRow.Value == headVersion
+                         && new SettingsViewModel().VersionValue == headVersion;
+        Console.WriteLine($"[diag] version: head='{headVersion}' diagnosticsRow='{versionRow?.Value}' settingsAbout='{new SettingsViewModel().VersionValue}' ok={versionOk}");
         Console.WriteLine($"[diag] nav-implemented={navExists} onDiagnostics={onDiagnostics} statusRows={diag.Status.Count}");
         Console.WriteLine($"[diag] functional: notDisposable={notDisposable} statusOk={statusOk} actionsOk={actionsOk} noDeferredWording={noDeferredWording}");
 
@@ -2574,7 +2586,7 @@ internal static class Program
         Console.WriteLine($"[diag] Runtime->Diagnostics: ran={runtimeRan} disposed={runtimeDisposed} no-orphan-frames={noOrphanFrames}");
 
         bool ok = navExists && onDiagnostics && notDisposable && statusOk && actionsOk && noDeferredWording
-                  && runtimeRan && runtimeDisposed && noOrphanFrames;
+                  && versionOk && runtimeRan && runtimeDisposed && noOrphanFrames;
         Console.WriteLine(ok ? "[diag] Diagnostics smoke OK" : "[diag] Diagnostics smoke FAIL");
         return ok ? 0 : 1;
     }
