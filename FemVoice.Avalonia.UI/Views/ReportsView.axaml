@@ -53,7 +53,9 @@
       <Border Classes="card" IsVisible="{Binding HasHistory}">
         <StackPanel Spacing="6">
           <TextBlock Text="{Binding HistoryHeading}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}"/>
-          <ItemsControl ItemsSource="{Binding ExportRows}">
+          <TextBlock Text="{Binding HistoryTruncatedNote}" IsVisible="{Binding IsHistoryTruncated}" TextWrapping="Wrap"
+                     Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+          <ItemsControl ItemsSource="{Binding DisplayRows}">
             <ItemsControl.ItemTemplate>
               <DataTemplate DataType="vm:ReportExportRow">
                 <TextBlock Text="{Binding Display}" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"

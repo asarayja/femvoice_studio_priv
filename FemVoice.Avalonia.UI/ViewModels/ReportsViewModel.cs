@@ -86,7 +86,26 @@ public sealed class ReportsViewModel
 
     // ── Real report EXPORT (CSV / text of the saved sessions) ──────────────────────────────────────────────────
     /// <summary>Real per-session rows read from the DB, oldest→newest (empty with no DB / no sessions).</summary>
+    /// <summary>EVERY saved session, oldest first. This is what the summary is computed from and what the CSV/text
+    /// export writes — it must never be truncated, or the report quietly misrepresents the user's history.</summary>
     public IReadOnlyList<ReportExportRow> ExportRows { get; private set; } = Array.Empty<ReportExportRow>();
+
+    /// <summary>Newest <see cref="MaxDisplayedRows"/> rows for the on-screen list (newest first). The screen is capped
+    /// for rendering cost only; <see cref="ExportRows"/> stays complete.</summary>
+    public IReadOnlyList<ReportExportRow> DisplayRows { get; private set; } = Array.Empty<ReportExportRow>();
+
+    /// <summary>Rows rendered in the history card before it is truncated (export is never truncated).</summary>
+    public const int MaxDisplayedRows = 100;
+
+    /// <summary>True when the on-screen list shows fewer rows than exist — the UI says so rather than implying the
+    /// list is the whole history.</summary>
+    public bool IsHistoryTruncated => ExportRows.Count > DisplayRows.Count;
+
+    /// <summary>Explicit note shown when the list is truncated, so a cap is never silent.</summary>
+    public string HistoryTruncatedNote => string.Format(
+        Localized.Get("Reports_HistoryTruncatedFormat",
+            "Viser de {0} nyeste av {1} økter. Eksporten inneholder alle."),
+        DisplayRows.Count, ExportRows.Count);
     /// <summary>True when there is real session data to export (drives the enabled Export buttons).</summary>
     public bool CanExport => ExportRows.Count > 0;
     public string ExportLabel => Localized.Get("Reports_ExportCsv", "Eksporter CSV");
@@ -134,7 +153,12 @@ public sealed class ReportsViewModel
         if (database is null) return;
         try
         {
-            var sessions = database.GetRecentSessions(50);
+            // ALL saved sessions, not the newest 50. The summary claims to be a progress report — capping it made
+            // "Antall økter", the period, total time, averages and the best session silently describe only the tail of
+            // the user's history, and the CSV/text export (built from these same rows) dropped everything older with
+            // no indication. GetTrainingSessions compares ISO-8601 StartTime strings, so a MinValue lower bound is
+            // safe and simply means "from the beginning".
+            var sessions = database.GetTrainingSessions(DateTime.MinValue, DateTime.UtcNow.AddDays(1));
             if (sessions.Count == 0)
             {
                 HasPreview = true;
@@ -147,6 +171,8 @@ public sealed class ReportsViewModel
                 (int)Math.Round(s.DurationSeconds / 60.0),
                 s.AveragePitch,
                 s.OverallScore)).ToList();
+            // Screen list: newest first, capped for rendering cost only. Export keeps every row.
+            DisplayRows = ExportRows.Reverse().Take(MaxDisplayedRows).ToList();
             var pitches = ordered.Select(s => s.AveragePitch).Where(p => p > 0).ToList();
             double avgPitch = pitches.Count > 0 ? pitches.Average() : 0;
             double avgScore = ordered.Average(s => s.OverallScore);
