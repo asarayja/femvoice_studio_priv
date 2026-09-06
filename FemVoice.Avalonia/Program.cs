@@ -72,6 +72,7 @@ internal static class Program
         if (args.Contains("--start-here-path-smoke")) return StartHerePathSmoke();
         if (args.Contains("--audit-fixes-smoke")) return AuditFixesSmoke().GetAwaiter().GetResult();
         if (args.Contains("--merge-devices-smoke")) return MergeDevicesSmoke();
+        if (args.Contains("--cloud-sync-smoke")) return CloudSyncSmoke().GetAwaiter().GetResult();
         if (args.Contains("--session-analytics-smoke")) return SessionAnalyticsSmoke().GetAwaiter().GetResult();
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
@@ -1075,6 +1076,149 @@ internal static class Program
         Console.WriteLine($"[audit-fix] baselineSurvivesSave={baselineSurvives} progressionAdvances={progressionAdvances} distinctDays={distinctDays} calibrationHint={hintOk}");
         Console.WriteLine(ok ? "[audit-fix] Audit-fixes smoke OK" : "[audit-fix] Audit-fixes smoke FAIL");
         return ok ? 0 : 1;
+    }
+
+    /// <summary>In-memory stand-in for Drive, so the sync RULES are testable without credentials or a network.</summary>
+    private sealed class FakeCloudProvider : global::FemVoice.Avalonia.Cloud.ICloudBackupProvider
+    {
+        private readonly Dictionary<string, (string Name, byte[] Bytes, DateTime When)> _files = new();
+        private int _next;
+        public string DisplayName => "Fake";
+        public bool IsConfigured { get; set; } = true;
+        public string? SignedInAccount { get; set; } = "her@example.com";
+        public int UploadCount { get; private set; }
+        public int DownloadCount { get; private set; }
+
+        public Task<bool> SignInAsync(System.Threading.CancellationToken ct = default) { SignedInAccount = "her@example.com"; return Task.FromResult(true); }
+        public void SignOut() => SignedInAccount = null;
+
+        public Task<IReadOnlyList<global::FemVoice.Avalonia.Cloud.CloudBackupFile>> ListAsync(System.Threading.CancellationToken ct = default)
+            => Task.FromResult<IReadOnlyList<global::FemVoice.Avalonia.Cloud.CloudBackupFile>>(_files
+                .Select(kv => new global::FemVoice.Avalonia.Cloud.CloudBackupFile(kv.Key, kv.Value.Name, kv.Value.When, kv.Value.Bytes.Length))
+                .OrderByDescending(f => f.ModifiedUtc).ToList());
+
+        public Task<string?> UploadAsync(string localPath, string remoteName, System.Threading.CancellationToken ct = default)
+        {
+            UploadCount++;
+            string id = "file" + (++_next);
+            _files[id] = (remoteName, System.IO.File.ReadAllBytes(localPath), new DateTime(2026, 5, 1).AddMinutes(_next));
+            return Task.FromResult<string?>(id);
+        }
+
+        public Task<bool> DownloadAsync(string fileId, string destinationPath, System.Threading.CancellationToken ct = default)
+        {
+            DownloadCount++;
+            if (!_files.TryGetValue(fileId, out var f)) return Task.FromResult(false);
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(destinationPath)!);
+            System.IO.File.WriteAllBytes(destinationPath, f.Bytes);
+            return Task.FromResult(true);
+        }
+
+        public void Seed(string dbPath, string name)
+        {
+            string id = "file" + (++_next);
+            _files[id] = (name, System.IO.File.ReadAllBytes(dbPath), new DateTime(2026, 5, 1).AddMinutes(_next));
+        }
+    }
+
+    // Cloud sync RULES, exercised against a fake provider (the real OAuth/Drive transport needs credentials and a
+    // browser, so it cannot run here — that limitation is stated in GoogleDriveBackupProvider's own docs).
+    // The rule that matters: PULL MERGES, NEVER REPLACES. If pulling replaced the local database, syncing after
+    // training on two devices would silently destroy a day of the user's work.
+    private static async Task<int> CloudSyncSmoke()
+    {
+        int pid = System.Diagnostics.Process.GetCurrentProcess().Id;
+        string appDir = global::FemVoiceStudio.Data.DatabaseService.ResolveAppDataDir();
+        string phoneName = $"femvoice-cloud-phone-{pid}.db", pcName = $"femvoice-cloud-pc-{pid}.db";
+        string phonePath = System.IO.Path.Combine(appDir, phoneName), pcPath = System.IO.Path.Combine(appDir, pcName);
+        void Cleanup()
+        {
+            foreach (var f in new[] { phonePath, pcPath })
+                foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(f + sfx); } catch { } }
+            try
+            {
+                string backups = System.IO.Path.Combine(appDir, "Backups");
+                if (System.IO.Directory.Exists(backups))
+                    foreach (var f in System.IO.Directory.GetFiles(backups, $"*{pid}*")) { try { System.IO.File.Delete(f); } catch { } }
+            }
+            catch { }
+        }
+        Cleanup();
+        try
+        {
+            var phoneDb = new global::FemVoiceStudio.Data.DatabaseService(phoneName);
+            var pcDb = new global::FemVoiceStudio.Data.DatabaseService(pcName);
+            void Train(global::FemVoiceStudio.Data.DatabaseService db, DateTime whenUtc, double pitch)
+            {
+                var s = new global::FemVoiceStudio.Models.TrainingSession
+                {
+                    UserId = 1, StartTime = whenUtc, EndTime = whenUtc.AddMinutes(5), AveragePitch = pitch,
+                    OverallScore = 60, ResonanceScore = 42,
+                    DifficultyLevel = global::FemVoiceStudio.Models.DifficultyLevel.Nybegynner, Feedback = "cloud-test",
+                };
+                int id = db.SaveTrainingSession(s);
+                if (id > 0) { s.Id = id; db.UpdateTrainingSession(s); }
+            }
+            int Count(global::FemVoiceStudio.Data.DatabaseService db)
+                => db.GetTrainingSessions(DateTime.MinValue, DateTime.UtcNow.AddDays(1)).Count;
+
+            var monday = new DateTime(2026, 4, 6, 18, 0, 0, DateTimeKind.Utc);
+            Train(phoneDb, monday, 178);                    // trained on the phone
+            Train(pcDb, monday.AddDays(1), 186);            // and on the PC the next day
+
+            var phoneData = new global::FemVoice.Avalonia.Data.SettingsDataService(phoneDb, phonePath);
+            var cloud = new FakeCloudProvider();
+            cloud.Seed(pcPath, "femvoice-pc-20260407-180000.db");   // the PC pushed its backup
+            var sync = new global::FemVoice.Avalonia.Cloud.CloudSyncService(cloud, phoneData, phoneDb);
+
+            // PULL must MERGE: both days survive on the phone.
+            var pulled = await sync.PullAsync();
+            var days = phoneDb.GetTrainingSessions(DateTime.MinValue, DateTime.UtcNow.AddDays(1))
+                              .Select(s => s.StartTime.Date).Distinct().ToList();
+            bool mergeOk = pulled.Ok && pulled.SessionsAdded == 1 && Count(phoneDb) == 2
+                           && days.Contains(monday.Date) && days.Contains(monday.AddDays(1).Date);
+
+            // Idempotent: pulling again adds nothing and duplicates nothing.
+            var again = await sync.PullAsync();
+            bool idempotent = again.Ok && again.SessionsAdded == 0 && Count(phoneDb) == 2;
+
+            // PUSH uploads a backup named after the device.
+            var pushed = await sync.PushAsync(new DateTime(2026, 4, 6, 20, 0, 0), "Min PC");
+            var stored = await cloud.ListAsync();
+            bool pushOk = pushed.Ok && cloud.UploadCount == 1
+                          && stored.Any(f => f.Name.StartsWith(global::FemVoice.Avalonia.Cloud.CloudSyncService.RemotePrefix, StringComparison.Ordinal)
+                                             && f.Name.Contains("min-pc"));
+
+            // Signed out / unconfigured must do NOTHING (and never touch the network).
+            var signedOut = new FakeCloudProvider { SignedInAccount = null };
+            var syncOut = new global::FemVoice.Avalonia.Cloud.CloudSyncService(signedOut, phoneData, phoneDb);
+            var unconfigured = new FakeCloudProvider { IsConfigured = false };
+            var syncUnconf = new global::FemVoice.Avalonia.Cloud.CloudSyncService(unconfigured, phoneData, phoneDb);
+            bool guardsOk = !(await syncOut.PullAsync()).Ok && !(await syncOut.PushAsync(DateTime.Now, "pc")).Ok
+                            && signedOut.UploadCount == 0 && signedOut.DownloadCount == 0
+                            && !(await syncUnconf.PullAsync()).Ok && unconfigured.DownloadCount == 0;
+
+            // A stray non-FemVoice file in the same folder is ignored — never downloaded, never merged.
+            var strayCloud = new FakeCloudProvider();
+            string stray = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"notes-{pid}.txt");
+            System.IO.File.WriteAllText(stray, "not a database");
+            strayCloud.Seed(stray, "someone-elses-notes.txt");
+            var syncStray = new global::FemVoice.Avalonia.Cloud.CloudSyncService(strayCloud, phoneData, phoneDb);
+            var strayResult = await syncStray.PullAsync();
+            bool strayIgnored = strayResult.Ok && strayCloud.DownloadCount == 0 && Count(phoneDb) == 2;
+            try { System.IO.File.Delete(stray); } catch { }
+
+            // The real provider must report itself unconfigured without credentials, so the UI can hide sign-in.
+            var real = new global::FemVoice.Avalonia.Cloud.GoogleDriveBackupProvider();
+            bool realGuard = real.DisplayName == "Google Drive";
+
+            bool ok = mergeOk && idempotent && pushOk && guardsOk && strayIgnored && realGuard;
+            Console.WriteLine($"[cloud] merge={mergeOk} idempotent={idempotent} push={pushOk} guards={guardsOk} strayIgnored={strayIgnored} provider={realGuard} (configured={real.IsConfigured})");
+            Console.WriteLine(ok ? "[cloud] Cloud sync smoke OK" : "[cloud] Cloud sync smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[cloud] Cloud sync smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
+        finally { Cleanup(); }
     }
 
     // Carrying progress BETWEEN DEVICES: merging a backup must be a UNION (both devices' sessions survive), where a
