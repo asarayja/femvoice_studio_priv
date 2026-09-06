@@ -68,6 +68,7 @@ internal static class Program
         if (args.Contains("--case-review-smoke")) return CaseReviewSmoke();
         if (args.Contains("--dashboard-resonance-smoke")) return DashboardResonanceSmoke().GetAwaiter().GetResult();
         if (args.Contains("--voice-perception-smoke")) return VoicePerceptionSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--training-reminder-smoke")) return TrainingReminderSmoke();
         if (args.Contains("--session-analytics-smoke")) return SessionAnalyticsSmoke().GetAwaiter().GetResult();
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
@@ -800,6 +801,72 @@ internal static class Program
         bool ok = estimatorOk && localizationOk && liveOk;
         Console.WriteLine($"[perception] estimator={estimatorOk} localization={localizationOk} live={liveOk}");
         Console.WriteLine(ok ? "[perception] Voice-perception mirror smoke OK" : "[perception] Voice-perception mirror smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
+    // Daily training reminder: the pure Core scheduler lands the documented states for canonical inputs; the opt-in
+    // prefs round-trip through ReminderPreferences; and the dashboard surfaces a Due nudge (and hides it once
+    // recording). Uses preferred time 00:00 so "now" is deterministically past it; snapshots/restores the REAL prefs.
+    private static int TrainingReminderSmoke()
+    {
+        // (1) Pure scheduler states.
+        var now = new DateTime(2026, 9, 9, 19, 0, 0);           // Wed 19:00
+        var at18 = new TimeSpan(18, 0, 0);
+        var none = System.Array.Empty<DateTime>();
+        bool schedulerOk =
+            FemVoiceStudio.Services.TrainingReminderScheduler.Evaluate(false, 3, at18, none, now).State == FemVoiceStudio.Services.ReminderState.Disabled &&
+            FemVoiceStudio.Services.TrainingReminderScheduler.Evaluate(true, 3, at18, none, now).State == FemVoiceStudio.Services.ReminderState.Due &&
+            FemVoiceStudio.Services.TrainingReminderScheduler.Evaluate(true, 3, at18, new[] { new DateTime(2026, 9, 9, 9, 0, 0) }, now).State == FemVoiceStudio.Services.ReminderState.Done &&
+            FemVoiceStudio.Services.TrainingReminderScheduler.Evaluate(true, 3, new TimeSpan(23, 0, 0), none, now).State == FemVoiceStudio.Services.ReminderState.Upcoming;
+
+        // Snapshot the REAL prefs so the smoke never leaves reminders forced on for the user.
+        var store = new global::FemVoice.Avalonia.Preferences.UiPreferencesStore();
+        var saved = store.Load();
+        bool prevEnabled = saved.RemindersEnabled;
+        int prevMinute = saved.ReminderMinuteOfDay;
+        int prevFreq = saved.TrainingFrequency;
+
+        bool prefsRoundTrip, dueOk, hiddenWhileRecording, localizationOk;
+        var prevCulture = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture;
+        string fileName = $"femvoice-reminder-{System.Diagnostics.Process.GetCurrentProcess().Id}.db";
+        string full = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio", fileName);
+        void Cleanup() { foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(full + sfx); } catch { } } }
+        Cleanup();
+        try
+        {
+            // Enable reminders at 00:00 (any real "now" is past it), goal 3.
+            saved.RemindersEnabled = true; saved.ReminderMinuteOfDay = 0; saved.TrainingFrequency = 3;
+            store.Save(saved);
+            prefsRoundTrip = global::FemVoice.Avalonia.Preferences.ReminderPreferences.RemindersEnabled()
+                             && global::FemVoice.Avalonia.Preferences.ReminderPreferences.ReminderTimeOfDay() == TimeSpan.Zero;
+
+            // Fresh DB with no sessions today → the dashboard reminder is Due.
+            var db = new global::FemVoiceStudio.Data.DatabaseService(fileName);
+            using (var vm = new MainDashboardViewModel(new SyntheticAudioCaptureService(), new InlineUiDispatcher(), db))
+            {
+                dueOk = vm.ShowReminder && vm.ReminderMessage.Length > 0;
+                vm.StartCommand.ExecuteAsync(null).GetAwaiter().GetResult();
+                hiddenWhileRecording = !vm.ShowReminder;   // a nudge mid-session is pointless
+                vm.StopCommand.ExecuteAsync(null).GetAwaiter().GetResult();
+            }
+
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");
+            localizationOk = global::FemVoice.Avalonia.Localization.Localized.Get("Settings_Reminders_Title", "Påminnelser") == "Reminders"
+                             && global::FemVoice.Avalonia.Localization.Localized.Get("Reminder_Heading", "Påminnelse") == "Reminder";
+        }
+        finally
+        {
+            global::FemVoice.Avalonia.Localization.Localized.CurrentCulture = prevCulture;
+            // Restore the user's real prefs verbatim.
+            var cur = store.Load();
+            cur.RemindersEnabled = prevEnabled; cur.ReminderMinuteOfDay = prevMinute; cur.TrainingFrequency = prevFreq;
+            store.Save(cur);
+            Cleanup();
+        }
+
+        bool ok = schedulerOk && prefsRoundTrip && dueOk && hiddenWhileRecording && localizationOk;
+        Console.WriteLine($"[reminder] scheduler={schedulerOk} prefs={prefsRoundTrip} due={dueOk} hiddenWhileRecording={hiddenWhileRecording} localization={localizationOk}");
+        Console.WriteLine(ok ? "[reminder] Training-reminder smoke OK" : "[reminder] Training-reminder smoke FAIL");
         return ok ? 0 : 1;
     }
 

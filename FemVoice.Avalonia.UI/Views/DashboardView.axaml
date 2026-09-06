@@ -13,6 +13,23 @@
                    Text="{loc:Tr Key=Dash_Subtitle, Fallback='Trykk Start for live tonehøyde, stabilitet og helse fra mikrofonen.'}"/>
       </StackPanel>
 
+      <!-- Daily training reminder (in-app nudge): a humane "today's session is still owed" banner. Only shown when the
+           opt-in reminder is Due (past the preferred time, none logged today, weekly goal not yet met). Short copy +
+           a direct Start so it's one tap from the intent. -->
+      <Border Classes="card" IsVisible="{Binding ShowReminder}" BorderBrush="{DynamicResource ShellSuccessBrush}"
+              Background="{DynamicResource ShellChartBackgroundBrush}">
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+            <TextBlock Text="{Binding ReminderHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellSuccessBrush}" FontSize="13"/>
+            <TextBlock Text="{Binding ReminderMessage}" TextWrapping="Wrap" FontSize="15" Foreground="{DynamicResource ShellBodyTextBrush}"/>
+            <TextBlock Text="{Binding ReminderStreakNote}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource ShellMutedBrush}"
+                       IsVisible="{Binding ReminderStreakNote, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+          </StackPanel>
+          <Button Grid.Column="1" Content="{loc:Tr Key=UI_StartSession, Fallback='Start Økt'}" Classes="primary"
+                  Command="{Binding StartCommand}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+        </Grid>
+      </Border>
+
       <!-- Session controls (full width). Mid-session this collapses to just Stop + a "Tar opp" indicator so the
            reading text + pitch graph below are what you see. -->
       <Border x:Name="SessionCard" Classes="card">

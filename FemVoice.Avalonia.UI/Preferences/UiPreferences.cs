@@ -67,6 +67,15 @@ public sealed class UiPreferences
     /// calibrated → the meter uses fixed provisional anchors. Persisted local preference.</summary>
     public double ResonanceBaselineCentroidHz { get; set; }
 
+    /// <summary>Daily training reminder: whether the in-app "today's session" nudge is on. Opt-in (default off).
+    /// The reminder is derived (no background timer) from the weekly goal + real session history by
+    /// <c>TrainingReminderScheduler</c>. Persisted local preference.</summary>
+    public bool RemindersEnabled { get; set; }
+
+    /// <summary>Preferred reminder time as minutes since local midnight (0–1439). Default 1080 = 18:00. The nudge only
+    /// surfaces at/after this time on a day a session is still owed. Persisted local preference.</summary>
+    public int ReminderMinuteOfDay { get; set; } = 1080;
+
     /// <summary>Schema version for forward-compatible parsing of the local file.</summary>
     public int Version { get; set; } = 1;
 
@@ -98,6 +107,8 @@ public sealed class UiPreferences
             ResearchSharingConsent = ResearchSharingConsent,
             // Guard against absurd/corrupt values; a plausible voiced-speech centroid is a few hundred–few thousand Hz.
             ResonanceBaselineCentroidHz = ResonanceBaselineCentroidHz is >= 100 and <= 4000 ? ResonanceBaselineCentroidHz : 0,
+            RemindersEnabled = RemindersEnabled,
+            ReminderMinuteOfDay = ReminderMinuteOfDay is >= 0 and <= 1439 ? ReminderMinuteOfDay : 1080,
             Version = Version <= 0 ? 1 : Version,
         };
     }

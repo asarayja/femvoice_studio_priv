@@ -23,6 +23,13 @@ internal static class ScaffoldTranslations
     {
         ["en"] = new()
         {
+            ["Reminder_Heading"] = "Reminder",
+            ["Reminder_DueMessage"] = "Today's session is still to do — a few minutes is enough.",
+            ["Reminder_StreakNote"] = "Keep your {0}-day streak going.",
+            ["Settings_Reminders_Title"] = "Reminders",
+            ["Settings_Reminders_Enable"] = "Daily reminder to practice",
+            ["Settings_Reminders_Time"] = "Remind me at",
+            ["Settings_Reminders_Note"] = "Shows a friendly reminder on the home screen when today's session is still owed — only after your chosen time, never twice the same day, and never once you've hit your weekly goal.",
             ["Dash_Perception_Heading"] = "How your voice reads now",
             ["Dash_Perception_Explainer"] = "An estimate from pitch + resonance — not a verdict. Calibrate your microphone for a more precise reading.",
             ["Dash_Perception_PitchLabel"] = "Pitch",
@@ -83,6 +90,13 @@ internal static class ScaffoldTranslations
         },
         ["sv"] = new()
         {
+            ["Reminder_Heading"] = "Påminnelse",
+            ["Reminder_DueMessage"] = "Dagens pass återstår — några minuter räcker.",
+            ["Reminder_StreakNote"] = "Behåll din svit på {0} dagar.",
+            ["Settings_Reminders_Title"] = "Påminnelser",
+            ["Settings_Reminders_Enable"] = "Daglig påminnelse om att öva",
+            ["Settings_Reminders_Time"] = "Påminn mig kl.",
+            ["Settings_Reminders_Note"] = "Visar en vänlig påminnelse på startsidan när dagens pass återstår — bara efter vald tid, aldrig två gånger samma dag, och aldrig när du nått ditt veckomål.",
             ["Dash_Perception_Heading"] = "Så här uppfattas din röst nu",
             ["Dash_Perception_Explainer"] = "En uppskattning utifrån tonhöjd + resonans — inte en dom. Kalibrera mikrofonen för en mer exakt avläsning.",
             ["Dash_Perception_PitchLabel"] = "Tonhöjd",
@@ -116,6 +130,13 @@ internal static class ScaffoldTranslations
         },
         ["da"] = new()
         {
+            ["Reminder_Heading"] = "Påmindelse",
+            ["Reminder_DueMessage"] = "Dagens session mangler stadig — få minutter er nok.",
+            ["Reminder_StreakNote"] = "Behold din stime på {0} dage.",
+            ["Settings_Reminders_Title"] = "Påmindelser",
+            ["Settings_Reminders_Enable"] = "Daglig påmindelse om at øve",
+            ["Settings_Reminders_Time"] = "Mind mig om kl.",
+            ["Settings_Reminders_Note"] = "Viser en venlig påmindelse på forsiden, når dagens session stadig mangler — kun efter det valgte tidspunkt, aldrig to gange samme dag, og aldrig når du har nået dit ugemål.",
             ["Dash_Perception_Heading"] = "Sådan opfattes din stemme nu",
             ["Dash_Perception_Explainer"] = "Et skøn ud fra tonehøjde + resonans — ikke en facit. Kalibrer mikrofonen for en mere præcis aflæsning.",
             ["Dash_Perception_PitchLabel"] = "Tonehøjde",
@@ -149,6 +170,13 @@ internal static class ScaffoldTranslations
         },
         ["fi"] = new()
         {
+            ["Reminder_Heading"] = "Muistutus",
+            ["Reminder_DueMessage"] = "Tämän päivän harjoitus on vielä tekemättä — muutama minuutti riittää.",
+            ["Reminder_StreakNote"] = "Pidä {0} päivän putkesi käynnissä.",
+            ["Settings_Reminders_Title"] = "Muistutukset",
+            ["Settings_Reminders_Enable"] = "Päivittäinen muistutus harjoittelusta",
+            ["Settings_Reminders_Time"] = "Muistuta klo",
+            ["Settings_Reminders_Note"] = "Näyttää ystävällisen muistutuksen etusivulla, kun päivän harjoitus on vielä tekemättä — vain valitun ajan jälkeen, ei koskaan kahdesti samana päivänä eikä silloin, kun olet saavuttanut viikkotavoitteesi.",
             ["Dash_Perception_Heading"] = "Näin äänesi kuulostaa nyt",
             ["Dash_Perception_Explainer"] = "Arvio äänenkorkeuden ja resonanssin perusteella — ei lopullinen tuomio. Kalibroi mikrofoni tarkempaa lukemaa varten.",
             ["Dash_Perception_PitchLabel"] = "Äänenkorkeus",
@@ -182,6 +210,13 @@ internal static class ScaffoldTranslations
         },
         ["de"] = new()
         {
+            ["Reminder_Heading"] = "Erinnerung",
+            ["Reminder_DueMessage"] = "Die heutige Übung steht noch aus — ein paar Minuten genügen.",
+            ["Reminder_StreakNote"] = "Halte deine Serie von {0} Tagen aufrecht.",
+            ["Settings_Reminders_Title"] = "Erinnerungen",
+            ["Settings_Reminders_Enable"] = "Tägliche Erinnerung zum Üben",
+            ["Settings_Reminders_Time"] = "Erinnere mich um",
+            ["Settings_Reminders_Note"] = "Zeigt eine freundliche Erinnerung auf der Startseite, wenn die heutige Übung noch aussteht — nur nach deiner gewählten Zeit, nie zweimal am selben Tag und nie, wenn du dein Wochenziel erreicht hast.",
             ["Dash_Perception_Heading"] = "So wirkt deine Stimme jetzt",
             ["Dash_Perception_Explainer"] = "Eine Schätzung aus Tonhöhe + Resonanz — kein Urteil. Kalibriere dein Mikrofon für eine genauere Einschätzung.",
             ["Dash_Perception_PitchLabel"] = "Tonhöhe",
@@ -215,6 +250,13 @@ internal static class ScaffoldTranslations
         },
         ["fr"] = new()
         {
+            ["Reminder_Heading"] = "Rappel",
+            ["Reminder_DueMessage"] = "La séance du jour reste à faire — quelques minutes suffisent.",
+            ["Reminder_StreakNote"] = "Maintenez votre série de {0} jours.",
+            ["Settings_Reminders_Title"] = "Rappels",
+            ["Settings_Reminders_Enable"] = "Rappel quotidien pour s'entraîner",
+            ["Settings_Reminders_Time"] = "Me rappeler à",
+            ["Settings_Reminders_Note"] = "Affiche un rappel amical sur l'accueil quand la séance du jour reste à faire — uniquement après l'heure choisie, jamais deux fois le même jour, et jamais une fois votre objectif hebdomadaire atteint.",
             ["Dash_Perception_Heading"] = "Voici comment votre voix est perçue",
             ["Dash_Perception_Explainer"] = "Une estimation basée sur la hauteur + la résonance — pas un verdict. Calibrez votre micro pour une lecture plus précise.",
             ["Dash_Perception_PitchLabel"] = "Hauteur",
@@ -248,6 +290,13 @@ internal static class ScaffoldTranslations
         },
         ["es"] = new()
         {
+            ["Reminder_Heading"] = "Recordatorio",
+            ["Reminder_DueMessage"] = "La sesión de hoy está pendiente — con unos minutos basta.",
+            ["Reminder_StreakNote"] = "Mantén tu racha de {0} días.",
+            ["Settings_Reminders_Title"] = "Recordatorios",
+            ["Settings_Reminders_Enable"] = "Recordatorio diario para practicar",
+            ["Settings_Reminders_Time"] = "Recuérdame a las",
+            ["Settings_Reminders_Note"] = "Muestra un recordatorio amable en la pantalla de inicio cuando la sesión de hoy sigue pendiente — solo después de la hora elegida, nunca dos veces el mismo día, y nunca cuando ya has alcanzado tu meta semanal.",
             ["Dash_Perception_Heading"] = "Así se percibe tu voz ahora",
             ["Dash_Perception_Explainer"] = "Una estimación a partir del tono + la resonancia, no un veredicto. Calibra el micrófono para una lectura más precisa.",
             ["Dash_Perception_PitchLabel"] = "Tono",
@@ -281,6 +330,13 @@ internal static class ScaffoldTranslations
         },
         ["pt"] = new()
         {
+            ["Reminder_Heading"] = "Lembrete",
+            ["Reminder_DueMessage"] = "A sessão de hoje ainda falta — poucos minutos bastam.",
+            ["Reminder_StreakNote"] = "Mantenha sua sequência de {0} dias.",
+            ["Settings_Reminders_Title"] = "Lembretes",
+            ["Settings_Reminders_Enable"] = "Lembrete diário para praticar",
+            ["Settings_Reminders_Time"] = "Lembrar-me às",
+            ["Settings_Reminders_Note"] = "Mostra um lembrete amigável na tela inicial quando a sessão de hoje ainda falta — apenas após o horário escolhido, nunca duas vezes no mesmo dia e nunca depois de você atingir sua meta semanal.",
             ["Dash_Perception_Heading"] = "Como sua voz soa agora",
             ["Dash_Perception_Explainer"] = "Uma estimativa com base no tom + ressonância — não um veredito. Calibre o microfone para uma leitura mais precisa.",
             ["Dash_Perception_PitchLabel"] = "Tom",
@@ -314,6 +370,13 @@ internal static class ScaffoldTranslations
         },
         ["it"] = new()
         {
+            ["Reminder_Heading"] = "Promemoria",
+            ["Reminder_DueMessage"] = "La sessione di oggi è ancora da fare — bastano pochi minuti.",
+            ["Reminder_StreakNote"] = "Mantieni la tua serie di {0} giorni.",
+            ["Settings_Reminders_Title"] = "Promemoria",
+            ["Settings_Reminders_Enable"] = "Promemoria giornaliero per esercitarti",
+            ["Settings_Reminders_Time"] = "Ricordamelo alle",
+            ["Settings_Reminders_Note"] = "Mostra un promemoria amichevole nella schermata iniziale quando la sessione di oggi è ancora da fare — solo dopo l'orario scelto, mai due volte lo stesso giorno e mai una volta raggiunto l'obiettivo settimanale.",
             ["Dash_Perception_Heading"] = "Ecco come suona la tua voce ora",
             ["Dash_Perception_Explainer"] = "Una stima basata su intonazione + risonanza, non un verdetto. Calibra il microfono per una lettura più precisa.",
             ["Dash_Perception_PitchLabel"] = "Intonazione",
@@ -347,6 +410,13 @@ internal static class ScaffoldTranslations
         },
         ["nl"] = new()
         {
+            ["Reminder_Heading"] = "Herinnering",
+            ["Reminder_DueMessage"] = "De sessie van vandaag moet nog — een paar minuten is genoeg.",
+            ["Reminder_StreakNote"] = "Houd je reeks van {0} dagen vast.",
+            ["Settings_Reminders_Title"] = "Herinneringen",
+            ["Settings_Reminders_Enable"] = "Dagelijkse herinnering om te oefenen",
+            ["Settings_Reminders_Time"] = "Herinner me om",
+            ["Settings_Reminders_Note"] = "Toont een vriendelijke herinnering op het startscherm wanneer de sessie van vandaag nog openstaat — alleen na je gekozen tijd, nooit twee keer op dezelfde dag en nooit zodra je je weekdoel hebt gehaald.",
             ["Dash_Perception_Heading"] = "Zo klinkt je stem nu",
             ["Dash_Perception_Explainer"] = "Een schatting op basis van toonhoogte + resonantie — geen oordeel. Kalibreer je microfoon voor een nauwkeurigere meting.",
             ["Dash_Perception_PitchLabel"] = "Toonhoogte",
@@ -380,6 +450,13 @@ internal static class ScaffoldTranslations
         },
         ["pl"] = new()
         {
+            ["Reminder_Heading"] = "Przypomnienie",
+            ["Reminder_DueMessage"] = "Dzisiejsza sesja wciąż czeka — wystarczy kilka minut.",
+            ["Reminder_StreakNote"] = "Utrzymaj swoją serię {0} dni.",
+            ["Settings_Reminders_Title"] = "Przypomnienia",
+            ["Settings_Reminders_Enable"] = "Codzienne przypomnienie o ćwiczeniu",
+            ["Settings_Reminders_Time"] = "Przypomnij mi o",
+            ["Settings_Reminders_Note"] = "Pokazuje przyjazne przypomnienie na ekranie głównym, gdy dzisiejsza sesja wciąż czeka — tylko po wybranej godzinie, nigdy dwa razy tego samego dnia i nigdy po osiągnięciu celu tygodniowego.",
             ["Dash_Perception_Heading"] = "Tak brzmi teraz Twój głos",
             ["Dash_Perception_Explainer"] = "Szacunek na podstawie wysokości + rezonansu — nie wyrok. Skalibruj mikrofon, aby uzyskać dokładniejszy odczyt.",
             ["Dash_Perception_PitchLabel"] = "Wysokość",
@@ -413,6 +490,13 @@ internal static class ScaffoldTranslations
         },
         ["cs"] = new()
         {
+            ["Reminder_Heading"] = "Připomenutí",
+            ["Reminder_DueMessage"] = "Dnešní lekce ještě čeká — stačí pár minut.",
+            ["Reminder_StreakNote"] = "Udrž si sérii {0} dní.",
+            ["Settings_Reminders_Title"] = "Připomenutí",
+            ["Settings_Reminders_Enable"] = "Denní připomenutí k procvičování",
+            ["Settings_Reminders_Time"] = "Připomeň mi v",
+            ["Settings_Reminders_Note"] = "Zobrazí přátelské připomenutí na úvodní obrazovce, když dnešní lekce ještě čeká — jen po zvoleném čase, nikdy dvakrát za den a nikdy po dosažení týdenního cíle.",
             ["Dash_Perception_Heading"] = "Takto teď zní tvůj hlas",
             ["Dash_Perception_Explainer"] = "Odhad na základě výšky + rezonance — ne verdikt. Zkalibruj mikrofon pro přesnější čtení.",
             ["Dash_Perception_PitchLabel"] = "Výška",
@@ -446,6 +530,13 @@ internal static class ScaffoldTranslations
         },
         ["hu"] = new()
         {
+            ["Reminder_Heading"] = "Emlékeztető",
+            ["Reminder_DueMessage"] = "A mai gyakorlat még hátravan — pár perc is elég.",
+            ["Reminder_StreakNote"] = "Tartsd meg a(z) {0} napos sorozatod.",
+            ["Settings_Reminders_Title"] = "Emlékeztetők",
+            ["Settings_Reminders_Enable"] = "Napi emlékeztető a gyakorlásra",
+            ["Settings_Reminders_Time"] = "Emlékeztess ekkor:",
+            ["Settings_Reminders_Note"] = "Barátságos emlékeztetőt jelenít meg a kezdőképernyőn, amikor a mai gyakorlat még hátravan — csak a választott idő után, soha nem kétszer ugyanazon a napon, és soha, ha már elérted a heti célodat.",
             ["Dash_Perception_Heading"] = "Így hangzik most a hangod",
             ["Dash_Perception_Explainer"] = "Becslés a hangmagasság + rezonancia alapján — nem ítélet. Kalibráld a mikrofont a pontosabb leolvasáshoz.",
             ["Dash_Perception_PitchLabel"] = "Hangmagasság",
@@ -479,6 +570,13 @@ internal static class ScaffoldTranslations
         },
         ["ro"] = new()
         {
+            ["Reminder_Heading"] = "Memento",
+            ["Reminder_DueMessage"] = "Sesiunea de azi mai rămâne — câteva minute sunt de ajuns.",
+            ["Reminder_StreakNote"] = "Menține-ți seria de {0} zile.",
+            ["Settings_Reminders_Title"] = "Mementouri",
+            ["Settings_Reminders_Enable"] = "Memento zilnic pentru exersare",
+            ["Settings_Reminders_Time"] = "Amintește-mi la",
+            ["Settings_Reminders_Note"] = "Afișează un memento prietenos pe ecranul principal când sesiunea de azi mai rămâne — doar după ora aleasă, niciodată de două ori în aceeași zi și niciodată după ce ți-ai atins obiectivul săptămânal.",
             ["Dash_Perception_Heading"] = "Așa este percepută vocea ta acum",
             ["Dash_Perception_Explainer"] = "O estimare pe baza înălțimii + rezonanței — nu un verdict. Calibrează microfonul pentru o citire mai precisă.",
             ["Dash_Perception_PitchLabel"] = "Înălțime",
@@ -512,6 +610,13 @@ internal static class ScaffoldTranslations
         },
         ["hr"] = new()
         {
+            ["Reminder_Heading"] = "Podsjetnik",
+            ["Reminder_DueMessage"] = "Današnja vježba još je pred tobom — dovoljno je nekoliko minuta.",
+            ["Reminder_StreakNote"] = "Zadrži svoj niz od {0} dana.",
+            ["Settings_Reminders_Title"] = "Podsjetnici",
+            ["Settings_Reminders_Enable"] = "Dnevni podsjetnik za vježbanje",
+            ["Settings_Reminders_Time"] = "Podsjeti me u",
+            ["Settings_Reminders_Note"] = "Prikazuje ljubazan podsjetnik na početnom zaslonu kad današnja vježba još čeka — samo nakon odabranog vremena, nikad dvaput istog dana i nikad kad dostigneš svoj tjedni cilj.",
             ["Dash_Perception_Heading"] = "Ovako sada zvuči tvoj glas",
             ["Dash_Perception_Explainer"] = "Procjena na temelju visine + rezonancije — ne konačna ocjena. Kalibriraj mikrofon za precizniji rezultat.",
             ["Dash_Perception_PitchLabel"] = "Visina",
@@ -545,6 +650,13 @@ internal static class ScaffoldTranslations
         },
         ["tr"] = new()
         {
+            ["Reminder_Heading"] = "Hatırlatma",
+            ["Reminder_DueMessage"] = "Bugünkü seans hâlâ bekliyor — birkaç dakika yeterli.",
+            ["Reminder_StreakNote"] = "{0} günlük serini sürdür.",
+            ["Settings_Reminders_Title"] = "Hatırlatmalar",
+            ["Settings_Reminders_Enable"] = "Alıştırma için günlük hatırlatma",
+            ["Settings_Reminders_Time"] = "Bana şu saatte hatırlat:",
+            ["Settings_Reminders_Note"] = "Bugünkü seans hâlâ beklerken ana ekranda dostça bir hatırlatma gösterir — yalnızca seçtiğin saatten sonra, asla aynı gün iki kez ve haftalık hedefine ulaştığında asla.",
             ["Dash_Perception_Heading"] = "Sesin şu anda böyle algılanıyor",
             ["Dash_Perception_Explainer"] = "Perde + rezonansa dayalı bir tahmin — kesin bir yargı değil. Daha hassas bir okuma için mikrofonunu kalibre et.",
             ["Dash_Perception_PitchLabel"] = "Perde",
@@ -578,6 +690,13 @@ internal static class ScaffoldTranslations
         },
         ["uk"] = new()
         {
+            ["Reminder_Heading"] = "Нагадування",
+            ["Reminder_DueMessage"] = "Сьогоднішнє заняття ще попереду — вистачить кількох хвилин.",
+            ["Reminder_StreakNote"] = "Збережи свою серію у {0} днів.",
+            ["Settings_Reminders_Title"] = "Нагадування",
+            ["Settings_Reminders_Enable"] = "Щоденне нагадування про тренування",
+            ["Settings_Reminders_Time"] = "Нагадати мені о",
+            ["Settings_Reminders_Note"] = "Показує доброзичливе нагадування на головному екрані, коли сьогоднішнє заняття ще попереду — лише після вибраного часу, ніколи двічі того самого дня і ніколи після досягнення тижневої мети.",
             ["Dash_Perception_Heading"] = "Так зараз звучить твій голос",
             ["Dash_Perception_Explainer"] = "Оцінка на основі висоти + резонансу — не остаточний вирок. Відкалібруй мікрофон для точнішого зчитування.",
             ["Dash_Perception_PitchLabel"] = "Висота",
@@ -611,6 +730,13 @@ internal static class ScaffoldTranslations
         },
         ["el"] = new()
         {
+            ["Reminder_Heading"] = "Υπενθύμιση",
+            ["Reminder_DueMessage"] = "Η σημερινή συνεδρία εκκρεμεί — λίγα λεπτά αρκούν.",
+            ["Reminder_StreakNote"] = "Κράτησε το σερί σου των {0} ημερών.",
+            ["Settings_Reminders_Title"] = "Υπενθυμίσεις",
+            ["Settings_Reminders_Enable"] = "Καθημερινή υπενθύμιση για εξάσκηση",
+            ["Settings_Reminders_Time"] = "Υπενθύμισέ μου στις",
+            ["Settings_Reminders_Note"] = "Εμφανίζει μια φιλική υπενθύμιση στην αρχική οθόνη όταν η σημερινή συνεδρία εκκρεμεί — μόνο μετά την ώρα που επέλεξες, ποτέ δύο φορές την ίδια μέρα και ποτέ αφού πετύχεις τον εβδομαδιαίο στόχο σου.",
             ["Dash_Perception_Heading"] = "Έτσι ακούγεται η φωνή σου τώρα",
             ["Dash_Perception_Explainer"] = "Μια εκτίμηση με βάση το ύψος + την αντήχηση — όχι ετυμηγορία. Βαθμονόμησε το μικρόφωνο για πιο ακριβή μέτρηση.",
             ["Dash_Perception_PitchLabel"] = "Ύψος",
@@ -644,6 +770,13 @@ internal static class ScaffoldTranslations
         },
         ["ar"] = new()
         {
+            ["Reminder_Heading"] = "تذكير",
+            ["Reminder_DueMessage"] = "جلسة اليوم لا تزال متبقية — بضع دقائق تكفي.",
+            ["Reminder_StreakNote"] = "حافظ على سلسلتك المكوّنة من {0} أيام.",
+            ["Settings_Reminders_Title"] = "التذكيرات",
+            ["Settings_Reminders_Enable"] = "تذكير يومي بالتمرين",
+            ["Settings_Reminders_Time"] = "ذكّرني الساعة",
+            ["Settings_Reminders_Note"] = "يعرض تذكيراً ودّياً على الشاشة الرئيسية عندما تكون جلسة اليوم متبقية — فقط بعد الوقت الذي اخترته، وليس مرتين في اليوم نفسه أبداً، وليس بعد بلوغ هدفك الأسبوعي.",
             ["Dash_Perception_Heading"] = "هكذا يُسمع صوتك الآن",
             ["Dash_Perception_Explainer"] = "تقدير بناءً على طبقة الصوت + الرنين — وليس حكماً نهائياً. عاير الميكروفون للحصول على قراءة أدق.",
             ["Dash_Perception_PitchLabel"] = "طبقة الصوت",
