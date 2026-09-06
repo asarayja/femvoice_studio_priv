@@ -103,6 +103,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         RefreshProgression();
         RefreshReminder();
         RefreshStartHere();
+        RefreshCalibrationHint();
     }
 
     // Recent session start times in LOCAL time (for the reminder scheduler): from the real DB when available, else the
@@ -156,6 +157,34 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     // daily) rather than duplicating it; steps aside once the path is complete or while progression is safety-locked.
     /// <summary>Set by the shell: opens a catalog exercise by id (dashboard→exercise). Null in headless/tests.</summary>
     public Action<int>? OpenExerciseRequested { get; set; }
+
+    // ── "Calibrate your microphone" hint ──────────────────────────────────────────────────────────────────────────
+    // Calibration was never suggested anywhere, yet the resonance/training meter is scaled to the user's own relaxed
+    // voice and falls back to fixed anchors without it. (The perceived-voice mirror deliberately does NOT depend on
+    // calibration — see VoicePerceptionEstimator — so this hint is about meter accuracy, and says exactly that.)
+    /// <summary>Set by the shell: opens the mic-calibration wizard. Null in headless/tests. Assigning it re-evaluates
+    /// the hint, because the shell wires this AFTER constructing the dashboard — evaluating only in the constructor
+    /// would leave the hint permanently hidden.</summary>
+    public Action? OpenMicCalibrationRequested
+    {
+        get => _openMicCalibrationRequested;
+        set { _openMicCalibrationRequested = value; RefreshCalibrationHint(); }
+    }
+    private Action? _openMicCalibrationRequested;
+    [ObservableProperty] private bool _showCalibrationHint;
+    public string CalibrationHintHeading => Localized.Get("Dash_CalibrateHint_Heading", "Kalibrer mikrofonen");
+    public string CalibrationHintBody => Localized.Get("Dash_CalibrateHint_Body",
+        "Resonansmåleren blir mer presis når den kjenner din vanlige stemme. Tar under ett minutt.");
+    public string CalibrationHintButton => Localized.Get("Dash_CalibrateHint_Button", "Kalibrer nå");
+
+    [RelayCommand]
+    private void OpenMicCalibration() => _openMicCalibrationRequested?.Invoke();
+
+    /// <summary>Show the hint only while the user has no stored resonance baseline, and never mid-session.</summary>
+    private void RefreshCalibrationHint()
+        => ShowCalibrationHint = !IsRecording
+                                 && _openMicCalibrationRequested is not null
+                                 && FemVoice.Avalonia.Preferences.CapturePreferences.ResonanceBaselineCentroidHz() is null;
     [ObservableProperty] private bool _showStartHere;
     [ObservableProperty] private string _startHereStage = "";      // "Steg 1 av 3 · Grunnlag"
     [ObservableProperty] private string _startHereNext = "";       // localized next-exercise name
@@ -429,8 +458,9 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         _voiceMonitor.Start(SampleRate);   // hear-own-voice (opt-in; no-op when off)
         _sessionStart = System.DateTime.Now;
         IsRecording = true;
-        ShowReminder = false;   // a nudge mid-session is pointless; re-evaluated after the session is saved
-        ShowStartHere = false;  // likewise the path card; re-evaluated after the session is saved
+        ShowReminder = false;        // a nudge mid-session is pointless; re-evaluated after the session is saved
+        ShowStartHere = false;       // likewise the path card; re-evaluated after the session is saved
+        ShowCalibrationHint = false; // and the calibration hint
         CurrentFeedbackMessage = Localized.Get("Dash_Listening", "Lytter …");
     }
 

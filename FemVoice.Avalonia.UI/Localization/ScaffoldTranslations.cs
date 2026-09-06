@@ -23,6 +23,9 @@ internal static class ScaffoldTranslations
     {
         ["en"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "Calibrate your microphone",
+            ["Dash_CalibrateHint_Body"] = "The resonance meter gets more accurate once it knows your ordinary voice. Takes under a minute.",
+            ["Dash_CalibrateHint_Button"] = "Calibrate now",
             ["Reports_HistoryTruncatedFormat"] = "Showing the {0} most recent of {1} sessions. The export contains all of them.",
             ["StartHere_Heading"] = "Start here",
             ["StartHere_StageFormat"] = "Step {0} of {1} · {2}",
@@ -99,6 +102,9 @@ internal static class ScaffoldTranslations
         },
         ["sv"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "Kalibrera mikrofonen",
+            ["Dash_CalibrateHint_Body"] = "Resonansmätaren blir mer exakt när den känner din vanliga röst. Tar under en minut.",
+            ["Dash_CalibrateHint_Button"] = "Kalibrera nu",
             ["Reports_HistoryTruncatedFormat"] = "Visar de {0} senaste av {1} pass. Exporten innehåller alla.",
             ["StartHere_Heading"] = "Börja här",
             ["StartHere_StageFormat"] = "Steg {0} av {1} · {2}",
@@ -148,6 +154,9 @@ internal static class ScaffoldTranslations
         },
         ["da"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "Kalibrer mikrofonen",
+            ["Dash_CalibrateHint_Body"] = "Resonansmåleren bliver mere præcis, når den kender din almindelige stemme. Tager under et minut.",
+            ["Dash_CalibrateHint_Button"] = "Kalibrer nu",
             ["Reports_HistoryTruncatedFormat"] = "Viser de {0} nyeste af {1} sessioner. Eksporten indeholder dem alle.",
             ["StartHere_Heading"] = "Start her",
             ["StartHere_StageFormat"] = "Trin {0} af {1} · {2}",
@@ -197,6 +206,9 @@ internal static class ScaffoldTranslations
         },
         ["fi"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "Kalibroi mikrofoni",
+            ["Dash_CalibrateHint_Body"] = "Resonanssimittari tarkentuu, kun se tuntee tavallisen äänesi. Kestää alle minuutin.",
+            ["Dash_CalibrateHint_Button"] = "Kalibroi nyt",
             ["Reports_HistoryTruncatedFormat"] = "Näytetään {0} uusinta {1} harjoituksesta. Vienti sisältää kaikki.",
             ["StartHere_Heading"] = "Aloita tästä",
             ["StartHere_StageFormat"] = "Vaihe {0}/{1} · {2}",
@@ -246,6 +258,9 @@ internal static class ScaffoldTranslations
         },
         ["de"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "Mikrofon kalibrieren",
+            ["Dash_CalibrateHint_Body"] = "Die Resonanzanzeige wird genauer, wenn sie deine gewöhnliche Stimme kennt. Dauert unter einer Minute.",
+            ["Dash_CalibrateHint_Button"] = "Jetzt kalibrieren",
             ["Reports_HistoryTruncatedFormat"] = "Zeigt die {0} neuesten von {1} Sitzungen. Der Export enthält alle.",
             ["StartHere_Heading"] = "Hier starten",
             ["StartHere_StageFormat"] = "Schritt {0} von {1} · {2}",
@@ -295,6 +310,9 @@ internal static class ScaffoldTranslations
         },
         ["fr"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "Calibrez votre micro",
+            ["Dash_CalibrateHint_Body"] = "Le mesureur de résonance gagne en précision une fois qu'il connaît votre voix ordinaire. Moins d'une minute.",
+            ["Dash_CalibrateHint_Button"] = "Calibrer maintenant",
             ["Reports_HistoryTruncatedFormat"] = "Affiche les {0} séances les plus récentes sur {1}. L'export les contient toutes.",
             ["StartHere_Heading"] = "Commencer ici",
             ["StartHere_StageFormat"] = "Étape {0} sur {1} · {2}",
@@ -344,6 +362,9 @@ internal static class ScaffoldTranslations
         },
         ["es"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "Calibra tu micrófono",
+            ["Dash_CalibrateHint_Body"] = "El medidor de resonancia gana precisión cuando conoce tu voz habitual. Menos de un minuto.",
+            ["Dash_CalibrateHint_Button"] = "Calibrar ahora",
             ["Reports_HistoryTruncatedFormat"] = "Mostrando las {0} sesiones más recientes de {1}. La exportación las incluye todas.",
             ["StartHere_Heading"] = "Empieza aquí",
             ["StartHere_StageFormat"] = "Paso {0} de {1} · {2}",
@@ -393,6 +414,9 @@ internal static class ScaffoldTranslations
         },
         ["pt"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "Calibre o microfone",
+            ["Dash_CalibrateHint_Body"] = "O medidor de ressonância fica mais preciso quando conhece sua voz habitual. Leva menos de um minuto.",
+            ["Dash_CalibrateHint_Button"] = "Calibrar agora",
             ["Reports_HistoryTruncatedFormat"] = "Mostrando as {0} sessões mais recentes de {1}. A exportação inclui todas.",
             ["StartHere_Heading"] = "Comece aqui",
             ["StartHere_StageFormat"] = "Etapa {0} de {1} · {2}",
@@ -442,6 +466,9 @@ internal static class ScaffoldTranslations
         },
         ["it"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "Calibra il microfono",
+            ["Dash_CalibrateHint_Body"] = "Il misuratore di risonanza diventa più preciso quando conosce la tua voce abituale. Meno di un minuto.",
+            ["Dash_CalibrateHint_Button"] = "Calibra ora",
             ["Reports_HistoryTruncatedFormat"] = "Mostra le {0} sessioni più recenti su {1}. L'esportazione le contiene tutte.",
             ["StartHere_Heading"] = "Inizia qui",
             ["StartHere_StageFormat"] = "Passo {0} di {1} · {2}",
@@ -491,6 +518,9 @@ internal static class ScaffoldTranslations
         },
         ["nl"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "Kalibreer je microfoon",
+            ["Dash_CalibrateHint_Body"] = "De resonantiemeter wordt nauwkeuriger zodra hij je gewone stem kent. Duurt minder dan een minuut.",
+            ["Dash_CalibrateHint_Button"] = "Nu kalibreren",
             ["Reports_HistoryTruncatedFormat"] = "Toont de {0} nieuwste van {1} sessies. De export bevat ze allemaal.",
             ["StartHere_Heading"] = "Begin hier",
             ["StartHere_StageFormat"] = "Stap {0} van {1} · {2}",
@@ -540,6 +570,9 @@ internal static class ScaffoldTranslations
         },
         ["pl"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "Skalibruj mikrofon",
+            ["Dash_CalibrateHint_Body"] = "Miernik rezonansu jest dokładniejszy, gdy zna Twój zwykły głos. Zajmuje mniej niż minutę.",
+            ["Dash_CalibrateHint_Button"] = "Kalibruj teraz",
             ["Reports_HistoryTruncatedFormat"] = "Pokazuje {0} najnowszych z {1} sesji. Eksport zawiera wszystkie.",
             ["StartHere_Heading"] = "Zacznij tutaj",
             ["StartHere_StageFormat"] = "Krok {0} z {1} · {2}",
@@ -589,6 +622,9 @@ internal static class ScaffoldTranslations
         },
         ["cs"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "Zkalibruj mikrofon",
+            ["Dash_CalibrateHint_Body"] = "Měřič rezonance je přesnější, když zná tvůj běžný hlas. Trvá to necelou minutu.",
+            ["Dash_CalibrateHint_Button"] = "Kalibrovat nyní",
             ["Reports_HistoryTruncatedFormat"] = "Zobrazuje {0} nejnovějších z {1} lekcí. Export obsahuje všechny.",
             ["StartHere_Heading"] = "Začni zde",
             ["StartHere_StageFormat"] = "Krok {0} z {1} · {2}",
@@ -638,6 +674,9 @@ internal static class ScaffoldTranslations
         },
         ["hu"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "Kalibráld a mikrofont",
+            ["Dash_CalibrateHint_Body"] = "A rezonanciamérő pontosabb lesz, ha ismeri a szokásos hangodat. Kevesebb mint egy perc.",
+            ["Dash_CalibrateHint_Button"] = "Kalibrálás most",
             ["Reports_HistoryTruncatedFormat"] = "A(z) {1} alkalomból a {0} legutóbbi látható. Az exportálás mindet tartalmazza.",
             ["StartHere_Heading"] = "Kezdd itt",
             ["StartHere_StageFormat"] = "{0}. lépés / {1} · {2}",
@@ -687,6 +726,9 @@ internal static class ScaffoldTranslations
         },
         ["ro"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "Calibrează microfonul",
+            ["Dash_CalibrateHint_Body"] = "Indicatorul de rezonanță devine mai precis când îți cunoaște vocea obișnuită. Durează sub un minut.",
+            ["Dash_CalibrateHint_Button"] = "Calibrează acum",
             ["Reports_HistoryTruncatedFormat"] = "Afișează cele mai recente {0} din {1} sesiuni. Exportul le conține pe toate.",
             ["StartHere_Heading"] = "Începe aici",
             ["StartHere_StageFormat"] = "Pasul {0} din {1} · {2}",
@@ -736,6 +778,9 @@ internal static class ScaffoldTranslations
         },
         ["hr"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "Kalibriraj mikrofon",
+            ["Dash_CalibrateHint_Body"] = "Mjerač rezonancije postaje precizniji kad zna tvoj uobičajeni glas. Traje manje od minute.",
+            ["Dash_CalibrateHint_Button"] = "Kalibriraj sada",
             ["Reports_HistoryTruncatedFormat"] = "Prikazuje {0} najnovijih od {1} vježbi. Izvoz sadrži sve.",
             ["StartHere_Heading"] = "Počni ovdje",
             ["StartHere_StageFormat"] = "Korak {0} od {1} · {2}",
@@ -785,6 +830,9 @@ internal static class ScaffoldTranslations
         },
         ["tr"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "Mikrofonunu kalibre et",
+            ["Dash_CalibrateHint_Body"] = "Rezonans ölçer, her zamanki sesini tanıdığında daha isabetli olur. Bir dakikadan kısa sürer.",
+            ["Dash_CalibrateHint_Button"] = "Şimdi kalibre et",
             ["Reports_HistoryTruncatedFormat"] = "{1} seanstan en yeni {0} tanesi gösteriliyor. Dışa aktarma hepsini içerir.",
             ["StartHere_Heading"] = "Buradan başla",
             ["StartHere_StageFormat"] = "Adım {0} / {1} · {2}",
@@ -834,6 +882,9 @@ internal static class ScaffoldTranslations
         },
         ["uk"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "Відкалібруй мікрофон",
+            ["Dash_CalibrateHint_Body"] = "Вимірювач резонансу стає точнішим, коли знає твій звичайний голос. Займе менше хвилини.",
+            ["Dash_CalibrateHint_Button"] = "Калібрувати зараз",
             ["Reports_HistoryTruncatedFormat"] = "Показано {0} найновіших із {1} занять. Експорт містить усі.",
             ["StartHere_Heading"] = "Почни тут",
             ["StartHere_StageFormat"] = "Крок {0} з {1} · {2}",
@@ -883,6 +934,9 @@ internal static class ScaffoldTranslations
         },
         ["el"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "Βαθμονόμησε το μικρόφωνο",
+            ["Dash_CalibrateHint_Body"] = "Ο μετρητής αντήχησης γίνεται πιο ακριβής όταν γνωρίζει τη συνηθισμένη σου φωνή. Λιγότερο από ένα λεπτό.",
+            ["Dash_CalibrateHint_Button"] = "Βαθμονόμηση τώρα",
             ["Reports_HistoryTruncatedFormat"] = "Εμφανίζονται οι {0} πιο πρόσφατες από {1} συνεδρίες. Η εξαγωγή τις περιέχει όλες.",
             ["StartHere_Heading"] = "Ξεκίνα εδώ",
             ["StartHere_StageFormat"] = "Βήμα {0} από {1} · {2}",
@@ -932,6 +986,9 @@ internal static class ScaffoldTranslations
         },
         ["ar"] = new()
         {
+            ["Dash_CalibrateHint_Heading"] = "عاير الميكروفون",
+            ["Dash_CalibrateHint_Body"] = "يصبح مقياس الرنين أدق عندما يعرف صوتك المعتاد. يستغرق أقل من دقيقة.",
+            ["Dash_CalibrateHint_Button"] = "عاير الآن",
             ["Reports_HistoryTruncatedFormat"] = "يتم عرض أحدث {0} من أصل {1} جلسة. التصدير يحتوي عليها جميعاً.",
             ["StartHere_Heading"] = "ابدأ هنا",
             ["StartHere_StageFormat"] = "الخطوة {0} من {1} · {2}",

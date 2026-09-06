@@ -63,6 +63,8 @@ public partial class ShellViewModel : ObservableObject
         // depends on the dashboard, never the reverse, so no DI cycle). Null in headless smokes that build the
         // dashboard standalone.
         _dashboard.OpenExerciseRequested = OpenExerciseById;
+        // Same callback idiom: lets the dashboard's "calibrate your microphone" hint open the wizard.
+        _dashboard.OpenMicCalibrationRequested = () => _showMicCalibrationCommand.Execute(null);
         // Truthful audio status via the approved capture abstraction (read-only; never starts capture). The injected
         // backend is the real-when-available cross-platform one (ALSA/winmm); fall back to synthetic only when no
         // service is injected (headless/tests).
