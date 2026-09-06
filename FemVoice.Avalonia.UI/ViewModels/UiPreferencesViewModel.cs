@@ -38,6 +38,7 @@ public partial class UiPreferencesViewModel : ObservableObject
 
         MicDeviceOptions = EnumerateMicDevices();
         RefreshBackups();
+        InitCloud(database);
 
         var p = _store.Load();
         _theme = p.Theme;
@@ -320,6 +321,85 @@ public partial class UiPreferencesViewModel : ObservableObject
         if (SelectedBackup is null) { DataStatus = NoBackupsLabel; return; }
         ConfirmRestore = false; ConfirmClear = false;
         DataStatus = _data.Merge(SelectedBackup.FilePath).Message;
+    }
+
+    // ── Cloud sync (Google Drive appDataFolder) ───────────────────────────────────────────────────────────────────
+    // Hidden entirely unless the build has real OAuth credentials (see GoogleClientConfig): a sign-in button that can
+    // only fail with "invalid_client" is worse than no button. Pull MERGES — see CloudSyncService.
+    private FemVoice.Avalonia.Cloud.CloudSyncService? _cloud;
+
+    private void InitCloud(FemVoiceStudio.Data.IDatabaseService? database)
+    {
+        try
+        {
+            var provider = new FemVoice.Avalonia.Cloud.GoogleDriveBackupProvider();
+            _cloud = new FemVoice.Avalonia.Cloud.CloudSyncService(provider, _data, database);
+            CloudAvailable = provider.IsConfigured;
+            CloudAccount = provider.SignedInAccount ?? "";
+        }
+        catch { CloudAvailable = false; }   // never let cloud setup break the Settings page
+    }
+
+    [ObservableProperty] private bool _cloudAvailable;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSignedInToCloud))]
+    private string _cloudAccount = "";
+    [ObservableProperty] private string _cloudStatus = "";
+    [ObservableProperty] private bool _cloudBusy;
+
+    public bool IsSignedInToCloud => !string.IsNullOrEmpty(CloudAccount);
+    public string CloudHeading => Localized.Get("Settings_Cloud_Title", "Synkronisering mellom enheter");
+    public string CloudNote => Localized.Get("Settings_Cloud_Note",
+        "Lagrer sikkerhetskopier i en skjult app-mappe i din egen Google Drive. Nedlasting slår sammen økter — ingenting overskrives.");
+    public string CloudSignInLabel => Localized.Get("Settings_Cloud_SignIn", "Logg inn med Google");
+    public string CloudSignOutLabel => Localized.Get("Settings_Cloud_SignOut", "Logg ut");
+    public string CloudPushLabel => Localized.Get("Settings_Cloud_Push", "Last opp");
+    public string CloudPullLabel => Localized.Get("Settings_Cloud_Pull", "Hent ned og slå sammen");
+
+    [RelayCommand]
+    private async Task CloudSignIn()
+    {
+        if (_cloud is null) return;
+        CloudBusy = true;
+        try
+        {
+            bool ok = await _cloud.Provider.SignInAsync().ConfigureAwait(true);
+            CloudAccount = _cloud.Provider.SignedInAccount ?? "";
+            CloudStatus = ok
+                ? string.Format(Localized.Get("Settings_Cloud_SignedInFormat", "Logget inn som {0}."), CloudAccount)
+                : Localized.Get("Settings_Cloud_SignInFailed", "Innlogging ble avbrutt eller feilet.");
+        }
+        catch (Exception ex) { CloudStatus = ex.Message; }
+        finally { CloudBusy = false; }
+    }
+
+    [RelayCommand]
+    private void CloudSignOut()
+    {
+        if (_cloud is null) return;
+        _cloud.Provider.SignOut();
+        CloudAccount = "";
+        CloudStatus = Localized.Get("Settings_Cloud_SignedOut", "Logget ut på denne enheten.");
+    }
+
+    [RelayCommand]
+    private async Task CloudPush()
+    {
+        if (_cloud is null) return;
+        CloudBusy = true;
+        try { CloudStatus = (await _cloud.PushAsync(DateTime.Now, Environment.MachineName).ConfigureAwait(true)).Message; }
+        catch (Exception ex) { CloudStatus = ex.Message; }
+        finally { CloudBusy = false; RefreshBackups(); }
+    }
+
+    [RelayCommand]
+    private async Task CloudPull()
+    {
+        if (_cloud is null) return;
+        CloudBusy = true;
+        try { CloudStatus = (await _cloud.PullAsync().ConfigureAwait(true)).Message; }
+        catch (Exception ex) { CloudStatus = ex.Message; }
+        finally { CloudBusy = false; }
     }
 
     public string MergeLabel => Localized.Get("Settings_MergeBackup", "Slå sammen valgt");

@@ -197,6 +197,13 @@ public static class ScaffoldStrings
         // Non-destructive merge of a backup (carry progress between devices).
         "Settings_MergeBackup",
         "Settings_MergeNote",
+        // Cloud sync (Google Drive appDataFolder) — hidden unless credentials are configured.
+        "Settings_Cloud_Title",
+        "Settings_Cloud_Note",
+        "Settings_Cloud_SignIn",
+        "Settings_Cloud_SignOut",
+        "Settings_Cloud_Push",
+        "Settings_Cloud_Pull",
     };
 
     /// <summary>Keys with a trusted, culture-invariant translation already populated (no native review needed).</summary>

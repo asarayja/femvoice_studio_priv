@@ -1212,7 +1212,33 @@ internal static class Program
             var real = new global::FemVoice.Avalonia.Cloud.GoogleDriveBackupProvider();
             bool realGuard = real.DisplayName == "Google Drive";
 
-            bool ok = mergeOk && idempotent && pushOk && guardsOk && strayIgnored && realGuard;
+            // SETTINGS UI GUARD: with no google_client.json the whole cloud section must be hidden — never a button
+            // that can only fail with "invalid_client". With credentials present it must appear. Uses a temp file at
+            // the real config path, snapshotting whatever is already there.
+            string cfgPath = global::FemVoice.Avalonia.Cloud.GoogleClientConfig.ConfigPath;
+            string? savedCfg = System.IO.File.Exists(cfgPath) ? System.IO.File.ReadAllText(cfgPath) : null;
+            bool uiGuardOk;
+            try
+            {
+                if (savedCfg is not null) System.IO.File.Delete(cfgPath);
+                bool hiddenWithoutCreds = !new UiPreferencesViewModel(database: phoneDb).CloudAvailable;
+
+                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(cfgPath)!);
+                System.IO.File.WriteAllText(cfgPath,
+                    "{\"client_id\":\"1234-test.apps.googleusercontent.com\",\"client_secret\":\"GOCSPX-test\"}");
+                var withCreds = new UiPreferencesViewModel(database: phoneDb);
+                bool shownWithCreds = withCreds.CloudAvailable && !withCreds.IsSignedInToCloud;
+
+                uiGuardOk = hiddenWithoutCreds && shownWithCreds;
+                Console.WriteLine($"[cloud] settings UI: hiddenWithoutCreds={hiddenWithoutCreds} shownWithCreds={shownWithCreds}");
+            }
+            finally
+            {
+                try { if (savedCfg is null) System.IO.File.Delete(cfgPath); else System.IO.File.WriteAllText(cfgPath, savedCfg); }
+                catch { /* restore is best-effort */ }
+            }
+
+            bool ok = mergeOk && idempotent && pushOk && guardsOk && strayIgnored && realGuard && uiGuardOk;
             Console.WriteLine($"[cloud] merge={mergeOk} idempotent={idempotent} push={pushOk} guards={guardsOk} strayIgnored={strayIgnored} provider={realGuard} (configured={real.IsConfigured})");
             Console.WriteLine(ok ? "[cloud] Cloud sync smoke OK" : "[cloud] Cloud sync smoke FAIL");
             return ok ? 0 : 1;

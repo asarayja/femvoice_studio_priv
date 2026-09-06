@@ -116,6 +116,25 @@
           <TextBlock Text="{Binding MergeNote}" TextWrapping="Wrap" IsVisible="{Binding HasBackups}"
                      Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
 
+          <!-- Cloud sync. Hidden entirely unless real OAuth credentials are present, so there is never a button
+               that can only fail. See docs/GOOGLE_DRIVE_SYNC_SETUP.md. -->
+          <StackPanel Spacing="6" Margin="0,10,0,0" IsVisible="{Binding CloudAvailable}">
+            <TextBlock Text="{Binding CloudHeading}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource ShellAccentBrush}"/>
+            <TextBlock Text="{Binding CloudNote}" TextWrapping="Wrap" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+            <WrapPanel>
+              <Button Classes="secondary" Content="{Binding CloudSignInLabel}" Command="{Binding CloudSignInCommand}"
+                      IsVisible="{Binding !IsSignedInToCloud}" IsEnabled="{Binding !CloudBusy}" Margin="0,0,8,8"/>
+              <Button Classes="secondary" Content="{Binding CloudPushLabel}" Command="{Binding CloudPushCommand}"
+                      IsVisible="{Binding IsSignedInToCloud}" IsEnabled="{Binding !CloudBusy}" Margin="0,0,8,8"/>
+              <Button Classes="secondary" Content="{Binding CloudPullLabel}" Command="{Binding CloudPullCommand}"
+                      IsVisible="{Binding IsSignedInToCloud}" IsEnabled="{Binding !CloudBusy}" Margin="0,0,8,8"/>
+              <Button Classes="secondary" Content="{Binding CloudSignOutLabel}" Command="{Binding CloudSignOutCommand}"
+                      IsVisible="{Binding IsSignedInToCloud}" IsEnabled="{Binding !CloudBusy}" Margin="0,0,8,8"/>
+            </WrapPanel>
+            <TextBlock Text="{Binding CloudStatus}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}" FontSize="12"
+                       IsVisible="{Binding CloudStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+          </StackPanel>
+
           <!-- Inline confirmation for the destructive actions -->
           <Border BorderBrush="{DynamicResource ShellWarningBrush}" BorderThickness="1" CornerRadius="6" Padding="10"
                   IsVisible="{Binding ConfirmRestore}">

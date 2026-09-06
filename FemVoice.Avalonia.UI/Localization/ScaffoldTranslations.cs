@@ -23,6 +23,12 @@ internal static class ScaffoldTranslations
     {
         ["en"] = new()
         {
+            ["Settings_Cloud_Title"] = "Sync between devices",
+            ["Settings_Cloud_Note"] = "Stores backups in a hidden app folder in your own Google Drive. Downloading merges sessions — nothing is overwritten.",
+            ["Settings_Cloud_SignIn"] = "Sign in with Google",
+            ["Settings_Cloud_SignOut"] = "Sign out",
+            ["Settings_Cloud_Push"] = "Upload",
+            ["Settings_Cloud_Pull"] = "Download and merge",
             ["Settings_MergeBackup"] = "Merge selected",
             ["Settings_MergeNote"] = "Brings the sessions from a backup into this device without deleting anything — use it to carry your progress over from another device.",
             ["Dash_CalibrateHint_Heading"] = "Calibrate your microphone",
@@ -104,6 +110,12 @@ internal static class ScaffoldTranslations
         },
         ["sv"] = new()
         {
+            ["Settings_Cloud_Title"] = "Synk mellan enheter",
+            ["Settings_Cloud_Note"] = "Lagrar säkerhetskopior i en dold appmapp i din egen Google Drive. Nedladdning slår ihop pass — inget skrivs över.",
+            ["Settings_Cloud_SignIn"] = "Logga in med Google",
+            ["Settings_Cloud_SignOut"] = "Logga ut",
+            ["Settings_Cloud_Push"] = "Ladda upp",
+            ["Settings_Cloud_Pull"] = "Hämta och slå ihop",
             ["Settings_MergeBackup"] = "Slå ihop vald",
             ["Settings_MergeNote"] = "Hämtar passen från en säkerhetskopia till den här enheten utan att radera något — använd den för att ta med dig framstegen från en annan enhet.",
             ["Dash_CalibrateHint_Heading"] = "Kalibrera mikrofonen",
@@ -158,6 +170,12 @@ internal static class ScaffoldTranslations
         },
         ["da"] = new()
         {
+            ["Settings_Cloud_Title"] = "Synk mellem enheder",
+            ["Settings_Cloud_Note"] = "Gemmer sikkerhedskopier i en skjult app-mappe i dit eget Google Drev. Download fletter sessioner — intet overskrives.",
+            ["Settings_Cloud_SignIn"] = "Log ind med Google",
+            ["Settings_Cloud_SignOut"] = "Log ud",
+            ["Settings_Cloud_Push"] = "Upload",
+            ["Settings_Cloud_Pull"] = "Hent og flet",
             ["Settings_MergeBackup"] = "Flet valgte",
             ["Settings_MergeNote"] = "Henter sessionerne fra en sikkerhedskopi ind på denne enhed uden at slette noget — brug den til at tage fremskridtet med fra en anden enhed.",
             ["Dash_CalibrateHint_Heading"] = "Kalibrer mikrofonen",
@@ -212,6 +230,12 @@ internal static class ScaffoldTranslations
         },
         ["fi"] = new()
         {
+            ["Settings_Cloud_Title"] = "Synkronointi laitteiden välillä",
+            ["Settings_Cloud_Note"] = "Tallentaa varmuuskopiot piilotettuun sovelluskansioon omassa Google Drivessasi. Lataus yhdistää harjoitukset — mitään ei korvata.",
+            ["Settings_Cloud_SignIn"] = "Kirjaudu Googlella",
+            ["Settings_Cloud_SignOut"] = "Kirjaudu ulos",
+            ["Settings_Cloud_Push"] = "Lähetä",
+            ["Settings_Cloud_Pull"] = "Lataa ja yhdistä",
             ["Settings_MergeBackup"] = "Yhdistä valittu",
             ["Settings_MergeNote"] = "Tuo harjoitukset varmuuskopiosta tähän laitteeseen poistamatta mitään — käytä sitä edistymisen siirtämiseen toiselta laitteelta.",
             ["Dash_CalibrateHint_Heading"] = "Kalibroi mikrofoni",
@@ -266,6 +290,12 @@ internal static class ScaffoldTranslations
         },
         ["de"] = new()
         {
+            ["Settings_Cloud_Title"] = "Synchronisierung zwischen Geräten",
+            ["Settings_Cloud_Note"] = "Speichert Sicherungen in einem versteckten App-Ordner in deinem eigenen Google Drive. Das Herunterladen führt Sitzungen zusammen — nichts wird überschrieben.",
+            ["Settings_Cloud_SignIn"] = "Mit Google anmelden",
+            ["Settings_Cloud_SignOut"] = "Abmelden",
+            ["Settings_Cloud_Push"] = "Hochladen",
+            ["Settings_Cloud_Pull"] = "Herunterladen und zusammenführen",
             ["Settings_MergeBackup"] = "Ausgewählte zusammenführen",
             ["Settings_MergeNote"] = "Holt die Sitzungen aus einer Sicherung auf dieses Gerät, ohne etwas zu löschen — so nimmst du deinen Fortschritt von einem anderen Gerät mit.",
             ["Dash_CalibrateHint_Heading"] = "Mikrofon kalibrieren",
@@ -320,6 +350,12 @@ internal static class ScaffoldTranslations
         },
         ["fr"] = new()
         {
+            ["Settings_Cloud_Title"] = "Synchronisation entre appareils",
+            ["Settings_Cloud_Note"] = "Enregistre les sauvegardes dans un dossier d'application masqué de votre propre Google Drive. Le téléchargement fusionne les séances — rien n'est écrasé.",
+            ["Settings_Cloud_SignIn"] = "Se connecter avec Google",
+            ["Settings_Cloud_SignOut"] = "Se déconnecter",
+            ["Settings_Cloud_Push"] = "Envoyer",
+            ["Settings_Cloud_Pull"] = "Télécharger et fusionner",
             ["Settings_MergeBackup"] = "Fusionner la sélection",
             ["Settings_MergeNote"] = "Récupère les séances d'une sauvegarde sur cet appareil sans rien supprimer — pour reprendre votre progression depuis un autre appareil.",
             ["Dash_CalibrateHint_Heading"] = "Calibrez votre micro",
@@ -374,6 +410,12 @@ internal static class ScaffoldTranslations
         },
         ["es"] = new()
         {
+            ["Settings_Cloud_Title"] = "Sincronización entre dispositivos",
+            ["Settings_Cloud_Note"] = "Guarda las copias en una carpeta de aplicación oculta de tu propio Google Drive. La descarga combina las sesiones — no se sobrescribe nada.",
+            ["Settings_Cloud_SignIn"] = "Iniciar sesión con Google",
+            ["Settings_Cloud_SignOut"] = "Cerrar sesión",
+            ["Settings_Cloud_Push"] = "Subir",
+            ["Settings_Cloud_Pull"] = "Descargar y combinar",
             ["Settings_MergeBackup"] = "Combinar seleccionada",
             ["Settings_MergeNote"] = "Trae las sesiones de una copia de seguridad a este dispositivo sin borrar nada — úsalo para traer tu progreso desde otro dispositivo.",
             ["Dash_CalibrateHint_Heading"] = "Calibra tu micrófono",
@@ -428,6 +470,12 @@ internal static class ScaffoldTranslations
         },
         ["pt"] = new()
         {
+            ["Settings_Cloud_Title"] = "Sincronização entre dispositivos",
+            ["Settings_Cloud_Note"] = "Guarda backups numa pasta de aplicativo oculta no seu próprio Google Drive. Baixar mescla as sessões — nada é sobrescrito.",
+            ["Settings_Cloud_SignIn"] = "Entrar com o Google",
+            ["Settings_Cloud_SignOut"] = "Sair",
+            ["Settings_Cloud_Push"] = "Enviar",
+            ["Settings_Cloud_Pull"] = "Baixar e mesclar",
             ["Settings_MergeBackup"] = "Mesclar selecionada",
             ["Settings_MergeNote"] = "Traz as sessões de um backup para este dispositivo sem apagar nada — use para levar seu progresso de outro dispositivo.",
             ["Dash_CalibrateHint_Heading"] = "Calibre o microfone",
@@ -482,6 +530,12 @@ internal static class ScaffoldTranslations
         },
         ["it"] = new()
         {
+            ["Settings_Cloud_Title"] = "Sincronizzazione tra dispositivi",
+            ["Settings_Cloud_Note"] = "Salva i backup in una cartella dell'app nascosta nel tuo Google Drive. Lo scaricamento unisce le sessioni — nulla viene sovrascritto.",
+            ["Settings_Cloud_SignIn"] = "Accedi con Google",
+            ["Settings_Cloud_SignOut"] = "Esci",
+            ["Settings_Cloud_Push"] = "Carica",
+            ["Settings_Cloud_Pull"] = "Scarica e unisci",
             ["Settings_MergeBackup"] = "Unisci selezionato",
             ["Settings_MergeNote"] = "Porta le sessioni da un backup su questo dispositivo senza cancellare nulla — usalo per riprendere i progressi da un altro dispositivo.",
             ["Dash_CalibrateHint_Heading"] = "Calibra il microfono",
@@ -536,6 +590,12 @@ internal static class ScaffoldTranslations
         },
         ["nl"] = new()
         {
+            ["Settings_Cloud_Title"] = "Synchronisatie tussen apparaten",
+            ["Settings_Cloud_Note"] = "Bewaart back-ups in een verborgen app-map in je eigen Google Drive. Downloaden voegt sessies samen — er wordt niets overschreven.",
+            ["Settings_Cloud_SignIn"] = "Inloggen met Google",
+            ["Settings_Cloud_SignOut"] = "Uitloggen",
+            ["Settings_Cloud_Push"] = "Uploaden",
+            ["Settings_Cloud_Pull"] = "Downloaden en samenvoegen",
             ["Settings_MergeBackup"] = "Geselecteerde samenvoegen",
             ["Settings_MergeNote"] = "Haalt de sessies uit een back-up naar dit apparaat zonder iets te verwijderen — zo neem je je voortgang mee van een ander apparaat.",
             ["Dash_CalibrateHint_Heading"] = "Kalibreer je microfoon",
@@ -590,6 +650,12 @@ internal static class ScaffoldTranslations
         },
         ["pl"] = new()
         {
+            ["Settings_Cloud_Title"] = "Synchronizacja między urządzeniami",
+            ["Settings_Cloud_Note"] = "Przechowuje kopie w ukrytym folderze aplikacji na Twoim Dysku Google. Pobieranie scala sesje — nic nie jest nadpisywane.",
+            ["Settings_Cloud_SignIn"] = "Zaloguj się przez Google",
+            ["Settings_Cloud_SignOut"] = "Wyloguj",
+            ["Settings_Cloud_Push"] = "Wyślij",
+            ["Settings_Cloud_Pull"] = "Pobierz i scal",
             ["Settings_MergeBackup"] = "Scal wybraną",
             ["Settings_MergeNote"] = "Przenosi sesje z kopii zapasowej na to urządzenie, niczego nie usuwając — użyj, aby zabrać postępy z innego urządzenia.",
             ["Dash_CalibrateHint_Heading"] = "Skalibruj mikrofon",
@@ -644,6 +710,12 @@ internal static class ScaffoldTranslations
         },
         ["cs"] = new()
         {
+            ["Settings_Cloud_Title"] = "Synchronizace mezi zařízeními",
+            ["Settings_Cloud_Note"] = "Ukládá zálohy do skryté složky aplikace na tvém Google Disku. Stažení slučuje lekce — nic se nepřepisuje.",
+            ["Settings_Cloud_SignIn"] = "Přihlásit se přes Google",
+            ["Settings_Cloud_SignOut"] = "Odhlásit se",
+            ["Settings_Cloud_Push"] = "Nahrát",
+            ["Settings_Cloud_Pull"] = "Stáhnout a sloučit",
             ["Settings_MergeBackup"] = "Sloučit vybranou",
             ["Settings_MergeNote"] = "Přenese lekce ze zálohy do tohoto zařízení, aniž by cokoli smazal — použij k převzetí pokroku z jiného zařízení.",
             ["Dash_CalibrateHint_Heading"] = "Zkalibruj mikrofon",
@@ -698,6 +770,12 @@ internal static class ScaffoldTranslations
         },
         ["hu"] = new()
         {
+            ["Settings_Cloud_Title"] = "Szinkronizálás eszközök között",
+            ["Settings_Cloud_Note"] = "A biztonsági mentéseket a saját Google Drive-od rejtett alkalmazásmappájában tárolja. A letöltés egyesíti az alkalmakat — semmi nem íródik felül.",
+            ["Settings_Cloud_SignIn"] = "Bejelentkezés Google-fiókkal",
+            ["Settings_Cloud_SignOut"] = "Kijelentkezés",
+            ["Settings_Cloud_Push"] = "Feltöltés",
+            ["Settings_Cloud_Pull"] = "Letöltés és egyesítés",
             ["Settings_MergeBackup"] = "Kijelölt egyesítése",
             ["Settings_MergeNote"] = "Áthozza az alkalmakat egy biztonsági mentésből erre az eszközre, törlés nélkül — így viheted át a haladásod egy másik eszközről.",
             ["Dash_CalibrateHint_Heading"] = "Kalibráld a mikrofont",
@@ -752,6 +830,12 @@ internal static class ScaffoldTranslations
         },
         ["ro"] = new()
         {
+            ["Settings_Cloud_Title"] = "Sincronizare între dispozitive",
+            ["Settings_Cloud_Note"] = "Salvează copiile într-un folder de aplicație ascuns din propriul tău Google Drive. Descărcarea îmbină sesiunile — nimic nu este suprascris.",
+            ["Settings_Cloud_SignIn"] = "Conectare cu Google",
+            ["Settings_Cloud_SignOut"] = "Deconectare",
+            ["Settings_Cloud_Push"] = "Încarcă",
+            ["Settings_Cloud_Pull"] = "Descarcă și îmbină",
             ["Settings_MergeBackup"] = "Îmbină selecția",
             ["Settings_MergeNote"] = "Aduce sesiunile dintr-o copie de rezervă pe acest dispozitiv fără a șterge nimic — folosește-l ca să-ți aduci progresul de pe alt dispozitiv.",
             ["Dash_CalibrateHint_Heading"] = "Calibrează microfonul",
@@ -806,6 +890,12 @@ internal static class ScaffoldTranslations
         },
         ["hr"] = new()
         {
+            ["Settings_Cloud_Title"] = "Sinkronizacija između uređaja",
+            ["Settings_Cloud_Note"] = "Sprema sigurnosne kopije u skrivenu mapu aplikacije na tvom Google Driveu. Preuzimanje spaja vježbe — ništa se ne prepisuje.",
+            ["Settings_Cloud_SignIn"] = "Prijava Google računom",
+            ["Settings_Cloud_SignOut"] = "Odjava",
+            ["Settings_Cloud_Push"] = "Prenesi",
+            ["Settings_Cloud_Pull"] = "Preuzmi i spoji",
             ["Settings_MergeBackup"] = "Spoji odabrano",
             ["Settings_MergeNote"] = "Donosi vježbe iz sigurnosne kopije na ovaj uređaj bez brisanja ičega — koristi za prijenos napretka s drugog uređaja.",
             ["Dash_CalibrateHint_Heading"] = "Kalibriraj mikrofon",
@@ -860,6 +950,12 @@ internal static class ScaffoldTranslations
         },
         ["tr"] = new()
         {
+            ["Settings_Cloud_Title"] = "Cihazlar arası eşitleme",
+            ["Settings_Cloud_Note"] = "Yedekleri kendi Google Drive'ındaki gizli bir uygulama klasöründe saklar. İndirme seansları birleştirir — hiçbir şeyin üzerine yazılmaz.",
+            ["Settings_Cloud_SignIn"] = "Google ile giriş yap",
+            ["Settings_Cloud_SignOut"] = "Çıkış yap",
+            ["Settings_Cloud_Push"] = "Yükle",
+            ["Settings_Cloud_Pull"] = "İndir ve birleştir",
             ["Settings_MergeBackup"] = "Seçileni birleştir",
             ["Settings_MergeNote"] = "Bir yedekteki seansları hiçbir şey silmeden bu cihaza getirir — ilerlemeni başka bir cihazdan taşımak için kullan.",
             ["Dash_CalibrateHint_Heading"] = "Mikrofonunu kalibre et",
@@ -914,6 +1010,12 @@ internal static class ScaffoldTranslations
         },
         ["uk"] = new()
         {
+            ["Settings_Cloud_Title"] = "Синхронізація між пристроями",
+            ["Settings_Cloud_Note"] = "Зберігає резервні копії у прихованій папці застосунку на твоєму Google Диску. Завантаження об'єднує заняття — нічого не перезаписується.",
+            ["Settings_Cloud_SignIn"] = "Увійти через Google",
+            ["Settings_Cloud_SignOut"] = "Вийти",
+            ["Settings_Cloud_Push"] = "Вивантажити",
+            ["Settings_Cloud_Pull"] = "Завантажити та об'єднати",
             ["Settings_MergeBackup"] = "Об'єднати вибране",
             ["Settings_MergeNote"] = "Переносить заняття з резервної копії на цей пристрій, нічого не видаляючи — щоб забрати прогрес з іншого пристрою.",
             ["Dash_CalibrateHint_Heading"] = "Відкалібруй мікрофон",
@@ -968,6 +1070,12 @@ internal static class ScaffoldTranslations
         },
         ["el"] = new()
         {
+            ["Settings_Cloud_Title"] = "Συγχρονισμός μεταξύ συσκευών",
+            ["Settings_Cloud_Note"] = "Αποθηκεύει αντίγραφα ασφαλείας σε κρυφό φάκελο εφαρμογής στο δικό σου Google Drive. Η λήψη συγχωνεύει τις συνεδρίες — τίποτα δεν αντικαθίσταται.",
+            ["Settings_Cloud_SignIn"] = "Σύνδεση με Google",
+            ["Settings_Cloud_SignOut"] = "Αποσύνδεση",
+            ["Settings_Cloud_Push"] = "Μεταφόρτωση",
+            ["Settings_Cloud_Pull"] = "Λήψη και συγχώνευση",
             ["Settings_MergeBackup"] = "Συγχώνευση επιλεγμένου",
             ["Settings_MergeNote"] = "Φέρνει τις συνεδρίες από ένα αντίγραφο ασφαλείας σε αυτή τη συσκευή χωρίς να διαγράψει τίποτα — για να μεταφέρεις την πρόοδό σου από άλλη συσκευή.",
             ["Dash_CalibrateHint_Heading"] = "Βαθμονόμησε το μικρόφωνο",
@@ -1022,6 +1130,12 @@ internal static class ScaffoldTranslations
         },
         ["ar"] = new()
         {
+            ["Settings_Cloud_Title"] = "المزامنة بين الأجهزة",
+            ["Settings_Cloud_Note"] = "يحفظ النسخ الاحتياطية في مجلد تطبيق مخفي داخل Google Drive الخاص بك. التنزيل يدمج الجلسات — لا يُستبدل أي شيء.",
+            ["Settings_Cloud_SignIn"] = "تسجيل الدخول بحساب Google",
+            ["Settings_Cloud_SignOut"] = "تسجيل الخروج",
+            ["Settings_Cloud_Push"] = "رفع",
+            ["Settings_Cloud_Pull"] = "تنزيل ودمج",
             ["Settings_MergeBackup"] = "دمج المحدد",
             ["Settings_MergeNote"] = "ينقل الجلسات من نسخة احتياطية إلى هذا الجهاز دون حذف أي شيء — استخدمه لنقل تقدّمك من جهاز آخر.",
             ["Dash_CalibrateHint_Heading"] = "عاير الميكروفون",
