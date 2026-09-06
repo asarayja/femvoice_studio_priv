@@ -96,6 +96,42 @@ namespace FemVoiceStudio.Audio
         }
 
         /// <summary>
+        /// Median spectral centroid (Hz) of the VOICED part of a recording — the robust way to derive a user's
+        /// relaxed-voice baseline from a calibration phase.
+        ///
+        /// A phase recording also contains whatever happened before the user actually started speaking. Averaging over
+        /// everything let a late start store the ROOM's spectrum as the voice baseline, and room noise is broadband so
+        /// its centroid sits far above speech — which then pinned the live resonance meter near 0 permanently. Frames
+        /// below <paramref name="rmsGate"/> (pass the calibration profile's own voiced threshold) are therefore
+        /// discarded, and if fewer than <paramref name="minVoicedFrames"/> remain this returns 0 so the caller stores
+        /// NOTHING: a wrong baseline is worse than no baseline, since no baseline simply means fixed anchors.
+        /// </summary>
+        public static double MedianVoicedCentroidHz(float[] samples, int sampleRate, double rmsGate,
+            int frameSize = 2048, int minVoicedFrames = 10)
+        {
+            if (samples is null || sampleRate <= 0 || frameSize <= 0 || samples.Length < frameSize) return 0;
+            double gate = rmsGate > 0 ? rmsGate : 0.0025;
+
+            var voiced = new System.Collections.Generic.List<float[]>(samples.Length / frameSize);
+            for (int offset = 0; offset + frameSize <= samples.Length; offset += frameSize)
+            {
+                double sumSquares = 0;
+                for (int i = 0; i < frameSize; i++)
+                {
+                    double s = samples[offset + i];
+                    sumSquares += s * s;
+                }
+                if (Math.Sqrt(sumSquares / frameSize) < gate) continue;   // silence / room noise → not the user's voice
+
+                var frame = new float[frameSize];
+                Array.Copy(samples, offset, frame, 0, frameSize);
+                voiced.Add(frame);
+            }
+
+            return voiced.Count < minVoicedFrames ? 0 : MedianCentroidHz(voiced, sampleRate);
+        }
+
+        /// <summary>
         /// Power-weighted spectral centroid (Hz) over the voice band. Magnitude-independent and monotonic with
         /// brightness. Returns 0 for silence or a frame too short to transform.
         /// </summary>
