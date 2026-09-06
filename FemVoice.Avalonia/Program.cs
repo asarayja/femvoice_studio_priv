@@ -71,6 +71,7 @@ internal static class Program
         if (args.Contains("--training-reminder-smoke")) return TrainingReminderSmoke();
         if (args.Contains("--start-here-path-smoke")) return StartHerePathSmoke();
         if (args.Contains("--audit-fixes-smoke")) return AuditFixesSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--merge-devices-smoke")) return MergeDevicesSmoke();
         if (args.Contains("--session-analytics-smoke")) return SessionAnalyticsSmoke().GetAwaiter().GetResult();
         if (args.Contains("--packaging-smoke")) return PackagingSmoke();
         if (args.Contains("--packaged-theme-smoke")) return PackagedThemeSmoke();
@@ -1074,6 +1075,71 @@ internal static class Program
         Console.WriteLine($"[audit-fix] baselineSurvivesSave={baselineSurvives} progressionAdvances={progressionAdvances} distinctDays={distinctDays} calibrationHint={hintOk}");
         Console.WriteLine(ok ? "[audit-fix] Audit-fixes smoke OK" : "[audit-fix] Audit-fixes smoke FAIL");
         return ok ? 0 : 1;
+    }
+
+    // Carrying progress BETWEEN DEVICES: merging a backup must be a UNION (both devices' sessions survive), where a
+    // restore would replace the file and lose one side. Simulates the real case — trained on the "PC" one day and the
+    // "phone" the next — and also proves merging is idempotent and never duplicates.
+    private static int MergeDevicesSmoke()
+    {
+        int pid = System.Diagnostics.Process.GetCurrentProcess().Id;
+        string dirPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FemVoiceStudio");
+        string phoneName = $"femvoice-merge-phone-{pid}.db", pcName = $"femvoice-merge-pc-{pid}.db";
+        string phonePath = System.IO.Path.Combine(dirPath, phoneName), pcPath = System.IO.Path.Combine(dirPath, pcName);
+        void Cleanup() { foreach (var f in new[] { phonePath, pcPath }) foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(f + sfx); } catch { } } }
+        Cleanup();
+        try
+        {
+            var phone = new global::FemVoiceStudio.Data.DatabaseService(phoneName);
+            var pc = new global::FemVoiceStudio.Data.DatabaseService(pcName);
+            void Train(global::FemVoiceStudio.Data.DatabaseService db, DateTime whenUtc, double pitch, double score)
+            {
+                var session = new global::FemVoiceStudio.Models.TrainingSession
+                {
+                    UserId = 1, StartTime = whenUtc, EndTime = whenUtc.AddMinutes(6),
+                    AveragePitch = pitch, OverallScore = score, ResonanceScore = 40,
+                    DifficultyLevel = global::FemVoiceStudio.Models.DifficultyLevel.Nybegynner,
+                    Feedback = "device-test",
+                };
+                // Same create-then-enrich two-step the app uses: the INSERT does not carry ResonanceScore, only the
+                // UPDATE does. Writing it here means the merge is checked against a REALISTIC row.
+                int id = db.SaveTrainingSession(session);
+                if (id > 0) { session.Id = id; db.UpdateTrainingSession(session); }
+            }
+
+            var monday = new DateTime(2026, 4, 6, 18, 0, 0, DateTimeKind.Utc);
+            Train(phone, monday, 178, 61);                    // trained on the phone
+            Train(phone, monday.AddMinutes(30), 181, 64);
+            Train(pc, monday.AddDays(1), 186, 70);            // trained on the PC the next day
+            int phoneBefore = phone.GetTrainingSessions(DateTime.MinValue, DateTime.UtcNow.AddDays(1)).Count;
+            int pcBefore = pc.GetTrainingSessions(DateTime.MinValue, DateTime.UtcNow.AddDays(1)).Count;
+
+            // Merge the PC's file into the phone: the phone must end up with BOTH days.
+            int added = phone.MergeSessionsFrom(pcPath);
+            var after = phone.GetTrainingSessions(DateTime.MinValue, DateTime.UtcNow.AddDays(1));
+            bool unionOk = added == pcBefore && after.Count == phoneBefore + pcBefore;
+            bool keptBothDays = after.Any(s => s.StartTime.Date == monday.Date)
+                                && after.Any(s => s.StartTime.Date == monday.AddDays(1).Date);
+            // Field fidelity: the imported row keeps its real values, not defaults.
+            var imported = after.FirstOrDefault(s => s.StartTime.Date == monday.AddDays(1).Date);
+            bool fieldsOk = imported is not null && Math.Abs(imported.AveragePitch - 186) < 0.01 && imported.ResonanceScore > 0;
+
+            // Idempotent: merging the same file again adds nothing.
+            int addedAgain = phone.MergeSessionsFrom(pcPath);
+            bool idempotent = addedAgain == 0
+                              && phone.GetTrainingSessions(DateTime.MinValue, DateTime.UtcNow.AddDays(1)).Count == after.Count;
+
+            // Junk / missing input is refused quietly rather than throwing.
+            bool safeInputs = phone.MergeSessionsFrom(System.IO.Path.Combine(dirPath, "does-not-exist.db")) == 0
+                              && phone.MergeSessionsFrom("") == 0;
+
+            bool ok = unionOk && keptBothDays && fieldsOk && idempotent && safeInputs;
+            Console.WriteLine($"[merge] phone={phoneBefore} pc={pcBefore} added={added} after={after.Count} union={unionOk} bothDays={keptBothDays} fields={fieldsOk} idempotent={idempotent} safeInputs={safeInputs}");
+            Console.WriteLine(ok ? "[merge] Cross-device merge smoke OK" : "[merge] Cross-device merge smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[merge] Cross-device merge smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
+        finally { Cleanup(); }
     }
 
     // Per-dimension VoiceIntelligence write-path (DSP foundation): a synthetic dashboard session must persist a
