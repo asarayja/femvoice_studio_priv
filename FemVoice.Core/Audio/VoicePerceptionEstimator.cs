@@ -35,10 +35,13 @@ namespace FemVoiceStudio.Audio
     ///   • Pitch → 0–100: fully masculine at/below <see cref="PitchFloorHz"/> (≈140 Hz), fully feminine at/above
     ///     <see cref="PitchCeilHz"/> (≈210 Hz), linear between (≈50% near 175 Hz — the commonly-cited androgynous
     ///     speaking range). Absolute and mic-independent (f0 is robust).
-    ///   • Resonance → 0–100: the calibrated brightness percent is used directly. When the user has calibrated (mic
-    ///     baseline), this is measured RELATIVE to their own relaxed voice, so it reads "brighter/more forward than my
-    ///     habitual voice" — a reliable training signal but self-referential, which is why pitch (absolute) is weighted
-    ///     a little higher.
+    ///   • Resonance → 0–100: an ABSOLUTE brightness percent — <see cref="VoiceBrightnessMeter.BrightnessPercent"/>
+    ///     with NO calibration baseline. This must never be the per-user calibrated percent: that scale is defined as
+    ///     "brighter than MY relaxed voice", so a user's habitual voice reads ~10 by definition, which caps the
+    ///     combined score below <see cref="FeminineThreshold"/> and makes that band unreachable however bright the
+    ///     voice actually is — and lets calibrating move a voice DOWN a band. "Feminine" must mean the same thing for
+    ///     everyone, so the perception cue is absolute; the calibrated scale belongs to the training meter (progress
+    ///     against yourself). Absolute anchors are still microphone-dependent, hence "estimate, not verdict".
     ///   • Combined = <see cref="PitchWeight"/>·pitch + <see cref="ResonanceWeight"/>·resonance (0.55 / 0.45).
     ///     Both cues matter — raising pitch without brightening resonance still tends to read masculine — but pitch is
     ///     the more portable measurement, hence the slight lean.
@@ -65,8 +68,10 @@ namespace FemVoiceStudio.Audio
 
         /// <summary>
         /// Estimate the perceived-gender reading. <paramref name="pitchHz"/> is the current (stabilized) fundamental in
-        /// Hz; <paramref name="brightnessPercent"/> is the 0–100 value from <see cref="VoiceBrightnessMeter"/>. Callers
-        /// gate on voicing; a non-positive pitch is treated as the masculine floor for the pitch component.
+        /// Hz; <paramref name="brightnessPercent"/> is the 0–100 ABSOLUTE brightness from
+        /// <see cref="VoiceBrightnessMeter.BrightnessPercent"/> called WITHOUT a calibration baseline (see the type
+        /// remarks — passing the calibrated percent makes the Feminine band unreachable). Callers gate on voicing; a
+        /// non-positive pitch is treated as the masculine floor for the pitch component.
         /// </summary>
         public static VoicePerception Estimate(double pitchHz, int brightnessPercent)
         {

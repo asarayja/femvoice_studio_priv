@@ -307,8 +307,10 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     /// <summary>Smooths the per-frame estimate and applies band hysteresis so the label is readable while training.</summary>
     private readonly FemVoiceStudio.Audio.VoicePerceptionStabilizer _perceptionStabilizer = new();
     public string PerceptionHeading => Localized.Get("Dash_Perception_Heading", "Slik leser stemmen din nå");
+    // NOTE: no longer mentions calibration — the mirror deliberately uses the ABSOLUTE resonance scale, so calibrating
+    // does not (and must not) change this reading. Calibration belongs to the training meter instead.
     public string PerceptionExplainer => Localized.Get("Dash_Perception_Explainer",
-        "Et anslag ut fra tonehøyde + resonans — ikke en fasit. Kalibrer mikrofonen for et mer presist anslag.");
+        "Et anslag ut fra tonehøyde + resonans — ikke en fasit. Ulike lyttere kan oppfatte stemmen forskjellig.");
     public string PerceptionPitchLabel => Localized.Get("Dash_Perception_PitchLabel", "Tonehøyde");
     public string PerceptionResonanceLabel => Localized.Get("Dash_ResonanceLabel", "Resonans");
 
@@ -526,6 +528,17 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         // fell back to fixed values and froze the score. The meter responds to the actual voice and is loudness-independent.
         int resonancePct = result.IsVoiced ? FemVoiceStudio.Audio.VoiceBrightnessMeter.BrightnessPercent(e.Samples, SampleRate, _resonanceBaseline) : 0;
         if (IsRecording && result.IsVoiced) _sessionResonance.Add(resonancePct);
+        // TWO different questions, so two different scales:
+        //  • resonancePct  — CALIBRATED, i.e. "how much brighter than YOUR relaxed voice". That is the right scale for
+        //    the training meter and for the saved session score (progress against yourself).
+        //  • perceptionResonancePct — ABSOLUTE (fixed anchors, no baseline). The perceived-voice mirror answers "how
+        //    would a listener hear this", so it must not be measured against the user's own voice: on the calibrated
+        //    scale a user's habitual voice reads ~10 BY DEFINITION, which capped the combined score below the Feminine
+        //    threshold and made that band unreachable no matter how bright the voice actually was — and meant
+        //    calibrating could move a voice DOWN a band. Absolute anchors keep "Feminin" meaning the same for everyone.
+        int perceptionResonancePct = result.IsVoiced
+            ? FemVoiceStudio.Audio.VoiceBrightnessMeter.BrightnessPercent(e.Samples, SampleRate, baselineCentroidHz: null)
+            : 0;
         double smoothed = _metrics.CalculateSmoothedPitch(result.Pitch, result.IsVoiced);
         double stabilized = result.IsVoiced ? _stabilizer.Filter(smoothed, DateTime.Now) : 0;
         StabilityState stability = _metrics.CalculateStability();
@@ -564,7 +577,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
             CurrentFeedbackMessage = DeriveFeedback(result.IsVoiced, stability, health, stabilized);
 
             bool voiced = result.IsVoiced && stabilized > 0;
-            UpdatePerception(voiced, stabilized, resonancePct);   // perceived-voice mirror (pitch + resonance → band + tip)
+            UpdatePerception(voiced, stabilized, perceptionResonancePct);   // mirror uses the ABSOLUTE resonance scale
             // Display-only chart snapshot (axis + comfort band fixed; marker follows current pitch). No data change.
             DashboardChart = RuntimeChartDisplay.From(
                 ChartHeightPx, _chartMin, _chartMax, ComfortZoneLow, ComfortZoneHigh,
