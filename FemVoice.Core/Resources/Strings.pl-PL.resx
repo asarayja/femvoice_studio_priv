@@ -3753,7 +3753,7 @@ Tej operacji nie można cofnąć!</value>
     <value>Zmierz głos</value>
   </data>
   <data name="MicCalibration_Ready" xml:space="preserve">
-    <value>Naciśnij start. Następnie sam zdecydujesz, kiedy aplikacja zmierzy ciche pomieszczenie, a kiedy komfortowy głos lub nucenie.</value>
+    <value>Naciśnij start. Następnie sam wybierasz, kiedy aplikacja zmierzy cichy pokój, a kiedy Twój zwykły głos mówiony.</value>
   </data>
   <data name="MicCalibration_ManualReady" xml:space="preserve">
     <value>Gotowe. Naciśnij "Zmierz ciszę w pomieszczeniu", gdy będziesz cicho, a pomieszczenie będzie spokojne.</value>
@@ -3768,13 +3768,13 @@ Tej operacji nie można cofnąć!</value>
     <value>Mierzenie szumu tła. Zachowaj ciszę.</value>
   </data>
   <data name="MicCalibration_SilenceCaptured" xml:space="preserve">
-    <value>Ciche pomieszczenie zostało zmierzone. Naciśnij "Zmierz głos", gdy będziesz gotów użyć komfortowego głosu lub delikatnego nucenia.</value>
+    <value>Cichy pokój został zmierzony. Naciśnij „Zmierz głos”, gdy będziesz gotowy mówić swoim zwykłym głosem.</value>
   </data>
   <data name="MicCalibration_VoiceInstruction" xml:space="preserve">
-    <value>Użyj komfortowego głosu lub delikatnego nucenia. Nie napinaj głosu. Naciśnij przycisk pomiaru, gdy będziesz gotów.</value>
+    <value>Mów swoim zwykłym, swobodnym głosem — proszę nie nucić. Nie napinaj głosu. Naciśnij przycisk pomiaru, gdy będziesz gotowy.</value>
   </data>
   <data name="MicCalibration_VoiceRecording" xml:space="preserve">
-    <value>Mierzenie komfortowego głosu lub nucenia. Utrzymuj poziom spokojny i równy.</value>
+    <value>Mierzy Twój zwykły głos mówiony. Mów spokojnie i równomiernie.</value>
   </data>
   <data name="MicCalibration_Complete" xml:space="preserve">
     <value>Kalibracja została zakończona.</value>
@@ -3798,10 +3798,10 @@ Tej operacji nie można cofnąć!</value>
     <value>Kalibracja nie powiodła się: {0}</value>
   </data>
   <data name="MicCalibration_TooQuiet" xml:space="preserve">
-    <value>Głos/nucenie było zbyt ciche. Spróbuj ponownie bliżej mikrofonu, sprawdź urządzenie wejściowe w systemie Windows i użyj spokojnego, komfortowego dźwięku.</value>
+    <value>Twój głos był zbyt cichy. Spróbuj ponownie bliżej mikrofonu, sprawdź urządzenie wejściowe w Windows i mów spokojnie na wygodnym poziomie.</value>
   </data>
   <data name="MicCalibration_TooCloseToNoise" xml:space="preserve">
-    <value>Głos/nucenie był zbyt zbliżony do szumu tła. Zmniejsz hałas w pomieszczeniu, przysuń mikrofon bliżej lub nieznacznie podnieś poziom wejścia w systemie Windows.</value>
+    <value>Twój głos był zbyt blisko szumu tła. Zmniejsz hałas, przysuń mikrofon lub nieco zwiększ poziom wejścia w Windows.</value>
   </data>
   <data name="MicCalibration_TooLoud" xml:space="preserve">
     <value>Poziom mikrofonu był zbyt wysoki i może powodować przesterowanie. Zmniejsz głośność wejścia w systemie Windows lub wzmocnienie mikrofonu i spróbuj ponownie.</value>

@@ -71,7 +71,7 @@ public partial class MicCalibrationViewModel : ObservableObject, IDisposable
 
         SelectedDevice = Devices.Count > 0 ? Devices[0] : null;
         _instruction = Localized.Get("MicCalibration_Ready",
-            "Trykk start. Deretter velger du selv når appen skal måle stille rom og når den skal måle komfortabel stemme eller humming.");
+            "Trykk start. Deretter velger du selv når appen skal måle stille rom og når den skal måle din vanlige talestemme.");
         _primaryActionLabel = Localized.Get("MicCalibration_RecordSilence", "Mål stille rom");
         StatusMessage = IsAvailable
             ? Localized.Get("MicCalibration_ManualReady", "Klar. Trykk «Mål stille rom» når du er stille og rommet er rolig.")
@@ -150,9 +150,9 @@ public partial class MicCalibrationViewModel : ObservableObject, IDisposable
                 _step = Step.VoiceReady;
                 NoiseSummary = FormatPhaseSummary(Localized.Get("MicCalibration_NoiseLabel", "Støy"), _background);
                 Instruction = Localized.Get("MicCalibration_VoiceInstruction",
-                    "Bruk komfortabel stemme eller rolig humming. Ikke press stemmen. Trykk måleknappen når du er klar.");
+                    "Snakk med din vanlige, avslappede talestemme — ikke nynn. Ikke press stemmen. Trykk måleknappen når du er klar.");
                 ResultText = Localized.Get("MicCalibration_SilenceCaptured",
-                    "Stille rom er målt. Trykk «Mål stemme» når du er klar til å bruke komfortabel stemme eller rolig humming.");
+                    "Stille rom er målt. Trykk «Mål stemme» når du er klar til å snakke med din vanlige stemme.");
                 PrimaryActionLabel = Localized.Get("MicCalibration_RecordVoice", "Mål stemme");
                 return;
             }
@@ -160,7 +160,7 @@ public partial class MicCalibrationViewModel : ObservableObject, IDisposable
             if (_step == Step.VoiceReady)
             {
                 _voice = await CapturePhaseAsync("MicCalibration_VoiceRecording",
-                    "Måler komfortabel stemme eller humming. Hold nivået rolig og jevnt.");
+                    "Måler din vanlige talestemme. Snakk rolig og jevnt.");
                 Finalize();
             }
         }

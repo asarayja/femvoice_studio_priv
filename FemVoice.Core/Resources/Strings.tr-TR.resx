@@ -3753,7 +3753,7 @@ Bu işlem geri alınamaz!</value>
     <value>Sesi ölç</value>
   </data>
   <data name="MicCalibration_Ready" xml:space="preserve">
-    <value>Başlat'a basın. Ardından uygulamanın ne zaman sessiz bir odayı, ne zaman da rahat bir sesi veya mırıldanmayı ölçeceğini siz seçersiniz.</value>
+    <value>Başlat'a bas. Ardından uygulamanın sessiz odayı ve her zamanki konuşma sesini ne zaman ölçeceğini sen seçersin.</value>
   </data>
   <data name="MicCalibration_ManualReady" xml:space="preserve">
     <value>Hazır. Sessiz olduğunuzda ve oda sakinken "Sessiz odayı ölç"e basın.</value>
@@ -3768,13 +3768,13 @@ Bu işlem geri alınamaz!</value>
     <value>Arka plan gürültüsü ölçülüyor. Sessiz kalın.</value>
   </data>
   <data name="MicCalibration_SilenceCaptured" xml:space="preserve">
-    <value>Sessiz oda ölçüldü. Rahat bir sesi veya yumuşak mırıldanmayı kullanmaya hazır olduğunuzda "Sesi ölç"e basın.</value>
+    <value>Sessiz oda ölçüldü. Her zamanki sesinle konuşmaya hazır olduğunda «Sesi ölç»e bas.</value>
   </data>
   <data name="MicCalibration_VoiceInstruction" xml:space="preserve">
-    <value>Rahat bir ses veya yumuşak mırıldanma kullanın. Sesinizi zorlamayın. Hazır olduğunuzda ölçme düğmesine basın.</value>
+    <value>Her zamanki rahat konuşma sesinle konuş — lütfen mırıldanma. Sesini zorlama. Hazır olduğunda ölçme düğmesine bas.</value>
   </data>
   <data name="MicCalibration_VoiceRecording" xml:space="preserve">
-    <value>Rahat ses veya mırıldanma ölçülüyor. Seviyeyi sakin ve dengeli tutun.</value>
+    <value>Her zamanki konuşma sesin ölçülüyor. Sakin ve düzenli konuş.</value>
   </data>
   <data name="MicCalibration_Complete" xml:space="preserve">
     <value>Kalibrasyon tamamlandı.</value>
@@ -3798,10 +3798,10 @@ Bu işlem geri alınamaz!</value>
     <value>Kalibrasyon başarısız oldu: {0}</value>
   </data>
   <data name="MicCalibration_TooQuiet" xml:space="preserve">
-    <value>Ses/mırıldanma çok düşüktü. Mikrofona daha yakın tekrar deneyin, Windows giriş aygıtını kontrol edin ve sakin, rahat bir ses kullanın.</value>
+    <value>Sesin çok kısıktı. Mikrofona daha yakın tekrar dene, Windows giriş aygıtını kontrol et ve rahat bir seviyede sakince konuş.</value>
   </data>
   <data name="MicCalibration_TooCloseToNoise" xml:space="preserve">
-    <value>Ses/mırıldanma arka plan gürültüsüne çok yakındı. Oda gürültüsünü azaltın, mikrofonu yaklaştırın veya Windows giriş seviyesini biraz yükseltin.</value>
+    <value>Sesin arka plan gürültüsüne çok yakındı. Oda gürültüsünü azalt, mikrofonu yaklaştır veya Windows giriş seviyesini biraz artır.</value>
   </data>
   <data name="MicCalibration_TooLoud" xml:space="preserve">
     <value>Mikrofon seviyesi çok yüksekti ve kırpılabilir. Windows giriş ses düzeyini veya mikrofon kazancını azaltıp tekrar deneyin.</value>

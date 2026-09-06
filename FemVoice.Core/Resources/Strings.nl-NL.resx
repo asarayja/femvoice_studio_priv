@@ -3753,7 +3753,7 @@ Dit kan niet ongedaan worden gemaakt!</value>
     <value>Stem meten</value>
   </data>
   <data name="MicCalibration_Ready" xml:space="preserve">
-    <value>Druk op start. Daarna kies je zelf wanneer de app een stille ruimte meet en wanneer ze een comfortabele stem of neuriën meet.</value>
+    <value>Druk op start. Daarna kies je zelf wanneer de app een stille kamer meet en wanneer je gewone spreekstem.</value>
   </data>
   <data name="MicCalibration_ManualReady" xml:space="preserve">
     <value>Klaar. Druk op "Stille ruimte meten" wanneer je stil bent en de ruimte rustig is.</value>
@@ -3768,13 +3768,13 @@ Dit kan niet ongedaan worden gemaakt!</value>
     <value>Achtergrondgeluid wordt gemeten. Blijf stil.</value>
   </data>
   <data name="MicCalibration_SilenceCaptured" xml:space="preserve">
-    <value>De stille ruimte is gemeten. Druk op "Stem meten" wanneer je klaar bent om een comfortabele stem of zacht neuriën te gebruiken.</value>
+    <value>Stille kamer is gemeten. Druk op "Stem meten" wanneer je klaar bent om met je gewone stem te spreken.</value>
   </data>
   <data name="MicCalibration_VoiceInstruction" xml:space="preserve">
-    <value>Gebruik een comfortabele stem of zacht neuriën. Pers je stem niet. Druk op de meetknop wanneer je klaar bent.</value>
+    <value>Spreek met je gewone, ontspannen spreekstem — niet neuriën. Pers je stem niet. Druk op de meetknop wanneer je klaar bent.</value>
   </data>
   <data name="MicCalibration_VoiceRecording" xml:space="preserve">
-    <value>Comfortabele stem of neuriën wordt gemeten. Houd het niveau rustig en gelijkmatig.</value>
+    <value>Meet je gewone spreekstem. Spreek rustig en gelijkmatig.</value>
   </data>
   <data name="MicCalibration_Complete" xml:space="preserve">
     <value>De kalibratie is voltooid.</value>
@@ -3798,10 +3798,10 @@ Dit kan niet ongedaan worden gemaakt!</value>
     <value>Kalibratie mislukt: {0}</value>
   </data>
   <data name="MicCalibration_TooQuiet" xml:space="preserve">
-    <value>De stem/het neuriën was te zacht. Probeer het opnieuw dichter bij de microfoon, controleer het Windows-invoerapparaat en gebruik een rustig, comfortabel geluid.</value>
+    <value>Je stem was te zacht. Probeer het opnieuw dichter bij de microfoon, controleer het Windows-invoerapparaat en spreek rustig op een comfortabel niveau.</value>
   </data>
   <data name="MicCalibration_TooCloseToNoise" xml:space="preserve">
-    <value>De stem/het neuriën lag te dicht bij het achtergrondgeluid. Verminder het omgevingsgeluid, plaats de microfoon dichterbij of verhoog het Windows-invoerniveau iets.</value>
+    <value>Je stem lag te dicht bij het achtergrondgeluid. Verminder omgevingsgeluid, zet de microfoon dichterbij of verhoog het Windows-invoerniveau iets.</value>
   </data>
   <data name="MicCalibration_TooLoud" xml:space="preserve">
     <value>Het microfoonniveau was te hoog en kan vervormen. Verlaag het Windows-invoervolume of de microfoonversterking en probeer het opnieuw.</value>

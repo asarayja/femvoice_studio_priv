@@ -3949,7 +3949,7 @@ Dette kan ikke angres!</value>
     <value>Mål stemme</value>
   </data>
   <data name="MicCalibration_Ready" xml:space="preserve">
-    <value>Trykk start. Deretter velger du selv når appen skal måle stille rom og når den skal måle komfortabel stemme eller humming.</value>
+    <value>Trykk start. Deretter velger du selv når appen skal måle stille rom og når den skal måle din vanlige talestemme.</value>
   </data>
   <data name="MicCalibration_ManualReady" xml:space="preserve">
     <value>Klar. Trykk "Mål stille rom" når du er stille og rommet er rolig.</value>
@@ -3964,13 +3964,13 @@ Dette kan ikke angres!</value>
     <value>Måler bakgrunnsstøy. Vær stille.</value>
   </data>
   <data name="MicCalibration_SilenceCaptured" xml:space="preserve">
-    <value>Stille rom er målt. Trykk "Mål stemme" når du er klar til å bruke komfortabel stemme eller rolig humming.</value>
+    <value>Stille rom er målt. Trykk "Mål stemme" når du er klar til å snakke med din vanlige stemme.</value>
   </data>
   <data name="MicCalibration_VoiceInstruction" xml:space="preserve">
-    <value>Bruk komfortabel stemme eller rolig humming. Ikke press stemmen. Trykk måleknappen når du er klar.</value>
+    <value>Snakk med din vanlige, avslappede talestemme — ikke nynn. Ikke press stemmen. Trykk måleknappen når du er klar.</value>
   </data>
   <data name="MicCalibration_VoiceRecording" xml:space="preserve">
-    <value>Måler komfortabel stemme eller humming. Hold nivået rolig og jevnt.</value>
+    <value>Måler din vanlige talestemme. Snakk rolig og jevnt.</value>
   </data>
   <data name="MicCalibration_Complete" xml:space="preserve">
     <value>Kalibreringen er ferdig.</value>
@@ -3994,10 +3994,10 @@ Dette kan ikke angres!</value>
     <value>Kalibrering feilet: {0}</value>
   </data>
   <data name="MicCalibration_TooQuiet" xml:space="preserve">
-    <value>Stemme/humming var for lavt. Prøv igjen nærmere mikrofonen, sjekk riktig input i Windows, og bruk rolig komfortabel lyd.</value>
+    <value>Stemmen var for svak. Prøv igjen nærmere mikrofonen, sjekk riktig input i Windows, og snakk rolig på et behagelig nivå.</value>
   </data>
   <data name="MicCalibration_TooCloseToNoise" xml:space="preserve">
-    <value>Stemme/humming var for lik bakgrunnsstøyen. Senk romstøyen, flytt mikrofonen nærmere, eller øk inputnivået litt i Windows.</value>
+    <value>Stemmen var for lik bakgrunnsstøyen. Senk romstøyen, flytt mikrofonen nærmere, eller øk inputnivået litt i Windows.</value>
   </data>
   <data name="MicCalibration_TooLoud" xml:space="preserve">
     <value>Mikrofonnivået var for høyt og kan klippe. Senk inputvolum eller mikrofon-gain i Windows og prøv igjen.</value>
