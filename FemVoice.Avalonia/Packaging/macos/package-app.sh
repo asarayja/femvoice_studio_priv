@@ -93,6 +93,21 @@ echo "  version: $VERSION (from FemVoice.Avalonia.csproj)"
 
 cp -R "$PUBLISH_DIR/." "$APP/Contents/MacOS/"
 
+# Strip the executable bit from managed assemblies.
+#
+# `dotnet publish` marks its output +x and `cp -R` preserves it, so ~210 managed .dll files land in
+# Contents/MacOS marked executable. codesign treats every executable file inside a bundle as NESTED CODE
+# that must carry its own signature, and a managed assembly is a PE32 file that never can — so sealing the
+# bundle fails outright:
+#
+#   FemVoice Studio.app: code object is not signed at all
+#   In subcomponent: .../Contents/MacOS/System.Web.dll
+#
+# The .NET runtime loads these assemblies itself; nothing ever execs them, so the bit is meaningless here.
+# Clearing it lets codesign seal them as ordinary resources. The real executables — the apphost, createdump
+# and the .dylib files — keep theirs.
+find "$APP/Contents/MacOS" -type f -name '*.dll' -exec chmod a-x {} +
+
 # The bundle is unlaunchable if CFBundleExecutable does not name a real file in Contents/MacOS.
 # Verify it explicitly rather than discovering it on the test Mac.
 if [ ! -f "$APP/Contents/MacOS/$APPHOST" ]; then
