@@ -4,10 +4,14 @@
 ; Avalonia desktop app to Program Files, creates Start-menu (+ optional desktop)
 ; shortcuts, and registers an uninstaller in "Apps & features".
 ;
-; Payload = the single self-contained, code-signed exe produced by:
+; Payload = the full self-contained publish directory produced by:
 ;   dotnet publish FemVoice.Avalonia/FemVoice.Avalonia.csproj -c Release -r win-x64 `
 ;     --self-contained true -p:PublishSingleFile=true `
-;     -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -o dist/win-x64
+;     -p:DebugType=None -o dist/win-x64
+;
+; Important: even with PublishSingleFile=true, Avalonia/Skia/QuestPDF native runtime assets may be
+; emitted beside the apphost (libSkiaSharp.dll, libHarfBuzzSharp.dll, av_libglesv2.dll, e_sqlite3.dll,
+; qpdf.dll, QuestPdfSkia.dll, fonts). Install the whole publish folder, not only the exe.
 ;
 ; Build the installer:   ISCC.exe packaging\windows\FemVoiceStudio.iss
 ; Output:                dist\FemVoice-Studio-Setup.exe   (sign it afterwards)
@@ -49,7 +53,7 @@ Name: "norwegian"; MessagesFile: "compiler:Languages\Norwegian.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "{#RepoRoot}dist\win-x64\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#RepoRoot}dist\win-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"

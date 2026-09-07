@@ -3076,8 +3076,11 @@ internal static class Program
     // positive checks + the source leak guard.)
     private static int PackagingSmoke()
     {
-        // AppContext.BaseDirectory = .../FemVoice.Avalonia/bin/<cfg>/net10.0/  ->  up 3 = the project dir.
-        string projectDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+        var dir = new System.IO.DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null && !System.IO.File.Exists(System.IO.Path.Combine(dir.FullName, "FemVoiceStudio.slnx")))
+            dir = dir.Parent;
+        string repoRoot = dir?.FullName ?? System.IO.Directory.GetCurrentDirectory();
+        string projectDir = System.IO.Path.Combine(repoRoot, "FemVoice.Avalonia");
         string csprojPath = System.IO.Path.Combine(projectDir, "FemVoice.Avalonia.csproj");
         bool csprojFound = System.IO.File.Exists(csprojPath);
         string csproj = csprojFound ? System.IO.File.ReadAllText(csprojPath) : "";
@@ -3098,6 +3101,12 @@ internal static class Program
 
         bool plistOk = System.IO.File.Exists(System.IO.Path.Combine(projectDir, "Packaging", "macos", "Info.plist"));
         bool desktopOk = System.IO.File.Exists(System.IO.Path.Combine(projectDir, "Packaging", "linux", "femvoice-studio.desktop"));
+        string winInstallerPath = System.IO.Path.Combine(repoRoot, "packaging", "windows", "FemVoiceStudio.iss");
+        string winInstaller = System.IO.File.Exists(winInstallerPath) ? System.IO.File.ReadAllText(winInstallerPath) : "";
+        bool winInstallerCopiesFullPayload = winInstaller.Contains(@"dist\win-x64\*", StringComparison.Ordinal)
+            && winInstaller.Contains("recursesubdirs", StringComparison.OrdinalIgnoreCase)
+            && winInstaller.Contains("createallsubdirs", StringComparison.OrdinalIgnoreCase);
+        bool winInstallerNotExeOnly = !winInstaller.Contains(@"dist\win-x64\{#AppExeName}", StringComparison.Ordinal);
 
         // Runtime reflection over the shared UI assembly: it references Core + Audio.Abstractions and NO other
         // FemVoice.Audio.* assembly (and, implicitly, no Windows-audio adapter).
@@ -3109,6 +3118,7 @@ internal static class Program
         Console.WriteLine($"[pkg] csproj: found={csprojFound} RIDs(linux/osx/win x64+arm64)={ridsOk} Tmds-pin-0.21.3={tmdsPinned} no-trim={noTrim}");
         Console.WriteLine($"[pkg] project refs: count={projRefCount} core+abstractions-only={refsOk}");
         Console.WriteLine($"[pkg] templates: macos/Info.plist={plistOk} linux/.desktop={desktopOk}");
+        Console.WriteLine($"[pkg] windows installer: full-payload={winInstallerCopiesFullPayload} not-exe-only={winInstallerNotExeOnly}");
         Console.WriteLine($"[pkg] runtime refs: Core={refCore} Abstractions={refAbstractions} no-other-FemVoice.Audio={noOtherFemVoiceAudio}");
 
         // --- Packaging helper scripts (publish + .deb) ---
@@ -3174,6 +3184,7 @@ internal static class Program
 
         bool ok = csprojFound && ridsOk && tmdsPinned && noTrim && refsOk
                   && plistOk && desktopOk && refCore && refAbstractions && noOtherFemVoiceAudio
+                  && winInstallerCopiesFullPayload && winInstallerNotExeOnly
                   && helpersOk;
         Console.WriteLine(ok ? "[pkg] Packaging readiness smoke OK" : "[pkg] Packaging readiness smoke FAIL");
         return ok ? 0 : 1;

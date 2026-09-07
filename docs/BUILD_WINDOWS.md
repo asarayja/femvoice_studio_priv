@@ -31,10 +31,14 @@ dotnet publish FemVoice.Avalonia/FemVoice.Avalonia.csproj \
   -o dist/win-x64
 ```
 
-Output: `dist/win-x64/FemVoice.Studio.exe` (self-contained — no .NET install required on the target).
+Output: `dist/win-x64/FemVoice.Studio.exe` plus required native runtime assets beside it
+(`libSkiaSharp.dll`, `libHarfBuzzSharp.dll`, `av_libglesv2.dll`, `e_sqlite3.dll`, QuestPDF/qpdf files, fonts).
+The folder is self-contained — no .NET install required on the target.
 
 - Trimming is intentionally **off** (Avalonia XAML/reflection would break); the exe is ~80–90 MB.
 - To give the exe the app name/icon, it already uses `Assets/logo.ico` via `ApplicationIcon` in the csproj.
+- When building the installer, include the entire `dist/win-x64` folder. Installing only
+  `FemVoice.Studio.exe` will crash at startup with missing SkiaSharp native DLLs.
 
 ---
 

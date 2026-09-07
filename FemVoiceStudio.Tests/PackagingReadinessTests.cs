@@ -103,6 +103,18 @@ namespace FemVoiceStudio.Tests
             Assert.DoesNotContain("Debug", text, StringComparison.OrdinalIgnoreCase);
         }
 
+        [Fact]
+        public void WindowsInstaller_IncludesFullAvaloniaPublishPayload()
+        {
+            var file = FindRepoFile(Path.Combine("packaging", "windows", "FemVoiceStudio.iss"));
+            var text = File.ReadAllText(file);
+
+            Assert.Contains(@"dist\win-x64\*", text, StringComparison.Ordinal);
+            Assert.Contains("recursesubdirs", text, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("createallsubdirs", text, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(@"dist\win-x64\{#AppExeName}", text, StringComparison.Ordinal);
+        }
+
         private static string FindRepoFile(string relativePath)
         {
             var directory = new DirectoryInfo(AppContext.BaseDirectory);
