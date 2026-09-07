@@ -105,6 +105,30 @@ jobs:
             echo "Rebuild the Linux/Android packages at $VERSION and commit them before releasing." >&2
             exit 1
           fi
+
+          # A matching version number is NOT proof the packages are current. They are committed binaries
+          # built on the Linux host, so any source change after the last builds/ commit is missing from
+          # them while the filename still says 0.1.7. That is not hypothetical: the SQLite CVE-2025-6965
+          # upgrade landed after the packages were built, and a release would have shipped the vulnerable
+          # engine under a version claiming to contain the fix.
+          #
+          # So compare commit dates: if anything the packages are built FROM changed after builds/ was last
+          # committed, they are stale. This is the check the version comparison above cannot make.
+          BUILDS_AT=$(git log -1 --format=%ct -- builds/)
+          SRC_AT=$(git log -1 --format=%ct -- \
+            FemVoice.Core FemVoice.Avalonia.UI FemVoice.Avalonia FemVoice.Audio.Abstractions FemVoice.Android \
+            Directory.Build.props 2>/dev/null || echo 0)
+          if [ -n "$SRC_AT" ] && [ "$SRC_AT" -gt "$BUILDS_AT" ]; then
+            echo "ERROR: the committed packages are STALE." >&2
+            echo "  builds/ last committed: $(date -u -r "$BUILDS_AT" 2>/dev/null || echo "$BUILDS_AT")" >&2
+            echo "  source last changed:    $(date -u -r "$SRC_AT" 2>/dev/null || echo "$SRC_AT")" >&2
+            echo "  Source changed after the packages were built, so they do not contain it even though" >&2
+            echo "  the version number matches. Rebuild the Linux/Android packages and commit them." >&2
+            git log --oneline "--since=@$BUILDS_AT" -- \
+              FemVoice.Core FemVoice.Avalonia.UI FemVoice.Avalonia FemVoice.Audio.Abstractions FemVoice.Android >&2
+            exit 1
+          fi
+          echo "  packages are newer than the last source change
           echo "deb=$DEB"          >> "$GITHUB_OUTPUT"
           echo "archpkg=$ARCH_PKG" >> "$GITHUB_OUTPUT"
           echo "apk=$APK"          >> "$GITHUB_OUTPUT"
