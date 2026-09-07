@@ -153,7 +153,14 @@ jobs:
             find "$APP/Contents/MacOS" -type f \( -name '*.dylib' -o -name '*.so' \) -print0 \
               | xargs -0 -I{} codesign --force --timestamp=none --sign - "{}"
             codesign --force --timestamp=none --sign - "$APP"
-            codesign --verify --deep --strict --verbose=2 "$APP"
+            # Verify WITHOUT --deep. --deep recurses into every nested file and treats each .dll as code that
+            # must carry its own signature — but a .NET app's Contents/MacOS is full of managed assemblies,
+            # which are not Mach-O and are never signed. It fails on the first one ("code object is not signed
+            # at all. In subcomponent: .../System.Web.dll") even though the bundle and every real dylib signed
+            # fine. Plain --strict checks the bundle's own signature and its seal, which is what actually
+            # matters here: TCC identifies the app by that signature when remembering microphone permission.
+            codesign --verify --strict --verbose=2 "$APP"
+            codesign -dv "$APP" 2>&1 | grep -E 'Signature|Identifier' || true
             echo "::endgroup::"
           done
 
