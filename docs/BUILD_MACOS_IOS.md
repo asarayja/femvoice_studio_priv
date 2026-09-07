@@ -19,6 +19,80 @@ iOS work require a **Mac + Xcode** (and, for iOS, `dotnet workload install ios`)
 
 ## Part A — macOS desktop (`FemVoice.Avalonia`)
 
+### A.0 The easy route — let GitHub Actions build it (recommended)
+
+You do **not** need a Mac to *build* the Mac app; you only need one to *run* it. The **Release**
+workflow builds it on a real macOS runner and publishes it, together with the Linux and Android
+packages, as one GitHub Release on the public distribution repo.
+
+1. Open the repo on GitHub → **Actions** → **Release (macOS build + GitHub Release)** → **Run workflow**.
+2. Pick the architecture (`both` is the default; `arm64-only` is right for any Mac from 2020 onward) and
+   the release mode (`draft` is the default, so the Windows installer can be added before publishing).
+3. Download the `.dmg` for your Mac's architecture from the release page (or from the run's artifacts
+   when you used `release_mode: none`), then drag **FemVoice Studio** to Applications.
+
+The build is **self-contained**: the .NET runtime is inside the app, so the target Mac needs nothing
+installed. It runs from a manual trigger only.
+
+> Publishing to the distribution repo needs a `RELEASE_TOKEN` secret — a fine-grained PAT with
+> *Contents: Read and write* on `asarayja/FemVoice-Studio`. The automatic `GITHUB_TOKEN` cannot write to
+> another repository. Without it the build still succeeds and the assets are attached to the run.
+
+> **Why a `.dmg` and not the `.app`?** GitHub's artifact upload zips whatever you give it and drops the
+> executable permission bit. A zipped `.app` arrives with a non-executable apphost and simply refuses to
+> start. A disk image preserves permissions, so the `.dmg` is the artifact.
+
+### A.0.1 Opening it the first time (the app is unsigned)
+
+The app is **not code-signed or notarized** — that requires a paid Apple Developer ID (see
+`FemVoice.Avalonia/Packaging/macos/NOTARIZATION.md`). macOS quarantines anything downloaded from the
+internet, so on first launch you will get *"FemVoice Studio cannot be opened because the developer
+cannot be verified"* — or, on Sonoma and later, *"...is damaged and can't be opened"*, which is
+Gatekeeper's misleading wording for *unsigned*, **not** a corrupted download.
+
+Two ways to open it:
+
+- **Right-click** the app in Applications → **Open** → **Open** in the dialog. macOS remembers the choice.
+- Or clear the quarantine flag in Terminal:
+
+  ```bash
+  xattr -dr com.apple.quarantine "/Applications/FemVoice Studio.app"
+  ```
+
+If neither works, check **System Settings → Privacy & Security**; a blocked launch leaves an
+**"Open Anyway"** button there for about an hour.
+
+**Microphone.** macOS capture runs through **AudioQueue** (`CoreAudioCaptureService`, AudioToolbox
+P/Invoke — the macOS counterpart to ALSA on Linux and winmm on Windows). The first time you start a
+recording, macOS asks for access, using the `NSMicrophoneUsageDescription` string from the bundle.
+
+Granting it is required. If you refuse, **macOS does not return an error** — it delivers digital silence
+instead, so the meter simply never moves and nothing explains why. The backend watches for that: about
+two seconds of perfectly zero samples raises a device-lost with an actionable message, because a working
+microphone always carries some noise floor. Re-enable it under **System Settings → Privacy & Security →
+Microphone**.
+
+This is also why the CI bundle is **ad-hoc code-signed** (`codesign --sign -`). macOS remembers a
+microphone decision against the app's code identity; a completely unsigned bundle has none and is
+identified by path alone, so the permission can be forgotten or re-prompted on every launch. Ad-hoc
+signing costs nothing and needs no Apple account, and it makes "allow" stick. It does **not** notarize
+the app — Gatekeeper still warns on first open.
+
+### A.0.2 Building it locally on a Mac instead
+
+```bash
+SELF_CONTAINED=true ./FemVoice.Avalonia/Packaging/macos/package-app.sh osx-arm64
+./FemVoice.Avalonia/Packaging/macos/package-dmg.sh osx-arm64
+```
+
+`package-app.sh` substitutes the version from the csproj into `Info.plist` and refuses to emit a bundle
+whose `CFBundleExecutable` does not name a real file in `Contents/MacOS` — the mismatch that previously
+produced a bundle macOS could not launch at all.
+
+---
+
+### Manual reference (what the scripts above do)
+
 ### A.1 Publish the macOS binary
 
 From the repo root (any OS with the .NET 10 SDK):
@@ -33,7 +107,8 @@ dotnet publish FemVoice.Avalonia/FemVoice.Avalonia.csproj \
   -c Release -r osx-x64 --self-contained true -p:DebugType=None -o dist/osx-x64
 ```
 
-Output: `dist/osx-arm64/FemVoice.Avalonia` (a raw Mach-O executable + native `.dylib`s).
+Output: `dist/osx-arm64/FemVoice.Studio` (a raw Mach-O executable + native `.dylib`s). The file is
+named after `<AssemblyName>FemVoice.Studio</AssemblyName>`, **not** after the project.
 
 ### A.2 Wrap it in a `.app` bundle
 

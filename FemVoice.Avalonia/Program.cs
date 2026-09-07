@@ -97,6 +97,7 @@ internal static class Program
         if (args.Contains("--settings-reduce-motion-activation-smoke")) return SettingsReduceMotionActivationSmoke();
         if (args.Contains("--avalonia-translation-contribution-smoke")) return AvaloniaTranslationContributionSmoke();
         if (args.Contains("--avalonia-audio-readiness-smoke")) return AvaloniaAudioReadinessSmoke();
+        if (args.Contains("--macos-capture-backend-smoke")) return MacOsCaptureBackendSmoke();
         if (args.Contains("--avalonia-audio-backend-smoke")) return AvaloniaAudioBackendSmoke();
         if (args.Contains("--audio-playback-smoke")) return AudioPlaybackSmoke();
         if (args.Contains("--real-audio-capture-smoke")) return RealAudioCaptureSmoke();
@@ -3124,7 +3125,13 @@ internal static class Program
         string desktop = System.IO.File.Exists(desktopPath) ? System.IO.File.ReadAllText(desktopPath) : "";
 
         bool helpersRefProj = pl.Contains("FemVoice.Avalonia.csproj") && pm.Contains("FemVoice.Avalonia.csproj");
-        bool helpersFdd = pl.Contains("--self-contained false") && pm.Contains("--self-contained false");
+        // Both publish helpers must still default to FRAMEWORK-DEPENDENT. The Linux helper hardcodes the flag;
+        // the macOS helper takes a SELF_CONTAINED override (the CI .dmg is self-contained so the test Mac needs
+        // no .NET install), so its guarantee is the DEFAULT VALUE of that variable, not a literal flag. Checking
+        // the default rather than the literal keeps this assertion honest instead of merely string-matching.
+        bool helpersFdd = pl.Contains("--self-contained false")
+                          && pm.Contains("SELF_CONTAINED:-false")
+                          && pm.Contains("--self-contained \"$SELF_CONTAINED\"");
         bool helpersArtifacts = pl.Contains("artifacts/publish") && pm.Contains("artifacts/publish");
         bool debRefsDpkg = deb.Contains("dpkg-deb");
         bool debOut = deb.Contains("artifacts/packages/deb");
@@ -4694,6 +4701,46 @@ internal static class Program
     // Verifies the AudioReadiness classification/status over the synthetic + noop backends, that no frames are
     // emitted (no StartAsync), the shell surfaces it, and (source scan, skip→pass published) no Windows-audio/WPF/
     // DB references creep into the audio code. Pure; runs from the published DLL.
+    // The OS dispatcher must pick the RIGHT native capture binding for the machine it is running on. This is
+    // the check that actually pays off on the macOS CI runner: it is the only place where the CoreAudio path is
+    // exercised on real Apple hardware. GitHub's macOS runners have no microphone, so availability is REPORTED
+    // rather than asserted — asserting it would fail for the wrong reason and hide the wiring result.
+    private static int MacOsCaptureBackendSmoke()
+    {
+        using var dispatcher = new FemVoiceStudio.Audio.Abstractions.CrossPlatformAudioCaptureService();
+        string selected = dispatcher.SelectedBackendDescription;
+        bool available = dispatcher.IsBackendAvailable;
+        int deviceCount = dispatcher.GetInputDevices().Count;
+
+        string expected =
+            System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX) ? "CoreAudioCaptureService"
+            : System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux) ? "AlsaAudioCaptureService"
+            : System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) ? "WinMmAudioCaptureService"
+            : selected;
+        bool wiringOk = selected == expected;
+        Console.WriteLine($"[mac-cap] os={System.Runtime.InteropServices.RuntimeInformation.OSDescription}");
+        Console.WriteLine($"[mac-cap] backend='{selected}' expected='{expected}' wiring={wiringOk} available={available} devices={deviceCount}");
+
+        // Off macOS the CoreAudio backend must still be safe to construct and must never claim availability or
+        // emit frames — the same fail-safe contract the ALSA backend has on a machine with no sound card.
+        bool failSafeOk = true;
+        if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX))
+        {
+            using var mac = new FemVoiceStudio.Audio.Abstractions.MacOS.CoreAudioCaptureService();
+            int frames = 0; int lost = 0;
+            mac.FrameAvailable += (_, _) => frames++;
+            mac.DeviceLost += (_, _) => lost++;
+            mac.StartAsync(new FemVoiceStudio.Audio.Abstractions.AudioCaptureOptions()).GetAwaiter().GetResult();
+            mac.StopAsync().GetAwaiter().GetResult();
+            failSafeOk = !mac.IsBackendAvailable && mac.GetInputDevices().Count == 0 && frames == 0 && lost == 1;
+            Console.WriteLine($"[mac-cap] off-macOS fail-safe: available=False devices=0 frames={frames} deviceLost={lost} ok={failSafeOk}");
+        }
+
+        bool ok = wiringOk && failSafeOk;
+        Console.WriteLine(ok ? "[mac-cap] macOS capture backend smoke OK" : "[mac-cap] macOS capture backend smoke FAIL");
+        return ok ? 0 : 1;
+    }
+
     private static int AvaloniaAudioReadinessSmoke()
     {
         // Synthetic backend (the Avalonia default): backend=Synthetic, 1 device, real capture NOT available.

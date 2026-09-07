@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using FemVoiceStudio.Audio.Abstractions.Linux;
+using FemVoiceStudio.Audio.Abstractions.MacOS;
 using FemVoiceStudio.Audio.Abstractions.Windows;
 
 namespace FemVoiceStudio.Audio.Abstractions;
@@ -17,7 +18,10 @@ namespace FemVoiceStudio.Audio.Abstractions;
 ///   <item>Linux → real ALSA capture (verified end-to-end).</item>
 ///   <item>Windows → real capture via the multimedia <c>waveIn</c> API (<see cref="WinMmAudioCaptureService"/>),
 ///         also dependency-free P/Invoke — no NuGet, no COM.</item>
-///   <item>macOS → reported "unavailable" here; a CoreAudio/AVFoundation binding is a follow-up slice.</item>
+///   <item>macOS → real AudioQueue capture via AudioToolbox (<see cref="CoreAudioCaptureService"/>), also
+///         dependency-free P/Invoke. macOS gates the microphone through TCC: the system prompt uses the app
+///         bundle's NSMicrophoneUsageDescription, and a refusal surfaces as digital silence rather than an
+///         error — that backend detects it and reports device-lost with an actionable message.</item>
 /// </list>
 /// When no native binding is wired for the current OS (or the device can't be opened), it degrades GRACEFULLY:
 /// <see cref="IsBackendAvailable"/> is <c>false</c>, enumeration is empty, and <see cref="StartAsync"/> raises
@@ -48,8 +52,10 @@ public sealed class CrossPlatformAudioCaptureService : IRealAudioCaptureBackend,
             return new AlsaAudioCaptureService();
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return new WinMmAudioCaptureService();   // dependency-free winmm/waveIn capture (no NuGet, no COM)
-        // macOS native capture is a follow-up slice; it falls through to "unavailable" via a null native backend on
-        // this dispatcher (graceful degradation to the synthetic display-only source).
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            return new CoreAudioCaptureService();    // AudioQueue via AudioToolbox P/Invoke (no NuGet, no ObjC)
+        // Any other OS falls through to "unavailable" via a null native backend on this dispatcher (graceful
+        // degradation to the synthetic display-only source).
         return null;
     }
 
