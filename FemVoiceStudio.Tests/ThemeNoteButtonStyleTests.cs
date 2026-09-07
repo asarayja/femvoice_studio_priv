@@ -26,17 +26,22 @@ namespace FemVoiceStudio.Tests
         private static string ReadTheme(string file)
             => File.ReadAllText(Path.Combine(RepoRoot(), "FemVoiceStudio", "Themes", file));
 
+        private static string ReadNoteStyleBlock(string theme)
+        {
+            var xaml = ReadTheme(theme);
+            var start = xaml.IndexOf("x:Key=\"NoteRadioButtonStyle\"", StringComparison.Ordinal);
+            Assert.True(start >= 0, "NoteRadioButtonStyle was not found.");
+            var end = xaml.IndexOf("<Style ", start + 1, StringComparison.Ordinal);
+            return end > start ? xaml[start..end] : xaml[start..];
+        }
+
         public static TheoryData<string> Themes => new() { "DarkTheme.xaml", "LightTheme.xaml" };
 
         [Theory]
         [MemberData(nameof(Themes))]
         public void NoteRadioButtonStyle_ExistsAndCoversAllStates(string theme)
         {
-            var xaml = ReadTheme(theme);
-            Assert.Contains("x:Key=\"NoteRadioButtonStyle\"", xaml);
-            // The block from the style key to its close must cover every interactive state.
-            var start = xaml.IndexOf("x:Key=\"NoteRadioButtonStyle\"", StringComparison.Ordinal);
-            var block = xaml.Substring(start, Math.Min(2600, xaml.Length - start));
+            var block = ReadNoteStyleBlock(theme);
             Assert.Contains("Property=\"IsMouseOver\"", block);
             Assert.Contains("Property=\"IsPressed\"", block);
             Assert.Contains("Property=\"IsChecked\"", block);
@@ -49,8 +54,7 @@ namespace FemVoiceStudio.Tests
         [MemberData(nameof(Themes))]
         public void NoteRadioButtonStyle_UsesThemeBrushes(string theme)
         {
-            var start = ReadTheme(theme).IndexOf("x:Key=\"NoteRadioButtonStyle\"", StringComparison.Ordinal);
-            var block = ReadTheme(theme).Substring(start, 2600);
+            var block = ReadNoteStyleBlock(theme);
             Assert.Contains("AccentPrimaryBrush", block);     // selected fill
             Assert.Contains("TextOnAccentBrush", block);      // selected text
             Assert.Contains("BackgroundTertiaryBrush", block); // unselected surface

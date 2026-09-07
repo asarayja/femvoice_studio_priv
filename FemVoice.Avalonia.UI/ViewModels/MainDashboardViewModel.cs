@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -67,6 +68,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         _pitch = new PitchDetectionService(SampleRate);
         _capture.FrameAvailable += OnFrameAvailable;
         _capture.DeviceLost += OnDeviceLost;
+        Localized.LanguageChanged += OnAvaloniaLanguageChanged;
         UpdateComfortZone();
         LoadExercise();   // seed the exercise-text panel with the first sentence for the default difficulty
         RefreshRecentSessions();
@@ -350,7 +352,10 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
 
     /// <summary>One difficulty choice + its localized label (shared Difficulty_* keys, like WPF's buttons).</summary>
     public sealed record DifficultyOption(DifficultyLevel Value, string Label);
-    public IReadOnlyList<DifficultyOption> DifficultyOptions { get; } = new[]
+    private IReadOnlyList<DifficultyOption> _difficultyOptions = BuildDifficultyOptions();
+    public IReadOnlyList<DifficultyOption> DifficultyOptions => _difficultyOptions;
+
+    private static IReadOnlyList<DifficultyOption> BuildDifficultyOptions() => new[]
     {
         new DifficultyOption(DifficultyLevel.Nybegynner, Localized.Get("Difficulty_Beginner", "Nybegynner")),
         new DifficultyOption(DifficultyLevel.Middels, Localized.Get("Difficulty_Intermediate", "Middels")),
@@ -377,9 +382,9 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     // ── Exercise-text panel (WPF front-page parity) ───────────────────────────────────────────────────────────────
     // WPF's dashboard shows a sentence to READ at the current difficulty plus a difficulty badge (MainWindow.xaml
     // "Exercise Text at Bottom"). Sentences come from the SHARED Core ExerciseTextService — the same catalogue WPF
-    // uses — with localized content and the model's Norwegian seed as fallback. Changing difficulty or pressing
+    // uses — with Avalonia-localized content and the model's Norwegian seed as fallback. Changing difficulty or pressing
     // "Neste tekst" loads a matching sentence. Read-only; no clinical/scoring behaviour.
-    private readonly FemVoiceStudio.Services.ExerciseTextService _exercise = new();
+    private readonly FemVoiceStudio.Services.ExerciseTextService _exercise = new(new DashboardExerciseSeedLocalization());
     private int _exerciseIndex;   // deterministic cycle index (not random) so the panel + smokes are stable
 
     public string ExerciseTextHeading => Localized.Get("Main_ExerciseText", "Øvelsestekst");
@@ -396,23 +401,56 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void NextExercise() { _exerciseIndex++; LoadExercise(); }
 
-    /// <summary>Load the exercise sentence at the current cycle index for the selected difficulty. Prefers localized
-    /// content/title/category; falls back to the model's Norwegian seed when a resource key is absent.</summary>
+    /// <summary>Load the exercise sentence at the current cycle index for the selected difficulty. Uses the Avalonia
+    /// language resolver so the dashboard does not leak Core/WPF's singleton culture into the selected UI language.</summary>
     private void LoadExercise()
     {
         var texts = _exercise.GetTextsByDifficulty(SelectedDifficulty);
         var ex = texts.Count > 0
             ? texts[((_exerciseIndex % texts.Count) + texts.Count) % texts.Count]
             : _exercise.GetRandomText(SelectedDifficulty);   // GetDefaultText fallback when the catalogue is empty
-        CurrentExerciseText = LocalizedOrSeed(_exercise.GetLocalizedContent(ex.Id), $"Exercise_{ex.Id}_Content", ex.Content);
-        CurrentExerciseTitle = LocalizedOrSeed(_exercise.GetLocalizedTitle(ex.Id), $"Exercise_{ex.Id}_Title", ex.Title);
-        CurrentExerciseCategory = LocalizedOrSeed(_exercise.GetLocalizedCategory(ex.Id), $"Exercise_{ex.Id}_Category", ex.Category);
+        CurrentExerciseText = Localized.Get($"Exercise_{ex.Id}_Content", ex.Content);
+        CurrentExerciseTitle = Localized.Get($"Exercise_{ex.Id}_Title", ex.Title);
+        CurrentExerciseCategory = ResolveExerciseCategory(ex.Id, ex.Category);
     }
 
-    // The Core localization indexer echoes the key back when a string is missing; treat that (or empty) as "no
-    // translation" and use the model's seed text so a real sentence always shows.
-    private static string LocalizedOrSeed(string localized, string key, string seed)
-        => string.IsNullOrWhiteSpace(localized) || localized == key ? seed : localized;
+    private static string ResolveExerciseCategory(int exerciseId, string seed)
+    {
+        var value = Localized.Get($"Exercise_{exerciseId}_Category", seed);
+        return value.StartsWith("Category_", StringComparison.Ordinal)
+            ? Localized.Get(value, seed)
+            : value;
+    }
+
+    private void OnAvaloniaLanguageChanged()
+    {
+        void Refresh()
+        {
+            _difficultyOptions = BuildDifficultyOptions();
+            OnPropertyChanged(nameof(DifficultyOptions));
+            OnPropertyChanged(nameof(SelectedDifficultyOption));
+            OnPropertyChanged(nameof(ExerciseDifficultyBadge));
+            OnPropertyChanged(nameof(ExerciseTextHeading));
+            OnPropertyChanged(nameof(NextExerciseLabel));
+            OnPropertyChanged(nameof(ExerciseCategoryLabel));
+            LoadExercise();
+        }
+
+        if (_ui.CheckAccess()) Refresh();
+        else _ui.Post(Refresh);
+    }
+
+    private sealed class DashboardExerciseSeedLocalization : FemVoiceStudio.Services.ILocalizationService
+    {
+        public string CurrentLanguage => Localized.CurrentCulture.TwoLetterISOLanguageName;
+        public string this[string key] => key;
+        public string GetString(string key) => key;
+        public string GetFormattedString(string key, params object[] args) => key;
+        public void SetLanguage(string languageCode) { }
+        public bool IsNorwegian => CurrentLanguage is "nb" or "no" or "nn";
+        public bool IsEnglish => CurrentLanguage == "en";
+        public event PropertyChangedEventHandler? PropertyChanged { add { } remove { } }
+    }
 
     /// <summary>True when the active capture backend is the synthetic display-only source (no real microphone).
     /// Drives visibility of the synthetic test-tone selector — it is hidden when a real mic drives the dashboard.</summary>
@@ -807,6 +845,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
+        Localized.LanguageChanged -= OnAvaloniaLanguageChanged;
         _capture.FrameAvailable -= OnFrameAvailable;
         _capture.DeviceLost -= OnDeviceLost;
         _voiceMonitor.Dispose();

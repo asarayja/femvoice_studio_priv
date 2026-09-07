@@ -93,6 +93,7 @@ internal static class Program
         if (args.Contains("--settings-preferences-persistence-smoke")) return SettingsPreferencesPersistenceSmoke();
         if (args.Contains("--settings-theme-activation-smoke")) return SettingsThemeActivationSmoke();
         if (args.Contains("--settings-language-activation-smoke")) return SettingsLanguageActivationSmoke();
+        if (args.Contains("--dashboard-exercise-localization-smoke")) return DashboardExerciseLocalizationSmoke();
         if (args.Contains("--settings-reduce-motion-activation-smoke")) return SettingsReduceMotionActivationSmoke();
         if (args.Contains("--avalonia-translation-contribution-smoke")) return AvaloniaTranslationContributionSmoke();
         if (args.Contains("--avalonia-audio-readiness-smoke")) return AvaloniaAudioReadinessSmoke();
@@ -2439,6 +2440,8 @@ internal static class Program
         int deferred = shell.NavItems.Count(n => !n.IsImplemented);
         Console.WriteLine($"[shell] Nav items: {shell.NavItems.Count} (implemented={implemented}, deferred={deferred})");
         Console.WriteLine($"[shell] Lands on: {shell.CurrentDestinationLabel}");
+        ShellNavItem NavItem(params string[] labels) => shell.NavItems.First(n =>
+            labels.Any(label => n.Label.Contains(label, StringComparison.OrdinalIgnoreCase)));
 
         // Implemented nav switches CurrentPage.
         shell.ShowGuideCommand.Execute(null);
@@ -2449,7 +2452,7 @@ internal static class Program
         // Mikrofonkalibrering is now IMPLEMENTED: a real mic-check page (disposable — owns a capture backend it
         // stops on navigate-away). All nav items are implemented (0 deferred). Navigating there opens the VM and
         // then back to the dashboard disposes it (transient-page dispose guard) — verified below via the runtime.
-        var micItem = shell.NavItems.First(n => n.Label.Contains("Mikrofon"));
+        var micItem = NavItem("Mikrofon", "Microphone");
         micItem.Command.Execute(null);
         bool onDeferred = shell.CurrentPage is MicCalibrationViewModel && shell.CurrentPage is IDisposable;
         shell.ShowDashboardCommand.Execute(null);   // navigate away → the mic-check page is disposed (capture stopped)
@@ -2458,9 +2461,9 @@ internal static class Program
 
         // Progresjon + SmartCoach are now ENGINE-BACKED (real VMs); in this headless shell they have no DB → fail
         // safe to an "unavailable" state (no crash, no DB opened).
-        shell.NavItems.First(n => n.Label.Contains("Progresjon")).Command.Execute(null);
+        NavItem("Progresjon", "Progression").Command.Execute(null);
         bool onProgScaffold = shell.CurrentPage is ProgressionViewModel && shell.CurrentPage is not IDisposable;
-        shell.NavItems.First(n => n.Label.Contains("SmartCoach")).Command.Execute(null);
+        NavItem("SmartCoach").Command.Execute(null);
         bool onCoachScaffold = shell.CurrentPage is SmartCoachViewModel && shell.CurrentPage is not IDisposable;
         Console.WriteLine($"[shell] nav (engine-backed): progression={onProgScaffold} smartcoach={onCoachScaffold}");
 
@@ -4501,6 +4504,44 @@ internal static class Program
         {
             global::FemVoice.Avalonia.Localization.Localized.CurrentCulture = originalCulture;
             try { var dir = System.IO.Path.GetDirectoryName(root); if (dir != null && System.IO.Directory.Exists(dir)) System.IO.Directory.Delete(dir, true); } catch { }
+        }
+    }
+
+    // Regression: dashboard exercise text must follow Avalonia's selected UI language, not Core/WPF's singleton
+    // culture. This keeps Norwegian UI from showing English exercise sentences after language/navigation changes.
+    private static int DashboardExerciseLocalizationSmoke()
+    {
+        var originalCulture = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture;
+        try
+        {
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");
+            using var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+            bool englishInitial = dash.CurrentExerciseTitle == "Greetings"
+                && dash.CurrentExerciseText.StartsWith("Hello!", StringComparison.Ordinal)
+                && dash.CurrentExerciseCategory == "Basic"
+                && dash.ExerciseDifficultyBadge == "Beginner";
+
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
+            bool norwegianAfterSwitch = dash.CurrentExerciseTitle == "Hilsener"
+                && dash.CurrentExerciseText.StartsWith("Hei! God morgen!", StringComparison.Ordinal)
+                && dash.CurrentExerciseCategory == "Grunnleggende"
+                && dash.ExerciseDifficultyBadge == "Nybegynner";
+
+            dash.NextExerciseCommand.Execute(null);
+            bool norwegianAfterNext = dash.CurrentExerciseTitle == "Introduksjon"
+                && dash.CurrentExerciseText.Contains("Jeg heter", StringComparison.Ordinal)
+                && !dash.CurrentExerciseText.Contains("My name is", StringComparison.Ordinal);
+
+            Console.WriteLine($"[dash-loc] englishInitial={englishInitial} norwegianAfterSwitch={norwegianAfterSwitch} norwegianAfterNext={norwegianAfterNext}");
+            Console.WriteLine($"[dash-loc] title=\"{dash.CurrentExerciseTitle}\" category=\"{dash.CurrentExerciseCategory}\" text=\"{dash.CurrentExerciseText}\"");
+
+            bool ok = englishInitial && norwegianAfterSwitch && norwegianAfterNext;
+            Console.WriteLine(ok ? "[dash-loc] Dashboard exercise localization smoke OK" : "[dash-loc] Dashboard exercise localization smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        finally
+        {
+            global::FemVoice.Avalonia.Localization.Localized.CurrentCulture = originalCulture;
         }
     }
 

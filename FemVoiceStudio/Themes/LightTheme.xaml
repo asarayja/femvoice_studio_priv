@@ -415,6 +415,9 @@
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="focusBorder" Property="BorderBrush" Value="{StaticResource BorderFocusBrush}"/>
+                        </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="border" Property="Background" Value="{StaticResource BackgroundHoverBrush}"/>
                         </Trigger>
@@ -435,9 +438,6 @@
                             <Setter TargetName="border" Property="Background" Value="{StaticResource AccentSecondaryBrush}"/>
                             <Setter Property="Foreground" Value="{StaticResource TextOnAccentBrush}"/>
                         </MultiTrigger>
-                        <Trigger Property="IsKeyboardFocused" Value="True">
-                            <Setter TargetName="focusBorder" Property="BorderBrush" Value="{StaticResource BorderFocusBrush}"/>
-                        </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="border" Property="Opacity" Value="0.5"/>
                             <Setter Property="Foreground" Value="{StaticResource TextDisabledBrush}"/>
