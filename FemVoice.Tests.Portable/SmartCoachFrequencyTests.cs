@@ -16,6 +16,9 @@ namespace FemVoiceStudio.Tests
     /// constant. When no profile exists, the engine falls back to 3 (mirroring the
     /// UserVoiceProfile default and the WeeklyGoals table default), never crashing.
     /// </summary>
+    // Serialised with the other localization tests: LocalizationService.Instance is a global
+    // singleton, and this class asserts on a localized SmartCoach message.
+    [Collection("Localization")]
     public class SmartCoachFrequencyTests
     {
         private readonly TestDatabaseService _db = new();

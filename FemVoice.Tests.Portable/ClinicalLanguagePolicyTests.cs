@@ -14,6 +14,9 @@ namespace FemVoiceStudio.Tests
     /// and — the load-bearing CI check — asserts that the live Strings.resx contains
     /// zero violations so the language stays calm and comfort-oriented over time.
     /// </summary>
+    // Serialised with the other localization tests: LocalizationService.Instance is a global
+    // singleton, and this class scans the real shipping copy from the default language state.
+    [Collection("Localization")]
     public class ClinicalLanguagePolicyTests
     {
         // -----------------------------------------------------------------------------

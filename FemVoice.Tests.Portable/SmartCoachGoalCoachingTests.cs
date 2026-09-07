@@ -33,6 +33,9 @@ namespace FemVoiceStudio.Tests
     /// <see cref="LearningPathProfileBuilder"/>, ekte <see cref="TestDatabaseService"/>,
     /// og rene delegat-sømmer der en per-bruker-bro ellers ville krevd plumbing.
     /// </summary>
+    // Serialised with the other localization tests: LocalizationService.Instance is a global
+    // singleton, and this class asserts on localized SmartCoach output.
+    [Collection("Localization")]
     public class SmartCoachGoalCoachingTests
     {
         private readonly TestDatabaseService _testDatabase = new();
