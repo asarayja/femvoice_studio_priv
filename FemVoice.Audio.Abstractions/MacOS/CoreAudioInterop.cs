@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 namespace FemVoiceStudio.Audio.Abstractions.MacOS;
 
 /// <summary>
-/// P/Invoke surface for macOS audio capture via <b>AudioQueue</b> (AudioToolbox.framework). Deliberately
+/// P/Invoke surface for macOS audio capture AND playback via <b>AudioQueue</b> (AudioToolbox.framework). Deliberately
 /// dependency-free — no NuGet, no Xamarin/ObjC bindings — matching the ALSA (libasound) and winmm bindings
 /// used by the Linux and Windows backends, so <c>FemVoice.Audio.Abstractions</c> stays a plain net10.0
 /// assembly that every head can reference.
@@ -81,6 +81,25 @@ internal static class CoreAudioInterop
     internal static extern int AudioQueueNewInput(
         ref AudioStreamBasicDescription inFormat,
         AudioQueueInputCallback inCallbackProc,
+        IntPtr inUserData,
+        IntPtr inCallbackRunLoop,
+        IntPtr inCallbackRunLoopMode,
+        uint inFlags,
+        out IntPtr outAQ);
+
+    /// <summary>
+    /// Mirrors <c>AudioQueueOutputCallback</c>. AudioQueue hands a buffer back once it has finished playing it,
+    /// which is how the playback backend recycles its buffer pool.
+    /// </summary>
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void AudioQueueOutputCallback(IntPtr inUserData, IntPtr inAQ, IntPtr inBuffer);
+
+    /// <summary>Create a playback audio queue. Same run-loop rule as the input queue: <c>IntPtr.Zero</c> means
+    /// callbacks arrive on an AudioQueue-owned thread rather than requiring a CFRunLoop.</summary>
+    [DllImport(AudioToolbox)]
+    internal static extern int AudioQueueNewOutput(
+        ref AudioStreamBasicDescription inFormat,
+        AudioQueueOutputCallback inCallbackProc,
         IntPtr inUserData,
         IntPtr inCallbackRunLoop,
         IntPtr inCallbackRunLoopMode,

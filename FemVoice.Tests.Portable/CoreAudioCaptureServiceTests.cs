@@ -129,6 +129,48 @@ public class CoreAudioCaptureServiceTests
         svc.Dispose();   // idempotent
     }
 
+    // ── Playback (speaker) backend ───────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void OffMacOs_PlaybackReportsUnavailableAndEveryCallIsHarmless()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) return;
+
+        using var svc = new CoreAudioPlaybackService();
+        Assert.False(svc.IsAvailable);
+
+        // The base class refuses to start a thread when the backend is unavailable, so all of this must be
+        // a silent no-op rather than throwing into the voice monitor.
+        svc.Start(44100, 1);
+        svc.Write(new float[512]);
+        svc.Stop();
+        svc.Dispose();
+    }
+
+    [Fact]
+    public void PlaybackFactory_SelectsCoreAudioOnMacOsAndLeavesOtherPlatformsUnchanged()
+    {
+        using var playback = AudioPlaybackBackendFactory.CreateForRuntime();
+        string name = playback.GetType().Name;
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            Assert.Equal(nameof(CoreAudioPlaybackService), name);   // was NoopAudioPlaybackService — monitoring was silent
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            Assert.Equal("AlsaAudioPlaybackService", name);
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            Assert.Equal("WinMmAudioPlaybackService", name);
+    }
+
+    [Fact]
+    public void PlaybackWritesTheByteCountFieldAtTheOffsetTheNativeStructDeclares()
+    {
+        // The playback backend must tell AudioQueue how many bytes of a buffer are valid, by writing
+        // mAudioDataByteSize in place. It derives that offset from the struct rather than hardcoding it —
+        // this asserts the derivation agrees with the layout pinned above, so the two can never drift apart.
+        int offset = (int)Marshal.OffsetOf(NestedStruct("AudioQueueBuffer"), "mAudioDataByteSize");
+        Assert.Equal(16, offset);
+    }
+
     // ── The dispatcher still picks the right backend per OS ──────────────────────────────────────────
 
     [Fact]

@@ -145,9 +145,9 @@ public sealed class NoopAudioPlaybackService : IAudioPlaybackService
 }
 
 /// <summary>
-/// Selects the audio OUTPUT backend per OS, mirroring <see cref="AudioCaptureBackendFactory"/>: Linux/ALSA and
-/// Windows/winmm live in this assembly; a platform head (Android) injects its own via
-/// <see cref="PlatformPlaybackFactory"/>. macOS and unknown OSes get the no-op (silent, safe).
+/// Selects the audio OUTPUT backend per OS, mirroring <see cref="AudioCaptureBackendFactory"/>: Linux/ALSA,
+/// Windows/winmm and macOS/AudioQueue live in this assembly; a platform head (Android) injects its own via
+/// <see cref="PlatformPlaybackFactory"/>. Unknown OSes get the no-op (silent, safe).
 /// </summary>
 public static class AudioPlaybackBackendFactory
 {
@@ -165,6 +165,8 @@ public static class AudioPlaybackBackendFactory
                 return new Linux.AlsaAudioPlaybackService();
             if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
                 return new Windows.WinMmAudioPlaybackService();
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX))
+                return new MacOS.CoreAudioPlaybackService();
         }
         catch { /* fall through to no-op */ }
         return new NoopAudioPlaybackService();

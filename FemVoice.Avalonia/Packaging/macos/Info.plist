@@ -30,7 +30,12 @@
        unaffected. See AppIcon.icns.README.md. -->
   <key>CFBundleIconFile</key>             <string>AppIcon</string>
   <key>CFBundlePackageType</key>          <string>APPL</string>
-  <key>LSMinimumSystemVersion</key>       <string>11.0</string>
+  <!-- 12.0, not 11.0. This is the floor the SHIPPED BINARIES actually declare: the apphost, libcoreclr,
+       libSystem.Native and libe_sqlite3 in a .NET 10 self-contained publish all carry an LC_BUILD_VERSION
+       minos of 12.0. Claiming 11.0 would let macOS Big Sur launch the app and then fail it with a dyld
+       error, which reads as a corrupt download rather than an unsupported OS. Re-check this whenever the
+       .NET version moves. -->
+  <key>LSMinimumSystemVersion</key>       <string>12.0</string>
   <key>NSHighResolutionCapable</key>      <true/>
   <key>LSApplicationCategoryType</key>    <string>public.app-category.education</string>
   <key>NSMicrophoneUsageDescription</key> <string>FemVoice Studio bruker mikrofonen til å analysere stemmen din i sanntid under stemmetrening. Lyden behandles lokalt på maskinen din.</string>

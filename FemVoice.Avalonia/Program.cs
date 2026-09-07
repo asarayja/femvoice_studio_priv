@@ -4736,7 +4736,19 @@ internal static class Program
             Console.WriteLine($"[mac-cap] off-macOS fail-safe: available=False devices=0 frames={frames} deviceLost={lost} ok={failSafeOk}");
         }
 
-        bool ok = wiringOk && failSafeOk;
+        // Playback (the "hear your own voice" monitor) must select the same platform's backend. macOS used to
+        // fall through to the no-op here, which made monitoring silently silent on a Mac.
+        using var playback = FemVoiceStudio.Audio.Abstractions.AudioPlaybackBackendFactory.CreateForRuntime();
+        string playbackName = playback.GetType().Name;
+        string expectedPlayback =
+            System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX) ? "CoreAudioPlaybackService"
+            : System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux) ? "AlsaAudioPlaybackService"
+            : System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) ? "WinMmAudioPlaybackService"
+            : playbackName;
+        bool playbackOk = playbackName == expectedPlayback;
+        Console.WriteLine($"[mac-cap] playback='{playbackName}' expected='{expectedPlayback}' ok={playbackOk} available={playback.IsAvailable}");
+
+        bool ok = wiringOk && failSafeOk && playbackOk;
         Console.WriteLine(ok ? "[mac-cap] macOS capture backend smoke OK" : "[mac-cap] macOS capture backend smoke FAIL");
         return ok ? 0 : 1;
     }
