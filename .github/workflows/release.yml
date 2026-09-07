@@ -143,54 +143,55 @@ jobs:
       #
       # This does NOT notarize the app: Gatekeeper still warns on first open. Real notarization needs a
       # paid Developer ID — see Packaging/macos/NOTARIZATION.md.
-      - name: Ad-hoc code-sign the bundles (stable identity for the microphone permission)
+      # WHY THIS IS A CHECK AND NOT A SIGNING STEP.
+      #
+      # The point of ad-hoc signing was to give the app a stable code identity, because macOS TCC
+      # remembers the microphone permission against one — without it, "allow the microphone" can be
+      # forgotten or re-prompted on every launch.
+      #
+      # It turns out `dotnet publish` ALREADY ad-hoc signs the apphost and every .dylib on macOS: the four
+      # failed runs before this all logged "replacing existing signature" for each file, and the shipped
+      # apphost carries an LC_CODE_SIGNATURE load command. So the identity we wanted is already there.
+      #
+      # Re-sealing the whole .app on top of that is not merely redundant, it is impossible with .NET's
+      # layout: codesign treats the 214 managed assemblies sitting next to the apphost as nested code that
+      # must each carry their own signature, and a PE32 managed assembly never can:
+      #
+      #   FemVoice Studio.app: code object is not signed at all
+      #   In subcomponent: .../Contents/MacOS/System.Web.dll
+      #
+      # That is not fixable by flags (--deep, --strict and plain --verify all hit it) and not by clearing
+      # the executable bit (tried; codesign classifies them by file type, not permission). Restructuring
+      # the bundle so the assemblies live outside Contents/MacOS would break the apphost's own probing.
+      #
+      # So this step verifies the identity instead of manufacturing it, and signs only if publish somehow
+      # did not. If the apphost ever arrives unsigned, the build fails here rather than shipping an app
+      # whose microphone permission silently will not stick.
+      - name: Verify the app has a code identity (for the microphone permission)
         run: |
           set -euo pipefail
           for RID in ${{ steps.rids.outputs.rids }}; do
             APP="artifacts/dist/$RID/FemVoice Studio.app"
-            echo "::group::codesign $RID"
+            EXE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Contents/Info.plist")
+            APPHOST="$APP/Contents/MacOS/$EXE"
+            echo "::group::code identity $RID"
 
-            # codesign treats every EXECUTABLE file inside a bundle as nested code needing its own
-            # signature. dotnet publish marks its output +x and cp -R preserves it, so ~210 managed .dll
-            # files used to arrive executable and sealing the bundle failed on the first one
-            # ("code object is not signed at all. In subcomponent: .../System.Web.dll").
-            # package-app.sh now clears that bit. Check it here too, so a regression reports the actual
-            # cause instead of codesign's message, which points at a symptom three layers away.
-            STRAY=$(find "$APP/Contents/MacOS" -type f -name '*.dll' -perm -u+x | wc -l | tr -d ' ')
-            if [ "$STRAY" -ne 0 ]; then
-              echo "ERROR: $STRAY managed .dll files are marked executable; codesign will treat them as" >&2
-              echo "       unsigned nested code and refuse to seal the bundle." >&2
-              exit 1
+            if ! codesign -dv "$APPHOST" 2>&1 | grep -q 'Signature='; then
+              echo "apphost carries no signature — ad-hoc signing it now."
+              codesign --force --timestamp=none --sign - "$APPHOST"
             fi
 
-            # Sign nested code first, then the bundle itself; --deep alone is deprecated and unreliable.
-            find "$APP/Contents/MacOS" -type f \( -name '*.dylib' -o -name '*.so' \) -print0 \
-              | xargs -0 -I{} codesign --force --timestamp=none --sign - "{}"
-            codesign --force --timestamp=none --sign - "$APP"
-
-            # `codesign --verify` is NOT usable on a .NET bundle, with or without --deep. It walks
-            # Contents/MacOS and treats every managed .dll as nested code that must carry its own signature,
-            # failing with "code object is not signed at all. In subcomponent: .../System.Web.dll". Managed
-            # assemblies are never signed, and there are hundreds of them next to the apphost because that is
-            # where .NET requires them. The failure says nothing about the bundle's OWN signature.
-            #
-            # So assert the thing that actually matters instead of deleting the check: the bundle carries an
-            # ad-hoc signature. That signature is the code identity TCC keys the microphone permission to,
-            # which is the entire reason this step exists.
-            SIGINFO=$(codesign -dv "$APP" 2>&1 || true)
+            SIGINFO=$(codesign -dv "$APPHOST" 2>&1 || true)
             echo "$SIGINFO" | grep -E 'Identifier=|Signature=|CodeDirectory' || true
-            if ! echo "$SIGINFO" | grep -q 'Signature=adhoc'; then
-              echo "ERROR: the bundle does not carry an ad-hoc signature after signing." >&2
+            if ! echo "$SIGINFO" | grep -q 'Signature='; then
+              echo "ERROR: the app executable has no code signature. macOS would have no stable identity" >&2
+              echo "       to attach the microphone permission to." >&2
               echo "$SIGINFO" >&2
               exit 1
             fi
             echo "::endgroup::"
           done
 
-      # A .dmg is used rather than uploading the .app directly because actions/upload-artifact and GitHub
-      # release assets are zipped, and zipping DROPS the executable permission bit — the apphost inside a
-      # zipped .app arrives non-executable and the app cannot start. A disk image preserves permissions,
-      # symlinks and the code signature.
       - name: Build .dmg for each architecture
         run: |
           set -euo pipefail
@@ -231,10 +232,10 @@ jobs:
             test -n "$MIC" || { echo "NSMicrophoneUsageDescription is empty — macOS would terminate on mic access" >&2; exit 1; }
             # The self-contained runtime must actually be inside the bundle, or the app needs a .NET install.
             test -f "$APP/Contents/MacOS/libcoreclr.dylib" || { echo "runtime NOT bundled — app would need .NET installed" >&2; exit 1; }
-            # Same reason as the signing step: --verify walks managed .dll files and always fails on a .NET
-            # layout. Assert the bundle's own ad-hoc signature survived being packaged instead.
-            codesign -dv "$APP" 2>&1 | grep -q 'Signature=adhoc' \
-              || { echo "bundle lost its ad-hoc signature" >&2; exit 1; }
+            # Check the APPHOST, not the bundle: codesign cannot seal a .NET bundle (see the code-identity
+            # step), and the executable's signature is the identity macOS actually uses.
+            codesign -dv "$APP/Contents/MacOS/$EXE" 2>&1 | grep -q 'Signature=' \
+              || { echo "the app executable lost its code signature during packaging" >&2; exit 1; }
 
             # LSMinimumSystemVersion must not undercut what the shipped binaries actually require. The plist
             # claimed 11.0 while every .NET 10 binary declares an LC_BUILD_VERSION minos of 12.0, which would
