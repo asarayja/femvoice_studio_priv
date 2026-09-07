@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  macOS .app bundle Info.plist TEMPLATE (readiness only — NOT wired into the build).
-  This is a static template for a future macOS bundling step; the default build/publish does not consume it.
-  NSMicrophoneUsageDescription is STATIC readiness metadata: the Avalonia head uses synthetic audio and
-  implements NO real microphone capture — this string becomes relevant only when a real capture backend is
-  added in a future slice. No runtime permission is requested by code today.
-  Version note: CFBundleVersion/CFBundleShortVersionString use the numeric release form "0.1.0" (Apple bundle
-  versions must be numeric), mirroring the csproj <Version>0.1.0-dev</Version> with the dev suffix dropped. A
-  future bundling step should derive these from the csproj version rather than hardcoding them.
+  macOS .app bundle Info.plist TEMPLATE, consumed by package-app.sh.
+
+  __VERSION__ is a PLACEHOLDER: package-app.sh substitutes it with <Version> from
+  FemVoice.Avalonia.csproj (the single source of truth) and REFUSES to build a bundle in which the
+  placeholder still remains. It used to be a hardcoded "0.1.0" that silently went stale — an .app
+  reporting 0.1.0 while the app's own About screen said 0.1.7.
+
+  CFBundleExecutable must match the apphost file name produced by the publish, which is driven by
+  <AssemblyName>FemVoice.Studio</AssemblyName>. It used to say "FemVoice.Avalonia" (the project name),
+  left over from before the assembly was renamed: macOS could not find the executable and the bundle
+  would not launch at all. package-app.sh now verifies the named file exists inside the bundle.
+
+  NSMicrophoneUsageDescription is the text macOS shows the user in the microphone permission dialog.
+  The app performs REAL microphone capture, so this string must describe that plainly.
 -->
 
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -16,17 +22,17 @@
   <key>CFBundleName</key>                 <string>FemVoice Studio</string>
   <key>CFBundleDisplayName</key>          <string>FemVoice Studio</string>
   <key>CFBundleIdentifier</key>           <string>com.femvoice.studio</string>
-  <key>CFBundleVersion</key>              <string>0.1.0</string>
-  <key>CFBundleShortVersionString</key>   <string>0.1.0</string>
-  <key>CFBundleExecutable</key>           <string>FemVoice.Avalonia</string>
-  <!-- Icon readiness: macOS looks for Contents/Resources/AppIcon.icns. When that file is absent (no production
-       icon committed yet), macOS falls back to the generic app icon — packaging and launch are unaffected. See
-       AppIcon.icns.README.md. No production icon/branding is invented here. -->
+  <key>CFBundleVersion</key>              <string>__VERSION__</string>
+  <key>CFBundleShortVersionString</key>   <string>__VERSION__</string>
+  <key>CFBundleExecutable</key>           <string>FemVoice.Studio</string>
+  <!-- Icon: macOS looks for Contents/Resources/AppIcon.icns. When that file is absent (no production
+       .icns committed yet), macOS falls back to the generic app icon — packaging and launch are
+       unaffected. See AppIcon.icns.README.md. -->
   <key>CFBundleIconFile</key>             <string>AppIcon</string>
   <key>CFBundlePackageType</key>          <string>APPL</string>
   <key>LSMinimumSystemVersion</key>       <string>11.0</string>
   <key>NSHighResolutionCapable</key>      <true/>
   <key>LSApplicationCategoryType</key>    <string>public.app-category.education</string>
-  <key>NSMicrophoneUsageDescription</key> <string>FemVoice Studio bruker mikrofonen til stemmetrening. (Ikke aktiv i denne visning-bare versjonen.)</string>
+  <key>NSMicrophoneUsageDescription</key> <string>FemVoice Studio bruker mikrofonen til å analysere stemmen din i sanntid under stemmetrening. Lyden behandles lokalt på maskinen din.</string>
 </dict>
 </plist>
