@@ -149,6 +149,20 @@ jobs:
           for RID in ${{ steps.rids.outputs.rids }}; do
             APP="artifacts/dist/$RID/FemVoice Studio.app"
             echo "::group::codesign $RID"
+
+            # codesign treats every EXECUTABLE file inside a bundle as nested code needing its own
+            # signature. dotnet publish marks its output +x and cp -R preserves it, so ~210 managed .dll
+            # files used to arrive executable and sealing the bundle failed on the first one
+            # ("code object is not signed at all. In subcomponent: .../System.Web.dll").
+            # package-app.sh now clears that bit. Check it here too, so a regression reports the actual
+            # cause instead of codesign's message, which points at a symptom three layers away.
+            STRAY=$(find "$APP/Contents/MacOS" -type f -name '*.dll' -perm -u+x | wc -l | tr -d ' ')
+            if [ "$STRAY" -ne 0 ]; then
+              echo "ERROR: $STRAY managed .dll files are marked executable; codesign will treat them as" >&2
+              echo "       unsigned nested code and refuse to seal the bundle." >&2
+              exit 1
+            fi
+
             # Sign nested code first, then the bundle itself; --deep alone is deprecated and unreliable.
             find "$APP/Contents/MacOS" -type f \( -name '*.dylib' -o -name '*.so' \) -print0 \
               | xargs -0 -I{} codesign --force --timestamp=none --sign - "{}"
