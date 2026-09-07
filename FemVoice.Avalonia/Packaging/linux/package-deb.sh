@@ -19,15 +19,26 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"   # .../Packaging/linux -> repo root
-VERSION="0.1.0"
+# Version comes from the SINGLE source of truth: <Version> in FemVoice.Avalonia.csproj. It used to be
+# hardcoded here ("0.1.0"), which meant every release needed a manual edit or a rename after the fact — a
+# silent way to ship a package whose filename and control version disagree with the app's own About screen.
+# Override with VERSION=x.y.z only for a deliberate one-off.
+VERSION="${VERSION:-$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$REPO_ROOT/FemVoice.Avalonia/FemVoice.Avalonia.csproj" | head -1 | tr -d '\r')}"
+if [ -z "$VERSION" ]; then
+  echo "ERROR: could not read <Version> from FemVoice.Avalonia.csproj" >&2
+  exit 4
+fi
 PKG="femvoice-studio"
 
 PUBLISH_DIR="$REPO_ROOT/artifacts/publish/$RID"
 WORK="$REPO_ROOT/artifacts/package-work/$RID"
 OUT_DIR="$REPO_ROOT/artifacts/packages/deb"
 
-# Always (re)publish for a deterministic package.
+# Always (re)publish for a deterministic package. The publish directory is cleared first: `dotnet publish -o`
+# does NOT empty its output folder, so a previous SELF-CONTAINED publish into the same path would leave the whole
+# .NET runtime behind and this framework-dependent package would silently ship ~28 MB of runtime it never declares.
 echo "Publishing before packaging ..."
+rm -rf "$PUBLISH_DIR"
 "$SCRIPT_DIR/publish-linux.sh" "$RID"
 
 # Minimal Debian package layout under artifacts/package-work/<rid>.
@@ -65,6 +76,16 @@ chmod 0755 "$WORK/usr/bin/femvoice-studio"
 
 # Desktop entry under /usr/share/applications/femvoice-studio.desktop
 cp "$SCRIPT_DIR/femvoice-studio.desktop" "$WORK/usr/share/applications/femvoice-studio.desktop"
+
+# Icon under /usr/share/icons/hicolor/256x256/apps/femvoice-studio.png — this is what the .desktop entry's
+# "Icon=femvoice-studio" resolves to. Packaged by the script (it used to be copied in manually afterwards, which
+# meant a rebuild that forgot the step shipped a menu entry with a generic placeholder icon).
+ICON_SRC="$REPO_ROOT/FemVoice.Avalonia.UI/Assets/logo.png"
+if [ ! -f "$ICON_SRC" ]; then
+  echo "ERROR: icon not found at $ICON_SRC" >&2
+  exit 5
+fi
+install -Dm644 "$ICON_SRC" "$WORK/usr/share/icons/hicolor/256x256/apps/femvoice-studio.png"
 
 # DEBIAN/control (safe metadata; NO Debian maintainer hook scripts in this slice).
 cat > "$WORK/DEBIAN/control" <<CONTROL
