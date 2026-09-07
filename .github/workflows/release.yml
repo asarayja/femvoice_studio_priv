@@ -1,0 +1,377 @@
+name: Release (macOS build + GitHub Release)
+
+# Builds the macOS app on a real macOS runner and gathers EVERY platform artifact into ONE GitHub Release
+# on the public distribution repo, so there is a single page to download from.
+#
+#   macOS   — built here (it cannot be built on the Linux dev host: hdiutil is macOS-only)
+#   Linux   — .deb + Arch package, taken from builds/ (committed, built on the Linux host)
+#   Android — .apk, taken from builds/ (committed, built on the Linux host)
+#   Windows — NOT handled here. The maintainer builds and uploads it to the same release by hand.
+#
+# The release is published to the PUBLIC DISTRIBUTION repo (asarayja/FemVoice-Studio), not to this
+# development repo. GITHUB_TOKEN only grants write access to the repo the workflow runs in, so a
+# cross-repo release needs a PAT with contents:write on the target, stored here as the RELEASE_TOKEN
+# secret. The step fails with an explicit message when it is missing rather than half-publishing.
+#
+# WHY MANUAL ONLY: this publishes something outward-facing. It runs from workflow_dispatch and defaults
+# to a DRAFT release, so the Windows installer can be added and everything reviewed before anything
+# becomes public. Set release_mode=publish only when you intend to publish immediately.
+#
+# The macOS build is SELF-CONTAINED: the .dmg carries the .NET runtime, so the target Mac needs nothing
+# installed. It is ad-hoc code-signed but NOT notarized — see the signing step for why ad-hoc matters to
+# the microphone permission, and Packaging/macos/NOTARIZATION.md for what real notarization would need.
+
+on:
+  workflow_dispatch:
+    inputs:
+      architectures:
+        description: 'Which Mac architectures to build'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - arm64-only          # Apple Silicon (M1/M2/M3/M4) — most Macs since 2020
+          - x64-only            # Intel Macs
+      release_mode:
+        description: 'What to do with the GitHub Release'
+        required: true
+        default: 'draft'
+        type: choice
+        options:
+          - draft               # create/update a DRAFT release — add Windows, then publish by hand
+          - publish             # create/update and publish immediately
+          - none                # build only, upload as run artifacts, touch no release
+
+permissions:
+  contents: read                # this repo is only read; the release lands in the distribution repo
+
+env:
+  # Public download page. Change here if the distribution repo ever moves.
+  RELEASE_REPO: asarayja/FemVoice-Studio
+
+jobs:
+  release:
+    runs-on: macos-latest       # Apple Silicon runner; the osx-x64 bundle cross-publishes fine from it.
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: dotnet --info
+        run: dotnet --info
+
+      # The version comes from the SAME single source of truth the app's About screen uses, so the
+      # release tag can never disagree with what the running app reports.
+      - name: Resolve app version from csproj
+        id: ver
+        run: |
+          VERSION=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' FemVoice.Avalonia/FemVoice.Avalonia.csproj | head -1 | tr -d '\r')
+          if [ -z "$VERSION" ]; then echo "ERROR: could not read <Version> from the csproj" >&2; exit 1; fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION"    >> "$GITHUB_OUTPUT"
+          echo "Building FemVoice Studio $VERSION"
+
+      # A release must not mix versions. The Linux/Android artifacts are COMMITTED files built on the
+      # Linux host, so nothing here rebuilds them — if someone bumps <Version> without rebuilding them,
+      # this release would be labelled 0.1.8 while shipping 0.1.7 packages. Fail loudly instead.
+      - name: Verify committed Linux/Android artifacts match this version
+        id: prebuilt
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.ver.outputs.version }}"
+          DEB="builds/femvoice-studio_${VERSION}_amd64.deb"
+          ARCH_PKG="builds/femvoice-studio-${VERSION}-1-x86_64.pkg.tar.zst"
+          APK="builds/FemVoice-Android.apk"
+          MISSING=0
+          for f in "$DEB" "$ARCH_PKG" "$APK"; do
+            if [ -f "$f" ]; then echo "  found $f"; else echo "  MISSING $f" >&2; MISSING=1; fi
+          done
+          # The .apk filename carries no version, so cross-check the Android head's declared version.
+          ANDROID_VER=$(sed -n 's:.*<ApplicationDisplayVersion>\(.*\)</ApplicationDisplayVersion>.*:\1:p' FemVoice.Android/FemVoice.Android.csproj | head -1 | tr -d '\r')
+          if [ "$ANDROID_VER" != "$VERSION" ]; then
+            echo "  MISMATCH: FemVoice.Android declares $ANDROID_VER but this release is $VERSION" >&2
+            MISSING=1
+          else
+            echo "  Android head declares $ANDROID_VER"
+          fi
+          if [ "$MISSING" -ne 0 ]; then
+            echo "Rebuild the Linux/Android packages at $VERSION and commit them before releasing." >&2
+            exit 1
+          fi
+          echo "deb=$DEB"          >> "$GITHUB_OUTPUT"
+          echo "archpkg=$ARCH_PKG" >> "$GITHUB_OUTPUT"
+          echo "apk=$APK"          >> "$GITHUB_OUTPUT"
+
+      - name: Decide which RIDs to build
+        id: rids
+        run: |
+          case "${{ inputs.architectures }}" in
+            arm64-only) RIDS="osx-arm64" ;;
+            x64-only)   RIDS="osx-x64" ;;
+            *)          RIDS="osx-arm64 osx-x64" ;;
+          esac
+          echo "rids=$RIDS" >> "$GITHUB_OUTPUT"
+          echo "RIDs: $RIDS"
+
+      # package-app.sh publishes self-contained, assembles the bundle, substitutes the version into
+      # Info.plist, and FAILS if CFBundleExecutable does not name a real file in Contents/MacOS (that
+      # exact mismatch previously made the bundle unlaunchable).
+      - name: Build unsigned .app bundles (self-contained)
+        run: |
+          set -euo pipefail
+          for RID in ${{ steps.rids.outputs.rids }}; do
+            echo "::group::$RID"
+            SELF_CONTAINED=true ./FemVoice.Avalonia/Packaging/macos/package-app.sh "$RID"
+            echo "::endgroup::"
+          done
+
+      # AD-HOC SIGNING — this matters specifically for the microphone.
+      #
+      # macOS gates the microphone through TCC, which remembers a permission decision against the app's
+      # CODE IDENTITY. A completely unsigned bundle has none, so macOS identifies it by path alone: the
+      # permission can be forgotten, re-prompted, or (worst case) the prompt never appears and the app
+      # just receives digital silence — which is exactly the failure the CoreAudio backend has to warn
+      # about at runtime. Ad-hoc signing (`--sign -`) gives the bundle a stable identity without any
+      # Apple Developer ID, credential or secret, so "allow the microphone" sticks across launches.
+      #
+      # This does NOT notarize the app: Gatekeeper still warns on first open. Real notarization needs a
+      # paid Developer ID — see Packaging/macos/NOTARIZATION.md.
+      - name: Ad-hoc code-sign the bundles (stable identity for the microphone permission)
+        run: |
+          set -euo pipefail
+          for RID in ${{ steps.rids.outputs.rids }}; do
+            APP="artifacts/dist/$RID/FemVoice Studio.app"
+            echo "::group::codesign $RID"
+            # Sign nested code first, then the bundle itself; --deep alone is deprecated and unreliable.
+            find "$APP/Contents/MacOS" -type f \( -name '*.dylib' -o -name '*.so' \) -print0 \
+              | xargs -0 -I{} codesign --force --timestamp=none --sign - "{}"
+            codesign --force --timestamp=none --sign - "$APP"
+            codesign --verify --deep --strict --verbose=2 "$APP"
+            echo "::endgroup::"
+          done
+
+      # A .dmg is used rather than uploading the .app directly because actions/upload-artifact and GitHub
+      # release assets are zipped, and zipping DROPS the executable permission bit — the apphost inside a
+      # zipped .app arrives non-executable and the app cannot start. A disk image preserves permissions,
+      # symlinks and the code signature.
+      - name: Build .dmg for each architecture
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.ver.outputs.version }}"
+          mkdir -p release-assets
+          for RID in ${{ steps.rids.outputs.rids }}; do
+            APP="artifacts/dist/$RID/FemVoice Studio.app"
+            test -d "$APP" || { echo "missing bundle: $APP" >&2; exit 1; }
+
+            # Stage the bundle next to an /Applications symlink so the disk image opens as the usual
+            # "drag the app onto Applications" installer.
+            STAGE="dmg-stage-$RID"
+            rm -rf "$STAGE"; mkdir -p "$STAGE"
+            cp -R "$APP" "$STAGE/"
+            ln -s /Applications "$STAGE/Applications"
+
+            hdiutil create -volname "FemVoice Studio" -srcfolder "$STAGE" -ov -format UDZO \
+              "release-assets/FemVoice-Studio-${VERSION}-macOS-${RID}.dmg"
+          done
+          ls -lh release-assets
+
+      # Verify the packaged bundles on the machine that will run them, before anyone downloads one.
+      - name: Verify bundles (plist, apphost, architecture, signature)
+        run: |
+          set -euo pipefail
+          for RID in ${{ steps.rids.outputs.rids }}; do
+            APP="artifacts/dist/$RID/FemVoice Studio.app"
+            echo "::group::verify $RID"
+            EXE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Contents/Info.plist")
+            VER=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")
+            MIC=$(/usr/libexec/PlistBuddy -c 'Print :NSMicrophoneUsageDescription' "$APP/Contents/Info.plist")
+            echo "CFBundleExecutable=$EXE  version=$VER"
+            echo "NSMicrophoneUsageDescription=$MIC"
+            test "$VER" = "${{ steps.ver.outputs.version }}" || { echo "bundle version disagrees with the release version" >&2; exit 1; }
+            test -x "$APP/Contents/MacOS/$EXE" || { echo "apphost missing or not executable" >&2; exit 1; }
+            file "$APP/Contents/MacOS/$EXE"
+            # Without NSMicrophoneUsageDescription macOS kills the app the moment it touches the mic.
+            test -n "$MIC" || { echo "NSMicrophoneUsageDescription is empty — macOS would terminate on mic access" >&2; exit 1; }
+            # The self-contained runtime must actually be inside the bundle, or the app needs a .NET install.
+            test -f "$APP/Contents/MacOS/libcoreclr.dylib" || { echo "runtime NOT bundled — app would need .NET installed" >&2; exit 1; }
+            codesign --verify --strict "$APP" || { echo "bundle is not validly signed" >&2; exit 1; }
+
+            # LSMinimumSystemVersion must not undercut what the shipped binaries actually require. The plist
+            # claimed 11.0 while every .NET 10 binary declares an LC_BUILD_VERSION minos of 12.0, which would
+            # let Big Sur launch the app and then fail it with a dyld error that reads as a corrupt download.
+            # Compare them here so a .NET upgrade that raises the floor cannot slip out silently.
+            PLIST_MIN=$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$APP/Contents/Info.plist")
+            BIN_MIN=$(otool -l "$APP/Contents/MacOS/$EXE" | awk '/LC_BUILD_VERSION/{f=1} f&&/minos/{print $2; exit}')
+            echo "Info.plist LSMinimumSystemVersion=$PLIST_MIN   apphost minos=$BIN_MIN"
+            if [ -n "$BIN_MIN" ]; then
+              LOWEST=$(printf '%s\n%s\n' "$PLIST_MIN" "$BIN_MIN" | sort -V | head -1)
+              if [ "$LOWEST" != "$BIN_MIN" ]; then
+                echo "ERROR: Info.plist promises macOS $PLIST_MIN but the binaries need $BIN_MIN." >&2
+                echo "       Raise LSMinimumSystemVersion in Packaging/macos/Info.plist to $BIN_MIN." >&2
+                exit 1
+              fi
+            fi
+
+            # No library may demand a NEWER macOS than the bundle advertises. QuestPDF shipped exactly that
+            # regression: 2026.5.0's libQuestPdfSkia.dylib was built for macOS 15 while everything else needed
+            # 12, so PDF export would have failed on any Mac below Sequoia while the app itself ran fine.
+            # 2026.8.0 brought it back to 12. Check EVERY dylib, not just that one — a dependency can
+            # reintroduce this silently on any upgrade, and it is invisible until someone on an older Mac
+            # tries the feature it breaks.
+            OVER=0
+            while IFS= read -r LIB; do
+              LIB_MIN=$(otool -l "$LIB" | awk '/LC_BUILD_VERSION/{f=1} f&&/minos/{print $2; exit}')
+              [ -z "$LIB_MIN" ] && continue
+              LOWEST=$(printf '%s\n%s\n' "$PLIST_MIN" "$LIB_MIN" | sort -V | head -1)
+              if [ "$LOWEST" != "$LIB_MIN" ]; then
+                echo "ERROR: $(basename "$LIB") requires macOS $LIB_MIN, above the bundle's $PLIST_MIN." >&2
+                OVER=1
+              fi
+            done < <(find "$APP/Contents/MacOS" -maxdepth 1 -name '*.dylib')
+            if [ "$OVER" -ne 0 ]; then
+              echo "       Either raise LSMinimumSystemVersion or use a package build for an older macOS." >&2
+              exit 1
+            fi
+            echo "all bundled libraries are within the declared macOS $PLIST_MIN floor"
+            echo "::endgroup::"
+          done
+
+      # The ONLY place the CoreAudio capture path runs on real Apple hardware. The runner has no
+      # microphone, so this reports availability rather than asserting it — but it does prove the
+      # dispatcher selects CoreAudioCaptureService on macOS and that the P/Invoke layer loads.
+      - name: Verify macOS capture backend wiring
+        continue-on-error: true
+        run: |
+          dotnet build FemVoice.Avalonia/FemVoice.Avalonia.csproj -c Debug
+          dotnet FemVoice.Avalonia/bin/Debug/net10.0/FemVoice.Studio.dll --macos-capture-backend-smoke
+
+      - name: Gather Linux + Android artifacts and checksums
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.ver.outputs.version }}"
+          cp "${{ steps.prebuilt.outputs.deb }}"     release-assets/
+          cp "${{ steps.prebuilt.outputs.archpkg }}" release-assets/
+          # The committed .apk has no version in its name; give the release asset one.
+          cp "${{ steps.prebuilt.outputs.apk }}" "release-assets/FemVoice-Studio-${VERSION}-android.apk"
+          # Checksums matter more than usual here: the macOS app is not notarized, so a tester who hits
+          # Gatekeeper's "is damaged" message can confirm the download is intact rather than guess.
+          ( cd release-assets && shasum -a 256 * > SHA256SUMS.txt && cat SHA256SUMS.txt )
+          ls -lh release-assets
+
+      # Always available on the run page, even when release_mode=none or the release step fails.
+      - name: Upload run artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: FemVoice-Studio-${{ steps.ver.outputs.version }}
+          path: release-assets/*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Create or update the GitHub Release
+        if: inputs.release_mode != 'none'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "ERROR: the RELEASE_TOKEN secret is not set." >&2
+            echo "The release goes to $RELEASE_REPO, a DIFFERENT repo, and the automatic GITHUB_TOKEN" >&2
+            echo "cannot write there. Create a fine-grained PAT with Contents: Read and write on" >&2
+            echo "$RELEASE_REPO and add it as the RELEASE_TOKEN secret in this repo." >&2
+            echo "The .dmg and the other assets were already uploaded as run artifacts above." >&2
+            exit 1
+          fi
+          TAG="${{ steps.ver.outputs.tag }}"
+          VERSION="${{ steps.ver.outputs.version }}"
+
+          cat > notes.md <<NOTES
+          FemVoice Studio $VERSION — stemmetrening for feminisering av stemmen.
+
+          ## Last ned
+
+          | Plattform | Fil |
+          |---|---|
+          | Windows 10/11 | lastes opp separat |
+          | macOS (Apple Silicon) | \`FemVoice-Studio-$VERSION-macOS-osx-arm64.dmg\` |
+          | macOS (Intel) | \`FemVoice-Studio-$VERSION-macOS-osx-x64.dmg\` |
+          | Debian / Ubuntu | \`femvoice-studio_${VERSION}_amd64.deb\` |
+          | Arch Linux | \`femvoice-studio-${VERSION}-1-x86_64.pkg.tar.zst\` |
+          | Android 5.0+ | \`FemVoice-Studio-$VERSION-android.apk\` |
+
+          \`SHA256SUMS.txt\` inneholder sjekksummer, så du kan kontrollere at nedlastingen er intakt.
+
+          ## macOS — les dette først
+
+          Appen er **ikke notarisert** (det krever betalt Apple Developer ID). Første gang sier macOS
+          enten at utvikleren ikke kan verifiseres, eller — på Sonoma og nyere — at appen **«is damaged
+          and can't be opened»**. Det siste er Gatekeepers misvisende ordbruk for *ikke notarisert*, ikke
+          en ødelagt nedlasting; sjekk gjerne mot \`SHA256SUMS.txt\`.
+
+          Åpne den med **høyreklikk → Åpne → Åpne**, eller fjern karanteneflagget:
+
+          \`\`\`
+          xattr -dr com.apple.quarantine "/Applications/FemVoice Studio.app"
+          \`\`\`
+
+          **Mikrofon:** si ja når macOS spør. Sier du nei, gir ikke macOS noen feilmelding — den sender
+          bare digital stillhet, så måleren står stille. Appen oppdager det og sier fra. Du kan slå den
+          på igjen under Systeminnstillinger → Personvern og sikkerhet → Mikrofon.
+
+          .NET følger med i appen — du trenger ikke installere noe.
+
+          ## Linux
+
+          \`\`\`
+          sudo apt install ./femvoice-studio_${VERSION}_amd64.deb          # Debian/Ubuntu
+          sudo pacman -U femvoice-studio-${VERSION}-1-x86_64.pkg.tar.zst   # Arch
+          \`\`\`
+
+          .deb-en krever en installert .NET 10-runtime. Arch-pakka er selvstendig og trenger ingenting.
+
+          ## Android
+
+          Kopier .apk-en til telefonen, tillat installasjon fra ukjente kilder, og åpne fila. Gi
+          mikrofontilgang når appen spør — uten den får du ingen tilbakemelding.
+
+          ---
+
+          All trening lagres lokalt på hver enhet. Appen er et treningshjelpemiddel, ikke medisinsk
+          utstyr, og erstatter ikke en logoped.
+          NOTES
+
+          DRAFT_FLAG=""
+          if [ "${{ inputs.release_mode }}" = "draft" ]; then DRAFT_FLAG="--draft"; fi
+
+          if gh release view "$TAG" --repo "$RELEASE_REPO" >/dev/null 2>&1; then
+            echo "Release $TAG exists in $RELEASE_REPO — updating notes and replacing assets."
+            gh release edit "$TAG" --repo "$RELEASE_REPO" --title "FemVoice Studio $VERSION" --notes-file notes.md
+            gh release upload "$TAG" release-assets/* --repo "$RELEASE_REPO" --clobber
+          else
+            echo "Creating release $TAG in $RELEASE_REPO (${{ inputs.release_mode }})."
+            gh release create "$TAG" release-assets/* \
+              --repo "$RELEASE_REPO" \
+              --title "FemVoice Studio $VERSION" \
+              --notes-file notes.md \
+              --prerelease $DRAFT_FLAG
+          fi
+          gh release view "$TAG" --repo "$RELEASE_REPO" --json url,isDraft,assets \
+            --jq '"url: \(.url)\ndraft: \(.isDraft)\nassets: \(.assets | map(.name) | join(", "))"'
+
+      - name: Test — portable suite on macOS
+        continue-on-error: true
+        run: dotnet test FemVoice.Tests.Portable/FemVoice.Tests.Portable.csproj -c Debug --logger "trx;LogFileName=macos-portable.trx" --results-directory ${{ github.workspace }}/test-results
+
+      - name: Upload test results (trx)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-test-results
+          path: ${{ github.workspace }}/test-results/**/*.trx
+          if-no-files-found: warn
