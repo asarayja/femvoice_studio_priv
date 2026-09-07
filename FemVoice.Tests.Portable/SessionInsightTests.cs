@@ -23,6 +23,9 @@ namespace FemVoiceStudio.Tests
     ///   • empty history (first session) ⇒ no improvements but a valid insight,
     ///   • the summary is encouraging and non-shaming (ClinicalLanguagePolicy-clean).
     /// </summary>
+    // Serialised with the other localization tests: LocalizationService.Instance is a global
+    // singleton, and this class writes the singleton's language (nb/en) — the actual source of the leak.
+    [Collection("Localization")]
     public class SessionInsightTests
     {
         private static readonly SessionInsightBuilder Builder = new();

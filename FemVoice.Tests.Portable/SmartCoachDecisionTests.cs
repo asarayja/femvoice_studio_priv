@@ -18,6 +18,9 @@ namespace FemVoiceStudio.Tests
     /// Integration tests for SmartCoach decision logic.
     /// Tests baseline calculation, recommendation generation, and prioritization.
     /// </summary>
+    // Serialised with the other localization tests: LocalizationService.Instance is a global
+    // singleton, and this class asserts on localized SmartCoach output.
+    [Collection("Localization")]
     public class SmartCoachDecisionTests
     {
         private readonly TestDatabaseService _testDatabase;
