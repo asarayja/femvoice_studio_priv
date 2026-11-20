@@ -41,6 +41,7 @@ internal static class Program
         if (args.Contains("--exercise-smoke")) return ExerciseSmoke();
         if (args.Contains("--exercise-save-truthful-smoke")) return ExerciseSaveTruthfulSmoke().GetAwaiter().GetResult();
         if (args.Contains("--session-truth-smoke")) return SessionTruthSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--rest-guidance-smoke")) return RestGuidanceSmoke().GetAwaiter().GetResult();
         if (args.Contains("--settings-data-ops-smoke")) return SettingsDataOpsSmoke();
         if (args.Contains("--exercise-runtime-smoke")) return ExerciseRuntimeSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-runtime-integration-smoke")) return ExerciseRuntimeIntegrationSmoke().GetAwaiter().GetResult();
@@ -2179,6 +2180,97 @@ internal static class Program
         {
             global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory = prevFactory;
             Cleanup();
+        }
+    }
+
+    // ── Rest guidance ────────────────────────────────────────────────────────────────────────────────────────────
+    // The exercise and dashboard screens must SHOW the time-based rest advice from the shared PracticeLoadGuard
+    // (one sitting across every screen), must stay quiet in a fresh sitting, and the health readout must no longer
+    // claim the voice is "safe". The timing rules themselves are unit-tested with simulated time
+    // (PracticeLoadGuardTests); here a long sitting is pre-loaded so the wiring can be proven in ~2 s.
+    private static async System.Threading.Tasks.Task<int> RestGuidanceSmoke()
+    {
+        var guard = global::FemVoiceStudio.Services.VoiceLoad.PracticeLoadGuard.Shared;
+        // Pre-load `minutes` of continuous voiced practice ending right now (simulated timestamps, no waiting).
+        void PreloadSitting(double minutes)
+        {
+            guard.Reset();
+            var end = DateTime.UtcNow; var t = end.AddMinutes(-minutes);
+            guard.BeginSession(t);
+            const double tick = 1024.0 / 44100.0;
+            while (t < end) { t = t.AddSeconds(tick); guard.Observe(t, 0, 185, 0.08, false); }
+        }
+        var prevFactory = global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory;
+        try
+        {
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
+            var none = global::FemVoiceStudio.Services.VoiceLoad.RestAdviceLevel.None;
+            var soon = global::FemVoiceStudio.Services.VoiceLoad.RestAdviceLevel.Soon;
+            var now = global::FemVoiceStudio.Services.VoiceLoad.RestAdviceLevel.Now;
+
+            // (1) Wording: time-based, strongest message wins, nothing shown when there is nothing to say.
+            bool wording = RestAdviceDisplay.Text(none, false) == ""
+                && RestAdviceDisplay.Text(soon, false).Contains("pause snart")
+                && RestAdviceDisplay.Text(none, true).Contains("anbefalt varighet")
+                && RestAdviceDisplay.Text(soon, true).Contains("anbefalt varighet")
+                && RestAdviceDisplay.Text(now, true).Contains("pause nå")
+                && !RestAdviceDisplay.Text(now, false).Contains("stabil");   // no claim about the voice itself
+            Console.WriteLine($"[rest] wording={wording}");
+
+            var exercise = new global::FemVoiceStudio.Services.VoiceFeminizationExerciseService().GetAllEnhancedExercises().First(e => e.Id == 12);
+            global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory =
+                () => new ScriptedRealCapture(new[] { (172.0, 100000) });
+
+            // (2) Exercise in a FRESH sitting → no banner; health readout says "Ingen varsel", not "Trygt".
+            guard.Reset();
+            var exFresh = new ExerciseRuntimeViewModel(exercise, new InlineUiDispatcher(), () => { }, history: null, useRealMic: true, database: null);
+            exFresh.BeginCommand.Execute(null);
+            await System.Threading.Tasks.Task.Delay(1500);
+            bool freshQuiet = !exFresh.HasRestAdvice && exFresh.RestAdviceText == "";
+            bool healthHonest = exFresh.HealthStatusDisplay == "Ingen varsel";
+            Console.WriteLine($"[rest] exercise fresh: advice={exFresh.HasRestAdvice} health='{exFresh.HealthStatusDisplay}' ok={freshQuiet && healthHonest}");
+            exFresh.Dispose();
+
+            // (3) Exercise started after 30 min of continuous practice in the same sitting → "pause now" is shown.
+            PreloadSitting(30);
+            var exLong = new ExerciseRuntimeViewModel(exercise, new InlineUiDispatcher(), () => { }, history: null, useRealMic: true, database: null);
+            exLong.BeginCommand.Execute(null);
+            await System.Threading.Tasks.Task.Delay(1500);
+            bool exShows = exLong.HasRestAdvice && exLong.RestAdviceText.Contains("pause nå") && exLong.IsRunning;   // advisory: still running
+            Console.WriteLine($"[rest] exercise after long sitting: advice='{exLong.RestAdviceText}' running={exLong.IsRunning} ok={exShows}");
+            exLong.Dispose();
+
+            // (4) The dashboard shares the SAME sitting → it shows the advice too (and not in a fresh one).
+            PreloadSitting(30);
+            var capLong = new ScriptedRealCapture(new[] { (190.0, 100000) });
+            var dashLong = new MainDashboardViewModel(capLong, new InlineUiDispatcher());
+            await dashLong.StartCommand.ExecuteAsync(null);
+            await System.Threading.Tasks.Task.Delay(1500);
+            bool dashShows = dashLong.HasRestAdvice && dashLong.RestAdviceText.Contains("pause nå") && dashLong.IsRecording;
+            bool dashHealthHonest = dashLong.HealthStatusDisplay == "Ingen varsel";
+            Console.WriteLine($"[rest] dashboard after long sitting: advice='{dashLong.RestAdviceText}' health='{dashLong.HealthStatusDisplay}' ok={dashShows && dashHealthHonest}");
+            await dashLong.StopCommand.ExecuteAsync(null);
+            dashLong.Dispose();
+
+            guard.Reset();
+            var capFresh = new ScriptedRealCapture(new[] { (190.0, 100000) });
+            var dashFresh = new MainDashboardViewModel(capFresh, new InlineUiDispatcher());
+            await dashFresh.StartCommand.ExecuteAsync(null);
+            await System.Threading.Tasks.Task.Delay(1500);
+            bool dashQuiet = !dashFresh.HasRestAdvice;
+            Console.WriteLine($"[rest] dashboard fresh: advice={dashFresh.HasRestAdvice} ok={dashQuiet}");
+            await dashFresh.StopCommand.ExecuteAsync(null);
+            dashFresh.Dispose();
+
+            bool ok = wording && freshQuiet && healthHonest && exShows && dashShows && dashHealthHonest && dashQuiet;
+            Console.WriteLine(ok ? "[rest] Rest guidance smoke OK" : "[rest] Rest guidance smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[rest] FAIL: {ex}"); return 1; }
+        finally
+        {
+            global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory = prevFactory;
+            guard.Reset();
         }
     }
 

@@ -13,6 +13,13 @@
                    Text="{loc:Tr Key=Dash_Subtitle, Fallback='Trykk Start for live tonehøyde, stabilitet og helse fra mikrofonen.'}"/>
       </StackPanel>
 
+      <!-- Rest guidance (time-based, whole sitting — shared with the exercises): shown WHILE recording, at the top,
+           when the voice has been working a long time without a rest. Advisory only. -->
+      <Border Classes="card" IsVisible="{Binding HasRestAdvice}" BorderBrush="{DynamicResource ShellWarningBrush}">
+        <TextBlock Text="{Binding RestAdviceText}" TextWrapping="Wrap" FontWeight="SemiBold"
+                   Foreground="{DynamicResource ShellBodyTextBrush}"/>
+      </Border>
+
       <!-- Daily training reminder (in-app nudge): a humane "today's session is still owed" banner. Only shown when the
            opt-in reminder is Due (past the preferred time, none logged today, weekly goal not yet met). Short copy +
            a direct Start so it's one tap from the intent. -->

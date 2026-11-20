@@ -156,6 +156,14 @@
                            Foreground="{DynamicResource ShellWarningBrush}"/>
               </Border>
 
+              <!-- Rest guidance (time-based, whole sitting): "pause soon / now", or the exercise's recommended
+                   duration reached. Advisory only — never stops the exercise. -->
+              <Border IsVisible="{Binding HasRestAdvice}" Background="{DynamicResource ShellChartBackgroundBrush}"
+                      BorderBrush="{DynamicResource ShellWarningBrush}" BorderThickness="1" CornerRadius="6" Padding="10">
+                <TextBlock Text="{Binding RestAdviceText}" TextWrapping="Wrap" FontWeight="SemiBold"
+                           Foreground="{DynamicResource ShellBodyTextBrush}"/>
+              </Border>
+
               <!-- Moving focus trace (pitch for pitch exercises, brightness for resonance exercises). -->
               <TextBlock Text="{Binding LiveChartTitle}" FontSize="12" Foreground="{DynamicResource ShellMutedBrush}" Margin="0,4,0,0"/>
               <Grid ColumnDefinitions="Auto,*" Height="{Binding RuntimeChart.ChartHeightPx}">
