@@ -1134,26 +1134,23 @@ internal static class Program
     private static async Task<int> CloudSyncSmoke()
     {
         int pid = System.Diagnostics.Process.GetCurrentProcess().Id;
-        string appDir = global::FemVoiceStudio.Data.DatabaseService.ResolveAppDataDir();
-        string phoneName = $"femvoice-cloud-phone-{pid}.db", pcName = $"femvoice-cloud-pc-{pid}.db";
-        string phonePath = System.IO.Path.Combine(appDir, phoneName), pcPath = System.IO.Path.Combine(appDir, pcName);
+        // Everything lives in a private temp folder. This smoke used to create its databases in the REAL app-data
+        // folder, so its push wrote "femvoice-backup-20260406-200000.db" (two fake "cloud-test" sessions) into the
+        // user's real Backups folder — where Settings pre-selected it for Merge/Restore — and its UI-guard step
+        // deleted and rewrote the user's real google_client.json.
+        string appDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "femvoice-cloud-" + System.Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(appDir);
+        string phonePath = System.IO.Path.Combine(appDir, "phone.db"), pcPath = System.IO.Path.Combine(appDir, "pc.db");
         void Cleanup()
         {
-            foreach (var f in new[] { phonePath, pcPath })
-                foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(f + sfx); } catch { } }
-            try
-            {
-                string backups = System.IO.Path.Combine(appDir, "Backups");
-                if (System.IO.Directory.Exists(backups))
-                    foreach (var f in System.IO.Directory.GetFiles(backups, $"*{pid}*")) { try { System.IO.File.Delete(f); } catch { } }
-            }
-            catch { }
+            global::FemVoice.Avalonia.Cloud.GoogleClientConfig.ConfigPathOverride = null;
+            try { global::Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools(); System.IO.Directory.Delete(appDir, true); } catch { }
         }
-        Cleanup();
         try
         {
-            var phoneDb = new global::FemVoiceStudio.Data.DatabaseService(phoneName);
-            var pcDb = new global::FemVoiceStudio.Data.DatabaseService(pcName);
+            global::FemVoice.Avalonia.Cloud.GoogleClientConfig.ConfigPathOverride = System.IO.Path.Combine(appDir, "google_client.json");
+            var phoneDb = new global::FemVoiceStudio.Data.DatabaseService(phonePath);   // absolute → temp
+            var pcDb = new global::FemVoiceStudio.Data.DatabaseService(pcPath);
             void Train(global::FemVoiceStudio.Data.DatabaseService db, DateTime whenUtc, double pitch)
             {
                 var s = new global::FemVoiceStudio.Models.TrainingSession
@@ -2440,23 +2437,69 @@ internal static class Program
         var fixedNow = new DateTime(2026, 7, 19, 10, 30, 0);
         try
         {
-            System.IO.File.WriteAllText(dbPath, "ORIGINAL");   // stand-in DB file (real copy/replace semantics)
+            // A REAL SQLite database (these operations are database operations now, not byte copies).
+            int CountSessions(string path)
+            {
+                using var cn = new global::Microsoft.Data.Sqlite.SqliteConnection(new global::Microsoft.Data.Sqlite.SqliteConnectionStringBuilder
+                { DataSource = path, Mode = global::Microsoft.Data.Sqlite.SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
+                cn.Open();
+                using var cmd = cn.CreateCommand();
+                cmd.CommandText = "SELECT COUNT(*) FROM TrainingSessions";
+                return Convert.ToInt32(cmd.ExecuteScalar());
+            }
+            var db = new global::FemVoiceStudio.Data.DatabaseService(dbPath);   // absolute → temp
+            void Train(int dayOffset) => db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
+            {
+                UserId = 1, StartTime = new DateTime(2026, 7, 10 + dayOffset, 18, 0, 0, DateTimeKind.Utc),
+                EndTime = new DateTime(2026, 7, 10 + dayOffset, 18, 5, 0, DateTimeKind.Utc), AveragePitch = 180, OverallScore = 70,
+            });
+            Train(0);
             var data = new global::FemVoice.Avalonia.Data.SettingsDataService(null, dbPath);
 
-            // Backup: creates a real file; list reflects it.
+            // Backup: a real, readable database with the session in it; the list reflects it.
             var b = data.Backup(fixedNow);
-            bool backupOk = b.Ok && data.ListBackups().Count == 1;
+            bool backupOk = b.Ok && data.ListBackups().Count == 1 && CountSessions(data.ListBackups()[0].FilePath) == 1;
             string backupPath = data.ListBackups()[0].FilePath;
 
-            // Mutate the DB, then restore from the backup → original content is back; a pre-restore safety copy exists.
-            System.IO.File.WriteAllText(dbPath, "CHANGED");
-            var r = data.Restore(backupPath, fixedNow.AddMinutes(1));
-            bool restoreOk = r.Ok && System.IO.File.ReadAllText(dbPath) == "ORIGINAL"
-                && System.IO.Directory.GetFiles(data.BackupFolder, "femvoice-pre-restore-*.db").Length == 1;
+            // WAL: once the database is in write-ahead mode, the newest sessions live in the "-wal" sidecar until a
+            // checkpoint. A raw file copy silently lacked them; the backup must contain them.
+            bool walBackupOk;
+            using (var hold = new global::Microsoft.Data.Sqlite.SqliteConnection($"Data Source={dbPath}"))
+            {
+                hold.Open();
+                using (var pragma = hold.CreateCommand()) { pragma.CommandText = "PRAGMA journal_mode=WAL; PRAGMA wal_autocheckpoint=0;"; pragma.ExecuteNonQuery(); }
+                Train(1);                                                  // committed, but still only in the -wal file
+                bool inWalOnly = System.IO.File.Exists(dbPath + "-wal") && new System.IO.FileInfo(dbPath + "-wal").Length > 0;
+                var b2 = data.Backup(fixedNow.AddMinutes(1));
+                string walBackup = data.ListBackups().First(x => x.FilePath != backupPath).FilePath;
+                walBackupOk = inWalOnly && b2.Ok && CountSessions(walBackup) == 2;
 
-            // Clear (no concrete DB service → deletes the file).
+                // Restore the FIRST backup (1 session) over the live database (2 sessions, WAL sidecar present).
+                Train(2);                                                  // 3 sessions live now
+                var r = data.Restore(backupPath, fixedNow.AddMinutes(2));
+                var preRestore = data.ListBackups().FirstOrDefault(x => System.IO.Path.GetFileName(x.FilePath).Contains("pre-restore"));
+                bool preRestoreListed = preRestore is not null && CountSessions(preRestore.FilePath) == 3;   // the undo is IN the list
+                hold.Close();
+                global::Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+                bool restoredExactly = r.Ok && CountSessions(dbPath) == 1;   // exactly the backup — no stale -wal replayed over it
+                bool noStaging = !System.IO.File.Exists(dbPath + ".restoring");
+                Console.WriteLine($"[data-ops] walBackupOk={walBackupOk} (inWalOnly={inWalOnly}) preRestoreListed={preRestoreListed} restoredExactly={restoredExactly} noStaging={noStaging}");
+                walBackupOk = walBackupOk && preRestoreListed && restoredExactly && noStaging;
+            }
+
+            // Restore must REFUSE anything that is not a FemVoice database, and leave the live database untouched.
+            string junk = System.IO.Path.Combine(root, "femvoice-backup-junk.db");
+            System.IO.File.WriteAllText(junk, "not a database");
+            var refused = data.Restore(junk, fixedNow.AddMinutes(3));
+            var missing = data.Restore(System.IO.Path.Combine(root, "nope.db"), fixedNow.AddMinutes(3));
+            bool restoreOk = walBackupOk && !refused.Ok && !missing.Ok && CountSessions(dbPath) == 1;
+
+            // Clear (no concrete DB service → deletes the file). Deliberately takes NO automatic copy: someone who
+            // asks to erase their data must not have a hidden copy left behind.
+            int backupsBeforeClear = data.ListBackups().Count;
+            global::Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
             var c = data.Clear();
-            bool clearOk = c.Ok && !System.IO.File.Exists(dbPath);
+            bool clearOk = c.Ok && !System.IO.File.Exists(dbPath) && data.ListBackups().Count == backupsBeforeClear;
 
             // New persisted prefs round-trip.
             string prefsPath = System.IO.Path.Combine(root, "ui-preferences.json");
