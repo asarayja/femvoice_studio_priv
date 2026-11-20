@@ -6165,4 +6165,13 @@ Dette kan ikke angres!</value>
   <data name="Session_NotSavedNoVoice" xml:space="preserve">
     <value>Ingen stemme ble registrert, så økten ble ikke lagret.</value>
   </data>
+  <data name="Rest_PauseNow" xml:space="preserve">
+    <value>Du har øvd lenge uten pause. Ta en pause nå og la stemmen hvile.</value>
+  </data>
+  <data name="Rest_DurationReached" xml:space="preserve">
+    <value>Du har nådd anbefalt varighet for denne øvelsen. Avslutt gjerne her eller ta en pause.</value>
+  </data>
+  <data name="Health_NoWarning" xml:space="preserve">
+    <value>Ingen varsel</value>
+  </data>
 </root>

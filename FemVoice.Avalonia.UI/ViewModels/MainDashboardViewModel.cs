@@ -44,6 +44,13 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     private readonly List<double> _sessionPitch = new();
     private readonly object _sessionLock = new();   // capture thread appends; Stop snapshots
     private int _stopping;                          // 0/1 — Stop and DeviceLost must not run the stop path twice
+    // Rest guidance for the whole SITTING (shared with every exercise): time-based advice from the Core load model —
+    // see PracticeLoadGuard for exactly what it does and does not measure.
+    private readonly FemVoiceStudio.Services.VoiceLoad.PracticeLoadGuard _loadGuard =
+        FemVoiceStudio.Services.VoiceLoad.PracticeLoadGuard.Shared;
+    /// <summary>True when a rest is suggested (long practice without a break). Advisory — recording continues.</summary>
+    [ObservableProperty] private bool _hasRestAdvice;
+    [ObservableProperty] private string _restAdviceText = "";
     private const int SampleRate = 44100;
     private const int MaxTracePoints = 200;
     private const double ChartHeightPx = 200;   // fixed chart surface height; px == "distance from bottom"
@@ -505,6 +512,9 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         await _capture.StartAsync(new AudioCaptureOptions(SampleRate, DeviceId: FemVoice.Avalonia.Preferences.CapturePreferences.SelectedMicDeviceId())).ConfigureAwait(false);
         _voiceMonitor.Start(SampleRate);   // hear-own-voice (opt-in; no-op when off)
         _sessionStart = System.DateTime.Now;
+        _loadGuard.BeginSession(System.DateTime.UtcNow);   // continues the sitting, or a fresh one after a real rest
+        HasRestAdvice = false;
+        RestAdviceText = "";
         IsRecording = true;
         ShowReminder = false;        // a nudge mid-session is pointless; re-evaluated after the session is saved
         ShowStartHere = false;       // likewise the path card; re-evaluated after the session is saved
@@ -669,8 +679,21 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
             }
         }
 
+        // Rest guidance: how long the voice has really been working this sitting (voiced time + time since the last
+        // rest + time spent ABOVE the comfort zone). Time-based only — it does not claim to detect strain.
+        bool recordingNow = IsRecording;
+        string restText = "";
+        if (recordingNow)
+        {
+            bool voicedNow = result.IsVoiced && stabilized > 0;
+            var rest = _loadGuard.Observe(DateTime.UtcNow, (int)(DateTime.Now - _sessionStart).TotalSeconds,
+                voicedNow ? stabilized : 0, voicedNow ? result.Intensity : 0, voicedNow && stabilized > ComfortZoneHigh);
+            restText = RestAdviceDisplay.Text(rest.Level, durationReached: false);
+        }
+
         _ui.Post(() =>
         {
+            if (recordingNow) { RestAdviceText = restText; HasRestAdvice = restText.Length > 0; }
             CurrentPitch = result.IsVoiced ? Math.Round(stabilized, 1) : 0;
             CurrentSignalStatus = result.IsVoiced
                 ? string.Format(Localized.Get("Signal_Voiced", "Stemme ({0} sikkerhet)"), result.Confidence.ToString("P0"))
@@ -882,7 +905,9 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     private static string HealthText(HealthState h) => h switch
     {
         HealthState.NoVoice => "—",
-        HealthState.Safe => Localized.Get("Health_Safe", "Trygt"),
+        // NOT "Trygt"/"Safe": this readout only knows that no warning rule fired (pitch is not above the strain
+        // ceiling). The app cannot measure strain or tension, so it must not tell the user her voice is safe.
+        HealthState.Safe => Localized.Get("Health_NoWarning", "Ingen varsel"),
         HealthState.Monitor => Localized.Get("Health_Monitor", "Observer"),
         HealthState.Warning => Localized.Get("Health_Warning", "Advarsel"),
         HealthState.Danger => Localized.Get("Health_Danger", "Fare"),

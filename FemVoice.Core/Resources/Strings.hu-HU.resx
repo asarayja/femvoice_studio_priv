@@ -6164,4 +6164,13 @@ Ez nem vonható vissza!</value>
   <data name="Session_NotSavedNoVoice" xml:space="preserve">
     <value>No voice was detected, so the session was not saved.</value>
   </data>
+  <data name="Rest_PauseNow" xml:space="preserve">
+    <value>You have practised for a long time without a break. Take a break now and let your voice rest.</value>
+  </data>
+  <data name="Rest_DurationReached" xml:space="preserve">
+    <value>You have reached the recommended duration for this exercise. Feel free to stop here or take a break.</value>
+  </data>
+  <data name="Health_NoWarning" xml:space="preserve">
+    <value>No warning</value>
+  </data>
 </root>

@@ -93,6 +93,10 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     private readonly List<double> _sessionHealth = new();   // real per-frame voice-health 0–100 → session average
     private readonly object _sessionLock = new();           // capture thread appends; Stop/Dispose snapshot
     private int _stopping;                                  // 0/1 — the finished run is saved exactly once
+    // Rest guidance for the whole SITTING (shared with the dashboard and every other exercise): time-based advice
+    // from the Core load model — see PracticeLoadGuard for exactly what it does and does not measure.
+    private readonly FemVoiceStudio.Services.VoiceLoad.PracticeLoadGuard _loadGuard =
+        FemVoiceStudio.Services.VoiceLoad.PracticeLoadGuard.Shared;
     private string? _deviceLostReason;                      // set when the microphone was lost mid-run
 
     /// <summary>What happened to the finished run (drives the truthful session-ended text).</summary>
@@ -296,6 +300,10 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _hasHealthWarning;
     /// <summary>The take-a-break message shown when strain is detected (safety-first, mirrors the dashboard).</summary>
     public string HealthWarningText => Localized.Get("Feedback_TakeBreak", "Ta en pause og slapp av i stemmen.");
+    /// <summary>True when a rest is suggested (long practice without a break, or the exercise's recommended
+    /// duration is reached). Advisory — the exercise keeps running; the user decides.</summary>
+    [ObservableProperty] private bool _hasRestAdvice;
+    [ObservableProperty] private string _restAdviceText = "";
     [ObservableProperty] private int _elapsedSeconds;
     public string ElapsedText => $"{ElapsedSeconds / 60}:{ElapsedSeconds % 60:00}";
     partial void OnElapsedSecondsChanged(int value) => OnPropertyChanged(nameof(ElapsedText));
@@ -442,6 +450,9 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         SessionEndedSummary = "";
         _startUtc = DateTime.UtcNow;
         _lastFrameUtc = _startUtc;
+        _loadGuard.BeginSession(_startUtc);   // continues the sitting, or starts a fresh one after a real rest
+        HasRestAdvice = false;
+        RestAdviceText = "";
         IsRunning = true;
         Phase = RuntimePhase.Active;
         RuntimeStatusMessage = Localized.Get("ExRunVm_Status_InProgress", "Øvelse i gang — hold tonen i målområdet.");
@@ -579,6 +590,13 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         double hold = _holdRaw;
         int elapsed = (int)(now - _startUtc).TotalSeconds;
 
+        // Rest guidance: how long the voice has really been working this sitting (voiced time + time since the last
+        // rest + time spent ABOVE the target). Time-based only — it does not claim to detect strain.
+        var rest = _loadGuard.Observe(now, elapsed, result.IsVoiced ? pitch : 0, result.IsVoiced ? result.Intensity : 0,
+            result.IsVoiced && TargetPitchMax > 0 && pitch > TargetPitchMax);
+        string restText = RestAdviceDisplay.Text(rest.Level,
+            durationReached: Exercise.DurationMinutes > 0 && elapsed >= Exercise.DurationMinutes * 60);
+
         // Feed the VM-local coordinator READ-ONLY: pitch, resonance AND health are now the REAL measured signals
         // (resonance/brightness from the VoiceBrightnessMeter, health from LiveMetricsService); only stability stays a
         // documented neutral placeholder. Read its in-memory hold/state for the advisory readout.
@@ -612,6 +630,8 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
             CurrentResonance = result.IsVoiced ? ResonanceText(resonancePct) : "—";
             HealthStatusDisplay = HealthText(health);
             HasHealthWarning = healthWarning;
+            RestAdviceText = restText;
+            HasRestAdvice = restText.Length > 0;
             PitchStatus = PitchStatusDisplay(status);
             HoldSeconds = Math.Round(hold, 1);
             HoldProgressPercent = Math.Round(hold / _holdTargetSeconds * 100.0, 0);
@@ -648,7 +668,9 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     private static string HealthText(HealthState h) => h switch
     {
         HealthState.NoVoice => "—",
-        HealthState.Safe => Localized.Get("Health_Safe", "Trygt"),
+        // NOT "Trygt"/"Safe": this readout only knows that no warning rule fired (pitch is not above the strain
+        // ceiling). The app cannot measure strain or tension, so it must not tell the user her voice is safe.
+        HealthState.Safe => Localized.Get("Health_NoWarning", "Ingen varsel"),
         HealthState.Monitor => Localized.Get("Health_Monitor", "Observer"),
         HealthState.Warning => Localized.Get("Health_Warning", "Advarsel"),
         HealthState.Danger => Localized.Get("Health_Danger", "Fare"),
