@@ -239,7 +239,11 @@ namespace FemVoiceStudio.Services
                 CurrentLevel = settings.CurrentDifficulty,
                 SessionsAtCurrentLevel = settings.SessionsAtCurrentLevel,
                 SessionsRequiredForPromotion = SessionsRequiredForPromotion,
-                CurrentStreak = settings.CurrentStreak,
+                // The streak is COMPUTED from the saved sessions (consecutive local days up to today/yesterday), not
+                // read from the stored UserSettings.CurrentStreak counter. That counter is only touched when a
+                // session is saved, so after a break it kept showing the old streak ("10 dager på rad" two weeks
+                // later) while Statistics, the sidebar and SmartCoach — which already compute it — showed 0.
+                CurrentStreak = stats.Streak,
                 TotalSessions = settings.TotalSessionsCompleted,
                 AveragePitch = stats.AvgPitch,
                 Consistency = stats.Consistency,
@@ -352,7 +356,7 @@ namespace FemVoiceStudio.Services
             return _localization.GetString("Progression_SummaryTitle") + "\n" +
                    _localization.GetFormattedString("Progression_TotalSessions", settings.TotalSessionsCompleted) + "\n" +
                    _localization.GetFormattedString("Progression_AveragePitchLine", stats.AvgPitch) + "\n" +
-                   _localization.GetFormattedString("Progression_CurrentStreakLine", settings.CurrentStreak) + "\n" +
+                   _localization.GetFormattedString("Progression_CurrentStreakLine", stats.Streak) + "\n" +
                    _localization.GetFormattedString("Progression_ConsistencyLine", settings.ConsistencyScore);
         }
         
