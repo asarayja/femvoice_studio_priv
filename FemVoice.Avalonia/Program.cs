@@ -19,6 +19,11 @@ internal static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        // A smoke must never read or write the user's REAL data. Redirect every per-user folder to a private temp
+        // sandbox before anything resolves a path (see SandboxUserDataForSmokes).
+        bool isSmoke = args.Any(a => a == "--smoke" || a.EndsWith("-smoke", StringComparison.Ordinal));
+        if (isSmoke) SandboxUserDataForSmokes();
+
         _ = Services;   // build the container up front on the desktop head
 
         // Offscreen UI snapshot: render a page to a PNG without a visible window (works headless / when the
@@ -28,6 +33,14 @@ internal static class Program
         // Headless verification paths — used by scripts/linux-portable-gate.sh. A matched smoke returns via
         // ExitAfterSmoke() to dodge an intermittent native GL atexit-teardown segfault on exit (see note there).
         if (TryDispatchSmoke(args) is int smokeCode) return ExitAfterSmoke(smokeCode);
+
+        // A mistyped/removed smoke flag used to fall through and START THE REAL APP (a window on the user's desktop,
+        // from a script that expected a headless check). Fail loudly instead.
+        if (isSmoke)
+        {
+            Console.Error.WriteLine($"Unknown smoke flag: {string.Join(" ", args)}");
+            return ExitAfterSmoke(2);
+        }
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
@@ -127,8 +140,43 @@ internal static class Program
     // teardown is unsafe. So once the result is produced, flush output and terminate via POSIX _exit(), which
     // skips atexit handlers (and thus the buggy driver teardown). Linux-only; the real GUI path
     // (StartWithClassicDesktopLifetime) is untouched and manages its own shutdown.
+    // ── Smoke sandbox ────────────────────────────────────────────────────────────────────────────────────────────
+    // The smokes exercise the real services, and those resolve per-user folders in a dozen places (database, backups,
+    // Google credentials, UI preferences, session history, calibration profile, the persisted Core language, logs).
+    // Run plainly they therefore touched the user's real files: the persisted language decided whether 22 smokes
+    // passed, every run added rows to the real database and a 2-second "session" to the real local history, one smoke
+    // left a backup with fake sessions in the real Backups folder, and another rewrote the real google_client.json.
+    //
+    // On Linux/macOS .NET resolves those folders from the XDG_* variables on every call, and
+    // Environment.SetEnvironmentVariable changes only the MANAGED view of the environment — native libraries (ALSA,
+    // PipeWire) keep seeing the real one, so audio is unaffected. So: point the three variables at a private temp
+    // folder for this process, and delete it on exit. Set FEMVOICE_SMOKE_REAL_DATA=1 to opt out deliberately.
+    private static string? _smokeSandbox;
+    private static void SandboxUserDataForSmokes()
+    {
+        if (Environment.GetEnvironmentVariable("FEMVOICE_SMOKE_REAL_DATA") == "1") return;
+        if (!(System.OperatingSystem.IsLinux() || System.OperatingSystem.IsMacOS())) return;   // XDG is a Unix mechanism
+        try
+        {
+            string root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+                $"femvoice-smoke-{Environment.ProcessId}-{System.Guid.NewGuid():N}");
+            foreach (var (variable, sub) in new[] { ("XDG_DATA_HOME", "data"), ("XDG_DOCUMENTS_DIR", "docs"), ("XDG_CONFIG_HOME", "config") })
+            {
+                string dir = System.IO.Path.Combine(root, sub);
+                System.IO.Directory.CreateDirectory(dir);
+                Environment.SetEnvironmentVariable(variable, dir);
+            }
+            _smokeSandbox = root;
+        }
+        catch { /* no sandbox is still a runnable smoke; the gate script prints what was touched */ }
+    }
+
     private static int ExitAfterSmoke(int code)
     {
+        if (_smokeSandbox is not null)
+        {
+            try { global::Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools(); System.IO.Directory.Delete(_smokeSandbox, true); } catch { }
+        }
         Console.Out.Flush();
         Console.Error.Flush();
         if (System.OperatingSystem.IsLinux())
