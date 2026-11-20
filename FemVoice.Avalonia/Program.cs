@@ -57,6 +57,7 @@ internal static class Program
         if (args.Contains("--rest-guidance-smoke")) return RestGuidanceSmoke().GetAwaiter().GetResult();
         if (args.Contains("--mic-calibration-device-smoke")) return MicCalibrationDeviceSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-score-analytics-smoke")) return ExerciseScoreAnalyticsSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--session-lifecycle-smoke")) return SessionLifecycleSmoke().GetAwaiter().GetResult();
         if (args.Contains("--settings-data-ops-smoke")) return SettingsDataOpsSmoke();
         if (args.Contains("--exercise-runtime-smoke")) return ExerciseRuntimeSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-runtime-integration-smoke")) return ExerciseRuntimeIntegrationSmoke().GetAwaiter().GetResult();
@@ -2467,6 +2468,83 @@ internal static class Program
             return ok ? 0 : 1;
         }
         catch (Exception ex) { Console.WriteLine($"[exscore] FAIL: {ex}"); return 1; }
+        finally
+        {
+            global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory = prevFactory;
+            try { global::Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools(); System.IO.Directory.Delete(dir, true); } catch { }
+        }
+    }
+
+    // A running session must survive the user leaving it: navigating away from a recording dashboard, and closing the
+    // app mid-session (dashboard or exercise), both SAVE the session and release the microphone. Temp DB only.
+    private static async System.Threading.Tasks.Task<int> SessionLifecycleSmoke()
+    {
+        string dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "femvoice-lifecycle-" + System.Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(dir);
+        var prevFactory = global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory;
+        try
+        {
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
+            var db = new global::FemVoiceStudio.Data.DatabaseService(System.IO.Path.Combine(dir, "lifecycle.db"));
+            var svc = new global::FemVoiceStudio.Services.VoiceFeminizationExerciseService();
+            int Rows() => db.GetRecentSessions(1000).Count;
+            global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory =
+                () => new ScriptedRealCapture(new[] { (172.0, 100000) });
+
+            // (1) Dashboard recording → the user taps another page → recording stops, microphone released, session saved.
+            var cap1 = new ScriptedRealCapture(new[] { (190.0, 100000) });
+            var dash1 = new MainDashboardViewModel(cap1, new InlineUiDispatcher(), db,
+                new History.SessionHistoryStore(System.IO.Path.Combine(dir, "h1.json")));
+            var shell1 = new ShellViewModel(dash1, svc, new InlineUiDispatcher(), null, db);
+            await dash1.StartCommand.ExecuteAsync(null);
+            await System.Threading.Tasks.Task.Delay(2600);
+            int before = Rows();
+            shell1.ShowGuideCommand.Execute(null);                      // navigate away while recording
+            for (int i = 0; i < 100 && (dash1.IsRecording || Rows() == before); i++) await System.Threading.Tasks.Task.Delay(30);
+            bool navStops = !dash1.IsRecording && cap1.StopCalls >= 1 && Rows() == before + 1;
+            Console.WriteLine($"[lifecycle] leave dashboard while recording: recording={dash1.IsRecording} stopCalls={cap1.StopCalls} rows {before}->{Rows()} ok={navStops}");
+
+            // (2) App closes while the dashboard is recording → saved before the process goes away (synchronously).
+            var cap2 = new ScriptedRealCapture(new[] { (190.0, 100000) });
+            var dash2 = new MainDashboardViewModel(cap2, new InlineUiDispatcher(), db,
+                new History.SessionHistoryStore(System.IO.Path.Combine(dir, "h2.json")));
+            var shell2 = new ShellViewModel(dash2, svc, new InlineUiDispatcher(), null, db);
+            await dash2.StartCommand.ExecuteAsync(null);
+            await System.Threading.Tasks.Task.Delay(2600);
+            before = Rows();
+            shell2.StopActiveSession();                                  // what the window Closing hook calls
+            bool closeSavesDash = !dash2.IsRecording && Rows() == before + 1;   // already true when the call returns
+            shell2.StopActiveSession();                                  // idempotent
+            bool idempotent = Rows() == before + 1;
+            Console.WriteLine($"[lifecycle] close app while dashboard records: rows {before}->{Rows()} ok={closeSavesDash} idempotent={idempotent}");
+
+            // (3) App closes while an EXERCISE is running → saved.
+            var dash3 = new MainDashboardViewModel(new ScriptedRealCapture(new[] { (0.0, 10) }), new InlineUiDispatcher(), db,
+                new History.SessionHistoryStore(System.IO.Path.Combine(dir, "h3.json")));
+            var shell3 = new ShellViewModel(dash3, svc, new InlineUiDispatcher(), null, db);
+            var runtime = new ExerciseRuntimeViewModel(svc.GetAllEnhancedExercises().First(e => e.Id == 12), new InlineUiDispatcher(),
+                () => { }, history: null, useRealMic: true, database: db);
+            shell3.CurrentPage = runtime;
+            runtime.BeginCommand.Execute(null);
+            await System.Threading.Tasks.Task.Delay(2600);
+            before = Rows();
+            shell3.StopActiveSession();
+            bool closeSavesExercise = Rows() == before + 1;
+            Console.WriteLine($"[lifecycle] close app while exercise runs: rows {before}->{Rows()} ok={closeSavesExercise}");
+            runtime.Dispose();
+            bool noDoubleSave = Rows() == before + 1;                    // Stop already saved it; disposing must not save again
+
+            // (4) Nothing running → StopActiveSession is a harmless no-op.
+            before = Rows();
+            shell1.StopActiveSession();
+            bool noopWhenIdle = Rows() == before;
+
+            bool ok = navStops && closeSavesDash && idempotent && closeSavesExercise && noDoubleSave && noopWhenIdle;
+            Console.WriteLine($"[lifecycle] noDoubleSave={noDoubleSave} noopWhenIdle={noopWhenIdle}");
+            Console.WriteLine(ok ? "[lifecycle] Session lifecycle smoke OK" : "[lifecycle] Session lifecycle smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[lifecycle] FAIL: {ex}"); return 1; }
         finally
         {
             global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory = prevFactory;

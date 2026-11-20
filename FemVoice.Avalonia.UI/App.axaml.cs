@@ -31,6 +31,16 @@ public partial class App : Application
             var main = new MainWindow();
             desktop.MainWindow = main;
 
+            // Closing the app in the middle of a session must SAVE it, not lose it. Both hooks are needed (the window's
+            // close button, and an OS/session shutdown request); StopActiveSession is idempotent.
+            try
+            {
+                var shell = AppServices.Services.GetRequiredService<ShellViewModel>();   // the singleton the window shows
+                main.Closing += (_, _) => shell.StopActiveSession();
+                desktop.ShutdownRequested += (_, _) => shell.StopActiveSession();
+            }
+            catch { /* never block startup on a lifecycle hook */ }
+
             // Brand splash (WPF-parity branding): show the logo briefly, then reveal the main window. Wrapped so a
             // splash failure can NEVER block startup — on any error we just show the main window immediately.
             try

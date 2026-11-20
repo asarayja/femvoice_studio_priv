@@ -218,6 +218,12 @@ public partial class ShellViewModel : ObservableObject
 
     partial void OnCurrentPageChanging(object? oldValue, object newValue)
     {
+        // Leaving the dashboard while it is RECORDING: stop and save, exactly as pressing Stop would. The dashboard
+        // is a retained singleton, so it used to keep the microphone open and the session running invisibly while the
+        // user was on another page (and opening an exercise then put two captures on the same microphone).
+        if (ReferenceEquals(oldValue, _dashboard) && !ReferenceEquals(newValue, _dashboard) && _dashboard.IsRecording)
+            _ = _dashboard.StopCommand.ExecuteAsync(null);
+
         // Dispose a TRANSIENT, disposable outgoing page (e.g. the runtime VM) so a running exercise's
         // synthetic capture loop + VM-local coordinator stop when navigating away — including via the
         // shell nav rail. Retained singletons (_dashboard, _guide) and the static deferred placeholders
@@ -228,6 +234,27 @@ public partial class ShellViewModel : ObservableObject
             && !ReferenceEquals(oldValue, _firstTimeSetup)
             && oldValue is System.IDisposable disposable)
             disposable.Dispose();
+    }
+
+    /// <summary>
+    /// Stop and SAVE whatever session is running right now (dashboard recording or a running exercise). Called when
+    /// the app is closing: without it, closing the window mid-session simply lost the session. Blocks until the save
+    /// is done (the stop paths never need the UI thread to finish), is idempotent, and never throws.
+    /// </summary>
+    public void StopActiveSession()
+    {
+        try
+        {
+            if (_dashboard.IsRecording)
+                _dashboard.StopCommand.ExecuteAsync(null).GetAwaiter().GetResult();
+        }
+        catch { /* closing must never be blocked by a failed save */ }
+        try
+        {
+            if (CurrentPage is ExerciseRuntimeViewModel { IsRunning: true } runtime)
+                runtime.StopCommand.ExecuteAsync(null).GetAwaiter().GetResult();
+        }
+        catch { /* as above */ }
     }
 
     partial void OnCurrentPageChanged(object value)
