@@ -42,6 +42,7 @@ internal static class Program
         if (args.Contains("--exercise-save-truthful-smoke")) return ExerciseSaveTruthfulSmoke().GetAwaiter().GetResult();
         if (args.Contains("--session-truth-smoke")) return SessionTruthSmoke().GetAwaiter().GetResult();
         if (args.Contains("--rest-guidance-smoke")) return RestGuidanceSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--mic-calibration-device-smoke")) return MicCalibrationDeviceSmoke().GetAwaiter().GetResult();
         if (args.Contains("--settings-data-ops-smoke")) return SettingsDataOpsSmoke();
         if (args.Contains("--exercise-runtime-smoke")) return ExerciseRuntimeSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-runtime-integration-smoke")) return ExerciseRuntimeIntegrationSmoke().GetAwaiter().GetResult();
@@ -2272,6 +2273,71 @@ internal static class Program
             global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory = prevFactory;
             guard.Reset();
         }
+    }
+
+    // Mic calibration must measure the SAME microphone the training screens use (the Settings choice), not always the
+    // system default — otherwise the stored noise gate and resonance baseline belong to a different microphone.
+    private static async System.Threading.Tasks.Task<int> MicCalibrationDeviceSmoke()
+    {
+        string dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "femvoice-miccal-dev-" + System.Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(dir);
+        try
+        {
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
+            var capture = new OptionsRecordingCapture();
+            var vm = new MicCalibrationViewModel(capture, new InlineUiDispatcher(), profileDirectory: dir) { PhaseSeconds = 0.15 };
+            vm.SelectedMicDeviceId = () => "usb-headset-7";
+            await vm.NextCommand.ExecuteAsync(null);            // silence phase → opens the microphone
+            bool routed = capture.LastOptions?.DeviceId == "usb-headset-7";
+
+            var capture2 = new OptionsRecordingCapture();
+            var vm2 = new MicCalibrationViewModel(capture2, new InlineUiDispatcher(), profileDirectory: dir) { PhaseSeconds = 0.15 };
+            vm2.SelectedMicDeviceId = () => null;               // no choice made → system default, as before
+            await vm2.NextCommand.ExecuteAsync(null);
+            bool defaultWhenUnset = capture2.StartCalls == 1 && capture2.LastOptions is not null && capture2.LastOptions.DeviceId is null;
+
+            var capture3 = new OptionsRecordingCapture();
+            var vm3 = new MicCalibrationViewModel(capture3, new InlineUiDispatcher(), profileDirectory: dir) { PhaseSeconds = 0.15 };
+            vm3.SelectedMicDeviceId = () => throw new System.IO.IOException("prefs unreadable");
+            await vm3.NextCommand.ExecuteAsync(null);           // must not crash the wizard
+            bool failSafe = capture3.StartCalls == 1 && capture3.LastOptions?.DeviceId is null;
+
+            Console.WriteLine($"[miccal-dev] routed={routed} (got '{capture.LastOptions?.DeviceId}') defaultWhenUnset={defaultWhenUnset} failSafe={failSafe}");
+            bool ok = routed && defaultWhenUnset && failSafe;
+            Console.WriteLine(ok ? "[miccal-dev] Mic calibration device smoke OK" : "[miccal-dev] Mic calibration device smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[miccal-dev] FAIL: {ex}"); return 1; }
+        finally { try { System.IO.Directory.Delete(dir, true); } catch { } }
+    }
+
+    /// <summary>Capture fake that records the options it was started with and emits quiet frames.</summary>
+    private sealed class OptionsRecordingCapture : global::FemVoiceStudio.Audio.Abstractions.IAudioCaptureService
+    {
+        public event EventHandler<global::FemVoiceStudio.Audio.Abstractions.AudioFrameAvailableEventArgs>? FrameAvailable;
+        public event EventHandler<global::FemVoiceStudio.Audio.Abstractions.AudioDeviceLostEventArgs>? DeviceLost { add { } remove { } }
+        public global::FemVoiceStudio.Audio.Abstractions.AudioCaptureOptions? LastOptions;
+        public int StartCalls;
+        private System.Threading.CancellationTokenSource? _cts;
+        public IReadOnlyList<global::FemVoiceStudio.Audio.Abstractions.AudioInputDevice> GetInputDevices()
+            => new[] { new global::FemVoiceStudio.Audio.Abstractions.AudioInputDevice("usb-headset-7", "USB headset", false) };
+        public System.Threading.Tasks.Task StartAsync(global::FemVoiceStudio.Audio.Abstractions.AudioCaptureOptions options,
+            System.Threading.CancellationToken cancellationToken = default)
+        {
+            LastOptions = options; StartCalls++;
+            _cts = new System.Threading.CancellationTokenSource();
+            var token = _cts.Token;
+            _ = System.Threading.Tasks.Task.Run(async () =>
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    FrameAvailable?.Invoke(this, new global::FemVoiceStudio.Audio.Abstractions.AudioFrameAvailableEventArgs(new float[1024], 44100, 1));
+                    try { await System.Threading.Tasks.Task.Delay(12, token).ConfigureAwait(false); } catch { }
+                }
+            });
+            return System.Threading.Tasks.Task.CompletedTask;
+        }
+        public System.Threading.Tasks.Task StopAsync() { _cts?.Cancel(); return System.Threading.Tasks.Task.CompletedTask; }
     }
 
     // The Settings data actions are REAL file operations on the SQLite DB. Verifies (in a temp dir, no user data):

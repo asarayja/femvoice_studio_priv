@@ -43,6 +43,12 @@ public partial class MicCalibrationViewModel : ObservableObject, IDisposable
 
     public MicCalibrationViewModel() : this(null, null) { }
 
+    /// <summary>Which microphone to calibrate: the one chosen in Settings (null = system default). Calibration used to
+    /// open the system default regardless, so a user who had picked e.g. a USB headset got a noise gate and a
+    /// resonance baseline measured on a DIFFERENT microphone than the one every training screen then used — and the
+    /// brightness scale is strongly microphone-dependent. Settable so tests need not touch the real preferences.</summary>
+    public Func<string?> SelectedMicDeviceId { get; set; } = FemVoice.Avalonia.Preferences.CapturePreferences.SelectedMicDeviceId;
+
     /// <param name="capture">Injected capture backend; when null a real-when-available backend is created lazily
     /// on the first capture phase (so construction/headless stays side-effect-free).</param>
     /// <param name="ui">Dispatcher to marshal capture-thread frames to the UI thread; inline when null (tests).</param>
@@ -259,7 +265,10 @@ public partial class MicCalibrationViewModel : ObservableObject, IDisposable
         _backend.FrameAvailable += OnPhaseFrame;
         // Calibration wants RAW input (WPF disables ApplyInputProcessing on Windows). The Avalonia capture path is
         // already raw PCM (ALSA/synthetic apply no AGC/noise-suppression), so no processing flag is needed here.
-        await _backend.StartAsync(new AudioCaptureOptions());
+        // Same device as the training screens (dashboard/exercise/analyzer/resonance all pass the Settings choice).
+        string? deviceId = null;
+        try { deviceId = SelectedMicDeviceId(); } catch { /* unreadable preference → system default */ }
+        await _backend.StartAsync(new AudioCaptureOptions(DeviceId: deviceId));
 
         var startUtc = DateTime.UtcNow;
         while ((DateTime.UtcNow - startUtc).TotalSeconds < PhaseSeconds)
