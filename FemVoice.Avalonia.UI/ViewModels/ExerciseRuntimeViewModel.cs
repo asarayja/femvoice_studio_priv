@@ -91,6 +91,11 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     private readonly List<double> _sessionPitch = new();
     private readonly List<double> _sessionResonance = new();
     private readonly List<double> _sessionHealth = new();   // real per-frame voice-health 0–100 → session average
+    private readonly List<double> _sessionStability = new(); // real per-frame pitch stability 0–100 → session average
+    // What the LIVE feedback judged, frame by frame: voiced frames, and how many of them were inside the target the
+    // exercise is actually judged on (the pitch band — or the BRIGHTNESS band for a resonance-focused exercise).
+    private int _sessionVoicedFrames;
+    private int _sessionInTargetFrames;
     private readonly object _sessionLock = new();           // capture thread appends; Stop/Dispose snapshot
     private int _stopping;                                  // 0/1 — the finished run is saved exactly once
     // Rest guidance for the whole SITTING (shared with the dashboard and every other exercise): time-based advice
@@ -433,6 +438,9 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
             _sessionPitch.Clear();
             _sessionResonance.Clear();
             _sessionHealth.Clear();
+            _sessionStability.Clear();
+            _sessionVoicedFrames = 0;
+            _sessionInTargetFrames = 0;
         }
         _deviceLostReason = null;
         System.Threading.Volatile.Write(ref _stopping, 0);
@@ -586,6 +594,18 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         else if (focusValue > focusMax) status = _resonanceFocused ? "Resonans: for lys" : "Over målområde";
         else status = "Innenfor målområde";
 
+        // Tally the live judgement so the SAVED score is the same judgement the user saw (see SaveFinishedSession).
+        if (result.IsVoiced && pitch > 0)
+        {
+            double stability100 = FemVoice.Avalonia.Audio.SessionAnalyticsWriter.StabilityTo100(_metrics.CalculateStability());
+            lock (_sessionLock)
+            {
+                _sessionVoicedFrames++;
+                if (inRange) _sessionInTargetFrames++;
+                _sessionStability.Add(stability100);
+            }
+        }
+
         _holdRaw = inRange ? Math.Min(_holdTargetSeconds, _holdRaw + delta) : 0;
         double hold = _holdRaw;
         int elapsed = (int)(now - _startUtc).TotalSeconds;
@@ -703,16 +723,23 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         {
             try
             {
-                List<double> voiced; double avgResonance, avgHealth;
+                List<double> voiced; double avgResonance, avgHealth, avgStability; int voicedFrames, inTargetFrames;
                 lock (_sessionLock)
                 {
                     voiced = _sessionPitch.Where(p => p > 0).ToList();
                     avgResonance = _sessionResonance.Count > 0 ? _sessionResonance.Average() : 0;
                     avgHealth = _sessionHealth.Count > 0 ? _sessionHealth.Average() : 0;
+                    avgStability = _sessionStability.Count > 0 ? _sessionStability.Average() : 0;
+                    voicedFrames = _sessionVoicedFrames;
+                    inTargetFrames = _sessionInTargetFrames;
                 }
                 if (voiced.Count == 0) return SaveOutcome.NoVoice;   // nothing measured → nothing to save
                 double avg = voiced.Average();
-                double inZone = 100.0 * voiced.Count(p => p >= TargetPitchMin && p <= TargetPitchMax) / voiced.Count;
+                // The score is the share of voiced frames the LIVE feedback judged "in target". For a pitch exercise
+                // that is the pitch band (unchanged). For a resonance-focused exercise it is the BRIGHTNESS band —
+                // it used to be the pitch band here too, so a resonance exercise done with a dark voice at the "right"
+                // pitch was saved as 100 and a bright voice slightly outside the secondary pitch range as a failure.
+                double inZone = voicedFrames > 0 ? 100.0 * inTargetFrames / voicedFrames : 0;
                 double pitchVariation = 0;
                 if (voiced.Count > 1)
                 {
@@ -728,7 +755,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
                     MinPitch = voiced.Count > 0 ? Math.Round(voiced.Min(), 1) : 0,
                     MaxPitch = voiced.Count > 0 ? Math.Round(voiced.Max(), 1) : 0,
                     PitchVariation = Math.Round(pitchVariation, 1),          // real prosody metric (std-dev of pitch)
-                    OverallScore = Math.Round(inZone),                       // adherence to THIS exercise's target band
+                    OverallScore = Math.Round(inZone),                       // adherence to the target this exercise is JUDGED on
                     ResonanceScore = Math.Round(avgResonance, 1),            // real resonance from the Core DSP engine
                     VoiceHealthScore = Math.Round(avgHealth, 1),            // real per-session voice-health average
                     DifficultyLevel = Exercise.Difficulty,
@@ -750,6 +777,10 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
                 {
                     try { new FemVoiceStudio.Services.ProgressionService(_database, LocalizationService.Instance).EvaluateProgressionWithSafety(session); }
                     catch { /* progression is display-level; never affects the saved session */ }
+                    // Per-dimension record, exactly like a dashboard session — so the Progression parameter graph,
+                    // Clinician metrics and Analysis rings include exercises (they only ever saw dashboard sessions).
+                    FemVoice.Avalonia.Audio.SessionAnalyticsWriter.Write(_database, savedId, session.StartTime,
+                        session.EndTime ?? DateTime.UtcNow, inZone, avgResonance, pitchVariation, avgStability, avgHealth);
                 }
                 return savedId > 0 ? SaveOutcome.SavedReal : SaveOutcome.LocalOnly;
             }
