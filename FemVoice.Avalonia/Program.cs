@@ -43,6 +43,7 @@ internal static class Program
         if (args.Contains("--session-truth-smoke")) return SessionTruthSmoke().GetAwaiter().GetResult();
         if (args.Contains("--rest-guidance-smoke")) return RestGuidanceSmoke().GetAwaiter().GetResult();
         if (args.Contains("--mic-calibration-device-smoke")) return MicCalibrationDeviceSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--exercise-score-analytics-smoke")) return ExerciseScoreAnalyticsSmoke().GetAwaiter().GetResult();
         if (args.Contains("--settings-data-ops-smoke")) return SettingsDataOpsSmoke();
         if (args.Contains("--exercise-runtime-smoke")) return ExerciseRuntimeSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-runtime-integration-smoke")) return ExerciseRuntimeIntegrationSmoke().GetAwaiter().GetResult();
@@ -2033,6 +2034,9 @@ internal static class Program
         private System.Threading.CancellationTokenSource? _cts;
         private System.Threading.Tasks.Task? _loop;
         public int StopCalls;
+        /// <summary>Optional upper partial (harmonic number + gain relative to the fundamental) → a "brighter" tone.</summary>
+        public int HarmonicNumber { get; init; }
+        public double HarmonicGain { get; init; }
         public System.Threading.Tasks.TaskCompletionSource ScriptDone { get; } = new();
         public ScriptedRealCapture((double Hz, int Frames)[] script, int paceMs = 12, int loseDeviceAfterFrames = -1)
         { _script = script; _paceMs = paceMs; _loseDeviceAfterFrames = loseDeviceAfterFrames; }
@@ -2051,7 +2055,13 @@ internal static class Program
                     for (int f = 0; f < frames && !token.IsCancellationRequested; f++)
                     {
                         var buf = new float[n];
-                        if (hz > 0) for (int i = 0; i < n; i++) { buf[i] = (float)(0.2 * Math.Sin(phase)); phase += 2 * Math.PI * hz / sr; }
+                        if (hz > 0) for (int i = 0; i < n; i++)
+                        {
+                            double s = Math.Sin(phase);
+                            if (HarmonicNumber > 1 && HarmonicGain > 0) s += HarmonicGain * Math.Sin(HarmonicNumber * phase);
+                            buf[i] = (float)(0.2 * s / (1 + Math.Max(0, HarmonicGain)));
+                            phase += 2 * Math.PI * hz / sr;
+                        }
                         FrameAvailable?.Invoke(this, new global::FemVoiceStudio.Audio.Abstractions.AudioFrameAvailableEventArgs(buf, sr, 1));
                         if (++sent == _loseDeviceAfterFrames)
                         {
@@ -2338,6 +2348,85 @@ internal static class Program
             return System.Threading.Tasks.Task.CompletedTask;
         }
         public System.Threading.Tasks.Task StopAsync() { _cts?.Cancel(); return System.Threading.Tasks.Task.CompletedTask; }
+    }
+
+    // The SAVED exercise score must be the judgement the user saw live, and an exercise session must feed the
+    // per-dimension analytics exactly like a dashboard session. Regression guard for: (1) a resonance-focused exercise
+    // being scored on its secondary PITCH range (dark voice at the "right" pitch → 100, bright voice just outside the
+    // pitch range → 0); (2) exercises never writing a SessionAnalyticsRecord. Temp DB only.
+    private static async System.Threading.Tasks.Task<int> ExerciseScoreAnalyticsSmoke()
+    {
+        string dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "femvoice-exscore-" + System.Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(dir);
+        var prevFactory = global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory;
+        try
+        {
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
+            var db = new global::FemVoiceStudio.Data.DatabaseService(System.IO.Path.Combine(dir, "exscore.db"));
+            var all = new global::FemVoiceStudio.Services.VoiceFeminizationExerciseService().GetAllEnhancedExercises();
+
+            // A resonance-focused exercise: resonance goal + a profile that uses resonance and not pitch.
+            var resEx = all.First(e => e.Goal == global::FemVoiceStudio.Models.GoalCategory.Resonance
+                && ExerciseRuntimeTargetProfileDisplay.ResolveProfile(e) is { UsesResonance: true, UsesPitch: false });
+            var profile = ExerciseRuntimeTargetProfileDisplay.ResolveProfile(resEx)!;
+            double bandMid = (profile.TargetResonanceMin + profile.TargetResonanceMax) / 2.0 * 100.0;   // brightness %
+            // Brightness % → spectral centroid, with the same anchors the meter will use on this machine.
+            double? baseline = global::FemVoice.Avalonia.Preferences.CapturePreferences.ResonanceBaselineCentroidHz();
+            double floor = baseline is > 0 ? baseline.Value - 100 : 450, ceil = baseline is > 0 ? baseline.Value + 900 : 1700;
+            double wantCentroid = floor + bandMid / 100.0 * (ceil - floor);
+
+            async System.Threading.Tasks.Task<global::FemVoiceStudio.Models.TrainingSession> Run(
+                global::FemVoiceStudio.Services.EnhancedExercise ex, double hz, int harmonic, double gain)
+            {
+                global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory =
+                    () => new ScriptedRealCapture(new[] { (hz, 100000) }) { HarmonicNumber = harmonic, HarmonicGain = gain };
+                var vm = new ExerciseRuntimeViewModel(ex, new InlineUiDispatcher(), () => { }, history: null, useRealMic: true, database: db);
+                vm.BeginCommand.Execute(null);
+                await System.Threading.Tasks.Task.Delay(2600);
+                await vm.StopCommand.ExecuteAsync(null);
+                vm.Dispose();
+                return db.GetRecentSessions(1).Single();
+            }
+
+            // (1) Dark voice (pure tone) at a pitch INSIDE the secondary pitch range → resonance target missed → low.
+            double insidePitch = (resEx.TargetPitchMin + resEx.TargetPitchMax) / 2.0;
+            var dark = await Run(resEx, insidePitch, 0, 0);
+            bool darkLow = dark.OverallScore <= 10 && dark.ResonanceScore < profile.TargetResonanceMin * 100;
+
+            // (2) Bright voice (strong upper partial, centroid aimed at the middle of the brightness band) at a pitch
+            // OUTSIDE the secondary pitch range → resonance target met → high.
+            double outsidePitch = resEx.TargetPitchMin - 20;
+            int k = 12; double f2 = k * outsidePitch;
+            double gain = Math.Sqrt(Math.Max(0.0001, (wantCentroid - outsidePitch) / Math.Max(1, f2 - wantCentroid)));
+            var bright = await Run(resEx, outsidePitch, k, gain);
+            bool brightHigh = bright.OverallScore >= 80 && bright.AveragePitch < resEx.TargetPitchMin;
+            Console.WriteLine($"[exscore] resonance exercise #{resEx.Id} band {profile.TargetResonanceMin * 100:F0}-{profile.TargetResonanceMax * 100:F0}% | dark@{insidePitch:F0}Hz score={dark.OverallScore:F0} res={dark.ResonanceScore:F0} ok={darkLow} | bright@{outsidePitch:F0}Hz score={bright.OverallScore:F0} res={bright.ResonanceScore:F0} avgPitch={bright.AveragePitch:F0} ok={brightHigh}");
+
+            // (3) A pitch exercise is still scored on its pitch band.
+            var pitchEx = all.First(e => e.Id == 12);   // 165–180 Hz
+            var inBand = await Run(pitchEx, 172, 0, 0);
+            var below = await Run(pitchEx, 150, 0, 0);
+            bool pitchUnchanged = inBand.OverallScore >= 90 && below.OverallScore <= 10;
+            Console.WriteLine($"[exscore] pitch exercise #12: 172Hz score={inBand.OverallScore:F0}, 150Hz score={below.OverallScore:F0} ok={pitchUnchanged}");
+
+            // (4) Every one of those exercise sessions wrote a per-dimension analytics record.
+            var analytics = new global::FemVoiceStudio.Services.SessionAnalyticsStore(
+                new global::FemVoiceStudio.Services.SqliteSessionAnalyticsRepository(db.ConnectionString));
+            var records = analytics.GetSessionsAsync(DateTime.UtcNow.AddDays(-1), DateTime.UtcNow.AddDays(1), 1).GetAwaiter().GetResult();
+            int sessions = db.GetRecentSessions(100).Count;
+            bool analyticsWritten = sessions == 4 && records.Count == 4 && records.Any(r => r.ResonanceScore100 > 0);
+            Console.WriteLine($"[exscore] sessions={sessions} analyticsRecords={records.Count} ok={analyticsWritten}");
+
+            bool ok = darkLow && brightHigh && pitchUnchanged && analyticsWritten;
+            Console.WriteLine(ok ? "[exscore] Exercise score + analytics smoke OK" : "[exscore] Exercise score + analytics smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[exscore] FAIL: {ex}"); return 1; }
+        finally
+        {
+            global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory = prevFactory;
+            try { global::Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools(); System.IO.Directory.Delete(dir, true); } catch { }
+        }
     }
 
     // The Settings data actions are REAL file operations on the SQLite DB. Verifies (in a temp dir, no user data):

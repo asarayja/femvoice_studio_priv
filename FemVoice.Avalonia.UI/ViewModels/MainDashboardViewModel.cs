@@ -822,54 +822,15 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     private void WriteSessionAnalytics(int sessionId, System.DateTime startUtc, System.DateTime endUtc,
         double pitchComfortPercent, double avgResonance, double pitchVariation)
     {
-        if (_database is not FemVoiceStudio.Data.DatabaseService concrete) return;
-        try
+        double avgHealth, avgStability;
+        lock (_sessionLock)
         {
-            var analytics = new FemVoiceStudio.Services.SessionAnalyticsStore(
-                new FemVoiceStudio.Services.SqliteSessionAnalyticsRepository(concrete.ConnectionString));
-
-            double avgHealth, avgStability;
-            lock (_sessionLock)
-            {
-                avgHealth = _sessionHealth.Count > 0 ? _sessionHealth.Average() : 0;
-                avgStability = _sessionStability.Count > 0 ? _sessionStability.Average() : 0;
-            }
-
-            // Recovery from the real cross-session history (100 − debt). Empty history → rested; guarded.
-            double recovery100 = 100;
-            try
-            {
-                var forecast = new FemVoiceStudio.Services.RecoveryIntelligenceService()
-                    .ForecastFromHistoryAsync(analytics, System.DateTime.UtcNow, 1).GetAwaiter().GetResult();
-                recovery100 = System.Math.Clamp(100 - forecast.RecoveryDebt, 0, 100);
-            }
-            catch { /* no history yet → rested default */ }
-
-            var d = FemVoice.Avalonia.Audio.SessionAnalyticsScorer.Compute(
-                pitchComfortPercent, avgResonance, pitchVariation, avgStability, avgHealth, recovery100);
-
-            analytics.RecordSessionCompletedAsync(new FemVoiceStudio.Services.SessionAnalyticsRecord
-            {
-                SessionId = sessionId,
-                UserId = 1,
-                StartedAt = startUtc,
-                EndedAt = endUtc,
-                ExerciseCount = 1,
-                AverageResonance = d.ResonanceScore100,
-                AverageStability = d.ConsistencyScore100,
-                AveragePitchComfort = d.ComfortScore100,
-                AverageHealthScore = d.HealthScore100,
-                ResonanceScore100 = d.ResonanceScore100,
-                ComfortScore100 = d.ComfortScore100,
-                ConsistencyScore100 = d.ConsistencyScore100,
-                IntonationScore100 = d.IntonationScore100,
-                VocalWeightScore100 = d.VocalWeightScore100,
-                RecoveryScore100 = d.RecoveryScore100,
-                PitchScore100 = d.PitchScore100,
-                CompositeVoiceScore = d.CompositeVoiceScore,
-            }).GetAwaiter().GetResult();
+            avgHealth = _sessionHealth.Count > 0 ? _sessionHealth.Average() : 0;
+            avgStability = _sessionStability.Count > 0 ? _sessionStability.Average() : 0;
         }
-        catch { /* analytics write is best-effort — never affects the session save */ }
+        // Shared with the exercise runtime (which used to skip this write entirely).
+        FemVoice.Avalonia.Audio.SessionAnalyticsWriter.Write(_database, sessionId, startUtc, endUtc,
+            pitchComfortPercent, avgResonance, pitchVariation, avgStability, avgHealth);
     }
 
     /// <summary>Advance the real Core progression for a saved session (WPF parity). Fully guarded — progression is a
