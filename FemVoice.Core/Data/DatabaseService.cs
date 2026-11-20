@@ -1648,9 +1648,13 @@ namespace FemVoiceStudio.Data
             while (true)
             {
                 var checkCommand = connection.CreateCommand();
+                // 'localtime': StartTime is stored as an ISO-8601 instant (UTC "…Z", or with an offset), and
+                // date(StartTime) alone yields the UTC calendar day. The streak is counted in the user's LOCAL days
+                // (checkDate comes from DateTime.Today), so a session at 00:30 local — 23:30 UTC the day before in
+                // Norway, or any evening session in the Americas — was credited to the wrong day and broke the streak.
                 checkCommand.CommandText = @"
                     SELECT COUNT(*) FROM TrainingSessions
-                    WHERE date(StartTime) = @Date
+                    WHERE date(StartTime, 'localtime') = @Date
                 ";
                 checkCommand.Parameters.AddWithValue("@Date", checkDate.ToString("yyyy-MM-dd"));
                 
@@ -2522,7 +2526,7 @@ namespace FemVoiceStudio.Data
             
             var command = connection.CreateCommand();
             command.CommandText = @"
-                SELECT COUNT(DISTINCT date(StartTime)) 
+                SELECT COUNT(DISTINCT date(StartTime, 'localtime')) 
                 FROM TrainingSessions 
                 WHERE StartTime >= @From AND StartTime <= @To";
             command.Parameters.AddWithValue("@From", from.ToString("o"));
