@@ -74,7 +74,7 @@ public sealed class SettingsDataService
             Directory.CreateDirectory(_backupDir);
             string name = $"femvoice-backup-{nowLocal:yyyyMMdd-HHmmss}.db";
             string dest = Path.Combine(_backupDir, name);
-            File.Copy(_dbPath, dest, overwrite: true);
+            Snapshot(_dbPath, dest);
             return new DataOpResult(true, string.Format(L.Get("SettingsData_BackupSavedFormat", "Sikkerhetskopi lagret: {0}"), name));
         }
         catch (Exception ex) { return new DataOpResult(false, string.Format(L.Get("SettingsData_BackupFailedFormat", "Sikkerhetskopi feilet: {0}"), ex.Message)); }
@@ -88,12 +88,43 @@ public sealed class SettingsDataService
         {
             if (string.IsNullOrWhiteSpace(backupPath) || !File.Exists(backupPath))
                 return new DataOpResult(false, L.Get("SettingsData_BackupNotFound", "Fant ikke sikkerhetskopien."));
+            // Refuse anything that is not a readable FemVoice database BEFORE touching the live one: replacing the
+            // user's history with a truncated download or a stray file is the worst outcome this page can produce.
+            if (!IsFemVoiceDatabase(backupPath))
+                return new DataOpResult(false, L.Get("SettingsData_BackupNotFound", "Fant ikke sikkerhetskopien."));
+
             Directory.CreateDirectory(_backupDir);
-            // Safety copy of the current DB before overwriting, so a restore is itself reversible.
+            // Safety copy of the current DB before overwriting, so a restore is itself reversible. It is named like
+            // an ordinary backup (…-pre-restore.db) so it SHOWS UP in the list — it used to be written under a name
+            // the list never matched, i.e. an undo that could only be done by hand in the file manager.
             if (File.Exists(_dbPath))
-                File.Copy(_dbPath, Path.Combine(_backupDir, $"femvoice-pre-restore-{nowLocal:yyyyMMdd-HHmmss}.db"), overwrite: true);
-            Directory.CreateDirectory(Path.GetDirectoryName(_dbPath)!);
-            File.Copy(backupPath, _dbPath, overwrite: true);
+                Snapshot(_dbPath, Path.Combine(_backupDir, $"femvoice-backup-{nowLocal:yyyyMMdd-HHmmss}-pre-restore.db"));
+
+            string dbDir = Path.GetDirectoryName(_dbPath)!;
+            Directory.CreateDirectory(dbDir);
+            // Stage the restored database NEXT TO the live file, then swap it in with one rename. Writing over the
+            // live file in place meant a failure halfway (disk full, lock) left a truncated database.
+            string staged = _dbPath + ".restoring";
+            Snapshot(backupPath, staged);
+
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();   // release our own pooled handles first
+            // The old database's journal sidecars must not survive next to the new file: a leftover -wal from the
+            // previous database would be replayed over the restored one ("database disk image is malformed").
+            foreach (var sidecar in new[] { "-wal", "-shm", "-journal" })
+            {
+                try { File.Delete(_dbPath + sidecar); } catch { /* still held on Windows → handled by the restart */ }
+            }
+            try
+            {
+                File.Move(staged, _dbPath, overwrite: true);          // atomic on the same volume
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // Windows refuses to rename over a file another handle still has open. Fall back to the in-place copy
+                // (the previous behaviour) — the staged file is complete, so the source of the copy is known-good.
+                File.Copy(staged, _dbPath, overwrite: true);
+                try { File.Delete(staged); } catch { }
+            }
             return new DataOpResult(true, L.Get("SettingsData_Restored", "Gjenopprettet. Start appen på nytt for at endringen skal gjelde fullt ut."));
         }
         catch (Exception ex) { return new DataOpResult(false, string.Format(L.Get("SettingsData_RestoreFailedFormat", "Gjenoppretting feilet: {0}"), ex.Message)); }
@@ -119,6 +150,49 @@ public sealed class SettingsDataService
                 : L.Get("SettingsData_MergedNothing", "Ingen nye økter å legge til — alt fantes allerede."));
         }
         catch (Exception ex) { return new DataOpResult(false, string.Format(L.Get("SettingsData_MergeFailedFormat", "Sammenslåing feilet: {0}"), ex.Message)); }
+    }
+
+    /// <summary>
+    /// Write a CONSISTENT copy of a SQLite database to <paramref name="destPath"/> using SQLite's own online-backup
+    /// API. A raw file copy of a live database is not a backup: in WAL mode the newest committed sessions still live
+    /// in the "-wal" sidecar, so the copy silently lacked them (and the device they were pushed to never got them);
+    /// and a copy taken while a write commits can be torn. The backup API reads one consistent snapshot, sidecars
+    /// included. Falls back to a plain copy only when the source cannot be opened as a database at all — keeping the
+    /// bytes of a damaged file is still better than keeping nothing.
+    /// </summary>
+    private static void Snapshot(string sourcePath, string destPath)
+    {
+        try { File.Delete(destPath); } catch { }
+        try
+        {
+            using var source = new Microsoft.Data.Sqlite.SqliteConnection(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder
+            { DataSource = sourcePath, Mode = Microsoft.Data.Sqlite.SqliteOpenMode.ReadWrite, Pooling = false }.ToString());
+            using var dest = new Microsoft.Data.Sqlite.SqliteConnection(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder
+            { DataSource = destPath, Pooling = false }.ToString());
+            source.Open();
+            dest.Open();
+            source.BackupDatabase(dest);
+        }
+        catch (Microsoft.Data.Sqlite.SqliteException)
+        {
+            try { File.Delete(destPath); } catch { }
+            File.Copy(sourcePath, destPath, overwrite: true);
+        }
+    }
+
+    /// <summary>True when the file opens as a SQLite database that has the FemVoice sessions table.</summary>
+    private static bool IsFemVoiceDatabase(string path)
+    {
+        try
+        {
+            using var connection = new Microsoft.Data.Sqlite.SqliteConnection(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder
+            { DataSource = path, Mode = Microsoft.Data.Sqlite.SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'TrainingSessions'";
+            return Convert.ToInt32(command.ExecuteScalar()) == 1;
+        }
+        catch { return false; }
     }
 
     /// <summary>Empty the database (destructive — caller confirms). Uses the concrete service's ResetDatabase when

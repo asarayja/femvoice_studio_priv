@@ -19,6 +19,11 @@ internal static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        // A smoke must never read or write the user's REAL data. Redirect every per-user folder to a private temp
+        // sandbox before anything resolves a path (see SandboxUserDataForSmokes).
+        bool isSmoke = args.Any(a => a == "--smoke" || a.EndsWith("-smoke", StringComparison.Ordinal));
+        if (isSmoke) SandboxUserDataForSmokes();
+
         _ = Services;   // build the container up front on the desktop head
 
         // Offscreen UI snapshot: render a page to a PNG without a visible window (works headless / when the
@@ -28,6 +33,14 @@ internal static class Program
         // Headless verification paths — used by scripts/linux-portable-gate.sh. A matched smoke returns via
         // ExitAfterSmoke() to dodge an intermittent native GL atexit-teardown segfault on exit (see note there).
         if (TryDispatchSmoke(args) is int smokeCode) return ExitAfterSmoke(smokeCode);
+
+        // A mistyped/removed smoke flag used to fall through and START THE REAL APP (a window on the user's desktop,
+        // from a script that expected a headless check). Fail loudly instead.
+        if (isSmoke)
+        {
+            Console.Error.WriteLine($"Unknown smoke flag: {string.Join(" ", args)}");
+            return ExitAfterSmoke(2);
+        }
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
@@ -44,6 +57,7 @@ internal static class Program
         if (args.Contains("--rest-guidance-smoke")) return RestGuidanceSmoke().GetAwaiter().GetResult();
         if (args.Contains("--mic-calibration-device-smoke")) return MicCalibrationDeviceSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-score-analytics-smoke")) return ExerciseScoreAnalyticsSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--session-lifecycle-smoke")) return SessionLifecycleSmoke().GetAwaiter().GetResult();
         if (args.Contains("--settings-data-ops-smoke")) return SettingsDataOpsSmoke();
         if (args.Contains("--exercise-runtime-smoke")) return ExerciseRuntimeSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-runtime-integration-smoke")) return ExerciseRuntimeIntegrationSmoke().GetAwaiter().GetResult();
@@ -127,8 +141,43 @@ internal static class Program
     // teardown is unsafe. So once the result is produced, flush output and terminate via POSIX _exit(), which
     // skips atexit handlers (and thus the buggy driver teardown). Linux-only; the real GUI path
     // (StartWithClassicDesktopLifetime) is untouched and manages its own shutdown.
+    // ── Smoke sandbox ────────────────────────────────────────────────────────────────────────────────────────────
+    // The smokes exercise the real services, and those resolve per-user folders in a dozen places (database, backups,
+    // Google credentials, UI preferences, session history, calibration profile, the persisted Core language, logs).
+    // Run plainly they therefore touched the user's real files: the persisted language decided whether 22 smokes
+    // passed, every run added rows to the real database and a 2-second "session" to the real local history, one smoke
+    // left a backup with fake sessions in the real Backups folder, and another rewrote the real google_client.json.
+    //
+    // On Linux/macOS .NET resolves those folders from the XDG_* variables on every call, and
+    // Environment.SetEnvironmentVariable changes only the MANAGED view of the environment — native libraries (ALSA,
+    // PipeWire) keep seeing the real one, so audio is unaffected. So: point the three variables at a private temp
+    // folder for this process, and delete it on exit. Set FEMVOICE_SMOKE_REAL_DATA=1 to opt out deliberately.
+    private static string? _smokeSandbox;
+    private static void SandboxUserDataForSmokes()
+    {
+        if (Environment.GetEnvironmentVariable("FEMVOICE_SMOKE_REAL_DATA") == "1") return;
+        if (!(System.OperatingSystem.IsLinux() || System.OperatingSystem.IsMacOS())) return;   // XDG is a Unix mechanism
+        try
+        {
+            string root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+                $"femvoice-smoke-{Environment.ProcessId}-{System.Guid.NewGuid():N}");
+            foreach (var (variable, sub) in new[] { ("XDG_DATA_HOME", "data"), ("XDG_DOCUMENTS_DIR", "docs"), ("XDG_CONFIG_HOME", "config") })
+            {
+                string dir = System.IO.Path.Combine(root, sub);
+                System.IO.Directory.CreateDirectory(dir);
+                Environment.SetEnvironmentVariable(variable, dir);
+            }
+            _smokeSandbox = root;
+        }
+        catch { /* no sandbox is still a runnable smoke; the gate script prints what was touched */ }
+    }
+
     private static int ExitAfterSmoke(int code)
     {
+        if (_smokeSandbox is not null)
+        {
+            try { global::Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools(); System.IO.Directory.Delete(_smokeSandbox, true); } catch { }
+        }
         Console.Out.Flush();
         Console.Error.Flush();
         if (System.OperatingSystem.IsLinux())
@@ -1134,26 +1183,23 @@ internal static class Program
     private static async Task<int> CloudSyncSmoke()
     {
         int pid = System.Diagnostics.Process.GetCurrentProcess().Id;
-        string appDir = global::FemVoiceStudio.Data.DatabaseService.ResolveAppDataDir();
-        string phoneName = $"femvoice-cloud-phone-{pid}.db", pcName = $"femvoice-cloud-pc-{pid}.db";
-        string phonePath = System.IO.Path.Combine(appDir, phoneName), pcPath = System.IO.Path.Combine(appDir, pcName);
+        // Everything lives in a private temp folder. This smoke used to create its databases in the REAL app-data
+        // folder, so its push wrote "femvoice-backup-20260406-200000.db" (two fake "cloud-test" sessions) into the
+        // user's real Backups folder — where Settings pre-selected it for Merge/Restore — and its UI-guard step
+        // deleted and rewrote the user's real google_client.json.
+        string appDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "femvoice-cloud-" + System.Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(appDir);
+        string phonePath = System.IO.Path.Combine(appDir, "phone.db"), pcPath = System.IO.Path.Combine(appDir, "pc.db");
         void Cleanup()
         {
-            foreach (var f in new[] { phonePath, pcPath })
-                foreach (var sfx in new[] { "", "-wal", "-shm" }) { try { System.IO.File.Delete(f + sfx); } catch { } }
-            try
-            {
-                string backups = System.IO.Path.Combine(appDir, "Backups");
-                if (System.IO.Directory.Exists(backups))
-                    foreach (var f in System.IO.Directory.GetFiles(backups, $"*{pid}*")) { try { System.IO.File.Delete(f); } catch { } }
-            }
-            catch { }
+            global::FemVoice.Avalonia.Cloud.GoogleClientConfig.ConfigPathOverride = null;
+            try { global::Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools(); System.IO.Directory.Delete(appDir, true); } catch { }
         }
-        Cleanup();
         try
         {
-            var phoneDb = new global::FemVoiceStudio.Data.DatabaseService(phoneName);
-            var pcDb = new global::FemVoiceStudio.Data.DatabaseService(pcName);
+            global::FemVoice.Avalonia.Cloud.GoogleClientConfig.ConfigPathOverride = System.IO.Path.Combine(appDir, "google_client.json");
+            var phoneDb = new global::FemVoiceStudio.Data.DatabaseService(phonePath);   // absolute → temp
+            var pcDb = new global::FemVoiceStudio.Data.DatabaseService(pcPath);
             void Train(global::FemVoiceStudio.Data.DatabaseService db, DateTime whenUtc, double pitch)
             {
                 var s = new global::FemVoiceStudio.Models.TrainingSession
@@ -2429,6 +2475,83 @@ internal static class Program
         }
     }
 
+    // A running session must survive the user leaving it: navigating away from a recording dashboard, and closing the
+    // app mid-session (dashboard or exercise), both SAVE the session and release the microphone. Temp DB only.
+    private static async System.Threading.Tasks.Task<int> SessionLifecycleSmoke()
+    {
+        string dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "femvoice-lifecycle-" + System.Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(dir);
+        var prevFactory = global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory;
+        try
+        {
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
+            var db = new global::FemVoiceStudio.Data.DatabaseService(System.IO.Path.Combine(dir, "lifecycle.db"));
+            var svc = new global::FemVoiceStudio.Services.VoiceFeminizationExerciseService();
+            int Rows() => db.GetRecentSessions(1000).Count;
+            global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory =
+                () => new ScriptedRealCapture(new[] { (172.0, 100000) });
+
+            // (1) Dashboard recording → the user taps another page → recording stops, microphone released, session saved.
+            var cap1 = new ScriptedRealCapture(new[] { (190.0, 100000) });
+            var dash1 = new MainDashboardViewModel(cap1, new InlineUiDispatcher(), db,
+                new History.SessionHistoryStore(System.IO.Path.Combine(dir, "h1.json")));
+            var shell1 = new ShellViewModel(dash1, svc, new InlineUiDispatcher(), null, db);
+            await dash1.StartCommand.ExecuteAsync(null);
+            await System.Threading.Tasks.Task.Delay(2600);
+            int before = Rows();
+            shell1.ShowGuideCommand.Execute(null);                      // navigate away while recording
+            for (int i = 0; i < 100 && (dash1.IsRecording || Rows() == before); i++) await System.Threading.Tasks.Task.Delay(30);
+            bool navStops = !dash1.IsRecording && cap1.StopCalls >= 1 && Rows() == before + 1;
+            Console.WriteLine($"[lifecycle] leave dashboard while recording: recording={dash1.IsRecording} stopCalls={cap1.StopCalls} rows {before}->{Rows()} ok={navStops}");
+
+            // (2) App closes while the dashboard is recording → saved before the process goes away (synchronously).
+            var cap2 = new ScriptedRealCapture(new[] { (190.0, 100000) });
+            var dash2 = new MainDashboardViewModel(cap2, new InlineUiDispatcher(), db,
+                new History.SessionHistoryStore(System.IO.Path.Combine(dir, "h2.json")));
+            var shell2 = new ShellViewModel(dash2, svc, new InlineUiDispatcher(), null, db);
+            await dash2.StartCommand.ExecuteAsync(null);
+            await System.Threading.Tasks.Task.Delay(2600);
+            before = Rows();
+            shell2.StopActiveSession();                                  // what the window Closing hook calls
+            bool closeSavesDash = !dash2.IsRecording && Rows() == before + 1;   // already true when the call returns
+            shell2.StopActiveSession();                                  // idempotent
+            bool idempotent = Rows() == before + 1;
+            Console.WriteLine($"[lifecycle] close app while dashboard records: rows {before}->{Rows()} ok={closeSavesDash} idempotent={idempotent}");
+
+            // (3) App closes while an EXERCISE is running → saved.
+            var dash3 = new MainDashboardViewModel(new ScriptedRealCapture(new[] { (0.0, 10) }), new InlineUiDispatcher(), db,
+                new History.SessionHistoryStore(System.IO.Path.Combine(dir, "h3.json")));
+            var shell3 = new ShellViewModel(dash3, svc, new InlineUiDispatcher(), null, db);
+            var runtime = new ExerciseRuntimeViewModel(svc.GetAllEnhancedExercises().First(e => e.Id == 12), new InlineUiDispatcher(),
+                () => { }, history: null, useRealMic: true, database: db);
+            shell3.CurrentPage = runtime;
+            runtime.BeginCommand.Execute(null);
+            await System.Threading.Tasks.Task.Delay(2600);
+            before = Rows();
+            shell3.StopActiveSession();
+            bool closeSavesExercise = Rows() == before + 1;
+            Console.WriteLine($"[lifecycle] close app while exercise runs: rows {before}->{Rows()} ok={closeSavesExercise}");
+            runtime.Dispose();
+            bool noDoubleSave = Rows() == before + 1;                    // Stop already saved it; disposing must not save again
+
+            // (4) Nothing running → StopActiveSession is a harmless no-op.
+            before = Rows();
+            shell1.StopActiveSession();
+            bool noopWhenIdle = Rows() == before;
+
+            bool ok = navStops && closeSavesDash && idempotent && closeSavesExercise && noDoubleSave && noopWhenIdle;
+            Console.WriteLine($"[lifecycle] noDoubleSave={noDoubleSave} noopWhenIdle={noopWhenIdle}");
+            Console.WriteLine(ok ? "[lifecycle] Session lifecycle smoke OK" : "[lifecycle] Session lifecycle smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[lifecycle] FAIL: {ex}"); return 1; }
+        finally
+        {
+            global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory = prevFactory;
+            try { global::Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools(); System.IO.Directory.Delete(dir, true); } catch { }
+        }
+    }
+
     // The Settings data actions are REAL file operations on the SQLite DB. Verifies (in a temp dir, no user data):
     // backup copies the DB; restore replaces it (with a pre-restore safety copy); clear empties it; and the new
     // persisted prefs (mic device, hear-own-voice, focus, accessibility, consent) round-trip through the store.
@@ -2440,23 +2563,69 @@ internal static class Program
         var fixedNow = new DateTime(2026, 7, 19, 10, 30, 0);
         try
         {
-            System.IO.File.WriteAllText(dbPath, "ORIGINAL");   // stand-in DB file (real copy/replace semantics)
+            // A REAL SQLite database (these operations are database operations now, not byte copies).
+            int CountSessions(string path)
+            {
+                using var cn = new global::Microsoft.Data.Sqlite.SqliteConnection(new global::Microsoft.Data.Sqlite.SqliteConnectionStringBuilder
+                { DataSource = path, Mode = global::Microsoft.Data.Sqlite.SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
+                cn.Open();
+                using var cmd = cn.CreateCommand();
+                cmd.CommandText = "SELECT COUNT(*) FROM TrainingSessions";
+                return Convert.ToInt32(cmd.ExecuteScalar());
+            }
+            var db = new global::FemVoiceStudio.Data.DatabaseService(dbPath);   // absolute → temp
+            void Train(int dayOffset) => db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
+            {
+                UserId = 1, StartTime = new DateTime(2026, 7, 10 + dayOffset, 18, 0, 0, DateTimeKind.Utc),
+                EndTime = new DateTime(2026, 7, 10 + dayOffset, 18, 5, 0, DateTimeKind.Utc), AveragePitch = 180, OverallScore = 70,
+            });
+            Train(0);
             var data = new global::FemVoice.Avalonia.Data.SettingsDataService(null, dbPath);
 
-            // Backup: creates a real file; list reflects it.
+            // Backup: a real, readable database with the session in it; the list reflects it.
             var b = data.Backup(fixedNow);
-            bool backupOk = b.Ok && data.ListBackups().Count == 1;
+            bool backupOk = b.Ok && data.ListBackups().Count == 1 && CountSessions(data.ListBackups()[0].FilePath) == 1;
             string backupPath = data.ListBackups()[0].FilePath;
 
-            // Mutate the DB, then restore from the backup → original content is back; a pre-restore safety copy exists.
-            System.IO.File.WriteAllText(dbPath, "CHANGED");
-            var r = data.Restore(backupPath, fixedNow.AddMinutes(1));
-            bool restoreOk = r.Ok && System.IO.File.ReadAllText(dbPath) == "ORIGINAL"
-                && System.IO.Directory.GetFiles(data.BackupFolder, "femvoice-pre-restore-*.db").Length == 1;
+            // WAL: once the database is in write-ahead mode, the newest sessions live in the "-wal" sidecar until a
+            // checkpoint. A raw file copy silently lacked them; the backup must contain them.
+            bool walBackupOk;
+            using (var hold = new global::Microsoft.Data.Sqlite.SqliteConnection($"Data Source={dbPath}"))
+            {
+                hold.Open();
+                using (var pragma = hold.CreateCommand()) { pragma.CommandText = "PRAGMA journal_mode=WAL; PRAGMA wal_autocheckpoint=0;"; pragma.ExecuteNonQuery(); }
+                Train(1);                                                  // committed, but still only in the -wal file
+                bool inWalOnly = System.IO.File.Exists(dbPath + "-wal") && new System.IO.FileInfo(dbPath + "-wal").Length > 0;
+                var b2 = data.Backup(fixedNow.AddMinutes(1));
+                string walBackup = data.ListBackups().First(x => x.FilePath != backupPath).FilePath;
+                walBackupOk = inWalOnly && b2.Ok && CountSessions(walBackup) == 2;
 
-            // Clear (no concrete DB service → deletes the file).
+                // Restore the FIRST backup (1 session) over the live database (2 sessions, WAL sidecar present).
+                Train(2);                                                  // 3 sessions live now
+                var r = data.Restore(backupPath, fixedNow.AddMinutes(2));
+                var preRestore = data.ListBackups().FirstOrDefault(x => System.IO.Path.GetFileName(x.FilePath).Contains("pre-restore"));
+                bool preRestoreListed = preRestore is not null && CountSessions(preRestore.FilePath) == 3;   // the undo is IN the list
+                hold.Close();
+                global::Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+                bool restoredExactly = r.Ok && CountSessions(dbPath) == 1;   // exactly the backup — no stale -wal replayed over it
+                bool noStaging = !System.IO.File.Exists(dbPath + ".restoring");
+                Console.WriteLine($"[data-ops] walBackupOk={walBackupOk} (inWalOnly={inWalOnly}) preRestoreListed={preRestoreListed} restoredExactly={restoredExactly} noStaging={noStaging}");
+                walBackupOk = walBackupOk && preRestoreListed && restoredExactly && noStaging;
+            }
+
+            // Restore must REFUSE anything that is not a FemVoice database, and leave the live database untouched.
+            string junk = System.IO.Path.Combine(root, "femvoice-backup-junk.db");
+            System.IO.File.WriteAllText(junk, "not a database");
+            var refused = data.Restore(junk, fixedNow.AddMinutes(3));
+            var missing = data.Restore(System.IO.Path.Combine(root, "nope.db"), fixedNow.AddMinutes(3));
+            bool restoreOk = walBackupOk && !refused.Ok && !missing.Ok && CountSessions(dbPath) == 1;
+
+            // Clear (no concrete DB service → deletes the file). Deliberately takes NO automatic copy: someone who
+            // asks to erase their data must not have a hidden copy left behind.
+            int backupsBeforeClear = data.ListBackups().Count;
+            global::Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
             var c = data.Clear();
-            bool clearOk = c.Ok && !System.IO.File.Exists(dbPath);
+            bool clearOk = c.Ok && !System.IO.File.Exists(dbPath) && data.ListBackups().Count == backupsBeforeClear;
 
             // New persisted prefs round-trip.
             string prefsPath = System.IO.Path.Combine(root, "ui-preferences.json");

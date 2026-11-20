@@ -44,7 +44,10 @@ public sealed class GoogleClientConfig
                                 && !ClientId.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Where the credentials file is expected. Shown in the UI so the user knows where to put it.</summary>
-    public static string ConfigPath => Path.Combine(
+    /// <summary>Test hook: redirect the credentials file so a test never deletes or rewrites the user's real one.</summary>
+    public static string? ConfigPathOverride { get; set; }
+
+    public static string ConfigPath => ConfigPathOverride ?? Path.Combine(
         FemVoiceStudio.Data.DatabaseService.ResolveAppDataDir(), "google_client.json");
 
     /// <summary>Load the configured client, or an unconfigured instance. Never throws.</summary>
