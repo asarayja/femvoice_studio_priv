@@ -40,6 +40,7 @@ internal static class Program
         if (args.Contains("--dashboard-smoke")) return DashboardSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-smoke")) return ExerciseSmoke();
         if (args.Contains("--exercise-save-truthful-smoke")) return ExerciseSaveTruthfulSmoke().GetAwaiter().GetResult();
+        if (args.Contains("--session-truth-smoke")) return SessionTruthSmoke().GetAwaiter().GetResult();
         if (args.Contains("--settings-data-ops-smoke")) return SettingsDataOpsSmoke();
         if (args.Contains("--exercise-runtime-smoke")) return ExerciseRuntimeSmoke().GetAwaiter().GetResult();
         if (args.Contains("--exercise-runtime-integration-smoke")) return ExerciseRuntimeIntegrationSmoke().GetAwaiter().GetResult();
@@ -2015,6 +2016,170 @@ internal static class Program
             return ok ? 0 : 1;
         }
         catch (Exception ex) { Cleanup(); Console.WriteLine($"[ex-save] FAIL: {ex.Message}"); return 1; }
+    }
+
+    // ── Session truth ────────────────────────────────────────────────────────────────────────────────────────────
+    // A scripted "real" capture backend: plays a list of (Hz, frames) segments at a fixed pace (0 Hz = silence) and
+    // can lose the device on demand. Lets the smokes prove what a session SAVES without a microphone.
+    private sealed class ScriptedRealCapture : global::FemVoiceStudio.Audio.Abstractions.IRealAudioCaptureBackend
+    {
+        public event EventHandler<global::FemVoiceStudio.Audio.Abstractions.AudioFrameAvailableEventArgs>? FrameAvailable;
+        public event EventHandler<global::FemVoiceStudio.Audio.Abstractions.AudioDeviceLostEventArgs>? DeviceLost;
+        private readonly (double Hz, int Frames)[] _script;
+        private readonly int _paceMs;
+        private readonly int _loseDeviceAfterFrames;   // < 0 = never
+        private System.Threading.CancellationTokenSource? _cts;
+        private System.Threading.Tasks.Task? _loop;
+        public int StopCalls;
+        public System.Threading.Tasks.TaskCompletionSource ScriptDone { get; } = new();
+        public ScriptedRealCapture((double Hz, int Frames)[] script, int paceMs = 12, int loseDeviceAfterFrames = -1)
+        { _script = script; _paceMs = paceMs; _loseDeviceAfterFrames = loseDeviceAfterFrames; }
+        public bool IsBackendAvailable => true;
+        public IReadOnlyList<global::FemVoiceStudio.Audio.Abstractions.AudioInputDevice> GetInputDevices()
+            => new[] { new global::FemVoiceStudio.Audio.Abstractions.AudioInputDevice("scripted", "Scripted", true) };
+        public System.Threading.Tasks.Task StartAsync(global::FemVoiceStudio.Audio.Abstractions.AudioCaptureOptions options,
+            System.Threading.CancellationToken cancellationToken = default)
+        {
+            _cts = new System.Threading.CancellationTokenSource();
+            var token = _cts.Token;
+            _loop = System.Threading.Tasks.Task.Run(async () =>
+            {
+                const int n = 1024, sr = 44100; double phase = 0; int sent = 0;
+                foreach (var (hz, frames) in _script)
+                    for (int f = 0; f < frames && !token.IsCancellationRequested; f++)
+                    {
+                        var buf = new float[n];
+                        if (hz > 0) for (int i = 0; i < n; i++) { buf[i] = (float)(0.2 * Math.Sin(phase)); phase += 2 * Math.PI * hz / sr; }
+                        FrameAvailable?.Invoke(this, new global::FemVoiceStudio.Audio.Abstractions.AudioFrameAvailableEventArgs(buf, sr, 1));
+                        if (++sent == _loseDeviceAfterFrames)
+                        {
+                            DeviceLost?.Invoke(this, new global::FemVoiceStudio.Audio.Abstractions.AudioDeviceLostEventArgs("scripted device lost"));
+                            ScriptDone.TrySetResult();
+                            return;
+                        }
+                        try { await System.Threading.Tasks.Task.Delay(_paceMs, token).ConfigureAwait(false); } catch { }
+                    }
+                ScriptDone.TrySetResult();
+            });
+            return System.Threading.Tasks.Task.CompletedTask;
+        }
+        public async System.Threading.Tasks.Task StopAsync()
+        {
+            System.Threading.Interlocked.Increment(ref StopCalls);
+            _cts?.Cancel();
+            if (_loop is not null) { try { await _loop.ConfigureAwait(false); } catch { } }
+        }
+    }
+
+    // Proves a session saves what was really measured over the WHOLE session — and saves nothing when nothing was
+    // measured. Regression guard for: (1) dashboard statistics computed from the on-screen trace (last ~5 s only);
+    // (2) silent/blocked-microphone runs saved as 0-score sessions that counted toward progression; (3) a lost
+    // microphone leaving the capture open and the session unsaved (dashboard) or going unnoticed (exercise);
+    // (4) a running exercise being thrown away when the user navigates elsewhere. Temp DB only.
+    private static async System.Threading.Tasks.Task<int> SessionTruthSmoke()
+    {
+        string dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "femvoice-truth-" + System.Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(dir);
+        void Cleanup() { try { global::Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools(); System.IO.Directory.Delete(dir, true); } catch { } }
+        var prevFactory = global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory;
+        try
+        {
+            global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
+            var db = new global::FemVoiceStudio.Data.DatabaseService(System.IO.Path.Combine(dir, "truth.db"));   // absolute → temp
+            int Rows() => db.GetRecentSessions(1000).Count;
+            History.SessionHistoryStore Hist() => new(System.IO.Path.Combine(dir, "hist.json"));
+
+            // (D1) Dashboard: 150 frames below the comfort zone, then 220 frames inside it. The saved numbers must
+            // describe BOTH parts. (Before the fix: avg 200 Hz, min 200, score 100 — the last 200 trace points.)
+            var capA = new ScriptedRealCapture(new[] { (150.0, 150), (200.0, 220) });
+            var dashA = new MainDashboardViewModel(capA, new InlineUiDispatcher(), db, Hist());
+            await dashA.StartCommand.ExecuteAsync(null);
+            await capA.ScriptDone.Task;
+            await dashA.StopCommand.ExecuteAsync(null);
+            var sA = db.GetRecentSessions(1).Single();
+            bool wholeSession = sA.AveragePitch > 170 && sA.AveragePitch < 190 && sA.MinPitch < 160
+                                && sA.OverallScore > 40 && sA.OverallScore < 75;
+            Console.WriteLine($"[truth] D1 whole-session: avg={sA.AveragePitch:F1} min={sA.MinPitch:F1} max={sA.MaxPitch:F1} score={sA.OverallScore:F0} ok={wholeSession}");
+            dashA.Dispose();
+
+            // (D2) Dashboard: nothing but silence for >2 s → NO session row, and the user is told so.
+            int before = Rows();
+            var capB = new ScriptedRealCapture(new[] { (0.0, 400) });
+            var dashB = new MainDashboardViewModel(capB, new InlineUiDispatcher(), db, Hist());
+            await dashB.StartCommand.ExecuteAsync(null);
+            await System.Threading.Tasks.Task.Delay(2600);
+            await dashB.StopCommand.ExecuteAsync(null);
+            bool silentNotSaved = Rows() == before && dashB.CurrentFeedbackMessage.Contains("ikke lagret");
+            Console.WriteLine($"[truth] D2 silent: rows {before}->{Rows()} msg='{dashB.CurrentFeedbackMessage}' ok={silentNotSaved}");
+            dashB.Dispose();
+
+            // (D3) Dashboard: the microphone is lost mid-session → the capture is REALLY stopped, recording ends, and
+            // what was measured up to then is saved.
+            before = Rows();
+            var capC = new ScriptedRealCapture(new[] { (190.0, 100000) }, paceMs: 12, loseDeviceAfterFrames: 190);
+            var dashC = new MainDashboardViewModel(capC, new InlineUiDispatcher(), db, Hist());
+            await dashC.StartCommand.ExecuteAsync(null);
+            await capC.ScriptDone.Task;
+            for (int i = 0; i < 100 && (dashC.IsRecording || Rows() == before); i++) await System.Threading.Tasks.Task.Delay(30);
+            bool lostHandled = !dashC.IsRecording && capC.StopCalls >= 1 && Rows() == before + 1
+                               && dashC.CurrentSignalStatus.Contains("utilgjengelig");
+            Console.WriteLine($"[truth] D3 device-lost: recording={dashC.IsRecording} stopCalls={capC.StopCalls} rows {before}->{Rows()} status='{dashC.CurrentSignalStatus}' ok={lostHandled}");
+            dashC.Dispose();
+
+            var exercise = new global::FemVoiceStudio.Services.VoiceFeminizationExerciseService().GetAllEnhancedExercises().First(e => e.Id == 12);
+
+            // (E1) Exercise on a "real" microphone that only delivers silence → nothing saved, and the summary says so.
+            before = Rows();
+            global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory =
+                () => new ScriptedRealCapture(new[] { (0.0, 100000) });
+            var exSilent = new ExerciseRuntimeViewModel(exercise, new InlineUiDispatcher(), () => { }, history: null, useRealMic: true, database: db);
+            exSilent.BeginCommand.Execute(null);
+            await System.Threading.Tasks.Task.Delay(2600);
+            await exSilent.StopCommand.ExecuteAsync(null);
+            bool exSilentOk = exSilent.SavesRealSession && Rows() == before && exSilent.SessionEndedSummary.Contains("ikke lagret");
+            Console.WriteLine($"[truth] E1 exercise silent: rows {before}->{Rows()} summary='{exSilent.SessionEndedSummary}' ok={exSilentOk}");
+            exSilent.Dispose();
+
+            // (E2) Exercise: microphone lost mid-run → the run stops, the reason is shown, the measured part is saved.
+            before = Rows();
+            global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory =
+                () => new ScriptedRealCapture(new[] { (172.0, 100000) }, paceMs: 12, loseDeviceAfterFrames: 190);
+            var exLost = new ExerciseRuntimeViewModel(exercise, new InlineUiDispatcher(), () => { }, history: null, useRealMic: true, database: db);
+            exLost.BeginCommand.Execute(null);
+            for (int i = 0; i < 200 && (exLost.IsRunning || Rows() == before); i++) await System.Threading.Tasks.Task.Delay(30);
+            bool exLostOk = !exLost.IsRunning && Rows() == before + 1 && exLost.RuntimeStatusMessage.Contains("scripted device lost");
+            Console.WriteLine($"[truth] E2 exercise device-lost: running={exLost.IsRunning} rows {before}->{Rows()} status='{exLost.RuntimeStatusMessage}' ok={exLostOk}");
+            exLost.Dispose();
+
+            // (E3) Exercise: the user navigates away while it is running (the shell disposes the page) → the run is
+            // saved, exactly once — also when Stop already ran.
+            before = Rows();
+            global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory =
+                () => new ScriptedRealCapture(new[] { (172.0, 100000) });
+            var exNav = new ExerciseRuntimeViewModel(exercise, new InlineUiDispatcher(), () => { }, history: null, useRealMic: true, database: db);
+            exNav.BeginCommand.Execute(null);
+            await System.Threading.Tasks.Task.Delay(2600);
+            exNav.Dispose();                       // navigate-away, no Stop
+            int afterNav = Rows();
+            var exStopThenNav = new ExerciseRuntimeViewModel(exercise, new InlineUiDispatcher(), () => { }, history: null, useRealMic: true, database: db);
+            exStopThenNav.BeginCommand.Execute(null);
+            await System.Threading.Tasks.Task.Delay(2600);
+            await exStopThenNav.StopCommand.ExecuteAsync(null);
+            exStopThenNav.Dispose();               // Stop, then leave → still one row
+            bool navSaved = afterNav == before + 1 && Rows() == before + 2;
+            var sNav = db.GetRecentSessions(1).Single();
+            Console.WriteLine($"[truth] E3 navigate-away: rows {before}->{afterNav}->{Rows()} lastAvg={sNav.AveragePitch:F1} ok={navSaved}");
+
+            bool ok = wholeSession && silentNotSaved && lostHandled && exSilentOk && exLostOk && navSaved;
+            Console.WriteLine(ok ? "[truth] Session truth smoke OK" : "[truth] Session truth smoke FAIL");
+            return ok ? 0 : 1;
+        }
+        catch (Exception ex) { Console.WriteLine($"[truth] FAIL: {ex}"); return 1; }
+        finally
+        {
+            global::FemVoiceStudio.Audio.Abstractions.AudioCaptureBackendFactory.PlatformRealBackendFactory = prevFactory;
+            Cleanup();
+        }
     }
 
     // The Settings data actions are REAL file operations on the SQLite DB. Verifies (in a temp dir, no user data):

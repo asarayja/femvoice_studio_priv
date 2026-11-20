@@ -91,6 +91,12 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     private readonly List<double> _sessionPitch = new();
     private readonly List<double> _sessionResonance = new();
     private readonly List<double> _sessionHealth = new();   // real per-frame voice-health 0–100 → session average
+    private readonly object _sessionLock = new();           // capture thread appends; Stop/Dispose snapshot
+    private int _stopping;                                  // 0/1 — the finished run is saved exactly once
+    private string? _deviceLostReason;                      // set when the microphone was lost mid-run
+
+    /// <summary>What happened to the finished run (drives the truthful session-ended text).</summary>
+    private enum SaveOutcome { SavedReal, NoVoice, LocalOnly }
 
     /// <summary>True when this run will be saved as a real session: a real microphone drives it AND a DB is present.</summary>
     public bool SavesRealSession => !IsSyntheticSource && _database is not null;
@@ -201,6 +207,9 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
             IsSyntheticSource = true;
         }
         _capture.FrameAvailable += OnFrameAvailable;
+        // A lost/blocked microphone must be SHOWN: without this the exercise kept saying "Aktiv" over a dead meter
+        // and then saved a 0-score "real" session.
+        _capture.DeviceLost += OnDeviceLost;
 
         // Explicit lifecycle: start Inactive (no auto-start). The user presses Start (BeginCommand) to run
         // the synthetic session; the FrameAvailable handler is subscribed once here and only fires while the
@@ -411,9 +420,14 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         _resonanceBaseline = FemVoice.Avalonia.Preferences.CapturePreferences.ResonanceBaselineCentroidHz();
         _stabilizer.Reset();
         _metrics.Reset();
-        _sessionPitch.Clear();
-        _sessionResonance.Clear();
-        _sessionHealth.Clear();
+        lock (_sessionLock)
+        {
+            _sessionPitch.Clear();
+            _sessionResonance.Clear();
+            _sessionHealth.Clear();
+        }
+        _deviceLostReason = null;
+        System.Threading.Volatile.Write(ref _stopping, 0);
         HealthStatusDisplay = "—";
         HasHealthWarning = false;
         _holdRaw = 0;
@@ -462,20 +476,26 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
     private async System.Threading.Tasks.Task Stop()
     {
         if (!IsRunning) return;
-        await _capture.StopAsync().ConfigureAwait(false);
+        if (System.Threading.Interlocked.Exchange(ref _stopping, 1) == 1) return;   // Stop/Back/DeviceLost raced
+        try { await _capture.StopAsync().ConfigureAwait(false); } catch { /* a dead device must not block the stop */ }
         _voiceMonitor.Stop();
         // Clear the VM-local coordinator's in-memory state (safe no-op when inactive; persists nothing).
         if (_coordinatorEnabled) _coordinator.StopExercise();
         // Persist the finished exercise (off the UI thread) BEFORE clearing live values. A real microphone run with a
         // DB saves a real TrainingSession that counts toward progression; otherwise a local history record is kept.
-        bool saved = SaveFinishedSession();
+        SaveOutcome outcome = SaveFinishedSession();
+        string? lost = _deviceLostReason;
 
         _ui.Post(() =>
         {
             // Build the truthful session-ended summary from the last live values BEFORE clearing them.
-            string tail = saved
-                ? Localized.Get("ExRunVm_Tail_Saved", "Lagret — teller mot progresjonen din.")
-                : IsSyntheticSource ? Localized.Get("ExRunVm_Tail_Synth", "Syntetisk testlyd — ikke lagret.") : Localized.Get("ExRunVm_Tail_Local", "Lagret lokalt.");
+            string tail = outcome switch
+            {
+                SaveOutcome.SavedReal => Localized.Get("ExRunVm_Tail_Saved", "Lagret — teller mot progresjonen din."),
+                SaveOutcome.NoVoice => Localized.Get("Session_NotSavedNoVoice", "Ingen stemme ble registrert, så økten ble ikke lagret."),
+                _ => IsSyntheticSource ? Localized.Get("ExRunVm_Tail_Synth", "Syntetisk testlyd — ikke lagret.") : Localized.Get("ExRunVm_Tail_Local", "Lagret lokalt."),
+            };
+            if (lost is not null) tail = lost + " " + tail;
             SessionEndedSummary = string.Format(
                 Localized.Get("ExRunVm_SessionEnded", "Økt fullført · varighet {0} · beste hold {1} %. {2}"),
                 ElapsedText, _peakHoldPercent.ToString("F0"), tail);
@@ -484,14 +504,26 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
             Phase = RuntimePhase.Stopped;
             HasHealthWarning = false;
             HealthStatusDisplay = "—";
-            PitchStatus = Localized.Get("ExRunVm_Phase_Stopped", "Stoppet");
-            RuntimeStatusMessage = Localized.Get("ExRunVm_ExerciseStopped", "Øvelse stoppet.");
+            PitchStatus = lost is null
+                ? Localized.Get("ExRunVm_Phase_Stopped", "Stoppet")
+                : Localized.Get("Signal_MicUnavailable", "Mikrofon utilgjengelig");
+            RuntimeStatusMessage = lost ?? Localized.Get("ExRunVm_ExerciseStopped", "Øvelse stoppet.");
             CoordinatorReadout = ExerciseCoordinatorReadoutDisplay.Inactive();
             RuntimePitchSamples.Clear();
             RuntimeChart = EmptyFocusChart();
-            LiveFeedbackMessage = Localized.Get("ExRunVm_ExerciseStopped", "Øvelse stoppet.");
+            LiveFeedbackMessage = lost ?? Localized.Get("ExRunVm_ExerciseStopped", "Øvelse stoppet.");
             LiveFeedbackSeverity = "Stoppet";
         });
+    }
+
+    // The microphone was lost/blocked mid-run (unplugged, permission denied, driver failure). Stop through the normal
+    // path so the user SEES it and the run is closed properly. Hopped off the calling thread: DeviceLost is raised
+    // from the capture thread and StopAsync may join that very thread.
+    private void OnDeviceLost(object? sender, AudioDeviceLostEventArgs e)
+    {
+        if (!IsRunning) return;
+        _deviceLostReason = e.Reason ?? Localized.Get("Audio_DeviceLost", "Lydenhet mistet.");
+        _ = System.Threading.Tasks.Task.Run(() => Stop());
     }
 
     [RelayCommand]
@@ -518,16 +550,16 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
         // detection kept falling back to fixed values and froze the score. The meter responds to the actual voice and
         // is loudness-independent, so a resonance-focused exercise's target band is reachable by brightening the voice.
         int resonancePct = result.IsVoiced ? FemVoiceStudio.Audio.VoiceBrightnessMeter.BrightnessPercent(e.Samples, SampleRate, _resonanceBaseline) : 0;
-        if (result.IsVoiced && IsRunning) _sessionResonance.Add(resonancePct);   // real per-session resonance → saved average
+        if (result.IsVoiced && IsRunning) lock (_sessionLock) _sessionResonance.Add(resonancePct);   // real per-session resonance → saved average
         double smoothed = _metrics.CalculateSmoothedPitch(result.Pitch, result.IsVoiced);
         double pitch = result.IsVoiced ? _stabilizer.Filter(smoothed, now) : 0;
 
-        if (result.IsVoiced && pitch > 0) _sessionPitch.Add(pitch);   // real per-session sample → saved session stats
+        if (result.IsVoiced && pitch > 0) lock (_sessionLock) _sessionPitch.Add(pitch);   // real per-session sample → saved session stats
 
         // Real voice-HEALTH monitoring (same LiveMetricsService engine as the dashboard). Detects strain during the
         // exercise so we can warn the user to take a break — safety-first, exactly like the dashboard.
         HealthState health = result.IsVoiced ? _metrics.CalculateHealth(0, smoothed, result.Intensity) : HealthState.NoVoice;
-        if (result.IsVoiced) _sessionHealth.Add(HealthTo100(health));
+        if (result.IsVoiced) lock (_sessionLock) _sessionHealth.Add(HealthTo100(health));
         bool healthWarning = health is HealthState.Warning or HealthState.Danger;
 
         // FOCUS-AWARE: a resonance exercise is judged on live brightness vs the resonance target band; a pitch
@@ -637,22 +669,28 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
 
     /// <summary>Persist the finished exercise. A real-microphone run with a DB saves a real TrainingSession (so it
     /// counts toward progression, streak and recent sessions — exactly like a dashboard session); otherwise it keeps a
-    /// local history record. Returns true only when a real DB session was saved. Never throws to the app.</summary>
-    private bool SaveFinishedSession()
+    /// local history record. A run in which NO voice was measured (blocked/dead microphone, or nothing was said) is
+    /// not saved as a real session at all — it used to be written as a 0 Hz / score-0 session that counted toward
+    /// progression. Never throws to the app.</summary>
+    private SaveOutcome SaveFinishedSession()
     {
         int elapsed = ElapsedSeconds;
-        if (elapsed < 2) return false;   // skip trivial runs (matches the dashboard threshold)
+        if (elapsed < 2) return SaveOutcome.LocalOnly;   // skip trivial runs (matches the dashboard threshold)
 
         if (SavesRealSession)
         {
             try
             {
-                var voiced = _sessionPitch.Where(p => p > 0).ToList();
-                double avg = voiced.Count > 0 ? voiced.Average() : 0;
-                double inZone = voiced.Count > 0
-                    ? 100.0 * voiced.Count(p => p >= TargetPitchMin && p <= TargetPitchMax) / voiced.Count : 0;
-                double avgResonance = _sessionResonance.Count > 0 ? _sessionResonance.Average() : 0;
-                double avgHealth = _sessionHealth.Count > 0 ? _sessionHealth.Average() : 0;
+                List<double> voiced; double avgResonance, avgHealth;
+                lock (_sessionLock)
+                {
+                    voiced = _sessionPitch.Where(p => p > 0).ToList();
+                    avgResonance = _sessionResonance.Count > 0 ? _sessionResonance.Average() : 0;
+                    avgHealth = _sessionHealth.Count > 0 ? _sessionHealth.Average() : 0;
+                }
+                if (voiced.Count == 0) return SaveOutcome.NoVoice;   // nothing measured → nothing to save
+                double avg = voiced.Average();
+                double inZone = 100.0 * voiced.Count(p => p >= TargetPitchMin && p <= TargetPitchMax) / voiced.Count;
                 double pitchVariation = 0;
                 if (voiced.Count > 1)
                 {
@@ -691,9 +729,9 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
                     try { new FemVoiceStudio.Services.ProgressionService(_database, LocalizationService.Instance).EvaluateProgressionWithSafety(session); }
                     catch { /* progression is display-level; never affects the saved session */ }
                 }
-                return savedId > 0;
+                return savedId > 0 ? SaveOutcome.SavedReal : SaveOutcome.LocalOnly;
             }
-            catch { return false; }   // never surface a session-save error to the app
+            catch { return SaveOutcome.LocalOnly; }   // never surface a session-save error to the app
         }
 
         // Fallback: local display history (no DB, or a synthetic test-tone run — not real training data).
@@ -708,13 +746,21 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
             });
         }
         catch { /* best effort */ }
-        return false;
+        return SaveOutcome.LocalOnly;
     }
 
     public void Dispose()
     {
+        bool wasRunning = IsRunning;
         IsRunning = false;                       // mark stopped (also when navigated away via top nav)
         _capture.FrameAvailable -= OnFrameAvailable;
+        _capture.DeviceLost -= OnDeviceLost;
+        // Leaving a RUNNING exercise through the navigation rail used to throw the whole run away without a word.
+        // Save it exactly as Stop would (the guard makes Stop→Back→Dispose save only once).
+        if (wasRunning && System.Threading.Interlocked.Exchange(ref _stopping, 1) == 0)
+        {
+            try { SaveFinishedSession(); } catch { /* never block navigation */ }
+        }
         _voiceMonitor.Dispose();
         _ = _capture.StopAsync();                // stops the capture loop (synthetic or real) — no more frames
         (_capture as IDisposable)?.Dispose();    // release a real capture backend (e.g. ALSA) if used

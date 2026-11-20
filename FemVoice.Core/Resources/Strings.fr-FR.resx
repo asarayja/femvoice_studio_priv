@@ -6161,4 +6161,7 @@ This cannot be undone!</value>
   <data name="ExRun_ResHint" xml:space="preserve">
     <value>Say a steady tone — the brightness appears here.</value>
   </data>
+  <data name="Session_NotSavedNoVoice" xml:space="preserve">
+    <value>No voice was detected, so the session was not saved.</value>
+  </data>
 </root>

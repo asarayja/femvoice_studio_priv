@@ -38,6 +38,12 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     // Per-frame health/stability states mapped to 0–100, accumulated during a recording → per-dimension VI scores.
     private readonly List<double> _sessionHealth = new();
     private readonly List<double> _sessionStability = new();
+    // EVERY voiced, stabilized pitch sample of the running session (Hz) → the saved session statistics. Deliberately
+    // separate from PitchSamples: that collection is the on-screen trace and is trimmed to the last MaxTracePoints
+    // (~5 s of audio), so computing the saved average/min/max/score from it described only the END of the session.
+    private readonly List<double> _sessionPitch = new();
+    private readonly object _sessionLock = new();   // capture thread appends; Stop snapshots
+    private int _stopping;                          // 0/1 — Stop and DeviceLost must not run the stop path twice
     private const int SampleRate = 44100;
     private const int MaxTracePoints = 200;
     private const double ChartHeightPx = 200;   // fixed chart surface height; px == "distance from bottom"
@@ -485,9 +491,13 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         _resonanceBaseline = FemVoice.Avalonia.Preferences.CapturePreferences.ResonanceBaselineCentroidHz();
         _stabilizer.Reset();
         _metrics.Reset();
-        _sessionResonance.Clear();
-        _sessionHealth.Clear();
-        _sessionStability.Clear();
+        lock (_sessionLock)
+        {
+            _sessionResonance.Clear();
+            _sessionHealth.Clear();
+            _sessionStability.Clear();
+            _sessionPitch.Clear();
+        }
         PitchSamples.Clear();
         PitchTracePx.Clear();
         DashboardChart = RuntimeChartDisplay.Empty(ChartHeightPx, _chartMin, _chartMax, ComfortZoneLow, ComfortZoneHigh);
@@ -503,31 +513,64 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private async Task Stop()
+    private Task Stop() => StopCore(deviceLostReason: null);
+
+    /// <summary>The one stop path, shared by the Stop button and a lost capture device. Really releases the capture
+    /// and the voice monitor (a lost device used to only flip <see cref="IsRecording"/>, leaving both open and the
+    /// session unsaved), then saves what was actually measured.</summary>
+    private async Task StopCore(string? deviceLostReason)
     {
         if (!IsRecording) return;
-        await _capture.StopAsync().ConfigureAwait(false);
+        if (System.Threading.Interlocked.Exchange(ref _stopping, 1) == 1) return;   // already stopping
+        try
+        {
+            await StopAndSave(deviceLostReason).ConfigureAwait(false);
+        }
+        finally { System.Threading.Volatile.Write(ref _stopping, 0); }
+    }
+
+    private async Task StopAndSave(string? deviceLostReason)
+    {
+        try { await _capture.StopAsync().ConfigureAwait(false); } catch { /* a dead device must not block the stop */ }
         _voiceMonitor.Stop();
         IsRecording = false;
-        CurrentSignalStatus = Localized.Get("Signal_NoVoice", "Ingen stemme");
-        CurrentFeedbackMessage = Localized.Get("Dash_SessionStopped", "Økt stoppet.");
+        CurrentSignalStatus = deviceLostReason is null
+            ? Localized.Get("Signal_NoVoice", "Ingen stemme")
+            : Localized.Get("Signal_MicUnavailable", "Mikrofon utilgjengelig");
+        CurrentFeedbackMessage = deviceLostReason ?? Localized.Get("Dash_SessionStopped", "Økt stoppet.");
         ResonanceDisplay = "—";
         UpdatePerception(false, 0, 0);   // clear the perceived-voice mirror when the session ends
+
+        // Snapshot the WHOLE session's samples (the capture is stopped; the lock covers a straggling frame).
+        List<double> voiced, sessionResonance;
+        lock (_sessionLock)
+        {
+            voiced = _sessionPitch.Where(p => p > 0).ToList();
+            sessionResonance = _sessionResonance.ToList();
+        }
 
         // Record the session. Skip trivial (<2 s) sessions.
         int durationSeconds = (int)System.Math.Round((System.DateTime.Now - _sessionStart).TotalSeconds);
         if (durationSeconds < 2) { RefreshStartHere(); RefreshReminder(); }   // nothing saved → just re-show the cards
         if (durationSeconds >= 2)
         {
-            if (_database is not null)
+            if (_database is not null && voiced.Count == 0)
+            {
+                // Nothing was measured (muted/blocked microphone, or the user never spoke). Saving this would write a
+                // 0 Hz / score-0 "training session" that counts toward progression and drags every average down, so
+                // it is not saved — and the user is told so instead of a silent "Økt stoppet.".
+                if (deviceLostReason is null)
+                    CurrentFeedbackMessage = Localized.Get("Session_NotSavedNoVoice",
+                        "Ingen stemme ble registrert, så økten ble ikke lagret.");
+            }
+            else if (_database is not null)
             {
                 try
                 {
-                    var voiced = PitchSamples.Where(p => p > 0).ToList();
                     double avg = voiced.Count > 0 ? voiced.Average() : 0;
                     double inZone = voiced.Count > 0
                         ? 100.0 * voiced.Count(p => p >= ComfortZoneLow && p <= ComfortZoneHigh) / voiced.Count : 0;
-                    double avgResonance = _sessionResonance.Count > 0 ? _sessionResonance.Average() : 0;
+                    double avgResonance = sessionResonance.Count > 0 ? sessionResonance.Average() : 0;
                     // Real pitch variation (prosody): population std-dev of the voiced pitch samples (Hz). A genuine
                     // measurement of the real pitch — persisted via the INSERT (PitchVariation column). No fabrication.
                     double pitchVariation = 0;
@@ -595,7 +638,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         // ResonanceProxyEngine score, which stuck low ("always Mørk") on real mics because its formant peak detection
         // fell back to fixed values and froze the score. The meter responds to the actual voice and is loudness-independent.
         int resonancePct = result.IsVoiced ? FemVoiceStudio.Audio.VoiceBrightnessMeter.BrightnessPercent(e.Samples, SampleRate, _resonanceBaseline) : 0;
-        if (IsRecording && result.IsVoiced) _sessionResonance.Add(resonancePct);
+        if (IsRecording && result.IsVoiced) lock (_sessionLock) _sessionResonance.Add(resonancePct);
         // TWO different questions, so two different scales:
         //  • resonancePct  — CALIBRATED, i.e. "how much brighter than YOUR relaxed voice". That is the right scale for
         //    the training meter and for the saved session score (progress against yourself).
@@ -618,8 +661,12 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         // scores written on Stop. No UI-thread dependency; plain numeric aggregation.
         if (IsRecording && result.IsVoiced && stabilized > 0)
         {
-            _sessionHealth.Add(HealthTo100(health));
-            _sessionStability.Add(StabilityTo100(stability));
+            lock (_sessionLock)
+            {
+                _sessionHealth.Add(HealthTo100(health));
+                _sessionStability.Add(StabilityTo100(stability));
+                _sessionPitch.Add(stabilized);   // whole-session sample (NOT the trimmed on-screen trace)
+            }
         }
 
         _ui.Post(() =>
@@ -662,13 +709,20 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         });
     }
 
+    // A lost device runs the SAME stop path as the Stop button: the capture + voice monitor are really released (on
+    // macOS the queue otherwise kept the microphone open and Start could never work again) and whatever was measured
+    // up to that point is saved rather than thrown away. Hopped off the calling thread because DeviceLost is raised
+    // from the capture thread and StopAsync may join that very thread.
     private void OnDeviceLost(object? sender, AudioDeviceLostEventArgs e)
-        => _ui.Post(() =>
+    {
+        string reason = e.Reason ?? Localized.Get("Audio_DeviceLost", "Lydenhet mistet.");
+        if (!IsRecording)
         {
-            IsRecording = false;
-            CurrentSignalStatus = Localized.Get("Signal_MicUnavailable", "Mikrofon utilgjengelig");
-            CurrentFeedbackMessage = e.Reason ?? Localized.Get("Audio_DeviceLost", "Lydenhet mistet.");
-        });
+            _ui.Post(() => CurrentSignalStatus = Localized.Get("Signal_MicUnavailable", "Mikrofon utilgjengelig"));
+            return;
+        }
+        _ = Task.Run(() => StopCore(reason));
+    }
 
     private void UpdateComfortZone()
     {
@@ -751,8 +805,12 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
             var analytics = new FemVoiceStudio.Services.SessionAnalyticsStore(
                 new FemVoiceStudio.Services.SqliteSessionAnalyticsRepository(concrete.ConnectionString));
 
-            double avgHealth = _sessionHealth.Count > 0 ? _sessionHealth.Average() : 0;
-            double avgStability = _sessionStability.Count > 0 ? _sessionStability.Average() : 0;
+            double avgHealth, avgStability;
+            lock (_sessionLock)
+            {
+                avgHealth = _sessionHealth.Count > 0 ? _sessionHealth.Average() : 0;
+                avgStability = _sessionStability.Count > 0 ? _sessionStability.Average() : 0;
+            }
 
             // Recovery from the real cross-session history (100 − debt). Empty history → rested; guarded.
             double recovery100 = 100;

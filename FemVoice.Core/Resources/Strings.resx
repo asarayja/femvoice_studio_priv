@@ -6162,4 +6162,7 @@ Dette kan ikke angres!</value>
   <data name="ExRun_ResHint" xml:space="preserve">
     <value>Si en jevn tone — lysheten vises her.</value>
   </data>
+  <data name="Session_NotSavedNoVoice" xml:space="preserve">
+    <value>Ingen stemme ble registrert, så økten ble ikke lagret.</value>
+  </data>
 </root>
