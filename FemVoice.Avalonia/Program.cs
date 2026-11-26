@@ -1506,13 +1506,6 @@ internal static class Program
                 foreach (var culture in new[] { "nb-NO", "en-US", "de-DE", "fr-FR", "es-ES", "it-IT", "sv-SE" })
                 {
                     global::FemVoice.Avalonia.Localization.LanguageActivation.Apply(culture);
-                    var day = new DayDetailsViewModel(db, today);
-                    var uiCulture = global::System.Globalization.CultureInfo.GetCultureInfo(culture);
-                    if (day.DateDisplay != today.ToString("D", uiCulture) ||
-                        day.Sessions.FirstOrDefault()?.Time != today.AddHours(9).ToString("t", uiCulture))
-                        localizedSessionsOk = false;
-                    if (culture == "en-US" && day.Sessions.Any(row => row.Difficulty != "Beginner"))
-                        localizedSessionsOk = false;
                     var headers = new CalendarViewModel(db, _ => { }).WeekdayHeaders;
                     string joined = string.Join(",", headers);
                     seenHeaders.Add($"{culture}=[{joined}]");
@@ -1522,6 +1515,14 @@ internal static class Program
                         weekdaysOk = false;
                     if (culture is "nb-NO" && joined != "Man,Tir,Ons,Tor,Fre,Lør,Søn") weekdaysOk = false;
                     if (culture is "de-DE" && joined != "Mo,Di,Mi,Do,Fr,Sa,So") weekdaysOk = false;
+
+                    var details = new DayDetailsViewModel(db, today);
+                    var uiCulture = global::System.Globalization.CultureInfo.GetCultureInfo(culture);
+                    if (details.DateDisplay != today.ToString("D", uiCulture) ||
+                        details.Sessions.FirstOrDefault()?.Time != today.AddHours(9).ToString("t", uiCulture))
+                        localizedSessionsOk = false;
+                    if (culture == "en-US" && details.Sessions.Any(row => row.Difficulty != "Beginner"))
+                        localizedSessionsOk = false;
                 }
             }
             finally { global::FemVoice.Avalonia.Localization.Localized.CurrentCulture = previousCulture; }
