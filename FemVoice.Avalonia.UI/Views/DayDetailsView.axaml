@@ -39,13 +39,13 @@
             <TextBlock Text="{Binding SessionDetailsHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}" Margin="0,0,0,6"/>
             <!-- Header row -->
             <Grid ColumnDefinitions="60,90,70,*,70,120,70">
-              <TextBlock Grid.Column="0" Text="Tid" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Grid.Column="0" Text="{loc:Tr Key=Chart_TimeAxis, Fallback='Tid'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
               <TextBlock Grid.Column="1" Text="{loc:Tr Key=ExRun_Lbl_Level, Fallback='Nivå'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-              <TextBlock Grid.Column="2" Text="Varighet" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Grid.Column="2" Text="{loc:Tr Key=ExRun_Lbl_Duration, Fallback='Varighet'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
               <TextBlock Grid.Column="3" Text="{loc:Tr Key=Dashboard_Pitch, Fallback=Tonehøyde}" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
               <TextBlock Grid.Column="4" Text="{loc:Tr Key=Dashboard_Resonance, Fallback=Resonans}" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-              <TextBlock Grid.Column="5" Text="Formant" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
-              <TextBlock Grid.Column="6" Text="Score" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Grid.Column="5" Text="{loc:Tr Key=ResonanceWindow_Formants, Fallback='Formant'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
+              <TextBlock Grid.Column="6" Text="{loc:Tr Key=Dashboard_Score, Fallback='Score'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellMutedBrush}" FontSize="12"/>
             </Grid>
             <ItemsControl ItemsSource="{Binding Sessions}">
               <ItemsControl.ItemTemplate>

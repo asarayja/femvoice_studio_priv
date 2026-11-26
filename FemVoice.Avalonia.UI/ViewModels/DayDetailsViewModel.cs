@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using CommunityToolkit.Mvvm.Input;
 using FemVoiceStudio.Data;
@@ -23,7 +22,7 @@ public sealed class DayDetailsViewModel
     public DayDetailsViewModel(IDatabaseService? database, DateTime date, Action? onBack = null)
     {
         Date = date;
-        DateDisplay = date.ToString("dddd d. MMMM yyyy", CultureInfo.CurrentCulture);
+        DateDisplay = date.ToString("D", Localized.CurrentCulture);
         BackLabel = Localized.Get("Common_Back", "Tilbake");
         BackCommand = new RelayCommand(() => onBack?.Invoke());
         Load(database, date);
@@ -59,8 +58,8 @@ public sealed class DayDetailsViewModel
                 .ToList();
 
             Sessions = sessions.Select(s => new DaySessionRow(
-                s.StartTime.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture),
-                s.DifficultyLevel.ToString(),
+                s.StartTime.ToLocalTime().ToString("t", Localized.CurrentCulture),
+                ExerciseDisplay.Difficulty(s.DifficultyLevel),
                 $"{(int)Math.Round(s.DurationSeconds / 60.0)} min",
                 s.AveragePitch > 0 ? $"{s.AveragePitch:F0} Hz ({s.MinPitch:F0}–{s.MaxPitch:F0})" : "—",
                 s.ResonanceScore > 0 ? $"{s.ResonanceScore:F0}" : "—",

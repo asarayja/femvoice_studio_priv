@@ -1468,6 +1468,7 @@ internal static class Program
             {
                 var s = new global::FemVoiceStudio.Models.TrainingSession
                 { UserId = 1, StartTime = start.ToUniversalTime(), EndTime = start.AddMinutes(5).ToUniversalTime(),
+                  DifficultyLevel = global::FemVoiceStudio.Models.DifficultyLevel.Nybegynner,
                   AveragePitch = pitch, MinPitch = pitch - 10, MaxPitch = pitch + 10, OverallScore = score, ResonanceScore = res, Feedback = "d" };
                 s.Id = db.SaveTrainingSession(s);
                 if (res > 0) db.UpdateTrainingSession(s);
@@ -1497,6 +1498,7 @@ internal static class Program
             // ENGLISH. Assert per language that the headers change with the culture and contain none of that poison.
             var previousCulture = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture;
             bool weekdaysOk = true;
+            bool localizedSessionsOk = true;
             string[] poison = { "Heiraten", "Épouser", "Casarse", "Sonne", "Soleil", "Sole", "Sunce", "Aurinko" };
             var seenHeaders = new System.Collections.Generic.List<string>();
             try
@@ -1513,10 +1515,18 @@ internal static class Program
                         weekdaysOk = false;
                     if (culture is "nb-NO" && joined != "Man,Tir,Ons,Tor,Fre,Lør,Søn") weekdaysOk = false;
                     if (culture is "de-DE" && joined != "Mo,Di,Mi,Do,Fr,Sa,So") weekdaysOk = false;
+
+                    var details = new DayDetailsViewModel(db, today);
+                    var uiCulture = global::System.Globalization.CultureInfo.GetCultureInfo(culture);
+                    if (details.DateDisplay != today.ToString("D", uiCulture) ||
+                        details.Sessions.FirstOrDefault()?.Time != today.AddHours(9).ToString("t", uiCulture))
+                        localizedSessionsOk = false;
+                    if (culture == "en-US" && details.Sessions.Any(row => row.Difficulty != "Beginner"))
+                        localizedSessionsOk = false;
                 }
             }
             finally { global::FemVoice.Avalonia.Localization.Localized.CurrentCulture = previousCulture; }
-            Console.WriteLine($"[daydetails] weekdays ok={weekdaysOk} {string.Join(" ", seenHeaders)}");
+            Console.WriteLine($"[daydetails] session labels ok={localizedSessionsOk} weekdays ok={weekdaysOk} {string.Join(" ", seenHeaders)}");
 
             // DayDetails loads exactly today's two sessions with real detail.
             var det = new DayDetailsViewModel(db, today, null);
@@ -1527,7 +1537,7 @@ internal static class Program
 
             Console.WriteLine($"[daydet] hasDays={hasDays} todayFound={todayFound} heatmapOk={heatmapOk} openedToday={openedToday} twoSessions={twoSessions} detailOk={detailOk} summaryOk={summaryOk} cardsOk={cardsOk}");
             bool ok = hasDays && todayFound && heatmapOk && openedToday && twoSessions && detailOk && summaryOk && cardsOk
-                      && weekdaysOk;
+                      && weekdaysOk && localizedSessionsOk;
             Console.WriteLine(ok ? "[daydet] Day details smoke OK" : "[daydet] Day details smoke FAIL");
             return ok ? 0 : 1;
         }
