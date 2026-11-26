@@ -28,7 +28,7 @@
          in-memory list (no persistence/analytics/DB). Category "Alle" + one chip per exercise goal. -->
     <StackPanel Grid.Row="2" Spacing="8" Margin="0,0,0,12">
       <TextBox Text="{Binding SearchText, Mode=TwoWay}" Watermark="{Binding SearchPlaceholder}"
-               ToolTip.Tip="Søk på navn eller beskrivelse"/>
+               ToolTip.Tip="{Binding SearchPlaceholder}"/>
       <ItemsControl ItemsSource="{Binding CategoryChips}">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
@@ -40,7 +40,7 @@
           <DataTemplate>
             <!-- Chip button; selected state is a converter-free bool->class binding. -->
             <Button Classes="chipFilter" Classes.selected="{Binding IsSelected}"
-                    Content="{Binding Label}" Margin="0,0,8,8"
+                    Content="{Binding DisplayLabel}" Margin="0,0,8,8"
                     Command="{Binding $parent[ItemsControl].DataContext.SelectCategoryCommand}"
                     CommandParameter="{Binding Label}"/>
           </DataTemplate>
@@ -55,7 +55,8 @@
           <ItemsControl.ItemTemplate>
             <DataTemplate>
               <!-- Whole row is a button: click/tap anywhere (or Enter/Space when focused) opens the exercise. -->
-              <Button Classes="guideCard" Margin="0,0,0,10" ToolTip.Tip="Åpne øvelsen"
+              <Button Classes="guideCard" Margin="0,0,0,10" ToolTip.Tip="{loc:Tr Key=Guide_OpenExercise, Fallback='Åpne øvelsen'}"
+                      AutomationProperties.Name="{Binding Name}"
                       Command="{Binding $parent[ItemsControl].DataContext.OpenExerciseCommand}"
                       CommandParameter="{Binding}">
                 <Grid ColumnDefinitions="Auto,*,Auto">

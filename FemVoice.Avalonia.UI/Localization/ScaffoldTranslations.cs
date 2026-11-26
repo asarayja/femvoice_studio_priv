@@ -107,6 +107,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Saved"] = "Saved. Theme, language and motion preference are updated (only translated text changes; the rest stays Norwegian).",
             ["Settings_LocalPrefs_SaveFailed"] = "Could not save the settings locally.",
             ["Settings_LocalPrefs_Reloaded"] = "Loaded from the saved file.",
+            ["Guide_OpenExercise"] = "Open exercise",
+            ["Exercise_116_Title"] = "Water bubbling (Lax Vox)",
+            ["Exercise_116_Description"] = "A straw phonation (SOVT) variation: sing through a wide tube into a glass of water to make bubbles. Water resistance and the bubbles provide visual and tactile feedback during a gentle warm-up.",
+            ["Exercise_117_Title"] = "Big dog / little dog (resonance contrast)",
+            ["Exercise_117_Description"] = "Compare a big dog's deep, open woof with a little dog's bright, forward yip to feel how the size of the resonating space changes independently of pitch. Carry the brighter, smaller shape into vowels, words and sentences.",
         },
         ["sv"] = new()
         {

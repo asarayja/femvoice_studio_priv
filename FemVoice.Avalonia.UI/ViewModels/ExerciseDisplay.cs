@@ -1,4 +1,5 @@
 using FemVoiceStudio.Models;
+using FemVoiceStudio.Services;
 using FemVoice.Avalonia.Localization;
 
 namespace FemVoice.Avalonia.ViewModels;
@@ -8,6 +9,15 @@ namespace FemVoice.Avalonia.ViewModels;
 /// the exercise definitions.</summary>
 internal static class ExerciseDisplay
 {
+    public static string Title(EnhancedExercise exercise) => CatalogText(exercise, "Title", exercise.Name);
+    public static string Description(EnhancedExercise exercise) => CatalogText(exercise, "Description", exercise.Description);
+
+    // The enhanced catalog is the current Norwegian source; existing session keys use its original name.
+    private static string CatalogText(EnhancedExercise exercise, string field, string source)
+        => Localized.CurrentCulture.TwoLetterISOLanguageName is "nb" or "nn" or "no"
+            ? source
+            : Localized.Get($"Exercise_{exercise.Id + 100}_{field}", source);
+
     public static string Goal(GoalCategory g) => g switch
     {
         GoalCategory.Pitch => Localized.Get("Goal_Pitch", "Tonehøyde"),
