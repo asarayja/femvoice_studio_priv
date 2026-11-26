@@ -3782,6 +3782,9 @@ Dit kan niet ongedaan worden gemaakt!</value>
   <data name="MicCalibration_NoiseLabel" xml:space="preserve">
     <value>Ruis</value>
   </data>
+  <data name="MicCalibration_PeakLevelFormat" xml:space="preserve">
+    <value>Piek: {0:F0}</value>
+  </data>
   <data name="MicCalibration_LiveLevelFormat" xml:space="preserve">
     <value>Live niveau: RMS {0:F4} ({1:F1} dBFS), piek {2:F1} dBFS</value>
   </data>
