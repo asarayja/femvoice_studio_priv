@@ -107,11 +107,11 @@
           <Grid ColumnDefinitions="130,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Tr Key=Dashboard_AveragePitch, Fallback='Snitt tonehøyde'}" Foreground="{DynamicResource ShellMutedBrush}"/>
             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AveragePitch, StringFormat='{}{0:F0} Hz'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <TextBlock Grid.Row="1" Grid.Column="0" Text="Minimum" Foreground="{DynamicResource ShellMutedBrush}"/>
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="{loc:Tr Key=Analyzer_Minimum, Fallback='Minimum'}" Foreground="{DynamicResource ShellMutedBrush}"/>
             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding MinPitch, StringFormat='{}{0:F0} Hz'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <TextBlock Grid.Row="2" Grid.Column="0" Text="Maksimum" Foreground="{DynamicResource ShellMutedBrush}"/>
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="{loc:Tr Key=Analyzer_Maximum, Fallback='Maksimum'}" Foreground="{DynamicResource ShellMutedBrush}"/>
             <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding MaxPitch, StringFormat='{}{0:F0} Hz'}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
-            <TextBlock Grid.Row="3" Grid.Column="0" Text="Varighet" Foreground="{DynamicResource ShellMutedBrush}"/>
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="{loc:Tr Key=ExRun_Lbl_Duration, Fallback='Varighet'}" Foreground="{DynamicResource ShellMutedBrush}"/>
             <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding DurationText}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
             <TextBlock Grid.Row="4" Grid.Column="0" Text="{loc:Tr Key=Analyzer_VoicedMeasurements, Fallback='Stemte målinger'}" Foreground="{DynamicResource ShellMutedBrush}"/>
             <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SampleCount}" Foreground="{DynamicResource ShellBodyTextBrush}"/>
