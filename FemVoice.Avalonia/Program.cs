@@ -4919,7 +4919,11 @@ internal static class Program
             vm.SaveCommand.Execute(null);
             // Save switched the resolver live to en-US — so even the status itself renders in English ("Saved…").
             bool saveAppliesLive = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name == "en-US"
-                && (vm.Status.Contains("Saved") || vm.Status.Contains("Lagret"));
+                && (vm.Status.Contains("Saved") || vm.Status.Contains("Lagret"))
+                && vm.DataHeading == "Data and backups"
+                && string.Format(G("Settings_Cloud_SignedInFormat", "missing"), "test") == "Signed in as test."
+                && G("Settings_Cloud_SignInFailed", "missing") == "Sign-in was cancelled or failed."
+                && G("Settings_Cloud_SignedOut", "missing") == "Signed out on this device.";
 
             Console.WriteLine($"[lang] svApplied={svApplied} enApplied={enApplied} nbApplied={nbApplied} allCulturesSwitch={allCulturesSwitch} englishFallback={englishFallback}");
             Console.WriteLine($"[lang] startupRead={startupRead} missingSafe={missingSafe} corruptSafe={corruptSafe} unknownSafe={unknownSafe} threadCultureUntouched={threadCultureUntouched}");

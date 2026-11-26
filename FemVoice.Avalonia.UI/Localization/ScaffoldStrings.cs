@@ -204,6 +204,10 @@ public static class ScaffoldStrings
         "Settings_Cloud_SignOut",
         "Settings_Cloud_Push",
         "Settings_Cloud_Pull",
+        "Settings_BackupHeading",
+        "Settings_Cloud_SignedInFormat",
+        "Settings_Cloud_SignInFailed",
+        "Settings_Cloud_SignedOut",
     };
 
     /// <summary>Keys with a trusted, culture-invariant translation already populated (no native review needed).</summary>
