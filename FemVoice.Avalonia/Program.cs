@@ -353,7 +353,27 @@ internal static class Program
             Console.WriteLine($"[smartcoach] emptyOk={emptyOk} dataOk={dataOk} detailOk={detailOk} detailRows={vm.DetailMetrics.Count} weekHist={vm.WeeklyHistory.Count} focus='{rec1?.FocusArea}' weekly={weekly}");
             Console.WriteLine($"[smartcoach] completeOk={completeOk} (before={completeBefore} now={completedNow} persisted={persistedComplete} reflects={reflectsPersisted}) progressToGoal={vm.HasProgressToGoal} baseline='{vm.BaselineConfidence}'");
             Console.WriteLine($"[smartcoach] rec: {rec1?.RecommendationText}");
-            bool ok = emptyOk && dataOk && detailOk && completeOk && messagesWired;
+            var previousCulture = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture;
+            bool storedCopyOk;
+            try
+            {
+                const string key = "SmartCoach_Daily_ResonanceFoundation";
+                var service = global::FemVoice.Avalonia.Localization.AvaloniaLocalizationService.Instance;
+                service.SetLanguage("nb-NO");
+                var saved = db.GetDailyRecommendation(DateTime.Today, 1)!;
+                saved.RecommendationText = service[key];
+                db.SaveDailyRecommendation(saved);
+                service.SetLanguage("en-US");
+                var english = new SmartCoachViewModel(db);
+                storedCopyOk = english.RecommendationText == service[key]
+                    && english.RecommendationText != saved.RecommendationText && english.IsRecommendationCompleted
+                    && db.GetDailyRecommendation(DateTime.Today, 1)!.RecommendationText == saved.RecommendationText;
+                saved.RecommendationText = "Custom recommendation";
+                db.SaveDailyRecommendation(saved);
+                storedCopyOk &= new SmartCoachViewModel(db).RecommendationText == saved.RecommendationText;
+            }
+            finally { global::FemVoice.Avalonia.Localization.Localized.CurrentCulture = previousCulture; }
+            bool ok = emptyOk && dataOk && detailOk && completeOk && messagesWired && storedCopyOk;
             Console.WriteLine(ok ? "[smartcoach] SmartCoach engine smoke OK" : "[smartcoach] SmartCoach engine smoke FAIL");
             return ok ? 0 : 1;
         }
@@ -4844,9 +4864,12 @@ internal static class Program
             bool svApplied = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name == "sv-SE"
                 && G("Settings_Title", "fb") == "Inställningar";
             global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");
-            bool enApplied = G("Settings_Title", "fb") == "Settings" && G("Common_Save", "fb") == "Save";
+            var service = global::FemVoice.Avalonia.Localization.AvaloniaLocalizationService.Instance;
+            bool enApplied = G("Settings_Title", "fb") == "Settings" && G("Common_Save", "fb") == "Save"
+                && service.IsEnglish && service["Common_Save"] == "Save";
             global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
-            bool nbApplied = G("Settings_Title", "fb") == "Innstillinger";
+            bool nbApplied = G("Settings_Title", "fb") == "Innstillinger"
+                && service.IsNorwegian && service.GetString("Settings_Title") == "Innstillinger";
 
             // ALL 20 cultures switch the navigable UI: each non-Norwegian culture returns a translated (non-source)
             // value for a high-visibility key.

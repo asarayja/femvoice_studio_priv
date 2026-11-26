@@ -30,7 +30,7 @@
             <TextBlock Text="{Binding TodaysFocusHeading}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
             <StackPanel Orientation="Horizontal" Spacing="8">
               <Border Background="{DynamicResource ShellChipBackgroundBrush}" CornerRadius="6" Padding="8,3">
-                <TextBlock Text="{Binding FocusLabel, StringFormat='Fokus: {0}'}" Foreground="{DynamicResource ShellAccentBrush}" FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding FocusLabel}" Foreground="{DynamicResource ShellAccentBrush}" FontWeight="SemiBold"/>
               </Border>
               <Border Background="{DynamicResource ShellChipBackgroundBrush}" CornerRadius="6" Padding="8,3">
                 <TextBlock Text="{Binding DurationText}" Foreground="{DynamicResource ShellBodyTextBrush}"/>

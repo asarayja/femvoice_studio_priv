@@ -25,7 +25,7 @@ public static class Localized
 {
     // Avalonia-owned resource resolver over the SAME shared resources used by Core (read-only; a separate instance
     // from the Core/WPF LocalizationService — we never call SetLanguage and never touch thread/Core culture state).
-    private static readonly ResourceManager Resources =
+    internal static readonly ResourceManager Resources =
         new ResourceManager("FemVoiceStudio.Resources.Strings", typeof(LocalizationService).Assembly);
 
     /// <summary>Raised (on the calling thread) whenever <see cref="CurrentCulture"/> changes, so the Avalonia UI
@@ -65,6 +65,8 @@ public static class Localized
     /// string passed as <paramref name="fallback"/>. For Norwegian, the Norwegian source is used directly. This is
     /// Avalonia-local only — no SetLanguage, no thread-culture change, no shared-Core mutation.
     /// </summary>
+    public static string Get(string key) => Get(key, Core(key, Norwegian) ?? key);
+
     public static string Get(string key, string fallback)
     {
         if (string.IsNullOrEmpty(key)) return fallback;
