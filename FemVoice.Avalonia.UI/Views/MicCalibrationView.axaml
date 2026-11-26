@@ -57,7 +57,7 @@
                 <TextBlock Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" Text="{Binding Level, StringFormat='{}{0:F0}'}"/>
               </StackPanel>
               <TextBlock Grid.Column="1" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11"
-                         Text="{Binding PeakLevel, StringFormat='Topp: {0:F0}'}"/>
+                         Text="{Binding PeakLevelText}"/>
             </Grid>
             <TextBlock Text="{Binding LiveLevelText}" Foreground="{DynamicResource ShellFaintBrush}" FontSize="11" TextWrapping="Wrap"/>
           </StackPanel>

@@ -3782,6 +3782,9 @@ Această acțiune nu poate fi anulată!</value>
   <data name="MicCalibration_NoiseLabel" xml:space="preserve">
     <value>Zgomot</value>
   </data>
+  <data name="MicCalibration_PeakLevelFormat" xml:space="preserve">
+    <value>Vârf: {0:F0}</value>
+  </data>
   <data name="MicCalibration_LiveLevelFormat" xml:space="preserve">
     <value>Nivel în timp real: RMS {0:F4} ({1:F1} dBFS), vârf {2:F1} dBFS</value>
   </data>

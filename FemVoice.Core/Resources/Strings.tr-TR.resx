@@ -3782,6 +3782,9 @@ Bu işlem geri alınamaz!</value>
   <data name="MicCalibration_NoiseLabel" xml:space="preserve">
     <value>Gürültü</value>
   </data>
+  <data name="MicCalibration_PeakLevelFormat" xml:space="preserve">
+    <value>Tepe: {0:F0}</value>
+  </data>
   <data name="MicCalibration_LiveLevelFormat" xml:space="preserve">
     <value>Canlı seviye: RMS {0:F4} ({1:F1} dBFS), tepe {2:F1} dBFS</value>
   </data>

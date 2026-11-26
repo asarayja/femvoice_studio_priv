@@ -126,7 +126,12 @@ public partial class MicCalibrationViewModel : ObservableObject, IDisposable
 
     // Live meter (during a capture phase) — plain signal metering, no DSP/pitch/scoring.
     [ObservableProperty] private double _level;
-    [ObservableProperty] private double _peakLevel;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PeakLevelText))]
+    private double _peakLevel;
+
+    public string PeakLevelText => string.Format(Localized.CurrentCulture,
+        Localized.Get("MicCalibration_PeakLevelFormat", "Topp: {0:F0}"), PeakLevel);
     [ObservableProperty] private bool _signalDetected;
 
     /// <summary>The primary button is usable when a device exists, no phase is recording, and we're not finished.</summary>
