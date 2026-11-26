@@ -109,9 +109,9 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Reloaded"] = "Loaded from the saved file.",
             ["Guide_OpenExercise"] = "Open exercise",
             ["Exercise_116_Title"] = "Water bubbling (Lax Vox)",
-            ["Exercise_116_Description"] = "A straw phonation (SOVT) variation: sing through a wide tube into a glass of water to make bubbles. Water resistance and the bubbles provide visual and tactile feedback during a gentle warm-up.",
+            ["Exercise_116_Description"] = "A straw phonation (SOVT) variation: sing through a wide tube into a glass of water to make bubbles. The adjustable back pressure and visible, tactile feedback provide a gentle warm-up to reduce vocal wear before feminization exercises.",
             ["Exercise_117_Title"] = "Big dog / little dog (resonance contrast)",
-            ["Exercise_117_Description"] = "Compare a big dog's deep, open woof with a little dog's bright, forward yip to feel how the size of the resonating space changes independently of pitch. Carry the brighter, smaller shape into vowels, words and sentences.",
+            ["Exercise_117_Description"] = "Contrast a big dog's deep, open woof with a little dog's bright, forward yip to feel how the resonating space changes size independently of pitch. Carry the brighter, smaller shape into vowels, words and sentences. Resonance is often a stronger feminization cue than pitch alone.",
         },
         ["sv"] = new()
         {
@@ -172,6 +172,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Save"] = "Spara", ["Settings_LocalPrefs_Reload"] = "Läs in igen", ["Settings_LocalPrefs_ReduceMotion"] = "Minska rörelse",
             ["Settings_LocalPrefs_Saved"] = "Sparat. Tema, språk och rörelseval har uppdaterats (endast översatt text ändras; resten visas på norska).",
             ["Settings_LocalPrefs_SaveFailed"] = "Det gick inte att spara inställningarna lokalt.", ["Settings_LocalPrefs_Reloaded"] = "Inläst från den sparade filen.",
+            ["Guide_OpenExercise"] = "Öppna övningen",
+            ["Exercise_116_Title"] = "Bubbelövning i vatten (Lax Vox)",
+            ["Exercise_116_Description"] = "En vattenvariant av rörfonation (SOVT): sjung genom ett brett rör i ett glas vatten så att det bubblar. Justerbart mottryck och synlig och kännbar återkoppling ger en skonsam uppvärmning som minskar röstbelastningen före feminiseringsövningarna.",
+            ["Exercise_117_Title"] = "Stor hund / liten hund (resonanskontrast)",
+            ["Exercise_117_Description"] = "Jämför en stor hunds mörka, öppna skall med en liten hunds ljusa, framåtriktade gläfs. Känn hur resonansrummets storlek förändras oberoende av tonhöjden. Ta med den ljusa, lilla formen in i vokaler, ord och meningar. Resonans har ofta större betydelse för feminisering än enbart tonhöjd.",
         },
         ["da"] = new()
         {
@@ -232,6 +237,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Save"] = "Gem", ["Settings_LocalPrefs_Reload"] = "Genindlæs", ["Settings_LocalPrefs_ReduceMotion"] = "Reducer bevægelse",
             ["Settings_LocalPrefs_Saved"] = "Gemt. Tema, sprog og bevægelsesvalg er opdateret (kun oversat tekst ændres; resten vises på norsk).",
             ["Settings_LocalPrefs_SaveFailed"] = "Kunne ikke gemme indstillingerne lokalt.", ["Settings_LocalPrefs_Reloaded"] = "Indlæst fra den gemte fil.",
+            ["Guide_OpenExercise"] = "Åbn øvelsen",
+            ["Exercise_116_Title"] = "Boblefonation i vand (Lax Vox)",
+            ["Exercise_116_Description"] = "En vandvariant af rørfonation (SOVT): syng gennem et bredt rør ned i et glas vand, så det bobler. Justerbart modtryk og synlig og mærkbar feedback giver en skånsom opvarmning, der mindsker stemmebelastningen før feminiseringsøvelserne.",
+            ["Exercise_117_Title"] = "Stor hund / lille hund (resonanskontrast)",
+            ["Exercise_117_Description"] = "Sammenlign en stor hunds mørke, åbne gøen med en lille hunds lyse, fremadrettede bjæf. Mærk, hvordan resonansrummets størrelse ændrer sig uafhængigt af tonehøjden. Tag den lille, lyse form med ind i vokaler, ord og sætninger. Resonans har ofte større betydning for feminiseringen end tonehøjden alene.",
         },
         ["fi"] = new()
         {
@@ -292,6 +302,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Save"] = "Tallenna", ["Settings_LocalPrefs_Reload"] = "Lataa uudelleen", ["Settings_LocalPrefs_ReduceMotion"] = "Vähennä liikettä",
             ["Settings_LocalPrefs_Saved"] = "Tallennettu. Teema, kieli ja liikevalinta päivitetty (vain käännetty teksti muuttuu; muu näkyy norjaksi).",
             ["Settings_LocalPrefs_SaveFailed"] = "Asetusten tallentaminen paikallisesti epäonnistui.", ["Settings_LocalPrefs_Reloaded"] = "Ladattu tallennetusta tiedostosta.",
+            ["Guide_OpenExercise"] = "Avaa harjoitus",
+            ["Exercise_116_Title"] = "Putkiääntö vedessä (Lax Vox)",
+            ["Exercise_116_Description"] = "Pilliäänteen vesimuunnelma (SOVT): laula leveän putken läpi vesilasiin niin, että vesi kuplii. Säädettävä vastapaine sekä näkyvä ja tuntuva palaute lämmittävät ääntä hellästi ja vähentävät kuormitusta ennen äänen feminisointiharjoituksia.",
+            ["Exercise_117_Title"] = "Iso koira / pieni koira (resonanssikontrasti)",
+            ["Exercise_117_Description"] = "Vertaa ison koiran tummaa, avointa haukahdusta pienen koiran kirkkaaseen, edessä soivaan haukkuun. Tunne, miten resonanssitilan koko muuttuu sävelkorkeudesta riippumatta. Säilytä pieni, kirkas muoto vokaaleissa, sanoissa ja lauseissa. Resonanssi vaikuttaa usein äänen feminiinisyyteen enemmän kuin pelkkä sävelkorkeus.",
         },
         ["de"] = new()
         {
@@ -352,6 +367,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Save"] = "Speichern", ["Settings_LocalPrefs_Reload"] = "Neu laden", ["Settings_LocalPrefs_ReduceMotion"] = "Bewegung reduzieren",
             ["Settings_LocalPrefs_Saved"] = "Gespeichert. Design, Sprache und Bewegungsoption wurden aktualisiert (nur übersetzter Text ändert sich; der Rest bleibt Norwegisch).",
             ["Settings_LocalPrefs_SaveFailed"] = "Die Einstellungen konnten nicht lokal gespeichert werden.", ["Settings_LocalPrefs_Reloaded"] = "Aus der gespeicherten Datei geladen.",
+            ["Guide_OpenExercise"] = "Übung öffnen",
+            ["Exercise_116_Title"] = "Blubbern im Wasser (Lax Vox)",
+            ["Exercise_116_Description"] = "Eine Wasservariante der Strohhalmphonation (SOVT): Durch einen breiten Schlauch in ein Glas Wasser singen, sodass Blasen entstehen. Der regulierbare Gegendruck und die sicht- und spürbare Rückmeldung ermöglichen ein sanftes Aufwärmen, das die Stimme vor den Feminisierungsübungen entlastet.",
+            ["Exercise_117_Title"] = "Großer Hund / kleiner Hund (Resonanzkontrast)",
+            ["Exercise_117_Description"] = "Vergleiche das dunkle, offene Bellen eines großen Hundes mit dem hellen, vorn klingenden Kläffen eines kleinen Hundes. Spüre, wie sich die Größe des Resonanzraums unabhängig von der Tonhöhe ändert. Übertrage die kleine, helle Form auf Vokale, Wörter und Sätze. Resonanz ist für die Feminisierung oft wichtiger als die Tonhöhe allein.",
         },
         ["fr"] = new()
         {
@@ -412,6 +432,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Save"] = "Enregistrer", ["Settings_LocalPrefs_Reload"] = "Recharger", ["Settings_LocalPrefs_ReduceMotion"] = "Réduire les animations",
             ["Settings_LocalPrefs_Saved"] = "Enregistré. Le thème, la langue et l'option de mouvement ont été mis à jour (seul le texte traduit change ; le reste reste en norvégien).",
             ["Settings_LocalPrefs_SaveFailed"] = "Impossible d'enregistrer les paramètres localement.", ["Settings_LocalPrefs_Reloaded"] = "Chargé depuis le fichier enregistré.",
+            ["Guide_OpenExercise"] = "Ouvrir l’exercice",
+            ["Exercise_116_Title"] = "Phonation dans l’eau (Lax Vox)",
+            ["Exercise_116_Description"] = "Variante aquatique de la phonation à la paille (SOVT) : chantez dans un tube large plongé dans un verre d’eau pour produire des bulles. La contre-pression réglable et le retour visuel et tactile permettent un échauffement doux qui réduit la fatigue vocale avant les exercices de féminisation.",
+            ["Exercise_117_Title"] = "Grand chien / petit chien (contraste de résonance)",
+            ["Exercise_117_Description"] = "Comparez l’aboiement sombre et ouvert d’un grand chien au jappement clair et projeté vers l’avant d’un petit chien. Sentez l’espace de résonance changer de taille indépendamment de la hauteur. Gardez cette petite forme claire pour les voyelles, les mots et les phrases. La résonance joue souvent un rôle plus important dans la féminisation que la hauteur seule.",
         },
         ["es"] = new()
         {
@@ -472,6 +497,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Save"] = "Guardar", ["Settings_LocalPrefs_Reload"] = "Recargar", ["Settings_LocalPrefs_ReduceMotion"] = "Reducir el movimiento",
             ["Settings_LocalPrefs_Saved"] = "Guardado. El tema, el idioma y la opción de movimiento se han actualizado (solo cambia el texto traducido; el resto permanece en noruego).",
             ["Settings_LocalPrefs_SaveFailed"] = "No se pudieron guardar los ajustes localmente.", ["Settings_LocalPrefs_Reloaded"] = "Cargado desde el archivo guardado.",
+            ["Guide_OpenExercise"] = "Abrir el ejercicio",
+            ["Exercise_116_Title"] = "Fonación con burbujas en agua (Lax Vox)",
+            ["Exercise_116_Description"] = "Variante en agua de la fonación con pajita (SOVT): canta por un tubo ancho dentro de un vaso con agua para que salgan burbujas. La contrapresión regulable y la información visual y táctil permiten un calentamiento suave que reduce el desgaste vocal antes de los ejercicios de feminización.",
+            ["Exercise_117_Title"] = "Perro grande / perro pequeño (contraste de resonancia)",
+            ["Exercise_117_Description"] = "Compara el ladrido oscuro y abierto de un perro grande con el ladrido brillante y adelantado de un perro pequeño. Siente cómo cambia de tamaño el espacio de resonancia con independencia de la altura tonal. Mantén la forma pequeña y brillante al pronunciar vocales, palabras y frases. La resonancia suele influir más en la feminización que la altura por sí sola.",
         },
         ["pt"] = new()
         {
@@ -532,6 +562,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Save"] = "Salvar", ["Settings_LocalPrefs_Reload"] = "Recarregar", ["Settings_LocalPrefs_ReduceMotion"] = "Reduzir movimento",
             ["Settings_LocalPrefs_Saved"] = "Salvo. O tema, o idioma e a opção de movimento foram atualizados (apenas o texto traduzido muda; o restante permanece em norueguês).",
             ["Settings_LocalPrefs_SaveFailed"] = "Não foi possível salvar as configurações localmente.", ["Settings_LocalPrefs_Reloaded"] = "Carregado do arquivo salvo.",
+            ["Guide_OpenExercise"] = "Abrir o exercício",
+            ["Exercise_116_Title"] = "Fonação com bolhas na água (Lax Vox)",
+            ["Exercise_116_Description"] = "Variante aquática da fonação com canudo (SOVT): cante por um tubo largo dentro de um copo com água para fazer bolhas. A contrapressão ajustável e o retorno visual e tátil permitem um aquecimento suave que reduz o desgaste vocal antes dos exercícios de feminização.",
+            ["Exercise_117_Title"] = "Cachorro grande / cachorro pequeno (contraste de ressonância)",
+            ["Exercise_117_Description"] = "Compare o latido escuro e aberto de um cachorro grande com o latido brilhante e projetado para a frente de um cachorro pequeno. Sinta o espaço de ressonância mudar de tamanho independentemente da altura da voz. Leve a forma pequena e brilhante para vogais, palavras e frases. A ressonância costuma influenciar mais a feminização do que a altura isoladamente.",
         },
         ["it"] = new()
         {
@@ -592,6 +627,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Save"] = "Salva", ["Settings_LocalPrefs_Reload"] = "Ricarica", ["Settings_LocalPrefs_ReduceMotion"] = "Riduci il movimento",
             ["Settings_LocalPrefs_Saved"] = "Salvato. Tema, lingua e preferenza di movimento aggiornati (cambia solo il testo tradotto; il resto resta in norvegese).",
             ["Settings_LocalPrefs_SaveFailed"] = "Impossibile salvare le impostazioni localmente.", ["Settings_LocalPrefs_Reloaded"] = "Caricato dal file salvato.",
+            ["Guide_OpenExercise"] = "Apri l’esercizio",
+            ["Exercise_116_Title"] = "Fonazione con bolle in acqua (Lax Vox)",
+            ["Exercise_116_Description"] = "Variante in acqua della fonazione con cannuccia (SOVT): canta attraverso un tubo largo immerso in un bicchiere d’acqua per produrre bolle. La contropressione regolabile e il riscontro visivo e tattile consentono un riscaldamento delicato che riduce l’affaticamento vocale prima degli esercizi di femminilizzazione.",
+            ["Exercise_117_Title"] = "Cane grande / cane piccolo (contrasto di risonanza)",
+            ["Exercise_117_Description"] = "Confronta il latrato scuro e aperto di un cane grande con il guaito chiaro e proiettato in avanti di un cane piccolo. Senti come cambia la dimensione dello spazio di risonanza indipendentemente dall’altezza della voce. Mantieni la forma piccola e chiara nelle vocali, nelle parole e nelle frasi. La risonanza conta spesso più della sola altezza nella femminilizzazione.",
         },
         ["nl"] = new()
         {
@@ -652,6 +692,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Save"] = "Opslaan", ["Settings_LocalPrefs_Reload"] = "Opnieuw laden", ["Settings_LocalPrefs_ReduceMotion"] = "Beweging verminderen",
             ["Settings_LocalPrefs_Saved"] = "Opgeslagen. Thema, taal en bewegingskeuze zijn bijgewerkt (alleen vertaalde tekst verandert; de rest blijft Noors).",
             ["Settings_LocalPrefs_SaveFailed"] = "Kan de instellingen niet lokaal opslaan.", ["Settings_LocalPrefs_Reloaded"] = "Geladen uit het opgeslagen bestand.",
+            ["Guide_OpenExercise"] = "Oefening openen",
+            ["Exercise_116_Title"] = "Bubbelen in water (Lax Vox)",
+            ["Exercise_116_Description"] = "Een watervariant van fonatie door een rietje (SOVT): zing door een brede slang in een glas water zodat er bellen ontstaan. De regelbare tegendruk en zichtbare, voelbare feedback zorgen voor een zachte warming-up die de stem vóór feminiseringsoefeningen ontlast.",
+            ["Exercise_117_Title"] = "Grote hond / kleine hond (resonantiecontrast)",
+            ["Exercise_117_Description"] = "Vergelijk het donkere, open geblaf van een grote hond met het heldere, voorin klinkende gekef van een kleine hond. Voel hoe de resonantieruimte van grootte verandert, los van de toonhoogte. Neem de kleine, heldere vorm mee in klinkers, woorden en zinnen. Resonantie speelt bij feminisering vaak een grotere rol dan toonhoogte alleen.",
         },
         ["pl"] = new()
         {
@@ -712,6 +757,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Save"] = "Zapisz", ["Settings_LocalPrefs_Reload"] = "Wczytaj ponownie", ["Settings_LocalPrefs_ReduceMotion"] = "Ogranicz ruch",
             ["Settings_LocalPrefs_Saved"] = "Zapisano. Motyw, język i ustawienie ruchu zostały zaktualizowane (zmienia się tylko przetłumaczony tekst; reszta pozostaje po norwesku).",
             ["Settings_LocalPrefs_SaveFailed"] = "Nie udało się zapisać ustawień lokalnie.", ["Settings_LocalPrefs_Reloaded"] = "Wczytano z zapisanego pliku.",
+            ["Guide_OpenExercise"] = "Otwórz ćwiczenie",
+            ["Exercise_116_Title"] = "Fonacja z bąbelkami w wodzie (Lax Vox)",
+            ["Exercise_116_Description"] = "Wodny wariant fonacji przez słomkę (SOVT): śpiewaj przez szeroką rurkę zanurzoną w szklance wody, aby powstały bąbelki. Regulowane przeciwciśnienie oraz informacja wzrokowa i dotykowa umożliwiają łagodną rozgrzewkę i ograniczają obciążenie głosu przed ćwiczeniami feminizującymi.",
+            ["Exercise_117_Title"] = "Duży pies / mały pies (kontrast rezonansu)",
+            ["Exercise_117_Description"] = "Porównaj ciemne, otwarte szczeknięcie dużego psa z jasnym, wysuniętym do przodu szczeknięciem małego. Poczuj, jak rozmiar przestrzeni rezonansowej zmienia się niezależnie od wysokości dźwięku. Przenieś małą, jasną formę na samogłoski, słowa i zdania. Rezonans często wpływa na feminizację silniej niż sama wysokość głosu.",
         },
         ["cs"] = new()
         {
@@ -772,6 +822,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Save"] = "Uložit", ["Settings_LocalPrefs_Reload"] = "Načíst znovu", ["Settings_LocalPrefs_ReduceMotion"] = "Omezit pohyb",
             ["Settings_LocalPrefs_Saved"] = "Uloženo. Motiv, jazyk a volba pohybu byly aktualizovány (mění se pouze přeložený text; zbytek zůstává v norštině).",
             ["Settings_LocalPrefs_SaveFailed"] = "Nastavení se nepodařilo uložit lokálně.", ["Settings_LocalPrefs_Reloaded"] = "Načteno z uloženého souboru.",
+            ["Guide_OpenExercise"] = "Otevřít cvičení",
+            ["Exercise_116_Title"] = "Fonace s bubláním ve vodě (Lax Vox)",
+            ["Exercise_116_Description"] = "Vodní varianta fonace brčkem (SOVT): zpívejte širokou trubičkou do sklenice vody tak, aby vznikaly bubliny. Nastavitelný protitlak a viditelná i hmatová zpětná vazba umožňují šetrné rozehřátí, které snižuje hlasovou zátěž před feminizačními cvičeními.",
+            ["Exercise_117_Title"] = "Velký pes / malý pes (kontrast rezonance)",
+            ["Exercise_117_Description"] = "Porovnejte temné, otevřené štěknutí velkého psa s jasným, vpřed umístěným štěknutím malého psa. Vnímejte, jak se velikost rezonančního prostoru mění nezávisle na výšce hlasu. Přeneste malý, jasný tvar do samohlásek, slov a vět. Rezonance má na feminizaci často větší vliv než samotná výška hlasu.",
         },
         ["hu"] = new()
         {
@@ -832,6 +887,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Save"] = "Mentés", ["Settings_LocalPrefs_Reload"] = "Újratöltés", ["Settings_LocalPrefs_ReduceMotion"] = "Mozgás csökkentése",
             ["Settings_LocalPrefs_Saved"] = "Mentve. A téma, a nyelv és a mozgásbeállítás frissült (csak a lefordított szöveg változik; a többi norvégul marad).",
             ["Settings_LocalPrefs_SaveFailed"] = "A beállításokat nem sikerült helyileg menteni.", ["Settings_LocalPrefs_Reloaded"] = "Betöltve a mentett fájlból.",
+            ["Guide_OpenExercise"] = "Gyakorlat megnyitása",
+            ["Exercise_116_Title"] = "Buborékos hangadás vízben (Lax Vox)",
+            ["Exercise_116_Description"] = "A szívószálas hangadás (SOVT) vízzel végzett változata: egy széles csövön át énekelj egy pohár vízbe úgy, hogy buborékok keletkezzenek. Az állítható ellennyomás, valamint a látható és érezhető visszajelzés kíméletes bemelegítést ad, mérsékelve a hang terhelését a feminizáló gyakorlatok előtt.",
+            ["Exercise_117_Title"] = "Nagy kutya / kis kutya (rezonanciakontraszt)",
+            ["Exercise_117_Description"] = "Hasonlítsd össze a nagy kutya sötét, nyílt ugatását a kis kutya világos, elöl megszólaló vakkantásával. Érezd, hogyan változik a rezonáló tér mérete a hangmagasságtól függetlenül. A kicsi, világos formát vidd át magánhangzókra, szavakra és mondatokra. A rezonancia a hang feminizálásában gyakran többet számít, mint a hangmagasság önmagában.",
         },
         ["ro"] = new()
         {
@@ -892,6 +952,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Save"] = "Salvează", ["Settings_LocalPrefs_Reload"] = "Reîncarcă", ["Settings_LocalPrefs_ReduceMotion"] = "Reducere mișcare",
             ["Settings_LocalPrefs_Saved"] = "Salvat. Tema, limba și opțiunea de mișcare au fost actualizate (se schimbă doar textul tradus; restul rămâne în norvegiană).",
             ["Settings_LocalPrefs_SaveFailed"] = "Setările nu au putut fi salvate local.", ["Settings_LocalPrefs_Reloaded"] = "Încărcat din fișierul salvat.",
+            ["Guide_OpenExercise"] = "Deschide exercițiul",
+            ["Exercise_116_Title"] = "Fonație cu bule în apă (Lax Vox)",
+            ["Exercise_116_Description"] = "Variantă în apă a fonației prin pai (SOVT): cântă printr-un tub larg introdus într-un pahar cu apă, astfel încât să apară bule. Contrapresiunea reglabilă și feedbackul vizual și tactil oferă o încălzire blândă care reduce solicitarea vocii înaintea exercițiilor de feminizare.",
+            ["Exercise_117_Title"] = "Câine mare / câine mic (contrast de rezonanță)",
+            ["Exercise_117_Description"] = "Compară lătratul întunecat și deschis al unui câine mare cu scheunatul luminos și proiectat înainte al unui câine mic. Simte cum spațiul de rezonanță își schimbă dimensiunea independent de înălțimea sunetului. Păstrează forma mică și luminoasă în vocale, cuvinte și propoziții. Rezonanța contribuie adesea mai mult la feminizare decât înălțimea sunetului singură.",
         },
         ["hr"] = new()
         {
@@ -952,6 +1017,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Save"] = "Spremi", ["Settings_LocalPrefs_Reload"] = "Ponovno učitaj", ["Settings_LocalPrefs_ReduceMotion"] = "Smanji kretanje",
             ["Settings_LocalPrefs_Saved"] = "Spremljeno. Tema, jezik i odabir kretanja su ažurirani (mijenja se samo prevedeni tekst; ostatak ostaje na norveškom).",
             ["Settings_LocalPrefs_SaveFailed"] = "Postavke nije moguće spremiti lokalno.", ["Settings_LocalPrefs_Reloaded"] = "Učitano iz spremljene datoteke.",
+            ["Guide_OpenExercise"] = "Otvori vježbu",
+            ["Exercise_116_Title"] = "Fonacija s mjehurićima u vodi (Lax Vox)",
+            ["Exercise_116_Description"] = "Vodena inačica fonacije kroz slamku (SOVT): pjevajte kroz široku cijev u čašu vode tako da nastanu mjehurići. Podesivi protutlak te vidljiva i opipljiva povratna informacija omogućuju blago zagrijavanje koje smanjuje opterećenje glasa prije vježbi feminizacije.",
+            ["Exercise_117_Title"] = "Veliki pas / mali pas (kontrast rezonancije)",
+            ["Exercise_117_Description"] = "Usporedite taman, otvoren lavež velikog psa sa svijetlim, naprijed usmjerenim lavežom malog psa. Osjetite kako se veličina rezonantnog prostora mijenja neovisno o visini tona. Prenesite mali, svijetli oblik u samoglasnike, riječi i rečenice. Rezonancija često više pridonosi feminizaciji od same visine tona.",
         },
         ["tr"] = new()
         {
@@ -1012,6 +1082,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Save"] = "Kaydet", ["Settings_LocalPrefs_Reload"] = "Yeniden yükle", ["Settings_LocalPrefs_ReduceMotion"] = "Hareketi azalt",
             ["Settings_LocalPrefs_Saved"] = "Kaydedildi. Tema, dil ve hareket tercihi güncellendi (yalnızca çevrilmiş metin değişir; geri kalanı Norveççe kalır).",
             ["Settings_LocalPrefs_SaveFailed"] = "Ayarlar yerel olarak kaydedilemedi.", ["Settings_LocalPrefs_Reloaded"] = "Kaydedilen dosyadan yüklendi.",
+            ["Guide_OpenExercise"] = "Alıştırmayı aç",
+            ["Exercise_116_Title"] = "Suda kabarcıklarla sesleme (Lax Vox)",
+            ["Exercise_116_Description"] = "Pipetle seslemenin (SOVT) suda yapılan biçimi: geniş bir tüpten bir bardak suya doğru ses vererek kabarcık oluşturun. Ayarlanabilir karşı basınç ile görsel ve dokunsal geri bildirim, feminizasyon alıştırmaları öncesinde sesi yormadan ısınmaya yardımcı olur.",
+            ["Exercise_117_Title"] = "Büyük köpek / küçük köpek (rezonans karşıtlığı)",
+            ["Exercise_117_Description"] = "Büyük bir köpeğin koyu, açık havlamasıyla küçük bir köpeğin parlak, önde duyulan havlamasını karşılaştırın. Ses yüksekliği değişmeden rezonans boşluğunun boyutunun nasıl değiştiğini hissedin. Küçük, parlak şekli ünlülere, sözcüklere ve cümlelere taşıyın. Rezonans, feminizasyonda genellikle tek başına ses perdesinden daha etkilidir.",
         },
         ["uk"] = new()
         {
@@ -1072,6 +1147,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Save"] = "Зберегти", ["Settings_LocalPrefs_Reload"] = "Перезавантажити", ["Settings_LocalPrefs_ReduceMotion"] = "Зменшити рух",
             ["Settings_LocalPrefs_Saved"] = "Збережено. Тему, мову та параметр руху оновлено (змінюється лише перекладений текст; решта залишається норвезькою).",
             ["Settings_LocalPrefs_SaveFailed"] = "Не вдалося зберегти налаштування локально.", ["Settings_LocalPrefs_Reloaded"] = "Завантажено зі збереженого файлу.",
+            ["Guide_OpenExercise"] = "Відкрити вправу",
+            ["Exercise_116_Title"] = "Фонація з бульбашками у воді (Lax Vox)",
+            ["Exercise_116_Description"] = "Водний варіант фонації через соломинку (SOVT): співайте крізь широку трубку у склянку води, щоб утворювалися бульбашки. Регульований протитиск і зоровий та тактильний зворотний зв’язок забезпечують м’яку розминку, що зменшує голосове навантаження перед вправами з фемінізації.",
+            ["Exercise_117_Title"] = "Великий собака / малий собака (контраст резонансу)",
+            ["Exercise_117_Description"] = "Порівняйте темний, відкритий гавкіт великого собаки зі світлим, спрямованим уперед дзявканням малого. Відчуйте зміну розміру резонансного простору незалежно від висоти голосу. Перенесіть малу, світлу форму на голосні, слова й речення. Резонанс часто важливіший для фемінізації, ніж сама висота голосу.",
         },
         ["el"] = new()
         {
@@ -1132,6 +1212,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Save"] = "Αποθήκευση", ["Settings_LocalPrefs_Reload"] = "Επαναφόρτωση", ["Settings_LocalPrefs_ReduceMotion"] = "Μείωση κίνησης",
             ["Settings_LocalPrefs_Saved"] = "Αποθηκεύτηκε. Το θέμα, η γλώσσα και η προτίμηση κίνησης ενημερώθηκαν (αλλάζει μόνο το μεταφρασμένο κείμενο· τα υπόλοιπα παραμένουν στα νορβηγικά).",
             ["Settings_LocalPrefs_SaveFailed"] = "Δεν ήταν δυνατή η τοπική αποθήκευση των ρυθμίσεων.", ["Settings_LocalPrefs_Reloaded"] = "Φορτώθηκε από το αποθηκευμένο αρχείο.",
+            ["Guide_OpenExercise"] = "Άνοιγμα άσκησης",
+            ["Exercise_116_Title"] = "Φώνηση με φυσαλίδες στο νερό (Lax Vox)",
+            ["Exercise_116_Description"] = "Παραλλαγή της φώνησης με καλαμάκι (SOVT): τραγουδήστε μέσα από έναν φαρδύ σωλήνα σε ένα ποτήρι νερό ώστε να σχηματιστούν φυσαλίδες. Η ρυθμιζόμενη αντίθλιψη και η οπτική και απτική ανάδραση προσφέρουν ήπια προθέρμανση που μειώνει την καταπόνηση πριν από τις ασκήσεις θηλυκοποίησης της φωνής.",
+            ["Exercise_117_Title"] = "Μεγάλος σκύλος / μικρός σκύλος (αντίθεση αντήχησης)",
+            ["Exercise_117_Description"] = "Συγκρίνετε το σκούρο, ανοιχτό γάβγισμα ενός μεγάλου σκύλου με το φωτεινό, μπροστινό γάβγισμα ενός μικρού. Νιώστε πώς το μέγεθος του χώρου αντήχησης αλλάζει ανεξάρτητα από το τονικό ύψος. Κρατήστε τη μικρή, φωτεινή διαμόρφωση σε φωνήεντα, λέξεις και προτάσεις. Η αντήχηση συχνά συμβάλλει στη θηλυκοποίηση περισσότερο από το τονικό ύψος μόνο του.",
         },
         ["ar"] = new()
         {
@@ -1192,6 +1277,11 @@ internal static class ScaffoldTranslations
             ["Settings_LocalPrefs_Save"] = "حفظ", ["Settings_LocalPrefs_Reload"] = "إعادة التحميل", ["Settings_LocalPrefs_ReduceMotion"] = "تقليل الحركة",
             ["Settings_LocalPrefs_Saved"] = "تم الحفظ. تم تحديث السمة واللغة وتفضيل الحركة (يتغير النص المترجَم فقط؛ والباقي يبقى بالنرويجية).",
             ["Settings_LocalPrefs_SaveFailed"] = "تعذّر حفظ الإعدادات محليًا.", ["Settings_LocalPrefs_Reloaded"] = "تم التحميل من الملف المحفوظ.",
+            ["Guide_OpenExercise"] = "فتح التمرين",
+            ["Exercise_116_Title"] = "التصويت بالفقاعات في الماء (Lax Vox)",
+            ["Exercise_116_Description"] = "نسخة مائية من التصويت عبر المصّاصة (SOVT): غنِّ عبر أنبوب عريض في كوب ماء لتكوين فقاعات. يوفّر الضغط العكسي القابل للضبط والتغذية الراجعة البصرية واللمسية إحماءً لطيفًا يقلّل إجهاد الصوت قبل تمارين تأنيثه.",
+            ["Exercise_117_Title"] = "كلب كبير / كلب صغير (تباين الرنين)",
+            ["Exercise_117_Description"] = "قارن نباح كلب كبير داكن النبرة ومفتوح بِنُباح كلب صغير مشرق يتردّد في مقدمة الفم. لاحظ كيف يتغير حجم حيز الرنين بمعزل عن طبقة الصوت. حافظ على الشكل الصغير المشرق عند نطق الحركات والكلمات والجمل. للرنين في كثير من الأحيان أثر في تأنيث الصوت يفوق أثر الطبقة وحدها.",
         },
     };
 }
