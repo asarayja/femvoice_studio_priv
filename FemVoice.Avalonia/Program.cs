@@ -1433,12 +1433,28 @@ internal static class Program
             for (int i = 0; i < 5; i++)
                 db.SaveTrainingSession(new global::FemVoiceStudio.Models.TrainingSession
                 { UserId = 1, StartTime = DateTime.UtcNow.AddDays(-i), EndTime = DateTime.UtcNow.AddDays(-i).AddMinutes(5),
-                  AveragePitch = 175 + i, OverallScore = 60 + i, Feedback = "s" });
+                  AveragePitch = 175 + i, OverallScore = 60 + i, DifficultyLevel = global::FemVoiceStudio.Models.DifficultyLevel.Nybegynner, Feedback = "s" });
 
             var vm = new StatisticsViewModel(db);
             bool tilesOk = vm.EngineAvailable && vm.Tiles.Count >= 5;
             bool levelOk = vm.HasLevel && vm.LevelName.Length > 0;
-            bool recentOk = vm.HasRecentSessions && vm.RecentSessions.Count == 5
+            var originalCulture = Localized.CurrentCulture;
+            bool localized;
+            try
+            {
+                Localized.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+                var english = new StatisticsViewModel(db);
+                localized = english.EngineAvailable && english.LevelName == "Beginner"
+                    && english.RecentSessions.All(r => r.Difficulty == "Beginner")
+                    && english.Tiles.Any(t => t.Label == "Days trained")
+                    && english.Tiles.Any(t => t.Label == "Total time")
+                    && english.Tiles.Any(t => t.Label == "Consistency")
+                    && english.Tiles.Any(t => t.Label == "Average score");
+                Localized.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("nb-NO");
+                localized &= new StatisticsViewModel(db).LevelName == "Nybegynner";
+            }
+            finally { Localized.CurrentCulture = originalCulture; }
+            bool recentOk = localized && vm.HasRecentSessions && vm.RecentSessions.Count == 5
                             && vm.RecentSessions.All(r => r.Score.Contains("/ 100") && r.Duration.Contains("min"));
             Console.WriteLine($"[stats] noDbOk={noDbOk} tilesOk={tilesOk}({vm.Tiles.Count}) levelOk={levelOk}('{vm.LevelName}') recentOk={recentOk}({vm.RecentSessions.Count})");
             bool ok = noDbOk && tilesOk && levelOk && recentOk;

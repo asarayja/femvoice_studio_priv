@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using FemVoiceStudio.Data;
 using FemVoiceStudio.Services;   // ProgressionService, LevelClassificationSystem
@@ -52,13 +51,13 @@ public sealed class StatisticsViewModel
 
             Tiles = new List<AnalysisSummaryMetric>
             {
-                new(Localized.Get("Statistics_TotalSessions", "Totalt antall økter"), sessions.Count.ToString()),
-                new(Localized.Get("Statistics_CurrentStreak", "Nåværende streak"), $"{streak} dager"),
-                new("Dager trent", daysTrained.ToString()),
-                new("Total tid", $"{totalMinutes} min"),
+                new(Localized.Get("Statistics_TotalSessions", "Totalt antall økter"), sessions.Count.ToString(Localized.CurrentCulture)),
+                new(Localized.Get("Statistics_CurrentStreak", "Nåværende streak"), string.Format(Localized.CurrentCulture, Localized.Get("Report_TimeWindow_Days", "{0} dager"), streak)),
+                new(Localized.Get("Statistics_DaysTrained", "Dager trent"), daysTrained.ToString(Localized.CurrentCulture)),
+                new(Localized.Get("Statistics_TotalTime", "Total tid"), $"{totalMinutes} min"),
                 new(Localized.Get("Statistics_AveragePitch", "Gjennomsnittlig pitch"), avgPitch > 0 ? $"{avgPitch:F0} Hz" : "—"),
-                new("Konsistens", $"{consistency:F0} %"),
-                new("Snitt score", $"{avgScore:F0} / 100"),
+                new(Localized.Get("Dashboard_Consistency", "Konsistens"), $"{consistency:F0} %"),
+                new(Localized.Get("Analysis_AvgScoreLabel", "Snitt score"), $"{avgScore:F0} / 100"),
             };
 
             // Current-level card (real level + progress toward promotion).
@@ -66,7 +65,7 @@ public sealed class StatisticsViewModel
             {
                 var status = new ProgressionService(database, LocalizationService.Instance).GetProgressionStatus();
                 var level = LevelClassificationSystem.FromDifficultyLevel(status.CurrentLevel);
-                LevelName = LevelClassificationSystem.GetLevelName(level);
+                LevelName = Localized.Get($"Level_{level}", LevelClassificationSystem.GetLevelName(level));
                 if (status.SessionsRequiredForPromotion > 0)
                 {
                     LevelProgressPercent = Math.Round(Math.Clamp(100.0 * status.SessionsAtCurrentLevel / status.SessionsRequiredForPromotion, 0, 100));
@@ -80,8 +79,8 @@ public sealed class StatisticsViewModel
             RecentSessions = sessions
                 .OrderByDescending(s => s.StartTime).Take(10)
                 .Select(s => new StatSessionRow(
-                    s.StartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
-                    s.DifficultyLevel.ToString(),
+                    s.StartTime.ToLocalTime().ToString("g", Localized.CurrentCulture),
+                    ExerciseDisplay.Difficulty(s.DifficultyLevel),
                     $"{(int)Math.Round(s.DurationSeconds / 60.0)} min",
                     $"{s.OverallScore:F0} / 100"))
                 .ToList();
