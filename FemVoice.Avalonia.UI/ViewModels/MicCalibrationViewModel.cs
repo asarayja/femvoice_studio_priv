@@ -43,18 +43,13 @@ public partial class MicCalibrationViewModel : ObservableObject, IDisposable
 
     public MicCalibrationViewModel() : this(null, null) { }
 
-    /// <summary>Which microphone to calibrate: the one chosen in Settings (null = system default). Calibration used to
-    /// open the system default regardless, so a user who had picked e.g. a USB headset got a noise gate and a
-    /// resonance baseline measured on a DIFFERENT microphone than the one every training screen then used — and the
-    /// brightness scale is strongly microphone-dependent. Settable so tests need not touch the real preferences.</summary>
-    public Func<string?> SelectedMicDeviceId { get; set; } = FemVoice.Avalonia.Preferences.CapturePreferences.SelectedMicDeviceId;
-
     /// <param name="capture">Injected capture backend; when null a real-when-available backend is created lazily
     /// on the first capture phase (so construction/headless stays side-effect-free).</param>
     /// <param name="ui">Dispatcher to marshal capture-thread frames to the UI thread; inline when null (tests).</param>
     /// <param name="profileDirectory">Override the calibration-profile directory (tests write to a temp path so the
     /// real user profile is never touched); null → the frozen service's default LocalApplicationData location.</param>
-    public MicCalibrationViewModel(IAudioCaptureService? capture, IUiDispatcher? ui, string? profileDirectory = null)
+    public MicCalibrationViewModel(IAudioCaptureService? capture, IUiDispatcher? ui, string? profileDirectory = null,
+        Func<string?>? preferredDeviceId = null)
     {
         _ui = ui ?? new InlineUiDispatcher();
         _capture = capture;   // may be null → a backend is created on first capture
@@ -64,18 +59,22 @@ public partial class MicCalibrationViewModel : ObservableObject, IDisposable
         try
         {
             var probe = _capture ?? AudioCaptureBackendFactory.CreateForRuntime();
-            Devices = probe.GetInputDevices().Select(d => d.Name).ToList();
+            Devices = probe.GetInputDevices();
             _backend = _capture ?? probe;
             IsAvailable = Devices.Count > 0;
             if (_capture is null && probe is IDisposable dp && !ReferenceEquals(probe, _backend)) dp.Dispose();
         }
         catch
         {
-            Devices = Array.Empty<string>();
+            Devices = Array.Empty<AudioInputDevice>();
             IsAvailable = false;
         }
 
-        SelectedDevice = Devices.Count > 0 ? Devices[0] : null;
+        string? savedId = null;
+        try { savedId = (preferredDeviceId ?? FemVoice.Avalonia.Preferences.CapturePreferences.SelectedMicDeviceId)(); }
+        catch { /* Missing or unreadable preferences use the default input. */ }
+        SelectedDevice = Devices.FirstOrDefault(d => d.Id == savedId)
+            ?? Devices.FirstOrDefault(d => d.IsDefault) ?? Devices.FirstOrDefault();
         _instruction = Localized.Get("MicCalibration_Ready",
             "Trykk start. Deretter velger du selv når appen skal måle stille rom og når den skal måle din vanlige talestemme.");
         _primaryActionLabel = Localized.Get("MicCalibration_RecordSilence", "Mål stille rom");
@@ -92,13 +91,19 @@ public partial class MicCalibrationViewModel : ObservableObject, IDisposable
     public string LevelLabel => Localized.Get("MicCal_Level", "Inngangsnivå");
     public string RestartLabel => Localized.Get("MicCalibration_Restart", "Start på nytt");
 
-    /// <summary>Input device names (display-only).</summary>
-    public IReadOnlyList<string> Devices { get; }
-    [ObservableProperty] private string? _selectedDevice;
+    public IReadOnlyList<AudioInputDevice> Devices { get; }
+    [ObservableProperty] private AudioInputDevice? _selectedDevice;
+
+    partial void OnSelectedDeviceChanged(AudioInputDevice? value)
+    {
+        // A room measurement made on a different input cannot be reused for the voice phase.
+        if (_step is Step.VoiceReady or Step.Completed) Restart();
+    }
 
     /// <summary>True when at least one input device exists (drives the record button / meter visibility).</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanRecord))]
+    [NotifyPropertyChangedFor(nameof(CanSelectDevice))]
     private bool _isAvailable;
 
     // ── Wizard-visible state ──────────────────────────────────────────────────────────────────────────────────
@@ -121,6 +126,7 @@ public partial class MicCalibrationViewModel : ObservableObject, IDisposable
     /// <summary>True while a capture phase is in progress (buttons disabled).</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanRecord))]
+    [NotifyPropertyChangedFor(nameof(CanSelectDevice))]
     private bool _capturing;
     [ObservableProperty] private string _statusMessage = string.Empty;
 
@@ -131,6 +137,7 @@ public partial class MicCalibrationViewModel : ObservableObject, IDisposable
 
     /// <summary>The primary button is usable when a device exists, no phase is recording, and we're not finished.</summary>
     public bool CanRecord => IsAvailable && !Capturing && !IsComplete;
+    public bool CanSelectDevice => IsAvailable && !Capturing;
 
     // Below this RMS-derived level, treat the input as silence (metering epsilon — NOT a clinical noise gate).
     private const double SignalEpsilon = 2.0;
@@ -192,7 +199,7 @@ public partial class MicCalibrationViewModel : ObservableObject, IDisposable
             return;
         }
 
-        var deviceName = string.IsNullOrWhiteSpace(SelectedDevice) ? "default-input" : SelectedDevice!;
+        var deviceName = SelectedDevice?.Name ?? "default-input";
         var profile = _calibration.BuildAdaptiveProfile(deviceName, _background, _voice);
         _calibration.Save(profile);
 
@@ -265,21 +272,24 @@ public partial class MicCalibrationViewModel : ObservableObject, IDisposable
         _backend.FrameAvailable += OnPhaseFrame;
         // Calibration wants RAW input (WPF disables ApplyInputProcessing on Windows). The Avalonia capture path is
         // already raw PCM (ALSA/synthetic apply no AGC/noise-suppression), so no processing flag is needed here.
-        // Same device as the training screens (dashboard/exercise/analyzer/resonance all pass the Settings choice).
-        string? deviceId = null;
-        try { deviceId = SelectedMicDeviceId(); } catch { /* unreadable preference → system default */ }
-        await _backend.StartAsync(new AudioCaptureOptions(DeviceId: deviceId));
-
-        var startUtc = DateTime.UtcNow;
-        while ((DateTime.UtcNow - startUtc).TotalSeconds < PhaseSeconds)
+        try
         {
-            Progress = Math.Min(100, (DateTime.UtcNow - startUtc).TotalSeconds / PhaseSeconds * 100);
-            await Task.Delay(50);
-        }
+            var deviceId = SelectedDevice?.Id;
+            await _backend.StartAsync(new AudioCaptureOptions(DeviceId: deviceId == "default" ? null : deviceId));
 
-        _backend.FrameAvailable -= OnPhaseFrame;
-        await _backend.StopAsync();
-        Capturing = false;
+            var startUtc = DateTime.UtcNow;
+            while ((DateTime.UtcNow - startUtc).TotalSeconds < PhaseSeconds)
+            {
+                Progress = Math.Min(100, (DateTime.UtcNow - startUtc).TotalSeconds / PhaseSeconds * 100);
+                await Task.Delay(50);
+            }
+        }
+        finally
+        {
+            _backend.FrameAvailable -= OnPhaseFrame;
+            try { await _backend.StopAsync(); }
+            finally { Capturing = false; }
+        }
         Progress = 100;
         lock (_bufferLock) return _phaseBuffer.ToArray();
     }
