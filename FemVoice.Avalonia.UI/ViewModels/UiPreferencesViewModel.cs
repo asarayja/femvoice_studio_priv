@@ -274,7 +274,7 @@ public partial class UiPreferencesViewModel : ObservableObject
     }
 
     // ── Data: real backup / restore / clear (inline confirmation) ─────────────────────────────────────────────────
-    public string DataHeading => Localized.Get("Settings_Database", "Data og sikkerhetskopi");
+    public string DataHeading => Localized.Get("Settings_BackupHeading", "Data og sikkerhetskopi");
     public string DataNote => Localized.Get("Settings_DatabaseNote",
         "Ekte handlinger på den lokale databasen. Sikkerhetskopi er trygt; gjenoppretting og tømming endrer dataene dine.");
     public string BackupLabel => Localized.Get("Settings_CreateBackup", "Lag sikkerhetskopi");

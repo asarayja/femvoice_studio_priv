@@ -1149,9 +1149,11 @@ internal static class Program
             }
             catch { }
         }
+        var previousCulture = Localized.CurrentCulture;
         Cleanup();
         try
         {
+            LanguageActivation.Apply("en-US");
             var phoneDb = new global::FemVoiceStudio.Data.DatabaseService(phoneName);
             var pcDb = new global::FemVoiceStudio.Data.DatabaseService(pcName);
             void Train(global::FemVoiceStudio.Data.DatabaseService db, DateTime whenUtc, double pitch)
@@ -1181,12 +1183,14 @@ internal static class Program
             var pulled = await sync.PullAsync();
             var days = phoneDb.GetTrainingSessions(DateTime.MinValue, DateTime.UtcNow.AddDays(1))
                               .Select(s => s.StartTime.Date).Distinct().ToList();
-            bool mergeOk = pulled.Ok && pulled.SessionsAdded == 1 && Count(phoneDb) == 2
+            bool mergeOk = pulled.Ok && pulled.Message == "New sessions: 1. Backups merged: 1."
+                           && pulled.SessionsAdded == 1 && Count(phoneDb) == 2
                            && days.Contains(monday.Date) && days.Contains(monday.AddDays(1).Date);
 
             // Idempotent: pulling again adds nothing and duplicates nothing.
             var again = await sync.PullAsync();
-            bool idempotent = again.Ok && again.SessionsAdded == 0 && Count(phoneDb) == 2;
+            bool idempotent = again.Ok && again.Message == "Already up to date. No new sessions."
+                              && again.SessionsAdded == 0 && Count(phoneDb) == 2;
 
             // PUSH uploads a backup named after the device.
             var pushed = await sync.PushAsync(new DateTime(2026, 4, 6, 20, 0, 0), "Min PC");
@@ -1250,7 +1254,7 @@ internal static class Program
             return ok ? 0 : 1;
         }
         catch (Exception ex) { Console.WriteLine($"[cloud] Cloud sync smoke FAIL: {ex.GetType().Name}: {ex.Message}"); return 1; }
-        finally { Cleanup(); }
+        finally { Localized.CurrentCulture = previousCulture; Cleanup(); }
     }
 
     // Carrying progress BETWEEN DEVICES: merging a backup must be a UNION (both devices' sessions survive), where a
@@ -4919,7 +4923,11 @@ internal static class Program
             vm.SaveCommand.Execute(null);
             // Save switched the resolver live to en-US — so even the status itself renders in English ("Saved…").
             bool saveAppliesLive = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name == "en-US"
-                && (vm.Status.Contains("Saved") || vm.Status.Contains("Lagret"));
+                && (vm.Status.Contains("Saved") || vm.Status.Contains("Lagret"))
+                && vm.DataHeading == "Data and backups"
+                && string.Format(G("Settings_Cloud_SignedInFormat", "missing"), "test") == "Signed in as test."
+                && G("Settings_Cloud_SignInFailed", "missing") == "Sign-in was cancelled or failed."
+                && G("Settings_Cloud_SignedOut", "missing") == "Signed out on this device.";
 
             Console.WriteLine($"[lang] svApplied={svApplied} enApplied={enApplied} nbApplied={nbApplied} allCulturesSwitch={allCulturesSwitch} englishFallback={englishFallback}");
             Console.WriteLine($"[lang] startupRead={startupRead} missingSafe={missingSafe} corruptSafe={corruptSafe} unknownSafe={unknownSafe} threadCultureUntouched={threadCultureUntouched}");
