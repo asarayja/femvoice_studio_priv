@@ -34,6 +34,8 @@ internal static class ScaffoldTranslations
             ["Dash_CalibrateHint_Heading"] = "Calibrate your microphone",
             ["Dash_CalibrateHint_Body"] = "The resonance meter gets more accurate once it knows your ordinary voice. Takes under a minute.",
             ["Dash_CalibrateHint_Button"] = "Calibrate now",
+            ["Statistics_DaysTrained"] = "Days trained",
+            ["Statistics_TotalTime"] = "Total time",
             ["Reports_HistoryTruncatedFormat"] = "Showing the {0} most recent of {1} sessions. The export contains all of them.",
             ["StartHere_Heading"] = "Start here",
             ["StartHere_StageFormat"] = "Step {0} of {1} · {2}",

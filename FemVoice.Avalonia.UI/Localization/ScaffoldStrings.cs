@@ -189,6 +189,8 @@ public static class ScaffoldStrings
         "StartHere_StageProgress",
         "StartHere_Button",
         // Reports: explicit note when the on-screen history list is capped (the export never is).
+        "Statistics_DaysTrained",
+        "Statistics_TotalTime",
         "Reports_HistoryTruncatedFormat",
         // Dashboard one-time hint pointing a new user at mic calibration (meter accuracy).
         "Dash_CalibrateHint_Heading",
