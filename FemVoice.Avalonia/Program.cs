@@ -1504,7 +1504,13 @@ internal static class Program
                 foreach (var culture in new[] { "nb-NO", "en-US", "de-DE", "fr-FR", "es-ES", "it-IT", "sv-SE" })
                 {
                     global::FemVoice.Avalonia.Localization.LanguageActivation.Apply(culture);
-                    var headers = new CalendarViewModel(db, _ => { }).WeekdayHeaders;
+                    var calendar = new CalendarViewModel(db, _ => { });
+                    var headers = calendar.WeekdayHeaders;
+                    var expectedCulture = System.Globalization.CultureInfo.GetCultureInfo(culture);
+                    if (calendar.MonthLabel != calendar.Month.ToString("Y", expectedCulture)
+                        || calendar.Days.Count != 42
+                        || calendar.Days.Any(day => day.Tooltip.Split('\n')[0] != day.Date.ToString("d", expectedCulture)))
+                        weekdaysOk = false;
                     string joined = string.Join(",", headers);
                     seenHeaders.Add($"{culture}=[{joined}]");
                     if (headers.Count != 7) { weekdaysOk = false; continue; }
