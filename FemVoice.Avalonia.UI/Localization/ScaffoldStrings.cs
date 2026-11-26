@@ -208,6 +208,20 @@ public static class ScaffoldStrings
         "Settings_Cloud_SignedInFormat",
         "Settings_Cloud_SignInFailed",
         "Settings_Cloud_SignedOut",
+        "Cloud_NoLocalBackup",
+        "Cloud_UploadFailed",
+        "Cloud_UploadedFormat",
+        "Cloud_NeedsDatabase",
+        "Cloud_NothingToPull",
+        "Cloud_PulledFormat",
+        "Cloud_PulledNothing",
+        "Cloud_NotConfigured",
+        "Cloud_NotSignedIn",
+        "Cloud_FailedFormat",
+        "SettingsData_MergeUnavailable",
+        "SettingsData_MergedFormat",
+        "SettingsData_MergedNothing",
+        "SettingsData_MergeFailedFormat",
     };
 
     /// <summary>Keys with a trusted, culture-invariant translation already populated (no native review needed).</summary>
