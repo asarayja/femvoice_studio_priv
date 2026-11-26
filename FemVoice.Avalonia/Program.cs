@@ -1757,6 +1757,16 @@ internal static class Program
             bool canPersist = vm.CanPersist;
             vm.PersistCommand.Execute(null);
             bool recentShows = vm.RecentOverrides.Count >= 1 && vm.HasRecent;
+            var savedCulture = Localized.CurrentCulture;
+            try
+            {
+                LanguageActivation.Apply("en-US");
+                var english = new ManualOverridePanelViewModel(db, null);
+                recentShows &= english.RecentOverrides.Any(row => row.EndsWith(" · limited", StringComparison.Ordinal))
+                    && english.WasClampedText == (english.WasClamped ? "Yes" : "No")
+                    && Localized.Get("Override_IntendedStability", "missing") == "Requested stability threshold";
+            }
+            finally { Localized.CurrentCulture = savedCulture; }
             // Independently confirm the row is in the store (WasApplied + WasClamped preserved).
             var store = new global::FemVoiceStudio.Services.ManualOverridesStore(
                 new global::FemVoiceStudio.Services.SqliteManualOverridesRepository(db.ConnectionString));

@@ -118,7 +118,10 @@ public partial class ManualOverridePanelViewModel : ObservableObject
 
     // ── Clamped outcome (the ONLY thing shown — never the raw intent) ────────────────────────────────────────
     [ObservableProperty] private bool _wasApplied;
-    [ObservableProperty] private bool _wasClamped;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(WasClampedText))]
+    private bool _wasClamped;
+    public string WasClampedText => WasClamped ? Localized.Get("Common_Yes", "Ja") : Localized.Get("Common_No", "Nei");
     [ObservableProperty] private string _blockedReasonCode = "";
     [ObservableProperty] private string _appliedResonance = "—";
     [ObservableProperty] private string _appliedStability = "—";
@@ -246,8 +249,13 @@ public partial class ManualOverridePanelViewModel : ObservableObject
             var now = DateTime.UtcNow;
             var rows = store.GetOverridesAsync(1, now.AddDays(-90), now.AddDays(1)).GetAwaiter().GetResult()
                 .OrderByDescending(e => e.RequestedAt).Take(10)
-                .Select(e => $"{e.RequestedAt.ToLocalTime():yyyy-MM-dd HH:mm} · {e.OverrideKind} · "
-                           + (e.WasApplied ? (e.WasClamped ? "klampet" : "anvendt") : $"ikke anvendt ({e.BlockedReasonCode})"))
+                .Select(e =>
+                {
+                    var outcome = e.WasApplied
+                        ? (e.WasClamped ? Localized.Get("Override_HistoryLimited", "klampet") : Localized.Get("Override_HistoryApplied", "anvendt"))
+                        : Localized.Get("Override_HistoryNotApplied", "ikke anvendt") + $" ({e.BlockedReasonCode})";
+                    return $"{e.RequestedAt.ToLocalTime().ToString("g", Localized.CurrentCulture)} · {e.OverrideKind} · {outcome}";
+                })
                 .ToList();
             RecentOverrides = rows;
         }
