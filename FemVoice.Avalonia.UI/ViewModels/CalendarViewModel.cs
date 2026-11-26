@@ -113,7 +113,7 @@ public sealed partial class CalendarViewModel : ObservableObject
     // sessions is clickable → openDay(date). Fails safe (empty grid) on any DB error.
     private void BuildGrid()
     {
-        MonthLabel = Month.ToString("MMMM yyyy", CultureInfo.CurrentCulture);
+        MonthLabel = Month.ToString("Y", Localized.CurrentCulture);
         try
         {
             // Grid starts on the Monday on/before the 1st of the month; 42 cells (6 weeks).
@@ -151,10 +151,10 @@ public sealed partial class CalendarViewModel : ObservableObject
                 int count = agg?.Sessions ?? 0;
                 var cellDate = d;
                 string tip = count > 0
-                    ? string.Format(CultureInfo.CurrentCulture,
+                    ? string.Format(Localized.CurrentCulture,
                         Localized.Get("Calendar_DayTooltipFormat", "{0:d}\\n{1} økter · {2} min\\nSnitt score {3:F0} · pitch {4:F0} · resonans {5:F0}").Replace("\\n", "\n"),
                         d, count, agg!.Minutes, agg.Score, agg.PitchScore, agg.ResonanceScore)
-                    : d.ToString("d", CultureInfo.CurrentCulture);
+                    : d.ToString("d", Localized.CurrentCulture);
                 cells.Add(new CalendarDayCell(d, d.Month == Month.Month, d == today, count,
                     agg?.Minutes ?? 0, agg?.Score ?? 0, agg?.PitchScore ?? 0, agg?.ResonanceScore ?? 0, tip,
                     new RelayCommand(() => { if (count > 0) _openDay?.Invoke(cellDate); })));
