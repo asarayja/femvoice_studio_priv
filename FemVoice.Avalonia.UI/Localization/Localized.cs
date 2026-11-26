@@ -65,6 +65,8 @@ public static class Localized
     /// string passed as <paramref name="fallback"/>. For Norwegian, the Norwegian source is used directly. This is
     /// Avalonia-local only — no SetLanguage, no thread-culture change, no shared-Core mutation.
     /// </summary>
+    public static string Get(string key) => Get(key, Core(key, Norwegian) ?? key);
+
     public static string Get(string key, string fallback)
     {
         if (string.IsNullOrEmpty(key)) return fallback;

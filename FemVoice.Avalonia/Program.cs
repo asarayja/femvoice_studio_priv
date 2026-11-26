@@ -4844,9 +4844,12 @@ internal static class Program
             bool svApplied = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name == "sv-SE"
                 && G("Settings_Title", "fb") == "Inställningar";
             global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");
-            bool enApplied = G("Settings_Title", "fb") == "Settings" && G("Common_Save", "fb") == "Save";
+            var service = global::FemVoice.Avalonia.Localization.AvaloniaLocalizationService.Instance;
+            bool enApplied = G("Settings_Title", "fb") == "Settings" && G("Common_Save", "fb") == "Save"
+                && service.IsEnglish && service["Common_Save"] == "Save";
             global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
-            bool nbApplied = G("Settings_Title", "fb") == "Innstillinger";
+            bool nbApplied = G("Settings_Title", "fb") == "Innstillinger"
+                && service.IsNorwegian && service.GetString("Settings_Title") == "Innstillinger";
 
             // ALL 20 cultures switch the navigable UI: each non-Norwegian culture returns a translated (non-source)
             // value for a high-visibility key.
