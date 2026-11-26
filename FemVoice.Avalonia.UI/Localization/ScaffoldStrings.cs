@@ -147,6 +147,8 @@ public static class ScaffoldStrings
         "Shell_MicStatus",
         "Shell_Mode",
         "Shell_Nav_Analysis",
+        "Shell_NavHeading",
+        "Shell_PageFormat",
         "Shell_Nav_Dashboard",
         "Shell_Nav_Diagnostics",
         "Shell_Nav_Guide",

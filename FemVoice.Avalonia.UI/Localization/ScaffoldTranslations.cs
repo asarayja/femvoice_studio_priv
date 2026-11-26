@@ -59,6 +59,8 @@ internal static class ScaffoldTranslations
             ["Perception_TipRaisePitch"] = "Raise your pitch a little for a brighter impression.",
             ["Perception_TipBrighten"] = "Brighten your resonance and bring it more forward in the mouth.",
             ["Perception_TipHold"] = "Nice — hold this tone steadily.",
+            ["Shell_NavHeading"] = "Navigation",
+            ["Shell_PageFormat"] = "Page: {0}",
             ["Shell_Nav_Dashboard"] = "Dashboard",
             ["Shell_Nav_Guide"] = "Exercise guide",
             ["Shell_Nav_Settings"] = "Settings",

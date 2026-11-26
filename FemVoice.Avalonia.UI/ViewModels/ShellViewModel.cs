@@ -143,6 +143,8 @@ public partial class ShellViewModel : ObservableObject
             BuildNav();
             OnPropertyChanged(nameof(MicStatusText));
             OnPropertyChanged(nameof(ModeText));
+            OnPropertyChanged(nameof(CurrentDestinationLabel));
+            OnPropertyChanged(nameof(DestinationStatus));
             CurrentPage = current switch
             {
                 ExerciseGuideViewModel => _guide,
@@ -163,6 +165,8 @@ public partial class ShellViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsOnboarding))]
     [NotifyPropertyChangedFor(nameof(IsChromeVisible))]
+    [NotifyPropertyChangedFor(nameof(CurrentDestinationLabel))]
+    [NotifyPropertyChangedFor(nameof(DestinationStatus))]
     private object _currentPage;
 
     /// <summary>True while the first-run onboarding is the active page. Drives hiding the nav rail / info sidebar /
@@ -212,7 +216,9 @@ public partial class ShellViewModel : ObservableObject
     }
 
     /// <summary>Label of the current destination, for the status strip.</summary>
-    [ObservableProperty] private string _currentDestinationLabel = "Dashbord";
+    public string CurrentDestinationLabel => GetDestinationLabel(CurrentPage);
+    public string DestinationStatus => string.Format(Localized.CurrentCulture,
+        Localized.Get("Shell_PageFormat", "Side: {0}"), CurrentDestinationLabel);
 
     public bool IsDashboard => CurrentPage == _dashboard;
 
@@ -237,7 +243,11 @@ public partial class ShellViewModel : ObservableObject
         // path) are computed on construction, so returning from an exercise — or coming back the next day with the app
         // still open — would otherwise show yesterday's state. Re-read whenever the dashboard becomes visible.
         if (value is MainDashboardViewModel dash) dash.RefreshFromHistory();
-        CurrentDestinationLabel = value switch
+    }
+
+    private static string GetDestinationLabel(object page)
+    {
+        return page switch
         {
             MainDashboardViewModel => Localized.Get("Shell_Nav_Dashboard", "Dashbord"),
             ExerciseGuideViewModel => Localized.Get("Shell_Nav_Guide", "Øvelsesguide"),

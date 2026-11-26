@@ -29,7 +29,7 @@
             BorderBrush="{DynamicResource ShellBorderBrush}" BorderThickness="0,1,0,0">
       <DockPanel>
         <TextBlock DockPanel.Dock="Left" Text="{Binding MicStatusText}" Foreground="{DynamicResource ShellAccentBrush}" FontSize="12"/>
-        <TextBlock Text="{Binding CurrentDestinationLabel, StringFormat='Side: {0}'}"
+        <TextBlock Text="{Binding DestinationStatus}"
                    HorizontalAlignment="Center" Foreground="{DynamicResource ShellSubtleTextBrush}" FontSize="12"/>
       </DockPanel>
     </Border>
