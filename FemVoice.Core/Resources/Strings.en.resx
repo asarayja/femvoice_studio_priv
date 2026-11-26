@@ -5945,6 +5945,9 @@ This cannot be undone!</value>
   <data name="Analysis_NoSessionsShort" xml:space="preserve">
     <value>0 — no saved sessions yet</value>
   </data>
+  <data name="Analysis_RealDataNote" xml:space="preserve">
+    <value>Analysis is calculated from your saved sessions.</value>
+  </data>
   <data name="Analysis_NoSessionsNotice" xml:space="preserve">
     <value>No saved sessions yet. Complete a session on the dashboard and real analysis will appear here.</value>
   </data>
