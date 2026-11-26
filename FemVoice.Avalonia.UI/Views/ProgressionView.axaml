@@ -113,7 +113,7 @@
             <!-- FemVoice score -->
             <Border Classes="card">
               <StackPanel Spacing="4">
-                <TextBlock Text="FemVoice-score" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+                <TextBlock Text="{loc:Tr Key=Progression_FemVoiceScore, Fallback='FemVoice-score'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
                 <StackPanel Orientation="Horizontal" Spacing="6">
                   <TextBlock Text="{Binding FemVoiceScoreText}" FontSize="34" FontWeight="Bold" Foreground="{DynamicResource ShellAccentBrush}"/>
                   <TextBlock Text="/ 100" VerticalAlignment="Bottom" Margin="0,0,0,6" Foreground="{DynamicResource ShellMutedBrush}"/>
@@ -169,7 +169,7 @@
             <!-- Progression summary (real engine) -->
             <Border Classes="card">
               <StackPanel Spacing="6">
-                <TextBlock Text="Progresjonssammendrag" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
+                <TextBlock Text="{loc:Tr Key=Progression_SummaryHeading, Fallback='Progresjonssammendrag'}" FontWeight="SemiBold" Foreground="{DynamicResource ShellHeadingBrush}"/>
                 <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Foreground="{DynamicResource ShellBodyTextBrush}"/>
                 <TextBlock Text="{Binding RecommendedDifficultyText}" Foreground="{DynamicResource ShellMutedBrush}"/>
               </StackPanel>

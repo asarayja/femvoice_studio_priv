@@ -259,6 +259,21 @@ internal static class Program
             double avgPitch = recent.Average(s => s.AveragePitch);
             string summary1 = ps.GetProgressionSummary();
             bool dataOk = recent.Count == 6 && avgScore > 0 && avgPitch > 0 && !string.IsNullOrWhiteSpace(summary1);
+            var originalCulture = Localized.CurrentCulture;
+            try
+            {
+                Localized.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+                var english = new ProgressionViewModel(db);
+                dataOk &= english.EngineAvailable && english.LevelName == "Beginner"
+                    && english.Summary.StartsWith("Your progress:", StringComparison.Ordinal)
+                    && english.RecommendedDifficultyText.EndsWith("Beginner", StringComparison.Ordinal)
+                    && english.StatMetrics.Any(m => m.Value.Contains(" Hz (goal "))
+                    && english.TodaysFocusText == Localized.Get("Level_FocusArea_Beginner", "");
+                Localized.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("nb-NO");
+                var norwegian = new ProgressionViewModel(db);
+                dataOk &= norwegian.LevelName == "Nybegynner" && norwegian.Summary != english.Summary;
+            }
+            finally { Localized.CurrentCulture = originalCulture; }
 
             // Richer detail (ported from WPF ProgressionDashboard): the VM surfaces stat metrics + target parameters
             // + a score-history chart + weekly summary from the real DB.
@@ -4844,9 +4859,12 @@ internal static class Program
             bool svApplied = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture.Name == "sv-SE"
                 && G("Settings_Title", "fb") == "Inställningar";
             global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");
-            bool enApplied = G("Settings_Title", "fb") == "Settings" && G("Common_Save", "fb") == "Save";
+            var service = global::FemVoice.Avalonia.Localization.AvaloniaLocalizationService.Instance;
+            bool enApplied = G("Settings_Title", "fb") == "Settings" && G("Common_Save", "fb") == "Save"
+                && service.IsEnglish && service["Common_Save"] == "Save";
             global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
-            bool nbApplied = G("Settings_Title", "fb") == "Innstillinger";
+            bool nbApplied = G("Settings_Title", "fb") == "Innstillinger"
+                && service.IsNorwegian && service.GetString("Settings_Title") == "Innstillinger";
 
             // ALL 20 cultures switch the navigable UI: each non-Norwegian culture returns a translated (non-source)
             // value for a high-visibility key.

@@ -180,6 +180,9 @@ public static class ScaffoldStrings
         "Settings_Reminders_Time",
         "Settings_Reminders_Note",
         // "Start her" beginner path card (dashboard). Translated across all overlay languages.
+        "Progression_SummaryHeading",
+        "Progression_PitchGoalFormat",
+        "Progression_FemVoiceScore",
         "StartHere_Heading",
         "StartHere_StageFormat",
         "StartHere_Stage_Fundamentals",
