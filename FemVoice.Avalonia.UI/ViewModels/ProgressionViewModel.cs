@@ -97,11 +97,11 @@ public sealed partial class ProgressionViewModel : ObservableObject
         try
         {
             var settings = database.GetUserSettings();
-            var level = (TrainingLevel)settings.CurrentDifficulty;
-            LevelName = LevelClassificationSystem.GetLevelName(level);
+            var level = LevelClassificationSystem.FromDifficultyLevel(settings.CurrentDifficulty);
+            LevelName = Localized.Get($"Level_{level}", LevelClassificationSystem.GetLevelName(level));
             LevelEmoji = LevelClassificationSystem.GetLevelEmoji(level);
-            LevelDescription = LevelClassificationSystem.GetLevelFocus(level);
-            TodaysFocusText = LevelClassificationSystem.GetFocusArea(level);
+            LevelDescription = Localized.Get($"Level_Focus_{level}", LevelClassificationSystem.GetLevelFocus(level));
+            TodaysFocusText = Localized.Get($"Level_FocusArea_{level}", LevelClassificationSystem.GetFocusArea(level));
             HasTodaysFocus = !string.IsNullOrWhiteSpace(TodaysFocusText);
 
             IReadOnlyList<FemVoiceStudio.Models.TrainingSession> recent = database.GetRecentSessions(20);
@@ -114,9 +114,9 @@ public sealed partial class ProgressionViewModel : ObservableObject
                 AveragePitchText = $"{recent.Average(s => s.AveragePitch):F0} Hz";
             }
 
-            var ps = new ProgressionService(database, localization ?? LocalizationService.Instance);
+            var ps = new ProgressionService(database, localization ?? AvaloniaLocalizationService.Instance);
             Summary = ps.GetProgressionSummary();
-            RecommendedDifficultyText = string.Format(Localized.Get("Progression_RecommendedLevelFormat", "Anbefalt nivå: {0}"), ps.GetRecommendedDifficulty());
+            RecommendedDifficultyText = string.Format(Localized.Get("Progression_RecommendedLevelFormat", "Anbefalt nivå: {0}"), ExerciseDisplay.Difficulty(ps.GetRecommendedDifficulty()));
 
             // Progress toward the next level + real stat rows (from the real ProgressionStatus).
             var status = ps.GetProgressionStatus();
@@ -131,7 +131,8 @@ public sealed partial class ProgressionViewModel : ObservableObject
                 new(Localized.Get("Main_TotalSessions", "Totalt antall økter"), status.TotalSessions.ToString()),
                 new(Localized.Get("Main_Streak", "Dager på rad"), status.CurrentStreak.ToString()),
                 new(Localized.Get("Dashboard_AveragePitch", "Snitt tonehøyde"),
-                    status.AveragePitch > 0 ? $"{status.AveragePitch:F0} Hz (mål {status.AveragePitchGoal:F0} Hz)" : "—"),
+                    status.AveragePitch > 0 ? string.Format(Localized.CurrentCulture, Localized.Get("Progression_PitchGoalFormat", "{0:F0} Hz (mål {1:F0} Hz)"),
+                        status.AveragePitch, status.AveragePitchGoal) : "—"),
                 new(Localized.Get("Dashboard_Consistency", "Jevnhet"), $"{status.Consistency:F0} %"),
             };
 
@@ -141,7 +142,7 @@ public sealed partial class ProgressionViewModel : ObservableObject
             {
                 new(Localized.Get("Dashboard_TargetPitch", "Målområde tonehøyde"), $"{pMin:F0}–{pMax:F0} Hz"),
                 new(Localized.Get("Dashboard_ResonanceMin", "Minste resonans"), $"{LevelClassificationSystem.GetResonanceMinimum(level):F0}"),
-                new(Localized.Get("SmartCoach_TodaysFocus", "Dagens fokus"), LevelClassificationSystem.GetFocusArea(level)),
+                new(Localized.Get("SmartCoach_TodaysFocus", "Dagens fokus"), TodaysFocusText),
             };
 
             // FemVoice-score history (oldest→newest) as bar heights in px.

@@ -259,6 +259,21 @@ internal static class Program
             double avgPitch = recent.Average(s => s.AveragePitch);
             string summary1 = ps.GetProgressionSummary();
             bool dataOk = recent.Count == 6 && avgScore > 0 && avgPitch > 0 && !string.IsNullOrWhiteSpace(summary1);
+            var originalCulture = Localized.CurrentCulture;
+            try
+            {
+                Localized.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+                var english = new ProgressionViewModel(db);
+                dataOk &= english.EngineAvailable && english.LevelName == "Beginner"
+                    && english.Summary.StartsWith("Your progress:", StringComparison.Ordinal)
+                    && english.RecommendedDifficultyText.EndsWith("Beginner", StringComparison.Ordinal)
+                    && english.StatMetrics.Any(m => m.Value.Contains(" Hz (goal "))
+                    && english.TodaysFocusText == Localized.Get("Level_FocusArea_Beginner", "");
+                Localized.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("nb-NO");
+                var norwegian = new ProgressionViewModel(db);
+                dataOk &= norwegian.LevelName == "Nybegynner" && norwegian.Summary != english.Summary;
+            }
+            finally { Localized.CurrentCulture = originalCulture; }
 
             // Richer detail (ported from WPF ProgressionDashboard): the VM surfaces stat metrics + target parameters
             // + a score-history chart + weekly summary from the real DB.
