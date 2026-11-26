@@ -3209,6 +3209,15 @@ internal static class Program
                                     && real.HasSessionSummary && real.SessionSummary.Contains("økter analysert");   // WPF session summary
                 resonanceRealOk = real.HasRealData && resSeries is not null && resSeries.Summary.Contains("64")
                                   && resMetric is not null && resMetric.Value.Contains("64") && prosodyOk && componentsOk;
+                var savedCulture = Localized.CurrentCulture;
+                try
+                {
+                    Localized.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+                    var english = new AnalysisViewModel(db);
+                    resonanceRealOk &= english.HasRealData
+                        && english.SampleDataNotice == "Analysis is calculated from your saved sessions.";
+                }
+                finally { Localized.CurrentCulture = savedCulture; }
                 Console.WriteLine($"[analysis] real-resonance: res='{resSeries?.Summary}' prosody='{prosodySeries?.Summary}' components={real.ScoreComponents.Count} ok={resonanceRealOk}");
             }
             catch (Exception ex) { Console.WriteLine($"[analysis] real-resonance FAIL: {ex.Message}"); resonanceRealOk = false; }

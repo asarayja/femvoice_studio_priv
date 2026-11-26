@@ -5946,6 +5946,9 @@ Dette kan ikke angres!</value>
   <data name="Analysis_NoSessionsShort" xml:space="preserve">
     <value>0 — ingen lagrede økter ennå</value>
   </data>
+  <data name="Analysis_RealDataNote" xml:space="preserve">
+    <value>Ekte analyse beregnet fra dine faktiske lagrede økter.</value>
+  </data>
   <data name="Analysis_NoSessionsNotice" xml:space="preserve">
     <value>Ingen lagrede økter ennå. Fullfør en økt på dashbordet, så vises ekte analyse her.</value>
   </data>
