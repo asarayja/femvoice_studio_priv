@@ -17,6 +17,8 @@ public partial class CategoryChipViewModel : ObservableObject
     }
 
     public string Label { get; }
+    public string DisplayLabel => Label == ExerciseGuideViewModel.AllCategory
+        ? FemVoice.Avalonia.Localization.Localized.Get("Exercise_All", Label) : Label;
 
     [ObservableProperty]
     private bool _isSelected;

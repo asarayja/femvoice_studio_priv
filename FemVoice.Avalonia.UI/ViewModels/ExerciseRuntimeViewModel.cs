@@ -122,7 +122,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
 
         TargetPitchMin = exercise.TargetPitchMin;
         TargetPitchMax = exercise.TargetPitchMax;
-        SelectedExerciseName = exercise.Name;
+        SelectedExerciseName = ExerciseDisplay.Title(exercise);
         Category = string.IsNullOrWhiteSpace(exercise.Category) ? Localized.Get("ExRunVm_DefaultCategory", "Øvelse") : exercise.Category;
         Difficulty = ExerciseDisplay.Difficulty(exercise.Difficulty);
         Steps = exercise.Steps ?? new List<string>();
@@ -255,7 +255,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
 
     // ── Pre-start exercise info (display-only; from the shared catalog — the single exercise page now shows
     //    this directly, replacing the old separate detail page). Nothing computed clinically here. ──
-    public string Purpose => Exercise.Description;
+    public string Purpose => ExerciseDisplay.Description(Exercise);
     public string Rationale => Exercise.ScientificRationale;
     public IReadOnlyList<string> Steps { get; }
     public string GoalText => ExerciseDisplay.Goal(Exercise.Goal);
@@ -760,7 +760,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
                     VoiceHealthScore = Math.Round(avgHealth, 1),            // real per-session voice-health average
                     DifficultyLevel = Exercise.Difficulty,
                     ExerciseTextId = Exercise.Id,   // catalog id (WPF parity) so per-exercise progress can be keyed by id
-                    Feedback = $"Øvelse: {SelectedExerciseName}",
+                    Feedback = $"Øvelse: {Exercise.Name}",
                 };
                 // Create-then-enrich two-step (ResonanceScore is only written by UpdateTrainingSession), same as the
                 // dashboard. Both are existing Core APIs — no Core change.
@@ -793,7 +793,7 @@ public partial class ExerciseRuntimeViewModel : ObservableObject, IDisposable
             _history?.Append(new History.SessionRecord
             {
                 WhenUtcTicks = DateTime.UtcNow.Ticks,
-                Source = SelectedExerciseName,
+                Source = Exercise.Name,
                 DurationSeconds = elapsed,
                 Note = IsSyntheticSource ? "Øvelse · syntetisk testlyd · lokal historikk" : "Øvelse · lokal historikk",
             });

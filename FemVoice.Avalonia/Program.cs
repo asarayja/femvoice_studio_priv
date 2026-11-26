@@ -962,7 +962,7 @@ internal static class Program
             var shell = new ShellViewModel(dash, svc, new InlineUiDispatcher());
             shell.OpenExerciseById(firstId);
             shellNavOk = dash.OpenExerciseRequested is not null
-                         && shell.CurrentPage is ExerciseRuntimeViewModel rt && rt.SelectedExerciseName == firstName;
+                         && shell.CurrentPage is ExerciseRuntimeViewModel rt && rt.Exercise.Id == firstId;
             (shell.CurrentPage as IDisposable)?.Dispose();
             dash.Dispose();
 
@@ -4311,7 +4311,29 @@ internal static class Program
         Console.WriteLine($"[guide-filter] total={total} chips={guide.CategoryChips.Count} chipsExist={chipsExist} defaultAll={defaultAll} categorySubset={categorySubset}({cat}={expectCat}) oneChipSelected={oneChipSelected} clearCatAll={clearCategoryReturnsAll}");
         Console.WriteLine($"[guide-filter] searchByName('{token}')={searchFiltersByName} combined={combined} emptyState={emptyState} clearSearchAll={clearSearchReturnsAll} opensExercise={opensExercise} noTargetHzInRows={noTargetHzInRows}");
 
-        bool allOk = chipsExist && defaultAll && categorySubset && oneChipSelected && clearCategoryReturnsAll
+        // Check every built-in card, including the two exercises added after the original translations.
+        var previousCulture = Localized.CurrentCulture;
+        bool localizedCatalog;
+        try
+        {
+            Localized.CurrentCulture = new System.Globalization.CultureInfo("en-US");
+            var englishGuide = new ExerciseGuideViewModel(svc, _ => { });
+            localizedCatalog = englishGuide.Exercises.First(c => c.Id == 1).Name == "Basic Humming"
+                && englishGuide.Exercises.First(c => c.Id == 2).ShortDescription.StartsWith("Explore different vowel sounds", StringComparison.Ordinal)
+                && englishGuide.Exercises.First(c => c.Id == 17).Name.StartsWith("Big dog", StringComparison.Ordinal)
+                && englishGuide.CategoryChips.First().DisplayLabel == "All";
+            englishGuide.SearchText = "water bubbling";
+            localizedCatalog &= englishGuide.FilteredExercises.Any(c => c.Id == 16);
+
+            Localized.CurrentCulture = new System.Globalization.CultureInfo("nb-NO");
+            var norwegianGuide = new ExerciseGuideViewModel(svc, _ => { });
+            localizedCatalog &= norwegianGuide.Exercises.All(c => c.Name == c.Exercise.Name
+                && c.ShortDescription == c.Exercise.Description)
+                && norwegianGuide.CategoryChips.First().DisplayLabel == "Alle";
+        }
+        finally { Localized.CurrentCulture = previousCulture; }
+
+        bool allOk = localizedCatalog && chipsExist && defaultAll && categorySubset && oneChipSelected && clearCategoryReturnsAll
                      && searchFiltersByName && combined && emptyState && clearSearchReturnsAll && opensExercise && noTargetHzInRows;
         Console.WriteLine(allOk ? "[guide-filter] Exercise Guide filter/search smoke OK" : "[guide-filter] Exercise Guide filter/search smoke FAIL");
         return allOk ? 0 : 1;

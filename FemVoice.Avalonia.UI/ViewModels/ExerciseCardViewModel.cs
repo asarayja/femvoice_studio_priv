@@ -18,9 +18,9 @@ public sealed class ExerciseCardViewModel
     public int SessionCount { get; }
 
     public int Id => Exercise.Id;
-    public string Name => Exercise.Name;
+    public string Name => ExerciseDisplay.Title(Exercise);
     public string Category => string.IsNullOrWhiteSpace(Exercise.Category) ? FemVoice.Avalonia.Localization.Localized.Get("ExRunVm_DefaultCategory", "Øvelse") : Exercise.Category;
-    public string ShortDescription => Exercise.Description;
+    public string ShortDescription => ExerciseDisplay.Description(Exercise);
     public string DifficultyText => ExerciseDisplay.Difficulty(Exercise.Difficulty);
     public string GoalText => ExerciseDisplay.Goal(Exercise.Goal);
     public string TargetPitchText => ExerciseDisplay.TargetPitch(Exercise.TargetPitchMin, Exercise.TargetPitchMax);
