@@ -2295,25 +2295,34 @@ internal static class Program
         {
             global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
             var capture = new OptionsRecordingCapture();
-            var vm = new MicCalibrationViewModel(capture, new InlineUiDispatcher(), profileDirectory: dir) { PhaseSeconds = 0.15 };
-            vm.SelectedMicDeviceId = () => "usb-headset-7";
-            await vm.NextCommand.ExecuteAsync(null);            // silence phase → opens the microphone
-            bool routed = capture.LastOptions?.DeviceId == "usb-headset-7";
+            using var vm = new MicCalibrationViewModel(capture, new InlineUiDispatcher(), dir,
+                () => "usb-headset-7") { PhaseSeconds = 0.15 };
+            bool savedChoiceShown = vm.SelectedDevice?.Id == "usb-headset-7";
+            await vm.NextCommand.ExecuteAsync(null);
+            bool savedChoiceUsed = capture.LastOptions?.DeviceId == "usb-headset-7";
 
-            var capture2 = new OptionsRecordingCapture();
-            var vm2 = new MicCalibrationViewModel(capture2, new InlineUiDispatcher(), profileDirectory: dir) { PhaseSeconds = 0.15 };
-            vm2.SelectedMicDeviceId = () => null;               // no choice made → system default, as before
-            await vm2.NextCommand.ExecuteAsync(null);
-            bool defaultWhenUnset = capture2.StartCalls == 1 && capture2.LastOptions is not null && capture2.LastOptions.DeviceId is null;
+            // Identical display names still represent distinct inputs. Switching after the noise phase
+            // must discard the old room sample and measure both phases on the newly chosen input.
+            vm.SelectedDevice = vm.Devices.Single(d => d.Id == "usb-headset-8");
+            bool discardedOldNoise = string.IsNullOrEmpty(vm.NoiseSummary);
+            await vm.NextCommand.ExecuteAsync(null);
+            bool newNoise = capture.LastOptions?.DeviceId == "usb-headset-8" && !string.IsNullOrEmpty(vm.NoiseSummary);
+            await vm.NextCommand.ExecuteAsync(null);
+            bool newVoice = capture.StartCalls == 3 && capture.LastOptions?.DeviceId == "usb-headset-8";
 
-            var capture3 = new OptionsRecordingCapture();
-            var vm3 = new MicCalibrationViewModel(capture3, new InlineUiDispatcher(), profileDirectory: dir) { PhaseSeconds = 0.15 };
-            vm3.SelectedMicDeviceId = () => throw new System.IO.IOException("prefs unreadable");
-            await vm3.NextCommand.ExecuteAsync(null);           // must not crash the wizard
-            bool failSafe = capture3.StartCalls == 1 && capture3.LastOptions?.DeviceId is null;
+            async System.Threading.Tasks.Task<bool> UsesDefault(Func<string?> preference)
+            {
+                var backend = new OptionsRecordingCapture();
+                using var wizard = new MicCalibrationViewModel(backend, new InlineUiDispatcher(), dir,
+                    preference) { PhaseSeconds = 0.15 };
+                await wizard.NextCommand.ExecuteAsync(null);
+                return wizard.SelectedDevice?.IsDefault == true && backend.StartCalls == 1
+                    && backend.LastOptions is { DeviceId: null };
+            }
 
-            Console.WriteLine($"[miccal-dev] routed={routed} (got '{capture.LastOptions?.DeviceId}') defaultWhenUnset={defaultWhenUnset} failSafe={failSafe}");
-            bool ok = routed && defaultWhenUnset && failSafe;
+            bool fallback = await UsesDefault(() => null) && await UsesDefault(() => "disconnected")
+                && await UsesDefault(() => throw new System.IO.IOException("prefs unreadable"));
+            bool ok = savedChoiceShown && savedChoiceUsed && discardedOldNoise && newNoise && newVoice && fallback;
             Console.WriteLine(ok ? "[miccal-dev] Mic calibration device smoke OK" : "[miccal-dev] Mic calibration device smoke FAIL");
             return ok ? 0 : 1;
         }
@@ -2330,7 +2339,12 @@ internal static class Program
         public int StartCalls;
         private System.Threading.CancellationTokenSource? _cts;
         public IReadOnlyList<global::FemVoiceStudio.Audio.Abstractions.AudioInputDevice> GetInputDevices()
-            => new[] { new global::FemVoiceStudio.Audio.Abstractions.AudioInputDevice("usb-headset-7", "USB headset", false) };
+            => new global::FemVoiceStudio.Audio.Abstractions.AudioInputDevice[]
+            {
+                new("default", "System default input", true),
+                new("usb-headset-7", "USB headset", false),
+                new("usb-headset-8", "USB headset", false),
+            };
         public System.Threading.Tasks.Task StartAsync(global::FemVoiceStudio.Audio.Abstractions.AudioCaptureOptions options,
             System.Threading.CancellationToken cancellationToken = default)
         {
@@ -3465,7 +3479,7 @@ internal static class Program
 
         // The saved profile reflects the frozen service's math (usable-quality thresholds derived, not zero).
         var reload = new global::FemVoiceStudio.Audio.MicrophoneCalibrationService(profileDir)
-            .Load(mic.SelectedDevice ?? "default-input");
+            .Load(mic.SelectedDevice?.Name ?? "default-input");
         bool profileSane = reload is not null && reload.NoiseGateThreshold > 0 && reload.VoicedRmsThreshold > 0
                            && reload.CalibrationCount >= 1;
 
