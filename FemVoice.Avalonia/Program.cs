@@ -1804,7 +1804,21 @@ internal static class Program
 
             var recent = store.Recent(1);
             bool newestFirst = recent.Count == 1 && recent[0].WhenUtcTicks == 2000;      // newest first
-            bool displayOk = recent[0].DurationText.Contains("min") && !string.IsNullOrWhiteSpace(recent[0].Display);
+            bool displayOk;
+            var previousCulture = Localized.CurrentCulture;
+            try
+            {
+                Localized.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+                var row = recent.Single();
+                string expectedTime = new DateTime(row.WhenUtcTicks, DateTimeKind.Utc).ToLocalTime()
+                    .ToString("g", Localized.CurrentCulture);
+                displayOk = row.Display == $"{expectedTime} · Dashboard · 1 min 15 s" && row.Source == "Dashbord";
+                var other = new global::FemVoice.Avalonia.History.SessionRecord { Source = "custom" };
+                displayOk &= other.Display.Contains(" · custom · ");
+                Localized.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("nb-NO");
+                displayOk &= row.Display.Contains(" · Dashbord · ");
+            }
+            finally { Localized.CurrentCulture = previousCulture; }
 
             // Corrupt file → graceful empty (never throws).
             System.IO.File.WriteAllText(tmp, "{ not json ]");

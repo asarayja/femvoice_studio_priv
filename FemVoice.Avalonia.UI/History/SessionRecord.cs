@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json.Serialization;
+using FemVoice.Avalonia.Localization;
 
 namespace FemVoice.Avalonia.History;
 
@@ -23,7 +24,7 @@ public sealed class SessionRecord
     public string Note { get; set; } = "";
 
     [JsonIgnore]
-    public string WhenText => new DateTime(WhenUtcTicks, DateTimeKind.Utc).ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+    public string WhenText => new DateTime(WhenUtcTicks, DateTimeKind.Utc).ToLocalTime().ToString("g", Localized.CurrentCulture);
 
     [JsonIgnore]
     public string DurationText => DurationSeconds >= 60
@@ -31,5 +32,12 @@ public sealed class SessionRecord
         : $"{DurationSeconds} s";
 
     [JsonIgnore]
-    public string Display => $"{WhenText} · {Source} · {DurationText}";
+    public string Display
+    {
+        get
+        {
+            string sourceLabel = Source == "Dashbord" ? Localized.Get("Shell_Nav_Dashboard", "Dashbord") : Source;
+            return $"{WhenText} · {sourceLabel} · {DurationText}";
+        }
+    }
 }
