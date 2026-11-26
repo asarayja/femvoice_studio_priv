@@ -97,16 +97,16 @@ public sealed partial class SmartCoachViewModel : ObservableObject
         }
         try
         {
-            var engine = new SmartCoachEngine(database, localization ?? LocalizationService.Instance);
+            var engine = new SmartCoachEngine(database, localization ?? AvaloniaLocalizationService.Instance);
             var rec = engine.GenerateDailyRecommendation(UserId);
             _hasRecommendation = rec is not null;
             FocusLabel = FocusText(rec.FocusArea);
-            RecommendationText = rec.RecommendationText;
+            RecommendationText = StoredCoachText.Display(rec.RecommendationText);
             DurationText = $"{rec.RecommendedDurationMinutes} min";
             HasHealthWarning = rec.HealthWarning;
-            HealthWarningText = rec.HealthWarningText ?? "";
+            HealthWarningText = StoredCoachText.Display(rec.HealthWarningText ?? "");
             IsRecommendationCompleted = rec.IsCompleted;
-            WeeklyTargetText = string.Format(Localized.Get("SmartCoach_WeeklyTargetFormat", "{0} økter/uke (mål)"), engine.GetWeeklySessionTarget(UserId));
+            WeeklyTargetText = string.Format(Localized.CurrentCulture, Localized.Get("SmartCoach_WeeklyTargetFormat", "{0} økter/uke (mål)"), engine.GetWeeklySessionTarget(UserId));
             StatusSummary = engine.GetStatusSummary(UserId);
             BuildProgressToGoal(database, engine);
             BuildDetail(database);
@@ -212,7 +212,7 @@ public sealed partial class SmartCoachViewModel : ObservableObject
             Messages = unread
                 .OrderByDescending(m => m.CreatedAt ?? m.Date)
                 .Take(5)
-                .Select(m => new CoachMessage(string.IsNullOrWhiteSpace(m.Title) ? m.MessageType : m.Title, m.Message))
+                .Select(m => new CoachMessage(string.IsNullOrWhiteSpace(m.Title) ? m.MessageType : StoredCoachText.Display(m.Title), StoredCoachText.Display(m.Message)))
                 .ToList();
         }
         catch { Messages = Array.Empty<CoachMessage>(); }
@@ -249,11 +249,12 @@ public sealed partial class SmartCoachViewModel : ObservableObject
             for (int i = 0; i < 7; i++)
             {
                 var day = DateTime.Now.Date.AddDays(-i);
+                var dayLabel = string.Format(Localized.CurrentCulture, "{0:ddd} {0:d}", day);
                 if (byDay.TryGetValue(day, out var daySessions) && daySessions.Count > 0)
-                    hist.Add(new AnalysisSummaryMetric(day.ToString("ddd dd.MM"),
-                        string.Format(Localized.Get("SmartCoach_DayHistoryFormat", "{0} økter · snitt {1}"), daySessions.Count, daySessions.Average(s => s.OverallScore).ToString("F0"))));
+                    hist.Add(new AnalysisSummaryMetric(dayLabel,
+                        string.Format(Localized.CurrentCulture, Localized.Get("SmartCoach_DayHistoryFormat", "{0} økter · snitt {1}"), daySessions.Count, daySessions.Average(s => s.OverallScore).ToString("F0", Localized.CurrentCulture))));
                 else
-                    hist.Add(new AnalysisSummaryMetric(day.ToString("ddd dd.MM"), "—"));
+                    hist.Add(new AnalysisSummaryMetric(dayLabel, "—"));
             }
             WeeklyHistory = hist;
         }
