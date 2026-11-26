@@ -287,7 +287,12 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
 
     // ── "Din progresjon" block (ported from the WPF MainWindow) — real level/streak/totals from the DB ──────────
     [ObservableProperty] private bool _hasProgression;
-    [ObservableProperty] private string _progLevelName = "—";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ProgLevelName))]
+    private TrainingLevel? _progressLevel;
+    public string ProgLevelName => ProgressLevel is TrainingLevel level
+        ? Localized.Get($"Level_{level}", LevelClassificationSystem.GetLevelName(level))
+        : "—";
     [ObservableProperty] private string _progTotalSessions = "0";
     [ObservableProperty] private string _progStreak = "0";
     [ObservableProperty] private string _progToNext = "";
@@ -303,8 +308,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
         try
         {
             var status = new FemVoiceStudio.Services.ProgressionService(_database, LocalizationService.Instance).GetProgressionStatus();
-            var level = FemVoiceStudio.Services.LevelClassificationSystem.FromDifficultyLevel(status.CurrentLevel);
-            ProgLevelName = FemVoiceStudio.Services.LevelClassificationSystem.GetLevelName(level);
+            ProgressLevel = LevelClassificationSystem.FromDifficultyLevel(status.CurrentLevel);
             ProgTotalSessions = status.TotalSessions.ToString();
             ProgStreak = status.CurrentStreak.ToString();
             _currentStreak = status.CurrentStreak;
@@ -443,6 +447,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
             OnPropertyChanged(nameof(DifficultyOptions));
             OnPropertyChanged(nameof(SelectedDifficultyOption));
             OnPropertyChanged(nameof(ExerciseDifficultyBadge));
+            OnPropertyChanged(nameof(ProgLevelName));
             OnPropertyChanged(nameof(ExerciseTextHeading));
             OnPropertyChanged(nameof(NextExerciseLabel));
             OnPropertyChanged(nameof(ExerciseCategoryLabel));

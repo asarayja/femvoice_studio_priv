@@ -4942,20 +4942,30 @@ internal static class Program
     private static int DashboardExerciseLocalizationSmoke()
     {
         var originalCulture = global::FemVoice.Avalonia.Localization.Localized.CurrentCulture;
+        var temp = System.IO.Directory.CreateTempSubdirectory("femvoice-dashboard-language-");
         try
         {
             global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("en-US");
-            using var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), new InlineUiDispatcher());
+            var database = new global::FemVoiceStudio.Data.DatabaseService(System.IO.Path.Combine(temp.FullName, "test.db"));
+            var ui = new InlineUiDispatcher();
+            using var dash = new MainDashboardViewModel(new NoopAudioCaptureService(), ui, database);
+            var shell = new ShellViewModel(dash, new VoiceFeminizationExerciseService(), ui);
             bool englishInitial = dash.CurrentExerciseTitle == "Greetings"
                 && dash.CurrentExerciseText.StartsWith("Hello!", StringComparison.Ordinal)
                 && dash.CurrentExerciseCategory == "Basic"
-                && dash.ExerciseDifficultyBadge == "Beginner";
+                && dash.ExerciseDifficultyBadge == "Beginner"
+                && dash.ProgLevelName == "Beginner"
+                && shell.DestinationStatus == "Page: Dashboard"
+                && global::FemVoice.Avalonia.Localization.Localized.Get("Shell_NavHeading", "Navigasjon") == "Navigation";
 
             global::FemVoice.Avalonia.Localization.LanguageActivation.Apply("nb-NO");
             bool norwegianAfterSwitch = dash.CurrentExerciseTitle == "Hilsener"
                 && dash.CurrentExerciseText.StartsWith("Hei! God morgen!", StringComparison.Ordinal)
                 && dash.CurrentExerciseCategory == "Grunnleggende"
-                && dash.ExerciseDifficultyBadge == "Nybegynner";
+                && dash.ExerciseDifficultyBadge == "Nybegynner"
+                && dash.ProgLevelName == "Nybegynner"
+                && shell.DestinationStatus == "Side: Dashbord"
+                && global::FemVoice.Avalonia.Localization.Localized.Get("Shell_NavHeading", "Navigasjon") == "Navigasjon";
 
             dash.NextExerciseCommand.Execute(null);
             bool norwegianAfterNext = dash.CurrentExerciseTitle == "Introduksjon"
@@ -4972,6 +4982,8 @@ internal static class Program
         finally
         {
             global::FemVoice.Avalonia.Localization.Localized.CurrentCulture = originalCulture;
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            temp.Delete(recursive: true);
         }
     }
 
