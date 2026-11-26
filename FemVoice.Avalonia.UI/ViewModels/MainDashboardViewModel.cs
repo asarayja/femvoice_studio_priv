@@ -447,6 +447,7 @@ public partial class MainDashboardViewModel : ObservableObject, IDisposable
             OnPropertyChanged(nameof(NextExerciseLabel));
             OnPropertyChanged(nameof(ExerciseCategoryLabel));
             LoadExercise();
+            RefreshRecentSessions();
         }
 
         if (_ui.CheckAccess()) Refresh();
